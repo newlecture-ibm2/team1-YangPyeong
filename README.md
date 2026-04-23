@@ -25,15 +25,18 @@ cd team1-YangPyeong
 
 ### 2. 초기 환경 설정 (최초 1회)
 
-> ⚠️ **반드시 실행해주세요!** AI 에이전트 규칙 연동 등 공통 환경이 설정됩니다.
+> ⚠️ **반드시 실행해주세요!** 에이전트 셋업, 패키지 설치, 환경변수 생성이 자동 진행됩니다.
 
 ```bash
 bash setup.sh
 ```
 
-이 스크립트가 수행하는 작업:
-- ✅ AI 에이전트 규칙(`.agents/rules/`)을 워크스페이스에 심링크로 연결
-- ✅ 이후 팀원 모두 동일한 AI 코딩 가이드라인(헥사고날 아키텍처, BFF 등)이 적용됨
+이 스크립트가 완전히 자동으로 수행하는 작업:
+- ✅ **AI 에이전트 규칙 연동**: `.agents/rules/` 폴더를 워크스페이스와 연결
+- ✅ **환경 변수 템플릿 복사**: 사용 가능한 `.env.example`을 기준으로 기본 `.env` 자동 복사
+- ✅ **권한 설정**: Spring Boot `backend/gradlew` 실행 권한 부여
+- ✅ **패키지 자동 설치**: Frontend(`npm install`) 및 AI(`python3 -m venv` 및 `pip install`)
+- *(이후 팀원 모두가 공통된 환경과 개발 가이드라인을 공유하게 됩니다)*
 
 ### 3. 서비스별 실행
 
@@ -45,7 +48,7 @@ cd backend && ./gradlew bootRun
 cd frontend && npm install && npm run dev
 
 # AI (FastAPI)
-cd ai && pip install -r requirements.txt && uvicorn app.main:app --reload
+cd ai && source .venv/bin/activate && pip install -r requirements.txt && uvicorn app.main:app --reload
 ```
 
 ---
