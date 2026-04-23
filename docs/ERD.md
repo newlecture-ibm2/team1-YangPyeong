@@ -23,6 +23,7 @@ erDiagram
         varchar status "ACTIVE | SUSPENDED"
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
     }
 
     farms {
@@ -37,6 +38,7 @@ erDiagram
         varchar status "PENDING | APPROVED | REJECTED"
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
     }
 
     %% ===== 작물 도메인 =====
@@ -48,11 +50,10 @@ erDiagram
         int growth_days
         decimal yield_per_sqm "㎡당 수확량(kg)"
         decimal avg_cost_per_sqm "㎡당 평균 비용(원)"
-        jsonb climate_conditions
-        varchar suitable_facility
         boolean is_active
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
     }
 
     seed_registrations {
@@ -61,11 +62,11 @@ erDiagram
         bigint crop_id FK
         varchar seed_type "SEED | SEEDLING | SAPLING"
         int quantity
-        date purchase_date
-        varchar source_store
         varchar receipt_image_url
         boolean verified
         timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     crop_plans {
@@ -74,10 +75,9 @@ erDiagram
         bigint seed_registration_id FK
         varchar crop_name
         date planting_date
-        decimal target_yield "kg"
         decimal area "㎡"
         varchar status "PLANNED | IN_PROGRESS | COMPLETED | CANCELLED"
-        boolean is_deleted "논리 삭제"
+        timestamp deleted_at
         timestamp created_at
         timestamp updated_at
     }
@@ -89,6 +89,8 @@ erDiagram
         date harvest_date
         varchar quality_grade "A | B | C | D"
         timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     %% ===== 수급 도메인 =====
@@ -104,6 +106,8 @@ erDiagram
         varchar balance_status "EXCESS_WARN | EXCESS_CAUTION | BALANCED | SHORT_CAUTION | SHORT_WARN"
         timestamp calculated_at
         timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     %% ===== 상점 도메인 =====
@@ -118,6 +122,7 @@ erDiagram
         varchar status "PENDING | ACTIVE | INACTIVE | REJECTED"
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
     }
 
     orders {
@@ -129,6 +134,7 @@ erDiagram
         varchar shipping_address
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
     }
 
     order_items {
@@ -138,6 +144,9 @@ erDiagram
         int quantity
         decimal unit_price
         decimal subtotal
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     cart_items {
@@ -146,6 +155,8 @@ erDiagram
         bigint product_id FK
         int quantity
         timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     %% ===== 커뮤니티 도메인 =====
@@ -157,7 +168,7 @@ erDiagram
         varchar category "FREE | INFO | QNA"
         int view_count
         boolean is_notice
-        boolean is_deleted
+        timestamp deleted_at
         timestamp created_at
         timestamp updated_at
     }
@@ -168,52 +179,36 @@ erDiagram
         bigint author_id FK
         text content
         boolean accepted "답변 채택 여부"
-        boolean is_deleted
-        timestamp created_at
-        timestamp updated_at
-    }
-
-    %% ===== 가게 도메인 =====
-    stores {
-        bigint id PK
-        varchar name
-        varchar address
-        decimal lat
-        decimal lng
-        varchar phone
-        varchar category
-        varchar partner_status "NONE | PARTNER"
-        boolean is_active
+        timestamp deleted_at
         timestamp created_at
         timestamp updated_at
     }
 
     %% ===== 정책 도메인 =====
-    policy_data {
+
+    policies {
         bigint id PK
-        varchar region_code
         varchar policy_name
-        varchar category "보조금 | 자재지원 | 교육 | 기타"
-        jsonb target_crops
-        jsonb conditions
-        decimal benefit_amount
-        date application_deadline
+        varchar region_code
+        varchar category
         varchar source_url
         boolean is_active
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
     }
 
-    policy_matches {
+    %% ===== RAG 도메인 =====
+    rag_documents {
         bigint id PK
-        bigint user_id FK
-        bigint policy_id FK
-        bigint crop_id FK
-        decimal match_score
-        decimal estimated_benefit
-        boolean document_generated
-        varchar generated_doc_url
+        varchar title
+        varchar category "CROP_GUIDE | MARKET | POLICY | WEATHER | ETC"
+        varchar file_url
+        bigint uploaded_by FK
+        boolean is_active
         timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     %% ===== 알림 도메인 =====
@@ -227,6 +222,8 @@ erDiagram
         varchar channel "IN_APP | SMS | EMAIL"
         timestamp sent_at
         timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     notifications {
@@ -238,6 +235,8 @@ erDiagram
         varchar link
         boolean is_read
         timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
     }
 
     %% ===== 관계 정의 =====
@@ -247,7 +246,6 @@ erDiagram
     users ||--o{ cart_items : "장바구니"
     users ||--o{ posts : "작성"
     users ||--o{ comments : "작성"
-    users ||--o{ policy_matches : "매칭이력"
     users ||--o{ notifications : "수신"
 
     farms ||--o{ seed_registrations : "종자등록"
@@ -255,7 +253,6 @@ erDiagram
 
     crops ||--o{ seed_registrations : "작물참조"
     crops ||--o{ balance_data : "수급데이터"
-    crops ||--o{ policy_matches : "정책매칭"
 
     seed_registrations ||--o{ crop_plans : "계획연결"
 
@@ -267,9 +264,9 @@ erDiagram
 
     posts ||--o{ comments : "댓글"
 
-    policy_data ||--o{ policy_matches : "정책참조"
 
     users ||--o{ guide_messages : "발송"
+    users ||--o{ rag_documents : "등록"
 ```
 
 ---
@@ -290,6 +287,7 @@ erDiagram
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | ACTIVE / SUSPENDED |
 | created_at | TIMESTAMP | NOT NULL | 가입일 |
 | updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.2 farms (농장)
 
@@ -306,6 +304,7 @@ erDiagram
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.3 crops (작물 마스터)
 
@@ -318,11 +317,10 @@ erDiagram
 | growth_days | INT | | 재배 기간 (일) |
 | yield_per_sqm | DECIMAL(10,2) | | ㎡당 수확량 (kg) |
 | avg_cost_per_sqm | DECIMAL(10,2) | | ㎡당 평균 비용 (원) |
-| climate_conditions | JSONB | | 적합 기후 조건 |
-| suitable_facility | VARCHAR(100) | | 적합 시설 |
 | is_active | BOOLEAN | DEFAULT true | 활성 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.4 seed_registrations (종자 등록)
 
@@ -333,11 +331,11 @@ erDiagram
 | crop_id | BIGINT | FK → crops(id), NOT NULL | 작물 |
 | seed_type | VARCHAR(20) | NOT NULL | SEED(씨앗) / SEEDLING(종자) / SAPLING(모종) |
 | quantity | INT | NOT NULL | 수량 |
-| purchase_date | DATE | NOT NULL | 구매일 |
-| source_store | VARCHAR(100) | | 구매처 |
 | receipt_image_url | VARCHAR(500) | | 영수증 사진 URL |
 | verified | BOOLEAN | DEFAULT false | 인증 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
+| updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.5 crop_plans (파종 계획)
 
@@ -348,10 +346,9 @@ erDiagram
 | seed_registration_id | BIGINT | FK → seed_registrations(id) | 종자 등록 참조 |
 | crop_name | VARCHAR(50) | NOT NULL | 작물명 (스냅샷) |
 | planting_date | DATE | NOT NULL | 파종일 |
-| target_yield | DECIMAL(10,2) | | 목표 수확량 (kg) |
 | area | DECIMAL(10,2) | NOT NULL | 파종 면적 (㎡) |
 | status | VARCHAR(20) | DEFAULT 'PLANNED' | PLANNED / IN_PROGRESS / COMPLETED / CANCELLED |
-| is_deleted | BOOLEAN | DEFAULT false | 논리 삭제 (재배 의향 취소) |
+| deleted_at | TIMESTAMP | | 논리 삭제 시각 (null이면 미삭제) |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 
@@ -365,6 +362,8 @@ erDiagram
 | harvest_date | DATE | NOT NULL | 수확일 |
 | quality_grade | VARCHAR(5) | | 품질 등급 (A/B/C/D) |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
+| updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.7 balance_data (수급 데이터)
 
@@ -381,6 +380,8 @@ erDiagram
 | balance_status | VARCHAR(20) | | EXCESS_WARN / EXCESS_CAUTION / BALANCED / SHORT_CAUTION / SHORT_WARN |
 | calculated_at | TIMESTAMP | | 최종 계산 시각 |
 | created_at | TIMESTAMP | NOT NULL | 생성일 |
+| updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 > **UNIQUE 제약**: (region_code, crop_id, year, season) 복합 유니크
 
@@ -398,6 +399,7 @@ erDiagram
 | status | VARCHAR(20) | DEFAULT 'PENDING' | PENDING / ACTIVE / INACTIVE / REJECTED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.9 orders (주문)
 
@@ -411,6 +413,7 @@ erDiagram
 | shipping_address | VARCHAR(255) | | 배송 주소 |
 | created_at | TIMESTAMP | NOT NULL | 주문일 |
 | updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.10 order_items (주문 항목)
 
@@ -422,6 +425,9 @@ erDiagram
 | quantity | INT | NOT NULL | 수량 |
 | unit_price | DECIMAL(10,2) | NOT NULL | 단가 (주문 시점 스냅샷) |
 | subtotal | DECIMAL(10,2) | NOT NULL | 소계 |
+| created_at | TIMESTAMP | NOT NULL | 생성일 |
+| updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.11 cart_items (장바구니)
 
@@ -432,6 +438,8 @@ erDiagram
 | product_id | BIGINT | FK → products(id), NOT NULL | 상품 |
 | quantity | INT | NOT NULL, DEFAULT 1 | 수량 |
 | created_at | TIMESTAMP | NOT NULL | 담은 시각 |
+| updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 > **UNIQUE 제약**: (user_id, product_id) 복합 유니크
 
@@ -446,7 +454,7 @@ erDiagram
 | category | VARCHAR(10) | NOT NULL | FREE / INFO / QNA |
 | view_count | INT | DEFAULT 0 | 조회수 |
 | is_notice | BOOLEAN | DEFAULT false | 공지 여부 |
-| is_deleted | BOOLEAN | DEFAULT false | 논리 삭제 |
+| deleted_at | TIMESTAMP | | 삭제 시각 (null이면 미삭제) |
 | created_at | TIMESTAMP | NOT NULL | 작성일 |
 | updated_at | TIMESTAMP | | 수정일 |
 
@@ -459,58 +467,39 @@ erDiagram
 | author_id | BIGINT | FK → users(id), NOT NULL | 작성자 |
 | content | TEXT | NOT NULL | 댓글 내용 |
 | accepted | BOOLEAN | DEFAULT false | 답변 채택 여부 (Q&A) |
-| is_deleted | BOOLEAN | DEFAULT false | 논리 삭제 |
+| deleted_at | TIMESTAMP | | 삭제 시각 (null이면 미삭제) |
 | created_at | TIMESTAMP | NOT NULL | 작성일 |
 | updated_at | TIMESTAMP | | 수정일 |
 
-### 2.14 stores (가게)
-
-| 컬럼 | 타입 | 제약 | 설명 |
-|------|------|------|------|
-| id | BIGINT | PK, AUTO | 가게 고유 ID |
-| name | VARCHAR(100) | NOT NULL | 가게명 |
-| address | VARCHAR(255) | NOT NULL | 주소 |
-| lat | DECIMAL(10,7) | | 위도 |
-| lng | DECIMAL(10,7) | | 경도 |
-| phone | VARCHAR(20) | | 전화번호 |
-| category | VARCHAR(50) | | 업종 |
-| partner_status | VARCHAR(10) | DEFAULT 'NONE' | NONE / PARTNER (제휴 여부) |
-| is_active | BOOLEAN | DEFAULT true | 활성 여부 |
-| created_at | TIMESTAMP | NOT NULL | 등록일 |
-| updated_at | TIMESTAMP | | 수정일 |
-
-### 2.15 policy_data (지자체 정책)
+### 2.14 policies (지자체 정책 목록)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
 | id | BIGINT | PK, AUTO | 정책 고유 ID |
-| region_code | VARCHAR(20) | NOT NULL | 지역 코드 |
 | policy_name | VARCHAR(200) | NOT NULL | 정책명 |
+| region_code | VARCHAR(20) | NOT NULL | 지역 코드 |
 | category | VARCHAR(20) | NOT NULL | 보조금 / 자재지원 / 교육 / 기타 |
-| target_crops | JSONB | | 대상 작물 목록 |
-| conditions | JSONB | | 신청 조건 |
-| benefit_amount | DECIMAL(12,2) | | 지원 금액 |
-| application_deadline | DATE | | 신청 마감일 |
-| source_url | VARCHAR(500) | | 원문 URL |
+| source_url | VARCHAR(500) | NOT NULL | 정책 원문 링크 |
 | is_active | BOOLEAN | DEFAULT true | 활성 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.16 policy_matches (정책 매칭 이력)
+### 2.15 rag_documents (RAG 문서 메타데이터)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
-| id | BIGINT | PK, AUTO | 매칭 이력 고유 ID |
-| user_id | BIGINT | FK → users(id), NOT NULL | 유저 |
-| policy_id | BIGINT | FK → policy_data(id), NOT NULL | 정책 |
-| crop_id | BIGINT | FK → crops(id), NOT NULL | 작물 |
-| match_score | DECIMAL(5,2) | | 매칭 점수 |
-| estimated_benefit | DECIMAL(12,2) | | 예상 수혜 금액 |
-| document_generated | BOOLEAN | DEFAULT false | 공문 생성 여부 |
-| generated_doc_url | VARCHAR(500) | | 생성된 공문 URL |
-| created_at | TIMESTAMP | NOT NULL | 매칭 일시 |
+| id | BIGINT | PK, AUTO | 문서 고유 ID |
+| title | VARCHAR(200) | NOT NULL | 문서 제목 |
+| category | VARCHAR(20) | NOT NULL | CROP_GUIDE / MARKET / POLICY / WEATHER / ETC |
+| file_url | VARCHAR(500) | NOT NULL | 원본 파일 경로/URL |
+| uploaded_by | BIGINT | FK → users(id), NOT NULL | 등록한 관리자 |
+| is_active | BOOLEAN | DEFAULT true | 활성 여부 (비활성화 시 AI 참조 제외) |
+| created_at | TIMESTAMP | NOT NULL | 등록일 |
+| updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.17 guide_messages (권고 메시지)
+### 2.16 guide_messages (권고 메시지)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -523,8 +512,10 @@ erDiagram
 | channel | VARCHAR(10) | NOT NULL | IN_APP / SMS / EMAIL |
 | sent_at | TIMESTAMP | | 발송 시각 |
 | created_at | TIMESTAMP | NOT NULL | 생성일 |
+| updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.18 notifications (알림)
+### 2.17 notifications (알림)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -536,6 +527,8 @@ erDiagram
 | link | VARCHAR(500) | | 이동 링크 |
 | is_read | BOOLEAN | DEFAULT false | 읽음 여부 |
 | created_at | TIMESTAMP | NOT NULL | 생성일 |
+| updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ---
 
@@ -554,8 +547,8 @@ erDiagram
 | orders → order_items | 1:N | 주문 1건에 여러 항목 |
 | users → posts | 1:N | 유저가 여러 게시글 작성 |
 | posts → comments | 1:N | 게시글에 여러 댓글 |
-| policy_data → policy_matches | 1:N | 정책 1건에 여러 매칭 이력 |
 | users → notifications | 1:N | 유저에게 여러 알림 |
+| users → rag_documents | 1:N | 관리자가 여러 RAG 문서 등록 |
 
 ---
 
@@ -598,6 +591,4 @@ CREATE INDEX idx_posts_category ON posts(category);
 -- 알림 (빈번한 조회)
 CREATE INDEX idx_notifications_user_id_read ON notifications(user_id, is_read);
 
--- 정책 매칭
-CREATE INDEX idx_policy_matches_user_id ON policy_matches(user_id);
 ```
