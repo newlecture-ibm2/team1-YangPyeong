@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko" data-active="농장관리">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1440">
+  <title>농장 관리 — FarmBalance 화면설계</title>
+  <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+
+<!-- GNB 일반/농업인 헤더 -->
+<header class="gnb">
+  <div class="gnb-inner">
+    <a href="../../index.html" class="gnb-logo"><span>🌿</span> FarmBalance</a>
+    <nav class="gnb-nav">
+      <a href="#"                        data-menu="홈">홈</a>
+      <a href="farm-manage.html"         data-menu="농장관리">농장관리</a>
+      <a href="../balance/balance-list.html" data-menu="밸런스">밸런스</a>
+      <a href="../recommend/recommend-list.html" data-menu="추천">추천</a>
+      <a href="../policy/policy-list.html"    data-menu="정책">정책</a>
+      <a href="../community/community-list.html" data-menu="커뮤니티">커뮤니티</a>
+      <a href="../shop/product-browse.html"   data-menu="상점">상점</a>
+      <a href="../stores/store-map.html"      data-menu="가게">가게</a>
+    </nav>
+    <div class="gnb-right">
+      <div class="gnb-icon">🔔</div>
+      <div class="gnb-icon">👤</div>
+    </div>
+  </div>
+</header>
+
+<!-- 브레드크럼 -->
+<div class="breadcrumb">
+  <a href="../../index.html">홈</a> <span>›</span> 농장관리 <span>›</span> <strong>농장 관리</strong>
+</div>
+
+<!-- 본문 -->
+<div class="page">
+  <h1 class="page-title"><span class="icon">🏠</span> 내 농장 관리</h1>
+
+  <!-- 농장 정보 카드 -->
+  <div class="card">
+    <div class="flex-between mb-16">
+      <h2 class="card-title" style="margin-bottom:0;">양평 해맑은 농장</h2>
+      <div class="flex gap-8">
+        <span class="badge badge-green">✅ 승인완료</span>
+        <span class="badge badge-gray">📋 승인대기</span>
+      </div>
+    </div>
+
+    <table class="info-tbl">
+      <tr>
+        <th>주소</th>
+        <td>경기도 양평군 용문면</td>
+        <th>면적</th>
+        <td>3,300㎡ (1,000평)</td>
+      </tr>
+      <tr>
+        <th>토양유형</th>
+        <td>양토</td>
+        <th>등록일</th>
+        <td>2026-03-15</td>
+      </tr>
+    </table>
+
+    <div class="btn-row mt-16">
+      <button class="btn btn-outline" style="flex:1;">수정하기</button>
+      <button class="btn btn-danger" style="flex:1;">농장 삭제</button>
+    </div>
+  </div>
+
+  <!-- 통계 3열 카드 -->
+  <div class="stat-row">
+    <div class="stat-card">
+      <div>
+        <div class="stat-text">등록된 종자</div>
+        <div class="stat-num">5건</div>
+      </div>
+      <div class="stat-icon">🌱</div>
+    </div>
+    <div class="stat-card">
+      <div>
+        <div class="stat-text">파종 계획</div>
+        <div class="stat-num">3건</div>
+      </div>
+      <div class="stat-icon">🌿</div>
+    </div>
+    <div class="stat-card">
+      <div>
+        <div class="stat-text">수확 실적</div>
+        <div class="stat-num">2건</div>
+      </div>
+      <div class="stat-icon">🧺</div>
+    </div>
+  </div>
+
+  <!-- 최근 활동 -->
+  <div class="card">
+    <h2 class="card-title">최근 활동 기일전보</h2>
+    <ul class="timeline">
+      <li>
+        <div class="tl-title">등록된 종자 "양평 해맑은로 농장" 였습니다.</div>
+        <div class="tl-date">2026-03-15일</div>
+      </li>
+      <li>
+        <div class="tl-title">파종 계획로 '3건' 등록합니다.</div>
+        <div class="tl-date">2026-03-15일</div>
+      </li>
+      <li>
+        <div class="tl-title">파종 계획로 '수확 실적입니다.</div>
+        <div class="tl-date">2026-03-15일</div>
+      </li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+  // 메뉴 활성화
+  document.querySelectorAll('.gnb-nav a').forEach(function(a){
+    if(a.getAttribute('data-menu') === '농장관리') a.classList.add('active');
+  });
+</script>
+</body>
+</html>

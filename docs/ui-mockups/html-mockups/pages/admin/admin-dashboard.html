@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>관리자 대시보드 — FarmBalance</title><link rel="stylesheet" href="../../css/style.css"></head>
+<body>
+<div class="admin-layout">
+<aside class="sidebar"><div class="sidebar-logo"><span>🌿</span> FarmBalance</div><nav>
+  <a href="admin-dashboard.html" class="active">📊 대시보드</a><a href="admin-users.html">👥 사용자 관리</a><a href="admin-approvals.html">✅ 농부 승인/반려</a><a href="admin-crops.html">🌾 작물 마스터</a><a href="admin-data.html">🔗 외부 데이터 연동</a><a href="admin-engine.html">⚖️ 밸런스 엔진</a><a href="admin-health.html">💚 시스템 헬스</a><a href="admin-community.html">💬 커뮤니티 관리</a><a href="admin-shop.html">🛒 상점 관리</a><a href="admin-stores.html">📍 가게 정보 관리</a><a href="admin-coupons.html">🎫 쿠폰/보상 관리</a>
+</nav></aside>
+<main class="admin-main">
+  <div class="page">
+    <h1 class="page-title"><span class="icon">📊</span> 관리자 대시보드</h1>
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-label">총 사용자</div><div class="kpi-value">1,248</div></div>
+      <div class="kpi"><div class="kpi-label">농부 (승인)</div><div class="kpi-value">342</div></div>
+      <div class="kpi"><div class="kpi-label">승인 대기</div><div class="kpi-value text-red">12</div></div>
+      <div class="kpi"><div class="kpi-label">오늘 등록</div><div class="kpi-value">28건</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h2 class="card-title">일별 등록 추이</h2><div class="placeholder" style="height:250px;">📈 라인 차트 — 일별 종자/파종/수확 등록 추이</div></div>
+      <div class="card"><h2 class="card-title">역할별 사용자 분포</h2><div class="placeholder" style="height:250px;">📊 도넛 차트 — 일반/농부/지자체/관리자</div></div>
+    </div>
+    <div class="card">
+      <h2 class="card-title">최근 알림</h2>
+      <ul class="timeline">
+        <li><div class="tl-title">새 농부 승인 신청: 양평 이농부</div><div class="tl-date">5분 전</div></li>
+        <li><div class="tl-title">배추 수급 부족 경고 발생</div><div class="tl-date">1시간 전</div></li>
+        <li><div class="tl-title">외부 데이터(KAMIS) 연동 완료</div><div class="tl-date">3시간 전</div></li>
+      </ul>
+    </div>
+  </div>
+</main>
+</div>
+</body></html>

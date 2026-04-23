@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=1440">
+  <title>종자 구매 등록 — FarmBalance</title>
+  <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+<header class="gnb"><div class="gnb-inner">
+  <a href="../../index.html" class="gnb-logo"><span>🌿</span> FarmBalance</a>
+  <nav class="gnb-nav">
+    <a href="#">홈</a>
+    <a href="farm-manage.html" class="active">농장관리</a>
+    <a href="../balance/balance-list.html">밸런스</a>
+    <a href="../recommend/recommend-list.html">추천</a>
+    <a href="../policy/policy-list.html">정책</a>
+    <a href="../community/community-list.html">커뮤니티</a>
+    <a href="../shop/product-browse.html">상점</a>
+    <a href="../stores/store-map.html">가게</a>
+  </nav>
+  <div class="gnb-right"><div class="gnb-icon">🔔</div><div class="gnb-icon">👤</div></div>
+</div></header>
+
+<div class="breadcrumb"><a href="../../index.html">홈</a> <span>›</span> 농장관리 <span>›</span> <strong>종자 구매 등록</strong></div>
+
+<div class="page">
+  <h1 class="page-title"><span class="icon">🌱</span> 종자 구매 등록</h1>
+
+  <div class="card" style="background:var(--olive-bg);border-color:var(--olive);">
+    <p style="font-size:13px;color:var(--olive-dark);">🪙 <strong>포인트 안내:</strong> 종자 등록 시 100P, 영수증 첨부 시 추가 50P가 적립됩니다.</p>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">종자 정보</h2>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">종자명 <span class="text-red">*</span></label>
+        <input class="form-input" placeholder="예: 청경채 씨앗">
+      </div>
+      <div class="form-group">
+        <label class="form-label">작물 분류 <span class="text-red">*</span></label>
+        <select class="form-select">
+          <option>선택하세요</option>
+          <option>채소</option>
+          <option>과일</option>
+          <option>곡물</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">수량</label>
+        <input class="form-input" type="number" placeholder="10">
+      </div>
+      <div class="form-group">
+        <label class="form-label">구매처</label>
+        <input class="form-input" placeholder="예: 양평 농협">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">구매 금액 (원)</label>
+        <input class="form-input" type="number" placeholder="15000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">구매일</label>
+        <input class="form-input" type="date">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">영수증 사진</h2>
+    <div class="upload-zone">
+      <div class="upload-icon">📷</div>
+      <div>영수증 사진을 업로드하세요 <span class="badge badge-olive">+50P</span></div>
+      <div style="font-size:11px;margin-top:4px;color:#bbb;">JPEG, PNG (최대 5MB)</div>
+    </div>
+  </div>
+
+  <div class="btn-row btn-row-right">
+    <button class="btn btn-gray">취소</button>
+    <button class="btn btn-primary">등록하기</button>
+  </div>
+</div>
+</body>
+</html>

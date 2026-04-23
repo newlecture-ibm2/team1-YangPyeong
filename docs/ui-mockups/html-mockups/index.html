@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1440">
+  <title>FarmBalance — 화면설계 목업 (전체 47화면)</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- GNB -->
+<header class="gnb">
+  <div class="gnb-inner">
+    <div class="gnb-logo"><span>🌿</span> FarmBalance</div>
+    <nav class="gnb-nav">
+      <a href="#" class="active">전체 화면 목록</a>
+    </nav>
+    <div class="gnb-right">
+      <span style="font-size:13px;color:#999;">v1.0 · 47 Screens</span>
+    </div>
+  </div>
+</header>
+
+<div class="page" style="padding-top:32px;">
+
+  <!-- 히어로 -->
+  <div class="index-hero">
+    <h1>🌾 FarmBalance 화면설계 목업</h1>
+    <p>전체 47개 화면 · Desktop 1440px 기준 · 기획용 와이어프레임</p>
+  </div>
+
+  <!-- ============ 0. 공통/인증 ============ -->
+  <div class="menu-section">
+    <div class="menu-section-title">🔐 0. 인증 (Auth)</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="pages/auth/login.html">
+        <div class="mc-icon">🔑</div>
+        <div><div class="mc-label">로그인</div><div class="mc-sub">/auth/login</div></div>
+      </a>
+      <a class="menu-card" href="pages/auth/signup.html">
+        <div class="mc-icon">📝</div>
+        <div><div class="mc-label">회원가입</div><div class="mc-sub">/auth/signup</div></div>
+      </a>
+      <a class="menu-card" href="pages/auth/password-reset.html">
+        <div class="mc-icon">🔒</div>
+        <div><div class="mc-label">비밀번호 찾기</div><div class="mc-sub">/auth/password-reset</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============ 1.1 농장관리 ============ -->
+  <div class="menu-section">
+    <div class="menu-section-title">🌾 1.1 농장관리 (Farm)</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="pages/farm/farm-manage.html">
+        <div class="mc-icon">🏠</div>
+        <div><div class="mc-label">농장 관리</div><div class="mc-sub">/farm</div></div>
+      </a>
+      <a class="menu-card" href="pages/farm/farm-register.html">
+        <div class="mc-icon">📋</div>
+        <div><div class="mc-label">농장 등록 신청</div><div class="mc-sub">/farm/register</div></div>
+      </a>
+      <a class="menu-card" href="pages/farm/seed-register.html">
+        <div class="mc-icon">🌱</div>
+        <div><div class="mc-label">종자 구매 등록</div><div class="mc-sub">/farm/seed</div></div>
+      </a>
+      <a class="menu-card" href="pages/farm/plan-register.html">
+        <div class="mc-icon">📅</div>
+        <div><div class="mc-label">파종 계획 등록</div><div class="mc-sub">/farm/plan</div></div>
+      </a>
+      <a class="menu-card" href="pages/farm/harvest-register.html">
+        <div class="mc-icon">🥕</div>
+        <div><div class="mc-label">수확 실적 등록</div><div class="mc-sub">/farm/harvest</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============ 1.2 밸런스 ============ -->
+  <div class="menu-section">
+    <div class="menu-section-title">📊 1.2 밸런스 (Balance)</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="pages/balance/balance-list.html">
+        <div class="mc-icon">📊</div>
+        <div><div class="mc-label">작물 밸런스 조회</div><div class="mc-sub">/balance</div></div>
+      </a>
+      <a class="menu-card" href="pages/balance/balance-detail.html">
+        <div class="mc-icon">📈</div>
+        <div><div class="mc-label">작물 밸런스 상세</div><div class="mc-sub">/balance/:cropCode</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============ 1.3 추천 ============ -->
+  <div class="menu-section">
+    <div class="menu-section-title">🤖 1.3 추천 (Recommend)</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="pages/recommend/recommend-list.html">
+        <div class="mc-icon">🤖</div>
+        <div><div class="mc-label">추천 목록</div><div class="mc-sub">/recommend</div></div>
+      </a>
+      <a class="menu-card" href="pages/recommend/recommend-detail.html">
+        <div class="mc-icon">🔍</div>
+        <div><div class="mc-label">추천 상세</div><div class="mc-sub">/recommend/:id</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============ 1.4 정책 ============ -->
+  <div class="menu-section">
+    <div class="menu-section-title">📜 1.4 정책 (Policy)</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="pages/policy/policy-list.html">
+        <div class="mc-icon">📜</div>
+        <div><div class="mc-label">정책 목록</div><div class="mc-sub">/policy</div></div>
+      </a>
+      <a class="menu-card" href="pages/policy/policy-detail.html">
+        <div class="mc-icon">📄</div>
+        <div><div class="mc-label">정책 상세</div><div class="mc-sub">/policy/:id</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============ 1.5 커뮤니티 ============ -->
+  <div class="menu-section">
+    <div class="menu-section-title">💬 1.5 커뮤니티 (Community)</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="pages/community/community-list.html">
+        <div class="mc-icon">💬</div>
+        <div><div class="mc-label">게시글 목록</div><div class="mc-sub">/community</div></div>
+      </a>
+      <a class="menu-card" href="pages/community/community-detail.html">
+        <div class="mc-icon">📝</div>
+        <div><div class="mc-label">게시글 상세</div><div class="mc-sub">/community/:id</div></div>
+      </a>
+      <a class="menu-card" href="pages/community/community-write.html">
+        <div class="mc-icon">✏️</div>
+        <div><div class="mc-label">글 작성/수정</div><div class="mc-sub">/community/write</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============ 1.6 상점 ============ -->
+  <div class="menu-section">
+    <div class="menu-section-title">🛒 1.6 상점 (Shop)</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="pages/shop/product-browse.html">
+        <div class="mc-icon">🛍️</div>
+        <div><div class="mc-label">상품 탐색</div><div class="mc-sub">/shop · 상품</div></div>
+      </a>
+      <a class="menu-card" href="pages/shop/product-detail.html">
+        <div class="mc-icon">📦</div>
+        <div><div class="mc-label">상품 상세</div><div class="mc-sub">/shop/:id · 상품</div></div>
+      </a>
+      <a class="menu-card" href="pages/shop/cart.html">
+        <div class="mc-icon">🛒</div>
+        <div><div class="mc-label">장바구니</div><div class="mc-sub">/shop/cart · 주문</div></div>
+      </a>
+      <a class="menu-card" href="pages/shop/checkout.html">
+        <div class="mc-icon">💳</div>
+        <div><div class="mc-label">주문/결제</div><div class="mc-sub">/shop/checkout · 주문</div></div>
+      </a>
+      <a class="menu-card" href="pages/shop/orders.html">
+        <div class="mc-icon">📋</div>
+        <div><div class="mc-label">주문 내역</div><div class="mc-sub">/shop/orders · 주문</div></div>
+      </a>
+      <a class="menu-card" href="pages/shop/seller-products.html">
+        <div class="mc-icon">📦</div>
+        <div><div class="mc-label">상품 등록/관리</div><div class="mc-sub">/shop/seller · 판매자</div></div>
+      </a>
+      <a class="menu-card" href="pages/shop/seller-orders.html">
+        <div class="mc-icon">📬</div>
+        <div><div class="mc-label">주문 접수/관리</div><div class="mc-sub">/shop/seller/orders · 판매자</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============ 1.7 가게 ============ -->
+  <div class="menu-section">
+    <div class="menu-section-title">📍 1.7 가게 (Stores)</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="pages/stores/store-map.html">
+        <div class="mc-icon">🗺️</div>
+        <div><div class="mc-label">가게 지도 조회</div><div class="mc-sub">/stores</div></div>
+      </a>
+      <a class="menu-card" href="pages/stores/store-detail.html">
+        <div class="mc-icon">🏪</div>
+        <div><div class="mc-label">가게 상세</div><div class="mc-sub">/stores/:id</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============ 1.8 마이페이지 ============ -->
+  <div class="menu-section">
+    <div class="menu-section-title">👤 1.8 마이페이지 (MyPage)</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="pages/mypage/profile.html">
+        <div class="mc-icon">👤</div>
+        <div><div class="mc-label">프로필 조회/수정</div><div class="mc-sub">/mypage/profile</div></div>
+      </a>
+      <a class="menu-card" href="pages/mypage/history.html">
+        <div class="mc-icon">📋</div>
+        <div><div class="mc-label">내 등록 이력</div><div class="mc-sub">/mypage/history</div></div>
+      </a>
+      <a class="menu-card" href="pages/mypage/points.html">
+        <div class="mc-icon">🪙</div>
+        <div><div class="mc-label">포인트 내역</div><div class="mc-sub">/mypage/points</div></div>
+      </a>
+      <a class="menu-card" href="pages/mypage/notifications.html">
+        <div class="mc-icon">🔔</div>
+        <div><div class="mc-label">알림 내역</div><div class="mc-sub">/mypage/notifications</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============ 2. 지자체 ============ -->
+  <div class="menu-section">
+    <div class="menu-section-title">📈 2. 지자체 (Gov)</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="pages/gov/gov-dashboard.html">
+        <div class="mc-icon">📊</div>
+        <div><div class="mc-label">관할 수급 대시보드</div><div class="mc-sub">/gov · 대시보드</div></div>
+      </a>
+      <a class="menu-card" href="pages/gov/gov-cultivation.html">
+        <div class="mc-icon">🌿</div>
+        <div><div class="mc-label">재배 의향 현황</div><div class="mc-sub">/gov/analytics · 통계분석</div></div>
+      </a>
+      <a class="menu-card" href="pages/gov/gov-compare.html">
+        <div class="mc-icon">🔄</div>
+        <div><div class="mc-label">인접 지역 비교 분석</div><div class="mc-sub">/gov/analytics · 통계분석</div></div>
+      </a>
+      <a class="menu-card" href="pages/gov/gov-sales.html">
+        <div class="mc-icon">💰</div>
+        <div><div class="mc-label">판매 현황 분석</div><div class="mc-sub">/gov/analytics · 통계분석</div></div>
+      </a>
+      <a class="menu-card" href="pages/gov/gov-download.html">
+        <div class="mc-icon">📥</div>
+        <div><div class="mc-label">수급 데이터 다운로드</div><div class="mc-sub">/gov/data · 데이터</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============ 3. 관리자 ============ -->
+  <div class="menu-section">
+    <div class="menu-section-title">⚙️ 3. 관리자 (Admin)</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="pages/admin/admin-dashboard.html">
+        <div class="mc-icon">📊</div>
+        <div><div class="mc-label">관리자 대시보드</div><div class="mc-sub">/admin</div></div>
+      </a>
+      <a class="menu-card" href="pages/admin/admin-users.html">
+        <div class="mc-icon">👥</div>
+        <div><div class="mc-label">사용자 관리</div><div class="mc-sub">/admin/users</div></div>
+      </a>
+      <a class="menu-card" href="pages/admin/admin-approvals.html">
+        <div class="mc-icon">✅</div>
+        <div><div class="mc-label">농부 승인/반려</div><div class="mc-sub">/admin/approvals</div></div>
+      </a>
+      <a class="menu-card" href="pages/admin/admin-crops.html">
+        <div class="mc-icon">🌾</div>
+        <div><div class="mc-label">작물 마스터 관리</div><div class="mc-sub">/admin/crops</div></div>
+      </a>
+      <a class="menu-card" href="pages/admin/admin-data.html">
+        <div class="mc-icon">🔗</div>
+        <div><div class="mc-label">외부 데이터 연동</div><div class="mc-sub">/admin/data</div></div>
+      </a>
+      <a class="menu-card" href="pages/admin/admin-engine.html">
+        <div class="mc-icon">⚖️</div>
+        <div><div class="mc-label">밸런스 엔진 관리</div><div class="mc-sub">/admin/engine</div></div>
+      </a>
+      <a class="menu-card" href="pages/admin/admin-health.html">
+        <div class="mc-icon">💚</div>
+        <div><div class="mc-label">시스템 헬스</div><div class="mc-sub">/admin/health</div></div>
+      </a>
+      <a class="menu-card" href="pages/admin/admin-community.html">
+        <div class="mc-icon">💬</div>
+        <div><div class="mc-label">커뮤니티 관리</div><div class="mc-sub">/admin/community</div></div>
+      </a>
+      <a class="menu-card" href="pages/admin/admin-shop.html">
+        <div class="mc-icon">🛒</div>
+        <div><div class="mc-label">상점 관리</div><div class="mc-sub">/admin/shop</div></div>
+      </a>
+      <a class="menu-card" href="pages/admin/admin-stores.html">
+        <div class="mc-icon">📍</div>
+        <div><div class="mc-label">가게 정보 관리</div><div class="mc-sub">/admin/stores</div></div>
+      </a>
+      <a class="menu-card" href="pages/admin/admin-coupons.html">
+        <div class="mc-icon">🎫</div>
+        <div><div class="mc-label">쿠폰/보상 관리</div><div class="mc-sub">/admin/coupons</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- 랜딩 -->
+  <div class="menu-section">
+    <div class="menu-section-title">🏠 랜딩</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="pages/landing.html">
+        <div class="mc-icon">🏠</div>
+        <div><div class="mc-label">랜딩페이지 (비회원)</div><div class="mc-sub">/</div></div>
+      </a>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<footer style="text-align:center;padding:32px;font-size:12px;color:#999;">
+  FarmBalance 화면설계 목업 v1.0 · 47 Screens · Desktop 1440px
+</footer>
+
+</body>
+</html>

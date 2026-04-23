@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>시스템 헬스 — FarmBalance</title><link rel="stylesheet" href="../../css/style.css"></head>
+<body>
+<div class="admin-layout">
+<aside class="sidebar"><div class="sidebar-logo"><span>🌿</span> FarmBalance</div><nav>
+  <a href="admin-dashboard.html">📊 대시보드</a><a href="admin-users.html">👥 사용자 관리</a><a href="admin-approvals.html">✅ 농부 승인/반려</a><a href="admin-crops.html">🌾 작물 마스터</a><a href="admin-data.html">🔗 외부 데이터 연동</a><a href="admin-engine.html">⚖️ 밸런스 엔진</a><a href="admin-health.html" class="active">💚 시스템 헬스</a><a href="admin-community.html">💬 커뮤니티 관리</a><a href="admin-shop.html">🛒 상점 관리</a><a href="admin-stores.html">📍 가게 정보 관리</a><a href="admin-coupons.html">🎫 쿠폰/보상 관리</a>
+</nav></aside>
+<main class="admin-main"><div class="page">
+  <h1 class="page-title"><span class="icon">💚</span> 시스템 헬스 <span class="badge badge-phase2">Phase 2</span></h1>
+  <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);">
+    <div class="kpi"><div class="kpi-label">API 서버</div><div class="kpi-value text-green">UP</div></div>
+    <div class="kpi"><div class="kpi-label">DB 상태</div><div class="kpi-value text-green">UP</div></div>
+    <div class="kpi"><div class="kpi-label">KAMIS 연동</div><div class="kpi-value text-green">UP</div></div>
+    <div class="kpi"><div class="kpi-label">응답시간 (avg)</div><div class="kpi-value">42ms</div></div>
+  </div>
+  <div class="card"><h2 class="card-title">서버 응답시간 추이</h2><div class="placeholder" style="height:250px;">📈 라인 차트 — 최근 24시간 응답시간</div></div>
+  <div class="card">
+    <h2 class="card-title">서비스 상태</h2>
+    <table class="tbl"><thead><tr><th>서비스</th><th>상태</th><th>업타임</th><th>최종 확인</th></tr></thead>
+    <tbody>
+      <tr><td>Spring Boot API</td><td><span class="badge badge-green">정상</span></td><td>99.9%</td><td>2초 전</td></tr>
+      <tr><td>PostgreSQL</td><td><span class="badge badge-green">정상</span></td><td>100%</td><td>5초 전</td></tr>
+      <tr><td>Redis Cache</td><td><span class="badge badge-green">정상</span></td><td>99.8%</td><td>3초 전</td></tr>
+      <tr><td>KAMIS API</td><td><span class="badge badge-green">정상</span></td><td>98.5%</td><td>1분 전</td></tr>
+    </tbody></table>
+  </div>
+</div></main>
+</div>
+</body></html>
