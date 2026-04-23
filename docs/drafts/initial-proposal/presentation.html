@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MonoSell — 단 한 명의 셀러를 위한, 단 하나의 완벽한 워크플로우</title>
+  <meta name="description" content="MonoSell: 파편화된 이커머스 업무를 통합하는 All-in-One B2B SaaS 플랫폼">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --white: #ffffff;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --black: #0a0a0a;
+      --accent: #2563eb;
+      --accent-light: #3b82f6;
+      --accent-bg: #eff6ff;
+      --accent-border: #bfdbfe;
+      --red: #dc2626;
+      --red-bg: #fef2f2;
+      --green: #059669;
+      --green-bg: #ecfdf5;
+      --purple: #7c3aed;
+      --purple-bg: #f5f3ff;
+      --orange: #ea580c;
+      --orange-bg: #fff7ed;
+      --font: 'Inter', 'Noto Sans KR', -apple-system, sans-serif;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #f4f6f8; /* 눈이 편안한 소프트 그레이 */
+      color: var(--gray-900);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== SLIDE SYSTEM ===== */
+    .slide-deck { width: 100%; height: 100%; position: relative; }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px 60px 80px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      overflow-y: auto;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ===== TYPOGRAPHY ===== */
+    .slide-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .slide-title {
+      font-size: clamp(34px, 4.5vw, 52px);
+      font-weight: 800;
+      color: var(--black);
+      line-height: 1.2;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .slide-title .highlight {
+      color: var(--accent);
+    }
+
+    .slide-desc {
+      font-size: clamp(18px, 2vw, 22px);
+      font-weight: 400;
+      color: var(--gray-500);
+      line-height: 1.6;
+      margin-bottom: 40px;
+      max-width: 900px;
+    }
+
+    .quote {
+      font-size: clamp(20px, 2.2vw, 26px);
+      font-weight: 500;
+      color: var(--gray-700);
+      padding: 20px 28px;
+      border-left: 4px solid var(--accent);
+      background: var(--accent-bg);
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 40px;
+      max-width: 900px;
+      line-height: 1.6;
+    }
+
+    /* ===== CARDS ===== */
+    .cards { display: grid; gap: 20px; }
+    .cards.c2 { grid-template-columns: repeat(2, 1fr); }
+    .cards.c3 { grid-template-columns: repeat(3, 1fr); }
+
+    .card {
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 36px;
+      background: var(--white);
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: var(--gray-300);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+
+    .card-emoji {
+      font-size: 38px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 10px;
+    }
+
+    .card-body {
+      font-size: 16px;
+      color: var(--gray-500);
+      line-height: 1.6;
+    }
+
+    .card-tag {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .tag-blue { background: var(--accent-bg); color: var(--accent); }
+    .tag-red { background: var(--red-bg); color: var(--red); }
+    .tag-green { background: var(--green-bg); color: var(--green); }
+    .tag-purple { background: var(--purple-bg); color: var(--purple); }
+    .tag-orange { background: var(--orange-bg); color: var(--orange); }
+
+    /* ===== FEATURE CARD (NUMBERED) ===== */
+    .f-num {
+      font-size: 46px;
+      font-weight: 900;
+      color: var(--gray-200);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .f-role {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    /* ===== INFO BAR ===== */
+    .info-bar {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 24px 32px;
+      border-radius: 12px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      margin-top: 36px;
+      max-width: 1000px;
+    }
+
+    .info-bar .ib-icon { font-size: 26px; flex-shrink: 0; margin-top: 2px; }
+
+    .info-bar .ib-text {
+      font-size: 17px;
+      color: var(--gray-600);
+      line-height: 1.65;
+    }
+
+    .info-bar .ib-text strong {
+      color: var(--gray-900);
+      font-weight: 600;
+    }
+
+    /* ===== ARCHITECTURE ===== */
+    .arch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 28px 0;
+      flex-wrap: wrap;
+    }
+
+    .arch-box {
+      flex: 1;
+      padding: 24px 32px;
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      text-align: center;
+      min-width: 160px;
+      background: var(--white);
+      transition: box-shadow 0.2s;
+    }
+
+    .arch-box:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+    .arch-box .ab-label {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: 6px;
+    }
+
+    .arch-box .ab-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .arch-box .ab-sub {
+      font-size: 15px;
+      color: var(--gray-400);
+      margin-top: 4px;
+    }
+
+    .arch-arrow { color: var(--gray-300); font-size: 28px; }
+
+    /* ===== TECH STACK ===== */
+    .tech-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+
+    .tech-table td {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 16px;
+      vertical-align: top;
+    }
+
+    .tech-table td:first-child {
+      width: 160px;
+      font-weight: 700;
+      color: var(--gray-400);
+      font-size: 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding-top: 21px;
+    }
+
+    .tech-table td:last-child {
+      color: var(--gray-700);
+    }
+
+    .tech-table .pill {
+      display: inline-block;
+      padding: 6px 14px;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin: 3px 6px 3px 0;
+      background: var(--gray-50);
+    }
+
+    /* ===== MSA STRIP ===== */
+    .msa-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin: 24px 0;
+    }
+
+    .msa-item {
+      text-align: center;
+      padding: 24px 16px;
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      background: var(--gray-50);
+    }
+
+    .msa-item .mi-emoji { font-size: 36px; margin-bottom: 10px; display: block; }
+    .msa-item .mi-name { font-size: 17px; font-weight: 700; color: var(--gray-800); }
+    .msa-item .mi-who { font-size: 14px; color: var(--gray-400); margin-top: 4px; }
+
+    /* ===== VALUE CARDS ===== */
+    .val-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+    .val-card {
+      text-align: center;
+      padding: 40px 32px;
+      border: 1px solid var(--gray-200);
+      border-radius: 14px;
+      background: var(--white);
+      transition: box-shadow 0.2s;
+    }
+
+    .val-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+
+    .val-card .vc-emoji { font-size: 44px; margin-bottom: 18px; }
+    .val-card .vc-sub {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .val-card .vc-title { font-size: 22px; font-weight: 700; color: var(--gray-900); margin-bottom: 12px; }
+    .val-card .vc-desc { font-size: 16px; color: var(--gray-500); line-height: 1.6; }
+
+    /* ===== COVER ===== */
+    .cover {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 100%;
+    }
+
+    .cover-logo {
+      font-size: clamp(80px, 11vw, 130px);
+      font-weight: 900;
+      color: var(--black);
+      letter-spacing: -3px;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    .cover-logo .dot { color: var(--accent); }
+
+    .cover-sub {
+      font-size: clamp(18px, 2.5vw, 26px);
+      color: var(--gray-500);
+      font-weight: 400;
+      margin-bottom: 56px;
+      letter-spacing: 1px;
+    }
+
+    .cover-chips {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .cover-chip {
+      padding: 14px 24px;
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--gray-600);
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cover-chip .cc-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    /* ===== NAVIGATION ===== */
+    .nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--gray-200);
+      z-index: 100;
+    }
+
+    .nav-dots {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .nav-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--gray-300);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-dot.active {
+      background: var(--accent);
+      width: 22px;
+      border-radius: 4px;
+    }
+
+    .nav-dot:hover { background: var(--gray-400); }
+    .nav-dot.active:hover { background: var(--accent); }
+
+    .nav-page {
+      font-size: 13px;
+      color: var(--gray-400);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .nav-btns { display: flex; gap: 6px; }
+
+    .nav-btn {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--gray-200);
+      background: var(--white);
+      color: var(--gray-600);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .nav-btn:hover {
+      border-color: var(--gray-400);
+      color: var(--gray-900);
+    }
+
+    .nav-btn:active { transform: scale(0.95); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .slide { padding: 40px 28px 90px; }
+      .cards.c3 { grid-template-columns: 1fr; }
+      .cards.c2 { grid-template-columns: 1fr; }
+      .val-grid { grid-template-columns: 1fr; }
+      .msa-strip { grid-template-columns: repeat(3, 1fr); }
+      .arch-row { flex-direction: column; }
+    }
+
+    .slide::-webkit-scrollbar { width: 3px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <div class="slide-deck" id="slideDeck">
+
+    <!-- ========== 1. 표지 ========== -->
+    <section class="slide active" data-slide="0">
+      <div class="cover">
+        <p class="slide-label" style="margin-bottom: 24px;">AI-Powered Commerce Platform</p>
+        <h1 class="cover-logo">MonoSell<span class="dot">.</span></h1>
+        <p class="cover-sub">단 한 명의 셀러를 위한, 단 하나의 완벽한 워크플로우. 모노셀(MonoSell)</p>
+        <div class="cover-chips">
+          <div class="cover-chip"><span class="cc-dot"></span>All-in-One B2B SaaS 플랫폼 구축</div>
+          <div class="cover-chip"><span class="cc-dot"></span>5인의 가상 AI 에이전트 도입</div>
+          <div class="cover-chip"><span class="cc-dot"></span>MSA 아키텍처 기반 풀스택 개발</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 2. 기획 배경 ========== -->
+    <section class="slide" data-slide="1">
+      <p class="slide-label">02 — Problem</p>
+      <h2 class="slide-title">기획 배경 <span class="highlight">(문제 정의)</span></h2>
+      <p class="slide-desc" style="margin-bottom: 20px;"></p>
+      <div class="quote">1인 마켓의 폭발적 성장, 하지만 셀러는 혹사당하고 있습니다.</div>
+      <div class="cards c3">
+        <div class="card">
+          <span class="card-emoji">🔀</span>
+          <h3 class="card-title">업무의 파편화</h3>
+          <p class="card-body">카피라이팅은 ChatGPT, 이미지 편집은 포토룸, 번역은 파파고 등 여러 탭을 오가며 작업해야 하는 비효율성.</p>
+          <span class="card-tag tag-red">피로도 증가</span>
+        </div>
+        <div class="card">
+          <span class="card-emoji">🧠</span>
+          <h3 class="card-title">전문 지식의 부재</h3>
+          <p class="card-body">디자인, 마케팅, 고객 응대(CS), 데이터 분석 등 모든 분야를 혼자 전문가 수준으로 감당하기 불가능.</p>
+          <span class="card-tag tag-orange">역량 한계</span>
+        </div>
+        <div class="card">
+          <span class="card-emoji">💸</span>
+          <h3 class="card-title">외주 비용의 부담</h3>
+          <p class="card-body">프리랜서를 고용하기에는 초기 자본이 부족한 1인 창업가의 현실적 한계.</p>
+          <span class="card-tag tag-purple">자금 부족</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 3. 솔루션 ========== -->
+    <section class="slide" data-slide="2">
+      <p class="slide-label">03 — Solution</p>
+      <h2 class="slide-title"><span class="highlight">MonoSell</span>이 제안하는 솔루션</h2>
+      <p class="slide-desc" style="margin-bottom: 20px;"></p>
+      <div class="quote">클릭 몇 번으로 5명의 AI 전문가를 고용하는 마법</div>
+      <div class="cards c2">
+        <div class="card">
+          <span class="card-emoji">🔗</span>
+          <h3 class="card-title">All-in-One 워크플로우</h3>
+          <p class="card-body">파편화된 툴들을 하나의 매끄러운 플랫폼으로 통합하여 작업 효율을 극대화합니다.</p>
+          <span class="card-tag tag-blue">통합 플랫폼</span>
+        </div>
+        <div class="card">
+          <span class="card-emoji">☁️</span>
+          <h3 class="card-title">B2B SaaS 모델</h3>
+          <p class="card-body">프로그램 설치 없이 웹 브라우저에서 바로 사용하는 구독형 서비스.</p>
+          <span class="card-tag tag-green">Zero Install</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 4. 핵심 기능 1/2 ========== -->
+    <section class="slide" data-slide="3">
+      <p class="slide-label">04 — Core Features (1/2)</p>
+      <h2 class="slide-title">핵심 기능 및 <span class="highlight">AI 적용</span></h2>
+      <p class="slide-desc">기획부터 고객 응대까지, AI 에이전트의 역할</p>
+      <div class="cards c3">
+        <div class="card">
+          <div class="f-num">01</div>
+          <span class="card-emoji">✨</span>
+          <h3 class="card-title">브랜딩 보드</h3>
+          <p class="f-role">AI 카피라이터 & 디자이너</p>
+          <p class="card-body">타겟과 무드 키워드 입력 시 브랜드명, 소개글, 로고 스케치 자동 생성</p>
+          <span class="card-tag tag-blue">Text-to-Image</span>
+        </div>
+        <div class="card">
+          <div class="f-num">02</div>
+          <span class="card-emoji">📸</span>
+          <h3 class="card-title">비주얼 스튜디오</h3>
+          <p class="f-role">AI 썸네일 & 마케터</p>
+          <p class="card-body">상품 사진 업로드 시 해시태그 및 인스타그램용 광고 카피 자동 추출</p>
+          <span class="card-tag tag-purple">Vision AI</span>
+        </div>
+        <div class="card">
+          <div class="f-num">03</div>
+          <span class="card-emoji">🛡️</span>
+          <h3 class="card-title">CS 디펜더</h3>
+          <p class="f-role">AI 고객 관리 비서</p>
+          <p class="card-body">악플 선제적 블라인드 처리 및 고객 의도 맞춤형 자동 답글 제공</p>
+          <span class="card-tag tag-red">Sentiment Analysis</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 5. 핵심 기능 2/2 ========== -->
+    <section class="slide" data-slide="4">
+      <p class="slide-label">05 — Core Features (2/2)</p>
+      <h2 class="slide-title">데이터 분석부터 <span class="highlight">글로벌 진출</span>까지</h2>
+      <p class="slide-desc" style="margin-bottom: 20px;"></p>
+      <div class="cards c2">
+        <div class="card">
+          <div class="f-num">04</div>
+          <span class="card-emoji">📊</span>
+          <h3 class="card-title">데이터 인사이트</h3>
+          <p class="f-role">AI 전략 컨설턴트</p>
+          <p class="card-body">쇼핑몰 매출 데이터와 최신 외부 트렌드를 결합한 판매 전략 및 재고 예측 브리핑</p>
+          <span class="card-tag tag-green">데이터 융합 프롬프팅</span>
+        </div>
+        <div class="card">
+          <div class="f-num">05</div>
+          <span class="card-emoji">🌍</span>
+          <h3 class="card-title">글로벌 로컬라이저</h3>
+          <p class="f-role">AI 현지화 에이전트</p>
+          <p class="card-body">타겟 국가의 문화권(Slang)에 맞춘 상세페이지 번역 및 사이즈/환율 자동 변환</p>
+          <span class="card-tag tag-orange">LLM 문맥 번역</span>
+        </div>
+      </div>
+      <div class="info-bar">
+        <span class="ib-icon">⚡</span>
+        <p class="ib-text">모든 AI 기능은 <strong>Google Gemini 1.5 Flash API</strong>를 기반으로 하며, 백엔드 내 공통 <strong>AiService</strong> 클래스를 통해 API Key 유출을 방지하고 통신을 중앙 통제합니다.</p>
+      </div>
+    </section>
+
+    <!-- ========== 6. 아키텍처 ========== -->
+    <section class="slide" data-slide="5">
+      <p class="slide-label">06 — Architecture</p>
+      <h2 class="slide-title">시스템 아키텍처 및 <span class="highlight">기술 스택</span></h2>
+      <p class="slide-desc">클라우드 네이티브 기반의 비용 최적화(0원) 및 안정성 확보</p>
+
+      <div class="arch-row">
+        <div class="arch-box">
+          <div class="ab-label">Frontend</div>
+          <div class="ab-name">Next.js</div>
+          <div class="ab-sub">웹 클라이언트</div>
+        </div>
+        <span class="arch-arrow">→</span>
+        <div class="arch-box">
+          <div class="ab-label">Backend API</div>
+          <div class="ab-name">Spring Boot</div>
+          <div class="ab-sub">AWS EC2</div>
+        </div>
+        <span class="arch-arrow">→</span>
+        <div class="arch-box">
+          <div class="ab-label">Database</div>
+          <div class="ab-name">PostgreSQL</div>
+          <div class="ab-sub">AWS EC2 (Docker)</div>
+        </div>
+        <span class="arch-arrow">↔</span>
+        <div class="arch-box">
+          <div class="ab-label">AI Gateway</div>
+          <div class="ab-name">Gemini 1.5</div>
+          <div class="ab-sub">Flash API</div>
+        </div>
+      </div>
+
+      <table class="tech-table">
+        <tr>
+          <td>Frontend</td>
+          <td><span class="pill">Next.js</span><span class="pill">직관적 렌더링</span></td>
+        </tr>
+        <tr>
+          <td>Backend API</td>
+          <td><span class="pill">Java</span><span class="pill">Spring Boot</span><span class="pill">AWS EC2</span></td>
+        </tr>
+        <tr>
+          <td>Database</td>
+          <td><span class="pill">PostgreSQL</span><span class="pill">Docker</span><span class="pill">AWS EC2 내부</span></td>
+        </tr>
+        <tr>
+          <td>AI / API</td>
+          <td><span class="pill">Gemini 1.5 Flash</span><span class="pill">AiService 중앙 통제</span></td>
+        </tr>
+      </table>
+    </section>
+
+    <!-- ========== 7. 팀 협업 전략 ========== -->
+    <section class="slide" data-slide="6">
+      <p class="slide-label">07 — Team Strategy</p>
+      <h2 class="slide-title">팀 협업 전략 <span class="highlight">(MSA 기반 분업)</span></h2>
+      <p class="slide-desc" style="margin-bottom: 16px;"></p>
+      <div class="quote">팀원 전원이 풀스택 개발자와 AI 엔지니어로 거듭나는 구조</div>
+
+      <div class="msa-strip">
+        <div class="msa-item">
+          <span class="mi-emoji">✨</span>
+          <div class="mi-name">브랜딩 보드</div>
+          <div class="mi-who">팀원 A</div>
+        </div>
+        <div class="msa-item">
+          <span class="mi-emoji">📸</span>
+          <div class="mi-name">비주얼 스튜디오</div>
+          <div class="mi-who">팀원 B</div>
+        </div>
+        <div class="msa-item">
+          <span class="mi-emoji">🛡️</span>
+          <div class="mi-name">CS 디펜더</div>
+          <div class="mi-who">팀원 C</div>
+        </div>
+        <div class="msa-item">
+          <span class="mi-emoji">📊</span>
+          <div class="mi-name">데이터 인사이트</div>
+          <div class="mi-who">팀원 D</div>
+        </div>
+        <div class="msa-item">
+          <span class="mi-emoji">🌍</span>
+          <div class="mi-name">글로벌 로컬라이저</div>
+          <div class="mi-who">팀원 E</div>
+        </div>
+      </div>
+
+      <div class="cards c3">
+        <div class="card">
+          <span class="card-emoji">🧩</span>
+          <h3 class="card-title">철저한 도메인 분리</h3>
+          <p class="card-body">각 팀원이 1개의 탭(기능)을 전담하여 프론트엔드 UI, DB 테이블, 백엔드 API, AI 프롬프트까지 100% 독립 개발.</p>
+        </div>
+        <div class="card">
+          <span class="card-emoji">🚫</span>
+          <h3 class="card-title">코드 충돌 원천 차단</h3>
+          <p class="card-body">DB 연관 관계(FK) 최소화 및 기능별 브랜치 분리로 1개월 단기 쾌속 개발(Agile) 달성.</p>
+        </div>
+        <div class="card">
+          <span class="card-emoji">🎯</span>
+          <h3 class="card-title">공통 UI/UX 적용</h3>
+          <p class="card-body">디자인 템플릿(버튼, 모달)과 API 게이트웨이만 공통으로 사용하여 하나의 서비스처럼 매끄럽게 통합.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 8. 사업성 ========== -->
+    <section class="slide" data-slide="7">
+      <p class="slide-label">08 — Business Value</p>
+      <h2 class="slide-title">사업성 및 <span class="highlight">기대 효과</span></h2>
+      <p class="slide-desc">단순한 포트폴리오를 넘어선 실전 비즈니스 가치</p>
+
+      <div class="val-grid">
+        <div class="val-card">
+          <div class="vc-emoji">🎯</div>
+          <div class="vc-sub">Market Fit</div>
+          <h3 class="vc-title">시장성</h3>
+          <p class="vc-desc">폭발적으로 증가하는 1인 비즈니스(크리에이터, 독립 셀러) 시장의 핵심 페인 포인트 정조준.</p>
+        </div>
+        <div class="val-card">
+          <div class="vc-emoji">🚀</div>
+          <div class="vc-sub">Scalability</div>
+          <h3 class="vc-title">확장성</h3>
+          <p class="vc-desc">독립적인 MSA 구조로 세무 자동화, 재고 관리 등 새로운 AI 탭을 무한히 확장 가능.</p>
+        </div>
+        <div class="val-card">
+          <div class="vc-emoji">💎</div>
+          <div class="vc-sub">Proof of Skills</div>
+          <h3 class="vc-title">개발자로서의 증명</h3>
+          <p class="vc-desc">외부 API 연동, DB 무결성, 클라우드 배포, 실무적인 LLM 제어 능력까지 완벽하게 입증.</p>
+        </div>
+      </div>
+
+      <div class="info-bar" style="margin-top: 32px;">
+        <span class="ib-icon">✦</span>
+        <p class="ib-text"><strong>MonoSell</strong>은 단순한 학습용 프로젝트를 넘어, 실제 시장에서 통하는 <strong>AI 기반 B2B SaaS</strong>의 가능성을 증명합니다.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-dots" id="navDots"></div>
+    <div class="nav-page" id="navPage">1 / 8</div>
+    <div class="nav-btns">
+      <button class="nav-btn" onclick="go(-1)" aria-label="이전">←</button>
+      <button class="nav-btn" onclick="go(1)" aria-label="다음">→</button>
+    </div>
+  </nav>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const total = slides.length;
+    let cur = 0;
+    let busy = false;
+
+    // Build dots
+    const dotsEl = document.getElementById('navDots');
+    for (let i = 0; i < total; i++) {
+      const d = document.createElement('div');
+      d.className = 'nav-dot' + (i === 0 ? ' active' : '');
+      d.onclick = () => jump(i);
+      dotsEl.appendChild(d);
+    }
+
+    function updateUI() {
+      document.getElementById('navPage').textContent = `${cur + 1} / ${total}`;
+      document.querySelectorAll('.nav-dot').forEach((d, i) => d.classList.toggle('active', i === cur));
+    }
+
+    function jump(to) {
+      if (busy || to === cur || to < 0 || to >= total) return;
+      busy = true;
+      slides[cur].classList.remove('active');
+      slides[to].classList.add('active');
+      cur = to;
+      updateUI();
+      setTimeout(() => busy = false, 350);
+    }
+
+    function go(dir) { jump(cur + dir); }
+
+    document.addEventListener('keydown', e => {
+      if (['ArrowRight','ArrowDown',' '].includes(e.key)) { e.preventDefault(); go(1); }
+      else if (['ArrowLeft','ArrowUp'].includes(e.key)) { e.preventDefault(); go(-1); }
+      else if (e.key === 'Home') { e.preventDefault(); jump(0); }
+      else if (e.key === 'End') { e.preventDefault(); jump(total - 1); }
+    });
+
+    let tx = 0, ty = 0;
+    document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; });
+    document.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - tx;
+      const dy = e.changedTouches[0].clientY - ty;
+      if (Math.abs(dx) > Math.abs(dy)) { if (dx < -50) go(1); else if (dx > 50) go(-1); }
+      else { if (dy < -50) go(1); else if (dy > 50) go(-1); }
+    });
+  </script>
+</body>
+</html>

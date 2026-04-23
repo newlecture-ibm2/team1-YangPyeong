@@ -1,0 +1,37 @@
+# ===== Backend (Spring Boot / Gradle) =====
+backend/.gradle/
+backend/build/
+backend/out/
+backend/bin/
+
+# ===== Frontend (Next.js / Node) =====
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env
+frontend/.env.local
+
+# ===== AI (Python / FastAPI) =====
+ai/.venv/
+ai/__pycache__/
+ai/app/__pycache__/
+ai/**/__pycache__/
+ai/.env
+ai/data/chroma/
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Env =====
+.env
+.env.local
+.env.*.local
