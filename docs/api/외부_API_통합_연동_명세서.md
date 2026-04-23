@@ -1,104 +1,304 @@
-# 🌐 외부 API 통합 연동 명세서 (Total Specification)
+# 🌐 외부 API 통합 연동 기능명세서
 
+> **문서 ID:** EXT-TOTAL-001  
 > **작성일:** 2026-04-23  
-> **버전:** v1.1 (AI 서비스 2종 추가 통합)  
-> **관리 범위:** 기상청, 흙토람, 카카오맵, 농사로, KOSIS, Google Gemini, AWS Bedrock
+> **버전:** v2.0 (데이터 API 5종 + AI 서비스 2종 최종 통합)  
+> **기술 표준:** `지윤02_기능명세서.md` §0 준수  
+> **관련 ERD:** `balance_data`, `crops`, `farms`, `crop_plans`, `recommendation_history`
 
 ---
 
-## 1. 개요 (Overview)
+## 1. 개요
 
-FarmBalance 시스템은 5종의 데이터 수집 API와 **2종의 클라우드 AI 서비스(Gemini, Bedrock)**를 유기적으로 결합하여 농민에게 **지능형 수급 분석**과 **전문 영농 상담**을 제공한다. 본 문서는 시스템 전체의 데이터 파이프라인과 기술 표준을 정의한다.
+FarmBalance 시스템은 **5종의 데이터 수집 API**와 **2종의 클라우드 AI 서비스**를 유기적으로 결합한다.  
+유저의 주소 입력 한 번으로 날씨·토양·재배법·통계 데이터를 자동 수집하고, AI가 이를 해석하여 **개인화된 영농 리포트**를 완성한다.
 
-### 1.1 개별 명세서 바로가기 (API Specs)
+본 문서는 개별 API 명세서 7종을 관통하는 **시스템 수준의 통합 설계**를 정의한다.
 
-| 분류 | 명세서 명 | 핵심 역할 |
-| :--- | :--- | :--- |
-| **위치/기반** | [🗺️ 카카오맵 위치 명세서](file:///docs/api/API_카카오맵_위치서비스_명세서.md) | 주소 기반 좌표 및 법정동 코드 획득 |
-| **환경/날씨** | [🌦️ 기상청 통합 명세서](file:///docs/api/API_기상청_통합_연동_명세서.md) | 실시간 예보 및 10년 과거 기후 기록 |
-| **토양/분석** | [🧪 흙토람 토양 명세서](file:///docs/api/API_흙토람_토양정보_명세서.md) | 필지별 토양 7종 화학 성분 분석 |
-| **재배/통계** | [📖 농사로 재배기술 명세서](file:///docs/api/API_농사로_재배기술_명세서.md) | HTML 재배 가이드 및 병해충 정보 |
-| **수급/통계** | [📊 KOSIS 생산량통계 명세서](file:///docs/api/API_KOSIS_생산량통계_명세서.md) | 연도별 생산량 추이 및 주산지 분석 |
-| **지능/AI (눈)** | [🤖 Google Gemini AI 명세서](file:///docs/api/API_Google_Gemini_AI_명세서.md) | 이미지 기반 병해충 진단 및 일반 상담 |
-| **지능/AI (머리)** | [🔗 AWS Bedrock AI 명세서](file:///docs/api/API_AWS_Bedrock_AI_명세서.md) | 내부 문서 기반 RAG 상담 및 자동화 에이전트 |
+### 1.1 개별 명세서 목록
+
+| 문서 ID | 명세서 | 핵심 역할 |
+| :---: | :--- | :--- |
+| EXT-MAP-001 | [🗺️ 카카오맵 위치서비스](./API_카카오맵_위치서비스_명세서.md) | 좌표·법정동 코드 획득 — **모든 연동의 시작점** |
+| EXT-WEATHER-001 | [🌦️ 기상청 통합 연동](./API_기상청_통합_연동_명세서.md) | 실시간 예보 + 10년 ASOS 기후 통계 |
+| EXT-SOIL-001 | [🧪 흙토람 토양정보](./API_흙토람_토양정보_명세서.md) | PNU 기반 토양 7종 화학 성분 분석 |
+| EXT-FARM-001 | [📖 농사로 재배기술](./API_농사로_재배기술_명세서.md) | HTML 재배 가이드 + 병해충 사진 DB |
+| EXT-STAT-001 | [📊 KOSIS 생산량통계](./API_KOSIS_생산량통계_명세서.md) | 10년 연도별·지역별 생산량 공식 통계 |
+| EXT-AI-001 | [🤖 Google Gemini AI](./API_Google_Gemini_AI_명세서.md) | 이미지 병해충 진단, 추천 사유 생성, 데이터 요약 |
+| EXT-AI-002 | [🔗 AWS Bedrock AI](./API_AWS_Bedrock_AI_명세서.md) | 내부 문서 RAG 상담, 업무 자동화 Agent |
 
 ---
 
-## 2. 통합 데이터 파이프라인 (Data Pipeline)
+## 2. 통합 데이터 파이프라인
 
-유저의 행동 하나가 여러 API의 연쇄 반응을 일으키며 최종 지능형 서비스를 완성한다.
+### 2.1 실시간 파이프라인 (유저 행동 트리거)
 
-```mermaid
-graph TD
-    User([유저 행동]) -->|주소/사진 입력| Kakao[<b>카카오맵 API</b><br/>좌표/법정동/PNU]
-    
-    subgraph "데이터 수집 계층 (Raw Data)"
-    Kakao -->|격자변환| Weather[<b>기상청 API</b><br/>실시간/과거 기후]
-    Kakao -->|PNU변환| Soil[<b>흙토람 API</b><br/>토양 성분]
-    KOSIS[<b>KOSIS API</b><br/>생산량 통계]
-    Nongsaro[<b>농사로 API</b><br/>재배 가이드 HTML]
-    end
-    
-    subgraph "지능 계층 (Intelligence Layer)"
-    Weather & Soil & KOSIS -->|수치 데이터| Gemini[<b>Google Gemini</b><br/>해석/추천 사유 생성]
-    Nongsaro -->|HTML 원문| Gemini
-    User -->|작물 사진| Gemini[<b>Google Gemini</b><br/>사진 기반 병해충 진단]
-    
-    User -->|전문 질문| Bedrock[<b>AWS Bedrock</b><br/>PDF/논문 기반 RAG 상담]
-    Bedrock -->|Agent 기능| DB[(시스템 DB/일정 변경)]
-    end
-    
-    Gemini & Bedrock --> Result([개인화된 영농 리포트 및 상담])
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  [유저] 농장 주소 입력: "경기도 양평군 양서면 복포리 123-4"        │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │
+                             ▼
+              ┌──────────────────────────────┐
+              │  ① 카카오맵 API (EXT-MAP)     │
+              │  주소 → 위경도(x, y)          │
+              │  주소 → 법정동코드 + 번지      │
+              └──────┬───────────────┬────────┘
+                     │               │
+          ┌──────────▼──────┐  ┌─────▼──────────────────┐
+          │  ② 기상청 API    │  │  ③ 흙토람 API           │
+          │  (EXT-WEATHER)  │  │  (EXT-SOIL)            │
+          │                 │  │                        │
+          │  (x,y)          │  │  법정동 + 번지           │
+          │  → GridConvert  │  │  → PnuCodeGenerator    │
+          │  → (nx=63,ny=89)│  │  → PNU 코드 조립        │
+          │  → 실시간 예보   │  │  → 토양 7종 성분 조회   │
+          └────────┬────────┘  └──────────┬─────────────┘
+                   │                      │
+                   │  기상 적합도 (12.5%)   │  토양 적합도 (12.5%)
+                   │                      │
+                   └──────────┬───────────┘
+                              │
+                              ▼
+              ┌──────────────────────────────┐
+              │  ④ AI 추천 엔진 (FRM-002)     │
+              │                              │
+              │  환경 적합도 (25%)             │
+              │  = 기상(12.5%) + 토양(12.5%)  │
+              │                              │
+              │  + 수급 적합도 (35%)           │ ← KOSIS 데이터
+              │  + 수익성 (25%)               │ ← KAMIS 데이터
+              │  + 농가 역량 (15%)            │ ← 내부 DB
+              │  = 종합 점수 (0~100)          │
+              │                              │
+              │  ⑤ Gemini: 추천 사유 생성     │
+              │  "양평군에서 고추 공급이       │
+              │   부족하여 재배를 권장합니다"   │
+              └──────────────────────────────┘
+```
+
+### 2.2 배치 파이프라인 (스케줄러 트리거)
+
+| 배치 | 스케줄 | 수집 대상 | 저장소 | 활용처 |
+| :--- | :--- | :--- | :---: | :--- |
+| `ClimateHistoryBatchJob` | 매일 03:00 | 기상청 ASOS 10년 기후 통계 | PostgreSQL | 기상 적합도 보정 (평년값) |
+| `ProductionStatsBatchJob` | 매년 3월 1일 | KOSIS 10년 생산량 통계 | PostgreSQL | 수급 밸런스 기초 데이터 |
+| `NongsaroPrefetchJob` | 주 1회 (월 06:00) | 농사로 주요 작물 TOP 20 가이드 | Redis + 로컬 | 재배 가이드 사전 캐싱 |
+
+### 2.3 AI 지능 파이프라인
+
+| 트리거 | AI 서비스 | 입력 | 출력 |
+| :--- | :--- | :--- | :--- |
+| 추천 요청 (FRM-002) | **Gemini** | 4항목 점수 데이터 | 추천 사유 문장 3개 |
+| 사진 업로드 (FRM-003) | **Gemini** | 작물 사진 (Base64) | 병명 + 방제법 |
+| 정책 질문 (GOV-002) | **Bedrock RAG** | 유저 질문 + S3 PDF | 문서 인용 답변 |
+| 업무 명령 (ADM-001) | **Bedrock Agent** | "비료 주문 미뤄줘" | Lambda 실행 → 결과 |
+
+---
+
+## 3. AI 추천 점수와 외부 API 매핑
+
+`수경02_기능명세서` FR-FM-002에 정의된 추천 점수 4항목이 어떤 외부 API 데이터를 소비하는지 정리한다.
+
+```
+종합 점수 = (수급 × 0.35) + (환경 × 0.25) + (수익성 × 0.25) + (역량 × 0.15)
+```
+
+| 점수 항목 (가중치) | 참조 외부 API | 참조 데이터 | ERD 테이블 |
+| :--- | :--- | :--- | :--- |
+| **수급 적합도** (35%) | KOSIS | 10년 생산량 추이 → 외부 공급 추정 | `balance_data.supply_ratio` |
+| **환경 적합도** (25%) | 기상청 + 흙토람 | 기온·강수 + pH·유기물·인산 | `crops.climate_conditions` |
+| **수익성** (25%) | KAMIS (※별도 명세 필요) | 최근 3년 평균 시장 가격 | — |
+| **농가 역량** (15%) | 내부 DB 전용 | 재배 이력, 보유 시설 | `farms`, `crop_plans` |
+| **추천 사유 문장** | Gemini | 위 점수 + 작물 정보 → 자연어 변환 | `recommendation_history` |
+
+---
+
+## 4. 환경변수 및 API Key 총괄
+
+모든 키는 `.env` 파일에서 관리하며, 코드 직접 기입을 **절대 금지**한다.
+
+| 환경변수명 | API | 사용 위치 | 노출 |
+| :--- | :--- | :---: | :---: |
+| `NEXT_PUBLIC_KAKAO_MAP_KEY` | 카카오맵 JS SDK | 프론트엔드 | ⚠️ 도메인 제한 보호 |
+| `KAKAO_REST_API_KEY` | 카카오 REST API | 백엔드 Infra | ❌ 서버 전용 |
+| `KMA_API_KEY` | 기상청 단기예보/ASOS | 백엔드 Infra | ❌ 서버 전용 |
+| `SOIL_API_KEY` | 흙토람 토양정보 | 백엔드 Infra | ❌ 서버 전용 |
+| `NONGSARO_API_KEY` | 농사로 재배기술 | 백엔드 Infra | ❌ 서버 전용 |
+| `KOSIS_API_KEY` | KOSIS 생산량통계 | 백엔드 Infra | ❌ 서버 전용 |
+| `GEMINI_API_KEY` | Google Gemini AI | 백엔드 Infra | ❌ 서버 전용 |
+| `AWS_ACCESS_KEY_ID` | AWS Bedrock (로컬) | 백엔드 Infra | ❌ 배포 시 IAM Role 전환 |
+| `AWS_SECRET_ACCESS_KEY` | AWS Bedrock (로컬) | 백엔드 Infra | ❌ 배포 시 IAM Role 전환 |
+| `AWS_REGION` | AWS 리전 | 백엔드 Infra | `ap-northeast-2` |
+| `BEDROCK_KB_ID` | Bedrock Knowledge Base | 백엔드 Infra | ❌ 서버 전용 |
+
+### 호출 경로 원칙
+
+```
+카카오맵 JS SDK만 유일하게 브라우저 직접 로드 (도메인 제한 보호)
+
+그 외 모든 API:
+  브라우저 → Next.js BFF → Spring Boot Infra → 외부 API
+  (httpOnly 쿠키 ↔ JWT)   (API Key 보관)
+
+  → 브라우저에서 REST Key 절대 노출 안 됨
 ```
 
 ---
 
-## 3. 외부 API 연동 매트릭스 (API Matrix)
+## 5. 캐싱 전략 총괄
 
-| 서비스명 | 데이터 성격 | 호출 방식 | 캐싱 (Redis) | 보안 방식 | 핵심 활용처 |
-| :--- | :--- | :--- | :---: | :---: | :--- |
-| **카카오맵** | 위치 정보 | SDK/REST | 7일 | 도메인 제한 | 모든 기반 좌표계 |
-| **기상청** | 수치 (날씨) | REST | 3시간 | API Key | 실시간 영농 알림 |
-| **흙토람** | 수치 (토종) | REST | 24시간 | API Key | 토양 적합도 산출 |
-| **농사로** | 텍스트 (재배) | REST | 7일 | API Key | 재배 기술 가이드 |
-| **KOSIS** | 수치 (통계) | Batch | DB 저장 | API Key | 수강 밸런스 엔진 |
-| **Google Gemini**| 지능 (AI) | REST | 1시간 | API Key | 사진 진단/요약/추천 |
-| **AWS Bedrock** | 지능 (RAG) | SDK (IAM) | 24시간 | **IAM Role** | 내부 문서 상담/자동화|
-
----
-
-## 4. 통합 기술 및 보안 표준
-
-### 4.1 에러 처리 및 Fallback 전략
-*   **AI 다운 시:** Gemini/Bedrock 장애 시 미리 정의된 **템플릿 기반 문장 자동 조합**으로 Fallback 한다.
-*   **수치 API 다운 시:** 기상/토양 데이터 수집 실패 시 **AI가 '평년값'을 기준으로 답변**하도록 프롬프트를 조정한다.
-
-### 4.2 보안 및 API 인증 체계
-*   **이원화 체계:** 
-    - **REST 방식:** Gemini, 기상청 등은 `.env`의 API Key를 Spring Boot Infra 계층에서 사용.
-    - **인프라 방식:** Bedrock은 API Key 없이 **IAM Role(권한)**을 서버에 부여하여 인증 (가장 안전).
-*   **BFF(Backend For Frontend):** 모든 외부 API 호출은 Next.js BFF를 거쳐 서버에서 수행하여 클라이언트 측 Key 노출을 원천 차단한다.
-
-### 4.3 AI 할루시네이션(환각) 방지 공통 수칙
-*   모든 AI 답변 화면에 **"AI 답변은 참고용이며 전문가 상담이 필요합니다"**라는 면책 문구를 필수 노출한다 (EXT-AI-001/002 준수).
-*   출처가 명확한 RAG 답변(Bedrock)은 **참조 문서명과 페이지**를 반드시 표기한다.
+| API | 캐시 대상 | 저장소 | TTL | 사유 |
+| :--- | :--- | :---: | :---: | :--- |
+| **카카오맵** | 주소→좌표 변환 | Redis | 7일 | 주소-좌표 매핑 불변 |
+| **카카오맵** | 키워드 검색 결과 | Redis | 1시간 | 가게 정보 변동 가능 |
+| **기상청** | 단기예보 데이터 | Redis | 3시간 | 3시간 단위 발표 |
+| **기상청** | ASOS 10년 통계 | PostgreSQL | 일일 배치 | 장기 보관용 |
+| **흙토람** | 토양 성분 데이터 | Redis | 24시간 | 토양 단기 불변 |
+| **농사로** | 재배 가이드 HTML | Redis | 7일 | 내용 변동 적음 |
+| **농사로** | 작물 이미지 | 로컬 스토리지 | 30일 | 서버 지연 대비 |
+| **KOSIS** | 10년 생산량 통계 | PostgreSQL | 연 1회 배치 | 연 1회만 발표 |
+| **Gemini** | 추천 근거 응답 | Redis | 1시간 | 동일 점수대 재활용 |
+| **Bedrock** | RAG 상담 응답 | Redis | 24시간 | 보조금 FAQ 반복 절감 |
 
 ---
 
-## 5. 단계별 구현 로드맵 (Roadmap)
+## 6. 에러 처리 통합 전략
 
-| 단계 | 구현 대상 | 핵심 과제 | 가시적 효과 |
+### 6.1 공통 에러 래핑
+
+```java
+public class ExternalApiException extends RuntimeException {
+    private final String apiName;       // "WEATHER", "SOIL", "GEMINI" 등
+    private final String errorCode;     // "API_CONNECTION_FAIL"
+    private final String correlationId; // X-Correlation-Id
+}
+```
+
+### 6.2 API별 Fallback 체인
+
+| 장애 API | 1차 Fallback | 2차 Fallback | 최종 Fallback |
+| :--- | :--- | :--- | :--- |
+| **기상청** | Redis 최종 캐시 | ASOS 평년 통계 (DB) | 기상 점수 50점 (중립) |
+| **흙토람** | Redis 최종 캐시 | 읍면리 평균 토양 | 토양 점수 50점 (중립) |
+| **카카오맵** | Redis 최종 캐시 | 주소 직접 입력 폼 전환 | — |
+| **농사로** | Redis 최종 캐시 | `crops` 기본 정보 | "가이드 일시 불가" 안내 |
+| **KOSIS** | DB 이전 배치 | 전년도 + 추세 예측 | 수급 점수 미반영 안내 |
+| **Gemini** | 템플릿 문장 자동 조합 | 농사로 원문 그대로 표시 | "AI 일시 장애" 안내 |
+| **Bedrock** | **Gemini로 자동 전환** | RAG 없이 일반 응답 | "문서 참조 불가" 안내 |
+
+> 📌 **핵심 원칙:** 외부 API 1~2개가 다운되어도 **시스템 전체가 중단되지 않는다**.
+
+### 6.3 통합 Retry 정책
+
+| 항목 | 데이터 API | AI API |
+| :--- | :--- | :--- |
+| 최대 재시도 | 3회 | 2회 |
+| 대기 전략 | Exponential Backoff | Fixed Delay 1초 |
+| 대기 시간 | 1초 → 2초 → 4초 | 1초 → 1초 |
+| 타임아웃 | 5초 (KOSIS 10초) | 10초 (Agent 30초) |
+| Circuit Breaker | 3회 연속 실패 → 30초 차단 | 5회 연속 실패 → 60초 차단 |
+
+---
+
+## 7. 보안 체계
+
+### 7.1 인증 이원화
+
+| 방식 | 대상 API | 특징 |
+| :--- | :--- | :--- |
+| **API Key (REST)** | 기상청, 흙토람, 농사로, KOSIS, Gemini | `.env` 관리, BFF 경유 |
+| **IAM Role (AWS)** | Bedrock | API Key 없음, 서버에 역할 부여 (가장 안전) |
+| **도메인 제한** | 카카오맵 JS SDK | 등록한 도메인에서만 동작 |
+
+### 7.2 AI 할루시네이션 방지 공통 수칙
+
+| 요소 | Gemini | Bedrock |
+| :--- | :--- | :--- |
+| 면책 문구 | ⚠️ 모든 응답 하단 필수 | ⚠️ 모든 응답 하단 필수 |
+| 출처 표기 | "Powered by Google Gemini" | **문서명 + 페이지** 자동 인용 |
+| 확신도 뱃지 | 🟢높음 / 🟡중간 / 🔴낮음 | RAG 검색 점수 기반 |
+| 피드백 수집 | 👍 / 👎 버튼 | 👍 / 👎 버튼 |
+| 개인정보 | `PersonalInfoMasker`로 마스킹 후 전송 | ✅ 데이터 학습 불가 (기업 보안) |
+
+---
+
+## 8. 통합 패키지 구조
+
+```
+backend/src/main/java/com/farmbalance/infra/external/
+│
+├── common/
+│   ├── ExternalApiException.java         # 공통 예외
+│   ├── ExternalApiRetryPolicy.java       # 공통 Retry/CircuitBreaker
+│   └── ExternalApiCacheManager.java      # 공통 Redis 캐시 매니저
+│
+├── kakao/                                # 카카오맵 (위치 허브)
+├── weather/                              # 기상청 (실시간 + ASOS 배치)
+├── soil/                                 # 흙토람 (PNU + 토양)
+├── nongsaro/                             # 농사로 (2-Step + HTML 정제)
+├── kosis/                                # KOSIS (연 1회 배치 + 매핑)
+│
+├── ai/                                   # Google Gemini
+│   ├── GeminiApiClient.java
+│   ├── PromptTemplateManager.java
+│   ├── ImageBase64Converter.java
+│   ├── PersonalInfoMasker.java
+│   └── GeminiResponseParser.java
+│
+└── aws/                                  # AWS Bedrock
+    ├── config/AwsBedrockConfig.java
+    └── bedrock/
+        ├── BedrockInferenceClient.java
+        ├── BedrockKnowledgeBaseClient.java
+        ├── BedrockAgentClient.java
+        └── BedrockResponseParser.java
+```
+
+---
+
+## 9. 구현 로드맵
+
+| 단계 | 구현 대상 | 핵심 과제 | 선행 조건 |
 | :---: | :--- | :--- | :--- |
-| **1단계** | 카카오 + 기상청 | 주소 기반 좌표 획득 및 실시간 날씨 연동 | 우리 동네 날씨 알림 가능 |
-| **2단계** | 흙토람 + KOSIS | 토양 적합도 및 생산량 데이터 DB 적재 | 수급 밸런스 차트 구현 |
-| **3단계** | **Gemini AI** | 수치 데이터 → 자연어 추천 사유 생성 및 사진 진단 | 지능형 작물 추천 서비스 |
-| **4단계** | **Bedrock AI** | 농업 매뉴얼 PDF 기반 RAG 및 업무자동화 에이전트 | 전문 지식 상담사 도입 |
-| **5단계** | 고도화 | API 간 Fallback 로직 및 전사 알림 파이프라인 결합 | 시스템 안정성 확보 |
+| **Phase 1** | 카카오맵 + 기상청 | 좌표 획득 → 격자 변환 → 실시간 예보 | 카카오 앱 등록, 도메인 설정 |
+| **Phase 2** | 흙토람 | PNU 조립 → 토양 성분 → 판정 | Phase 1의 법정동 코드 |
+| **Phase 3** | KOSIS 배치 | 10년 통계 적재 → `balance_data` 보정 | 작물-코드 매핑 테이블 |
+| **Phase 4** | Gemini AI | 추천 사유 생성 + 이미지 진단 + 요약 | Phase 1~3 데이터 준비 |
+| **Phase 5** | Bedrock AI | S3 PDF → Knowledge Base → RAG 상담 | AWS 모델 액세스 승인 |
+| **Phase 6** | 농사로 + 고도화 | HTML 정제 + Fallback + Circuit Breaker | 전체 API 안정화 후 |
 
 ---
 
-## 6. 결론 및 주의사항
+## 10. ERD 변경 제안 종합
 
-1.  **AI 비용 관리:** Gemini는 Free Tier 내에서, Bedrock은 호출 최적화를 통해 비용 발생을 최소화한다.
-2.  **데이터 소스 표기:** 각 API 데이터가 노출되는 화면하단에는 법정 출처(기상청, 흙토람, 농진청, 통계청, Google, Amazon)를 반드시 명시한다.
-3.  **개인정보보호:** AI에 데이터를 전달하기 전 반드시 유저의 이름, 전화번호 등 민감 정보는 마스킹 처리한다.
+| 대상 테이블 | 변경 내용 | 사유 | 출처 |
+| :--- | :--- | :--- | :---: |
+| `farms` | `lat` DECIMAL, `lng` DECIMAL 추가 | 농장 좌표 저장 | EXT-MAP-001 |
+| `crops` | `climate_conditions` JSONB에 `soil` 추가 | 토양 적합도 매칭 | EXT-SOIL-001 |
+| `crops` | `kosis_org_id`, `kosis_tbl_id`, `kosis_obj_code` 추가 | KOSIS 통계코드 매핑 | EXT-STAT-001 |
+| 신규 | `climate_history` 테이블 | ASOS 10년 기후 이력 | EXT-WEATHER-001 |
+| 신규 | `crop_production_stats` 테이블 | KOSIS 생산량 이력 | EXT-STAT-001 |
+
+> ⚠️ 위 변경 사항은 팀 ERD 확정 회의에서 논의 후 반영한다.
+
+---
+
+## 11. 법적 준수 사항
+
+| 데이터 | 화면 하단 표기 문구 |
+| :--- | :--- |
+| 기상청 예보 | "출처: 기상청" |
+| 흙토람 토양 | "출처: 농촌진흥청 흙토람" |
+| 농사로 재배 정보 | "출처: 농촌진흥청 농사로" |
+| KOSIS 통계 | "출처: 통계청 KOSIS" |
+| 카카오맵 지도 | 카카오맵 SDK 자체 워터마크 (자동) |
+| Gemini AI 답변 | "Powered by Google Gemini" + 면책 문구 |
+| Bedrock AI 답변 | "Powered by Amazon Bedrock" + 출처 인용 + 면책 문구 |
+
+---
+
+> 📌 **다음 단계:**  
+> ① KAMIS(농산물 가격) API 명세서 작성 (EXT-PRICE-001) — 수익성 점수(25%) 핵심 데이터  
+> ② ERD 변경 사항 팀 회의 상정  
+> ③ Phase 1 구현 시작: 카카오맵 앱 등록 + `GridCoordinateConverter` 단위 테스트
