@@ -1,0 +1,25 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy with Docker Compose
+        run: |
+          cd /home/farm/dist/team1-YangPyeong
+          git pull origin dev
+          docker compose down
+          docker compose up --build -d
+
+      - name: Health check
+        run: |
+          sleep 10
+          docker compose -f /home/farm/dist/team1-YangPyeong/docker-compose.yml ps
