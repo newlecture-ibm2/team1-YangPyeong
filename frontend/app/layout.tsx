@@ -1,17 +1,17 @@
-import React from 'react'
-import './globals.css'
 import type { Metadata } from 'next'
+import { ReactNode } from 'react'
+import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Farm Balance',
   description: 'Farm management system',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+interface RootLayoutProps {
+  children: ReactNode
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="ko">
       <body>{children}</body>
