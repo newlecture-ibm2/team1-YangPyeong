@@ -78,7 +78,7 @@ com.farmbalance.{도메인}/
 | shop | `com.farmbalance.shop` | 상점 |
 | community | `com.farmbalance.community` | 게시판 |
 | policy | `com.farmbalance.policy` | `adapter/out/external/` 포함 (AI API 호출) |
-| store | `com.farmbalance.store` | 가게 정보 |
+| store | `com.farmbalance.store` | 가게 정보 (DB 엔티티 없음, Kakao 연동) |
 | admin | `com.farmbalance.admin` | 관리 기능 |
 
 ### 2.5 API 설계 규칙

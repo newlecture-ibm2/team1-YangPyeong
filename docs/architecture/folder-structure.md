@@ -111,7 +111,7 @@ backend/
 | **shop** | `com.farmbalance.shop` | Product, Order | 상점 |
 | **community** | `com.farmbalance.community` | Post, Comment | 게시판 |
 | **policy** | `com.farmbalance.policy` | PolicyData, PolicyMatch | `out/external/` 포함 |
-| **store** | `com.farmbalance.store` | Store | 가게 정보 |
+| **store** | `com.farmbalance.store` | Store | 가게 정보 (Kakao API 연동, DB 엔티티 없음) |
 | **admin** | `com.farmbalance.admin` | — | 관리 기능 (서비스 조합) |
 
 ### 2.3 헥사고날 규칙

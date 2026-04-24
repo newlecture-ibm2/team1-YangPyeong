@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>사용자 관리 — FarmBalance</title><link rel="stylesheet" href="../../css/style.css"></head>
+<body>
+<div class="admin-layout">
+<aside class="sidebar"><div class="sidebar-logo"><span>🌿</span> FarmBalance</div><nav>
+  <a href="admin-dashboard.html">📊 대시보드</a><a href="admin-users.html" class="active">👥 사용자 관리</a><a href="admin-approvals.html">✅ 농부 승인/반려</a><a href="admin-crops.html">🌾 작물 마스터</a><a href="admin-data.html">🔗 외부 데이터 연동</a><a href="admin-engine.html">⚖️ 밸런스 엔진</a><a href="admin-community.html">💬 커뮤니티 관리</a><a href="admin-shop.html">🛒 상점 관리</a>
+</nav></aside>
+<main class="admin-main"><div class="page">
+  <h1 class="page-title"><span class="icon">👥</span> 사용자 관리</h1>
+  <div class="filter-bar"><input class="form-input" placeholder="이름, 이메일 검색" style="flex:1;"><select class="form-select"><option>역할: 전체</option><option>일반</option><option>농부</option><option>지자체</option></select><select class="form-select"><option>상태: 전체</option><option>활성</option><option>정지</option></select><button class="btn btn-primary btn-sm">검색</button></div>
+  <table class="tbl"><thead><tr><th>ID</th><th>이름</th><th>이메일</th><th>역할</th><th>가입일</th><th>상태</th><th>관리</th></tr></thead>
+  <tbody>
+    <tr><td>U001</td><td>홍길동</td><td>hong@email.com</td><td><span class="badge badge-olive">농부</span></td><td>2026-01-15</td><td><span class="badge badge-green">활성</span></td><td><a href="#">상세</a> · <a href="#" class="text-red">정지</a></td></tr>
+    <tr><td>U002</td><td>김영농</td><td>kim@email.com</td><td><span class="badge badge-olive">농부</span></td><td>2026-02-10</td><td><span class="badge badge-green">활성</span></td><td><a href="#">상세</a> · <a href="#" class="text-red">정지</a></td></tr>
+    <tr><td>U003</td><td>양평군 담당자</td><td>gov@yangpyeong.go.kr</td><td><span class="badge badge-blue">지자체</span></td><td>2026-01-01</td><td><span class="badge badge-green">활성</span></td><td><a href="#">상세</a></td></tr>
+    <tr><td>U004</td><td>이소비</td><td>lee@email.com</td><td><span class="badge badge-gray">일반</span></td><td>2026-03-20</td><td><span class="badge badge-red">정지</span></td><td><a href="#">상세</a> · <a href="#" class="text-olive">해제</a></td></tr>
+  </tbody></table>
+  <div class="pagination"><a href="#" class="active">1</a><a href="#">2</a><a href="#">3</a></div>
+</div></main>
+</div>
+</body></html>
