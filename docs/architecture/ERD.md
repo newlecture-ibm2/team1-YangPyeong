@@ -1,6 +1,6 @@
 # 🌱 FarmBalance — ERD (Entity-Relationship Diagram)
 
-> **기반 문서**: 전체_통합.md (16개 엔티티)
+> **기반 문서**: 전체_통합.md (14개 엔티티)
 > **DB**: PostgreSQL 16
 > **ORM**: Spring Data JPA (Hibernate)
 > **네이밍**: snake_case (DB) ↔ camelCase (Java Entity)
@@ -69,29 +69,7 @@ erDiagram
         timestamp deleted_at
     }
 
-    crop_plans {
-        bigint id PK
-        bigint farm_id FK
-        bigint seed_registration_id FK
-        varchar crop_name
-        date planting_date
-        decimal area "㎡"
-        varchar status "PLANNED | IN_PROGRESS | COMPLETED | CANCELLED"
-        timestamp deleted_at
-        timestamp created_at
-        timestamp updated_at
-    }
 
-    harvests {
-        bigint id PK
-        bigint crop_plan_id FK
-        decimal actual_yield "kg"
-        date harvest_date
-        varchar quality_grade "A | B | C | D"
-        timestamp created_at
-        timestamp updated_at
-        timestamp deleted_at
-    }
 
     %% ===== 수급 도메인 =====
     balance_data {
@@ -186,13 +164,11 @@ erDiagram
 
     %% ===== 정책 도메인 =====
 
-    policies {
+    policy_data {
         bigint id PK
-        varchar policy_name
-        varchar region_code
-        varchar category
-        varchar source_url
-        boolean is_active
+        varchar external_id "외부 API 제공 정책 고유번호"
+        jsonb data "정책 API 응답 원본 JSON"
+        timestamp fetched_at "수집 시각"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -249,14 +225,9 @@ erDiagram
     users ||--o{ notifications : "수신"
 
     farms ||--o{ seed_registrations : "종자등록"
-    farms ||--o{ crop_plans : "파종계획"
 
     crops ||--o{ seed_registrations : "작물참조"
     crops ||--o{ balance_data : "수급데이터"
-
-    seed_registrations ||--o{ crop_plans : "계획연결"
-
-    crop_plans ||--o| harvests : "수확실적"
 
     orders ||--|{ order_items : "주문항목"
     products ||--o{ order_items : "상품참조"
@@ -337,35 +308,7 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.5 crop_plans (파종 계획)
-
-| 컬럼 | 타입 | 제약 | 설명 |
-|------|------|------|------|
-| id | BIGINT | PK, AUTO | 파종 계획 고유 ID |
-| farm_id | BIGINT | FK → farms(id), NOT NULL | 농장 |
-| seed_registration_id | BIGINT | FK → seed_registrations(id) | 종자 등록 참조 |
-| crop_name | VARCHAR(50) | NOT NULL | 작물명 (스냅샷) |
-| planting_date | DATE | NOT NULL | 파종일 |
-| area | DECIMAL(10,2) | NOT NULL | 파종 면적 (㎡) |
-| status | VARCHAR(20) | DEFAULT 'PLANNED' | PLANNED / IN_PROGRESS / COMPLETED / CANCELLED |
-| deleted_at | TIMESTAMP | | 논리 삭제 시각 (null이면 미삭제) |
-| created_at | TIMESTAMP | NOT NULL | 등록일 |
-| updated_at | TIMESTAMP | | 수정일 |
-
-### 2.6 harvests (수확 실적)
-
-| 컬럼 | 타입 | 제약 | 설명 |
-|------|------|------|------|
-| id | BIGINT | PK, AUTO | 수확 실적 고유 ID |
-| crop_plan_id | BIGINT | FK → crop_plans(id), NOT NULL | 파종 계획 참조 |
-| actual_yield | DECIMAL(10,2) | NOT NULL | 실제 수확량 (kg) |
-| harvest_date | DATE | NOT NULL | 수확일 |
-| quality_grade | VARCHAR(5) | | 품질 등급 (A/B/C/D) |
-| created_at | TIMESTAMP | NOT NULL | 등록일 |
-| updated_at | TIMESTAMP | | 수정일 |
-| deleted_at | TIMESTAMP | | 삭제 시각 |
-
-### 2.7 balance_data (수급 데이터)
+### 2.5 balance_data (수급 데이터)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -385,7 +328,7 @@ erDiagram
 
 > **UNIQUE 제약**: (region_code, crop_id, year, season) 복합 유니크
 
-### 2.8 products (상품)
+### 2.6 products (상품)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -401,7 +344,7 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.9 orders (주문)
+### 2.7 orders (주문)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -415,7 +358,7 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.10 order_items (주문 항목)
+### 2.8 order_items (주문 항목)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -429,7 +372,7 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.11 cart_items (장바구니)
+### 2.9 cart_items (장바구니)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -443,7 +386,7 @@ erDiagram
 
 > **UNIQUE 제약**: (user_id, product_id) 복합 유니크
 
-### 2.12 posts (게시글)
+### 2.10 posts (게시글)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -458,7 +401,7 @@ erDiagram
 | created_at | TIMESTAMP | NOT NULL | 작성일 |
 | updated_at | TIMESTAMP | | 수정일 |
 
-### 2.13 comments (댓글)
+### 2.11 comments (댓글)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -471,21 +414,23 @@ erDiagram
 | created_at | TIMESTAMP | NOT NULL | 작성일 |
 | updated_at | TIMESTAMP | | 수정일 |
 
-### 2.14 policies (지자체 정책 목록)
+### 2.12 policy_data (정책 API 데이터 저장소)
+
+외부 정책 API에서 수집한 데이터를 JSON 원본 그대로 저장하는 테이블입니다. 정책 API 응답 스키마가 사전에 확정되지 않으므로 정규화하지 않고 JSONB로 저장하며, AI Agent의 Tool이 데이터를 조회하여 활용합니다.
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
-| id | BIGINT | PK, AUTO | 정책 고유 ID |
-| policy_name | VARCHAR(200) | NOT NULL | 정책명 |
-| region_code | VARCHAR(20) | NOT NULL | 지역 코드 |
-| category | VARCHAR(20) | NOT NULL | 보조금 / 자재지원 / 교육 / 기타 |
-| source_url | VARCHAR(500) | NOT NULL | 정책 원문 링크 |
-| is_active | BOOLEAN | DEFAULT true | 활성 여부 |
+| id | BIGINT | PK, AUTO | 내부 고유 ID |
+| external_id | VARCHAR(200) | UNIQUE, NOT NULL | 외부 API 제공 정책 고유번호 |
+| data | JSONB | NOT NULL | 정책 API 응답 원본 (항목 1건의 JSON) |
+| fetched_at | TIMESTAMP | NOT NULL | 수집 시각 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.15 rag_documents (RAG 문서 메타데이터)
+> **설계 근거**: 정책 API 응답 스키마가 사전에 확정되지 않으므로 정규화된 컬럼 대신 JSONB로 원본을 저장합니다. AI Agent Tool이 이 데이터를 조회하여 LLM에 전달하는 방식으로 활용됩니다. 다른 외부 API(통계, 기상 등)의 데이터 테이블은 추후 필요 시 별도로 추가합니다.
+
+### 2.13 rag_documents (RAG 문서 메타데이터)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -499,7 +444,7 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.16 guide_messages (권고 메시지)
+### 2.14 guide_messages (권고 메시지)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -515,7 +460,7 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.17 notifications (알림)
+### 2.15 notifications (알림)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -538,9 +483,6 @@ erDiagram
 |------|-----------|------|
 | users → farms | 1:N | 유저 한 명이 여러 농장 소유 가능 |
 | farms → seed_registrations | 1:N | 농장별 여러 종자 등록 |
-| farms → crop_plans | 1:N | 농장별 여러 파종 계획 |
-| seed_registrations → crop_plans | 1:N | 종자 등록 1건에 여러 파종 계획 가능 |
-| crop_plans → harvests | 1:1 | 파종 계획 1건에 수확 실적 1건 |
 | crops → balance_data | 1:N | 작물별 지역·시즌 수급 데이터 |
 | users → products | 1:N | 판매자가 여러 상품 등록 |
 | users → orders | 1:N | 구매자가 여러 주문 |
@@ -568,9 +510,7 @@ CREATE INDEX idx_farms_status ON farms(status);
 CREATE INDEX idx_seed_reg_farm_id ON seed_registrations(farm_id);
 CREATE INDEX idx_seed_reg_crop_id ON seed_registrations(crop_id);
 
--- 파종 계획
-CREATE INDEX idx_crop_plans_farm_id ON crop_plans(farm_id);
-CREATE INDEX idx_crop_plans_status ON crop_plans(status);
+
 
 -- 수급 데이터 (핵심 조회)
 CREATE UNIQUE INDEX idx_balance_data_unique ON balance_data(region_code, crop_id, year, season);
