@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: farm-backend
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
