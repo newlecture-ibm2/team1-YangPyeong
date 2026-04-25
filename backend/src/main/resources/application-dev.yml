@@ -1,7 +1,7 @@
 spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/farm_db}
-    username: ${DB_USERNAME:farm_admin}
+    username: ${DB_USERNAME:farm}
     password: ${DB_PASSWORD:farm_secret_password}
     driver-class-name: org.postgresql.Driver
 

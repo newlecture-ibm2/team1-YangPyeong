@@ -11,6 +11,7 @@ services:
       - NEXT_PUBLIC_API_URL=/api
       - INTERNAL_BACKEND_URL=http://backend:8080
       - JWT_SECRET=${JWT_SECRET}
+      - NEXT_PUBLIC_KAKAO_MAP_KEY=${NEXT_PUBLIC_KAKAO_MAP_KEY}
     depends_on:
       - backend
     develop:
@@ -57,6 +58,7 @@ services:
     restart: unless-stopped
     environment:
       - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASSWORD}@db:5432/farm_db
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - db
     develop:
