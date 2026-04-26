@@ -1,6 +1,6 @@
 # 🌱 FarmBalance — ERD (Entity-Relationship Diagram)
 
-> **기반 문서**: 전체_통합.md (14개 엔티티)
+> **기반 문서**: 전체_통합.md (13개 엔티티)
 > **DB**: PostgreSQL 16
 > **ORM**: Spring Data JPA (Hibernate)
 > **네이밍**: snake_case (DB) ↔ camelCase (Java Entity)
@@ -33,6 +33,7 @@ erDiagram
         varchar address
         decimal area_size "㎡"
         varchar soil_type
+        varchar business_number "사업자 등록번호"
         varchar land_cert_image_url
         boolean land_cert_verified
         varchar status "PENDING | APPROVED | REJECTED"
@@ -62,6 +63,8 @@ erDiagram
         bigint crop_id FK
         varchar seed_type "SEED | SEEDLING | SAPLING"
         int quantity
+        decimal estimated_yield "예상 총 수확량"
+        varchar yield_unit "g | kg | ton"
         varchar receipt_image_url
         boolean verified
         timestamp created_at
@@ -93,6 +96,7 @@ erDiagram
         bigint id PK
         bigint seller_id FK
         varchar name
+        varchar category "채소 | 과일 | 곡물 | 가공식품 | 농기구 | 기타"
         decimal price
         int stock
         text description
@@ -109,7 +113,10 @@ erDiagram
         varchar order_number UK
         decimal total_amount
         varchar status "ORDERED | ACCEPTED | SHIPPED | COMPLETED | CANCELLED"
+        varchar receiver_name "받는 분"
+        varchar receiver_phone "연락처"
         varchar shipping_address
+        varchar shipping_memo "배송 메모"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -174,18 +181,6 @@ erDiagram
         timestamp deleted_at
     }
 
-    %% ===== RAG 도메인 =====
-    rag_documents {
-        bigint id PK
-        varchar title
-        varchar category "CROP_GUIDE | MARKET | POLICY | WEATHER | ETC"
-        varchar file_url
-        bigint uploaded_by FK
-        boolean is_active
-        timestamp created_at
-        timestamp updated_at
-        timestamp deleted_at
-    }
 
     %% ===== 알림 도메인 =====
     guide_messages {
@@ -237,7 +232,6 @@ erDiagram
 
 
     users ||--o{ guide_messages : "발송"
-    users ||--o{ rag_documents : "등록"
 ```
 
 ---
@@ -270,6 +264,7 @@ erDiagram
 | address | VARCHAR(255) | NOT NULL | 농장 주소 |
 | area_size | DECIMAL(10,2) | NOT NULL | 면적 (㎡) |
 | soil_type | VARCHAR(50) | | 토양 유형 |
+| business_number | VARCHAR(12) | | 사업자 등록번호 |
 | land_cert_image_url | VARCHAR(500) | | 토지증명서 이미지/PDF URL |
 | land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
@@ -302,6 +297,8 @@ erDiagram
 | crop_id | BIGINT | FK → crops(id), NOT NULL | 작물 |
 | seed_type | VARCHAR(20) | NOT NULL | SEED(씨앗) / SEEDLING(종자) / SAPLING(모종) |
 | quantity | INT | NOT NULL | 수량 |
+| estimated_yield | DECIMAL(12,2) | | 예상 총 수확량 |
+| yield_unit | VARCHAR(10) | | 수확량 단위 (g / kg / ton) |
 | receipt_image_url | VARCHAR(500) | | 영수증 사진 URL |
 | verified | BOOLEAN | DEFAULT false | 인증 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
@@ -335,6 +332,7 @@ erDiagram
 | id | BIGINT | PK, AUTO | 상품 고유 ID |
 | seller_id | BIGINT | FK → users(id), NOT NULL | 판매자 |
 | name | VARCHAR(100) | NOT NULL | 상품명 |
+| category | VARCHAR(20) | | 채소 / 과일 / 곡물 / 가공식품 / 농기구 / 기타 |
 | price | DECIMAL(10,2) | NOT NULL | 가격 (원) |
 | stock | INT | NOT NULL, DEFAULT 0 | 재고 |
 | description | TEXT | | 상품 설명 |
@@ -353,7 +351,10 @@ erDiagram
 | order_number | VARCHAR(30) | UNIQUE, NOT NULL | 주문 번호 |
 | total_amount | DECIMAL(12,2) | NOT NULL | 총 금액 |
 | status | VARCHAR(20) | DEFAULT 'ORDERED' | ORDERED / ACCEPTED / SHIPPED / COMPLETED / CANCELLED |
+| receiver_name | VARCHAR(50) | | 받는 분 |
+| receiver_phone | VARCHAR(20) | | 받는 분 연락처 |
 | shipping_address | VARCHAR(255) | | 배송 주소 |
+| shipping_memo | VARCHAR(200) | | 배송 메모 |
 | created_at | TIMESTAMP | NOT NULL | 주문일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
@@ -430,21 +431,7 @@ erDiagram
 
 > **설계 근거**: 정책 API 응답 스키마가 사전에 확정되지 않으므로 정규화된 컬럼 대신 JSONB로 원본을 저장합니다. AI Agent Tool이 이 데이터를 조회하여 LLM에 전달하는 방식으로 활용됩니다. 다른 외부 API(통계, 기상 등)의 데이터 테이블은 추후 필요 시 별도로 추가합니다.
 
-### 2.13 rag_documents (RAG 문서 메타데이터)
-
-| 컬럼 | 타입 | 제약 | 설명 |
-|------|------|------|------|
-| id | BIGINT | PK, AUTO | 문서 고유 ID |
-| title | VARCHAR(200) | NOT NULL | 문서 제목 |
-| category | VARCHAR(20) | NOT NULL | CROP_GUIDE / MARKET / POLICY / WEATHER / ETC |
-| file_url | VARCHAR(500) | NOT NULL | 원본 파일 경로/URL |
-| uploaded_by | BIGINT | FK → users(id), NOT NULL | 등록한 관리자 |
-| is_active | BOOLEAN | DEFAULT true | 활성 여부 (비활성화 시 AI 참조 제외) |
-| created_at | TIMESTAMP | NOT NULL | 등록일 |
-| updated_at | TIMESTAMP | | 수정일 |
-| deleted_at | TIMESTAMP | | 삭제 시각 |
-
-### 2.14 guide_messages (권고 메시지)
+### 2.13 guide_messages (권고 메시지)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -460,7 +447,7 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.15 notifications (알림)
+### 2.14 notifications (알림)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -490,7 +477,6 @@ erDiagram
 | users → posts | 1:N | 유저가 여러 게시글 작성 |
 | posts → comments | 1:N | 게시글에 여러 댓글 |
 | users → notifications | 1:N | 유저에게 여러 알림 |
-| users → rag_documents | 1:N | 관리자가 여러 RAG 문서 등록 |
 
 ---
 

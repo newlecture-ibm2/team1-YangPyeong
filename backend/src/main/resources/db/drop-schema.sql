@@ -6,7 +6,6 @@
 
 DROP TABLE IF EXISTS notifications    CASCADE;
 DROP TABLE IF EXISTS guide_messages   CASCADE;
-DROP TABLE IF EXISTS rag_documents    CASCADE;
 DROP TABLE IF EXISTS policy_data      CASCADE;
 DROP TABLE IF EXISTS comments         CASCADE;
 DROP TABLE IF EXISTS posts            CASCADE;

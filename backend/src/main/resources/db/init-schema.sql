@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS farms (
     address                 VARCHAR(255)    NOT NULL,
     area_size               DECIMAL(10,2)   NOT NULL,
     soil_type               VARCHAR(50),
+    business_number         VARCHAR(12),
     land_cert_image_url     VARCHAR(500),
     land_cert_verified      BOOLEAN         DEFAULT false,
     status                  VARCHAR(20)     NOT NULL DEFAULT 'PENDING',
@@ -52,8 +53,9 @@ CREATE TABLE IF NOT EXISTS farms (
 );
 
 COMMENT ON TABLE  farms IS '농장';
-COMMENT ON COLUMN farms.area_size IS '면적 (㎡)';
-COMMENT ON COLUMN farms.status   IS 'PENDING | APPROVED | REJECTED';
+COMMENT ON COLUMN farms.area_size        IS '면적 (㎡)';
+COMMENT ON COLUMN farms.business_number  IS '사업자 등록번호';
+COMMENT ON COLUMN farms.status           IS 'PENDING | APPROVED | REJECTED';
 
 -- ----------------------------------------------------------
 -- 1.3 crops (작물 마스터)
@@ -85,6 +87,8 @@ CREATE TABLE IF NOT EXISTS seed_registrations (
     crop_id             BIGINT          NOT NULL REFERENCES crops(id),
     seed_type           VARCHAR(20)     NOT NULL,
     quantity            INT             NOT NULL,
+    estimated_yield     DECIMAL(12,2),
+    yield_unit          VARCHAR(10),
     receipt_image_url   VARCHAR(500),
     verified            BOOLEAN         DEFAULT false,
     created_at          TIMESTAMP       NOT NULL DEFAULT NOW(),
@@ -93,7 +97,9 @@ CREATE TABLE IF NOT EXISTS seed_registrations (
 );
 
 COMMENT ON TABLE  seed_registrations IS '종자 등록';
-COMMENT ON COLUMN seed_registrations.seed_type IS 'SEED | SEEDLING | SAPLING';
+COMMENT ON COLUMN seed_registrations.seed_type        IS 'SEED | SEEDLING | SAPLING';
+COMMENT ON COLUMN seed_registrations.estimated_yield  IS '예상 총 수확량';
+COMMENT ON COLUMN seed_registrations.yield_unit       IS '수확량 단위 (g / kg / ton)';
 
 -- ----------------------------------------------------------
 -- 1.5 balance_data (수급 데이터)
@@ -131,6 +137,7 @@ CREATE TABLE IF NOT EXISTS products (
     id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     seller_id       BIGINT          NOT NULL REFERENCES users(id),
     name            VARCHAR(100)    NOT NULL,
+    category        VARCHAR(20),
     price           DECIMAL(10,2)   NOT NULL,
     stock           INT             NOT NULL DEFAULT 0,
     description     TEXT,
@@ -142,7 +149,8 @@ CREATE TABLE IF NOT EXISTS products (
 );
 
 COMMENT ON TABLE  products IS '상품';
-COMMENT ON COLUMN products.status IS 'PENDING | ACTIVE | INACTIVE | REJECTED';
+COMMENT ON COLUMN products.category IS '채소 | 과일 | 곡물 | 가공식품 | 농기구 | 기타';
+COMMENT ON COLUMN products.status   IS 'PENDING | ACTIVE | INACTIVE | REJECTED';
 
 -- ----------------------------------------------------------
 -- 1.7 orders (주문)
@@ -153,14 +161,19 @@ CREATE TABLE IF NOT EXISTS orders (
     order_number        VARCHAR(30)     NOT NULL UNIQUE,
     total_amount        DECIMAL(12,2)   NOT NULL,
     status              VARCHAR(20)     DEFAULT 'ORDERED',
+    receiver_name       VARCHAR(50),
+    receiver_phone      VARCHAR(20),
     shipping_address    VARCHAR(255),
+    shipping_memo       VARCHAR(200),
     created_at          TIMESTAMP       NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMP,
     deleted_at          TIMESTAMP
 );
 
 COMMENT ON TABLE  orders IS '주문';
-COMMENT ON COLUMN orders.status IS 'ORDERED | ACCEPTED | SHIPPED | COMPLETED | CANCELLED';
+COMMENT ON COLUMN orders.status        IS 'ORDERED | ACCEPTED | SHIPPED | COMPLETED | CANCELLED';
+COMMENT ON COLUMN orders.receiver_name IS '받는 분';
+COMMENT ON COLUMN orders.shipping_memo IS '배송 메모';
 
 -- ----------------------------------------------------------
 -- 1.8 order_items (주문 항목)
@@ -254,25 +267,7 @@ COMMENT ON COLUMN policy_data.external_id IS '외부 API 제공 정책 고유번
 COMMENT ON COLUMN policy_data.data       IS '정책 API 응답 원본 JSON';
 
 -- ----------------------------------------------------------
--- 1.13 rag_documents (RAG 문서 메타데이터)
--- ----------------------------------------------------------
-CREATE TABLE IF NOT EXISTS rag_documents (
-    id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    title           VARCHAR(200)    NOT NULL,
-    category        VARCHAR(20)     NOT NULL,
-    file_url        VARCHAR(500)    NOT NULL,
-    uploaded_by     BIGINT          NOT NULL REFERENCES users(id),
-    is_active       BOOLEAN         DEFAULT true,
-    created_at      TIMESTAMP       NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMP,
-    deleted_at      TIMESTAMP
-);
-
-COMMENT ON TABLE  rag_documents IS 'RAG 문서 메타데이터';
-COMMENT ON COLUMN rag_documents.category IS 'CROP_GUIDE | MARKET | POLICY | WEATHER | ETC';
-
--- ----------------------------------------------------------
--- 1.14 guide_messages (권고 메시지)
+-- 1.13 guide_messages (권고 메시지)
 -- ----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS guide_messages (
     id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -293,7 +288,7 @@ COMMENT ON COLUMN guide_messages.target_type IS 'ALL | REGION | CROP | USER';
 COMMENT ON COLUMN guide_messages.channel     IS 'IN_APP | SMS | EMAIL';
 
 -- ----------------------------------------------------------
--- 1.15 notifications (알림)
+-- 1.14 notifications (알림)
 -- ----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS notifications (
     id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
