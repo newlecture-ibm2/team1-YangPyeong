@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>회원가입 — FarmBalance</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card" style="max-width:540px;">
+    <div class="logo-area">
+      <img src="./logo.png" alt="FarmBalance">
+      <span>FarmBalance</span>
+    </div>
+    <h1 class="auth-title">회원가입</h1>
+    <p class="auth-sub">FarmBalance와 함께 스마트 농업을 시작하세요.</p>
+
+    <div class="form-group">
+      <label class="form-label">역할 선택</label>
+      <div style="display:flex; gap:12px;">
+        <label style="flex:1; display:flex; align-items:center; gap:8px; padding:14px 18px; border:1.5px solid var(--border); border-radius:14px; cursor:pointer; font-size:14px; transition: border-color .2s;">
+          <input type="radio" name="role" checked> 🌾 농업인
+        </label>
+        <label style="flex:1; display:flex; align-items:center; gap:8px; padding:14px 18px; border:1.5px solid var(--border); border-radius:14px; cursor:pointer; font-size:14px;">
+          <input type="radio" name="role"> 👤 일반 사용자
+        </label>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div class="form-group">
+        <label class="form-label">이름</label>
+        <input type="text" class="form-input" placeholder="이름">
+      </div>
+      <div class="form-group">
+        <label class="form-label">전화번호</label>
+        <input type="tel" class="form-input" placeholder="010-0000-0000">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">이메일</label>
+      <input type="email" class="form-input" placeholder="example@farmbalance.kr">
+    </div>
+    <div class="form-group">
+      <label class="form-label">비밀번호</label>
+      <input type="password" class="form-input" placeholder="8자 이상, 영문+숫자 조합">
+    </div>
+    <div class="form-group">
+      <label class="form-label">비밀번호 확인</label>
+      <input type="password" class="form-input" placeholder="비밀번호 재입력">
+    </div>
+    <div class="form-group">
+      <label class="form-label">주소</label>
+      <div style="display:flex; gap:8px;">
+        <input type="text" class="form-input" placeholder="양평군 단월면..." style="flex:1;">
+        <button class="btn btn-outline btn-sm">주소 검색</button>
+      </div>
+    </div>
+    <button class="btn btn-dark" style="width:100%; justify-content:center; margin-top:8px;">가입하기</button>
+    <p class="auth-footer">이미 계정이 있으신가요? <a href="./login.html">로그인</a></p>
+  </div>
+</div>
+</body>
+</html>

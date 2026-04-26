@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>커뮤니티 — FarmBalance</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<nav class="nav">
+  <a href="./landing.html" class="nav-logo"><img src="./logo.png" alt=""> FarmBalance</a>
+  <div class="nav-links">
+    <a href="./farm-manage.html">농장관리</a>
+    <a href="./balance-list.html">밸런스</a>
+    <a href="./recommend-list.html">AI 추천</a>
+    <a href="./community-list.html" class="active">커뮤니티</a>
+    <a href="./shop-browse.html">상점</a>
+  </div>
+  <div class="nav-right"><a href="#" class="btn-nav btn-nav-fill">마이페이지</a></div>
+</nav>
+<div class="page">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="./landing.html">홈</a> › <strong>커뮤니티</strong></div>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h1 class="page-title">커뮤니티</h1>
+        <p class="page-sub">농업 노하우를 나누고 궁금한 점을 질문하세요.</p>
+      </div>
+      <a href="#" class="btn btn-primary">✏️ 글 작성</a>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <a href="#" class="active">전체</a>
+    <a href="#">재배 노하우</a>
+    <a href="#">병해충 Q&A</a>
+    <a href="#">자유게시판</a>
+    <a href="#">장터</a>
+  </div>
+
+  <div class="filter-bar">
+    <input class="form-input" placeholder="검색어를 입력하세요" style="flex:1;">
+    <button class="btn btn-primary btn-sm">검색</button>
+  </div>
+
+  <div class="card">
+    <table class="tbl">
+      <thead><tr><th style="width:50px;">번호</th><th>제목</th><th>작성자</th><th>날짜</th><th>조회</th><th>좋아요</th></tr></thead>
+      <tbody>
+        <tr><td>152</td><td><a href="#" style="color:var(--text-dark); text-decoration:none; font-weight:500;">상추 재배 시 진딧물 방제 방법 공유합니다</a> <span class="badge badge-lime">재배노하우</span></td><td>김농부</td><td>2026-04-20</td><td>234</td><td>15</td></tr>
+        <tr><td>151</td><td><a href="#" style="color:var(--text-dark); text-decoration:none; font-weight:500;">올해 배추 가격 전망 어떻게 보시나요?</a> <span class="badge badge-gray">자유</span></td><td>이영농</td><td>2026-04-19</td><td>189</td><td>8</td></tr>
+        <tr><td>150</td><td><a href="#" style="color:var(--text-dark); text-decoration:none; font-weight:500;">고추 탄저병 증상인데 대처법 부탁드려요</a> <span class="badge badge-orange">Q&A</span></td><td>박초보</td><td>2026-04-18</td><td>312</td><td>22</td></tr>
+        <tr><td>149</td><td><a href="#" style="color:var(--text-dark); text-decoration:none; font-weight:500;">양평 직거래 장터 열립니다 (4/25)</a> <span class="badge badge-gray">장터</span></td><td>양평마을</td><td>2026-04-17</td><td>156</td><td>5</td></tr>
+        <tr><td>148</td><td><a href="#" style="color:var(--text-dark); text-decoration:none; font-weight:500;">토마토 하우스 재배 일지 공유</a> <span class="badge badge-lime">재배노하우</span></td><td>토마토맨</td><td>2026-04-16</td><td>278</td><td>30</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination">
+    <a href="#">‹</a><a href="#" class="active">1</a><a href="#">2</a><a href="#">3</a><a href="#">4</a><a href="#">›</a>
+  </div>
+</div>
+<footer class="footer">
+  <div class="footer-brand"><img src="./logo.png" alt="">FarmBalance</div>
+  <div class="footer-links"><a href="#">이용약관</a><a href="#">개인정보처리방침</a></div>
+  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+</footer>
+</body>
+</html>

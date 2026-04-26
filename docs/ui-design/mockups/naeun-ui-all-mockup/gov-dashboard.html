@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관할 수급 대시보드 — FarmBalance</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<nav class="nav">
+  <a href="./landing.html" class="nav-logo"><img src="./logo.png" alt=""> FarmBalance</a>
+  <div class="nav-links">
+    <a href="./gov-dashboard.html" class="active">대시보드</a>
+    <a href="#">통계분석</a>
+    <a href="#">농가 관리</a>
+    <a href="#">데이터</a>
+  </div>
+  <div class="nav-right"><a href="#" class="btn-nav btn-nav-fill">마이페이지</a></div>
+</nav>
+<div class="page">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="./landing.html">홈</a> › 지자체 › <strong>대시보드</strong></div>
+    <h1 class="page-title">관할 수급 대시보드 — 양평군</h1>
+    <p class="page-sub">양평군 관할 지역의 농산물 수급 현황을 한눈에 파악합니다.</p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">등록 농가 수</div><div class="kpi-value">342</div></div>
+    <div class="kpi"><div class="kpi-label">등록 작물 수</div><div class="kpi-value">15종</div></div>
+    <div class="kpi"><div class="kpi-label">금월 등록 건수</div><div class="kpi-value">48건</div></div>
+    <div class="kpi"><div class="kpi-label">수급 경고</div><div class="kpi-value red">3건</div></div>
+  </div>
+
+  <div class="grid-2 mb-32">
+    <div class="card">
+      <h2 class="card-title">작물별 수급 현황</h2>
+      <div style="display:flex; flex-direction:column; gap:16px; margin-top:16px;">
+        <div><div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="font-weight:600;">🥬 상추</span><span class="badge badge-green">적정</span></div><div class="gauge"><div class="gauge-fill green" style="width:60%;"></div></div></div>
+        <div><div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="font-weight:600;">🥬 배추</span><span class="badge badge-red">부족</span></div><div class="gauge"><div class="gauge-fill red" style="width:35%;"></div></div></div>
+        <div><div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="font-weight:600;">🌶️ 고추</span><span class="badge badge-orange">과잉주의</span></div><div class="gauge"><div class="gauge-fill orange" style="width:75%;"></div></div></div>
+        <div><div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="font-weight:600;">🥔 감자</span><span class="badge badge-green">적정</span></div><div class="gauge"><div class="gauge-fill green" style="width:55%;"></div></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 class="card-title">지역 분포</h2>
+      <div class="placeholder" style="height:280px;">🗺️ 양평군 읍면별 등록 현황 지도</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">수급 경고 목록</h2>
+    <table class="tbl">
+      <thead><tr><th>작물</th><th>상태</th><th>공급량</th><th>수요량</th><th>갭</th><th>권고 조치</th></tr></thead>
+      <tbody>
+        <tr><td>🥬 배추</td><td><span class="badge badge-red">부족</span></td><td>800톤</td><td>1,500톤</td><td style="font-weight:700; color:var(--red);">-700톤</td><td>재배 장려 필요</td></tr>
+        <tr><td>🍅 토마토</td><td><span class="badge badge-orange">부족주의</span></td><td>300톤</td><td>500톤</td><td style="font-weight:700; color:var(--orange);">-200톤</td><td>모니터링</td></tr>
+        <tr><td>🌶️ 고추</td><td><span class="badge badge-orange">과잉주의</span></td><td>600톤</td><td>400톤</td><td style="font-weight:700; color:var(--orange);">+200톤</td><td>출하 분산 권고</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<footer class="footer">
+  <div class="footer-brand"><img src="./logo.png" alt="">FarmBalance</div>
+  <div class="footer-links"><a href="#">이용약관</a><a href="#">개인정보처리방침</a></div>
+  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+</footer>
+</body>
+</html>

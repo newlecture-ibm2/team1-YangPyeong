@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBalance — 농업 수급 밸런스 플랫폼</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --dark-green: #1B3A2D;
+      --mid-green: #2D5A41;
+      --light-green: #3A7D56;
+      --cream: #F5F0E8;
+      --soft-yellow: #F2ECD0;
+      --white: #FFFFFF;
+      --text-light: rgba(255,255,255,.85);
+      --text-dark: #1B3A2D;
+      --text-sub: #6B7D6F;
+      --cart-green: #2D5A41;
+      --border: #E0DBD0;
+      --serif: 'Fraunces', 'Gowun Batang', Georgia, serif;
+      --sans: 'Noto Sans KR', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--sans); color: var(--text-dark); line-height: 1.5; background: var(--cream); }
+
+    /* ── NAV ── */
+    .nav {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 28px 60px;
+    }
+    .nav-logo {
+      font-family: var(--serif); font-size: 22px; color: #fff; text-decoration: none;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .nav-logo img { height: 80px; width: auto; margin: -10px 0; }
+    .nav-links { display: flex; gap: 32px; }
+    .nav-links a { color: rgba(255,255,255,.7); text-decoration: none; font-size: 15px; font-weight: 500; transition: color .2s; }
+    .nav-links a:hover { color: #fff; }
+    .nav-right { display: flex; gap: 16px; align-items: center; }
+    .btn-nav { padding: 12px 28px; border-radius: 100px; font-size: 14px; font-weight: 600; text-decoration: none; transition: all .2s; border: none; cursor: pointer; }
+    .btn-nav-outline { background: transparent; border: 1.5px solid rgba(255,255,255,.3); color: #fff; }
+    .btn-nav-fill { background: #B8D94B; color: var(--dark-green); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative; background: var(--dark-green); min-height: 100vh;
+      display: flex; overflow: hidden;
+    }
+    .hero-bg-img {
+      position: absolute; right: 0; bottom: 0; width: 55%; height: 100%;
+      object-fit: cover; opacity: .5;
+      mask-image: linear-gradient(to left, rgba(0,0,0,.8), transparent);
+      -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,.8), transparent);
+    }
+    .hero-content {
+      position: relative; z-index: 2; padding: 180px 60px 80px;
+      display: flex; flex-direction: column; justify-content: center; max-width: 700px;
+    }
+    .hero h1 {
+      font-family: var(--serif); font-size: 72px; color: #fff; line-height: 1.05;
+      margin-bottom: 24px;
+    }
+    .hero h1 em { font-style: italic; color: #B8D94B; }
+    .hero p { font-size: 18px; color: var(--text-light); max-width: 480px; margin-bottom: 40px; line-height: 1.7; }
+    .hero-btns { display: flex; gap: 16px; }
+    .btn-hero { padding: 18px 36px; border-radius: 100px; font-size: 16px; font-weight: 700; text-decoration: none; border: none; cursor: pointer; transition: all .2s; }
+    .btn-hero-primary { background: #B8D94B; color: var(--dark-green); }
+    .btn-hero-primary:hover { background: #cfe85f; transform: translateY(-2px); }
+    .btn-hero-ghost { background: transparent; border: 1.5px solid rgba(255,255,255,.3); color: #fff; }
+
+    /* Hero stat badge */
+    .hero-badge {
+      position: absolute; top: 160px; right: 120px; z-index: 3;
+      width: 160px; height: 160px; border-radius: 50%;
+      background: rgba(184,217,75,.9); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+    }
+    .hero-badge .num { font-family: var(--serif); font-size: 42px; color: var(--dark-green); line-height: 1; }
+    .hero-badge .label { font-size: 11px; font-weight: 600; color: var(--dark-green); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ── SECTION: ABOUT ── */
+    .section-cream { background: var(--cream); padding: 100px 60px; }
+    .section-yellow { background: var(--soft-yellow); padding: 100px 60px; }
+    .section-dark { position: relative; background: var(--dark-green); padding: 100px 60px; overflow: hidden; }
+
+    .section-header { max-width: 1200px; margin: 0 auto 60px; }
+    .section-tag { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--light-green); margin-bottom: 12px; }
+    .section-title { font-family: var(--serif); font-size: 44px; color: var(--text-dark); line-height: 1.15; max-width: 560px; }
+
+    /* Circular image cards */
+    .circle-row { display: flex; gap: 40px; justify-content: center; max-width: 1200px; margin: 0 auto; flex-wrap: wrap; }
+    .circle-item { text-align: center; }
+    .circle-img {
+      width: 200px; height: 200px; border-radius: 50%; object-fit: cover;
+      border: 4px solid var(--white); box-shadow: 0 8px 24px rgba(0,0,0,.08);
+      margin-bottom: 16px; display: block;
+    }
+    .circle-name { font-family: var(--serif); font-size: 18px; color: var(--text-dark); }
+
+    /* ── PRODUCT CARDS ── */
+    .products-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; max-width: 1200px; margin: 0 auto; }
+    .product-card {
+      background: var(--white); border-radius: 20px; overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,.04); transition: transform .25s, box-shadow .25s;
+      text-decoration: none; color: inherit; display: block;
+    }
+    .product-card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
+    .product-card-img { width: 100%; height: 220px; object-fit: cover; display: block; }
+    .product-card-body { padding: 20px 24px 24px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .product-card-info h3 { font-family: var(--serif); font-size: 20px; color: var(--text-dark); margin-bottom: 4px; }
+    .product-card-info p { font-size: 13px; color: var(--text-sub); }
+    .product-card-meta { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+    .product-price { font-family: var(--serif); font-size: 18px; color: var(--dark-green); font-weight: 400; }
+    .cart-btn {
+      width: 44px; height: 44px; border-radius: 50%; background: var(--dark-green);
+      border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 18px; transition: background .2s;
+    }
+    .cart-btn:hover { background: var(--mid-green); }
+
+    /* ── STATS ── */
+    .stats-bg {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .3;
+    }
+    .stats-content { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; }
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-bottom: 60px; }
+    .stat { text-align: center; }
+    .stat-num { font-family: var(--serif); font-size: 80px; color: var(--cream); line-height: 1; }
+    .stat-label { font-size: 14px; color: rgba(255,255,255,.6); margin-top: 8px; max-width: 200px; margin-left: auto; margin-right: auto; }
+
+    .cta-block { display: flex; align-items: center; gap: 60px; }
+    .cta-img { width: 400px; height: 400px; object-fit: cover; border-radius: 24px; flex-shrink: 0; }
+    .cta-text h2 { font-family: var(--serif); font-size: 44px; color: #fff; line-height: 1.15; margin-bottom: 20px; }
+    .cta-text p { font-size: 16px; color: rgba(255,255,255,.6); margin-bottom: 32px; line-height: 1.7; }
+    .btn-cta { padding: 16px 36px; border-radius: 100px; font-size: 16px; font-weight: 700; background: #B8D94B; color: var(--dark-green); border: none; cursor: pointer; text-decoration: none; display: inline-flex; transition: all .2s; }
+    .btn-cta:hover { background: #cfe85f; }
+
+    /* ── FEATURES ── */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; max-width: 1200px; margin: 0 auto; }
+    .feat-card { background: var(--white); border-radius: 20px; padding: 36px; }
+    .feat-icon { font-size: 36px; margin-bottom: 16px; }
+    .feat-card h3 { font-family: var(--serif); font-size: 22px; margin-bottom: 8px; }
+    .feat-card p { font-size: 14px; color: var(--text-sub); line-height: 1.6; }
+
+    /* ── FOOTER ── */
+    .footer {
+      background: var(--dark-green); padding: 80px 60px 40px; text-align: center;
+    }
+    .footer-brand { font-family: var(--serif); font-size: 64px; color: var(--cream); margin-bottom: 32px; display: flex; align-items: center; justify-content: center; gap: 20px; }
+    .footer-brand img { height: 80px; width: auto; }
+    .footer-links { display: flex; justify-content: center; gap: 32px; margin-bottom: 40px; }
+    .footer-links a { color: rgba(255,255,255,.5); text-decoration: none; font-size: 14px; transition: color .2s; }
+    .footer-links a:hover { color: #B8D94B; }
+    .footer-copy { font-size: 13px; color: rgba(255,255,255,.3); border-top: 1px solid rgba(255,255,255,.1); padding-top: 24px; }
+  </style>
+</head>
+<body>
+
+<!-- ════════ NAV ════════ -->
+<nav class="nav">
+  <a href="#" class="nav-logo"><img src="./logo.png" alt="FarmBalance 로고"> FarmBalance</a>
+  <div class="nav-links">
+    <a href="./balance-list.html">밸런스</a>
+    <a href="./recommend-list.html">AI 추천</a>
+    <a href="./community-list.html">커뮤니티</a>
+    <a href="./shop-browse.html">상점</a>
+  </div>
+  <div class="nav-right">
+    <a href="./login.html" class="btn-nav btn-nav-outline">로그인</a>
+    <a href="./signup.html" class="btn-nav btn-nav-fill">시작하기</a>
+  </div>
+</nav>
+
+<!-- ════════ HERO ════════ -->
+<section class="hero">
+  <img src="https://images.unsplash.com/photo-1592982537447-6f2bf4244498?w=1200&q=80" alt="" class="hero-bg-img">
+  <div class="hero-content">
+    <h1>땅에 뿌리를 내리고,<br><em>데이터로 혁신하다</em></h1>
+    <p>양평군의 작물 수급 균형과 농가 소득 안정을 위한 AI 기반 스마트 농업 플랫폼. 데이터가 만드는 농업의 새로운 미래를 경험하세요.</p>
+    <div class="hero-btns">
+      <a href="./signup.html" class="btn-hero btn-hero-primary">무료로 시작하기</a>
+      <a href="./balance-list.html" class="btn-hero btn-hero-ghost">수급 현황 보기</a>
+    </div>
+  </div>
+  <div class="hero-badge">
+    <span class="num">342</span>
+    <span class="label">등록 농가 수</span>
+  </div>
+</section>
+
+<!-- ════════ ABOUT (Cream) ════════ -->
+<section class="section-cream">
+  <div class="section-header">
+    <p class="section-tag">About FarmBalance</p>
+    <h2 class="section-title">양평군에서 자라는<br>자연의 힘을 키웁니다</h2>
+  </div>
+  <div class="circle-row">
+    <div class="circle-item">
+      <img src="https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=400&q=80" alt="상추" class="circle-img">
+      <p class="circle-name">유기농 상추</p>
+    </div>
+    <div class="circle-item">
+      <img src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&q=80" alt="토마토" class="circle-img">
+      <p class="circle-name">GAP 토마토</p>
+    </div>
+    <div class="circle-item">
+      <img src="https://images.unsplash.com/photo-1594282486756-8b9e2278f5f9?w=400&q=80" alt="배추" class="circle-img">
+      <p class="circle-name">무농약 배추</p>
+    </div>
+    <div class="circle-item">
+      <img src="https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400&q=80" alt="고추" class="circle-img">
+      <p class="circle-name">양평 고추</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ PRODUCTS (Yellow) ════════ -->
+<section class="section-yellow">
+  <div class="section-header">
+    <p class="section-tag">Farm Shop</p>
+    <h2 class="section-title">양평 직거래 농산물</h2>
+  </div>
+  <div class="products-grid">
+    <a href="./shop-browse.html" class="product-card">
+      <img src="https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=600&q=80" alt="" class="product-card-img">
+      <div class="product-card-body">
+        <div class="product-card-info">
+          <h3>유기농 상추</h3>
+          <p>양평 해맑은 농장</p>
+          <div class="product-card-meta">
+            <span class="product-price">₩8,000</span>
+          </div>
+        </div>
+        <button class="cart-btn">🛒</button>
+      </div>
+    </a>
+    <a href="./shop-browse.html" class="product-card">
+      <img src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&q=80" alt="" class="product-card-img">
+      <div class="product-card-body">
+        <div class="product-card-info">
+          <h3>GAP 토마토</h3>
+          <p>강하 들녘 농장</p>
+          <div class="product-card-meta">
+            <span class="product-price">₩12,000</span>
+          </div>
+        </div>
+        <button class="cart-btn">🛒</button>
+      </div>
+    </a>
+    <a href="./shop-browse.html" class="product-card">
+      <img src="https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&q=80" alt="" class="product-card-img">
+      <div class="product-card-body">
+        <div class="product-card-info">
+          <h3>유채꽃 벌꿀</h3>
+          <p>꿀벌농장</p>
+          <div class="product-card-meta">
+            <span class="product-price">₩25,000</span>
+          </div>
+        </div>
+        <button class="cart-btn">🛒</button>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ════════ STATS (Dark Green + BG Photo) ════════ -->
+<section class="section-dark">
+  <img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&q=80" alt="" class="stats-bg">
+  <div class="stats-content">
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-num">342</div>
+        <div class="stat-label">등록 농가 수</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">98%</div>
+        <div class="stat-label">AI 추천 정확도</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">15종</div>
+        <div class="stat-label">모니터링 작물</div>
+      </div>
+    </div>
+
+    <div class="cta-block">
+      <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=600&q=80" alt="" class="cta-img">
+      <div class="cta-text">
+        <h2>수급 체인을 단축했습니다.<br>이제 무엇을 기를지<br>당신이 결정하세요.</h2>
+        <p>FarmBalance가 양평군의 수급 데이터를 분석하여 과잉과 부족을 사전에 감지하고, AI가 농장에 최적화된 작물을 추천합니다.</p>
+        <a href="./signup.html" class="btn-cta">지금 시작하기 →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ FEATURES (Cream) ════════ -->
+<section class="section-cream">
+  <div class="section-header">
+    <p class="section-tag">Core Features</p>
+    <h2 class="section-title">스마트한 농업을 위한<br>핵심 기능</h2>
+  </div>
+  <div class="features-grid">
+    <div class="feat-card">
+      <div class="feat-icon">📊</div>
+      <h3>실시간 수급 밸런스</h3>
+      <p>지역별·작물별 수급 현황을 실시간으로 확인하고 최적의 재배 결정을 내리세요.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🤖</div>
+      <h3>AI 작물 추천</h3>
+      <p>토양, 기후, 수급 데이터를 분석하여 나에게 맞는 최적의 작물을 추천합니다.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🛒</div>
+      <h3>농산물 직거래</h3>
+      <p>산지에서 소비자까지, 신선한 농산물을 합리적인 가격에 직거래하세요.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ FOOTER ════════ -->
+<footer class="footer">
+  <div class="footer-brand"><img src="./logo.png" alt="">FarmBalance</div>
+  <div class="footer-links">
+    <a href="./balance-list.html">밸런스</a>
+    <a href="./recommend-list.html">AI 추천</a>
+    <a href="./community-list.html">커뮤니티</a>
+    <a href="./shop-browse.html">상점</a>
+    <a href="#">이용약관</a>
+    <a href="#">개인정보처리방침</a>
+  </div>
+  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+</footer>
+
+</body>
+</html>

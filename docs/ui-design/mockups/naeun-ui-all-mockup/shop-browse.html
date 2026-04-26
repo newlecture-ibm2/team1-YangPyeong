@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>농산물 상점 — FarmBalance</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    .product-card { text-decoration: none; color: inherit; padding: 0; overflow: hidden; }
+    .product-img { width: 100%; height: 200px; object-fit: cover; border-radius: 20px 20px 0 0; display: block; }
+    .product-body { padding: 20px 24px 24px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .product-name { font-family: var(--serif); font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+    .product-seller { font-size: 13px; color: var(--text-sub); }
+    .product-price { font-family: var(--serif); font-size: 20px; color: var(--dark-green); margin-top: 10px; }
+    .cart-btn {
+      width: 44px; height: 44px; border-radius: 50%; background: var(--dark-green);
+      border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 18px; transition: background .2s; flex-shrink: 0;
+    }
+    .cart-btn:hover { background: var(--mid-green); }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="./landing.html" class="nav-logo"><img src="./logo.png" alt=""> FarmBalance</a>
+  <div class="nav-links">
+    <a href="./farm-manage.html">농장관리</a>
+    <a href="./balance-list.html">밸런스</a>
+    <a href="./recommend-list.html">AI 추천</a>
+    <a href="./community-list.html">커뮤니티</a>
+    <a href="./shop-browse.html" class="active">상점</a>
+  </div>
+  <div class="nav-right"><a href="#" class="btn-nav btn-nav-fill">마이페이지</a></div>
+</nav>
+<div class="page">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="./landing.html">홈</a> › <strong>상품 탐색</strong></div>
+    <h1 class="page-title">농산물 상점</h1>
+    <p class="page-sub">산지에서 직접 소비자에게, 신선한 농산물을 직거래하세요.</p>
+  </div>
+
+  <div class="filter-bar">
+    <select class="form-select" style="width:auto;"><option>카테고리: 전체</option><option>채소</option><option>과일</option><option>곡물</option><option>가공식품</option></select>
+    <select class="form-select" style="width:auto;"><option>정렬: 최신순</option><option>가격순</option><option>인기순</option></select>
+    <input class="form-input" placeholder="상품 검색" style="flex:1;">
+    <button class="btn btn-primary btn-sm">검색</button>
+  </div>
+
+  <div class="grid-4">
+    <a href="#" class="card product-card">
+      <img src="https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=400&q=80" alt="상추" class="product-img">
+      <div class="product-body">
+        <div>
+          <div class="product-name">유기농 상추 (500g)</div>
+          <div class="product-seller">양평 해맑은 농장</div>
+          <div class="product-price">₩8,000</div>
+        </div>
+        <button class="cart-btn">🛒</button>
+      </div>
+    </a>
+    <a href="#" class="card product-card">
+      <img src="https://images.unsplash.com/photo-1594282486756-8b9e2278f5f9?w=400&q=80" alt="배추" class="product-img">
+      <div class="product-body">
+        <div>
+          <div class="product-name">무농약 배추 (1포기)</div>
+          <div class="product-seller">용문 청정 농원</div>
+          <div class="product-price">₩5,000</div>
+        </div>
+        <button class="cart-btn">🛒</button>
+      </div>
+    </a>
+    <a href="#" class="card product-card">
+      <img src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&q=80" alt="토마토" class="product-img">
+      <div class="product-body">
+        <div>
+          <div class="product-name">GAP 토마토 (1kg)</div>
+          <div class="product-seller">강하 들녘 농장</div>
+          <div class="product-price">₩12,000</div>
+        </div>
+        <button class="cart-btn">🛒</button>
+      </div>
+    </a>
+    <a href="#" class="card product-card">
+      <img src="https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&q=80" alt="벌꿀" class="product-img">
+      <div class="product-body">
+        <div>
+          <div class="product-name">유채꽃 벌꿀 (500ml)</div>
+          <div class="product-seller">꿀벌농장</div>
+          <div class="product-price">₩25,000</div>
+        </div>
+        <button class="cart-btn">🛒</button>
+      </div>
+    </a>
+  </div>
+
+  <div class="pagination">
+    <a href="#">‹</a><a href="#" class="active">1</a><a href="#">2</a><a href="#">3</a><a href="#">›</a>
+  </div>
+</div>
+<footer class="footer">
+  <div class="footer-brand"><img src="./logo.png" alt="">FarmBalance</div>
+  <div class="footer-links"><a href="#">이용약관</a><a href="#">개인정보처리방침</a></div>
+  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+</footer>
+</body>
+</html>
