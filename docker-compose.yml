@@ -1,0 +1,119 @@
+services:
+  # 1. Frontend (Next.js)
+  frontend:
+    container_name: farm-frontend
+    image: farm-frontend:latest
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "3131:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=/api
+      - INTERNAL_BACKEND_URL=http://backend:8080
+      - JWT_SECRET=${JWT_SECRET}
+      - NEXT_PUBLIC_KAKAO_MAP_KEY=${NEXT_PUBLIC_KAKAO_MAP_KEY}
+    depends_on:
+      - backend
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+        - action: rebuild
+          path: ./frontend/package.json
+
+  # 2. Backend (Spring Boot)
+  backend:
+    container_name: farm-backend
+    image: farm-backend:latest
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - DB_URL=jdbc:postgresql://db:5432/farm_db
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - JWT_SECRET=${JWT_SECRET}
+      - AI_SERVER_URL=http://ai-server:8000
+      - AGENT_SERVER_URL=http://agent-server:8001
+    volumes:
+      - uploads-data:/var/lib/farm/uploads
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./backend/src
+          target: /app/src
+        - action: rebuild
+          path: ./backend/build.gradle
+
+  # 3. AI Server (FastAPI)
+  ai-server:
+    container_name: farm-ai
+    image: farm-ai:latest
+    build: ./ai
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASSWORD}@db:5432/farm_db
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      - db
+    develop:
+      watch:
+        - action: sync
+          path: ./ai
+          target: /app
+
+  # 4. Agent Server (FastAPI)
+  agent-server:
+    container_name: farm-agent
+    image: farm-agent:latest
+    build: ./agent
+    restart: unless-stopped
+    environment:
+      - AI_URL=http://ai-server:8000
+    depends_on:
+      - ai-server
+    develop:
+      watch:
+        - action: sync
+          path: ./agent
+          target: /app
+
+  # 5. Database (PostgreSQL)
+  db:
+    container_name: farm-db
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: farm_db
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d farm_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 6. Redis (Cache)
+  redis:
+    container_name: farm-redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# 네임드 볼륨 상세 정의
+volumes:
+  postgres-data:
+    name: farm-postgres-data
+  uploads-data:
+    name: farm-uploads-data

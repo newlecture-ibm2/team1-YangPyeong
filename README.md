@@ -61,8 +61,9 @@ team1-YangPyeong/
 ├── frontend/     ← Next.js 15 (BFF + 코로케이션)
 ├── ai/           ← FastAPI + 멀티 LLM + Agent + RAG
 ├── docs/         ← 기획/설계 문서
+├── scripts/      ← 운영 스크립트 (EC2 배포 등)
 ├── .agents/      ← AI 에이전트 개발 규칙
-├── setup.sh      ← 초기 환경 설정 스크립트
+├── setup.sh      ← 로컬 초기 환경 설정 스크립트
 └── docker-compose.yml
 ```
 
@@ -143,7 +144,27 @@ BEDROCK_MODEL_ID=anthropic.claude-3-sonnet-20240229-v1:0
 
 ---
 
-### 3. 서버 접속 및 보안/로그 수칙
+### 3. EC2 서버 초기 구축 (배포 담당자용)
+
+> ⚠️ **EC2 서버에 최초 배포할 때만** 실행합니다. 로컬 개발 환경과는 무관합니다.
+
+```bash
+# EC2 인스턴스에 SSH 접속 후 실행
+bash scripts/ec2-setup.sh
+```
+
+이 스크립트가 수행하는 작업:
+- ✅ **시스템 업데이트**: `apt-get update && upgrade`
+- ✅ **Docker 설치**: `docker.io` 설치 및 서비스 활성화
+- ✅ **Docker Compose v2 설치**: 최신 릴리스 자동 감지 및 설치
+- ✅ **유저 권한 설정**: `ubuntu` 유저를 docker 그룹에 추가
+- ✅ **유틸리티 설치**: git, curl, unzip
+
+> 실행 완료 후 docker 그룹 권한 적용을 위해 **서버에 재접속(exit → 다시 SSH)** 해야 합니다.
+
+---
+
+### 4. 서버 접속 및 보안/로그 수칙
 
 #### 🔑 서버 접속 (SSH)
 - **SSM 방식 (우리방식)**: AWS 콘솔에서 '연결' 버튼을 누르면 브라우저 터미널로 즉시 접속 가능합니다.
