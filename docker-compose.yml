@@ -50,7 +50,7 @@ services:
         - action: rebuild
           path: ./backend/build.gradle
 
-  # 3. AI Server (FastAPI)
+  # 3. AI Server (FastAPI + Gemini + ChromaDB)
   ai-server:
     container_name: farm-ai
     image: farm-ai:latest
@@ -59,6 +59,9 @@ services:
     environment:
       - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASSWORD}@db:5432/farm_db
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - CHROMA_PERSIST_DIR=/app/data/chroma
+    volumes:
+      - chroma-data:/app/data/chroma
     depends_on:
       - db
     develop:
@@ -67,7 +70,7 @@ services:
           path: ./ai
           target: /app
 
-  # 4. Agent Server (FastAPI)
+  # 4. Agent Server (FastAPI + Groq 챗봇)
   agent-server:
     container_name: farm-agent
     image: farm-agent:latest
@@ -75,6 +78,9 @@ services:
     restart: unless-stopped
     environment:
       - AI_URL=http://ai-server:8000
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    volumes:
+      - agent-data:/app/data/agent/logs
     depends_on:
       - ai-server
     develop:
@@ -118,3 +124,7 @@ volumes:
     name: farm-postgres-data
   uploads-data:
     name: farm-uploads-data
+  chroma-data:
+    name: farm-chroma-data
+  agent-data:
+    name: farm-agent-data
