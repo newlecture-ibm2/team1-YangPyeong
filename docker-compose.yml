@@ -37,6 +37,11 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - AI_SERVER_URL=http://ai-server:8000
       - AGENT_SERVER_URL=http://agent-server:8001
+      - KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}
+      - KMA_API_KEY=${KMA_API_KEY}
+      - SOIL_API_KEY=${SOIL_API_KEY}
+      - NONGSARO_API_KEY=${NONGSARO_API_KEY}
+      - KOSIS_API_KEY=${KOSIS_API_KEY}
     volumes:
       - uploads-data:/var/lib/farm/uploads
     depends_on:

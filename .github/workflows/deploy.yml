@@ -19,6 +19,14 @@ jobs:
           DB_USERNAME=${{ vars.DB_USERNAME }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+          NEXT_PUBLIC_KAKAO_MAP_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_MAP_KEY }}
+          KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}
+          KMA_API_KEY=${{ secrets.KMA_API_KEY }}
+          SOIL_API_KEY=${{ secrets.SOIL_API_KEY }}
+          NONGSARO_API_KEY=${{ secrets.NONGSARO_API_KEY }}
+          KOSIS_API_KEY=${{ secrets.KOSIS_API_KEY }}
           EOF
 
       - name: Deploy with Docker Compose
