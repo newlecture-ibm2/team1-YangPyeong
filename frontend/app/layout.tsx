@@ -3,8 +3,8 @@ import { ReactNode } from 'react'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Farm Balance',
-  description: 'Farm management system',
+  title: 'FarmBalance — 양평군 스마트 파밍 플랫폼',
+  description: '데이터 기반 작물 수급 예측과 AI 추천으로 농가 소득을 안정화하는 스마트 농업 플랫폼',
 }
 
 interface RootLayoutProps {

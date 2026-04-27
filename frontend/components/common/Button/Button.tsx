@@ -1,0 +1,55 @@
+'use client';
+
+import Link from 'next/link';
+import styles from './Button.module.css';
+
+interface ButtonProps {
+  children: React.ReactNode;
+  variant?: 'primary' | 'outline' | 'ghost' | 'dark' | 'kakao';
+  size?: 'sm' | 'md' | 'lg';
+  href?: string;
+  onClick?: () => void;
+  type?: 'button' | 'submit' | 'reset';
+  fullWidth?: boolean;
+  disabled?: boolean;
+  className?: string;
+}
+
+export default function Button({
+  children,
+  variant = 'primary',
+  size = 'md',
+  href,
+  onClick,
+  type = 'button',
+  fullWidth = false,
+  disabled = false,
+  className = '',
+}: ButtonProps) {
+  const classNames = [
+    styles.btn,
+    styles[`btn--${variant}`],
+    styles[`btn--${size}`],
+    fullWidth ? styles['btn--full'] : '',
+    className,
+  ].filter(Boolean).join(' ');
+
+  if (href) {
+    return (
+      <Link href={href} className={classNames}>
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      type={type}
+      className={classNames}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {children}
+    </button>
+  );
+}

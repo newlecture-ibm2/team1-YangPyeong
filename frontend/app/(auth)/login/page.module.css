@@ -1,0 +1,91 @@
+.authPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  padding: 40px;
+}
+
+.authCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 48px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+}
+
+.logoArea {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+.logoArea img {
+  height: 60px;
+}
+.logoArea span {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+.logoArea em {
+  font-style: italic;
+}
+
+.authTitle {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  text-align: center;
+  margin-bottom: 8px;
+  font-weight: 400;
+}
+
+.authSub {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  margin-bottom: 32px;
+}
+
+.authDivider {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  margin: 20px 0;
+  position: relative;
+}
+.authDivider::before,
+.authDivider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: var(--color-border);
+}
+.authDivider::before { left: 0; }
+.authDivider::after { right: 0; }
+
+.authFooter {
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-top: 24px;
+}
+.authFooter a {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+.authFooter a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .authPage { padding: 16px; }
+  .authCard { padding: 32px 24px; }
+}
