@@ -6,10 +6,15 @@ import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Input from '@/components/common/Input/Input';
 import Modal from '@/components/common/Modal/Modal';
+import Dropdown from '@/components/common/Dropdown/Dropdown';
+import SearchInput from '@/components/common/SearchInput/SearchInput';
+import FilterBar from '@/components/common/FilterBar/FilterBar';
+import { useToast } from '@/components/common/Toast';
 import styles from './page.module.css';
 
 export default function ComponentsDemoPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const toast = useToast();
 
   return (
     <div className={styles.container}>
@@ -69,13 +74,13 @@ export default function ComponentsDemoPage() {
             </div>
             
             <div className={styles.inputGroup}>
-              <Input 
-                as="select" 
+              <Dropdown 
                 label="Select Box"
                 options={[
                   { label: '옵션 1 선택', value: '1' },
                   { label: '옵션 2 선택', value: '2' }
                 ]}
+                placeholder="선택하세요"
               />
               <Input 
                 as="textarea" 
@@ -128,6 +133,97 @@ export default function ComponentsDemoPage() {
               <Button onClick={() => setIsModalOpen(false)}>확인</Button>
             </div>
           </Modal>
+        </div>
+      </section>
+
+      {/* 6. FilterBar & Search Components Section */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>6. Filters & Search</h2>
+        <div className={styles.box}>
+          <h3 style={{ marginBottom: '16px' }}>FilterBar (Combined)</h3>
+          <p style={{ color: '#666', marginBottom: '16px', fontSize: '14px' }}>
+            상단 필터 영역에 공통으로 쓰이는 레이아웃입니다. 모바일에서는 자동으로 세로 정렬됩니다.
+          </p>
+          <FilterBar
+            dropdowns={[
+              <Dropdown
+                key="crop"
+                options={[
+                  { value: 'all', label: '전체 작물' },
+                  { value: 'lettuce', label: '상추' },
+                  { value: 'cabbage', label: '배추' }
+                ]}
+                value="all"
+              />,
+              <Dropdown
+                key="status"
+                options={[
+                  { value: 'all', label: '전체 상태' },
+                  { value: 'active', label: '판매중' },
+                  { value: 'soldout', label: '품절' }
+                ]}
+                value="all"
+              />
+            ]}
+            search={
+              <SearchInput
+                placeholder="작물명 검색..."
+                onSearch={(val) => alert(`Search: ${val}`)}
+              />
+            }
+          />
+
+          <div className={styles.row} style={{ marginTop: '32px' }}>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ marginBottom: '16px' }}>Individual Dropdown</h3>
+              <Dropdown
+                label="단독 사용 예시"
+                options={[
+                  { value: '1', label: '옵션 1' },
+                  { value: '2', label: '옵션 2' }
+                ]}
+                placeholder="선택하세요"
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ marginBottom: '16px' }}>Individual SearchInput</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <SearchInput placeholder="아이콘만 있는 검색창" />
+                <SearchInput 
+                  placeholder="버튼이 포함된 검색창" 
+                  onSearch={(val) => alert(val)} 
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 7. Toast Section */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>7. Toast Notifications</h2>
+        <div className={styles.box}>
+          <h3 style={{ marginBottom: '16px' }}>알림 종류</h3>
+          <div className={styles.row}>
+            <Button 
+              variant="primary" 
+              onClick={() => toast.success('성공적으로 저장되었습니다!')}
+            >
+              성공 토스트 띄우기
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => toast.error('오류가 발생했습니다. 다시 시도해주세요.')}
+            >
+              에러 토스트 띄우기
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => toast.info('새로운 알림이 도착했습니다.')}
+            >
+              정보 토스트 띄우기
+            </Button>
+          </div>
         </div>
       </section>
 

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FarmBalance — 장바구니</title><link rel="stylesheet" href="../style.css">
+<style>.cart-item{display:flex;align-items:center;gap:16px;}.cart-img{width:80px;height:80px;border-radius:var(--radius-sm);background:var(--color-primary-pale);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:24px;}</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="../landing.html" class="nav-logo"><img src="../logo.png" alt="FarmBalance 로고"> FarmBalance</a>
+  <div class="nav-links"><a href="../balance/balance-list.html">밸런스</a><a href="../recommend/recommend-list.html">AI 추천</a><a href="../community/community-list.html">커뮤니티</a><a href="../shop/shop-browse.html" class="active">상점</a><a href="../policy/policy-list.html">정책</a><a href="../stores/store-map.html">가게</a></div>
+  <div class="nav-right"><a href="../auth/login.html" class="btn-nav btn-nav-outline">로그인</a><a href="../auth/signup.html" class="btn-nav btn-nav-fill">시작하기</a></div>
+</nav>
+<div class="page">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../landing.html">홈</a> › <a href="../shop/shop-browse.html">상점</a> › <strong>장바구니</strong></div>
+    <h1 class="page-title">장바구니 <span class="text-small" style="font-weight:400;">(3개)</span></h1>
+  </div>
+  <div class="grid-2" style="grid-template-columns:2fr 1fr;">
+    <div>
+      <div class="card mb-16"><div class="cart-item"><input type="checkbox" checked style="width:18px;height:18px;"><div class="cart-img">🥬</div><div style="flex:1;"><div style="font-weight:600;">유기농 상추 (500g)</div><div class="text-small">양평 해맑은 농장</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;"><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm">-</button><span style="padding:0 8px;">1</span><button class="btn btn-outline btn-sm">+</button></div><strong>₩8,000</strong></div></div><button class="btn btn-outline btn-sm">✕</button></div></div>
+      <div class="card mb-16"><div class="cart-item"><input type="checkbox" checked style="width:18px;height:18px;"><div class="cart-img">🥬</div><div style="flex:1;"><div style="font-weight:600;">무농약 배추 (1포기)</div><div class="text-small">용문 청정 농원</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;"><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm">-</button><span style="padding:0 8px;">2</span><button class="btn btn-outline btn-sm">+</button></div><strong>₩10,000</strong></div></div><button class="btn btn-outline btn-sm">✕</button></div></div>
+      <div class="card mb-16"><div class="cart-item"><input type="checkbox" checked style="width:18px;height:18px;"><div class="cart-img">🍅</div><div style="flex:1;"><div style="font-weight:600;">GAP 토마토 (1kg)</div><div class="text-small">강하 들녘 농장</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;"><div style="display:flex;gap:8px;"><button class="btn btn-outline btn-sm">-</button><span style="padding:0 8px;">1</span><button class="btn btn-outline btn-sm">+</button></div><strong>₩12,000</strong></div></div><button class="btn btn-outline btn-sm">✕</button></div></div>
+    </div>
+    <div>
+      <div class="card" style="position:sticky;top:80px;">
+        <h2 class="card-title">주문 요약</h2>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;"><span>상품 금액</span><span>₩30,000</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;"><span>배송비</span><span>₩3,000</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:14px;"><span>할인</span><span style="color:var(--color-danger);">-₩0</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:700;padding-top:16px;border-top:1px solid var(--color-border);"><span>합계</span><span style="color:var(--color-primary);">₩33,000</span></div>
+        <a href="./checkout.html" class="btn btn-primary btn-lg" style="width:100%;margin-top:16px;justify-content:center;">주문/결제하기</a>
+      </div>
+    </div>
+  </div>
+</div>
+<footer class="footer"><div class="footer-brand"><img src="../logo.png" alt="">FarmBalance</div><div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div></footer>
+</body></html>

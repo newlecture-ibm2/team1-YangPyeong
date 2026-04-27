@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBalance — 관리자</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    /* ═══ ADMIN LAYOUT ═══ */
+    .admin-wrap { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 72px); }
+    .admin-sidebar { background: #111714; padding: 32px 0; position: sticky; top: 72px; height: calc(100vh - 72px); overflow-y: auto; }
+    .admin-sidebar-title { font-family: var(--font-serif); font-size: 16px; color: var(--color-accent); padding: 0 24px; margin-bottom: 32px; letter-spacing: .04em; }
+    .admin-menu { list-style: none; }
+    .admin-menu li a { display: flex; align-items: center; gap: 12px; padding: 14px 24px; color: rgba(255,255,255,.5); font-size: 15px; text-decoration: none; transition: all .2s; border-left: 3px solid transparent; }
+    .admin-menu li a:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .admin-menu li a.active { color: #fff; background: rgba(255,255,255,.08); border-left-color: var(--color-accent); }
+    .admin-menu li a .icon { font-size: 18px; width: 24px; text-align: center; }
+    .admin-menu-label { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.25); padding: 24px 24px 8px; }
+    .admin-content { padding: 40px; background: var(--color-bg); }
+
+    /* STATUS DOT */
+    .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+    .status-dot.green { background: #2E7D32; }
+    .status-dot.red { background: var(--color-danger); }
+    .status-dot.yellow { background: #F59E0B; }
+
+    /* APPROVAL CARD */
+    .approval-card { background: var(--color-surface); border-radius: var(--radius-md); padding: 24px; margin-bottom: 16px; border-left: 4px solid var(--color-warning); transition: box-shadow .3s; }
+    .approval-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,.08); }
+    .approval-meta { display: flex; gap: 32px; margin: 16px 0; font-size: 14px; color: var(--color-text-secondary); }
+    .approval-actions { display: flex; gap: 12px; margin-top: 16px; }
+
+    /* TOGGLE */
+    .toggle { position: relative; width: 44px; height: 24px; border-radius: 12px; background: var(--color-border); cursor: pointer; border: none; transition: background .2s; }
+    .toggle.on { background: var(--color-primary); }
+    .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; }
+    .toggle.on::after { transform: translateX(20px); }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="../index.html" class="nav-logo"><img src="../logo.png" alt=""> FarmBalance</a>
+  <div class="nav-links"><a href="./landing.html">홈</a></div>
+  <div class="nav-right"><span class="pill pill--dark" style="font-size:13px;">관리자</span><a class="btn-nav btn-nav-fill" href="#">관리자 님</a></div>
+</nav>
+
+<div class="admin-wrap">
+  <!-- ══════ SIDEBAR ══════ -->
+  <aside class="admin-sidebar">
+    <p class="admin-sidebar-title">⚙️ 관리 메뉴</p>
+    <ul class="admin-menu">
+      <li><a href="#dashboard" class="active"><span class="icon">📊</span> 대시보드</a></li>
+      <p class="admin-menu-label">사용자</p>
+      <li><a href="#users"><span class="icon">👥</span> 사용자 관리</a></li>
+      <li><a href="#approvals"><span class="icon">✅</span> 농부 승인/반려</a></li>
+      <p class="admin-menu-label">데이터</p>
+      <li><a href="#crops"><span class="icon">🌾</span> 작물 마스터</a></li>
+      <li><a href="#"><span class="icon">🔗</span> 외부 데이터 연동</a></li>
+      <li><a href="#"><span class="icon">⚖️</span> 밸런스 엔진</a></li>
+      <p class="admin-menu-label">콘텐츠</p>
+      <li><a href="#"><span class="icon">💬</span> 커뮤니티 관리</a></li>
+      <li><a href="#"><span class="icon">🛒</span> 상점 관리</a></li>
+      <li><a href="#"><span class="icon">🏪</span> 가게 정보</a></li>
+      <li><a href="#"><span class="icon">🎟️</span> 쿠폰/보상</a></li>
+      <p class="admin-menu-label">시스템</p>
+      <li><a href="#"><span class="icon">💚</span> 시스템 헬스</a></li>
+    </ul>
+  </aside>
+
+  <!-- ══════ MAIN CONTENT ══════ -->
+  <main class="admin-content">
+
+    <!-- ═══ 1. 대시보드 ═══ -->
+    <section id="dashboard" class="mb-48">
+      <h2 class="page-title" style="margin-bottom:32px;">⚙️ 관리자 <span class="italic">대시보드</span></h2>
+
+      <!-- KPI 카드 -->
+      <div class="kpi-row">
+        <div class="kpi" style="border-left:4px solid var(--color-warning);">
+          <p class="kpi-label">가입 승인 대기</p>
+          <p class="kpi-value" style="color:var(--color-warning);">12</p>
+        </div>
+        <div class="kpi">
+          <p class="kpi-label">오늘 등록 건수</p>
+          <p class="kpi-value">47</p>
+        </div>
+        <div class="kpi">
+          <p class="kpi-label">주간 종자 구매량</p>
+          <p class="kpi-value">1,280</p>
+        </div>
+        <div class="kpi">
+          <p class="kpi-label">로스율</p>
+          <p class="kpi-value red">3.2%</p>
+        </div>
+      </div>
+
+      <!-- 차트 자리 + API 상태 -->
+      <div class="grid-2 mb-32">
+        <div class="card">
+          <h4 class="card-label">일별 가입 추이</h4>
+          <div class="placeholder" style="height:220px;">📈 라인 차트 영역</div>
+        </div>
+        <div class="card">
+          <h4 class="card-label">작물별 선호도</h4>
+          <div class="placeholder" style="height:220px;">🥧 파이 차트 영역</div>
+        </div>
+      </div>
+
+      <!-- 외부 API 상태 -->
+      <div class="card">
+        <h4 class="card-label">외부 API 상태</h4>
+        <div class="grid-3" style="margin-top:16px;">
+          <div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--color-primary-pale);border-radius:var(--radius-sm);">
+            <span class="status-dot green"></span>
+            <div><p style="font-weight:600;font-size:14px;">기상청 API</p><p style="font-size:12px;color:var(--color-text-secondary);">마지막 동기화: 10분 전</p></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--color-primary-pale);border-radius:var(--radius-sm);">
+            <span class="status-dot green"></span>
+            <div><p style="font-weight:600;font-size:14px;">KAMIS 시세</p><p style="font-size:12px;color:var(--color-text-secondary);">마지막 동기화: 1시간 전</p></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:16px;background:rgba(220,38,38,.08);border-radius:var(--radius-sm);">
+            <span class="status-dot red"></span>
+            <div><p style="font-weight:600;font-size:14px;">농산물유통</p><p style="font-size:12px;color:var(--color-danger);">장애 발생 · 30분 전</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 2. 사용자 관리 ═══ -->
+    <section id="users" class="mb-48">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <div>
+          <h2 class="page-title" style="margin-bottom:4px;">👥 사용자 <span class="italic">관리</span></h2>
+          <p class="text-small">총 1,234명</p>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <input class="form-input" style="width:280px;" placeholder="🔍 이름 또는 이메일 검색">
+        <select class="form-input" style="width:auto;"><option>역할: 전체</option><option>일반</option><option>농부</option><option>지자체</option><option>관리자</option></select>
+        <select class="form-input" style="width:auto;"><option>상태: 전체</option><option>활성</option><option>정지</option></select>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>이름</th><th>이메일</th><th>역할</th><th>가입일</th><th>상태</th><th>액션</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>홍길동</strong></td>
+              <td>farmer@yp.kr</td>
+              <td><span class="badge badge-green">농부</span></td>
+              <td>2026-03-15</td>
+              <td><span class="badge badge-green">활성</span></td>
+              <td><select class="form-input" style="width:auto;padding:6px 10px;font-size:12px;"><option>역할 변경</option><option>정지</option><option>감사로그</option></select></td>
+            </tr>
+            <tr>
+              <td><strong>김영수</strong></td>
+              <td>kim@yp.kr</td>
+              <td><span class="badge badge-lime">일반</span></td>
+              <td>2026-04-01</td>
+              <td><span class="badge badge-green">활성</span></td>
+              <td><select class="form-input" style="width:auto;padding:6px 10px;font-size:12px;"><option>역할 변경</option><option>정지</option><option>감사로그</option></select></td>
+            </tr>
+            <tr>
+              <td><strong>박지영</strong></td>
+              <td>park@gov.kr</td>
+              <td><span class="badge" style="background:rgba(37,99,235,.1);color:#2563EB;">지자체</span></td>
+              <td>2025-11-20</td>
+              <td><span class="badge badge-green">활성</span></td>
+              <td><select class="form-input" style="width:auto;padding:6px 10px;font-size:12px;"><option>역할 변경</option><option>정지</option><option>감사로그</option></select></td>
+            </tr>
+            <tr>
+              <td><strong>이철민</strong></td>
+              <td>lee@yp.kr</td>
+              <td><span class="badge badge-green">농부</span></td>
+              <td>2026-01-10</td>
+              <td><span class="badge badge-red">정지</span></td>
+              <td><select class="form-input" style="width:auto;padding:6px 10px;font-size:12px;"><option>역할 변경</option><option>활성화</option><option>감사로그</option></select></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><a href="#">«</a><a class="active" href="#">1</a><a href="#">2</a><a href="#">3</a><a href="#">…</a><a href="#">42</a><a href="#">»</a></div>
+    </section>
+
+    <!-- ═══ 3. 농부 승인/반려 ═══ -->
+    <section id="approvals" class="mb-48">
+      <h2 class="page-title" style="margin-bottom:24px;">✅ 농부 승인 <span class="italic">/ 반려</span></h2>
+
+      <div class="tabs mb-24">
+        <a href="#" class="active">대기중 (12)</a>
+        <a href="#">승인완료</a>
+        <a href="#">반려</a>
+      </div>
+
+      <div class="approval-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <h4>김새싹 · <span style="color:var(--color-text-secondary);font-weight:400;">새싹 농원</span></h4>
+            <div class="approval-meta">
+              <span>📍 양평군 지평면 일신리 456-7</span>
+              <span>📐 면적: 2,400㎡</span>
+              <span>🌱 주요: 배추, 상추</span>
+            </div>
+          </div>
+          <span class="badge badge-orange">대기중</span>
+        </div>
+        <div class="approval-meta">
+          <span>토양유형: 사양토 (pH 6.2)</span>
+          <span>신청일: 2026-04-25</span>
+        </div>
+        <div class="approval-actions">
+          <button class="btn btn-primary btn-sm">승인</button>
+          <button class="btn btn-sm" style="background:var(--color-danger);color:#fff;border:none;">반려</button>
+          <button class="btn btn-outline btn-sm">상세보기</button>
+        </div>
+      </div>
+
+      <div class="approval-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <h4>박대풍 · <span style="color:var(--color-text-secondary);font-weight:400;">대풍 농장</span></h4>
+            <div class="approval-meta">
+              <span>📍 양평군 강하면 전수리 89-12</span>
+              <span>📐 면적: 5,100㎡</span>
+              <span>🌱 주요: 고추, 감자, 옥수수</span>
+            </div>
+          </div>
+          <span class="badge badge-orange">대기중</span>
+        </div>
+        <div class="approval-meta">
+          <span>토양유형: 양토 (pH 6.8)</span>
+          <span>신청일: 2026-04-24</span>
+        </div>
+        <div class="approval-actions">
+          <button class="btn btn-primary btn-sm">승인</button>
+          <button class="btn btn-sm" style="background:var(--color-danger);color:#fff;border:none;">반려</button>
+          <button class="btn btn-outline btn-sm">상세보기</button>
+        </div>
+      </div>
+
+      <div class="approval-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <h4>최은비 · <span style="color:var(--color-text-secondary);font-weight:400;">은비네 텃밭</span></h4>
+            <div class="approval-meta">
+              <span>📍 양평군 양서면 목왕리 34</span>
+              <span>📐 면적: 800㎡</span>
+              <span>🌱 주요: 상추, 시금치</span>
+            </div>
+          </div>
+          <span class="badge badge-orange">대기중</span>
+        </div>
+        <div class="approval-meta">
+          <span>토양유형: 점토 (pH 5.9)</span>
+          <span>신청일: 2026-04-23</span>
+        </div>
+        <div class="approval-actions">
+          <button class="btn btn-primary btn-sm">승인</button>
+          <button class="btn btn-sm" style="background:var(--color-danger);color:#fff;border:none;">반려</button>
+          <button class="btn btn-outline btn-sm">상세보기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 4. 작물 마스터 관리 ═══ -->
+    <section id="crops">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <h2 class="page-title" style="margin-bottom:0;">🌾 작물 마스터 <span class="italic">관리</span></h2>
+        <div style="display:flex;gap:12px;">
+          <button class="btn btn-primary">작물 등록 <span class="arrow">→</span></button>
+          <button class="btn" style="background:var(--color-warning);color:#fff;border:none;">🔄 밸런스 재계산</button>
+        </div>
+      </div>
+      <div class="card" style="background:var(--color-primary-pale);margin-bottom:24px;padding:16px 24px;">
+        <p style="font-size:14px;color:var(--color-primary);">💡 재계산은 전체 수급 데이터에 영향을 줍니다. 신중하게 실행해주세요.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>작물코드</th><th>작물명</th><th>카테고리</th><th>시즌</th><th>상태</th><th>액션</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>CRP-001</td>
+              <td><strong>배추</strong></td>
+              <td>채소류</td>
+              <td><span class="pill pill--green" style="font-size:12px;">봄</span> <span class="pill pill--green" style="font-size:12px;">가을</span></td>
+              <td><button class="toggle on"></button></td>
+              <td><a class="btn btn-ghost btn-sm" href="#">수정</a></td>
+            </tr>
+            <tr>
+              <td>CRP-002</td>
+              <td><strong>고추</strong></td>
+              <td>채소류</td>
+              <td><span class="pill pill--green" style="font-size:12px;">여름</span></td>
+              <td><button class="toggle on"></button></td>
+              <td><a class="btn btn-ghost btn-sm" href="#">수정</a></td>
+            </tr>
+            <tr>
+              <td>CRP-003</td>
+              <td><strong>감자</strong></td>
+              <td>채소류</td>
+              <td><span class="pill pill--green" style="font-size:12px;">봄</span></td>
+              <td><button class="toggle on"></button></td>
+              <td><a class="btn btn-ghost btn-sm" href="#">수정</a></td>
+            </tr>
+            <tr>
+              <td>CRP-004</td>
+              <td><strong>양파</strong></td>
+              <td>채소류</td>
+              <td><span class="pill pill--green" style="font-size:12px;">봄</span> <span class="pill pill--green" style="font-size:12px;">가을</span></td>
+              <td><button class="toggle"></button></td>
+              <td><a class="btn btn-ghost btn-sm" href="#">수정</a></td>
+            </tr>
+            <tr>
+              <td>CRP-005</td>
+              <td><strong>유기농 상추</strong></td>
+              <td>엽채류</td>
+              <td><span class="pill pill--green" style="font-size:12px;">연중</span></td>
+              <td><button class="toggle on"></button></td>
+              <td><a class="btn btn-ghost btn-sm" href="#">수정</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><a href="#">«</a><a class="active" href="#">1</a><a href="#">2</a><a href="#">3</a><a href="#">»</a></div>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>

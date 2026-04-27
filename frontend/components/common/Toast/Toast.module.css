@@ -1,0 +1,113 @@
+/* ════════════════════════════════════════════════════════
+   Toast — 전역 알림 컴포넌트 스타일
+   ════════════════════════════════════════════════════════ */
+
+.toastContainer {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none; /* 컨테이너 자체는 클릭 안 되게 */
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto; /* 개별 토스트는 클릭 가능하게 */
+  animation: slideDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 바운스 효과 */
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Variants ── */
+.toast--success {
+  border-left: 4px solid var(--color-primary);
+}
+.toast--success .icon {
+  color: var(--color-primary);
+}
+
+.toast--error {
+  border-left: 4px solid var(--color-danger);
+}
+.toast--error .icon {
+  color: var(--color-danger);
+}
+
+.toast--info {
+  border-left: 4px solid var(--color-text-secondary);
+}
+.toast--info .icon {
+  color: var(--color-text-secondary);
+}
+
+/* ── Elements ── */
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px; /* 텍스트 첫 줄과 높이 맞추기 */
+}
+
+.message {
+  flex: 1;
+  font-size: 15px;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  margin: -4px -4px -4px 0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.closeBtn:hover {
+  background: #f0f0f0;
+  color: var(--color-text);
+}
+
+/* ── Animations ── */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 모바일 화면에서는 화면 꽉 차게 */
+@media (max-width: 480px) {
+  .toastContainer {
+    width: calc(100% - 40px);
+  }
+  .toast {
+    min-width: unset;
+    width: 100%;
+  }
+}
