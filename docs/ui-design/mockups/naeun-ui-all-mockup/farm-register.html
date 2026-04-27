@@ -2,90 +2,91 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>농장 등록 신청 — FarmBalance</title>
+  <title>FarmBalance — 농장 등록</title>
   <link rel="stylesheet" href="./style.css">
-  <style>
-    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip { padding: 8px 16px; border-radius: 100px; border: 1.5px solid var(--border); font-size: 13px; cursor: pointer; background: var(--white); transition: all .2s; }
-    .chip.selected { background: var(--dark-green); color: #fff; border-color: var(--dark-green); }
-    .upload-area { border: 2px dashed var(--border); border-radius: 16px; padding: 40px; text-align: center; color: var(--text-sub); cursor: pointer; transition: border-color .2s; }
-    .upload-area:hover { border-color: var(--dark-green); }
-  </style>
 </head>
 <body>
 <nav class="nav">
-  <a href="./landing.html" class="nav-logo"><img src="./logo.png" alt=""> FarmBalance</a>
-  <div class="nav-links">
-    <a href="./farm-manage.html" class="active">농장관리</a>
-    <a href="./balance-list.html">밸런스</a>
-    <a href="./recommend-list.html">AI 추천</a>
-    <a href="./community-list.html">커뮤니티</a>
-    <a href="./shop-browse.html">상점</a>
-  </div>
-  <div class="nav-right"><a href="#" class="btn-nav btn-nav-fill">마이페이지</a></div>
+  <a href="./index.html" class="nav-logo"><img src="./logo.png" alt=""> Farm<span class="italic">Balance</span></a>
+  <div class="nav-links"><a href="./farm-manage.html" class="active">내 농장</a><a href="./balance-list.html">수급현황</a><a href="./recommend-list.html">AI 추천</a><a href="./shop-browse.html">상점</a><a href="./community-list.html">커뮤니티</a></div>
+  <div class="nav-right"><a class="btn-nav btn-nav-fill" href="#">홍길동 님</a></div>
 </nav>
+
 <div class="page">
   <div class="page-header">
-    <div class="breadcrumb"><a href="./landing.html">홈</a> › <a href="./farm-manage.html">농장관리</a> › <strong>등록 신청</strong></div>
-    <h1 class="page-title">농장 등록 신청</h1>
-    <p class="page-sub">승인된 농장만 수급 밸런스 참여 및 종자 등록이 가능합니다.</p>
+    <p class="breadcrumb"><a href="./farm-manage.html">내 농장</a> / 농장 등록</p>
+    <h1 class="page-title">농장 <span class="italic">등록</span></h1>
+    <p class="page-sub">새로운 농장을 등록하고 FarmBalance의 AI 분석과 수급 관리를 시작하세요.</p>
   </div>
 
-  <div class="grid-2" style="gap:32px;">
+  <div class="grid-2">
     <div>
       <div class="card mb-24">
-        <h2 class="card-title">기본 정보</h2>
-        <div class="form-group"><label class="form-label">농장명</label><input class="form-input" placeholder="예: 양평 해맑은 농장"></div>
-        <div class="form-group">
-          <label class="form-label">주소</label>
-          <div style="display:flex; gap:8px;"><input class="form-input" placeholder="양평군 단월면..." style="flex:1;"><button class="btn btn-outline btn-sm">검색</button></div>
-        </div>
-        <div class="form-group"><label class="form-label">면적 (㎡)</label><input type="number" class="form-input" placeholder="3300"></div>
-        <div class="form-group">
-          <label class="form-label">토양 유형</label>
-          <select class="form-select"><option>선택하세요</option><option>사양토</option><option>양토</option><option>식양토</option><option>사질토</option></select>
+        <h3 class="card-title">기본 정보</h3>
+        <div class="form-group"><label class="form-label">농장 이름</label><input class="form-input" placeholder="예: 양평 해맑은 농장"></div>
+        <div class="form-group"><label class="form-label">주소</label><input class="form-input" placeholder="경기도 양평군 ..."></div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label">총 면적 (㎡)</label><input class="form-input" type="number" placeholder="0"></div>
+          <div class="form-group"><label class="form-label">설립 연도</label><input class="form-input" type="number" placeholder="2020"></div>
         </div>
       </div>
+
+      <div class="card mb-24">
+        <h3 class="card-title">재배 작물 선택</h3>
+        <p class="text-small mb-16">현재 재배 중이거나 계획 중인 작물을 선택하세요</p>
+        <div class="flex gap-8 flex-wrap">
+          <span class="pill pill--green" style="cursor:pointer;">🥬 배추</span>
+          <span class="pill pill--green" style="cursor:pointer;">🌶️ 고추</span>
+          <span class="pill pill--outline" style="cursor:pointer;">🥕 당근</span>
+          <span class="pill pill--outline" style="cursor:pointer;">🧅 양파</span>
+          <span class="pill pill--outline" style="cursor:pointer;">🥔 감자</span>
+          <span class="pill pill--outline" style="cursor:pointer;">🍅 토마토</span>
+          <span class="pill pill--outline" style="cursor:pointer;">🌾 벼</span>
+          <span class="pill pill--outline" style="cursor:pointer;">🫛 콩</span>
+        </div>
+      </div>
+
       <div class="card">
-        <h2 class="card-title">주요 재배 작물</h2>
-        <p style="font-size:14px; color:var(--text-sub); margin-bottom:16px;">해당하는 작물을 모두 선택하세요.</p>
-        <div class="chip-row">
-          <span class="chip selected">🥬 상추</span>
-          <span class="chip selected">🍅 토마토</span>
-          <span class="chip">🌶️ 고추</span>
-          <span class="chip">🥔 감자</span>
-          <span class="chip selected">🥕 당근</span>
-          <span class="chip">🍆 가지</span>
-          <span class="chip">🧅 양파</span>
-          <span class="chip">🌿 시금치</span>
-        </div>
+        <h3 class="card-title">농장 사진</h3>
+        <div class="placeholder" style="cursor:pointer;">📷 클릭하여 사진 업로드 (최대 5장)</div>
       </div>
     </div>
+
     <div>
-      <div class="card mb-24">
-        <h2 class="card-title">증빙 서류 업로드</h2>
-        <div class="upload-area">📄<br><br><strong>파일을 드래그하거나 클릭하세요</strong><br><span style="font-size:12px;">PDF, JPG, PNG (최대 10MB)</span></div>
+      <div class="card card-dark mb-24">
+        <h3 class="card-title" style="color:var(--color-accent);">💡 등록 안내</h3>
+        <ul style="list-style:none;color:rgba(255,255,255,.8);font-size:14px;line-height:2;">
+          <li>✅ 등록 후 AI 기반 맞춤 추천을 받을 수 있습니다</li>
+          <li>✅ 수급 알림을 통해 최적 출하 시기를 안내받습니다</li>
+          <li>✅ 재배 이력이 자동으로 기록됩니다</li>
+          <li>✅ 지자체 보조금 정보를 받을 수 있습니다</li>
+        </ul>
       </div>
-      <div class="card card-dark">
-        <p class="card-label" style="color:var(--lime);">안내</p>
-        <h3 class="card-title">신청 후 프로세스</h3>
-        <div style="font-size:14px; line-height:2; opacity:.8;">
-          <p>1. 농장 등록 신청서 제출</p>
-          <p>2. 지자체 담당자 서류 검토 (1~3일)</p>
-          <p>3. 승인 완료 → 종자 등록 가능</p>
-          <p>4. 수급 밸런스 데이터에 반영</p>
+
+      <div class="card">
+        <h3 class="card-title">토양 정보 (선택)</h3>
+        <div class="form-group"><label class="form-label">토양 유형</label>
+          <select class="form-input">
+            <option>선택하세요</option><option>사질토</option><option>양토</option><option>점토</option><option>사양토</option>
+          </select>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label">pH</label><input class="form-input" placeholder="6.0 ~ 7.0"></div>
+          <div class="form-group"><label class="form-label">유기물 (%)</label><input class="form-input" placeholder="2.5"></div>
         </div>
       </div>
+
+      <div class="flex gap-16 mt-16">
+        <button class="btn btn-primary btn-lg" type="button" style="flex:1;justify-content:center;">등록하기 <span class="arrow">→</span></button>
+        <button class="btn btn-outline" type="button">취소</button>
+      </div>
     </div>
-  </div>
-  <div style="text-align:center; margin-top:40px;">
-    <button class="btn btn-primary" style="padding:18px 48px; font-size:16px;">등록 신청하기</button>
   </div>
 </div>
+
 <footer class="footer">
-  <div class="footer-brand"><img src="./logo.png" alt="">FarmBalance</div>
-  <div class="footer-links"><a href="#">이용약관</a><a href="#">개인정보처리방침</a></div>
-  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+  <div class="footer-brand"><img src="./logo.png" alt=""> Farm<span class="italic">Balance</span></div>
+  <p class="footer-copy">© 2026 FarmBalance. 양평군 스마트 파밍 플랫폼</p>
 </footer>
 </body>
 </html>

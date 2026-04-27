@@ -2,64 +2,75 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>작물 밸런스 조회 — FarmBalance</title>
+  <title>FarmBalance — 수급 현황</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 <nav class="nav">
-  <a href="./landing.html" class="nav-logo"><img src="./logo.png" alt=""> FarmBalance</a>
-  <div class="nav-links">
-    <a href="./farm-manage.html">농장관리</a>
-    <a href="./balance-list.html" class="active">밸런스</a>
-    <a href="./recommend-list.html">AI 추천</a>
-    <a href="./community-list.html">커뮤니티</a>
-    <a href="./shop-browse.html">상점</a>
-  </div>
-  <div class="nav-right"><a href="#" class="btn-nav btn-nav-fill">마이페이지</a></div>
+  <a href="./index.html" class="nav-logo"><img src="./logo.png" alt=""> Farm<span class="italic">Balance</span></a>
+  <div class="nav-links"><a href="./farm-manage.html">내 농장</a><a href="./balance-list.html" class="active">수급현황</a><a href="./recommend-list.html">AI 추천</a><a href="./shop-browse.html">상점</a><a href="./community-list.html">커뮤니티</a></div>
+  <div class="nav-right"><a class="btn-nav btn-nav-fill" href="#">홍길동 님</a></div>
 </nav>
+
 <div class="page">
   <div class="page-header">
-    <div class="breadcrumb"><a href="./landing.html">홈</a> › <strong>작물 밸런스</strong></div>
-    <h1 class="page-title">작물 밸런스 조회</h1>
-    <p class="page-sub">지역별·작물별 수급 현황을 실시간으로 확인하세요.</p>
+    <h1 class="page-title">수급 <span class="italic">현황</span></h1>
+    <p class="page-sub">양평군 주요 작물의 실시간 공급·수요 밸런스를 확인하세요.</p>
   </div>
 
-  <div class="filter-bar">
-    <select class="form-select" style="width:auto;"><option>지역: 양평군</option></select>
-    <select class="form-select" style="width:auto;"><option>연도: 2026</option></select>
-    <select class="form-select" style="width:auto;"><option>작물: 전체</option></select>
-    <button class="btn btn-primary btn-sm">조회</button>
-  </div>
-
-  <div class="card mb-32">
-    <h2 class="card-title">수급 밸런스 현황</h2>
-    <div style="display:flex; flex-direction:column; gap:20px; margin-top:16px;">
-      <div><div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="font-weight:600;">🥬 상추</span><span><span class="badge badge-green">적정</span> +200톤</span></div><div class="gauge"><div class="gauge-fill green" style="width:60%;"></div></div></div>
-      <div><div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="font-weight:600;">🥬 배추</span><span><span class="badge badge-red">부족</span> -700톤</span></div><div class="gauge"><div class="gauge-fill red" style="width:35%;"></div></div></div>
-      <div><div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="font-weight:600;">🌶️ 고추</span><span><span class="badge badge-orange">과잉주의</span> +200톤</span></div><div class="gauge"><div class="gauge-fill orange" style="width:75%;"></div></div></div>
-      <div><div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="font-weight:600;">🥔 감자</span><span><span class="badge badge-green">적정</span> +50톤</span></div><div class="gauge"><div class="gauge-fill green" style="width:55%;"></div></div></div>
-      <div><div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="font-weight:600;">🍅 토마토</span><span><span class="badge badge-orange">부족주의</span> -200톤</span></div><div class="gauge"><div class="gauge-fill orange" style="width:40%;"></div></div></div>
+  <!-- GAUGE SUMMARY -->
+  <div class="grid-3 mb-48">
+    <div class="card">
+      <p class="card-label">배추</p>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:14px;font-weight:600;">공급률 72%</span>
+        <span class="badge badge-green">안정</span>
+      </div>
+      <div class="gauge"><div class="gauge-fill green" style="width:72%"></div></div>
+    </div>
+    <div class="card">
+      <p class="card-label">고추</p>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:14px;font-weight:600;">공급률 128%</span>
+        <span class="badge badge-orange">과잉</span>
+      </div>
+      <div class="gauge"><div class="gauge-fill orange" style="width:100%"></div></div>
+    </div>
+    <div class="card">
+      <p class="card-label">감자</p>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:14px;font-weight:600;">공급률 45%</span>
+        <span class="badge badge-red">부족</span>
+      </div>
+      <div class="gauge"><div class="gauge-fill red" style="width:45%"></div></div>
     </div>
   </div>
 
-  <div class="card">
-    <h2 class="card-title">작물별 밸런스 목록</h2>
-    <table class="tbl">
-      <thead><tr><th>작물</th><th>공급량</th><th>수요량</th><th>밸런스</th><th>상태</th><th>상세</th></tr></thead>
+  <!-- FILTER + TABLE -->
+  <div class="filter-bar">
+    <select class="form-input" style="width:auto;min-width:140px;"><option>전체 작물</option><option>채소류</option><option>과일류</option><option>곡물</option></select>
+    <select class="form-input" style="width:auto;min-width:140px;"><option>전체 상태</option><option>안정</option><option>과잉</option><option>부족</option></select>
+    <input class="form-input" style="width:auto;flex:1;min-width:200px;" placeholder="🔍 작물명 검색...">
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>작물</th><th>현재 공급량</th><th>수요량</th><th>공급률</th><th>상태</th><th>전월 대비</th></tr></thead>
       <tbody>
-        <tr><td>🥬 상추</td><td>1,200톤</td><td>1,000톤</td><td style="font-weight:700; color:#2E7D32;">+200톤</td><td><span class="badge badge-green">적정</span></td><td><a href="#" style="color:var(--dark-green); font-weight:600; text-decoration:none;">상세 →</a></td></tr>
-        <tr><td>🥬 배추</td><td>800톤</td><td>1,500톤</td><td style="font-weight:700; color:var(--red);">-700톤</td><td><span class="badge badge-red">부족</span></td><td><a href="#" style="color:var(--dark-green); font-weight:600; text-decoration:none;">상세 →</a></td></tr>
-        <tr><td>🌶️ 고추</td><td>600톤</td><td>400톤</td><td style="font-weight:700; color:var(--orange);">+200톤</td><td><span class="badge badge-orange">과잉주의</span></td><td><a href="#" style="color:var(--dark-green); font-weight:600; text-decoration:none;">상세 →</a></td></tr>
-        <tr><td>🥔 감자</td><td>900톤</td><td>850톤</td><td style="font-weight:700; color:#2E7D32;">+50톤</td><td><span class="badge badge-green">적정</span></td><td><a href="#" style="color:var(--dark-green); font-weight:600; text-decoration:none;">상세 →</a></td></tr>
-        <tr><td>🍅 토마토</td><td>300톤</td><td>500톤</td><td style="font-weight:700; color:var(--orange);">-200톤</td><td><span class="badge badge-orange">부족주의</span></td><td><a href="#" style="color:var(--dark-green); font-weight:600; text-decoration:none;">상세 →</a></td></tr>
+        <tr><td><strong>배추</strong></td><td>245 톤</td><td>340 톤</td><td>72%</td><td><span class="badge badge-green">안정</span></td><td style="color:var(--color-primary)">▲ 5.2%</td></tr>
+        <tr><td><strong>고추</strong></td><td>180 톤</td><td>140 톤</td><td>128%</td><td><span class="badge badge-orange">과잉</span></td><td style="color:var(--color-danger)">▲ 18.3%</td></tr>
+        <tr><td><strong>감자</strong></td><td>90 톤</td><td>200 톤</td><td>45%</td><td><span class="badge badge-red">부족</span></td><td style="color:var(--color-danger)">▼ 12.1%</td></tr>
+        <tr><td><strong>토마토</strong></td><td>120 톤</td><td>150 톤</td><td>80%</td><td><span class="badge badge-green">안정</span></td><td style="color:var(--color-primary)">▲ 3.4%</td></tr>
+        <tr><td><strong>양파</strong></td><td>310 톤</td><td>180 톤</td><td>172%</td><td><span class="badge badge-red">과잉</span></td><td style="color:var(--color-danger)">▲ 25.6%</td></tr>
       </tbody>
     </table>
   </div>
+  <div class="pagination"><a href="#">«</a><a class="active" href="#">1</a><a href="#">2</a><a href="#">3</a><a href="#">»</a></div>
 </div>
+
 <footer class="footer">
-  <div class="footer-brand"><img src="./logo.png" alt="">FarmBalance</div>
-  <div class="footer-links"><a href="#">이용약관</a><a href="#">개인정보처리방침</a></div>
-  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+  <div class="footer-brand"><img src="./logo.png" alt=""> Farm<span class="italic">Balance</span></div>
+  <p class="footer-copy">© 2026 FarmBalance. 양평군 스마트 파밍 플랫폼</p>
 </footer>
 </body>
 </html>

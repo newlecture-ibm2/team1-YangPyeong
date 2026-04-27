@@ -6,9 +6,9 @@
   --color-text: #1B1C1E;
   --color-text-secondary: #6B7280;
   --color-primary: #2D6A4F;
-  --color-primary-light: #40916C;
-  --color-primary-pale: #D8F3DC;
-  --color-accent: #B7E4C7;
+  --color-primary-light: #52B788;
+  --color-primary-pale: #EBFBEE;
+  --color-accent: #CCFF33;
   --color-border: #E5E7EB;
   --color-danger: #DC2626;
   --color-warning: #F59E0B;
@@ -158,12 +158,14 @@ h4 {
 }
 
 .btn--primary {
-  background: var(--color-primary);
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-primary);
+  font-weight: 600;
 }
 
 .btn--primary:hover {
   background: var(--color-primary-light);
+  color: #fff;
   transform: translateY(-1px);
 }
 
@@ -334,17 +336,19 @@ h4 {
 }
 
 .header__cta {
-  background: var(--color-text);
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-primary);
   padding: 12px 24px;
   border-radius: var(--radius-pill);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .header__cta:hover {
+  background: var(--color-primary-light);
+  color: #fff;
   transform: scale(1.05);
 }
 
@@ -463,7 +467,7 @@ table {
 }
 
 th {
-  text-align: left;
+  text-align: center;
   padding: 14px 20px;
   font-size: 12px;
   font-weight: 600;
@@ -478,10 +482,51 @@ td {
   padding: 16px 20px;
   font-size: 14px;
   border-bottom: 1px solid var(--color-border);
+  text-align: center;
+}
+
+/* 긴 문자열(제목, 설명, 주소 등)은 왼쪽 정렬 */
+td.td-left {
+  text-align: left;
 }
 
 tr:last-child td {
   border-bottom: none;
+}
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+}
+
+.pagination a {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  transition: all .2s;
+}
+
+.pagination a:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.pagination a.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
 }
 
 /* ── Hero ── */

@@ -7,46 +7,82 @@
 </head>
 <body>
 <nav class="nav">
-  <a href="#" class="nav-logo"><img src="./logo.png" alt=""> FarmBalance Mockups</a>
+  <a href="#" class="nav-logo"><img src="./logo.png" alt=""> Farm<span class="italic">Balance</span> Mockups</a>
 </nav>
 <div class="page" style="max-width:1000px;">
   <div class="page-header" style="text-align:center;">
-    <p class="card-label" style="margin-bottom:16px;">UI Design System — Greeno Farm Style</p>
-    <h1 class="page-title" style="font-size:48px;">전체 화면 목업 모음</h1>
-    <p class="page-sub" style="margin:16px auto 0; text-align:center;">Dribbble Greeno Farm 스타일이 적용된 FarmBalance 전체 페이지입니다.</p>
+    <p class="text-label mb-16">UI Design System — FarmBalance Style</p>
+    <h1 class="page-title" style="font-size:48px;">전체 화면 <span class="italic">목업 모음</span></h1>
+    <p class="page-sub" style="margin:16px auto 0;text-align:center;">ui-mockup.css 컬러/컴포넌트 시스템이 적용된 FarmBalance 전체 페이지입니다.</p>
   </div>
 
-  <div style="display:flex; flex-direction:column; gap:16px; margin-top:48px;">
-    <h2 style="font-family:var(--serif); font-size:24px; margin-bottom:8px;">🏠 랜딩 / 인증</h2>
-    <div class="grid-3">
-      <a href="./landing.html" class="card" style="text-decoration:none;"><p class="card-label">S-01</p><h3 class="card-title">랜딩 페이지</h3></a>
-      <a href="./login.html" class="card" style="text-decoration:none;"><p class="card-label">S-03</p><h3 class="card-title">로그인</h3></a>
-      <a href="./signup.html" class="card" style="text-decoration:none;"><p class="card-label">S-02</p><h3 class="card-title">회원가입</h3></a>
-    </div>
-
-    <h2 style="font-family:var(--serif); font-size:24px; margin:32px 0 8px;">🌾 농장 관리</h2>
-    <div class="grid-3">
-      <a href="./farm-register.html" class="card" style="text-decoration:none;"><p class="card-label">S-10</p><h3 class="card-title">농장 등록 신청</h3></a>
-      <a href="./farm-manage.html" class="card" style="text-decoration:none;"><p class="card-label">S-11</p><h3 class="card-title">농장 정보 관리</h3></a>
-    </div>
-
-    <h2 style="font-family:var(--serif); font-size:24px; margin:32px 0 8px;">📊 밸런스 / 추천</h2>
-    <div class="grid-3">
-      <a href="./balance-list.html" class="card" style="text-decoration:none;"><p class="card-label">S-20</p><h3 class="card-title">작물 밸런스 조회</h3></a>
-      <a href="./recommend-list.html" class="card" style="text-decoration:none;"><p class="card-label">S-22</p><h3 class="card-title">AI 작물 추천</h3></a>
-    </div>
-
-    <h2 style="font-family:var(--serif); font-size:24px; margin:32px 0 8px;">💬 커뮤니티 / 🛒 상점 / 🏛️ 지자체</h2>
-    <div class="grid-3">
-      <a href="./community-list.html" class="card" style="text-decoration:none;"><p class="card-label">S-40</p><h3 class="card-title">게시글 목록</h3></a>
-      <a href="./shop-browse.html" class="card" style="text-decoration:none;"><p class="card-label">S-30</p><h3 class="card-title">상품 탐색</h3></a>
-      <a href="./gov-dashboard.html" class="card" style="text-decoration:none;"><p class="card-label">S-60</p><h3 class="card-title">지자체 대시보드</h3></a>
-    </div>
+  <div class="grid-2" style="margin-top:48px;">
+    <a href="./landing.html" class="card" style="text-decoration:none;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">🏠</div>
+      <h3>랜딩 페이지</h3>
+      <p class="text-small">히어로 + KPI + 추천 작물 + 시세 테이블</p>
+    </a>
+    <a href="./login.html" class="card" style="text-decoration:none;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">🔐</div>
+      <h3>로그인</h3>
+      <p class="text-small">인증 카드 레이아웃 + 카카오 로그인</p>
+    </a>
+    <a href="./signup.html" class="card" style="text-decoration:none;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">📝</div>
+      <h3>회원가입</h3>
+      <p class="text-small">역할 선택 + 2열 폼 레이아웃</p>
+    </a>
+    <a href="./farm-register.html" class="card" style="text-decoration:none;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">🌱</div>
+      <h3>농장 등록</h3>
+      <p class="text-small">작물 칩 선택 + 사진 업로드 + 토양 정보</p>
+    </a>
+    <a href="./farm-manage.html" class="card" style="text-decoration:none;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">🏡</div>
+      <h3>농장 관리</h3>
+      <p class="text-small">KPI 그리드 + 벤토 레이아웃 + 다크 카드</p>
+    </a>
+    <a href="./balance-list.html" class="card" style="text-decoration:none;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">⚖️</div>
+      <h3>수급 현황</h3>
+      <p class="text-small">게이지 바 + 필터 + 테이블 + 페이지네이션</p>
+    </a>
+    <a href="./recommend-list.html" class="card" style="text-decoration:none;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">🤖</div>
+      <h3>AI 추천</h3>
+      <p class="text-small">랭킹 카드 + 게이지 + 상세 테이블</p>
+    </a>
+    <a href="./community-list.html" class="card" style="text-decoration:none;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">💬</div>
+      <h3>커뮤니티</h3>
+      <p class="text-small">탭 필터 + 게시글 테이블 + 뱃지</p>
+    </a>
+    <a href="./shop-browse.html" class="card" style="text-decoration:none;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">🛒</div>
+      <h3>상점</h3>
+      <p class="text-small">4열 카드 + 실사 이미지 + 장바구니</p>
+    </a>
+    <a href="./gov-dashboard.html" class="card" style="text-decoration:none;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">🏛️</div>
+      <h3>지자체 대시보드</h3>
+      <p class="text-small">KPI + 차트/지도 + 경고 테이블</p>
+    </a>
+    <a href="./mypage.html" class="card" style="text-decoration:none;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">👤</div>
+      <h3>마이페이지</h3>
+      <p class="text-small">프로필 + 등록이력 + 포인트 + 알림</p>
+    </a>
+    <a href="./admin.html" class="card" style="text-decoration:none;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">⚙️</div>
+      <h3>관리자</h3>
+      <p class="text-small">대시보드 + 사용자관리 + 승인 + 작물마스터</p>
+    </a>
   </div>
 </div>
+
 <footer class="footer">
-  <div class="footer-brand"><img src="./logo.png" alt="">FarmBalance</div>
-  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+  <div class="footer-brand"><img src="./logo.png" alt=""> Farm<span class="italic">Balance</span></div>
+  <p class="footer-copy">© 2026 FarmBalance. 양평군 스마트 파밍 플랫폼</p>
 </footer>
 </body>
 </html>

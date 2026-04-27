@@ -2,109 +2,95 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 작물 추천 — FarmBalance</title>
+  <title>FarmBalance — AI 추천</title>
   <link rel="stylesheet" href="./style.css">
-  <style>
-    .rec-card { display: flex; gap: 24px; align-items: center; }
-    .rec-rank { font-family: var(--serif); font-size: 48px; font-weight: 700; color: var(--border); min-width: 60px; text-align: center; }
-    .rec-info { flex: 1; }
-    .rec-scores { display: flex; gap: 16px; margin-top: 12px; }
-    .rec-score { font-size: 12px; color: var(--text-sub); }
-    .rec-score strong { display: block; font-size: 16px; color: var(--dark-green); font-family: var(--serif); }
-  </style>
 </head>
 <body>
 <nav class="nav">
-  <a href="./landing.html" class="nav-logo"><img src="./logo.png" alt=""> FarmBalance</a>
-  <div class="nav-links">
-    <a href="./farm-manage.html">농장관리</a>
-    <a href="./balance-list.html">밸런스</a>
-    <a href="./recommend-list.html" class="active">AI 추천</a>
-    <a href="./community-list.html">커뮤니티</a>
-    <a href="./shop-browse.html">상점</a>
-  </div>
-  <div class="nav-right"><a href="#" class="btn-nav btn-nav-fill">마이페이지</a></div>
+  <a href="./index.html" class="nav-logo"><img src="./logo.png" alt=""> Farm<span class="italic">Balance</span></a>
+  <div class="nav-links"><a href="./farm-manage.html">내 농장</a><a href="./balance-list.html">수급현황</a><a href="./recommend-list.html" class="active">AI 추천</a><a href="./shop-browse.html">상점</a><a href="./community-list.html">커뮤니티</a></div>
+  <div class="nav-right"><a class="btn-nav btn-nav-fill" href="#">홍길동 님</a></div>
 </nav>
+
 <div class="page">
   <div class="page-header">
-    <div class="breadcrumb"><a href="./landing.html">홈</a> › <strong>AI 작물 추천</strong></div>
-    <h1 class="page-title">AI 작물 추천</h1>
-    <p class="page-sub">토양·기후·수급 데이터를 분석하여 최적의 작물을 추천합니다.</p>
+    <h1 class="page-title">AI <span class="italic">추천</span> 작물</h1>
+    <p class="page-sub">양평군 토양·기후·시세를 AI가 종합 분석하여 최적 작물을 추천합니다.</p>
   </div>
 
-  <div class="card mb-24" style="background:rgba(184,217,75,.1); border-color:var(--lime);">
-    <p style="font-size:15px;">🌿 <strong>양평 해맑은 농장</strong>의 토양(사양토), 면적(3,300㎡), 현재 수급 상황을 종합 분석한 맞춤 추천입니다.</p>
+  <!-- TOP 3 RANKING -->
+  <div class="grid-3 mb-48">
+    <div class="card" style="text-align:center;border:2px solid var(--color-accent);">
+      <div style="font-size:48px;margin-bottom:12px;">🥇</div>
+      <h3 style="margin-bottom:4px;">유기농 배추</h3>
+      <p class="text-small mb-16">채소류 · 토양 적합도 92%</p>
+      <p style="font-family:var(--font-serif);font-size:48px;color:var(--color-primary);font-weight:700;margin-bottom:4px;">96</p>
+      <p class="text-label mb-16">AI 추천 점수</p>
+      <div style="text-align:left;">
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">토양 적합도 <strong>92%</strong></p>
+        <div class="gauge mb-8"><div class="gauge-fill green" style="width:92%"></div></div>
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">시세 전망 <strong>88%</strong></p>
+        <div class="gauge mb-8"><div class="gauge-fill green" style="width:88%"></div></div>
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">수급 안정성 <strong>95%</strong></p>
+        <div class="gauge"><div class="gauge-fill green" style="width:95%"></div></div>
+      </div>
+      <p style="margin-top:16px;font-size:14px;color:var(--color-primary);font-weight:600;">예상 수익: ₩4,200/kg</p>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <div style="font-size:48px;margin-bottom:12px;">🥈</div>
+      <h3 style="margin-bottom:4px;">청양고추</h3>
+      <p class="text-small mb-16">채소류 · 토양 적합도 88%</p>
+      <p style="font-family:var(--font-serif);font-size:48px;color:var(--color-primary);font-weight:700;margin-bottom:4px;">91</p>
+      <p class="text-label mb-16">AI 추천 점수</p>
+      <div style="text-align:left;">
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">토양 적합도 <strong>88%</strong></p>
+        <div class="gauge mb-8"><div class="gauge-fill green" style="width:88%"></div></div>
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">시세 전망 <strong>90%</strong></p>
+        <div class="gauge mb-8"><div class="gauge-fill green" style="width:90%"></div></div>
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">수급 안정성 <strong>85%</strong></p>
+        <div class="gauge"><div class="gauge-fill green" style="width:85%"></div></div>
+      </div>
+      <p style="margin-top:16px;font-size:14px;color:var(--color-primary);font-weight:600;">예상 수익: ₩5,100/kg</p>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <div style="font-size:48px;margin-bottom:12px;">🥉</div>
+      <h3 style="margin-bottom:4px;">방울토마토</h3>
+      <p class="text-small mb-16">과일류 · 토양 적합도 85%</p>
+      <p style="font-family:var(--font-serif);font-size:48px;color:var(--color-primary);font-weight:700;margin-bottom:4px;">87</p>
+      <p class="text-label mb-16">AI 추천 점수</p>
+      <div style="text-align:left;">
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">토양 적합도 <strong>85%</strong></p>
+        <div class="gauge mb-8"><div class="gauge-fill green" style="width:85%"></div></div>
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">시세 전망 <strong>82%</strong></p>
+        <div class="gauge mb-8"><div class="gauge-fill green" style="width:82%"></div></div>
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">수급 안정성 <strong>90%</strong></p>
+        <div class="gauge"><div class="gauge-fill green" style="width:90%"></div></div>
+      </div>
+      <p style="margin-top:16px;font-size:14px;color:var(--color-primary);font-weight:600;">예상 수익: ₩6,800/kg</p>
+    </div>
   </div>
 
-  <div style="display:flex; flex-direction:column; gap:20px;">
-    <div class="card">
-      <div class="rec-card">
-        <div class="rec-rank">1</div>
-        <div style="font-size:36px;">🥬</div>
-        <div class="rec-info">
-          <h3 style="font-size:20px; font-weight:700; font-family:var(--serif);">상추 <span class="badge badge-green" style="margin-left:8px;">적합도 92%</span></h3>
-          <div class="rec-scores">
-            <div class="rec-score"><strong>35/35</strong>수급</div>
-            <div class="rec-score"><strong>24/25</strong>환경</div>
-            <div class="rec-score"><strong>20/25</strong>수익</div>
-            <div class="rec-score"><strong>13/15</strong>역량</div>
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <p style="font-size:13px; color:var(--text-sub);">예상 수익</p>
-          <p style="font-family:var(--serif); font-size:22px; font-weight:700;">380만원<span style="font-size:13px; color:var(--text-sub); font-family:var(--sans);">/1,000㎡</span></p>
-          <a href="#" class="btn btn-primary btn-sm mt-16">상세 보기</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="rec-card">
-        <div class="rec-rank">2</div>
-        <div style="font-size:36px;">🥔</div>
-        <div class="rec-info">
-          <h3 style="font-size:20px; font-weight:700; font-family:var(--serif);">감자 <span class="badge badge-lime" style="margin-left:8px;">적합도 85%</span></h3>
-          <div class="rec-scores">
-            <div class="rec-score"><strong>30/35</strong>수급</div>
-            <div class="rec-score"><strong>22/25</strong>환경</div>
-            <div class="rec-score"><strong>20/25</strong>수익</div>
-            <div class="rec-score"><strong>13/15</strong>역량</div>
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <p style="font-size:13px; color:var(--text-sub);">예상 수익</p>
-          <p style="font-family:var(--serif); font-size:22px; font-weight:700;">420만원<span style="font-size:13px; color:var(--text-sub); font-family:var(--sans);">/1,000㎡</span></p>
-          <a href="#" class="btn btn-outline btn-sm mt-16">상세 보기</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="rec-card">
-        <div class="rec-rank">3</div>
-        <div style="font-size:36px;">🍅</div>
-        <div class="rec-info">
-          <h3 style="font-size:20px; font-weight:700; font-family:var(--serif);">토마토 <span class="badge badge-lime" style="margin-left:8px;">적합도 78%</span></h3>
-          <div class="rec-scores">
-            <div class="rec-score"><strong>28/35</strong>수급</div>
-            <div class="rec-score"><strong>20/25</strong>환경</div>
-            <div class="rec-score"><strong>18/25</strong>수익</div>
-            <div class="rec-score"><strong>12/15</strong>역량</div>
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <p style="font-size:13px; color:var(--text-sub);">예상 수익</p>
-          <p style="font-family:var(--serif); font-size:22px; font-weight:700;">550만원<span style="font-size:13px; color:var(--text-sub); font-family:var(--sans);">/1,000㎡</span></p>
-          <a href="#" class="btn btn-outline btn-sm mt-16">상세 보기</a>
-        </div>
-      </div>
-    </div>
+  <!-- FULL TABLE -->
+  <h3 class="mb-16">전체 추천 목록</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>순위</th><th>작물명</th><th>분류</th><th>AI 점수</th><th>예상 수익</th><th>수급 상태</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>유기농 배추</td><td><span class="pill pill--green">채소류</span></td><td>96</td><td>₩4,200/kg</td><td><span class="badge badge-green">안정</span></td><td><a class="btn btn-primary btn-sm" href="#">상세 →</a></td></tr>
+        <tr><td><strong>2</strong></td><td>청양고추</td><td><span class="pill pill--green">채소류</span></td><td>91</td><td>₩5,100/kg</td><td><span class="badge badge-green">안정</span></td><td><a class="btn btn-primary btn-sm" href="#">상세 →</a></td></tr>
+        <tr><td><strong>3</strong></td><td>방울토마토</td><td><span class="pill pill--green">과일류</span></td><td>87</td><td>₩6,800/kg</td><td><span class="badge badge-green">안정</span></td><td><a class="btn btn-primary btn-sm" href="#">상세 →</a></td></tr>
+        <tr><td><strong>4</strong></td><td>감자</td><td><span class="pill pill--outline">곡물</span></td><td>82</td><td>₩1,800/kg</td><td><span class="badge badge-red">부족</span></td><td><a class="btn btn-outline btn-sm" href="#">상세 →</a></td></tr>
+        <tr><td><strong>5</strong></td><td>당근</td><td><span class="pill pill--green">채소류</span></td><td>79</td><td>₩2,300/kg</td><td><span class="badge badge-green">안정</span></td><td><a class="btn btn-outline btn-sm" href="#">상세 →</a></td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
+
 <footer class="footer">
-  <div class="footer-brand"><img src="./logo.png" alt="">FarmBalance</div>
-  <div class="footer-links"><a href="#">이용약관</a><a href="#">개인정보처리방침</a></div>
-  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+  <div class="footer-brand"><img src="./logo.png" alt=""> Farm<span class="italic">Balance</span></div>
+  <p class="footer-copy">© 2026 FarmBalance. 양평군 스마트 파밍 플랫폼</p>
 </footer>
 </body>
 </html>
