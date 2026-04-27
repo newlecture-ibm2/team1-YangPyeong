@@ -1,23 +1,9 @@
-spring:
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/farm_db}
-    username: ${DB_USERNAME:farm}
-    password: ${DB_PASSWORD:farm_secret_password}
-    driver-class-name: org.postgresql.Driver
+# ── Dev 프로필 전용 설정 ──
+# application.yml의 설정을 상속받고, dev에서만 다른 부분만 덮어씁니다.
 
+spring:
   jpa:
-    hibernate:
-      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
-        format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: 6379
-
-server:
-  port: 8080

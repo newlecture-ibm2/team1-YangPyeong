@@ -7,7 +7,7 @@ spring:
 
   # ── DataSource ──
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:farmbalance}
+    url: ${DB_URL:jdbc:postgresql://db:5432/farm_db}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
@@ -23,13 +23,13 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        "[format_sql]": true
-        "[default_schema]": public
+        format_sql: true
+        default_schema: public
 
   # ── Redis ──
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
+      host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
 
   # ── Servlet (파일 업로드) ──
@@ -44,6 +44,24 @@ jwt:
   access-token-expiration: 1800000   # 30분 (ms)
   refresh-token-expiration: 604800000 # 7일 (ms)
 
+# ── External API Keys ──
+external:
+  kakao:
+    rest-api-key: ${KAKAO_REST_API_KEY:}
+  kma:
+    api-key: ${KMA_API_KEY:}
+  soil:
+    api-key: ${SOIL_API_KEY:}
+  nongsaro:
+    api-key: ${NONGSARO_API_KEY:}
+  kosis:
+    api-key: ${KOSIS_API_KEY:}
+
+# ── AI Server ──
+ai:
+  server-url: ${AI_SERVER_URL:http://ai-server:8000}
+  agent-url: ${AGENT_SERVER_URL:http://agent-server:8001}
+
 # ── Server ──
 server:
   port: ${SERVER_PORT:8080}
@@ -57,8 +75,8 @@ logging:
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{correlationId:-N/A}] %-5level %logger{36} - %msg%n"
   level:
     root: INFO
-    "[com.farmbalance]": DEBUG
-    "[org.springframework.security]": INFO
+    com.farmbalance: DEBUG
+    org.springframework.security: INFO
   file:
     name: logs/farm-backend.log
 
