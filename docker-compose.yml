@@ -29,7 +29,7 @@ services:
     build: ./backend
     restart: unless-stopped
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_PROFILES_ACTIVE=prod
       - DB_URL=jdbc:postgresql://db:5432/farm_db
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
