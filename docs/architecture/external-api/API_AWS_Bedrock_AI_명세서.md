@@ -4,7 +4,7 @@
 > **작성일:** 2026-04-23  
 > **버전:** v1.1  
 > **관련 기능:** FRM-002 (AI 작물 추천 — RAG 보강), GOV-002 (정책 상담), ADM-001 (에이전트 자동화)  
-> **관련 ERD:** `recommendation_history`, `crop_plans`, `balance_data`  
+> **관련 ERD:** `balance_data`, `crops`, `farms`  
 > **연계 서비스:** Amazon S3, AWS Lambda, OpenSearch Serverless
 
 ---
@@ -114,7 +114,7 @@ AI가 **스스로 판단**하여 시스템 내부 API를 호출하고 결과를 
 | :--- | :--- | :--- | :--- |
 | `CheckWeather` | `farmbalance-weather-lambda` | 기상청 API 호출 → 예보 반환 | "내일 양평 비 와?" |
 | `GetCropBalance` | `farmbalance-balance-lambda` | `balance_data` 조회 → 수급 상태 | "고추 수급 상황 어때?" |
-| `UpdateCropPlan` | `farmbalance-plan-lambda` | `crop_plans` 데이터 수정 | "비료 주문 3일 뒤로 미뤄줘" |
+| `UpdateCropPlan` | `farmbalance-plan-lambda` | `seed_registrations` 데이터 수정 | "비료 주문 3일 뒤로 미뤄줘" |
 | `SendNotification` | `farmbalance-notify-lambda` | 알림 발송 트리거 | "수급 과잉 농민들한테 알림 보내줘" |
 
 #### 2.2.2 에이전트 대화 시나리오 예시

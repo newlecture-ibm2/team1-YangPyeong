@@ -2,9 +2,10 @@
 
 > **문서 ID:** EXT-SOIL-001  
 > **작성일:** 2026-04-23  
-> **버전:** v1.0  
-> **관련 기능:** FR-FM-002 (AI 작물 추천), FRM-001 (농장 등록/관리), COM-003 (알림 시스템)  
-> **관련 ERD:** `farms.soil_type`, `crops.climate_conditions`
+> **최종 수정:** 2026-04-26 (SoilExam/V2, SoilFitStat/V2 추가)
+> **버전:** v2.0  
+> **관련 기능:** FR-FM-002 (AI 작물 추천), FRM-001 (농장 등록/관리)
+> **관련 ERD:** `soil_exam_data`, `soil_fitness_data`, `farms.bjd_code`, `farms.pnu_code`
 
 ---
 
@@ -83,9 +84,9 @@ Step 3. PNU 코드 조립 (백엔드 유틸리티)
          ├── 법정동 코드:  4183031024       (10자리)
          ├── 대장 구분:    1                (1: 토지, 2: 임야)
          ├── 산 여부:      1                (1: 일반, 2: 산)
-         ├── 본번:         0123             (4자리, 좌측 0 패딩)
-         ├── 부번:         0004             (4자리, 좌측 0 패딩)
-         └── PNU:          4183031024110123004  (19자리)
+         ├── 본번:         0275             (4자리, 좌측 0 패딩)
+         ├── 부번:         0000             (4자리, 좌측 0 패딩)
+         └── PNU:          4183033029102750000  (19자리)
 
 Step 4. 흙토람 API 호출
          └── pnu = "4183031024110123004"
@@ -117,7 +118,7 @@ Step 4. 흙토람 API 호출
 | 항목명 | 변수명 | 필수 | 값(예시) | 설명 |
 | :--- | :--- | :---: | :--- | :--- |
 | 서비스키 | `serviceKey` | Y | `(발급키)` | 공공데이터포털 Encoded 키 |
-| 필지 고유번호 | `PNU_Code` | Y | `4183031024110123004` | 위 Step 3에서 조립한 PNU |
+| 필지 고유번호 | `PNU_Code` | Y | `4183033029102750000` | 19자리 PNU 코드 |
 | 응답형식 | `dataType` | N | `JSON` | 기본 XML → JSON 명시 |
 
 ---
@@ -160,6 +161,99 @@ ELSE IF (측정값 > 적정 범위 상한)
 
 ---
 
+## 5. 추가 서비스: SoilExam/V2 (토양 화학성 검정)
+
+### 5.1 호출 정보
+
+| 항목 | 내용 |
+| :--- | :--- |
+| **Base URL** | `http://apis.data.go.kr/1390802/SoilEnviron/SoilExam/V2/getSoilExam` |
+| **Method** | `GET` |
+
+### 5.2 요청 파라미터
+
+| 항목명 | 변수명 | 필수 | 값(예시) | 설명 |
+| :--- | :--- | :---: | :--- | :--- |
+| 서비스키 | `serviceKey` | Y | `(발급키)` | Encoded 키 |
+| 필지코드 | `PNU_CD` | Y | `4183033029102750000` | 19자리 PNU |
+| 응답형식 | `dataType` | N | `JSON` | 기본 XML |
+
+### 5.3 응답 필드 → `soil_exam_data` 매핑
+
+| API 필드 | DB 컬럼 | 단위 | 설명 |
+| :---: | :--- | :---: | :--- |
+| `ACID` | ph | pH | 산도 |
+| `OM` | organic_matter | g/kg | 유기물 함량 |
+| `VLDPHA` | avail_phosphate | mg/kg | 유효인산 |
+| `VLDSIA` | avail_silica | mg/kg | 유효규산 |
+| `POSIFERT_K` | potassium | cmolc/kg | 치환성 칼륨 |
+| `POSIFERT_CA` | calcium | cmolc/kg | 치환성 칼슘 |
+| `POSIFERT_MG` | magnesium | cmolc/kg | 치환성 마그네슘 |
+| `ELCD` | ec | dS/m | 전기전도도 |
+| `ADDR_NM` | addr_name | — | 주소명 (예: "양평군 양서면 복포리") |
+| `EXAM_DT` | exam_date | — | 검정일자 |
+
+> **Fallback 전략 (3계층)**:
+> 1. `PARCEL` — SoilExam/V2 `getSoilExam` (PNU 개별 필지)
+> 2. `STAT_FALLBACK` — SoilExamStat/V2 `getFarmExamPhInfo` (법정동 통계 대표값)
+> 3. `DEFAULT` — 양평군 평균값
+
+---
+
+## 6. 추가 서비스: SoilFitStat/V2 (작물별 토양적성)
+
+### 6.1 호출 정보
+
+| 항목 | 내용 |
+| :--- | :--- |
+| **Base URL** | `http://apis.data.go.kr/1390802/SoilEnviron/SoilFitStat/V2/getSoilCropFitInfo` |
+| **Method** | `GET` |
+
+### 6.2 요청 파라미터
+
+| 항목명 | 변수명 | 필수 | 값(예시) | 설명 |
+| :--- | :--- | :---: | :--- | :--- |
+| 서비스키 | `serviceKey` | Y | `(발급키)` | Encoded 키 |
+| 법정동코드 | `STDG_CD` | Y | `4183033029` | 10자리 (법정동) |
+| 작물코드 | `soil_Crop_CD` | Y | `CR048` | CR001~CR064 |
+| 응답형식 | `dataType` | N | `JSON` | 기본 XML |
+
+### 6.3 응답 필드 → `soil_fitness_data` 매핑
+
+| API 필드 | DB 컬럼 | 설명 |
+| :---: | :--- | :--- |
+| `soil_Crop_Cd` | soil_crop_cd | 작물코드 (예: "CR048") |
+| `soil_Crop_Nm` | soil_crop_nm | 작물명 (예: "양파") |
+| `stdg_Cd` | bjd_code | 법정동코드 |
+| `bjd_Nm` | bjd_name | 법정동명 (예: "경기도 양평군") |
+| `high_Suit_Area` | high_suit_area | 최적지 면적 |
+| `suit_Area` | suit_area | 적지 면적 |
+| `poss_Area` | poss_area | 가능지 면적 |
+| `low_Suit_Area` | low_suit_area | 저위생산지 면적 |
+| `etc_Area` | etc_area | 기타 면적 |
+
+### 6.4 작물별 흙토람 API 호출 코드 (예시)
+
+흙토람 SoilFitStat API를 호출할 때 작물코드(`soil_Crop_CD`)를 애플리케이션 코드에서 직접 관리한다.
+
+> [!WARNING]
+> 아래 `soil_Crop_CD` 값은 **예시**입니다. 구현 시 흙토람 API를 직접 호출하여 정확한 코드를 반드시 검증해야 합니다.
+
+| 작물명 | soil_Crop_CD | 설명 |
+|---|---|---|
+| 고추 | `CR022` | 조미채소 |
+| 양파 | `CR048` | 조미채소 |
+| 마늘 | `CR049` | 조미채소 |
+| 사과 | `CR005` | 과수 |
+| 배 | `CR006` | 과수 |
+| 포도 | `CR007` | 과수 |
+| 딸기 | `CR016` | 과채류 |
+| 수박 | `CR014` | 과채류 |
+
+> 📌 이 매핑은 **애플리케이션 코드(Enum/Map)**로 관리한다. 별도 DB 테이블은 사용하지 않는다.
+
+---
+
 ## 5. AI 환경 점수 산출 로직 (토양 부분)
 
 ### 5.1 환경 적합도 구성
@@ -178,7 +272,7 @@ ELSE IF (측정값 > 적정 범위 상한)
 1. 흙토람에서 가져온 해당 필지의 토양 성분 로드
    ├── pH, OM, vldpha, posash, poscalcium, posmg, Ec
 
-2. 작물 적정 토양 조건 테이블(crop_master.climate_conditions 내 soil 필드)과 매칭
+2. 작물 적정 토양 조건 테이블(crops.climate_conditions 내 soil 필드)과 매칭
    ├── pH 매칭:    |작물 적정 pH - 실제 pH| ≤ 0.5 → 100점, ≤ 1.0 → 70점, 그 외 → 30점
    ├── OM 매칭:    적정 범위 내 → 100점, LOW → 60점 (비료 보정 가능), HIGH → 50점
    ├── 인산 매칭:  적정 범위 내 → 100점, LOW → 40점 (결실 영향 큼), HIGH → 70점
@@ -192,7 +286,7 @@ ELSE IF (측정값 > 적정 범위 상한)
    └── environment_score = (기상 점수 × 0.5) + (토양 점수 × 0.5)
 ```
 
-### 5.3 작물 적정 토양 조건 (crop_master.climate_conditions JSONB 확장)
+### 5.3 작물 적정 토양 조건 (crops.climate_conditions JSONB 확장)
 
 ```json
 {
@@ -250,7 +344,7 @@ ELSE IF (측정값 > 적정 범위 상한)
 │     ┌──────────────┐  ┌────────────┐  ┌───────────────────┐     │
 │     │ farms 테이블  │  │ AI 추천    │  │ 알림 서비스        │     │
 │     │ soil_type    │  │ 토양 점수  │  │ 기상+토양 결합     │     │
-│     │ 자동 저장     │  │ 산출       │  │ 알림 생성          │     │
+│     │ (적성 판정)  │  │ 산출       │  │ 알림 생성          │     │
 │     └──────────────┘  └────────────┘  └───────────────────┘     │
 └───────────────────────────────────────────────────────────────────┘
 ```
