@@ -2,9 +2,10 @@
 
 > **문서 ID:** EXT-TOTAL-001  
 > **작성일:** 2026-04-23  
-> **버전:** v2.0 (데이터 API 5종 + AI 서비스 2종 최종 통합)  
+> **최종 수정:** 2026-04-26 (신규 테이블 6개 반영, 농사로 cropEbook 교체, 흙토람 SoilExam/SoilFitStat 추가)
+> **버전:** v3.0  
 > **기술 표준:** `지윤02_기능명세서.md` §0 준수  
-> **관련 ERD:** `balance_data`, `crops`, `farms`, `crop_plans`, `recommendation_history`
+> **관련 ERD:** `weather_data`, `soil_exam_data`, `crop_production_stats`, `soil_fitness_data`, `crop_guides`, `pest_occurrence_reports`, `farms`, `crops`
 
 ---
 
@@ -22,7 +23,7 @@ FarmBalance 시스템은 **5종의 데이터 수집 API**와 **2종의 클라우
 | EXT-MAP-001 | [🗺️ 카카오맵 위치서비스](./API_카카오맵_위치서비스_명세서.md) | 좌표·법정동 코드 획득 — **모든 연동의 시작점** |
 | EXT-WEATHER-001 | [🌦️ 기상청 통합 연동](./API_기상청_통합_연동_명세서.md) | 실시간 예보 + 10년 ASOS 기후 통계 |
 | EXT-SOIL-001 | [🧪 흙토람 토양정보](./API_흙토람_토양정보_명세서.md) | PNU 기반 토양 7종 화학 성분 분석 |
-| EXT-FARM-001 | [📖 농사로 재배기술](./API_농사로_재배기술_명세서.md) | HTML 재배 가이드 + 병해충 사진 DB |
+| EXT-FARM-001 | [📖 농사로 재배기술·병해충](./API_농사로_재배기술_명세서.md) | 재배 길잡이 PDF + 병해충 발생정보 보고서 |
 | EXT-STAT-001 | [📊 KOSIS 생산량통계](./API_KOSIS_생산량통계_명세서.md) | 10년 연도별·지역별 생산량 공식 통계 |
 | EXT-AI-001 | [🤖 Google Gemini AI](./API_Google_Gemini_AI_명세서.md) | 이미지 병해충 진단, 추천 사유 생성, 데이터 요약 |
 | EXT-AI-002 | [🔗 AWS Bedrock AI](./API_AWS_Bedrock_AI_명세서.md) | 내부 문서 RAG 상담, 업무 자동화 Agent |
@@ -109,8 +110,22 @@ FarmBalance 시스템은 **5종의 데이터 수집 API**와 **2종의 클라우
 | **수급 적합도** (35%) | KOSIS | 10년 생산량 추이 → 외부 공급 추정 | `balance_data.supply_ratio` |
 | **환경 적합도** (25%) | 기상청 + 흙토람 | 기온·강수 + pH·유기물·인산 | `crops.climate_conditions` |
 | **수익성** (25%) | KAMIS (※별도 명세 필요) | 최근 3년 평균 시장 가격 | — |
-| **농가 역량** (15%) | 내부 DB 전용 | 재배 이력, 보유 시설 | `farms`, `crop_plans` |
-| **추천 사유 문장** | Gemini | 위 점수 + 작물 정보 → 자연어 변환 | `recommendation_history` |
+| **농가 역량** (15%) | 내부 DB 전용 | 재배 이력, 보유 시설 | `farms`, `seed_registrations` |
+| **추천 사유 문장** | Gemini | 위 점수 + 작물 정보 → 자연어 변환 | — |
+
+---
+
+## 3-1. 외부 API 작물코드 관리 방침
+
+외부 API 호출 시 필요한 작물코드는 **애플리케이션 코드(Enum/Map)**에서 직접 관리한다. 별도 DB 테이블은 사용하지 않는다.
+
+| API | 작물코드 필드 | 예시 | 참고 명세서 |
+| :--- | :--- | :--- | :--- |
+| KOSIS 생산량통계 | `tblId` + `itmId` | `DT_1ET0291` + `T76` (양파:면적) | `API_KOSIS_생산량통계_명세서.md` §4.1 |
+| 흙토람 토양적성 | `soil_Crop_CD` | `CR048` (양파) | `API_흙토람_토양정보_명세서.md` §6.4 |
+| 농사로 재배길잡이 | `subCategoryCode` | `VC041201` (양파) | `API_농사로_재배기술_명세서.md` §4.2 |
+
+> 📌 이러한 정적 매핑 데이터는 런타임에 변경되지 않으므로 DB가 아닌 코드/설정 파일로 관리하는 것이 적합하다.
 
 ---
 
@@ -270,17 +285,22 @@ backend/src/main/java/com/farmbalance/infra/external/
 
 ---
 
-## 10. ERD 변경 제안 종합
+## 10. ERD 변경 이력 (반영 완료)
 
-| 대상 테이블 | 변경 내용 | 사유 | 출처 |
-| :--- | :--- | :--- | :---: |
-| `farms` | `lat` DECIMAL, `lng` DECIMAL 추가 | 농장 좌표 저장 | EXT-MAP-001 |
-| `crops` | `climate_conditions` JSONB에 `soil` 추가 | 토양 적합도 매칭 | EXT-SOIL-001 |
-| `crops` | `kosis_org_id`, `kosis_tbl_id`, `kosis_obj_code` 추가 | KOSIS 통계코드 매핑 | EXT-STAT-001 |
-| 신규 | `climate_history` 테이블 | ASOS 10년 기후 이력 | EXT-WEATHER-001 |
-| 신규 | `crop_production_stats` 테이블 | KOSIS 생산량 이력 | EXT-STAT-001 |
+> ✅ 아래 변경은 ERD v2.0에 **반영 완료**되었습니다.
 
-> ⚠️ 위 변경 사항은 팀 ERD 확정 회의에서 논의 후 반영한다.
+| 대상 테이블 | 변경 내용 | 상태 |
+| :--- | :--- | :---: |
+| `farms` | `latitude`, `longitude` DECIMAL 추가 | ✅ 반영 완료 |
+| `farms` | `bjd_code`, `pnu_code` 추가 | ✅ 반영 완료 |
+| `crops` | `climate_conditions` JSONB (기상+토양 통합) | ✅ 반영 완료 |
+| ~~`crop_external_codes`~~ | ~~KOSIS/SOIL_FIT/NONGSARO 코드 통합 매핑~~ | ❌ 삭제 (애플리케이션 코드로 대체) |
+| `weather_data` | ASOS 10년 기후 이력 | ✅ 신규 생성 |
+| `crop_production_stats` | KOSIS 생산량 이력 | ✅ 신규 생성 |
+| `soil_exam_data` | 흙토람 토양 화학성 | ✅ 신규 생성 |
+| `soil_fitness_data` | 흙토람 토양적성 | ✅ 신규 생성 |
+| `crop_guides` | 농사로 재배 길잡이 | ✅ 신규 생성 |
+| `pest_occurrence_reports` | 농사로 병해충 발생정보 | ✅ 신규 생성 |
 
 ---
 
@@ -300,5 +320,4 @@ backend/src/main/java/com/farmbalance/infra/external/
 
 > 📌 **다음 단계:**  
 > ① KAMIS(농산물 가격) API 명세서 작성 (EXT-PRICE-001) — 수익성 점수(25%) 핵심 데이터  
-> ② ERD 변경 사항 팀 회의 상정  
-> ③ Phase 1 구현 시작: 카카오맵 앱 등록 + `GridCoordinateConverter` 단위 테스트
+> ② Phase 1 구현 시작: 카카오맵 앱 등록 + `GridCoordinateConverter` 단위 테스트

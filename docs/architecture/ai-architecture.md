@@ -473,7 +473,7 @@ CHROMA_PERSIST_DIR=./data/chroma
 EMBEDDING_MODEL=text-embedding-004
 
 # === Backend 연동 ===
-BACKEND_API_URL=http://localhost:8080/api/v1
+BACKEND_API_URL=http://localhost:8080/api
 ```
 
 ---

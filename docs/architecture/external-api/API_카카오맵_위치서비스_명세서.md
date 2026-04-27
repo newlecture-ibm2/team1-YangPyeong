@@ -2,9 +2,10 @@
 
 > **문서 ID:** EXT-MAP-001  
 > **작성일:** 2026-04-23  
-> **버전:** v1.0  
+> **최종 수정:** 2026-04-26 (farms 저장 필드 추가 반영)
+> **버전:** v2.0  
 > **관련 기능:** FRM-001 (농장 등록/관리), Common (주소 변환), ADM-001 (관제 대시보드)  
-> **관련 ERD:** `farms.address`, `stores.lat/lng/partner_status`  
+> **관련 ERD:** `farms.address`, `farms.bjd_code`, `farms.pnu_code`, `farms.latitude`, `farms.longitude`  
 > **연계 명세서:** EXT-WEATHER-001 (기상청), EXT-SOIL-001 (흙토람)
 
 ---
@@ -94,7 +95,7 @@ import Script from 'next/script';
 | :--- | :--- | :--- |
 | 농장 등록 (FRM-001) | 지도 클릭으로 농장 위치 핀 지정 | `kakao.maps.event.addListener(map, 'click')` |
 | 대시보드 (FRM-001) | 내 농장 위치 마커 표시 | `kakao.maps.Marker`, `kakao.maps.InfoWindow` |
-| 주변 시설 (Common) | 주변 농기구점·종묘사 마커 표시 | `kakao.maps.Marker` + DB `stores` 데이터 |
+| 주변 시설 (Common) | 주변 농기구점·종묘사 마커 표시 | `kakao.maps.Marker` + 카카오 키워드 검색 결과 |
 | 관리자 관제 (ADM-001) | 전국 파종 현황 히트맵 | `kakao.maps.MarkerClusterer` |
 
 ---
@@ -142,16 +143,17 @@ import Script from 'next/script';
 | 농기구 수리 | `"농기계"`, `"농기구수리"` | 장비 수리점 |
 | 농업기술센터 | `"농업기술센터"` | 지자체 기관 |
 
-**`stores` 테이블과의 매칭 로직:**
+**검색 결과 표시 방식:**
 
 ```
-1. 카카오 키워드 검색 결과 획득 (외부 데이터)
-2. DB stores 테이블에서 반경 내 is_active=true 가게 조회 (내부 데이터)
-3. 두 결과를 병합하여 지도에 표시
-   ├── DB 제휴 가게 (partner_status='PARTNER') → ⭐ 특수 마커 (우선 노출)
-   ├── DB 일반 가게 (partner_status='NONE')    → 📌 일반 마커
-   └── 카카오 검색 전용 결과 (DB 미등록)       → 📍 외부 마커 (별도 색상)
+1. 카카오 키워드 검색 API 호출 (실시간)
+2. 응답 결과를 지도 마커로 렌더링
+   ├── 카카오 검색 결과 → 평점, 리뷰 수, 업종 정보 표시
+   └── DB 저장 없이 실시간 조회만 수행
 ```
+
+> 📌 **설계 결정**: 가게 정보는 DB에 저장하지 않고 카카오 API 실시간 검색으로 처리한다.
+> 카카오가 이미 최신 영업시간·평점 등을 관리하므로 중복 저장은 불필요.
 
 ### 4.3 좌표 → 주소 변환 (Reverse Geocoding)
 
@@ -169,20 +171,23 @@ import Script from 'next/script';
 
 유저가 농장을 등록할 때, 카카오맵 API가 자동으로 채워주는 필드:
 
-| ERD 컬럼 | 데이터 원천 | 설명 |
+| ERD 컨럼 | 데이터 원천 | 설명 |
 | :--- | :--- | :--- |
 | `farms.address` | 주소 검색 or 역지오코딩 | 유저가 지도 클릭 또는 주소 입력 시 자동 저장 |
+| `farms.latitude` | `address.y` | 위도 → 지도 마커 표시, 기상청 격자 변환 |
+| `farms.longitude` | `address.x` | 경도 → 지도 마커 표시, 기상청 격자 변환 |
+| `farms.bjd_code` | `address.b_code` | 법정동코드 (10자리) → 흡토람 PNU 조립용 |
+| `farms.pnu_code` | `b_code` + `main_address_no` + `sub_address_no` + `mountain_yn` | 필지코드 (19자리) → 흡토람 토양 조회 |
 
-> 📌 현재 ERD에 `farms.lat`, `farms.lng` 컬럼이 없다. 농장 위치를 지도에 마커로 표시하려면 **위경도 컬럼 추가를 검토**해야 한다.
+### 5.2 주변 시설 조회 (실시간 검색)
 
-### 5.2 `stores` 테이블 연동
+주변 농기구점·종묘사 등의 시설 정보는 **DB에 저장하지 않고** 카카오 키워드 검색 API를 통해 실시간으로 조회한다.
 
-| ERD 컬럼 | 카카오맵 활용 | 설명 |
-| :--- | :--- | :--- |
-| `stores.lat` / `stores.lng` | 마커 좌표 | 가게의 지도 위 위치 표시 |
-| `stores.partner_status` | 마커 아이콘 분기 | `PARTNER` → 특수 마커 |
-| `stores.category` | 검색 키워드 매칭 | 업종별 필터링 |
-| `stores.is_active` | 노출 여부 | `false`인 가게는 지도에서 제외 |
+| 항목 | 설명 |
+| :--- | :--- |
+| 데이터 소스 | 카카오 키워드 검색 API (실시간) |
+| DB 저장 | 없음 (카카오가 영업시간·평점 등을 이미 관리) |
+| 캐싱 | Redis 1시간 TTL (동일 좌표 반복 검색 방지) |
 
 ---
 
@@ -236,7 +241,7 @@ import Script from 'next/script';
 | 주소 → 좌표(x,y) 변환 | **Redis** | 7일 | 주소-좌표 매핑은 거의 불변 |
 | 주소 → 법정동코드 변환 | **Redis** | 7일 | 법정동 코드는 고정값 |
 | 키워드 검색 결과 | **Redis** | 1시간 | 가게 정보는 변동 가능성 있음 |
-| stores 테이블 공간 쿼리 | **No Cache** | — | DB 실시간 조회 (데이터 정합성 우선) |
+
 
 ---
 
@@ -289,8 +294,8 @@ import Script from 'next/script';
 | :--- | :--- |
 | JS SDK 로드 실패 | 주소 텍스트 입력 폼으로 전환 (지도 없이 주소 검색만 수행) |
 | REST API 장애 | Redis 최종 캐시 반환 |
-| 카카오 전체 장애 | DB `stores` 테이블의 기존 좌표 기반으로 정적 목록 표시 |
-| 키워드 검색 0건 | DB `stores` 테이블에서 반경 검색만 수행 |
+| 카카오 전체 장애 | "주변 시설 검색 일시 불가" 안내 메시지 표시 |
+| 키워드 검색 0건 | "주변에 일치하는 시설이 없습니다" 안내 |
 
 ### 8.3 Retry 정책 (REST API)
 
@@ -315,27 +320,26 @@ backend/src/main/java/com/farmbalance/infra/external/kakao/
 frontend/src/components/map/
 ├── KakaoMap.tsx                      # 지도 렌더링 컴포넌트 (SDK 래퍼)
 ├── FarmMarker.tsx                    # 농장 위치 마커 컴포넌트
-├── StoreMarker.tsx                   # 주변 시설 마커 컴포넌트 (제휴 구분 아이콘)
+├── NearbyFacilityMarker.tsx           # 주변 시설 마커 컴포넌트 (카카오 검색 결과 기반)
 └── MapSearchBar.tsx                  # 지도 내 주소·키워드 검색 UI
 ```
 
 ---
 
-## 10. ERD 변경 제안
+## 10. ERD 변경 이력 (반영 완료)
 
-> ⚠️ 현재 `farms` 테이블에 위경도 컬럼이 없어, 농장 위치를 지도에 표시하려면 매번 주소로 재검색해야 한다.
+> ✅ 아래 변경은 ERD v2.0에 **반영 완료**되었습니다.
 
-| 대상 테이블 | 추가 컬럼 | 타입 | 사유 |
-| :--- | :--- | :--- | :--- |
-| `farms` | `lat` | DECIMAL(10,7) | 농장 위도 저장 → 지도 마커 즉시 표시 |
-| `farms` | `lng` | DECIMAL(10,7) | 농장 경도 저장 → 기상청 API 호출 시 재변환 불필요 |
-
-이 변경은 팀 내 ERD 확정 시 논의 필요.
+| 대상 테이블 | 추가된 컨럼 | 타입 | 상태 |
+| :--- | :--- | :--- | :---: |
+| `farms` | `latitude` | DECIMAL(10,7) | ✅ 반영 완료 |
+| `farms` | `longitude` | DECIMAL(10,7) | ✅ 반영 완료 |
+| `farms` | `bjd_code` | VARCHAR(10) | ✅ 반영 완료 |
+| `farms` | `pnu_code` | VARCHAR(19) | ✅ 반영 완료 |
 
 ---
 
 > 📌 **다음 단계:**  
 > ① 카카오 Developers 앱 생성 및 JS Key / REST Key 발급  
 > ② 로컬 개발 도메인(`localhost:3000`) 등록  
-> ③ `KakaoMap.tsx` 컴포넌트 프로토타입 구현  
-> ④ `farms` 테이블 위경도 컬럼 추가 여부 팀 논의
+> ③ `KakaoMap.tsx` 컴포넌트 프로토타입 구현

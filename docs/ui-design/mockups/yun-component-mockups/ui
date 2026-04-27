@@ -1,0 +1,1860 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-KPWG9ET5ZY"></script>
+    <script>window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-KPWG9ET5ZY');
+    </script>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Olha Uzhykova. Design Director | UI/UX Consultant | Mentor">
+    <meta name="description" content="At the heart of Design is an opportunity to problem solve.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:image" content="https://coderiver-olha-uzhykova.netlify.app/assets/meta/og-image.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/meta/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="./assets/meta/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./assets/meta/favicon-16x16.png">
+    <link rel="manifest" href="./assets/meta/site.webmanifest">
+    <link rel="mask-icon" href="./assets/meta/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <title>Olha Uzhykova. Design Director | UI/UX Consultant | Mentor</title>
+    <link rel="stylesheet" href="./css/index.css">
+    <script class="scripts" src="./js/main.js" defer></script>
+    <script>(function (h, o, t, j, a, r) {
+            h.hj = h.hj || function () { (h.hj.q = h.hj.q || []).push(arguments) };
+            h._hjSettings = { hjid: 3192607, hjsv: 6 };
+            a = o.getElementsByTagName('head')[0];
+            r = o.createElement('script'); r.async = 1;
+            r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv;
+            a.appendChild(r);
+        })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');
+
+
+
+    </script>
+</head>
+
+<body><svg id="translate" viewBox="0 0 300 300" preserveAspectRatio="none">
+        <path id="zero" d="M0,299.999999c0,0,60.351876-.040839,150,0s150,0,150,0v0h-300v0Z"></path>
+        <path id="first" d="M0,258.181161h150l150,.542397v41.276441h-300v-41.818838Z"></path>
+        <path id="second"
+            d="M0,258.181161c0,0,60.351876-258.222001,150-258.181162s150,258.723559,150,258.723559v41.276441h-300v-41.818838Z">
+        </path>
+        <path id="third" d="M0,-0.000001c0,0,60.351876-.040839,150,0s150,0,150,0v300h-300v-300Z"></path>
+    </svg>
+    <div id="wrapper" data-barba="wrapper">
+        <main data-barba="container" data-barba-namespace="home">
+            <header class="header">
+                <div class="header__menu-block">
+                    <div class="scrollTo" href="section.hero">
+                        <div class="header__menu with-logo magnetic custom-magnetic"><img
+                                class="header__logo header__menu-item" src="../assets/svg/logo2.svg" alt="logo2"
+                                width="40" height="33" />
+                            <div class="header__logo-animation">
+                                <div class="header__menu-item">Design Director</div>
+                                <div class="header__menu-item">Consultant</div>
+                                <div class="header__menu-item">Mentor</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="header__menu-block">
+                    <div class="header__menu new__custom_menu">
+                        <div class="magnetic header__menu-item scrollTo" href="section.portfolio">Portfolio</div>
+                        <div class="magnetic header__menu-item scrollTo" href="section.principles">My Values</div>
+                        <div class="magnetic header__menu-item scrollTo" href="section.help">What I Do</div>
+                    </div>
+                    <div class="scrollTo" href="section.form">
+                        <div class="button magnetic header__menu header__menu--help">Contact<div class="button__hover">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <header class="header header--mobile">
+                <div class="header__logo-link-mob scrollTo" href="section.hero">
+                    <div class="header__menu-block">
+                        <div class="header__menu with-logo magnetic"><img class="header__logo header__menu-item"
+                                src="../assets/svg/logo2.svg" alt="logo2" width="40" height="33" /></div>
+                    </div>
+                </div>
+                <div class="header__menu-block">
+                    <div class="scrollTo" href="section.form">
+                        <div class="header__menu header__menu--help magnetic">Contact</div>
+                    </div>
+                    <div class="header__menu header__menu--button magnetic"><svg class="header__menu-icon" width="28"
+                            height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect class="header__menu-icon-top" y="10" width="28" height="2" fill="#1B1C1E"></rect>
+                            <rect class="header__menu-icon-bottom" y="16" width="28" height="2" fill="#1B1C1E"></rect>
+                        </svg></div>
+                </div>
+                <div class="menu">
+                    <ul class="menu__list">
+                        <li>
+                            <div class="menu__list-item scrollTo" href="section.help">How can I help <i>you?</i></div>
+                        </li>
+                        <li>
+                            <div class="menu__list-item scrollTo" href="section.portfolio">Portfolio</div>
+                        </li>
+                        <li>
+                            <div class="menu__list-item scrollTo" href="section.principles">My Values</div>
+                        </li>
+                        <li>
+                            <div class="menu__list-item scrollTo" href="section.help">What I Do</div>
+                        </li>
+                    </ul>
+                    <div class="menu__socials"><a class="menu__social" href="https://www.linkedin.com/in/olgauzhykova"
+                            target="_blank">
+                            <div class="button magnetic menu__social-btn">LinkedIn<svg
+                                    class="icon icon-arrow_link button__arrow">
+                                    <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                </svg>
+                                <div class="button__hover"></div>
+                            </div>
+                        </a><a class="menu__social" href="https://twitter.com/olka_uzhyk" target="_blank">
+                            <div class="button magnetic menu__social-btn">Twitter<svg
+                                    class="icon icon-arrow_link button__arrow">
+                                    <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                </svg>
+                                <div class="button__hover"></div>
+                            </div>
+                        </a><a class="menu__social" href="https://www.facebook.com/olga.uzhikova" target="_blank">
+                            <div class="button magnetic menu__social-btn">Facebook<svg
+                                    class="icon icon-arrow_link button__arrow">
+                                    <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                </svg>
+                                <div class="button__hover"></div>
+                            </div>
+                        </a></div>
+                </div>
+            </header>
+            <div class="preloader"><!--img(src="../assets/videos/v2.gif" alt="preloader" width='180px')-->
+                <div class="pre_wrapper"><span class="first"></span><span class="second"></span><span
+                        class="third"></span><span class="snake_new"><span class="top_snake"></span><span
+                            class="right_snake"></span><span class="bottom_snake"></span><span
+                            class="left_snake"></span><span class="last_snake"></span><span class="head"></span></span>
+                </div>
+            </div>
+            <div id="scroller-wrapper">
+                <div id="scroller">
+                    <div class="hero__dashes-section" data-scroll-section>
+                        <div class="hero__dashes"></div>
+                        <div class="hero__space"></div>
+                    </div>
+                    <section class="hero" data-scroll-section>
+                        <div class="hero__wrapper">
+                            <div class="hero__space"></div>
+                            <div class="hero__ball-container">
+                                <picture class="image hero__ball">
+                                    <source media="(max-width: 768px)"
+                                        srcset="../assets/images/hero/ball-texture-sm.webp" type="image/webp"
+                                        width="500" height="500" />
+                                    <source media="(max-width: 767px)"
+                                        srcset="../assets/images/hero/ball-texture-sm.png" type="image/png" width="500"
+                                        height="500" />
+                                    <source srcset="../assets/images/hero/ball-texture.webp" type="image/webp"
+                                        width="1220" height="1220" />
+                                    <source srcset="../assets/images/hero/ball-texture.png" type="image/png"
+                                        width="1220" height="1220" /><img alt="ball" loading="eager" width="1220"
+                                        height="1220" />
+                                </picture>
+                            </div>
+                            <div class="hero__title">
+                                <div class="hero__name" data-scroll="" data-scroll-delay="0.18" data-scroll-speed="1.5">
+                                    Olha</div>
+                                <div class="hero__surname" data-scroll="" data-scroll-delay="0.18"
+                                    data-scroll-speed="1.5">Uzhykova</div>
+                            </div>
+                            <div class="hero__podium">
+                                <div class="hero__podium-text">At the heart of <span class="italic italic--wave">Design
+                                        <div class="hero__underline"><img src="../assets/svg/underline.svg"
+                                                alt="underline" width="213" height="22" /></div></span> is an
+                                    opportunity to problem <span class="italic italic--line">solve<div
+                                            class="hero__underline"></div></span>.</div>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="snakebar">
+                        <section class="introduction">
+                            <h2 class="introduction__title title title-animation">Hi there, I’m<br><span
+                                    class="font-italic">Olha.</span><span
+                                    class="introduction__also introduction__also--mobile green-pill">Also Olga, or
+                                    Olka</span></h2>
+                            <div class="introduction__info">
+                                <div class="introduction__info-block"><span
+                                        class="introduction__also green-pill show-up-animation">Also Olga, or
+                                        Olka</span></div>
+                                <div class="introduction__info-block with-padding">
+                                    <p class="introduction__paragraph text-block show-up-animation">An LA-based
+                                        award-winning design director and UI/UX design expert with 10 years of
+                                        experience in design and management.</p>
+                                    <p class="introduction__paragraph text-block show-up-animation">I am a mom to a
+                                        beautiful 2 y.o. daughter who already loves attending business meetings with me.
+                                        Also, a big part of my life is<a href="https://noomoagency.com" target="_blank">
+                                            Noomo</a>- a design agency which I run together with my husband.</p>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="snake" data-scroll-section>
+                            <div class="snake__ball">
+                                <div class="snake__image-container">
+                                    <div class="snake__image snake__image-1" id="snake-video"><video class="card"
+                                            src="./assets/images/intro-1.mp4"
+                                            poster="./assets/images/video-preview/snake_vid.png" autoplay="true"
+                                            playsinline="true" loop="true" muted="true" loading="lazy"></video></div>
+                                    <div class="snake__image snake__image-1 is-savemode" id="snake-animation"><img
+                                            class="card" src="./assets/videos/intro1_1.gif" loading="lazy"></div>
+                                </div>
+                                <div class="snake__image-container">
+                                    <div class="snake__image snake__image-2">
+                                        <picture class="image card">
+                                            <source media="(max-width: 768px)"
+                                                srcset="./assets/images/snake/intro-sm.webp" type="image/webp"
+                                                width="342" height="228" />
+                                            <source media="(max-width: 767px)"
+                                                srcset="./assets/images/snake/intro-sm.png" type="image/png" width="342"
+                                                height="228" />
+                                            <source srcset="./assets/images/snake/intro.webp" type="image/webp"
+                                                width="721" height="481" />
+                                            <source srcset="./assets/images/snake/intro.png" type="image/png"
+                                                width="721" height="481" /><img alt="stage-photo" loading="lazy"
+                                                width="721" height="481" />
+                                        </picture>
+                                    </div>
+                                </div>
+                                <div class="snake__snake-container"><svg class="snake__snake" viewBox="0 0 46 80">
+                                        <path class="snake__railway" id="mypath" fill="none"
+                                            d="M39 69c-2-1-9-2-16-1-12 2-20-1-18-8 2-8 14-5 19-3 6 2 16 4 18-2 2-4-1-7-3-8s-9-2-14-1c-5 2-7 3-11 3-4 1-11-1-12-6 0-6 5-8 12-8 12 2 27 6 27-4 0-11-11-8-25-4-7 1-15-1-15-8 0-6 5-7 10-6 8 1 9 3 13 4 9 1 16-3 16-9 0-7-8-8-15-7L13 2 4 1">
+                                        </path><text class="snake__text" width="100%">
+                                            <textPath class="snake__text-path" dominant-baseline="central"
+                                                xlink:href="#mypath" fill="black" startOffset="100%">AT THE HEART OF
+                                                DESIGN IS AN OPPORTUNITY TO PROBLEM SOLVE AT THE HEART OF DESIGN IS AN
+                                                OPPORTUNITY TO PROBLEM SOLVE
+                                                AT THE HEART OF DESIGN IS AN OPPORTUNITY TO PROBLEM SOLVE AT THE HEART
+                                                OF DESIGN IS AN OPPORTUNITY TO PROBLEM SOLVE </textPath>
+                                        </text>
+                                    </svg></div>
+                            </div>
+                        </section>
+                        <section class="portfolio" data-scroll-section>
+                            <div class="portfolio__dashes"></div>
+                            <div class="portfolio__space"></div>
+                            <h3 class="portfolio__title">Portfolio</h3>
+                            <div class="portfolio__items">
+                                <div class="portfolio__item"><a class='portfolio__headers' href='/space-needle'>
+                                        <h4 class="portfolio__item-title">Space Needle</h4>
+                                        <p class="portfolio__item-descr">Design Direction, UX/UI Design</p>
+                                    </a>
+                                    <div
+                                        class="portfolio__image-container first_transition portfolio__image-container--1">
+                                        <picture class="image portfolio__image">
+                                            <source media="(max-width: 768px)"
+                                                srcset="../assets/images/portfolio/1-sm.webp" type="image/webp"
+                                                width="560" height="560" />
+                                            <source media="(max-width: 767px)"
+                                                srcset="../assets/images/portfolio/1-sm.png" type="image/png"
+                                                width="560" height="560" />
+                                            <source srcset="../assets/images/portfolio/1.webp" type="image/webp"
+                                                width="1520" height="1520" />
+                                            <source srcset="../assets/images/portfolio/1.png" type="image/png"
+                                                width="1520" height="1520" /><img alt="portfolio item illustration"
+                                                loading="lazy" width="1520" height="1520" />
+                                        </picture>
+                                    </div>
+                                    <div class="portfolio__link"><svg class="icon icon-arrow_link portfolio__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg></div>
+                                </div>
+                                <div class="portfolio__item"><a class='portfolio__headers' href='/crisis-clean-up'>
+                                        <h4 class="portfolio__item-title">Crisis Cleanup</h4>
+                                        <p class="portfolio__item-descr">Lead UX/UI Designer</p>
+                                    </a>
+                                    <div
+                                        class="portfolio__image-container first_transition portfolio__image-container--2">
+                                        <picture class="image portfolio__image">
+                                            <source media="(max-width: 768px)"
+                                                srcset="../assets/images/portfolio/2-sm.webp" type="image/webp"
+                                                width="480" height="480" />
+                                            <source media="(max-width: 767px)"
+                                                srcset="../assets/images/portfolio/2-sm.png" type="image/png"
+                                                width="480" height="480" />
+                                            <source srcset="../assets/images/portfolio/2.webp" type="image/webp"
+                                                width="1260" height="1260" />
+                                            <source srcset="../assets/images/portfolio/2.png" type="image/png"
+                                                width="1260" height="1260" /><img alt="portfolio item illustration"
+                                                loading="lazy" width="1260" height="1260" />
+                                        </picture>
+                                    </div>
+                                    <div class="portfolio__link"><svg class="icon icon-arrow_link portfolio__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg></div>
+                                </div>
+                                <div class="portfolio__item"><a class='portfolio__headers' href='/tough-build'>
+                                        <h4 class="portfolio__item-title">ToughBuilt</h4>
+                                        <p class="portfolio__item-descr">Design Direction, UX/UI Design</p>
+                                    </a>
+                                    <div
+                                        class="portfolio__image-container first_transition portfolio__image-container--3">
+                                        <picture class="image portfolio__image">
+                                            <source media="(max-width: 768px)"
+                                                srcset="../assets/images/portfolio/3-sm.webp" type="image/webp"
+                                                width="400" height="400" />
+                                            <source media="(max-width: 767px)"
+                                                srcset="../assets/images/portfolio/3-sm.png" type="image/png"
+                                                width="400" height="400" />
+                                            <source srcset="../assets/images/portfolio/3.webp" type="image/webp"
+                                                width="1120" height="1120" />
+                                            <source srcset="../assets/images/portfolio/3.png" type="image/png"
+                                                width="1120" height="1120" /><img alt="portfolio item illustration"
+                                                loading="lazy" width="1120" height="1120" />
+                                        </picture>
+                                    </div>
+                                    <div class="portfolio__link"><svg class="icon icon-arrow_link portfolio__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg></div>
+                                </div>
+                                <div class="portfolio__item"><a class='portfolio__headers' href='/itg'>
+                                        <h4 class="portfolio__item-title">ITG.Digital</h4>
+                                        <p class="portfolio__item-descr">Product Owner, Design Direction</p>
+                                    </a>
+                                    <div
+                                        class="portfolio__image-container first_transition portfolio__image-container--5">
+                                        <picture class="image portfolio__image">
+                                            <source media="(max-width: 768px)"
+                                                srcset="../assets/images/portfolio/5-sm.webp" type="image/webp"
+                                                width="482" height="482" />
+                                            <source media="(max-width: 767px)"
+                                                srcset="../assets/images/portfolio/5-sm.png" type="image/png"
+                                                width="482" height="482" />
+                                            <source srcset="../assets/images/portfolio/5.webp" type="image/webp"
+                                                width="1260" height="1260" />
+                                            <source srcset="../assets/images/portfolio/5.png" type="image/png"
+                                                width="1260" height="1260" /><img alt="portfolio item illustration"
+                                                loading="lazy" width="1260" height="1260" />
+                                        </picture>
+                                    </div>
+                                    <div class="portfolio__link"><svg class="icon icon-arrow_link portfolio__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg></div>
+                                </div>
+                                <div class="portfolio__item"><a class='portfolio__headers' href='/netrix'>
+                                        <h4 class="portfolio__item-title">Netrix</h4>
+                                        <p class="portfolio__item-descr">Product Owner, Design Director</p>
+                                    </a>
+                                    <div
+                                        class="portfolio__image-container first_transition portfolio__image-container--6">
+                                        <picture class="image portfolio__image">
+                                            <source media="(max-width: 768px)"
+                                                srcset="../assets/images/portfolio/6-sm.webp" type="image/webp"
+                                                width="400" height="400" />
+                                            <source media="(max-width: 767px)"
+                                                srcset="../assets/images/portfolio/6-sm.png" type="image/png"
+                                                width="400" height="400" />
+                                            <source srcset="../assets/images/portfolio/6.webp" type="image/webp"
+                                                width="1120" height="1120" />
+                                            <source srcset="../assets/images/portfolio/6.png" type="image/png"
+                                                width="1120" height="1120" /><img alt="portfolio item illustration"
+                                                loading="lazy" width="1120" height="1120" />
+                                        </picture>
+                                    </div>
+                                    <div class="portfolio__link"><svg class="icon icon-arrow_link portfolio__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg></div>
+                                </div>
+                                <div class="portfolio__item"><a class='portfolio__headers' href='/life-house'>
+                                        <h4 class="portfolio__item-title">Life House</h4>
+                                        <p class="portfolio__item-descr">Lead Product Designer</p>
+                                    </a>
+                                    <div
+                                        class="portfolio__image-container first_transition portfolio__image-container--7">
+                                        <picture class="image portfolio__image">
+                                            <source media="(max-width: 768px)"
+                                                srcset="../assets/images/portfolio/7-sm.webp" type="image/webp"
+                                                width="560" height="560" />
+                                            <source media="(max-width: 767px)"
+                                                srcset="../assets/images/portfolio/7-sm.png" type="image/png"
+                                                width="560" height="560" />
+                                            <source srcset="../assets/images/portfolio/7.webp" type="image/webp"
+                                                width="1520" height="1520" />
+                                            <source srcset="../assets/images/portfolio/7.png" type="image/png"
+                                                width="1520" height="1520" /><img alt="portfolio item illustration"
+                                                loading="lazy" width="1520" height="1520" />
+                                        </picture>
+                                    </div>
+                                    <div class="portfolio__link"><svg class="icon icon-arrow_link portfolio__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg></div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <section class="principles" data-scroll-section>
+                        <h2 class="principles__title title-animation title"> Key<span
+                                class="font-italic">Principles</span></h2>
+                        <div class="principles__info">
+                            <div class="principles__info-block show-up-animation"><span
+                                    class="principles__also green-pill">I follow and believe in</span></div>
+                            <div class="principles__info-block">
+                                <p class="principles__paragraph text-block show-up-animation">“For me, design is about
+                                    problem solving, communicating an objective, and helping people. </p>
+                                <p class="principles__paragraph text-block show-up-animation">I believe that everything
+                                    you can imagine is possible when you have clearly defined goals, strong design,
+                                    strategy and assemble a talented team.”</p>
+                            </div>
+                        </div>
+                        <div class="principles__items">
+                            <div class="principles__item">
+                                <div class="principles__item-lottie"></div>
+                                <div class="principles__item-text">People are the biggest value</div>
+                            </div>
+                            <div class="principles__item">
+                                <div class="principles__item-lottie"></div>
+                                <div class="principles__item-text">Flexibility is a superpower</div>
+                            </div>
+                            <div class="principles__item">
+                                <div class="principles__item-lottie"></div>
+                                <div class="principles__item-text">Do your best or don’t start</div>
+                            </div>
+                            <div class="principles__item">
+                                <div class="principles__item-lottie"></div>
+                                <div class="principles__item-text">Good communication leads to success</div>
+                            </div>
+                        </div>
+                        <div class="principles__ball"></div>
+                    </section>
+                    <section class="awards" data-scroll-section>
+                        <div class="awards__text">
+                            <div class="awards__header title title-animation">Awards</div>
+                            <div class="awards__paragraph text-block show-up-animation">Over 50 design awards including
+                                RedDot,<br>Webby, San Francisco Design Week.</div>
+                        </div>
+                        <div class="awards__canvas"></div>
+                    </section>
+                    <section class="teacher" data-scroll-section>
+                        <div class="teacher__header title title-animation"><span class="font-italic">Teacher
+                            </span><span class="font-sans">& </span>Speaker</div>
+                        <div class="teacher__text">
+                            <div class="teacher__text-item text-block show-up-animation">While actively participating in
+                                developing the design community, I launched an exclusive design course on Awwwards
+                                Academy.</div>
+                            <div class="teacher__text-item text-block show-up-animation">I share my classes, interviews,
+                                experiences and insights with Art Director Clubs of Europe, Dribbble blog, Adobe live
+                                stream, design meetups, and various other panel discussions.</div>
+                        </div>
+                        <div class="teacher__main">
+                            <div class="teacher__ball"> </div>
+                            <div class="teacher__items">
+                                <div class="teacher__item teacher__item--1" data-lag="0.5" data-speed="1.2"><a
+                                        href="https://www.youtube.com/watch?v=Vm_T1afd8Vs" target="_blank">
+                                        <div class="teacher__item-container">
+                                            <div class="teacher__item-hover">
+                                                <p class="teacher__item-event">Interview for ADC*E</p>
+                                                <picture class="image teacher__item-image teacher__item-image--1">
+                                                    <source srcset="../assets/images/teacher-and-speaker/1.webp"
+                                                        type="image/webp" width="640" height="448" />
+                                                    <source srcset="../assets/images/teacher-and-speaker/1.png"
+                                                        type="image/png" width="640" height="448" /><img alt="picture"
+                                                        loading="eager" width="640" height="448" />
+                                                </picture>
+                                                <p class="teacher__item-desc">ADC Winners talk</p>
+                                            </div>
+                                        </div>
+                                    </a></div>
+                                <div class="teacher__item teacher__item--2" data-lag="0.5" data-speed="1.2"><a
+                                        href="https://www.awwwards.com/academy/course/building-better-user-experiences-with-a-product-thinking-approach"
+                                        target="_blank">
+                                        <div class="teacher__item-container">
+                                            <div class="teacher__item-hover">
+                                                <p class="teacher__item-event">Awwwards Academy Course</p>
+                                                <picture class="image teacher__item-image teacher__item-image--2">
+                                                    <source srcset="../assets/images/teacher-and-speaker/2.webp"
+                                                        type="image/webp" width="652" height="840" />
+                                                    <source srcset="../assets/images/teacher-and-speaker/2.png"
+                                                        type="image/png" width="652" height="840" /><img alt="picture"
+                                                        loading="eager" width="652" height="840" />
+                                                </picture>
+                                                <p class="teacher__item-desc">Building better user experiences with a
+                                                    product thinking approach</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <picture class="image teacher__item-image-mob teacher__item-image-mob--2">
+                                        <source srcset="../assets/images/teacher-and-speaker/1m.webp"
+                                            type="image/webp" />
+                                        <source srcset="../assets/images/teacher-and-speaker/1m.png" type="image/png" />
+                                        <img src="../assets/images/teacher-and-speaker/1m.png" alt="event"
+                                            loading="lazy" width="" height="" />
+                                    </picture>
+                                </div>
+                                <div class="teacher__item teacher__item--3" data-lag="0.5" data-speed="1.2"><a
+                                        href="https://dribbble.com/stories/2019/03/19/dribbble-interview-building-a-design-agency-with-olha-uzhykova"
+                                        target="_blank">
+                                        <div class="teacher__item-container">
+                                            <div class="teacher__item-hover">
+                                                <p class="teacher__item-event">Dribbble</p>
+                                                <picture class="image teacher__item-image teacher__item-image--3">
+                                                    <source srcset="../assets/images/teacher-and-speaker/3.webp"
+                                                        type="image/webp" width="640" height="448" />
+                                                    <source srcset="../assets/images/teacher-and-speaker/3.png"
+                                                        type="image/png" width="640" height="448" /><img alt="picture"
+                                                        loading="eager" width="640" height="448" />
+                                                </picture>
+                                                <p class="teacher__item-desc">Building a design agency</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <picture class="image teacher__item-image-mob teacher__item-image-mob--3">
+                                        <source srcset="../assets/images/teacher-and-speaker/2m.webp"
+                                            type="image/webp" />
+                                        <source srcset="../assets/images/teacher-and-speaker/2m.png" type="image/png" />
+                                        <img src="../assets/images/teacher-and-speaker/2m.png" alt="event"
+                                            loading="lazy" width="" height="" />
+                                    </picture>
+                                </div>
+                                <div class="teacher__item teacher__item--4" data-lag="0.5" data-speed="1.2"><a
+                                        href="https://www.awwwards.com/academy/webinar/live-design-jury-website-reviews-bruno-arizio-olha-uzhykova-jonas-lempa?fbclid=IwAR0AMLI5Ej8ss4gYY3jSQ8Cp3fCPwq2wLAh0BUlp1A9EuO8T3sNWol4hRXc"
+                                        target="_blank">
+                                        <div class="teacher__item-container">
+                                            <div class="teacher__item-hover">
+                                                <p class="teacher__item-event">Awwwards</p>
+                                                <picture class="image teacher__item-image teacher__item-image--4">
+                                                    <source srcset="../assets/images/teacher-and-speaker/4.webp"
+                                                        type="image/webp" width="640" height="448" />
+                                                    <source srcset="../assets/images/teacher-and-speaker/4.png"
+                                                        type="image/png" width="640" height="448" /><img alt="picture"
+                                                        loading="eager" width="640" height="448" />
+                                                </picture>
+                                                <p class="teacher__item-desc">Live design website reviews</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <picture class="image teacher__item-image-mob teacher__item-image-mob--4">
+                                        <source srcset="../assets/images/teacher-and-speaker/3m.webp"
+                                            type="image/webp" />
+                                        <source srcset="../assets/images/teacher-and-speaker/3m.png" type="image/png" />
+                                        <img src="../assets/images/teacher-and-speaker/3m.png" alt="event"
+                                            loading="lazy" width="" height="" />
+                                    </picture>
+                                </div>
+                                <div class="teacher__item teacher__item--5" data-lag="0.5" data-speed="1.2"><a
+                                        href="https://www.youtube.com/watch?v=HdFlwm6xc8Y" target="_blank">
+                                        <div class="teacher__item-container">
+                                            <div class="teacher__item-hover">
+                                                <p class="teacher__item-event">Adobe</p>
+                                                <picture class="image teacher__item-image teacher__item-image--5">
+                                                    <source srcset="../assets/images/teacher-and-speaker/5.webp"
+                                                        type="image/webp" width="640" height="448" />
+                                                    <source srcset="../assets/images/teacher-and-speaker/5.png"
+                                                        type="image/png" width="640" height="448" /><img alt="picture"
+                                                        loading="eager" width="640" height="448" />
+                                                </picture>
+                                                <p class="teacher__item-desc">3 days live stream about UI/UX design</p>
+                                            </div>
+                                        </div>
+                                    </a></div>
+                                <div class="teacher__item teacher__item--6" data-lag="0.5" data-speed="1.2"><a
+                                        href="https://www.youtube.com/watch?v=iuIxnhLZWzI" target="_blank">
+                                        <div class="teacher__item-container">
+                                            <div class="teacher__item-hover">
+                                                <p class="teacher__item-event">Zajno design Meetup</p>
+                                                <picture class="image teacher__item-image teacher__item-image--6">
+                                                    <source srcset="../assets/images/teacher-and-speaker/6.webp"
+                                                        type="image/webp" width="652" height="840" />
+                                                    <source srcset="../assets/images/teacher-and-speaker/6.png"
+                                                        type="image/png" width="652" height="840" /><img alt="picture"
+                                                        loading="eager" width="652" height="840" />
+                                                </picture>
+                                                <p class="teacher__item-desc">Communication with client and building
+                                                    relationships</p>
+                                            </div>
+                                        </div>
+                                    </a></div>
+                                <div class="teacher__item teacher__item--7" data-lag="0.5" data-speed="1.2"><a
+                                        href="https://www.youtube.com/watch?v=3bltY4FVcZg" target="_blank">
+                                        <div class="teacher__item-container">
+                                            <div class="teacher__item-hover">
+                                                <p class="teacher__item-event">Ukrainian creative week</p>
+                                                <picture class="image teacher__item-image teacher__item-image--7">
+                                                    <source srcset="../assets/images/teacher-and-speaker/7.webp"
+                                                        type="image/webp" width="640" height="448" />
+                                                    <source srcset="../assets/images/teacher-and-speaker/7.png"
+                                                        type="image/png" width="640" height="448" /><img alt="picture"
+                                                        loading="eager" width="640" height="448" />
+                                                </picture>
+                                                <p class="teacher__item-desc">Developing own product in a design agency
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </a></div>
+                                <div class="teacher__item teacher__item--8" data-lag="0.5" data-speed="1.2"><a
+                                        href="https://www.youtube.com/watch?v=QzcLaOP1uAE" target="_blank">
+                                        <div class="teacher__item-container">
+                                            <div class="teacher__item-hover">
+                                                <p class="teacher__item-event">Projector</p>
+                                                <picture class="image teacher__item-image teacher__item-image--8">
+                                                    <source srcset="../assets/images/teacher-and-speaker/8.webp"
+                                                        type="image/webp" width="640" height="448" />
+                                                    <source srcset="../assets/images/teacher-and-speaker/8.png"
+                                                        type="image/png" width="640" height="448" /><img alt="picture"
+                                                        loading="eager" width="640" height="448" />
+                                                </picture>
+                                                <p class="teacher__item-desc">What do you need to do to receive an
+                                                    award?</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <picture class="image teacher__item-image-mob teacher__item-image-mob--8">
+                                        <source srcset="../assets/images/teacher-and-speaker/4m.webp"
+                                            type="image/webp" />
+                                        <source srcset="../assets/images/teacher-and-speaker/4m.png" type="image/png" />
+                                        <img src="../assets/images/teacher-and-speaker/4m.png" alt="event"
+                                            loading="lazy" width="" height="" />
+                                    </picture>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="articles" data-scroll-section>
+                        <div class="articles__title title title-animation"><span class="font-italic">Articles
+                            </span><span class="font-sans">& </span><br>Publications</div>
+                        <div class="articles__books"> <a
+                                href="https://medium.com/muzli-design-inspiration/how-to-make-the-most-of-your-corporate-website-creative-ideas-in-details-b2635827374a"
+                                target="_blank">
+                                <div class="articles__book book book--1">
+                                    <div class="book__author">Muzly</div>
+                                    <div class="book__icon">
+                                        <picture class="image book__image">
+                                            <source srcset="../assets/images/books/star.webp" type="image/webp" />
+                                            <source srcset="../assets/images/books/star.png" type="image/png" /><img
+                                                src="../assets/images/books/star.png" alt="book-logo" loading="lazy"
+                                                width="198" height="195" />
+                                        </picture>
+                                    </div>
+                                    <div class="book__title">How to make the most of your corporate website? Creative
+                                        ideas in details</div>
+                                    <div class="book__year"><span class="book__dates">2021</span></div>
+                                </div>
+                            </a><a
+                                href="https://medium.com/muzli-design-inspiration/the-ultimate-guide-to-remote-usability-testing-734faad239a5"
+                                target="_blank">
+                                <div class="articles__book book book--2">
+                                    <div class="book__author">Muzly</div>
+                                    <div class="book__icon">
+                                        <picture class="image book__image">
+                                            <source srcset="../assets/images/books/check.webp" type="image/webp" />
+                                            <source srcset="../assets/images/books/check.png" type="image/png" /><img
+                                                src="../assets/images/books/check.png" alt="book-logo" loading="lazy"
+                                                width="155" height="113" />
+                                        </picture>
+                                    </div>
+                                    <div class="book__title">The ultimate guide to remote usability testing</div>
+                                    <div class="book__year"><span class="book__dates">2021</span></div>
+                                </div>
+                            </a><a
+                                href="https://medium.com/muzli-design-inspiration/designing-treatment-plan-in-behavioral-healthcare-be6a8087c96e"
+                                target="_blank">
+                                <div class="articles__book book book--3">
+                                    <div class="book__author">Muzly</div>
+                                    <div class="book__icon">
+                                        <picture class="image book__image">
+                                            <source srcset="../assets/images/books/drop.webp" type="image/webp" />
+                                            <source srcset="../assets/images/books/drop.png" type="image/png" /><img
+                                                src="../assets/images/books/drop.png" alt="book-logo" loading="lazy"
+                                                width="96" height="148" />
+                                        </picture>
+                                    </div>
+                                    <div class="book__title">Designing treatment plan in behavioral healthcare</div>
+                                    <div class="book__year"><span class="book__dates">2021</span></div>
+                                </div>
+                            </a><a
+                                href="https://medium.com/ux-planet/10-useful-tools-to-grow-your-business-8b2c0c5ecff8"
+                                target="_blank">
+                                <div class="articles__book book book--4">
+                                    <div class="book__author">UX Planet</div>
+                                    <div class="book__icon">
+                                        <picture class="image book__image">
+                                            <source srcset="../assets/images/books/levels.webp" type="image/webp" />
+                                            <source srcset="../assets/images/books/levels.png" type="image/png" /><img
+                                                src="../assets/images/books/levels.png" alt="book-logo" loading="lazy"
+                                                width="132" height="137" />
+                                        </picture>
+                                    </div>
+                                    <div class="book__title">10 Useful tools to grow your business</div>
+                                    <div class="book__year"><span class="book__dates">2020</span></div>
+                                </div>
+                            </a><a
+                                href="https://dribbble.com/stories/2018/05/29/an-interview-with-user-interface-designer-olga"
+                                target="_blank">
+                                <div class="articles__book book book--5">
+                                    <div class="book__author">Dribbble</div>
+                                    <div class="book__icon">
+                                        <picture class="image book__image">
+                                            <source srcset="../assets/images/books/lock.webp" type="image/webp" />
+                                            <source srcset="../assets/images/books/lock.png" type="image/png" /><img
+                                                src="../assets/images/books/lock.png" alt="book-logo" loading="lazy"
+                                                width="133" height="146" />
+                                        </picture>
+                                    </div>
+                                    <div class="book__title">An interview with user interface designer Olha Uzhykova
+                                    </div>
+                                    <div class="book__year"><span class="book__dates">2018</span></div>
+                                </div>
+                            </a><a href="https://medium.com/@netrix.digital" target="_blank">
+                                <div class="articles__book book book--6">
+                                    <div class="book__author">Medium</div>
+                                    <div class="book__icon">
+                                        <picture class="image book__image">
+                                            <source srcset="../assets/images/books/plus.webp" type="image/webp" />
+                                            <source srcset="../assets/images/books/plus.png" type="image/png" /><img
+                                                src="../assets/images/books/plus.png" alt="book-logo" loading="lazy"
+                                                width="136" height="136" />
+                                        </picture>
+                                    </div>
+                                    <div class="book__title">More articles on Medium</div>
+                                    <div class="book__year"><span class="book__dates">2020-<br>Now</span></div>
+                                </div>
+                            </a></div>
+                        <div class="articles__canvas"> </div>
+                    </section>
+                    <div class="whitebg">
+                        <section class="mentorship" data-scroll-section>
+                            <div class="mentorship__inner">
+                                <div class="mentorship__title title title-animation"> Mentorship <br><span
+                                        class="font-sans">& </span><span class="font-italic">Judging</span></div>
+                                <div class="mentorship__items">
+                                    <div class="mentorship__item">
+                                        <div class="mentorship__item-event">Awwwards</div>
+                                        <div class="mentorship__item-pills">
+                                            <div class="mentorship__item-title">Jury Member</div>
+                                            <div class="mentorship__item-dates">2019 - Now</div>
+                                        </div>
+                                        <div class="mentorship__item-image">
+                                            <picture class="image .mentorship__item-picture">
+                                                <source srcset="../assets/images/mentorship/1.webp" type="image/webp" />
+                                                <source srcset="../assets/images/mentorship/1.png" type="image/png" />
+                                                <img src="../assets/images/mentorship/1.png" alt="mentorship event"
+                                                    loading="lazy" width="400" height="534" />
+                                            </picture>
+                                        </div>
+                                    </div>
+                                    <div class="mentorship__item">
+                                        <div class="mentorship__item-event">DEV Challenge</div>
+                                        <div class="mentorship__item-pills">
+                                            <div class="mentorship__item-title">Jury Member</div>
+                                            <div class="mentorship__item-dates">2020, 2021</div>
+                                        </div>
+                                        <div class="mentorship__item-image">
+                                            <picture class="image .mentorship__item-picture">
+                                                <source srcset="../assets/images/mentorship/2.webp" type="image/webp" />
+                                                <source srcset="../assets/images/mentorship/2.png" type="image/png" />
+                                                <img src="../assets/images/mentorship/2.png" alt="mentorship event"
+                                                    loading="lazy" width="680" height="440" />
+                                            </picture>
+                                        </div>
+                                    </div>
+                                    <div class="mentorship__item">
+                                        <div class="mentorship__item-event">ADC*E</div>
+                                        <div class="mentorship__item-pills">
+                                            <div class="mentorship__item-title">Member and Judge</div>
+                                            <div class="mentorship__item-dates">2021</div>
+                                        </div>
+                                        <div class="mentorship__item-image">
+                                            <picture class="image .mentorship__item-picture">
+                                                <source srcset="../assets/images/mentorship/3.webp" type="image/webp" />
+                                                <source srcset="../assets/images/mentorship/3.png" type="image/png" />
+                                                <img src="../assets/images/mentorship/3.png" alt="mentorship event"
+                                                    loading="lazy" width="600" height="664" />
+                                            </picture>
+                                        </div>
+                                    </div>
+                                    <div class="mentorship__item">
+                                        <div class="mentorship__item-event">ADC*UA</div>
+                                        <div class="mentorship__item-pills">
+                                            <div class="mentorship__item-title">Jury Member</div>
+                                            <div class="mentorship__item-dates">2020, 2021</div>
+                                        </div>
+                                        <div class="mentorship__item-image">
+                                            <picture class="image .mentorship__item-picture">
+                                                <source srcset="../assets/images/mentorship/4.webp" type="image/webp" />
+                                                <source srcset="../assets/images/mentorship/4.png" type="image/png" />
+                                                <img src="../assets/images/mentorship/4.png" alt="mentorship event"
+                                                    loading="lazy" width="520" height="520" />
+                                            </picture>
+                                        </div>
+                                    </div>
+                                    <div class="mentorship__item">
+                                        <div class="mentorship__item-event">IBA regional hackathon</div>
+                                        <div class="mentorship__item-pills">
+                                            <div class="mentorship__item-title">Design Mentor</div>
+                                            <div class="mentorship__item-dates">2020</div>
+                                        </div>
+                                        <div class="mentorship__item-image">
+                                            <picture class="image .mentorship__item-picture">
+                                                <source srcset="../assets/images/mentorship/5.webp" type="image/webp" />
+                                                <source srcset="../assets/images/mentorship/5.png" type="image/png" />
+                                                <img src="../assets/images/mentorship/5.png" alt="mentorship event"
+                                                    loading="lazy" width="640" height="480" />
+                                            </picture>
+                                        </div>
+                                    </div>
+                                    <div class="mentorship__item">
+                                        <div class="mentorship__item-event">CSS Design Award</div>
+                                        <div class="mentorship__item-pills">
+                                            <div class="mentorship__item-title">Judge</div>
+                                            <div class="mentorship__item-dates">2018</div>
+                                        </div>
+                                        <div class="mentorship__item-image">
+                                            <picture class="image .mentorship__item-picture">
+                                                <source srcset="../assets/images/mentorship/6.webp" type="image/webp" />
+                                                <source srcset="../assets/images/mentorship/6.png" type="image/png" />
+                                                <img src="../assets/images/mentorship/6.png" alt="mentorship event"
+                                                    loading="lazy" width="399" height="560" />
+                                            </picture>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="working" data-scroll-section>
+                            <div class="working__dashes"></div>
+                            <div class="working__space"></div>
+                            <div class="working__title title title-animation">About <span
+                                    class="font-italic">working</span><br>with me</div>
+                            <div class="working__balls">
+                                <div class="working__photos">
+                                    <picture class="image working__photo working__photo--space is-active">
+                                        <source srcset="../assets/images/working/1.webp" type="image/webp" width="520"
+                                            height="520" />
+                                        <source srcset="../assets/images/working/1.png" type="image/png" width="520"
+                                            height="520" /><img alt="title-image" loading="lazy" width="520"
+                                            height="520" />
+                                    </picture>
+                                    <picture class="image working__photo working__photo--we">
+                                        <source srcset="../assets/images/working/2.webp" type="image/webp" width="520"
+                                            height="520" />
+                                        <source srcset="../assets/images/working/2.png" type="image/png" width="520"
+                                            height="520" /><img alt="title-image" loading="lazy" width="520"
+                                            height="520" />
+                                    </picture>
+                                    <picture class="image working__photo working__photo--lifehouse">
+                                        <source srcset="../assets/images/working/3.webp" type="image/webp" width="520"
+                                            height="520" />
+                                        <source srcset="../assets/images/working/3.png" type="image/png" width="520"
+                                            height="520" /><img alt="title-image" loading="lazy" width="520"
+                                            height="520" />
+                                    </picture>
+                                    <picture class="image working__photo working__photo--crysis">
+                                        <source srcset="../assets/images/working/4.webp" type="image/webp" width="520"
+                                            height="520" />
+                                        <source srcset="../assets/images/working/4.png" type="image/png" width="520"
+                                            height="520" /><img alt="title-image" loading="lazy" width="520"
+                                            height="520" />
+                                    </picture>
+                                    <picture class="image working__photo working__photo--tough">
+                                        <source srcset="../assets/images/working/5.webp" type="image/webp" width="520"
+                                            height="520" />
+                                        <source srcset="../assets/images/working/5.png" type="image/png" width="520"
+                                            height="520" /><img alt="title-image" loading="lazy" width="520"
+                                            height="520" />
+                                    </picture>
+                                    <picture class="image working__photo working__photo--netrix">
+                                        <source srcset="../assets/images/working/6.webp" type="image/webp" width="520"
+                                            height="520" />
+                                        <source srcset="../assets/images/working/6.png" type="image/png" width="520"
+                                            height="520" /><img alt="title-image" loading="lazy" width="520"
+                                            height="520" />
+                                    </picture>
+                                    <picture class="image working__photo working__photo--rapp">
+                                        <source srcset="../assets/images/working/7.webp" type="image/webp" width="520"
+                                            height="520" />
+                                        <source srcset="../assets/images/working/7.png" type="image/png" width="520"
+                                            height="520" /><img alt="title-image" loading="lazy" width="520"
+                                            height="520" />
+                                    </picture>
+                                    <picture class="image working__photo working__photo--stacked">
+                                        <source srcset="../assets/images/working/8.webp" type="image/webp" width="520"
+                                            height="520" />
+                                        <source srcset="../assets/images/working/8.png" type="image/png" width="520"
+                                            height="520" /><img alt="title-image" loading="lazy" width="520"
+                                            height="520" />
+                                    </picture>
+                                </div>
+                                <div class="working__content">
+                                    <div class="working__content-inner working__content-inner--space is-active">
+                                        <h4>Space Needle</h4>
+                                        <p class="working__content-subtitle">Karen Olson, Chief Marketing Officer</p>
+                                        <div class="working__content-content">
+                                            <p>Olha and her team began work on the updated Space Needle mobile app with
+                                                rigorous testing of various design paradigms and interviews with actual
+                                                Space Needle visitors on-site. The greatly improved app experience
+                                                resulted in a 20% increase in app usage within the first month alone. We
+                                                are immensely impressed with Olha’s work and contributions to this
+                                                project and look forward to a continued and long-lasting collaboration.
+                                            </p>
+                                        </div><a href="https://www.linkedin.com/in/1karen/" target="_blank">
+                                            <div class="working__social magnetic">LinkedIn<svg
+                                                    class="icon icon-arrow_link working__socials-arrow">
+                                                    <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                                </svg></div>
+                                        </a>
+                                    </div>
+                                    <div class="working__content-inner  working__content-inner--we">
+                                        <h4>WE Challenge</h4>
+                                        <p class="working__content-subtitle">Ievgeniia Bespalova, Co-Founder</p>
+                                        <div class="working__content-content">
+                                            <p>Based on Olha’s reputation and her own award-winning work at various
+                                                distinguished companies she was asked to serve as a DEV Challenge jury
+                                                panel member in the Design category for the 2020 and 2021 editions of
+                                                our competition. Olha is herself a former winner at this competition.
+                                            </p>
+                                            <p>Olha was invited to judge at DEV Challenge and to serve as a mentor at
+                                                the IBA Regional Hackathon due to her undeniable expertise in the field,
+                                                her years of experience, and her extraordinary achievements as one of
+                                                Ukraine’s absolute top UX/UI and product designers.</p>
+                                        </div><a href="https://www.linkedin.com/in/evgeniyamalykh/" target="_blank">
+                                            <div class="working__social magnetic">LinkedIn<svg
+                                                    class="icon icon-arrow_link working__socials-arrow">
+                                                    <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                                </svg></div>
+                                        </a>
+                                    </div>
+                                    <div class="working__content-inner  working__content-inner--lifehouse">
+                                        <h4>Life House</h4>
+                                        <p class="working__content-subtitle">Rami Zeidan Founder &amp;amp; CEO</p>
+                                        <div class="working__content-content">
+                                            <p>Olha’s contributions have been very helpful to our efforts. Her design
+                                                work contributed to the Company creating great products and solutions
+                                                for our niche industry and helping us secure tens of millions of dollars
+                                                in funding from notable investors.</p>
+                                            <p>I am of the opinion that Ms. Uzhykova is a designer and design director
+                                                of exceptional ability. I believe she is one of the top design
+                                                professionals in the field, especially in the travel and hospitality
+                                                industry.</p>
+                                        </div><a href="https://www.linkedin.com/in/ramiazeidan/" target="_blank">
+                                            <div class="working__social magnetic">LinkedIn<svg
+                                                    class="icon icon-arrow_link working__socials-arrow">
+                                                    <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                                </svg></div>
+                                        </a>
+                                    </div>
+                                    <div class="working__content-inner  working__content-inner--crysis">
+                                        <h4>Crisis Cleanup</h4>
+                                        <p class="working__content-subtitle">Aaron Titus, Executive Director</p>
+                                        <div class="working__content-content">
+                                            <p>Olha Uzhykova is a true professional who takes time to dive deep and
+                                                listen carefully to my requirements, use cases, and guiding principles.
+                                                She then comes up with innovative, creative solutions that are much
+                                                better than anything I had considered. Working with Olha is more than a
+                                                pleasure. Her role in our team is essential, and her vision for our
+                                                brand, UI, and UX is core to our users' interactions with us every day.
+                                            </p>
+                                        </div><a href="https://www.linkedin.com/in/aaron-titus/" target="_blank">
+                                            <div class="working__social magnetic">LinkedIn<svg
+                                                    class="icon icon-arrow_link working__socials-arrow">
+                                                    <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                                </svg></div>
+                                        </a>
+                                    </div>
+                                    <div class="working__content-inner  working__content-inner--tough">
+                                        <h4>ToughBuilt</h4>
+                                        <p class="working__content-subtitle">Edwin Moossaian</p>
+                                        <div class="working__content-content">
+                                            <p>Olga is one of the smartest designers I have ever worked with. One of her
+                                                outstanding skills as a designer is that she is a great listener. She
+                                                will take client requirements and expertly solve complex problems. She
+                                                can take her vast design experience and combine it with technology to
+                                                come up with fantastic designs on point, and on time. Her many award
+                                                winning designs speak for her talent and process.</p>
+                                        </div><a href="https://www.linkedin.com/in/edwin-moossaian-ab936831/"
+                                            target="_blank">
+                                            <div class="working__social magnetic">LinkedIn<svg
+                                                    class="icon icon-arrow_link working__socials-arrow">
+                                                    <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                                </svg></div>
+                                        </a>
+                                    </div>
+                                    <div class="working__content-inner  working__content-inner--netrix">
+                                        <h4>Netrix</h4>
+                                        <p class="working__content-subtitle">Oleg Martynenko</p>
+                                        <div class="working__content-content">
+                                            <p>Beyond her extraordinary talent and ability as a designer and design
+                                                director, Olha has played a pivotal role in cementing Netrix Digital’s
+                                                corporate and creative culture. She has led and implemented a design
+                                                philosophy that is centered on taking the time to understand our
+                                                clients’ goals and adopt them as our own, working closely with them to
+                                                ensure our high-performance design workflows accomplish everything that
+                                                our clients are aiming for – and more. The success of the projects led
+                                                Olha is also a result of her ability to guide the design work to achieve
+                                                measurable and actual business goals for our clients.</p>
+                                        </div><a href="https://www.linkedin.com/in/martynenkooleg/" target="_blank">
+                                            <div class="working__social magnetic">LinkedIn<svg
+                                                    class="icon icon-arrow_link working__socials-arrow">
+                                                    <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                                </svg></div>
+                                        </a>
+                                    </div>
+                                    <div class="working__content-inner  working__content-inner--rapp">
+                                        <h4>Stanislav Rapp</h4>
+                                        <p class="working__content-subtitle">Product Design Manager, Chan Zuckerberg
+                                            Initiative</p>
+                                        <div class="working__content-content">
+                                            <p>Given my professional experience in product design, as well as my
+                                                experience leading teams of product designers at major companies, I
+                                                attest that Olha is a professional of extraordinary ability, and has
+                                                made significant contributions to the field of product and UI/UX design
+                                                with her innovative and user-centric approach. She is in the top echelon
+                                                of product designers in the world, easily among the top 5%.</p>
+                                        </div><a href="https://www.linkedin.com/in/stanrapp/" target="_blank">
+                                            <div class="working__social magnetic">LinkedIn<svg
+                                                    class="icon icon-arrow_link working__socials-arrow">
+                                                    <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                                </svg></div>
+                                        </a>
+                                    </div>
+                                    <div class="working__content-inner  working__content-inner--stacked">
+                                        <h4>Staked</h4>
+                                        <p class="working__content-subtitle">Mario Kroes</p>
+                                        <div class="working__content-content">
+                                            <p>Olga was lovely to work with. She is incredibly creative and logical in
+                                                her approach which made our UI/UX process very fun to work though.
+                                                Communication was a breeze as well — I can’t recommend her enough.</p>
+                                        </div><a href="https://www.linkedin.com/in/mariokroes/" target="_blank">
+                                            <div class="working__social magnetic">LinkedIn<svg
+                                                    class="icon icon-arrow_link working__socials-arrow">
+                                                    <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                                </svg></div>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="working__ball working__ball--space is-active" data-item="space">
+                                    <div class="working__ball-fill"></div><img
+                                        class="working__ball-image working__ball-image--space"
+                                        src="../assets/svg/working/space.svg" alt="space" width="154" height="49"
+                                        loading="lazy">
+                                </div>
+                                <div class="working__ball working__ball--we" data-item="we">
+                                    <div class="working__ball-fill"></div><img
+                                        class="working__ball-image working__ball-image--we"
+                                        src="../assets/svg/working/we2.png" alt="we" width="350" height="60"
+                                        loading="lazy">
+                                </div>
+                                <div class="working__ball working__ball--lifehouse" data-item="lifehouse">
+                                    <div class="working__ball-fill"></div><img
+                                        class="working__ball-image working__ball-image--lifehouse"
+                                        src="../assets/svg/working/lifehouse.svg" alt="lifehouse" width="124"
+                                        height="19" loading="lazy">
+                                </div>
+                                <div class="working__ball working__ball--crysis" data-item="crysis">
+                                    <div class="working__ball-fill"></div><img
+                                        class="working__ball-image working__ball-image--crysis"
+                                        src="../assets/svg/working/crisis2.png" alt="crysis" width="252" height="142"
+                                        loading="lazy">
+                                </div>
+                                <div class="working__ball working__ball--tough" data-item="tough">
+                                    <div class="working__ball-fill"></div><img
+                                        class="working__ball-image working__ball-image--tough"
+                                        src="../assets/svg/working/tough.svg" alt="tough" width="154" height="34"
+                                        loading="lazy">
+                                </div>
+                                <div class="working__ball working__ball--netrix" data-item="netrix">
+                                    <div class="working__ball-fill"></div><img
+                                        class="working__ball-image working__ball-image--netrix"
+                                        src="../assets/svg/working/newLogo.svg" alt="netrix" width="156" height="55"
+                                        loading="lazy">
+                                </div>
+                                <div class="working__ball working__ball--rapp" data-item="rapp">
+                                    <div class="working__ball-fill"></div><img
+                                        class="working__ball-image working__ball-image--rapp"
+                                        src="../assets/svg/working/rapp.svg" alt="rapp" width="114" height="50"
+                                        loading="lazy">
+                                </div>
+                                <div class="working__ball working__ball--stacked" data-item="stacked">
+                                    <div class="working__ball-fill"></div><img
+                                        class="working__ball-image working__ball-image--stacked"
+                                        src="../assets/svg/working/stacked2.png" alt="stacked" width="173" height="120"
+                                        loading="lazy">
+                                </div>
+                            </div>
+                        </section>
+                        <section class="help" data-scroll-section>
+                            <div class="help__inner">
+                                <div class="help__placeholder"></div><svg class="help__text" viewBox="0 0 1075 1075"
+                                    shape-rendering="optimizeSpeed" text-rendering="optimizeSpeed">
+                                    <path id="helptext"
+                                        d="M90.068617,523.763089c0,0-2.568617-450,447.431383-450s452.568617,449.999998,452.568617,449.999998"
+                                        transform="translate(-2.568617 13.736911)" fill="none" stroke="#3f5787"
+                                        stroke-width="2.15"></path><text class="help__text" width="100%">
+                                        <textPath class="help__text-path" dominant-baseline="baseline"
+                                            xlink:href="#helptext" fill="black" startOffset="100%">Let's see how I may
+                                            help you.</textPath>
+                                    </text>
+                                </svg>
+                                <div class="help__balls">
+                                    <div class="help__ball help__ball--mentorship magnetic" data-modal="1">
+                                        <div class="help__ball-fill"></div>
+                                        <div class="help__ball-text">Mentorship</div>
+                                    </div>
+                                    <div class="help__ball help__ball--audit magnetic" data-modal="2">
+                                        <div class="help__ball-fill"></div>
+                                        <div class="help__ball-text">Website Audit</div>
+                                    </div>
+                                    <div class="help__ball help__ball--consulting magnetic" data-modal="3">
+                                        <div class="help__ball-fill"></div>
+                                        <div class="help__ball-text">Consulting</div>
+                                    </div>
+                                    <div class="help__ball help__ball--design magnetic" data-modal="4">
+                                        <div class="help__ball-fill"></div>
+                                        <div class="help__ball-text">UI/UX <br>Design</div>
+                                    </div>
+                                    <div class="help__ball help__ball--workshops magnetic" data-modal="5">
+                                        <div class="help__ball-fill"></div>
+                                        <div class="help__ball-text">Design<br>Workshops</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="form" data-scroll-section>
+                            <div class="form__container"><a href="mailto:olga@netrixdigital.com">
+                                    <div class="form__email">olga@netrixdigital.com</div>
+                                </a>
+                                <form class="form__inputs" id="form_main"><select id="form" name="subject">
+                                        <option value="consulting">Consulting</option>
+                                        <option value="design">Design</option>
+                                        <option value="mentorship">Mentorship</option>
+                                        <option value="workshops">Design Workshops</option>
+                                        <option value="audit">Website Audit</option>
+                                    </select>
+                                    <div class="form__input form__input-4"><input class="form__input-inner"
+                                            placeholder="Your name" name="from_name"></div>
+                                    <div class="form__input form__input-2"><input class="form__input-inner"
+                                            placeholder="Your email" name="reply_to"></div>
+                                    <div class="form__text-input">
+                                        <div class="form__input"><input class="form__input-inner"
+                                                placeholder="How may I help you?" name="message"></div>
+                                        <div class="form__submit magnetic"><svg
+                                                class="icon icon-arrow-right form__submit-arrow">
+                                                <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                            </svg></div>
+                                    </div>
+                                    <div class="button magnetic form__submit-mob" type="submit">submit<svg
+                                            class="icon icon-arrow-right button__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                        </svg>
+                                        <div class="button__hover"></div>
+                                    </div>
+                                    <div class="form__send-text">Thank you for your message. I’ll get back to you soon.
+                                    </div>
+                                    <div class="form__lottie"></div>
+                                    <div class="form__submitted magnetic"><svg
+                                            class="icon icon-checkmark form__checkmark">
+                                            <use xlink:href="../assets/icons/sprite.svg#checkmark"></use>
+                                        </svg></div>
+                                </form>
+                                <div class="form__socials"> <a class="form__social-link"
+                                        href="https://www.linkedin.com/in/olgauzhykova" target="_blank">
+                                        <div class="button magnetic form__social">LinkedIn<svg
+                                                class="icon icon-arrow_link button__arrow">
+                                                <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                            </svg>
+                                            <div class="button__hover"></div>
+                                        </div>
+                                    </a><a class="form__social-link" href="https://twitter.com/olka_uzhyk"
+                                        target="_blank">
+                                        <div class="button magnetic form__social">Twitter<svg
+                                                class="icon icon-arrow_link button__arrow">
+                                                <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                            </svg>
+                                            <div class="button__hover"></div>
+                                        </div>
+                                    </a><a class="form__social-link" href="https://www.facebook.com/olga.uzhikova"
+                                        target="_blank">
+                                        <div class="button magnetic form__social">Facebook<svg
+                                                class="icon icon-arrow_link button__arrow">
+                                                <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                            </svg>
+                                            <div class="button__hover"></div>
+                                        </div>
+                                    </a></div>
+                            </div>
+                        </section>
+                    </div>
+                    <div class="footer" data-scroll-section>
+                        <div class="footer__made">Made by <a class="footer__made--link" href="https://noomoagency.com"
+                                target="_blank">Noomo</a></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modals">
+                <div class="working-modal">
+                    <div class="working-modal__item working-modal__item--space is-active">
+                        <div class="working-modal__inner">
+                            <div class="working-modal__inner-content">
+                                <picture class="image working-modal__photo">
+                                    <source srcset="../assets/images/working/1.webp" type="image/webp" />
+                                    <source srcset="../assets/images/working/1.png" type="image/png" /><img
+                                        src="../assets/images/working/1.png" alt="alt" loading="lazy" width="520"
+                                        height="" />
+                                </picture>
+                                <h4 class="working-modal__title">Space Needle</h4>
+                                <p class="working-modal__subtitle">Karen Olson, Chief Marketing Officer</p>
+                                <div class="working-modal__content">
+                                    <p>Olha and her team began work on the updated Space Needle mobile app with rigorous
+                                        testing of various design paradigms and interviews with actual Space Needle
+                                        visitors on-site. The greatly improved app experience resulted in a 20% increase
+                                        in app usage within the first month alone. We are immensely impressed with
+                                        Olha’s work and contributions to this project and look forward to a continued
+                                        and long-lasting collaboration.</p>
+                                </div>
+                            </div>
+                            <div class="working-modal__socials"><a href="https://www.linkedin.com/in/1karen/"
+                                    target="_blank">
+                                    <div class="button magnetic working-modal__social">LinkedIn<svg
+                                            class="icon icon-arrow_link button__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg>
+                                        <div class="button__hover"></div>
+                                    </div>
+                                </a>
+                                <div class="button magnetic working-modal__social working-modal__switch" data-next="we">
+                                    Next<svg class="icon icon-arrow-right button__arrow">
+                                        <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                    </svg>
+                                    <div class="button__hover"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="working-modal__close"> <svg class="icon icon-close working-modal__close-icon">
+                                <use xlink:href="../assets/icons/sprite.svg#close"></use>
+                            </svg></div>
+                    </div>
+                    <div class="working-modal__item working-modal__item--we">
+                        <div class="working-modal__inner">
+                            <div class="working-modal__inner-content">
+                                <picture class="image working-modal__photo">
+                                    <source srcset="../assets/images/working/2.webp" type="image/webp" />
+                                    <source srcset="../assets/images/working/2.png" type="image/png" /><img
+                                        src="../assets/images/working/2.png" alt="alt" loading="lazy" width="520"
+                                        height="" />
+                                </picture>
+                                <h4 class="working-modal__title">WE Challenge</h4>
+                                <p class="working-modal__subtitle">Ievgeniia Bespalova, Co-Founder</p>
+                                <div class="working-modal__content">
+                                    <p>Based on Olha’s reputation and her own award-winning work at various
+                                        distinguished companies she was asked to serve as a DEV Challenge jury panel
+                                        member in the Design category for the 2020 and 2021 editions of our competition.
+                                        Olha is herself a former winner at this competition, having won top overall
+                                        honors and in the Mobile Design Pro category in 2018.</p>
+                                    <p>Olha was invited to judge at DEV Challenge and to serve as a mentor at the IBA
+                                        Regional Hackathon due to her undeniable expertise in the field, her years of
+                                        experience, and her extraordinary achievements as one of Ukraine’s absolute top
+                                        UX/UI and product designers.</p>
+                                </div>
+                            </div>
+                            <div class="working-modal__socials"><a href="https://www.linkedin.com/in/evgeniyamalykh/"
+                                    target="_blank">
+                                    <div class="button magnetic working-modal__social">LinkedIn<svg
+                                            class="icon icon-arrow_link button__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg>
+                                        <div class="button__hover"></div>
+                                    </div>
+                                </a>
+                                <div class="button magnetic working-modal__social working-modal__switch"
+                                    data-next="lifehouse">Next<svg class="icon icon-arrow-right button__arrow">
+                                        <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                    </svg>
+                                    <div class="button__hover"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="working-modal__close"> <svg class="icon icon-close working-modal__close-icon">
+                                <use xlink:href="../assets/icons/sprite.svg#close"></use>
+                            </svg></div>
+                    </div>
+                    <div class="working-modal__item working-modal__item--lifehouse">
+                        <div class="working-modal__inner">
+                            <div class="working-modal__inner-content">
+                                <picture class="image working-modal__photo">
+                                    <source srcset="../assets/images/working/3.webp" type="image/webp" />
+                                    <source srcset="../assets/images/working/3.png" type="image/png" /><img
+                                        src="../assets/images/working/3.png" alt="alt" loading="lazy" width="520"
+                                        height="" />
+                                </picture>
+                                <h4 class="working-modal__title">Life House</h4>
+                                <p class="working-modal__subtitle">Rami Zeidan Founder &amp;amp; CEO</p>
+                                <div class="working-modal__content">
+                                    <p>Olha’s contributions have been very helpful to our efforts. Her design work
+                                        contributed to the Company creating great products and solutions for our niche
+                                        industry and helping us secure tens of millions of dollars in funding from
+                                        notable investors.</p>
+                                    <p>I am of the opinion that Ms. Uzhykova is a designer and design director of
+                                        exceptional ability. I believe she is one of the top design professionals in the
+                                        field, especially in the travel and hospitality industry.</p>
+                                </div>
+                            </div>
+                            <div class="working-modal__socials"><a href="https://www.linkedin.com/in/ramiazeidan/"
+                                    target="_blank">
+                                    <div class="button magnetic working-modal__social">LinkedIn<svg
+                                            class="icon icon-arrow_link button__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg>
+                                        <div class="button__hover"></div>
+                                    </div>
+                                </a>
+                                <div class="button magnetic working-modal__social working-modal__switch"
+                                    data-next="crysis">Next<svg class="icon icon-arrow-right button__arrow">
+                                        <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                    </svg>
+                                    <div class="button__hover"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="working-modal__close"> <svg class="icon icon-close working-modal__close-icon">
+                                <use xlink:href="../assets/icons/sprite.svg#close"></use>
+                            </svg></div>
+                    </div>
+                    <div class="working-modal__item working-modal__item--crysis">
+                        <div class="working-modal__inner">
+                            <div class="working-modal__inner-content">
+                                <picture class="image working-modal__photo">
+                                    <source srcset="../assets/images/working/4.webp" type="image/webp" />
+                                    <source srcset="../assets/images/working/4.png" type="image/png" /><img
+                                        src="../assets/images/working/4.png" alt="alt" loading="lazy" width="520"
+                                        height="" />
+                                </picture>
+                                <h4 class="working-modal__title">Crisis Cleanup</h4>
+                                <p class="working-modal__subtitle">Aaron Titus, Executive Director</p>
+                                <div class="working-modal__content">
+                                    <p>Olha Uzhykova is a true professional who takes time to dive deep and listen
+                                        carefully to my requirements, use cases, and guiding principles. She then comes
+                                        up with innovative, creative solutions that are much better than anything I had
+                                        considered. Working with Olha is more than a pleasure. Her role in our team is
+                                        essential, and her vision for our brand, UI, and UX is core to our users'
+                                        interactions with us every day.</p>
+                                </div>
+                            </div>
+                            <div class="working-modal__socials"><a href="https://www.linkedin.com/in/aaron-titus/"
+                                    target="_blank">
+                                    <div class="button magnetic working-modal__social">LinkedIn<svg
+                                            class="icon icon-arrow_link button__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg>
+                                        <div class="button__hover"></div>
+                                    </div>
+                                </a>
+                                <div class="button magnetic working-modal__social working-modal__switch"
+                                    data-next="tough">Next<svg class="icon icon-arrow-right button__arrow">
+                                        <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                    </svg>
+                                    <div class="button__hover"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="working-modal__close"> <svg class="icon icon-close working-modal__close-icon">
+                                <use xlink:href="../assets/icons/sprite.svg#close"></use>
+                            </svg></div>
+                    </div>
+                    <div class="working-modal__item working-modal__item--tough">
+                        <div class="working-modal__inner">
+                            <div class="working-modal__inner-content">
+                                <picture class="image working-modal__photo">
+                                    <source srcset="../assets/images/working/5.webp" type="image/webp" />
+                                    <source srcset="../assets/images/working/5.png" type="image/png" /><img
+                                        src="../assets/images/working/5.png" alt="alt" loading="lazy" width="520"
+                                        height="" />
+                                </picture>
+                                <h4 class="working-modal__title">ToughBuilt</h4>
+                                <p class="working-modal__subtitle">Edwin Moossaian</p>
+                                <div class="working-modal__content">
+                                    <p>Olga is one of the smartest designers I have ever worked with. One of her
+                                        outstanding skills as a designer is that she is a great listener. She will take
+                                        client requirements and expertly solve complex problems. She can take her vast
+                                        design experience and combine it with technology to come up with fantastic
+                                        designs on point, and on time. Her many award winning designs speak for her
+                                        talent and process.</p>
+                                </div>
+                            </div>
+                            <div class="working-modal__socials"><a
+                                    href="https://www.linkedin.com/in/edwin-moossaian-ab936831/" target="_blank">
+                                    <div class="button magnetic working-modal__social">LinkedIn<svg
+                                            class="icon icon-arrow_link button__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg>
+                                        <div class="button__hover"></div>
+                                    </div>
+                                </a>
+                                <div class="button magnetic working-modal__social working-modal__switch"
+                                    data-next="netrix">Next<svg class="icon icon-arrow-right button__arrow">
+                                        <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                    </svg>
+                                    <div class="button__hover"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="working-modal__close"> <svg class="icon icon-close working-modal__close-icon">
+                                <use xlink:href="../assets/icons/sprite.svg#close"></use>
+                            </svg></div>
+                    </div>
+                    <div class="working-modal__item working-modal__item--netrix">
+                        <div class="working-modal__inner">
+                            <div class="working-modal__inner-content">
+                                <picture class="image working-modal__photo">
+                                    <source srcset="../assets/images/working/6.webp" type="image/webp" />
+                                    <source srcset="../assets/images/working/6.png" type="image/png" /><img
+                                        src="../assets/images/working/6.png" alt="alt" loading="lazy" width="520"
+                                        height="" />
+                                </picture>
+                                <h4 class="working-modal__title">Netrix</h4>
+                                <p class="working-modal__subtitle">Oleg Martynenko</p>
+                                <div class="working-modal__content">
+                                    <p>Beyond her extraordinary talent and ability as a designer and design director,
+                                        Olha has played a pivotal role in cementing Netrix Digital’s corporate and
+                                        creative culture. She has led and implemented a design philosophy that is
+                                        centered on taking the time to understand our clients’ goals and adopt them as
+                                        our own, working closely with them to ensure our high-performance design
+                                        workflows accomplish everything that our clients are aiming for – and more. The
+                                        success of the projects led Olha is also a result of her ability to guide the
+                                        design work to achieve measurable and actual business goals for our clients.</p>
+                                </div>
+                            </div>
+                            <div class="working-modal__socials"><a href="https://www.linkedin.com/in/martynenkooleg/"
+                                    target="_blank">
+                                    <div class="button magnetic working-modal__social">LinkedIn<svg
+                                            class="icon icon-arrow_link button__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg>
+                                        <div class="button__hover"></div>
+                                    </div>
+                                </a>
+                                <div class="button magnetic working-modal__social working-modal__switch"
+                                    data-next="rapp">Next<svg class="icon icon-arrow-right button__arrow">
+                                        <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                    </svg>
+                                    <div class="button__hover"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="working-modal__close"> <svg class="icon icon-close working-modal__close-icon">
+                                <use xlink:href="../assets/icons/sprite.svg#close"></use>
+                            </svg></div>
+                    </div>
+                    <div class="working-modal__item working-modal__item--rapp">
+                        <div class="working-modal__inner">
+                            <div class="working-modal__inner-content">
+                                <picture class="image working-modal__photo">
+                                    <source srcset="../assets/images/working/7.webp" type="image/webp" />
+                                    <source srcset="../assets/images/working/7.png" type="image/png" /><img
+                                        src="../assets/images/working/7.png" alt="alt" loading="lazy" width="520"
+                                        height="" />
+                                </picture>
+                                <h4 class="working-modal__title">Stanislav Rapp</h4>
+                                <p class="working-modal__subtitle">Product Design Manager, Chan Zuckerberg Initiative
+                                </p>
+                                <div class="working-modal__content">
+                                    <p>Given my professional experience in product design, as well as my experience
+                                        leading teams of product designers at major companies, I attest that Olha is a
+                                        professional of extraordinary ability, and has made significant contributions to
+                                        the field of product and UI/UX design with her innovative and user-centric
+                                        approach. She is in the top echelon of product designers in the world, easily
+                                        among the top 5%.</p>
+                                </div>
+                            </div>
+                            <div class="working-modal__socials"><a href="https://www.linkedin.com/in/stanrapp/"
+                                    target="_blank">
+                                    <div class="button magnetic working-modal__social">LinkedIn<svg
+                                            class="icon icon-arrow_link button__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg>
+                                        <div class="button__hover"></div>
+                                    </div>
+                                </a>
+                                <div class="button magnetic working-modal__social working-modal__switch"
+                                    data-next="stacked">Next<svg class="icon icon-arrow-right button__arrow">
+                                        <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                    </svg>
+                                    <div class="button__hover"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="working-modal__close"> <svg class="icon icon-close working-modal__close-icon">
+                                <use xlink:href="../assets/icons/sprite.svg#close"></use>
+                            </svg></div>
+                    </div>
+                    <div class="working-modal__item working-modal__item--stacked">
+                        <div class="working-modal__inner">
+                            <div class="working-modal__inner-content">
+                                <picture class="image working-modal__photo">
+                                    <source srcset="../assets/images/working/8.webp" type="image/webp" />
+                                    <source srcset="../assets/images/working/8.png" type="image/png" /><img
+                                        src="../assets/images/working/8.png" alt="alt" loading="lazy" width="520"
+                                        height="" />
+                                </picture>
+                                <h4 class="working-modal__title">Staked</h4>
+                                <p class="working-modal__subtitle">Mario Kroes</p>
+                                <div class="working-modal__content">
+                                    <p>Olga was lovely to work with. She is incredibly creative and logical in her
+                                        approach which made our UI/UX process very fun to work though. Communication was
+                                        a breeze as well — I can’t recommend her enough.</p>
+                                </div>
+                            </div>
+                            <div class="working-modal__socials"><a href="https://www.linkedin.com/in/mariokroes/"
+                                    target="_blank">
+                                    <div class="button magnetic working-modal__social">LinkedIn<svg
+                                            class="icon icon-arrow_link button__arrow">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow_link"></use>
+                                        </svg>
+                                        <div class="button__hover"></div>
+                                    </div>
+                                </a>
+                                <div class="button magnetic working-modal__social working-modal__switch"
+                                    data-next="space">Next<svg class="icon icon-arrow-right button__arrow">
+                                        <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                    </svg>
+                                    <div class="button__hover"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="working-modal__close"> <svg class="icon icon-close working-modal__close-icon">
+                                <use xlink:href="../assets/icons/sprite.svg#close"></use>
+                            </svg></div>
+                    </div>
+                </div>
+                <div class="help-modal">
+                    <div class="help-modal__bg"></div>
+                    <div class="help-modal__close"><svg class="icon icon-close help-modal__close-icon">
+                            <use xlink:href="../assets/icons/sprite.svg#close"></use>
+                        </svg></div>
+                    <div class="help-modal__item help-modal__item--1" data-modal-id="1">
+                        <div class="help-modal__container">
+                            <div class="help-modal__content">
+                                <h4 class="help-modal__title">Mentorship</h4>
+                                <p class="help-modal__subtitle">Helping designers to grow is one of the things I am
+                                    patient about.</p>
+                                <div class="help-modal__blocks">
+                                    <div class="help-modal__block">
+                                        <div class="help-modal__pill">What I can help you with</div>
+                                        <div class="help-modal__text">
+                                            <p>I can be useful for designers who have just started their career to
+                                                conduct a portfolio review, and give self-development advice; and for
+                                                experienced designers who have reached a certain stage in their career
+                                                and do not know where to go next. And for those who want to become
+                                                design managers.</p>
+                                        </div>
+                                    </div>
+                                    <div class="help-modal__block">
+                                        <div class="help-modal__pill">How does it work?</div>
+                                        <ul class="help-modal__list">
+                                            <li class="help-modal__list-item">$250/hour session</li>
+                                            <li class="help-modal__list-item">Email any information which will help me
+                                                to be prepared for a session</li>
+                                            <li class="help-modal__list-item">Get your payment link</li>
+                                            <li class="help-modal__list-item">Book a session in my calendar</li>
+                                            <li class="help-modal__list-item">Let’s do some magic together</li>
+                                            <li class="help-modal__list-item">Get a lot of useful materials</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="help-modal__actions help-modal__actions--single">
+                                <div class="help-modal__subtext">
+                                    <p>If you are from Ukraine 🇺🇦</p>
+                                    <p>You can book a session via <a target="_blank"
+                                            href="https://www.prjctrmentor.com">Projector</a> and get a mentorship
+                                        session in exchange for a donation to trusted volunteers and charity
+                                        organizations. <a target="_blank"
+                                            href="https://www.prjctrmentor.com/mentor/olga-uzhykova?fbclid=IwAR3VqgM4pHhv6jHVEXwIwheunj650_BteKVgIdmSbi5eSydgYOcTeQUPAOQ">More
+                                            details here</a>
+                                    <p>
+                                </div>
+                                <div class="help-modal__buttons">
+                                    <div class="help-modal__button help-modal__button--discuss form-modal-opener">
+                                        <div class="help-modal__button-text magnetic">Book a session</div>
+                                    </div>
+                                </div>
+                                <div class="help-modal__next-section">
+                                    <div class="help-modal__subtext">
+                                        <p>If you are from Ukraine 🇺🇦</p>
+                                        <p>You can book a session via <a target="_blank"
+                                                href="https://www.prjctrmentor.com">Projector</a> and get a mentorship
+                                            session in exchange for a donation to trusted volunteers and charity
+                                            organizations. <a target="_blank"
+                                                href="https://www.prjctrmentor.com/mentor/olga-uzhykova?fbclid=IwAR3VqgM4pHhv6jHVEXwIwheunj650_BteKVgIdmSbi5eSydgYOcTeQUPAOQ">More
+                                                details here</a>
+                                        <p>
+                                    </div>
+                                    <div class="help-modal__next magnetic" data-next="2">Next<svg
+                                            class="icon icon-arrow-right help-modal__next-icon">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                        </svg>
+                                        <div class="help-modal__hover"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="help-modal__item help-modal__item--4" data-modal-id="4">
+                        <div class="help-modal__container">
+                            <div class="help-modal__content">
+                                <h4 class="help-modal__title">UI/UX Design Project</h4>
+                                <p class="help-modal__subtitle">High-end design solutions where intuitive user
+                                    experience and creative ideas collide.</p>
+                                <div class="help-modal__blocks">
+                                    <div class="help-modal__block">
+                                        <div class="help-modal__pill">What I can help you with</div>
+                                        <div class="help-modal__text">
+                                            <p>Together with our award-winning <a target="_blank"
+                                                    href="https://netrixdigital.com/">Netrix</a> team, I help companies
+                                                design applications and websites. With a focus on business and users'
+                                                goals, we design products that are innovative, intuitive, and easy to
+                                                use.</p>
+                                            <p>Learn more about <a target="_blank"
+                                                    href="https://netrixdigital.com/product-design">our product design
+                                                    process</a> and <a target="_blank"
+                                                    href="https://netrixdigital.com/creative-websites">how we build
+                                                    creative websites</a>.</p>
+                                        </div>
+                                    </div>
+                                    <div class="help-modal__block">
+                                        <div class="help-modal__pill">Areas of expertise</div>
+                                        <ul class="help-modal__list">
+                                            <li class="help-modal__list-item">B2B products</li>
+                                            <li class="help-modal__list-item">SaaS</li>
+                                            <li class="help-modal__list-item">Business and e-commerce websites</li>
+                                            <li class="help-modal__list-item">Consumer facing apps</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="help-modal__actions help-modal__actions--single">
+                                <div class="help-modal__subtext"></div>
+                                <div class="help-modal__buttons">
+                                    <div class="help-modal__button help-modal__button--discuss form-modal-opener"
+                                        data-form="design">
+                                        <div class="help-modal__button-text magnetic">Let’s discuss your project</div>
+                                    </div>
+                                </div>
+                                <div class="help-modal__next-section">
+                                    <div class="help-modal__subtext"></div>
+                                    <div class="help-modal__next magnetic" data-next="5">Next<svg
+                                            class="icon icon-arrow-right help-modal__next-icon">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                        </svg>
+                                        <div class="help-modal__hover"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="help-modal__item help-modal__item--2" data-modal-id="2">
+                        <div class="help-modal__container">
+                            <div class="help-modal__content">
+                                <h4 class="help-modal__title">Website Audit</h4>
+                                <p class="help-modal__subtitle">There is always a way to improve user experience.</p>
+                                <div class="help-modal__blocks">
+                                    <div class="help-modal__block">
+                                        <div class="help-modal__pill">What I can help you with</div>
+                                        <div class="help-modal__text">
+                                            <p>Your conversation rate is low? You wish your customers could spend more
+                                                time on your website? Your users didn’t go through the checkout process?
+                                                You wish for a better retention rate?</p>
+                                            <p>Often you don’t need a complete redesign. Even small changes can help a
+                                                lot. I will audit your website and provide you with a detailed report
+                                                about your current UI and user experience situation, along with
+                                                suggestions for improvements.</p>
+                                        </div>
+                                    </div>
+                                    <div class="help-modal__block">
+                                        <div class="help-modal__pill">How does it work?</div>
+                                        <ul class="help-modal__list">
+                                            <li class="help-modal__list-item">1 Week</li>
+                                            <li class="help-modal__list-item">$1,500</li>
+                                            <li class="help-modal__list-item">A plan on how to get maximum out of your
+                                                website</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="help-modal__actions help-modal__actions--single">
+                                <div class="help-modal__subtext"></div>
+                                <div class="help-modal__buttons">
+                                    <div class="help-modal__button help-modal__button--discuss form-modal-opener"
+                                        data-form="audit">
+                                        <div class="help-modal__button-text magnetic">Drop me a message</div>
+                                    </div>
+                                </div>
+                                <div class="help-modal__next-section">
+                                    <div class="help-modal__subtext"></div>
+                                    <div class="help-modal__next magnetic" data-next="3">Next<svg
+                                            class="icon icon-arrow-right help-modal__next-icon">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                        </svg>
+                                        <div class="help-modal__hover"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="help-modal__item help-modal__item--3" data-modal-id="3">
+                        <div class="help-modal__container">
+                            <div class="help-modal__content">
+                                <h4 class="help-modal__title">Consulting</h4>
+                                <p class="help-modal__subtitle">It is my passion to help companies build great products
+                                    and design teams.</p>
+                                <div class="help-modal__blocks">
+                                    <div class="help-modal__block">
+                                        <div class="help-modal__pill">What I can help you with</div>
+                                        <div class="help-modal__text">
+                                            <p>With 10 years of experience in design and management, I can help you and
+                                                your team create better design solutions, improve the design process and
+                                                achieve greater results.</p>
+                                            <p>It can be a perfect fit for companies that need a design expert to
+                                                consult with and make the right design decisions.</p>
+                                        </div>
+                                    </div>
+                                    <div class="help-modal__block">
+                                        <div class="help-modal__pill">How does it work?</div>
+                                        <ul class="help-modal__list">
+                                            <li class="help-modal__list-item">$250/hour</li>
+                                            <li class="help-modal__list-item">Online or offline consultations</li>
+                                            <li class="help-modal__list-item">Frameworks and resources to use</li>
+                                            <li class="help-modal__list-item">Ideas and directions for your design team
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="help-modal__actions">
+                                <div class="help-modal__subtext"></div>
+                                <div class="help-modal__buttons">
+                                    <div class="help-modal__button help-modal__button--discuss form-modal-opener"
+                                        data-form="consulting">
+                                        <div class="help-modal__button-text magnetic">Drop me a message</div>
+                                    </div>
+                                    <div class="help-modal__button-or">or</div><a
+                                        href="https://calendly.com/olha-uzhykova" target="_blank">
+                                        <div class="help-modal__button">
+                                            <div class="help-modal__button-text magnetic">Book a session with me</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="help-modal__next-section">
+                                    <div class="help-modal__subtext"></div>
+                                    <div class="help-modal__next magnetic" data-next="4">Next<svg
+                                            class="icon icon-arrow-right help-modal__next-icon">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                        </svg>
+                                        <div class="help-modal__hover"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="help-modal__item help-modal__item--5" data-modal-id="5">
+                        <div class="help-modal__container">
+                            <div class="help-modal__content">
+                                <h4 class="help-modal__title">Design Workshops</h4>
+                                <p class="help-modal__subtitle">Let’s have a discussion that matters.</p>
+                                <div class="help-modal__blocks">
+                                    <div class="help-modal__block">
+                                        <div class="help-modal__pill">What I can help you with</div>
+                                        <div class="help-modal__text">
+                                            <p>Nothing works better than an intensive collaborative session that is
+                                                aimed to solve specific problems. Hire me to work with you for a few
+                                                days to deliver the best design decision for the problem you are trying
+                                                to solve.</p>
+                                            <p>As a result, you will have actionable goals with detailed roadmaps to
+                                                achieve them.</p>
+                                        </div>
+                                    </div>
+                                    <div class="help-modal__block">
+                                        <div class="help-modal__pill">How does it work?</div>
+                                        <ul class="help-modal__list">
+                                            <li class="help-modal__list-item">$10,000</li>
+                                            <li class="help-modal__list-item">1-2 days collaborative session with
+                                                stakeholders</li>
+                                            <li class="help-modal__list-item">Offline or online</li>
+                                            <li class="help-modal__list-item">A solution to your problem</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="help-modal__actions">
+                                <div class="help-modal__subtext"></div>
+                                <div class="help-modal__buttons">
+                                    <div class="help-modal__button help-modal__button--discuss form-modal-opener"
+                                        data-form="workshops">
+                                        <div class="help-modal__button-text magnetic">Drop me a message</div>
+                                    </div>
+                                    <div class="help-modal__button-or">or</div><a
+                                        href="https://calendly.com/olha-uzhykova" target="_blank">
+                                        <div class="help-modal__button">
+                                            <div class="help-modal__button-text magnetic">Book a session with me</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="help-modal__next-section">
+                                    <div class="help-modal__subtext"></div>
+                                    <div class="help-modal__next magnetic" data-next="1">Next<svg
+                                            class="icon icon-arrow-right help-modal__next-icon">
+                                            <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                        </svg>
+                                        <div class="help-modal__hover"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-modal">
+                    <div class="form-modal__bg"></div>
+                    <div class="form-modal__close"><svg class="icon icon-close form-modal__close-icon">
+                            <use xlink:href="../assets/icons/sprite.svg#close"></use>
+                        </svg></div>
+                    <form class="form-modal__inner" id="form-modal"><a href="mailto:olga@netrixdigital.com">
+                            <div class="form-modal__email">olga@netrixdigital.com</div>
+                        </a>
+                        <div class="form-modal__inputs" id="contact"><select id="form-modal-select" name="subject">
+                                <option value="consulting">Consulting</option>
+                                <option value="design">Design</option>
+                                <option value="mentorship">Mentorship</option>
+                                <option value="workshops">Design Workshops</option>
+                                <option value="audit">Website Audit</option>
+                            </select>
+                            <div class="form-modal__input form-modal__input-4"><input class="form-modal__input-inner"
+                                    placeholder="Your name" name="from_name"></div>
+                            <div class="form-modal__input form-modal__input-2"><input class="form-modal__input-inner"
+                                    placeholder="Your email" name="reply_to"></div>
+                            <div class="form-modal__text-input">
+                                <div class="form-modal__input form-modal__textarea"><textarea
+                                        class="form-modal__input-inner" placeholder="How may I help you?" rows="4"
+                                        name="message"></textarea></div>
+                                <div class="form-modal__submit magnetic"><svg
+                                        class="icon icon-arrow-right form__submit-arrow">
+                                        <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                    </svg></div>
+                            </div>
+                            <div class="button magnetic form__submit-mob">submit<svg
+                                    class="icon icon-arrow-right button__arrow">
+                                    <use xlink:href="../assets/icons/sprite.svg#arrow-right"></use>
+                                </svg>
+                                <div class="button__hover"></div>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="form-modal__success">
+                        <div class="form-modal__logo"> <img class="form-modal__logo-image" src="../assets/svg/logo2.svg"
+                                alt="logo2" width="40" height="33" /></div>
+                        <div class="form-modal__success-text"> Thank you for your message.<br>I’ll get back to you soon.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>
