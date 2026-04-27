@@ -184,6 +184,23 @@ else
     print_warn "agent/requirements.txt 없음 → 건너뜀"
 fi
 
+# ── 7. AI 에이전트 룰 동기화 (Cursor, Copilot 등) ──
+print_step 7 "AI 에이전트 공통 룰 동기화..."
+
+if [ -f .agents/rules/agentrules.md ]; then
+    # Cursor IDE 지원
+    ln -sf .agents/rules/agentrules.md .cursorrules
+    print_ok "Cursor 룰 연동 (.cursorrules -> agentrules.md)"
+
+    # GitHub Copilot 지원
+    mkdir -p .github
+    ln -sf ../.agents/rules/agentrules.md .github/copilot-instructions.md
+    print_ok "Copilot 룰 연동 (.github/copilot-instructions.md)"
+else
+    print_warn ".agents/rules/agentrules.md 파일 없음"
+fi
+
+
 # ── 완료 ──
 echo ""
 echo "============================================"
