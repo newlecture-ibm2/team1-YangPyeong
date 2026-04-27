@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBalance — 지자체 대시보드</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<nav class="nav">
+  <a href="./index.html" class="nav-logo"><img src="./logo.png" alt=""> Farm<span class="italic">Balance</span></a>
+  <div class="nav-links"><a href="./gov-dashboard.html" class="active">대시보드</a><a href="./balance-list.html">수급관리</a><a href="#">농가관리</a><a href="#">정책</a></div>
+  <div class="nav-right"><a class="btn-nav btn-nav-fill" href="#">양평군 관리자</a></div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="breadcrumb">지자체 / 대시보드</p>
+    <h1 class="page-title">양평군 <span class="italic">대시보드</span></h1>
+    <p class="page-sub">양평군 전체 농업 현황과 수급 밸런스를 모니터링합니다.</p>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi"><p class="kpi-label">등록 농가</p><p class="kpi-value">1,248</p></div>
+    <div class="kpi"><p class="kpi-label">관리 작물</p><p class="kpi-value">32종</p></div>
+    <div class="kpi"><p class="kpi-label">과잉 품목</p><p class="kpi-value red">5</p></div>
+    <div class="kpi"><p class="kpi-label">부족 품목</p><p class="kpi-value red">3</p></div>
+  </div>
+
+  <!-- BENTO -->
+  <div class="bento mb-48">
+    <!-- Supply Chart Placeholder -->
+    <div class="col-8">
+      <div class="card" style="height:100%;">
+        <h3 class="mb-16">월별 수급 추이</h3>
+        <div class="placeholder" style="min-height:300px;">📊 차트 영역 — Recharts / Chart.js로 구현 예정</div>
+      </div>
+    </div>
+    <!-- Map Placeholder -->
+    <div class="col-4">
+      <div class="card" style="height:100%;">
+        <h3 class="mb-16">지역별 분포</h3>
+        <div class="placeholder" style="min-height:300px;">🗺️ 양평군 지도 — Kakao Maps API 연동 예정</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WARNING TABLE -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h3>⚠️ 수급 경고 품목</h3>
+    <a class="btn btn-ghost" href="./balance-list.html">전체보기 →</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>작물</th><th>현재 공급률</th><th>상태</th><th>경고 수준</th><th>권고 사항</th><th>조치</th></tr></thead>
+      <tbody>
+        <tr><td><strong>양파</strong></td><td>172%</td><td><span class="badge badge-red">과잉</span></td><td><span class="badge badge-red">긴급</span></td><td>출하 분산 / 저장 권고</td><td><a class="btn btn-primary btn-sm" href="#">알림 발송</a></td></tr>
+        <tr><td><strong>고추</strong></td><td>128%</td><td><span class="badge badge-orange">과잉</span></td><td><span class="badge badge-orange">주의</span></td><td>재배 면적 축소 안내</td><td><a class="btn btn-outline btn-sm" href="#">알림 발송</a></td></tr>
+        <tr><td><strong>감자</strong></td><td>45%</td><td><span class="badge badge-red">부족</span></td><td><span class="badge badge-red">긴급</span></td><td>재배 확대 권장 / 보조금 안내</td><td><a class="btn btn-primary btn-sm" href="#">알림 발송</a></td></tr>
+        <tr><td><strong>당근</strong></td><td>62%</td><td><span class="badge badge-orange">부족</span></td><td><span class="badge badge-orange">주의</span></td><td>재배 농가 추가 모집</td><td><a class="btn btn-outline btn-sm" href="#">알림 발송</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-brand"><img src="./logo.png" alt=""> Farm<span class="italic">Balance</span></div>
+  <p class="footer-copy">© 2026 FarmBalance. 양평군 스마트 파밍 플랫폼</p>
+</footer>
+</body>
+</html>
