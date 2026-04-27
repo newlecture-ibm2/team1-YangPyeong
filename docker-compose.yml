@@ -99,6 +99,8 @@ services:
     container_name: farm-db
     image: postgres:16-alpine
     restart: unless-stopped
+    ports:
+      - "5151:5432"
     environment:
       POSTGRES_DB: farm_db
       POSTGRES_USER: ${DB_USERNAME}
