@@ -229,6 +229,7 @@ app/(main)/farm/
 - **커밋 메시지**: Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`).
 - **브랜치**: `main` (배포), `dev` (개발).
 - **환경 구축**: Docker Compose v2로 로컬 환경 동기화.
+- **.gitkeep 관리**: 빈 폴더를 유지하기 위해 생성한 `.gitkeep` 파일은 해당 폴더에 실제 파일이 생성되면 **반드시 삭제**합니다.
 
 ---
 
