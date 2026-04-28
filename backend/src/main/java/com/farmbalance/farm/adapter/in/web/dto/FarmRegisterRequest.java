@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -19,7 +20,7 @@ public class FarmRegisterRequest {
     @NotNull(message = "면적은 필수입니다.")
     private Double area;
 
-    private String cropType;
+    private List<String> cropTypes;
     
     // PNU 생성용 필드
     @NotBlank(message = "법정동 코드는 필수입니다.")
@@ -35,4 +36,8 @@ public class FarmRegisterRequest {
     @NotBlank(message = "부번은 필수입니다.")
     @Pattern(regexp = "^[0-9]{1,4}$", message = "부번은 1~4자리 숫자여야 합니다.")
     private String subNo;       // 부번
+    
+    private String registrationNumber; // 농업경영체 등록번호 (프론트에서 전달)
+    
+    private String documentUrl; // 증빙 서류 경로
 }

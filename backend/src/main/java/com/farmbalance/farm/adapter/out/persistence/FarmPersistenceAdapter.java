@@ -38,9 +38,14 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort {
                 .name(farm.getName())
                 .address(farm.getAddress())
                 .area(farm.getArea())
-                .cropType(farm.getCropType())
+                .cropTypes(farm.getCropTypes())
                 .bjdCode(farm.getBjdCode())
                 .pnuCode(farm.getPnuCode())
+                .latitude(farm.getLatitude())
+                .longitude(farm.getLongitude())
+                .registrationNumber(farm.getRegistrationNumber())
+                .documentUrl(farm.getDocumentUrl())
+                .certificationStatus(farm.getCertificationStatus())
                 .build();
 
         // 4. DB 저장
@@ -70,9 +75,14 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort {
                 .name(entity.getName())
                 .address(entity.getAddress())
                 .area(entity.getArea())
-                .cropType(entity.getCropType())
+                .cropTypes(entity.getCropTypes())
                 .bjdCode(entity.getBjdCode())
                 .pnuCode(entity.getPnuCode())
+                .latitude(entity.getLatitude())
+                .longitude(entity.getLongitude())
+                .registrationNumber(entity.getRegistrationNumber())
+                .documentUrl(entity.getDocumentUrl())
+                .certificationStatus(entity.getCertificationStatus())
                 .build();
     }
 }

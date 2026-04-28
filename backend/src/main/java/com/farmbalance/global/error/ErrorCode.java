@@ -43,6 +43,8 @@ public enum ErrorCode {
     FARM_APPROVAL_PENDING("E-FARM-003", "승인 대기 중인 농장 등록 신청이 있습니다.", HttpStatus.CONFLICT),
     FARM_AREA_EXCEEDED("E-FARM-004", "파종 면적이 농장 전체 면적을 초과합니다.", HttpStatus.BAD_REQUEST),
     FARM_PNU_DUPLICATE("E-FARM-005", "이미 등록된 지번(PNU)입니다.", HttpStatus.CONFLICT),
+    FARM_INVALID_ADDRESS("E-FARM-006", "주소를 좌표로 변환할 수 없습니다. 올바른 주소를 입력해주세요.", HttpStatus.BAD_REQUEST),
+    FARM_EXTERNAL_API_FAILED("E-FARM-007", "외부 API 호출에 실패했습니다. 잠시 후 다시 시도해주세요.", HttpStatus.SERVICE_UNAVAILABLE),
 
     // ── 종자/파종/수확 ──
     SEED_NOT_FOUND("E-SEED-001", "종자 등록 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

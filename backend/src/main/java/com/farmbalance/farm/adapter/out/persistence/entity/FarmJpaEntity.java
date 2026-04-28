@@ -7,6 +7,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "farms")
@@ -31,8 +33,10 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(nullable = false)
     private Double area;
 
-    @Column(name = "crop_type", length = 50)
-    private String cropType;
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "farm_crops", joinColumns = @JoinColumn(name = "farm_id"))
+    @Column(name = "crop_name")
+    private List<String> cropTypes = new ArrayList<>();
 
     @Column(name = "bjd_code", length = 10)
     private String bjdCode;
@@ -40,14 +44,35 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(name = "pnu_code", length = 19)
     private String pnuCode;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
+    @Column(name = "registration_number", length = 50)
+    private String registrationNumber;
+
+    @Column(name = "document_url", length = 500)
+    private String documentUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "certification_status", nullable = false, length = 20)
+    private com.farmbalance.farm.domain.CertificationStatus certificationStatus = com.farmbalance.farm.domain.CertificationStatus.PENDING;
+
     @Builder
-    public FarmJpaEntity(UserJpaEntity user, String name, String address, Double area, String cropType, String bjdCode, String pnuCode) {
+    public FarmJpaEntity(UserJpaEntity user, String name, String address, Double area, List<String> cropTypes, String bjdCode, String pnuCode, Double latitude, Double longitude, String registrationNumber, String documentUrl, com.farmbalance.farm.domain.CertificationStatus certificationStatus) {
         this.user = user;
         this.name = name;
         this.address = address;
         this.area = area;
-        this.cropType = cropType;
+        this.cropTypes = cropTypes;
         this.bjdCode = bjdCode;
         this.pnuCode = pnuCode;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.registrationNumber = registrationNumber;
+        this.documentUrl = documentUrl;
+        this.certificationStatus = certificationStatus != null ? certificationStatus : com.farmbalance.farm.domain.CertificationStatus.PENDING;
     }
 }

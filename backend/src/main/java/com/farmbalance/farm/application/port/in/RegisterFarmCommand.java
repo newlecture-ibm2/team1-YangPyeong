@@ -2,6 +2,7 @@ package com.farmbalance.farm.application.port.in;
 
 import lombok.Builder;
 import lombok.Getter;
+import java.util.List;
 
 @Getter
 @Builder
@@ -10,9 +11,11 @@ public class RegisterFarmCommand {
     private String name;
     private String address;
     private Double area;
-    private String cropType;
+    private List<String> cropTypes;
     private String bjdCode;
     private boolean isMountain;
     private String mainNo;
     private String subNo;
+    private String registrationNumber;
+    private String documentUrl;
 }

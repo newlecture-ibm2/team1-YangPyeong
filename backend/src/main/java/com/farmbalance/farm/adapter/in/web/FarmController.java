@@ -15,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import com.farmbalance.farm.application.port.out.UploadFilePort;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,6 +28,13 @@ public class FarmController {
 
     private final RegisterFarmUseCase registerFarmUseCase;
     private final LoadFarmUseCase loadFarmUseCase;
+    private final UploadFilePort uploadFilePort;
+
+    @PostMapping("/upload")
+    public ResponseEntity<ApiResponse<String>> uploadFile(@RequestParam("file") MultipartFile file) {
+        String fileUrl = uploadFilePort.upload(file);
+        return ResponseEntity.ok(ApiResponse.ok(fileUrl));
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<FarmRegisterResponse>> registerFarm(
@@ -38,11 +47,13 @@ public class FarmController {
                 .name(request.getName())
                 .address(request.getAddress())
                 .area(request.getArea())
-                .cropType(request.getCropType())
+                .cropTypes(request.getCropTypes())
                 .bjdCode(request.getBjdCode())
                 .isMountain(request.isMountain())
                 .mainNo(request.getMainNo())
                 .subNo(request.getSubNo())
+                .registrationNumber(request.getRegistrationNumber())
+                .documentUrl(request.getDocumentUrl())
                 .build();
 
         // UseCase 호출 (비즈니스 로직)
@@ -70,7 +81,7 @@ public class FarmController {
                         .id(farm.getId())
                         .name(farm.getName())
                         .address(farm.getAddress())
-                        .cropType(farm.getCropType())
+                        .cropTypes(farm.getCropTypes())
                         .build())
                 .collect(Collectors.toList());
 
@@ -88,7 +99,7 @@ public class FarmController {
                 .name(farm.getName())
                 .address(farm.getAddress())
                 .area(farm.getArea())
-                .cropType(farm.getCropType())
+                .cropTypes(farm.getCropTypes())
                 .pnuCode(farm.getPnuCode())
                 .build();
 
