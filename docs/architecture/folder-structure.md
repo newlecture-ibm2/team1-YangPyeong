@@ -201,7 +201,7 @@ frontend/
 │   │   └── signup/page.tsx
 │   │
 │   ├── (main)/                               ← 일반유저/농부 라우트 그룹
-│   │   ├── layout.tsx                        ← 공통 레이아웃 (Nav, Sidebar)
+│   │   ├── layout.tsx                        ← 공통 레이아웃 (Header, Sidebar)
 │   │   │
 │   │   ├── farm/                             ← 🌾 농장 도메인
 │   │   │   ├── page.tsx                      ← /farm
@@ -273,7 +273,7 @@ frontend/
 │
 ├── components/                               ← 🧩 공유 UI (도메인 무관)
 │   ├── common/                               ← Button, Input, Modal, Card 등
-│   └── layout/                               ← Nav, Sidebar, Footer
+│   └── layout/                               ← Header, Sidebar, Footer
 │
 ├── lib/                                      ← 🔧 전역 유틸
 │   ├── api-client.ts                         ← fetch 래퍼

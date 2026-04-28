@@ -1,6 +1,7 @@
 package com.farmbalance.admin.application.port.out;
 
 import com.farmbalance.admin.domain.AdminFarm;
+import com.farmbalance.admin.domain.FarmApprovalView;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,4 +20,9 @@ public interface AdminFarmPort {
     void updateStatus(Long id, String status);
 
     void updateLandCertVerified(Long id, Boolean verified);
+
+    /**
+     * farms + users JOIN — 승인 목록 화면용 뷰 조회
+     */
+    List<FarmApprovalView> findApprovalsByStatus(String status);
 }

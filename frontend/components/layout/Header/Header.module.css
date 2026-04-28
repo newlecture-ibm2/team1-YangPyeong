@@ -56,6 +56,27 @@
   align-items: center;
 }
 
+.cartBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-right: 4px;
+}
+
+.cartBtn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .btnOutline {
   padding: 10px 24px;
   border-radius: var(--radius-pill);
