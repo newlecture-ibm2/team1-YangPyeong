@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Modal from '@/components/common/Modal/Modal'
 import Button from '@/components/common/Button/Button'
 import Badge from '@/components/common/Badge/Badge'
@@ -38,6 +38,8 @@ export default function RagPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all')
   const [loading, setLoading] = useState(true)
   const toast = useToast()
+  const toastRef = useRef(toast)
+  toastRef.current = toast
 
   // 모달 상태
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -50,20 +52,22 @@ export default function RagPage() {
     try {
       const data = await fetchCategories()
       setCategories(data)
-    } catch (e: any) {
-      toast.error(e.message || '카테고리 목록을 불러오지 못했습니다.')
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '카테고리 목록을 불러오지 못했습니다.'
+      toastRef.current.error(msg)
     }
-  }, [toast])
+  }, [])
 
   const loadDocuments = useCallback(async () => {
     try {
       const categoryId = selectedCategoryId !== 'all' ? Number(selectedCategoryId) : undefined
       const data = await fetchDocuments(categoryId)
       setDocuments(data)
-    } catch (e: any) {
-      toast.error(e.message || '문서 목록을 불러오지 못했습니다.')
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '문서 목록을 불러오지 못했습니다.'
+      toastRef.current.error(msg)
     }
-  }, [selectedCategoryId, toast])
+  }, [selectedCategoryId])
 
   useEffect(() => {
     setLoading(true)
@@ -376,7 +380,7 @@ function CategoryFormModal({ category, onSave, onClose }: CategoryFormProps) {
       </div>
       {category && (
         <div className={styles.formGroup}>
-          <Dropdown 
+          <Dropdown
             label="활성 여부"
             options={[{ value: 'true', label: '활성' }, { value: 'false', label: '비활성' }]}
             value={isActive}
@@ -428,7 +432,7 @@ function DocumentFormModal({ document: doc, categories, onSave, onClose }: Docum
   return (
     <Modal isOpen={true} title={doc ? '문서 수정' : '문서 추가'} onClose={onClose}>
       <div className={styles.formGroup}>
-        <Dropdown 
+        <Dropdown
           label="카테고리 *"
           options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
           value={categoryId}
@@ -440,7 +444,7 @@ function DocumentFormModal({ document: doc, categories, onSave, onClose }: Docum
         <Input label="문서 제목 *" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예: 양평군 벼 재배 매뉴얼" />
       </div>
       <div className={styles.formGroup}>
-        <Dropdown 
+        <Dropdown
           label="저장 유형 *"
           options={[{ value: 'TEXT', label: '텍스트 직접 입력' }, { value: 'FILE', label: '파일 URL' }]}
           value={contentType}
@@ -461,7 +465,7 @@ function DocumentFormModal({ document: doc, categories, onSave, onClose }: Docum
             <Input label="원본 파일명" value={fileName} onChange={(e) => setFileName(e.target.value)} placeholder="매뉴얼.pdf" />
           </div>
           <div className={styles.formGroup}>
-            <Dropdown 
+            <Dropdown
               label="파일 형식"
               options={[
                 { value: 'PDF', label: 'PDF' },

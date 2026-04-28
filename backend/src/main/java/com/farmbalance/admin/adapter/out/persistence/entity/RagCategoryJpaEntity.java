@@ -13,7 +13,9 @@ import java.time.LocalDateTime;
  * RAG 카테고리 JPA 엔티티 (Driven Adapter)
  * domain.RagCategory ↔ RagCategoryJpaEntity 변환을 담당합니다.
  *
- * <p>ERD 2.24 rag_categories 테이블에 대응</p>
+ * <p>
+ * ERD 2.24 rag_categories 테이블에 대응
+ * </p>
  */
 @Entity
 @Table(name = "rag_categories")
