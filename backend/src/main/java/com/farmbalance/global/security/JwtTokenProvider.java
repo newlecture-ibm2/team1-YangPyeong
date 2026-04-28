@@ -29,9 +29,18 @@ public class JwtTokenProvider {
 
     private SecretKey secretKey;
 
+    public long getRefreshTokenExpiration() {
+        return refreshTokenExpiration;
+    }
+
     @PostConstruct
     public void init() {
-        this.secretKey = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes = secretString.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException(
+                    "JWT secret must be at least 32 bytes for HMAC-SHA256. Current: " + keyBytes.length + " bytes");
+        }
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String createAccessToken(Long userId, String email, String role) {
@@ -70,6 +79,16 @@ public class JwtTokenProvider {
 
     public String getRole(String token) {
         return validateAndGetClaims(token).get("role", String.class);
+    }
+
+    /** Claims에서 userId 추출 (이미 파싱된 Claims 재사용) */
+    public Long getUserId(Claims claims) {
+        return Long.valueOf(claims.getSubject());
+    }
+
+    /** Claims에서 role 추출 (이미 파싱된 Claims 재사용) */
+    public String getRole(Claims claims) {
+        return claims.get("role", String.class);
     }
 
     public boolean isValid(String token) {
