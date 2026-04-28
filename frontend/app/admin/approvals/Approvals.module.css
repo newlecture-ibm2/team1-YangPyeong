@@ -1,0 +1,157 @@
+/* ══════════════════════════════════════════════
+   농부 승인/반려 페이지 스타일
+   ══════════════════════════════════════════════ */
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── 탭 ── */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: 1.5rem;
+}
+
+.tab {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tabActive {
+  color: var(--color-primary, #2e7d32);
+  border-bottom-color: var(--color-primary, #2e7d32);
+  font-weight: 600;
+}
+
+/* ── 신청 카드 ── */
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.approvalCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.5rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.approvalCard:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.farmName {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.applyDate {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+/* ── 정보 테이블 ── */
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 2rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.infoItem {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.infoLabel {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  min-width: 60px;
+}
+
+.infoValue {
+  color: var(--color-text);
+}
+
+/* ── 토지증명서 링크 ── */
+.certLink {
+  color: var(--color-primary, #2e7d32);
+  text-decoration: underline;
+  font-size: 0.85rem;
+}
+
+.certLink:hover {
+  opacity: 0.8;
+}
+
+/* ── 카드 액션 ── */
+.cardActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── 로딩 / 비어있음 ── */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  font-size: 1.1rem;
+  color: var(--color-text-secondary);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}

@@ -28,6 +28,10 @@ trigger: always_on
 | **내부 API 스펙** | `docs/architecture/api-spec.md` |
 | **외부 API 연동** | `docs/architecture/external-api/` 폴더 내 해당 문서 |
 | **화면 목록/IA** | `docs/ui-design/screen-list.md` |
+| **디자인 토큰/글로벌 스타일** | `frontend/app/globals.css` |
+| **공통 UI 컴포넌트** | `frontend/components/common/` |
+| **컴포넌트 사용 예시** | `frontend/app/components-demo/page.tsx` |
+| **페이지 디자인 목업** | `docs/ui-design/mockups/final-ui-mockup/` |
 
 ---
 
@@ -204,6 +208,29 @@ app/(main)/farm/
 ### 3.7 UI 접근성 (중요 지침)
 - **가독성**: 고령 농업인 배려 — 최소 글꼴 크기 **16px**.
 - **터치 영역**: 최소 **44px** 이상.
+
+### 3.8 디자인 참조 (MUST FOLLOW)
+
+새 페이지나 컴포넌트를 만들 때 반드시 아래 두 곳을 **먼저 참조**합니다.
+
+| 참조 대상 | 경로 | 역할 |
+|-----------|------|------|
+| **디자인 토큰 + 글로벌 스타일** | `app/globals.css` | CSS 변수(`--color-*`, `--radius-*`, `--space-*` 등) 정의 |
+| **공통 컴포넌트 구현** | `components/common/` | Button, Badge, Card, Input, Modal, Dropdown, SearchInput, FilterBar, Toast 등 |
+| **공통 컴포넌트 사용 예시** | `app/components-demo/page.tsx` | 각 컴포넌트의 올바른 props, variant, 조합 패턴 데모 |
+| **페이지 디자인 목업** | `docs/ui-design/mockups/final-ui-mockup/` | 도메인별(admin, farm, shop 등) 최종 UI 디자인 HTML 목업 |
+
+**페이지 구현 전 참조 순서:**
+1. `final-ui-mockup/{도메인}/` 해당 페이지의 디자인 목업을 먼저 확인
+2. `components/common/` + `components-demo/page.tsx`로 사용 가능한 공통 컴포넌트 확인
+3. `globals.css`의 디자인 토큰으로 CSS Module 작성
+
+```
+✅ CSS Module 작성 시 globals.css의 디자인 토큰 사용  → color: var(--color-text);
+✅ 컴포넌트 사용 전 components-demo 참조             → <Badge variant="green">
+✅ 공통 컴포넌트로 해결 가능하면 직접 HTML 작성 금지    → <Dropdown> 사용 (not <select>)
+❌ 하드코딩 색상값 사용 금지                          → DO NOT color: #2D6A4F (use var())
+```
 
 ---
 
