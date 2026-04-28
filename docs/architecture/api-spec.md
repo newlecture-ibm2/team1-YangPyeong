@@ -99,6 +99,8 @@
 | GOV-002 | `GET` | `/api/govs/comparison` | 🏛️ | 지역별 비교 분석 |
 | GOV-004 | `POST` | `/api/govs/report` | 🏛️ | 분석 보고서(PDF) 생성 요청 |
 | GOV-005 | `POST` | `/api/govs/notice` | 🏛️ | 농가 대상 권고 발송 |
+| GOV-006 | `GET` | `/api/gov/download` | 🏛️ | 지자체 데이터 다운로드 (엑셀/CSV) |
+| GOV-006 | `GET` | `/api/gov/download/history` | 🏛️ | 데이터 다운로드 이력 최근 조회 |
 | ADM-011 | `GET` | `/api/admins/dashboard` | ⚙️ | 관리자 전체 통계 |
 | ADM-001 | `GET` | `/api/admins/user` | ⚙️ | 전체 사용자 관리 |
 | ADM-001 | `PATCH` | `/api/admins/user/{id}` | ⚙️ | 사용자 역할/상태 변경 |

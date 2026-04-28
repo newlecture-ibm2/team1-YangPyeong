@@ -14,7 +14,8 @@
     "next": "^15.5.15",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "react-kakao-maps-sdk": "^1.2.1"
+    "react-kakao-maps-sdk": "^1.2.1",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@types/node": "^20",
