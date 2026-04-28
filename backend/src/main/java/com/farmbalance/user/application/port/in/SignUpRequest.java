@@ -1,4 +1,4 @@
-package com.farmbalance.user.adapter.in.web.dto;
+package com.farmbalance.user.application.port.in;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -25,7 +25,4 @@ public class SignUpRequest {
     private String name;
 
     private String phone;
-
-    /** USER, FARMER 중 선택 (기본: USER) */
-    private String role;
 }

@@ -5,11 +5,7 @@ import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.global.security.JwtTokenProvider;
 import com.farmbalance.global.security.LoginAttemptStore;
 import com.farmbalance.global.security.RefreshTokenStore;
-import com.farmbalance.user.adapter.in.web.dto.*;
-import com.farmbalance.user.application.port.in.LoginUseCase;
-import com.farmbalance.user.application.port.in.LogoutUseCase;
-import com.farmbalance.user.application.port.in.RefreshTokenUseCase;
-import com.farmbalance.user.application.port.in.SignUpUseCase;
+import com.farmbalance.user.application.port.in.*;
 import com.farmbalance.user.application.port.out.UserRepository;
 import com.farmbalance.user.domain.Role;
 import com.farmbalance.user.domain.User;
@@ -19,8 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Set;
 
 /**
  * 인증 서비스 — UseCase 구현체 (Application Layer)
@@ -36,9 +30,6 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenStore refreshTokenStore;
     private final LoginAttemptStore loginAttemptStore;
-
-    /** 회원가입 시 허용되는 역할 (ADMIN/GOV는 관리자가 직접 부여) */
-    private static final Set<Role> ALLOWED_SIGNUP_ROLES = Set.of(Role.USER, Role.FARMER);
 
     @Override
     public TokenResponse login(LoginRequest request) {
@@ -103,33 +94,21 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
             throw new BusinessException(ErrorCode.USER_EMAIL_DUPLICATE);
         }
 
-        // 역할 결정 (USER, FARMER만 허용 — ADMIN/GOV는 관리자 부여)
-        Role role = Role.USER;
-        if (request.getRole() != null) {
-            try {
-                role = Role.valueOf(request.getRole().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new BusinessException(ErrorCode.USER_INVALID_ROLE);
-            }
-            if (!ALLOWED_SIGNUP_ROLES.contains(role)) {
-                throw new BusinessException(ErrorCode.USER_INVALID_ROLE,
-                        "회원가입 시 선택 가능한 역할: USER, FARMER");
-            }
-        }
-
-        UserStatus status = (role == Role.FARMER) ? UserStatus.PENDING : UserStatus.ACTIVE;
-
+        // 회원가입은 항상 USER/ACTIVE
+        // - FARMER: USER 가입 후 조건 충족 시 자동 승격
+        // - GOV: 관리자가 메일 문의 기반으로 계정 생성 후 메일 안내
+        // - ADMIN: 내부 부여
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
                 .phone(request.getPhone())
-                .role(role)
-                .status(status)
+                .role(Role.USER)
+                .status(UserStatus.ACTIVE)
                 .build();
 
         User saved = userRepository.save(user);
-        log.info("회원가입 완료: userId={}, role={}, status={}", saved.getId(), role, status);
+        log.info("회원가입 완료: userId={}, email={}", saved.getId(), saved.getEmail());
 
         return new SignUpResponse(saved.getId());
     }
