@@ -28,6 +28,7 @@ public enum ErrorCode {
     AUTH_TOKEN_EXPIRED("E-AUTH-TOKEN-001", "토큰이 만료되었습니다.", HttpStatus.UNAUTHORIZED),
     AUTH_TOKEN_INVALID("E-AUTH-TOKEN-002", "유효하지 않은 토큰입니다.", HttpStatus.UNAUTHORIZED),
     AUTH_LOGIN_LOCKED("E-AUTH-LOGIN-004", "로그인 5회 실패로 30분간 잠금되었습니다.", HttpStatus.TOO_MANY_REQUESTS),
+    AUTH_REFRESH_TOKEN_INVALID("E-AUTH-TOKEN-003", "유효하지 않은 리프레시 토큰입니다.", HttpStatus.UNAUTHORIZED),
 
     // ── 사용자 ──
     USER_NOT_FOUND("E-USER-001", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

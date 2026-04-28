@@ -3,7 +3,10 @@ services:
   frontend:
     container_name: farm-frontend
     image: farm-frontend:latest
-    build: ./frontend
+    build: 
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_KAKAO_MAP_JS_KEY=${NEXT_PUBLIC_KAKAO_MAP_JS_KEY}
     restart: unless-stopped
     ports:
       - "3131:3000"
@@ -11,7 +14,8 @@ services:
       - NEXT_PUBLIC_API_URL=/api
       - INTERNAL_BACKEND_URL=http://backend:8080
       - JWT_SECRET=${JWT_SECRET}
-      - NEXT_PUBLIC_KAKAO_MAP_KEY=${NEXT_PUBLIC_KAKAO_MAP_KEY}
+      - NEXT_PUBLIC_KAKAO_MAP_JS_KEY=${NEXT_PUBLIC_KAKAO_MAP_JS_KEY}
+      - SKIP_AUTH=${SKIP_AUTH:-true}
     depends_on:
       - backend
     develop:
