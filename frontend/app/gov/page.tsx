@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  BarChart, Bar
-} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import styles from './gov.module.css';
+import { useGovUser, getTestHeaders } from './_hooks/useGovUser';
+import GovTabs from './_components/GovTabs';
 
 interface DashboardData {
   summary: { totalFarms: number; totalCrops: number; surplusCount: number; shortageCount: number };
@@ -15,28 +14,33 @@ interface DashboardData {
 }
 
 export default function GovDashboardPage() {
+  const { user, loading: userLoading } = useGovUser();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/gov/dashboard')
+    fetch('/api/gov/dashboard', { headers: getTestHeaders() })
       .then(r => r.json())
       .then(res => { setData(res.data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className={styles.page}><p>로딩 중...</p></div>;
+  if (userLoading || loading) return <div className={styles.page}><p>로딩 중...</p></div>;
+  if (!user || user.role !== 'GOV') return <div className={styles.page}><p>지자체 관리자만 접근할 수 있습니다.</p></div>;
   if (!data) return <div className={styles.page}><p>데이터를 불러올 수 없습니다.</p></div>;
 
   const { summary, warningItems, monthlySupply, regionDistribution } = data;
+  const region = user.region;
 
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <p className={styles.breadcrumb}>지자체 / 대시보드</p>
-        <h1 className={styles.pageTitle}>양평군 <em>대시보드</em></h1>
-        <p className={styles.pageSub}>양평군 전체 농업 현황과 수급 밸런스를 모니터링합니다.</p>
+        <h1 className={styles.pageTitle}>{region} <em>대시보드</em></h1>
+        <p className={styles.pageSub}>{region} 전체 농업 현황과 수급 밸런스를 모니터링합니다.</p>
       </div>
+
+      <GovTabs />
 
       {/* KPI */}
       <div className={styles.kpiRow}>

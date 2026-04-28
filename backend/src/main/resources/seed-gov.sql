@@ -50,6 +50,10 @@ INSERT INTO users (id, email, password, name, phone, role, status, created_at) V
 (9035,'gov_buyer05@test.com','$2a$10$dummy','소비자E','010-2222-0005','USER','ACTIVE','2025-09-01 09:00:00'),
 (9040,'team1gov@yangpyeong.go.kr','$2a$10$dummy','양평군청','031-770-2001','GOV','ACTIVE','2025-01-01 09:00:00');
 
+UPDATE users SET region = '양평군' WHERE role = 'GOV' AND id = 9040;
+INSERT INTO users (id, email, password, name, phone, role, status, region, created_at) VALUES
+(9041, 'gapyeong@gapyeong.go.kr', '$2a$10$dummy', '가평군 담당자', '031-000-0000', 'GOV', 'ACTIVE', '가평군', NOW());
+
 -- ═══════ 3. crop_categories ═══════
 INSERT INTO crop_categories (id, name, description, display_order, is_active, created_at) VALUES
 (9001,'채소','엽채류, 과채류 등',1,true,NOW()),

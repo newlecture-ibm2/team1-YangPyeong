@@ -8,9 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * 다운로드 이력 서비스
- */
 @Service
 @RequiredArgsConstructor
 public class DownloadHistoryService implements GetDownloadHistoryUseCase {
@@ -18,7 +15,7 @@ public class DownloadHistoryService implements GetDownloadHistoryUseCase {
     private final DownloadHistoryPort historyPort;
 
     @Override
-    public List<DownloadHistory> getRecentHistory(Long userId) {
-        return historyPort.findRecentByUserId(userId, 10);
+    public List<DownloadHistory> getHistory(Long govUserId) {
+        return historyPort.findRecentByUserId(govUserId, 10);
     }
 }

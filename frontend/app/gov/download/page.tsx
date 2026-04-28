@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from '../gov.module.css';
+import { useGovUser, getTestHeaders } from '../_hooks/useGovUser';
+import GovTabs from '../_components/GovTabs';
 
 /**
  * 데이터 다운로드 (gov-download.html 설계서 기반)
@@ -48,6 +50,7 @@ const TABS = [
 ];
 
 export default function DownloadPage() {
+  const { user, loading: userLoading } = useGovUser();
   const pathname = usePathname();
 
   // 폼 상태
@@ -65,7 +68,7 @@ export default function DownloadPage() {
   const fetchHistory = useCallback(async () => {
     try {
       const res = await fetch('/api/gov/download/history', {
-        headers: { 'X-USER-ID': '1' } // 임시, 추후 JWT
+        headers: getTestHeaders()
       });
       const json = await res.json();
       if (json.data) setHistory(json.data);
@@ -93,7 +96,7 @@ export default function DownloadPage() {
       });
 
       const res = await fetch(`/api/gov/download?${params.toString()}`, {
-        headers: { 'X-USER-ID': '1' } // 임시, 추후 JWT
+        headers: getTestHeaders()
       });
 
       if (!res.ok) {
@@ -142,15 +145,19 @@ export default function DownloadPage() {
     });
   };
 
+  const region = user?.region || "지자체";
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <p className={styles.breadcrumb}>홈 › 지자체 › <strong>데이터 다운로드</strong></p>
         <h1 className={styles.pageTitle}>📥 데이터 다운로드</h1>
-        <p className={styles.pageSub}>양평군 농업 데이터를 Excel/CSV 형식으로 다운로드할 수 있습니다.</p>
+        <p className={styles.pageSub}>{region} 농업 데이터를 Excel/CSV 형식으로 다운로드할 수 있습니다.</p>
       </div>
 
-      <div className={styles.tabs}>
+      <GovTabs />
+
+      {/* <div className={styles.tabs}>
         {TABS.map((t) => (
           <Link
             key={t.href}
@@ -160,7 +167,7 @@ export default function DownloadPage() {
             {t.label}
           </Link>
         ))}
-      </div>
+      </div> */}
 
       {/* ── Download Settings ── */}
       <div className={styles.card}>

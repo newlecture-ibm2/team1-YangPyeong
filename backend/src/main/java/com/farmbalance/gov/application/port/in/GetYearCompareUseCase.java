@@ -1,9 +1,6 @@
 package com.farmbalance.gov.application.port.in;
-
-import com.farmbalance.gov.domain.model.GovDomain.*;
+import com.farmbalance.gov.application.result.GovCompareResult;
 import java.util.List;
-
-/** 연도 비교 조회 UseCase */
 public interface GetYearCompareUseCase {
-    List<YearCompareRow> getYearCompare(Integer baseYear, Integer compareYear, String crop);
+    List<GovCompareResult> getYearCompare(Integer baseYear, Integer compareYear, String crop, String govRegion);
 }

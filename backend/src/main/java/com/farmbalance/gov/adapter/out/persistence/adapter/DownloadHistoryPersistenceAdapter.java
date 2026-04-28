@@ -1,4 +1,4 @@
-package com.farmbalance.gov.adapter.out.persistence;
+package com.farmbalance.gov.adapter.out.persistence.adapter;
 
 import com.farmbalance.gov.adapter.out.persistence.entity.DownloadHistoryJpaEntity;
 import com.farmbalance.gov.adapter.out.persistence.repository.DownloadHistoryRepository;
@@ -14,7 +14,7 @@ import java.util.List;
  */
 @Component
 @RequiredArgsConstructor
-public class DownloadHistoryAdapter implements DownloadHistoryPort {
+public class DownloadHistoryPersistenceAdapter implements DownloadHistoryPort {
 
     private final DownloadHistoryRepository repository;
 

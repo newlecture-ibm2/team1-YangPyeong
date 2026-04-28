@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import styles from '../gov.module.css';
+import { useGovUser, getTestHeaders } from '../_hooks/useGovUser';
+import GovTabs from '../_components/GovTabs';
 
 interface CultivationRow {
   region: string; farmCount: number; areaM2: number; mainCrop: string; expectedTon: number;
@@ -22,6 +24,7 @@ export default function CultivationPage() {
   const pathname = usePathname();
   const [data, setData] = useState<CultivationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user, loading: userLoading } = useGovUser();
   const [year, setYear] = useState('2026');
 
   useEffect(() => {
@@ -32,6 +35,8 @@ export default function CultivationPage() {
       .catch(() => setLoading(false));
   }, [year]);
 
+  const region = user?.region || "지자체";
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -39,11 +44,13 @@ export default function CultivationPage() {
         <h1 className={styles.pageTitle}>🌾 재배 현황</h1>
       </div>
 
-      <div className={styles.tabs}>
+      <GovTabs />
+
+      {/* <div className={styles.tabs}>
         {TABS.map(t => (
           <Link key={t.href} href={t.href} className={`${styles.tab} ${pathname === t.href ? styles.tabActive : ''}`}>{t.label}</Link>
         ))}
-      </div>
+      </div> */}
 
       <div className={styles.filterBar}>
         <select className={styles.formSelect} value={year} onChange={e => setYear(e.target.value)}>
@@ -51,6 +58,8 @@ export default function CultivationPage() {
           <option value="2025">연도: 2025</option>
         </select>
       </div>
+
+      <GovTabs />
 
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>읍면별 재배 면적</h2>

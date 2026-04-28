@@ -45,6 +45,9 @@ public class UserJpaEntity {
     @Builder.Default
     private Role role = Role.USER;
 
+    @Column(length = 50)
+    private String region;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -70,6 +73,7 @@ public class UserJpaEntity {
                 .name(name)
                 .phone(phone)
                 .role(role)
+                .region(region)
                 .status(status)
                 .profileImageUrl(profileImageUrl)
                 .createdAt(createdAt)
@@ -85,6 +89,7 @@ public class UserJpaEntity {
                 .name(user.getName())
                 .phone(user.getPhone())
                 .role(user.getRole())
+                .region(user.getRegion())
                 .status(user.getStatus())
                 .profileImageUrl(user.getProfileImageUrl())
                 .build();

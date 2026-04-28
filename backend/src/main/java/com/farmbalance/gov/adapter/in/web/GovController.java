@@ -2,58 +2,74 @@ package com.farmbalance.gov.adapter.in.web;
 
 import com.farmbalance.global.response.ApiResponse;
 import com.farmbalance.gov.application.port.in.*;
-import com.farmbalance.gov.domain.model.GovDomain.*;
+import com.farmbalance.gov.application.result.*;
+import com.farmbalance.gov.domain.model.GovUserInfo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.Map;
+import org.springframework.web.server.ResponseStatusException;
 
-/**
- * 지자체 Controller (Driving Adapter)
- * 조회 전용 엔드포인트 — 실 DB 데이터 반환
- */
+import java.util.List;
+import com.farmbalance.gov.adapter.in.web.dto.*;
+
 @RestController
 @RequestMapping("/api/gov")
 @RequiredArgsConstructor
 public class GovController {
 
+    private final GetGovUserInfoUseCase userInfoUseCase;
     private final GetGovDashboardUseCase dashboardUseCase;
     private final GetCultivationStatusUseCase cultivationUseCase;
     private final GetYearCompareUseCase yearCompareUseCase;
     private final GetSalesStatusUseCase salesUseCase;
 
+    private GovUserInfo checkGovUser(Long userId) {
+        if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "사용자 인증이 필요합니다.");
+        GovUserInfo info = userInfoUseCase.getGovUserInfo(userId);
+        if (info == null || !"GOV".equals(info.role())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "지자체 권한이 없습니다.");
+        }
+        return info;
+    }
+
+    @GetMapping("/me")
+    public ApiResponse<GovUserResponse> getMe(@RequestHeader(value="X-USER-ID", required=false, defaultValue="9040") Long userId) {
+        return ApiResponse.ok(GovUserResponse.from(checkGovUser(userId)));
+    }
+
     @GetMapping("/dashboard")
-    public ApiResponse<Map<String, Object>> getDashboard() {
-        return ApiResponse.ok(Map.of(
-            "summary", dashboardUseCase.getSummary(),
-            "warningItems", dashboardUseCase.getWarningItems(),
-            "monthlySupply", dashboardUseCase.getMonthlySupply(),
-            "regionDistribution", dashboardUseCase.getRegionDistribution()
-        ));
+    public ApiResponse<GovDashboardResponse> getDashboard(@RequestHeader(value="X-USER-ID", required=false, defaultValue="9040") Long userId) {
+        GovUserInfo user = checkGovUser(userId);
+        return ApiResponse.ok(GovDashboardResponse.from(dashboardUseCase.getDashboardData(user.region())));
     }
 
     @GetMapping("/cultivation")
-    public ApiResponse<List<CultivationRow>> getCultivation(
+    public ApiResponse<List<GovCultivationResponse>> getCultivation(
+            @RequestHeader(value="X-USER-ID", required=false, defaultValue="9040") Long userId,
             @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) String region,
+            @RequestParam(required = false, name = "town") String town,
             @RequestParam(required = false) String crop) {
-        return ApiResponse.ok(cultivationUseCase.getCultivationStatus(year, region, crop));
+        GovUserInfo user = checkGovUser(userId);
+        List<GovCultivationResponse> res = cultivationUseCase.getCultivationStatus(year, user.region(), town, crop).stream()
+                .map(GovCultivationResponse::from).toList();
+        return ApiResponse.ok(res);
     }
 
     @GetMapping("/compare")
-    public ApiResponse<List<YearCompareRow>> getCompare(
+    public ApiResponse<List<GovCompareResponse>> getCompare(
+            @RequestHeader(value="X-USER-ID", required=false, defaultValue="9040") Long userId,
             @RequestParam(required = false) Integer baseYear,
             @RequestParam(required = false) Integer compareYear,
             @RequestParam(required = false) String crop) {
-        return ApiResponse.ok(yearCompareUseCase.getYearCompare(baseYear, compareYear, crop));
+        GovUserInfo user = checkGovUser(userId);
+        List<GovCompareResponse> res = yearCompareUseCase.getYearCompare(baseYear, compareYear, crop, user.region()).stream()
+                .map(GovCompareResponse::from).toList();
+        return ApiResponse.ok(res);
     }
 
     @GetMapping("/sales")
-    public ApiResponse<Map<String, Object>> getSales() {
-        return ApiResponse.ok(Map.of(
-            "summary", salesUseCase.getSalesSummary(),
-            "topProducts", salesUseCase.getTopProducts(),
-            "monthlySales", salesUseCase.getMonthlySales()
-        ));
+    public ApiResponse<GovSalesResponse> getSales(@RequestHeader(value="X-USER-ID", required=false, defaultValue="9040") Long userId) {
+        GovUserInfo user = checkGovUser(userId);
+        return ApiResponse.ok(GovSalesResponse.from(salesUseCase.getSalesData(user.region())));
     }
 }

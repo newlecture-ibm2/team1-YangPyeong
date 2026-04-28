@@ -13,7 +13,7 @@ export default function GovLayout({ children }: GovLayoutProps) {
       {children}
       <footer className={styles.footer}>
         <div className={styles.footerBrand}>FarmBalance</div>
-        <p className={styles.footerCopy}>© 2026 FarmBalance. 양평군 스마트 파밍 플랫폼</p>
+        <p className={styles.footerCopy}>© 2026 FarmBalance. 지자체 스마트 파밍 플랫폼</p>
       </footer>
     </>
   );

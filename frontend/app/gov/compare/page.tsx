@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import styles from '../gov.module.css';
+import { useGovUser, getTestHeaders } from '../_hooks/useGovUser';
+import GovTabs from '../_components/GovTabs';
 
 interface CompareRow {
   crop: string; prevYearTon: number; currentYearTon: number; diffTon: number; diffRate: number;
@@ -22,6 +24,7 @@ export default function ComparePage() {
   const pathname = usePathname();
   const [data, setData] = useState<CompareRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user, loading: userLoading } = useGovUser();
   const [baseYear, setBaseYear] = useState('2025');
   const [compareYear, setCompareYear] = useState('2026');
 
@@ -33,6 +36,8 @@ export default function ComparePage() {
       .catch(() => setLoading(false));
   }, [baseYear, compareYear]);
 
+  const region = user?.region || "지자체";
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -40,11 +45,13 @@ export default function ComparePage() {
         <h1 className={styles.pageTitle}>📊 연도 비교</h1>
       </div>
 
-      <div className={styles.tabs}>
+      <GovTabs />
+
+      {/* <div className={styles.tabs}>
         {TABS.map(t => (
           <Link key={t.href} href={t.href} className={`${styles.tab} ${pathname === t.href ? styles.tabActive : ''}`}>{t.label}</Link>
         ))}
-      </div>
+      </div> */}
 
       <div className={styles.filterBar}>
         <select className={styles.formSelect} value={baseYear} onChange={e => setBaseYear(e.target.value)}>

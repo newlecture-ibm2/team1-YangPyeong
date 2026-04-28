@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import styles from '../gov.module.css';
+import { useGovUser, getTestHeaders } from '../_hooks/useGovUser';
+import GovTabs from '../_components/GovTabs';
 
 interface SalesData {
   summary: { totalAmount: string; txCount: number; activeSellers: number; momRate: string };
@@ -24,18 +26,23 @@ export default function SalesPage() {
   const pathname = usePathname();
   const [data, setData] = useState<SalesData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user, loading: userLoading } = useGovUser();
 
   useEffect(() => {
-    fetch('/api/gov/sales')
+    fetch('/api/gov/sales' + (window.location.search || ''), { headers: getTestHeaders() }) //')
       .then(r => r.json())
       .then(res => { setData(res.data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className={styles.page}><p>로딩 중...</p></div>;
+    if (userLoading || loading) return <div className={styles.page}><p>로딩 중...</p></div>;
+  if (!user || user.role !== 'GOV') return <div className={styles.page}><p>지자체 관리자만 접근할 수 있습니다.</p></div>;
+  // if (loading) return <div className={styles.page}><p>로딩 중...</p></div>;
   if (!data) return <div className={styles.page}><p>데이터를 불러올 수 없습니다.</p></div>;
 
   const { summary, topProducts, monthlySales } = data;
+
+  const region = user?.region || "지자체";
 
   return (
     <div className={styles.page}>
@@ -44,11 +51,13 @@ export default function SalesPage() {
         <h1 className={styles.pageTitle}>💰 판매 현황</h1>
       </div>
 
-      <div className={styles.tabs}>
+      <GovTabs />
+
+      {/* <div className={styles.tabs}>
         {TABS.map(t => (
           <Link key={t.href} href={t.href} className={`${styles.tab} ${pathname === t.href ? styles.tabActive : ''}`}>{t.label}</Link>
         ))}
-      </div>
+      </div> */}
 
       <div className={styles.kpiRow}>
         <div className={styles.kpi}><div className={styles.kpiLabel}>이번달 총 거래액</div><div className={styles.kpiValue}>{summary.totalAmount}</div></div>
@@ -56,6 +65,8 @@ export default function SalesPage() {
         <div className={styles.kpi}><div className={styles.kpiLabel}>활성 판매자</div><div className={styles.kpiValue}>{summary.activeSellers}</div></div>
         <div className={styles.kpi}><div className={styles.kpiLabel}>전월 대비</div><div className={styles.kpiValue} style={{ color: 'var(--color-primary)' }}>{summary.momRate}</div></div>
       </div>
+
+      <GovTabs />
 
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>월별 거래액 추이</h2>
@@ -69,6 +80,8 @@ export default function SalesPage() {
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      <GovTabs />
 
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>인기 상품 TOP 5</h2>

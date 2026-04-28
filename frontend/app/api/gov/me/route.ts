@@ -5,7 +5,7 @@ export async function GET(request: Request) {
   const userId = request.headers.get('x-user-id') || '9040';
   const { searchParams } = new URL(request.url);
   try {
-    const res = await fetch(`${BACKEND_URL}/api/gov/compare?${searchParams.toString()}`, { 
+    const res = await fetch(`${BACKEND_URL}/api/gov/me?${searchParams.toString()}`, { 
       headers: { 'X-USER-ID': userId },
       cache: 'no-store' 
     });

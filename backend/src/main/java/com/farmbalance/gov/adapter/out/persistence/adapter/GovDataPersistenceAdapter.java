@@ -1,4 +1,4 @@
-package com.farmbalance.gov.adapter.out.persistence;
+package com.farmbalance.gov.adapter.out.persistence.adapter;
 
 import com.farmbalance.gov.application.port.out.GovDataQueryPort;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ import java.util.Map;
  */
 @Component
 @RequiredArgsConstructor
-public class GovDataQueryAdapter implements GovDataQueryPort {
+public class GovDataPersistenceAdapter implements GovDataQueryPort {
 
     private final JdbcTemplate jdbc;
 
@@ -38,8 +38,23 @@ public class GovDataQueryAdapter implements GovDataQueryPort {
         """;
 
     @Override
-    public List<Map<String, Object>> queryCultivation(LocalDate startDate, LocalDate endDate, String town) {
+    public com.farmbalance.gov.domain.model.GovUserInfo getGovUserInfo(Long userId) {
+        String sql = "SELECT id, name, role, region FROM users WHERE id = ? AND deleted_at IS NULL";
+        List<Map<String, Object>> result = jdbc.queryForList(sql, userId);
+        if (result.isEmpty()) return null;
+        Map<String, Object> row = result.get(0);
+        return new com.farmbalance.gov.domain.model.GovUserInfo(
+            ((Number) row.get("id")).longValue(),
+            (String) row.get("name"),
+            (String) row.get("role"),
+            (String) row.get("region")
+        );
+    }
+
+    @Override
+    public List<Map<String, Object>> queryCultivation(LocalDate startDate, LocalDate endDate, String govRegion, String town) {
         String townFilter = buildTownFilter(town);
+        String regionFilter = (govRegion != null) ? " AND f.address LIKE '%" + govRegion + "%' " : "";
         String sql = """
             SELECT %s AS "읍면",
                    f.name AS "농가명",
@@ -53,13 +68,16 @@ public class GovDataQueryAdapter implements GovDataQueryPort {
             WHERE sr.created_at BETWEEN ? AND ?
               AND sr.deleted_at IS NULL AND f.deleted_at IS NULL
               %s
+              %s
             ORDER BY sr.created_at DESC
-            """.formatted(TOWN_CASE, townFilter);
+            """.formatted(TOWN_CASE, townFilter, regionFilter);
         return jdbc.queryForList(sql, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
     }
 
     @Override
-    public List<Map<String, Object>> queryBalance(LocalDate startDate, LocalDate endDate, String town) {
+    public List<Map<String, Object>> queryBalance(LocalDate startDate, LocalDate endDate, String govRegion, String town) {
+        // 임시 매핑
+        String regionCode = "가평군".equals(govRegion) ? "4182000000" : "4183000000";
         String sql = """
             SELECT c.name AS "작물명",
                    bd.region_code AS "지역",
@@ -80,13 +98,15 @@ public class GovDataQueryAdapter implements GovDataQueryPort {
             JOIN crops c ON c.id = bd.crop_id
             WHERE bd.year BETWEEN EXTRACT(YEAR FROM ?::date)::int AND EXTRACT(YEAR FROM ?::date)::int
               AND bd.deleted_at IS NULL
+              AND bd.region_code = ?
             ORDER BY ABS(bd.supply_ratio - 100) DESC
             """;
-        return jdbc.queryForList(sql, startDate, endDate);
+        return jdbc.queryForList(sql, startDate, endDate, regionCode);
     }
 
     @Override
-    public List<Map<String, Object>> querySales(LocalDate startDate, LocalDate endDate, String town) {
+    public List<Map<String, Object>> querySales(LocalDate startDate, LocalDate endDate, String govRegion, String town) {
+        String regionFilter = (govRegion != null) ? " AND u.region = '" + govRegion + "' " : "";
         String sql = """
             SELECT TO_CHAR(o.created_at, 'YYYY-MM-DD') AS "주문일",
                    p.name AS "상품명",
@@ -101,14 +121,16 @@ public class GovDataQueryAdapter implements GovDataQueryPort {
             WHERE o.created_at BETWEEN ? AND ?
               AND o.status <> 'CANCELLED'
               AND o.deleted_at IS NULL
+              %s
             ORDER BY o.created_at DESC
-            """;
+            """.formatted(regionFilter);
         return jdbc.queryForList(sql, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
     }
 
     @Override
-    public List<Map<String, Object>> queryFarms(LocalDate startDate, LocalDate endDate, String town) {
+    public List<Map<String, Object>> queryFarms(LocalDate startDate, LocalDate endDate, String govRegion, String town) {
         String townFilter = buildTownFilter(town);
+        String regionFilter = (govRegion != null) ? " AND f.address LIKE '%" + govRegion + "%' " : "";
         String sql = """
             SELECT f.name AS "농가명",
                    u.name AS "대표자",
@@ -123,9 +145,10 @@ public class GovDataQueryAdapter implements GovDataQueryPort {
             WHERE f.created_at BETWEEN ? AND ?
               AND f.deleted_at IS NULL
               %s
+              %s
             GROUP BY f.id, f.name, u.name, f.address, f.area_size, f.status
             ORDER BY f.name
-            """.formatted(TOWN_CASE, townFilter);
+            """.formatted(TOWN_CASE, townFilter, regionFilter);
         return jdbc.queryForList(sql, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
     }
 

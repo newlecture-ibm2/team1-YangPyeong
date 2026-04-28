@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useGovUser } from '@/app/gov/_hooks/useGovUser';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import styles from '@/components/layout/Nav/Nav.module.css';
@@ -20,6 +21,7 @@ const GOV_NAV_LINKS = [
 
 export default function GovNav() {
   const pathname = usePathname();
+  const { user } = useGovUser();
 
   return (
     <nav className={styles.nav}>
@@ -29,25 +31,25 @@ export default function GovNav() {
       </Link>
 
       <div className={styles.links}>
-        {GOV_NAV_LINKS.map((link) => {
-          const isActive =
-            link.href === '/gov'
-              ? pathname === '/gov'
-              : pathname?.startsWith(link.href);
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`${styles.link} ${isActive ? styles['link--active'] : ''}`}
-            >
-              {link.label}
-            </Link>
-          );
-        })}
+        {/* 지자체 상단 헤더 메뉴 제거 (GovTabs로 대체) */}
       </div>
 
-      <div className={styles.right}>
-        <span className={styles.btnFill}>양평군 관리자</span>
+      <div className={styles.right} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        {/* 개발용 테스트 스위처 */}
+        <select 
+          onChange={(e) => {
+            localStorage.setItem('X-USER-ID', e.target.value);
+            window.location.reload();
+          }}
+          value={typeof window !== 'undefined' ? localStorage.getItem('X-USER-ID') || '9040' : '9040'}
+          style={{ padding: '4px', borderRadius: '4px', border: '1px solid #ccc' }}
+        >
+          <option value="9040">양평군(9040)</option>
+          <option value="9041">가평군(9041)</option>
+          <option value="9010">권한없음 유저</option>
+        </select>
+
+        <span className={styles.btnFill}>{user?.region ? `${user.region} 담당자` : "로딩 중..."}</span>
       </div>
     </nav>
   );

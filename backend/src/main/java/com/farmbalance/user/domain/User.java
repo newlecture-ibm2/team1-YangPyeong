@@ -18,6 +18,7 @@ public class User {
     private String name;
     private String phone;
     private Role role;
+    private String region;
     private UserStatus status;
     private String profileImageUrl;
     private LocalDateTime createdAt;
