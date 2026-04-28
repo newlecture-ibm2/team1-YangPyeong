@@ -3,7 +3,25 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api-fetch';
-import styles from '../../(auth)/login/page.module.css';
+
+const containerStyle: React.CSSProperties = {
+  minHeight: '100vh',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'linear-gradient(160deg, #F5F3EF 0%, #EBFBEE 50%, #F5F3EF 100%)',
+  padding: 24,
+};
+
+const cardStyle: React.CSSProperties = {
+  background: '#fff',
+  borderRadius: 16,
+  padding: '48px 40px',
+  maxWidth: 440,
+  width: '100%',
+  boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+  textAlign: 'center',
+};
 
 export default function GoogleCallbackPage() {
   const router = useRouter();
@@ -44,21 +62,32 @@ export default function GoogleCallbackPage() {
   }, [searchParams, router]);
 
   return (
-    <div className={styles.authPage}>
-      <div className={styles.authCard} style={{ textAlign: 'center' }}>
-        <div className={styles.logoArea}>
-          <span className={styles.logoIcon}>🌱</span>
-          <span className={styles.logoText}>Farm<em>Balance</em></span>
-        </div>
+    <div style={containerStyle}>
+      <div style={cardStyle}>
+        <p style={{ fontSize: 32, marginBottom: 8 }}>🌱</p>
+        <p style={{ fontWeight: 700, fontSize: 22, marginBottom: 24 }}>
+          Farm<em>Balance</em>
+        </p>
         {error ? (
           <>
-            <div className={styles.errorMsg}>{error}</div>
-            <button className={styles.submitBtn} onClick={() => router.push('/login')}>
+            <p style={{ color: '#dc2626', marginBottom: 16 }}>{error}</p>
+            <button
+              onClick={() => router.push('/login')}
+              style={{
+                padding: '12px 28px',
+                borderRadius: 999,
+                border: 'none',
+                background: '#2D6A4F',
+                color: '#fff',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
               로그인 페이지로 돌아가기
             </button>
           </>
         ) : (
-          <p style={{ color: 'var(--color-text-secondary)', marginTop: 24 }}>
+          <p style={{ color: '#888', marginTop: 24 }}>
             구글 로그인 처리 중...
           </p>
         )}
