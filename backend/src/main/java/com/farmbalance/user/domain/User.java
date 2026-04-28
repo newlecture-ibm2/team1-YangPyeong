@@ -19,6 +19,8 @@ public class User {
     private String phone;
     private Role role;
     private UserStatus status;
+    private AuthProvider provider;
+    private String providerId;
     private String profileImageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

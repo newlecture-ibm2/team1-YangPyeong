@@ -5,11 +5,13 @@ import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.global.security.JwtTokenProvider;
 import com.farmbalance.global.security.LoginAttemptStore;
 import com.farmbalance.global.security.RefreshTokenStore;
+import com.farmbalance.user.adapter.out.oauth.GoogleOAuthClient;
+import com.farmbalance.user.adapter.out.oauth.KakaoOAuthClient;
+import com.farmbalance.user.adapter.out.oauth.OAuthUserInfo;
 import com.farmbalance.user.application.port.in.*;
 import com.farmbalance.user.application.port.out.UserRepository;
-import com.farmbalance.user.domain.Role;
-import com.farmbalance.user.domain.User;
-import com.farmbalance.user.domain.UserStatus;
+import com.farmbalance.user.application.port.out.UserSocialAccountRepository;
+import com.farmbalance.user.domain.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,13 +25,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUseCase, LogoutUseCase {
+public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUseCase, LogoutUseCase, SocialLoginUseCase {
 
     private final UserRepository userRepository;
+    private final UserSocialAccountRepository socialAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenStore refreshTokenStore;
     private final LoginAttemptStore loginAttemptStore;
+    private final KakaoOAuthClient kakaoOAuthClient;
+    private final GoogleOAuthClient googleOAuthClient;
 
     @Override
     public TokenResponse login(LoginRequest request) {
@@ -46,6 +51,7 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
         User user = userRepository.findByEmail(email).orElse(null);
 
         boolean credentialsInvalid = (user == null)
+                || user.getPassword() == null
                 || !passwordEncoder.matches(request.getPassword(), user.getPassword());
 
         if (credentialsInvalid) {
@@ -60,31 +66,14 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
         }
 
         // ── 3. 계정 상태 검사 ──
-        if (user.getStatus() == UserStatus.SUSPENDED) {
-            throw new BusinessException(ErrorCode.AUTH_ACCOUNT_SUSPENDED);
-        }
-        if (user.getStatus() == UserStatus.PENDING) {
-            throw new BusinessException(ErrorCode.AUTH_ACCOUNT_PENDING);
-        }
+        validateUserStatus(user);
 
         // ── 4. 로그인 성공 → 시도 횟수 초기화 ──
         loginAttemptStore.resetAttempts(email);
 
         // ── 5. 토큰 발급 ──
-        String accessToken = jwtTokenProvider.createAccessToken(
-                user.getId(), user.getEmail(), user.getRole().name()
-        );
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
-
-        refreshTokenStore.save(user.getId(), refreshToken,
-                jwtTokenProvider.getRefreshTokenExpiration());
-
         log.info("로그인 성공: userId={}, email={}", user.getId(), user.getEmail());
-
-        return TokenResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
+        return issueTokens(user);
     }
 
     @Override
@@ -105,12 +94,52 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
                 .phone(request.getPhone())
                 .role(Role.USER)
                 .status(UserStatus.ACTIVE)
+                .provider(AuthProvider.LOCAL)
                 .build();
 
         User saved = userRepository.save(user);
         log.info("회원가입 완료: userId={}, email={}", saved.getId(), saved.getEmail());
 
         return new SignUpResponse(saved.getId());
+    }
+
+    @Override
+    @Transactional
+    public TokenResponse socialLogin(SocialLoginRequest request) {
+        // 1. provider 파싱
+        AuthProvider provider;
+        try {
+            provider = AuthProvider.valueOf(request.getProvider().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.AUTH_SOCIAL_LOGIN_FAILED,
+                    "지원하지 않는 소셜 로그인 제공자입니다: " + request.getProvider());
+        }
+
+        if (provider == AuthProvider.LOCAL) {
+            throw new BusinessException(ErrorCode.AUTH_SOCIAL_LOGIN_FAILED,
+                    "LOCAL은 소셜 로그인 제공자가 아닙니다.");
+        }
+
+        // 2. 소셜 API에서 사용자 정보 조회
+        OAuthUserInfo userInfo = fetchOAuthUserInfo(provider, request.getAccessToken());
+
+        // 3. 이메일 필수 확인 (카카오는 이메일이 없을 수 있음)
+        if (userInfo.getEmail() == null || userInfo.getEmail().isBlank()) {
+            throw new BusinessException(ErrorCode.AUTH_SOCIAL_EMAIL_REQUIRED);
+        }
+
+        // 4. 소셜 연동 테이블에서 먼저 조회
+        User user = socialAccountRepository.findByProviderAndProviderId(provider, userInfo.getProviderId())
+                .map(socialAccount -> userRepository.findById(socialAccount.getUserId())
+                        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)))
+                .orElseGet(() -> findOrCreateAndLinkSocialUser(provider, userInfo));
+
+        // 5. 계정 상태 검사
+        validateUserStatus(user);
+
+        // 6. 토큰 발급
+        log.info("소셜 로그인 성공: userId={}, provider={}, email={}", user.getId(), provider, user.getEmail());
+        return issueTokens(user);
     }
 
     @Override
@@ -138,35 +167,90 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        if (user.getStatus() == UserStatus.SUSPENDED) {
-            refreshTokenStore.delete(userId);
-            throw new BusinessException(ErrorCode.AUTH_ACCOUNT_SUSPENDED);
-        }
-        if (user.getStatus() == UserStatus.PENDING) {
-            refreshTokenStore.delete(userId);
-            throw new BusinessException(ErrorCode.AUTH_ACCOUNT_PENDING);
-        }
+        validateUserStatus(user);
 
         // 5. 새 토큰 쌍 발급 (Rotation)
-        String newAccessToken = jwtTokenProvider.createAccessToken(
-                user.getId(), user.getEmail(), user.getRole().name()
-        );
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getId());
-
-        refreshTokenStore.save(userId, newRefreshToken,
-                jwtTokenProvider.getRefreshTokenExpiration());
-
+        refreshTokenStore.delete(userId);
         log.info("토큰 갱신 성공: userId={}", userId);
-
-        return TokenResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
-                .build();
+        return issueTokens(user);
     }
 
     @Override
     public void logout(Long userId) {
         refreshTokenStore.delete(userId);
         log.info("로그아웃 완료: userId={}", userId);
+    }
+
+    // ── Private Helper 메서드 ──
+
+    /** JWT 토큰 쌍 발급 (공통) */
+    private TokenResponse issueTokens(User user) {
+        String accessToken = jwtTokenProvider.createAccessToken(
+                user.getId(), user.getEmail(), user.getRole().name()
+        );
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+
+        refreshTokenStore.save(user.getId(), refreshToken,
+                jwtTokenProvider.getRefreshTokenExpiration());
+
+        return TokenResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    /** 계정 상태 검사 (공통) */
+    private void validateUserStatus(User user) {
+        if (user.getStatus() == UserStatus.SUSPENDED) {
+            throw new BusinessException(ErrorCode.AUTH_ACCOUNT_SUSPENDED);
+        }
+        if (user.getStatus() == UserStatus.PENDING) {
+            throw new BusinessException(ErrorCode.AUTH_ACCOUNT_PENDING);
+        }
+    }
+
+    /** 소셜 제공자별 사용자 정보 조회 */
+    private OAuthUserInfo fetchOAuthUserInfo(AuthProvider provider, String accessToken) {
+        return switch (provider) {
+            case KAKAO -> kakaoOAuthClient.getUserInfo(accessToken);
+            case GOOGLE -> googleOAuthClient.getUserInfo(accessToken);
+            default -> throw new BusinessException(ErrorCode.AUTH_SOCIAL_LOGIN_FAILED);
+        };
+    }
+
+    /**
+     * 이메일로 기존 계정을 찾거나 신규 생성한 후, 소셜 연동 정보를 저장합니다.
+     * - 같은 이메일의 기존 계정이 있으면 → 소셜 연동 추가 (카카오+구글 동시 가능)
+     * - 없으면 → 새 계정 생성 + 소셜 연동
+     */
+    private User findOrCreateAndLinkSocialUser(AuthProvider provider, OAuthUserInfo userInfo) {
+        User user = userRepository.findByEmail(userInfo.getEmail())
+                .orElseGet(() -> {
+                    // 신규 소셜 사용자 생성
+                    User newUser = User.builder()
+                            .email(userInfo.getEmail())
+                            .password(null)
+                            .name(userInfo.getName())
+                            .role(Role.USER)
+                            .status(UserStatus.ACTIVE)
+                            .provider(provider)
+                            .providerId(userInfo.getProviderId())
+                            .profileImageUrl(userInfo.getProfileImageUrl())
+                            .build();
+                    return userRepository.save(newUser);
+                });
+
+        // 소셜 연동 정보 저장 (이미 연동되어 있지 않은 경우에만)
+        if (!socialAccountRepository.existsByUserIdAndProvider(user.getId(), provider)) {
+            UserSocialAccount socialAccount = UserSocialAccount.builder()
+                    .userId(user.getId())
+                    .provider(provider)
+                    .providerId(userInfo.getProviderId())
+                    .build();
+            socialAccountRepository.save(socialAccount);
+            log.info("소셜 연동 추가: userId={}, provider={}", user.getId(), provider);
+        }
+
+        return user;
     }
 }

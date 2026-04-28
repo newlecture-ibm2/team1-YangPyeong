@@ -23,6 +23,7 @@ public class AuthController {
     private final SignUpUseCase signUpUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
     private final LogoutUseCase logoutUseCase;
+    private final SocialLoginUseCase socialLoginUseCase;
 
     @PostMapping("/login")
     public ApiResponse<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
@@ -35,6 +36,11 @@ public class AuthController {
         return ApiResponse.ok(signUpUseCase.signUp(request));
     }
 
+    @PostMapping("/social-login")
+    public ApiResponse<TokenResponse> socialLogin(@Valid @RequestBody SocialLoginRequest request) {
+        return ApiResponse.ok(socialLoginUseCase.socialLogin(request));
+    }
+
     @PostMapping("/refresh")
     public ApiResponse<TokenResponse> refresh(@Valid @RequestBody RefreshRequest request) {
         return ApiResponse.ok(refreshTokenUseCase.refresh(request));
@@ -42,7 +48,6 @@ public class AuthController {
 
     /**
      * 로그아웃 — 토큰이 없어도 에러 없이 정상 응답 (멱등성 보장).
-     * 추후 .authenticated()로 전환 시에는 반드시 토큰 필요.
      */
     @PostMapping("/logout")
     public ApiResponse<Void> logout() {
