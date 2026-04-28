@@ -1,4 +1,4 @@
-package com.farmbalance.user.adapter.in.web.dto;
+package com.farmbalance.user.application.port.in;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
