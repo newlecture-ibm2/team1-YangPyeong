@@ -10,10 +10,8 @@ import com.farmbalance.user.adapter.out.oauth.KakaoOAuthClient;
 import com.farmbalance.user.adapter.out.oauth.OAuthUserInfo;
 import com.farmbalance.user.application.port.in.*;
 import com.farmbalance.user.application.port.out.UserRepository;
-import com.farmbalance.user.domain.AuthProvider;
-import com.farmbalance.user.domain.Role;
-import com.farmbalance.user.domain.User;
-import com.farmbalance.user.domain.UserStatus;
+import com.farmbalance.user.application.port.out.UserSocialAccountRepository;
+import com.farmbalance.user.domain.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUseCase, LogoutUseCase, SocialLoginUseCase {
 
     private final UserRepository userRepository;
+    private final UserSocialAccountRepository socialAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenStore refreshTokenStore;
@@ -129,9 +128,11 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
             throw new BusinessException(ErrorCode.AUTH_SOCIAL_EMAIL_REQUIRED);
         }
 
-        // 4. 기존 사용자 조회 (provider+providerId로 먼저, 없으면 이메일로)
-        User user = userRepository.findByProviderAndProviderId(provider.name(), userInfo.getProviderId())
-                .orElseGet(() -> findOrCreateSocialUser(provider, userInfo));
+        // 4. 소셜 연동 테이블에서 먼저 조회
+        User user = socialAccountRepository.findByProviderAndProviderId(provider, userInfo.getProviderId())
+                .map(socialAccount -> userRepository.findById(socialAccount.getUserId())
+                        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)))
+                .orElseGet(() -> findOrCreateAndLinkSocialUser(provider, userInfo));
 
         // 5. 계정 상태 검사
         validateUserStatus(user);
@@ -218,14 +219,14 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
     }
 
     /**
-     * 이메일로 기존 계정 조회 후 처리:
-     * - 같은 이메일의 기존 계정이 있으면 → 해당 계정으로 로그인 (계정 병합은 추후)
-     * - 없으면 → 새 소셜 계정 생성
+     * 이메일로 기존 계정을 찾거나 신규 생성한 후, 소셜 연동 정보를 저장합니다.
+     * - 같은 이메일의 기존 계정이 있으면 → 소셜 연동 추가 (카카오+구글 동시 가능)
+     * - 없으면 → 새 계정 생성 + 소셜 연동
      */
-    private User findOrCreateSocialUser(AuthProvider provider, OAuthUserInfo userInfo) {
-        // 같은 이메일 계정이 이미 존재하면 기존 계정 반환 (email unique 제약 보호)
-        return userRepository.findByEmail(userInfo.getEmail())
+    private User findOrCreateAndLinkSocialUser(AuthProvider provider, OAuthUserInfo userInfo) {
+        User user = userRepository.findByEmail(userInfo.getEmail())
                 .orElseGet(() -> {
+                    // 신규 소셜 사용자 생성
                     User newUser = User.builder()
                             .email(userInfo.getEmail())
                             .password(null)
@@ -238,5 +239,18 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
                             .build();
                     return userRepository.save(newUser);
                 });
+
+        // 소셜 연동 정보 저장 (이미 연동되어 있지 않은 경우에만)
+        if (!socialAccountRepository.existsByUserIdAndProvider(user.getId(), provider)) {
+            UserSocialAccount socialAccount = UserSocialAccount.builder()
+                    .userId(user.getId())
+                    .provider(provider)
+                    .providerId(userInfo.getProviderId())
+                    .build();
+            socialAccountRepository.save(socialAccount);
+            log.info("소셜 연동 추가: userId={}, provider={}", user.getId(), provider);
+        }
+
+        return user;
     }
 }
