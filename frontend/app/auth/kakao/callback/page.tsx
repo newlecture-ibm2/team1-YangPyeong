@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/api-fetch';
-import styles from '../../(auth)/login/page.module.css';
+import styles from '@/app/(auth)/login/page.module.css';
 
 export default function KakaoCallbackPage() {
   const router = useRouter();
