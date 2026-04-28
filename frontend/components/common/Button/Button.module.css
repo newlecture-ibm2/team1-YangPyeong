@@ -65,6 +65,17 @@
   background: #E6CF00;
 }
 
+.btn--google {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1.5px solid var(--color-border);
+  font-weight: 600;
+}
+.btn--google:hover:not(:disabled) {
+  background: #f8f8f8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
 /* ── Sizes ── */
 .btn--sm {
   padding: 8px 18px;

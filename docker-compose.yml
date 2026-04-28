@@ -16,6 +16,9 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - NEXT_PUBLIC_KAKAO_MAP_JS_KEY=${NEXT_PUBLIC_KAKAO_MAP_JS_KEY}
       - SKIP_AUTH=${SKIP_AUTH:-true}
+      - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
     depends_on:
       - backend
     develop:
