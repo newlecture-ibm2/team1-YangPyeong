@@ -20,6 +20,8 @@ public class User {
     private Role role;
     private String region;
     private UserStatus status;
+    private AuthProvider provider;
+    private String providerId;
     private String profileImageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

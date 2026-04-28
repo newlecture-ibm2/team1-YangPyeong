@@ -3,6 +3,7 @@ package com.farmbalance.user.adapter.out.persistence;
 import com.farmbalance.user.adapter.out.persistence.entity.UserJpaEntity;
 import com.farmbalance.user.adapter.out.persistence.repository.UserJpaRepository;
 import com.farmbalance.user.application.port.out.UserRepository;
+import com.farmbalance.user.domain.AuthProvider;
 import com.farmbalance.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,13 @@ public class UserPersistenceAdapter implements UserRepository {
     @Override
     public Optional<User> findByEmail(String email) {
         return userJpaRepository.findByEmail(email).map(UserJpaEntity::toDomain);
+    }
+
+    @Override
+    public Optional<User> findByProviderAndProviderId(String provider, String providerId) {
+        AuthProvider authProvider = AuthProvider.valueOf(provider);
+        return userJpaRepository.findByProviderAndProviderId(authProvider, providerId)
+                .map(UserJpaEntity::toDomain);
     }
 
     @Override
