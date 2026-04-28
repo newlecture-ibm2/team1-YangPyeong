@@ -1,0 +1,166 @@
+/* ══════════════════════════════════════════════
+   관리자 유저 관리 페이지 스타일
+   ══════════════════════════════════════════════ */
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.totalCount {
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  margin-left: 1rem;
+}
+
+
+/* ── 테이블 ── */
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.table th {
+  background: var(--color-bg-secondary, #f8f9fa);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.875rem 1rem;
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.table tbody tr:hover {
+  background: var(--color-bg-hover, rgba(0,0,0,0.02));
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── 역할/상태 배지 ── */
+.roleBadge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.roleGeneral {
+  background: var(--color-bg-secondary, #e9ecef);
+  color: var(--color-text-secondary, #6c757d);
+}
+
+.roleFarmer {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.roleAdmin {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.roleGov {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.statusActive {
+  color: #2e7d32;
+}
+
+.statusSuspended {
+  color: var(--color-danger, #dc3545);
+  font-weight: 600;
+}
+
+/* ── 액션 영역 ── */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ── 페이지네이션 ── */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 1.5rem;
+}
+
+.pageBtn {
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.15s ease;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: var(--color-bg-hover, #f0f0f0);
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageBtnActive {
+  background: var(--color-primary, #2e7d32);
+  color: white;
+  border-color: var(--color-primary, #2e7d32);
+}
+
+/* ── 로딩 / 비어있음 ── */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  font-size: 1.1rem;
+  color: var(--color-text-secondary);
+}
+
+.emptyRow {
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: 3rem 1rem !important;
+}

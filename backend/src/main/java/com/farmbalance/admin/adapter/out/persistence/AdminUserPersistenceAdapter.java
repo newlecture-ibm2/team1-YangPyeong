@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,6 +47,31 @@ public class AdminUserPersistenceAdapter implements AdminUserPort {
     }
 
     @Override
+    public List<AdminUser> findByFilter(String keyword, String role, String status, int offset, int limit) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM users WHERE deleted_at IS NULL");
+        List<Object> params = new ArrayList<>();
+
+        appendFilterConditions(sql, params, keyword, role, status);
+
+        sql.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?");
+        params.add(limit);
+        params.add(offset);
+
+        return jdbcTemplate.query(sql.toString(), rowMapper, params.toArray());
+    }
+
+    @Override
+    public long countByFilter(String keyword, String role, String status) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM users WHERE deleted_at IS NULL");
+        List<Object> params = new ArrayList<>();
+
+        appendFilterConditions(sql, params, keyword, role, status);
+
+        Long count = jdbcTemplate.queryForObject(sql.toString(), Long.class, params.toArray());
+        return count != null ? count : 0;
+    }
+
+    @Override
     public void updateRole(Long id, String role) {
         String sql = "UPDATE users SET role = ?, updated_at = NOW() WHERE id = ?";
         jdbcTemplate.update(sql, role, id);
@@ -55,5 +81,26 @@ public class AdminUserPersistenceAdapter implements AdminUserPort {
     public void updateStatus(Long id, String status) {
         String sql = "UPDATE users SET status = ?, updated_at = NOW() WHERE id = ?";
         jdbcTemplate.update(sql, status, id);
+    }
+
+    /**
+     * 검색/필터 WHERE 절 조건을 동적으로 추가하는 헬퍼
+     */
+    private void appendFilterConditions(StringBuilder sql, List<Object> params,
+                                        String keyword, String role, String status) {
+        if (keyword != null && !keyword.isBlank()) {
+            sql.append(" AND (name LIKE ? OR email LIKE ?)");
+            String like = "%" + keyword.trim() + "%";
+            params.add(like);
+            params.add(like);
+        }
+        if (role != null && !role.isBlank() && !"ALL".equalsIgnoreCase(role)) {
+            sql.append(" AND role = ?");
+            params.add(role.toUpperCase());
+        }
+        if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
+            sql.append(" AND status = ?");
+            params.add(status.toUpperCase());
+        }
     }
 }

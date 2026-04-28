@@ -74,6 +74,8 @@ public enum ErrorCode {
 
     // ── 관리자 ──
     ADMIN_ACTION_FAILED("E-ADMIN-001", "관리자 작업에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    ADMIN_INVALID_ROLE("E-ADMIN-002", "허용되지 않은 역할입니다. (GENERAL, FARMER만 가능)", HttpStatus.BAD_REQUEST),
+    ADMIN_INVALID_STATUS("E-ADMIN-003", "허용되지 않은 상태입니다. (ACTIVE, SUSPENDED만 가능)", HttpStatus.BAD_REQUEST),
 
     // ── 지자체 ──
     GOV_REPORT_FAILED("E-GOV-001", "보고서 생성에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
