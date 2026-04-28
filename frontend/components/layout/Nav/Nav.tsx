@@ -9,7 +9,9 @@ const NAV_LINKS = [
   { href: '/balance', label: '밸런스' },
   { href: '/recommend', label: 'AI 추천' },
   { href: '/community', label: '커뮤니티' },
+  { href: '/policy', label: '정책' },
   { href: '/shop', label: '상점' },
+  { href: '/stores', label: '가게' },
 ];
 
 export default function Nav() {
