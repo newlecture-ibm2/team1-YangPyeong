@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import Nav from '@/components/layout/Nav';
+import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
 interface MainLayoutProps {
@@ -9,9 +9,10 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   return (
     <>
-      <Nav />
+      <Header />
       <main>{children}</main>
       <Footer />
     </>
   );
 }
+
