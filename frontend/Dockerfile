@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+ARG NEXT_PUBLIC_KAKAO_MAP_JS_KEY
+ENV NEXT_PUBLIC_KAKAO_MAP_JS_KEY=$NEXT_PUBLIC_KAKAO_MAP_JS_KEY
 RUN npm run build
 
 # Run stage

@@ -42,7 +42,9 @@ export function middleware(request: NextRequest) {
   }
 
   // ── 5. 보호된 경로에 미인증 접근 시 → /login 리다이렉트 ──
-  if (!isAuthenticated) {
+  // SKIP_AUTH=true 설정 시 인증 없이 모든 페이지 접근 허용 (개발/시연용)
+  const skipAuth = process.env.SKIP_AUTH === 'true';
+  if (!isAuthenticated && !skipAuth) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
