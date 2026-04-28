@@ -221,9 +221,17 @@ app/(main)/farm/
 | **페이지 디자인 목업** | `docs/ui-design/mockups/final-ui-mockup/` | 도메인별(admin, farm, shop 등) 최종 UI 디자인 HTML 목업 |
 
 **페이지 구현 전 참조 순서:**
-1. `final-ui-mockup/{도메인}/` 해당 페이지의 디자인 목업을 먼저 확인
-2. `components/common/` + `components-demo/page.tsx`로 사용 가능한 공통 컴포넌트 확인
+1. `components/common/` + `components-demo/page.tsx`로 사용 가능한 공통 컴포넌트 확인
+2. `final-ui-mockup/{도메인}/` 해당 페이지의 디자인 목업을 먼저 확인
 3. `globals.css`의 디자인 토큰으로 CSS Module 작성
+
+> **우선순위 규칙**: `components/common/`의 컴포넌트 CSS와 `globals.css`의 색상이 **충돌하는 경우**, 공통 컴포넌트의 색상/스타일을 우선합니다.
+> `globals.css`는 공통 컴포넌트에 정의되지 않은 값(간격, 폰트, 테두리, 레이아웃 토큰 등)을 참조할 때 사용합니다.
+
+> [!WARNING]
+> `final-ui-mockup/`은 **디자인(CSS/레이아웃/스타일) 참고용**입니다. 기능·콘텐츠 스펙이 **아닙니다.**
+> 목업에 없는 기능이라도 이미 구현된 기능을 **절대 제거하지 않습니다.**
+> 목업은 시각적 스타일(간격, 색상, 카드 구조, 탭 형태 등)만 참고하고, 페이지의 기능·데이터 표시 항목은 기존 구현을 유지합니다.
 
 ```
 ✅ CSS Module 작성 시 globals.css의 디자인 토큰 사용  → color: var(--color-text);

@@ -1,141 +1,108 @@
 /* ══════════════════════════════════════════════
    관리자 유저 관리 페이지 스타일
+   Design tokens: globals.css 참조
+   Mockup: final-ui-mockup/admin/admin-users.html
    ══════════════════════════════════════════════ */
 
 .container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--space-2xl) var(--space-2xl) 80px;
 }
 
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
+  margin-bottom: 40px;
 }
 
 .title {
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-family: var(--font-serif);
+  font-size: 40px;
   color: var(--color-text);
+  line-height: 1.15;
+  font-weight: 400;
 }
 
 .totalCount {
-  font-size: 0.95rem;
+  font-size: 16px;
   color: var(--color-text-secondary);
-  margin-left: 1rem;
+  margin-top: var(--space-sm);
+  display: block;
 }
-
 
 /* ── 테이블 ── */
 .tableWrapper {
-  overflow-x: auto;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
   background: var(--color-surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: var(--space-xl);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.95rem;
+  font-size: 14px;
+}
+
+.table thead {
+  background: #FAFAF8;
 }
 
 .table th {
-  background: var(--color-bg-secondary, #f8f9fa);
+  padding: 14px var(--space-md);
+  text-align: center;
   font-weight: 600;
-  text-align: left;
-  padding: 0.875rem 1rem;
-  border-bottom: 2px solid var(--color-border);
-  white-space: nowrap;
   color: var(--color-text-secondary);
-  font-size: 0.85rem;
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .table td {
-  padding: 0.875rem 1rem;
+  padding: var(--space-md);
   border-bottom: 1px solid var(--color-border);
-  vertical-align: middle;
-}
-
-.table tbody tr:hover {
-  background: var(--color-bg-hover, rgba(0,0,0,0.02));
+  text-align: center;
 }
 
 .table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* ── 역할/상태 배지 ── */
-.roleBadge {
-  display: inline-block;
-  padding: 0.25rem 0.625rem;
-  border-radius: 9999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.roleGeneral {
-  background: var(--color-bg-secondary, #e9ecef);
-  color: var(--color-text-secondary, #6c757d);
-}
-
-.roleFarmer {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-.roleAdmin {
-  background: #fff3e0;
-  color: #e65100;
-}
-
-.roleGov {
-  background: #e3f2fd;
-  color: #1565c0;
-}
-
-.statusActive {
-  color: #2e7d32;
-}
-
-.statusSuspended {
-  color: var(--color-danger, #dc3545);
-  font-weight: 600;
-}
-
 /* ── 액션 영역 ── */
 .actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   align-items: center;
+  justify-content: center;
 }
 
 /* ── 페이지네이션 ── */
 .pagination {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 0.25rem;
-  margin-top: 1.5rem;
+  gap: var(--space-sm);
+  margin-top: var(--space-xl);
 }
 
 .pageBtn {
-  padding: 0.5rem 0.875rem;
-  border: 1px solid var(--color-border);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
   background: var(--color-surface);
-  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--color-border);
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .pageBtn:hover:not(:disabled) {
-  background: var(--color-bg-hover, #f0f0f0);
+  border-color: var(--color-primary);
+  color: var(--color-text);
 }
 
 .pageBtn:disabled {
@@ -144,9 +111,9 @@
 }
 
 .pageBtnActive {
-  background: var(--color-primary, #2e7d32);
-  color: white;
-  border-color: var(--color-primary, #2e7d32);
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
 }
 
 /* ── 로딩 / 비어있음 ── */
@@ -155,12 +122,12 @@
   justify-content: center;
   align-items: center;
   min-height: 300px;
-  font-size: 1.1rem;
+  font-size: 16px;
   color: var(--color-text-secondary);
 }
 
 .emptyRow {
   text-align: center;
   color: var(--color-text-secondary);
-  padding: 3rem 1rem !important;
+  padding: var(--space-2xl) var(--space-md) !important;
 }

@@ -64,28 +64,28 @@ export default function ApprovalsPage() {
     }
   }
 
-  // 탭별 배지 variant
-  const getStatusBadgeVariant = (status: ApprovalStatus): 'orange' | 'green' | 'red' => {
-    switch (status) {
-      case 'PENDING': return 'orange'
-      case 'APPROVED': return 'green'
-      case 'REJECTED': return 'red'
-    }
-  }
-
   const tabs: Tab[] = ['PENDING', 'APPROVED', 'REJECTED']
+
+  // 탭 라벨 (대기중 건수 표시)
+  const getTabLabel = (t: Tab): string => {
+    if (t === 'PENDING' && tab === 'PENDING' && approvals.length > 0) {
+      return `${APPROVAL_STATUS_LABELS[t]} (${approvals.length})`
+    }
+    return APPROVAL_STATUS_LABELS[t]
+  }
 
   return (
     <div className={styles.container}>
       {/* 헤더 */}
       <div className={styles.header}>
-        <h1 className={styles.title}>✅ 농부 승인/반려</h1>
+        <h1 className={styles.title}>✅ 승인 관리</h1>
         {tab === 'PENDING' && approvals.length > 0 && (
           <Badge variant="red">{approvals.length}건 대기</Badge>
         )}
       </div>
+      <p className={styles.subtitle}>농장 등록, 판매자 신청 등 승인이 필요한 항목을 관리합니다.</p>
 
-      {/* 탭 */}
+      {/* 탭 (pill 스타일) */}
       <div className={styles.tabs}>
         {tabs.map((t) => (
           <button
@@ -93,7 +93,7 @@ export default function ApprovalsPage() {
             className={`${styles.tab} ${tab === t ? styles.tabActive : ''}`}
             onClick={() => setTab(t)}
           >
-            {APPROVAL_STATUS_LABELS[t]}
+            {getTabLabel(t)}
           </button>
         ))}
       </div>
@@ -109,7 +109,7 @@ export default function ApprovalsPage() {
             : `${APPROVAL_STATUS_LABELS[tab]} 내역이 없습니다.`}
         </div>
       ) : (
-        /* 카드 목록 */
+        /* 카드 목록 (목업: card + flex-between 레이아웃) */
         <div className={styles.cardList}>
           {approvals.map((item) => (
             <div key={item.farmId} className={styles.approvalCard}>
@@ -162,8 +162,8 @@ export default function ApprovalsPage() {
                 )}
                 <div className={styles.infoItem}>
                   <span className={styles.infoLabel}>상태</span>
-                  <Badge variant={getStatusBadgeVariant(item.status)}>
-                    {APPROVAL_STATUS_LABELS[item.status]}
+                  <Badge variant={item.status === 'APPROVED' ? 'green' : item.status === 'REJECTED' ? 'red' : 'orange'}>
+                    {APPROVAL_STATUS_LABELS[item.status as ApprovalStatus]}
                   </Badge>
                 </div>
               </div>
@@ -175,7 +175,7 @@ export default function ApprovalsPage() {
                     반려
                   </Button>
                   <Button variant="primary" size="sm" onClick={() => handleApprove(item)}>
-                    ✅ 승인
+                    승인
                   </Button>
                 </div>
               )}

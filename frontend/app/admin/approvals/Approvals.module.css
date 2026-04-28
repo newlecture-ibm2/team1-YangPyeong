@@ -1,81 +1,92 @@
 /* ══════════════════════════════════════════════
    농부 승인/반려 페이지 스타일
+   Design tokens: globals.css 참조
+   Mockup: final-ui-mockup/admin/admin-approvals.html
    ══════════════════════════════════════════════ */
 
 .container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--space-2xl) var(--space-2xl) 80px;
 }
 
 .header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
 }
 
 .title {
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-family: var(--font-serif);
+  font-size: 40px;
   color: var(--color-text);
+  line-height: 1.15;
+  font-weight: 400;
 }
 
-/* ── 탭 ── */
+.subtitle {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  max-width: 600px;
+  line-height: 1.7;
+  margin-bottom: 40px;
+}
+
+/* ── 탭 (목업: pill 스타일) ── */
 .tabs {
   display: flex;
-  gap: 0;
-  border-bottom: 2px solid var(--color-border);
-  margin-bottom: 1.5rem;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
 }
 
 .tab {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  background: none;
-  font-size: 0.95rem;
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
   font-weight: 500;
   color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast);
 }
 
 .tab:hover {
+  border-color: var(--color-primary);
   color: var(--color-text);
 }
 
 .tabActive {
-  color: var(--color-primary, #2e7d32);
-  border-bottom-color: var(--color-primary, #2e7d32);
-  font-weight: 600;
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
 }
 
-/* ── 신청 카드 ── */
+/* ── 신청 카드 (목업: card 스타일) ── */
 .cardList {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-md);
 }
 
 .approvalCard {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg, 12px);
-  padding: 1.5rem;
-  transition: box-shadow 0.2s ease;
+  border-radius: var(--radius-md);
+  padding: var(--space-xl);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
 .approvalCard:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-lg);
 }
 
 .cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-md);
 }
 
 .farmName {
@@ -85,22 +96,22 @@
 }
 
 .applyDate {
-  font-size: 0.8rem;
+  font-size: 14px;
   color: var(--color-text-secondary);
 }
 
-/* ── 정보 테이블 ── */
+/* ── 정보 그리드 ── */
 .infoGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.5rem 2rem;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
+  gap: var(--space-sm) var(--space-xl);
+  margin-bottom: var(--space-md);
+  font-size: 14px;
 }
 
 .infoItem {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-sm);
 }
 
 .infoLabel {
@@ -115,9 +126,9 @@
 
 /* ── 토지증명서 링크 ── */
 .certLink {
-  color: var(--color-primary, #2e7d32);
+  color: var(--color-primary);
   text-decoration: underline;
-  font-size: 0.85rem;
+  font-size: 14px;
 }
 
 .certLink:hover {
@@ -128,9 +139,9 @@
 .cardActions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
   border-top: 1px solid var(--color-border);
 }
 
@@ -140,18 +151,18 @@
   justify-content: center;
   align-items: center;
   min-height: 300px;
-  font-size: 1.1rem;
+  font-size: 16px;
   color: var(--color-text-secondary);
 }
 
 .emptyState {
   text-align: center;
-  padding: 4rem 1rem;
+  padding: var(--space-2xl) var(--space-md);
   color: var(--color-text-secondary);
-  font-size: 1rem;
+  font-size: 16px;
 }
 
 .emptyIcon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 48px;
+  margin-bottom: var(--space-md);
 }
