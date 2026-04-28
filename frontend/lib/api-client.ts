@@ -9,6 +9,9 @@
 
 import { BACKEND_URL, type ApiResponse } from './constants';
 
+// 클라이언트용 apiFetch는 api-fetch.ts로 분리됨 — 하위 호환을 위해 re-export
+export { apiFetch } from './api-fetch';
+
 /* ────────────────────────────────────────────────────── */
 /*  1. 서버 사이드 전용 — 백엔드 직접 호출                   */
 /* ────────────────────────────────────────────────────── */
