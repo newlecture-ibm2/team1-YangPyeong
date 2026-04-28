@@ -1,5 +1,6 @@
 package com.farmbalance.user.adapter.out.persistence.entity;
 
+import com.farmbalance.user.domain.AuthProvider;
 import com.farmbalance.user.domain.Role;
 import com.farmbalance.user.domain.User;
 import com.farmbalance.user.domain.UserStatus;
@@ -31,7 +32,7 @@ public class UserJpaEntity {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(nullable = false, length = 72)
+    @Column(length = 72)
     private String password;
 
     @Column(nullable = false, length = 50)
@@ -49,6 +50,14 @@ public class UserJpaEntity {
     @Column(nullable = false, length = 20)
     @Builder.Default
     private UserStatus status = UserStatus.ACTIVE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private AuthProvider provider = AuthProvider.LOCAL;
+
+    @Column(length = 100)
+    private String providerId;
 
     @Column(length = 200)
     private String profileImageUrl;
@@ -71,6 +80,8 @@ public class UserJpaEntity {
                 .phone(phone)
                 .role(role)
                 .status(status)
+                .provider(provider)
+                .providerId(providerId)
                 .profileImageUrl(profileImageUrl)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
@@ -86,6 +97,8 @@ public class UserJpaEntity {
                 .phone(user.getPhone())
                 .role(user.getRole())
                 .status(user.getStatus())
+                .provider(user.getProvider())
+                .providerId(user.getProviderId())
                 .profileImageUrl(user.getProfileImageUrl())
                 .build();
     }

@@ -1,6 +1,7 @@
 package com.farmbalance.user.adapter.out.persistence.repository;
 
 import com.farmbalance.user.adapter.out.persistence.entity.UserJpaEntity;
+import com.farmbalance.user.domain.AuthProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -11,6 +12,8 @@ import java.util.Optional;
 public interface UserJpaRepository extends JpaRepository<UserJpaEntity, Long> {
 
     Optional<UserJpaEntity> findByEmail(String email);
+
+    Optional<UserJpaEntity> findByProviderAndProviderId(AuthProvider provider, String providerId);
 
     boolean existsByEmail(String email);
 }
