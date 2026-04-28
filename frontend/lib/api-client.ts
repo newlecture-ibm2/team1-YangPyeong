@@ -8,7 +8,6 @@
    ════════════════════════════════════════════════════════ */
 
 import { BACKEND_URL, type ApiResponse } from './constants';
-import { getSessionFromCookie } from './cookie';
 
 /* ────────────────────────────────────────────────────── */
 /*  1. 서버 사이드 전용 — 백엔드 직접 호출                   */
@@ -53,6 +52,7 @@ export async function backendFetch<T = unknown>(
 
   // 인증 토큰 자동 첨부
   if (withAuth) {
+    const { getSessionFromCookie } = await import('./cookie');
     const session = await getSessionFromCookie();
     if (session?.token) {
       headers.set('Authorization', `Bearer ${session.token}`);
@@ -96,52 +96,6 @@ export async function backendFetch<T = unknown>(
       error: {
         code: 'NETWORK_ERROR',
         message: error instanceof Error ? error.message : '백엔드 서버에 연결할 수 없습니다.',
-      },
-    };
-  }
-}
-
-/* ────────────────────────────────────────────────────── */
-/*  2. 클라이언트 사이드 전용 — BFF API Route 호출          */
-/* ────────────────────────────────────────────────────── */
-
-/**
- * 클라이언트 컴포넌트에서 Next.js BFF API Route를 호출하는 함수
- * 쿠키가 자동으로 포함되므로 별도 토큰 관리 불필요
- * 
- * @example
- * // 클라이언트 컴포넌트에서
- * const result = await apiFetch<CropData[]>('/api/dashboard/crop-balance');
- * 
- * // POST 요청
- * const result = await apiFetch<Seed>('/api/seeds', {
- *   method: 'POST',
- *   body: { cropId: 1, quantity: 100 },
- * });
- */
-export async function apiFetch<T = unknown>(
-  path: string,
-  options: { method?: string; body?: unknown } = {},
-): Promise<ApiResponse<T>> {
-  const { method = 'GET', body } = options;
-
-  try {
-    const response = await fetch(path, {
-      method,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
-      credentials: 'include', // 쿠키 자동 포함
-    });
-
-    return await response.json();
-  } catch (error) {
-    console.error(`[Client] apiFetch 실패: ${path}`, error);
-    return {
-      success: false,
-      data: null,
-      error: {
-        code: 'FETCH_ERROR',
-        message: error instanceof Error ? error.message : '요청에 실패했습니다.',
       },
     };
   }
