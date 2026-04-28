@@ -7,82 +7,149 @@ import Card from '@/components/common/Card/Card';
 import Badge from '@/components/common/Badge/Badge';
 import styles from './page.module.css';
 
-// 임시 데이터 (백엔드 FarmJpaEntity 구조 반영)
-const MOCK_FARMS = [
-  {
-    id: 1,
-    name: '양평 해맑은 농장',
-    address: '경기도 양평군 양서면 양수리 123-4',
-    area: 3200,
-    cropType: '배추',
-    bjdCode: '4183031022',
-  },
-  {
-    id: 2,
-    name: '푸른 초장 농원',
-    address: '경기도 양평군 용문면 다문리 456',
-    area: 1500,
-    cropType: '고추',
-    bjdCode: '4183035021',
-  }
+// 임시 KPI 데이터
+const MOCK_KPI = {
+  totalArea: 3200,
+  cropCount: 4,
+  monthlyRevenue: 2400000,
+  aiScore: 87,
+};
+
+// 임시 최근 활동 데이터
+const MOCK_ACTIVITIES = [
+  { id: 1, date: '2026-04-25', activity: '파종 완료', crop: '배추', status: 'done' },
+  { id: 2, date: '2026-04-22', activity: '비료 시비', crop: '고추', status: 'done' },
+  { id: 3, date: '2026-04-20', activity: '수확 예정', crop: '감자', status: 'scheduled' },
+  { id: 4, date: '2026-04-18', activity: '병해충 점검', crop: '토마토', status: 'checking' },
 ];
 
-export default function FarmListPage() {
-  const [farms] = useState(MOCK_FARMS);
+// 임시 농장 정보
+const MOCK_FARM_INFO = {
+  name: '양평 해맑은 농장',
+  location: '경기도 양평군 양서면',
+  area: '3,200 ㎡',
+  soil: '양토 (pH 6.5)',
+  registeredAt: '2024-03-15',
+};
+
+type ActivityStatus = 'done' | 'scheduled' | 'checking';
+
+const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'lime' | 'orange' }> = {
+  done: { label: '완료', variant: 'green' },
+  scheduled: { label: '예정', variant: 'lime' },
+  checking: { label: '점검중', variant: 'orange' },
+};
+
+export default function FarmDashboardPage() {
+  const [kpi] = useState(MOCK_KPI);
+  const [activities] = useState(MOCK_ACTIVITIES);
+  const [farmInfo] = useState(MOCK_FARM_INFO);
 
   return (
     <div className={styles.container}>
+      {/* 페이지 헤더 */}
       <div className={styles.header}>
         <div>
-          <p className={styles.breadcrumb}>홈 / 내 농장</p>
-          <h1 className={styles.title}>내 농장 <span style={{ fontStyle: 'italic', color: 'var(--color-primary)' }}>관리</span></h1>
-          <p className={styles.subtitle}>등록된 농장의 현황을 한눈에 확인하세요.</p>
+          <p className={styles.breadcrumb}>
+            <Link href="/" className={styles.breadcrumbLink}>홈</Link> / 내 농장
+          </p>
+          <h1 className={styles.title}>내 농장 <span className={styles.italic}>관리</span></h1>
+          <p className={styles.subtitle}>{farmInfo.name}의 현황을 한눈에 확인하세요.</p>
         </div>
-        <Link href="/farm/register">
-          <Button variant="primary">+ 농장 등록</Button>
-        </Link>
-      </div>
-
-      {farms.length > 0 ? (
-        <div className={styles.grid}>
-          {farms.map((farm) => (
-            <Card key={farm.id}>
-              <div className={styles.farmCard}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <h3 style={{ fontSize: '20px', fontWeight: 600 }}>{farm.name}</h3>
-                  <Badge variant="green">{farm.cropType}</Badge>
-                </div>
-                
-                <div className={styles.farmInfo}>
-                  <div className={styles.farmInfoRow}>
-                    <span className={styles.farmInfoLabel}>주소</span>
-                    <span className={styles.farmInfoValue}>{farm.address}</span>
-                  </div>
-                  <div className={styles.farmInfoRow}>
-                    <span className={styles.farmInfoLabel}>면적</span>
-                    <span className={styles.farmInfoValue}>{farm.area.toLocaleString()} ㎡</span>
-                  </div>
-                  <div className={styles.farmInfoRow}>
-                    <span className={styles.farmInfoLabel}>법정동 코드</span>
-                    <span className={styles.farmInfoValue}>{farm.bjdCode}</span>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: '8px' }}>
-                  <Button variant="outline" size="sm" style={{ width: '100%' }}>상세 보기</Button>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className={styles.emptyState}>
-          <p style={{ marginBottom: '16px' }}>등록된 농장이 없습니다.</p>
+        <div className={styles.headerButtons}>
           <Link href="/farm/register">
-            <Button variant="primary">첫 농장 등록하기</Button>
+            <Button variant="outline">+ 농장 추가</Button>
+          </Link>
+          <Link href="/farm/register">
+            <Button variant="primary">+ 작물 추가</Button>
           </Link>
         </div>
-      )}
+      </div>
+
+      {/* KPI 카드 Row */}
+      <div className={styles.kpiRow}>
+        <div className={styles.kpiCard}>
+          <p className={styles.kpiLabel}>재배 면적</p>
+          <p className={styles.kpiValue}>{kpi.totalArea.toLocaleString()}㎡</p>
+        </div>
+        <div className={styles.kpiCard}>
+          <p className={styles.kpiLabel}>재배 작물</p>
+          <p className={styles.kpiValue}>{kpi.cropCount}종</p>
+        </div>
+        <div className={styles.kpiCard}>
+          <p className={styles.kpiLabel}>이번 달 수익</p>
+          <p className={styles.kpiValue}>₩{(kpi.monthlyRevenue / 1000000).toFixed(1)}M</p>
+        </div>
+        <div className={styles.kpiCard}>
+          <p className={styles.kpiLabel}>AI 점수</p>
+          <p className={styles.kpiValue}>{kpi.aiScore}</p>
+        </div>
+      </div>
+
+      {/* 벤토 레이아웃: 최근 활동 + 농장 정보 */}
+      <div className={styles.bento}>
+        {/* 최근 활동 테이블 (8/12) */}
+        <div className={styles.bentoMain}>
+          <Card>
+            <div className={styles.sectionHeader}>
+              <h3 className={styles.sectionTitle}>최근 활동</h3>
+              <Link href="#" className={styles.viewAllLink}>전체보기 →</Link>
+            </div>
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>날짜</th>
+                    <th>활동</th>
+                    <th>작물</th>
+                    <th>상태</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activities.map((item) => {
+                    const statusInfo = STATUS_MAP[item.status as ActivityStatus];
+                    return (
+                      <tr key={item.id}>
+                        <td>{item.date}</td>
+                        <td>{item.activity}</td>
+                        <td>{item.crop}</td>
+                        <td>
+                          <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+
+        {/* 농장 정보 사이드 카드 (4/12) */}
+        <div className={styles.bentoSide}>
+          <Card variant="dark">
+            <h3 className={styles.farmInfoTitle}>농장 정보</h3>
+            <dl className={styles.farmInfoList}>
+              <dt>위치</dt>
+              <dd>{farmInfo.location}</dd>
+
+              <dt>면적</dt>
+              <dd>{farmInfo.area}</dd>
+
+              <dt>토양</dt>
+              <dd>{farmInfo.soil}</dd>
+
+              <dt>등록일</dt>
+              <dd>{farmInfo.registeredAt}</dd>
+            </dl>
+            <Link href="/farm/register" className={styles.editBtnWrap}>
+              <Button variant="primary" style={{ width: '100%', justifyContent: 'center' }}>
+                정보 수정
+              </Button>
+            </Link>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
