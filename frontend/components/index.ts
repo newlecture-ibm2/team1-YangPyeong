@@ -7,6 +7,6 @@ export { default as Dropdown } from './common/Dropdown';
 export { default as SearchInput } from './common/SearchInput';
 export { default as FilterBar } from './common/FilterBar';
 export { useToast } from './common/Toast';
-export { default as Nav } from './layout/Nav';
+export { default as Header } from './layout/Header';
 export { default as Footer } from './layout/Footer';
 export { default as Sidebar } from './layout/Sidebar';
