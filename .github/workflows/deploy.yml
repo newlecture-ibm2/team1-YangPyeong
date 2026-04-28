@@ -21,7 +21,7 @@ jobs:
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
-          NEXT_PUBLIC_KAKAO_MAP_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_MAP_KEY }}
+          NEXT_PUBLIC_KAKAO_MAP_JS_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_MAP_JS_KEY }}
           KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}
           KMA_API_KEY=${{ secrets.KMA_API_KEY }}
           SOIL_API_KEY=${{ secrets.SOIL_API_KEY }}
@@ -32,7 +32,8 @@ jobs:
       - name: Deploy with Docker Compose
         run: |
           cd /home/farm/dist/team1-YangPyeong
-          git pull origin dev
+          git fetch origin
+          git reset --hard origin/dev
           docker compose down
           docker compose up --build -d
 
