@@ -3,6 +3,7 @@ backend/.gradle/
 backend/build/
 backend/out/
 backend/bin/
+backend/logs/
 
 # ===== Frontend (Next.js / Node) =====
 frontend/node_modules/

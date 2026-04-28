@@ -4,7 +4,7 @@
 
 /** Spring Boot 백엔드 서버 주소 (서버 사이드 전용) */
 export const BACKEND_URL =
-  process.env.BACKEND_URL || 'http://localhost:8080';
+  process.env.INTERNAL_BACKEND_URL || 'http://localhost:8080';
 
 /** 쿠키에 저장할 세션 키 이름 */
 export const SESSION_COOKIE_NAME = 'fb-session';

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBalance — UI Mockup 전체 화면 목록</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    .index-hero {
+      background: var(--color-primary);
+      padding: 60px 48px 48px;
+      text-align: center;
+      color: #fff;
+    }
+    .index-hero h1 {
+      font-family: var(--font-serif);
+      font-size: 48px;
+      font-weight: 400;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .index-hero h1 em { font-style: italic; color: var(--color-accent); }
+    .index-hero p { font-size: 16px; color: rgba(255,255,255,.65); max-width: 600px; margin: 0 auto; }
+
+    .domain-section { margin-bottom: 48px; }
+    .domain-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px; padding-bottom: 12px;
+      border-bottom: 2px solid var(--color-primary);
+    }
+    .domain-icon { font-size: 28px; }
+    .domain-name { font-family: var(--font-serif); font-size: 24px; font-weight: 400; color: var(--color-text); }
+    .domain-count {
+      font-size: 12px; font-weight: 600; color: var(--color-primary);
+      background: var(--color-primary-pale); padding: 3px 10px;
+      border-radius: var(--radius-pill);
+    }
+
+    .page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .page-link {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px; background: var(--color-surface);
+      border-radius: var(--radius-md); text-decoration: none;
+      color: var(--color-text); border: 1.5px solid var(--color-border);
+      transition: all .2s ease;
+    }
+    .page-link:hover {
+      border-color: var(--color-primary); transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    }
+    .page-link-icon { font-size: 22px; flex-shrink: 0; }
+    .page-link-info { flex: 1; }
+    .page-link-title { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+    .page-link-file { font-size: 12px; color: var(--color-text-secondary); font-family: monospace; }
+    .page-link-arrow { color: var(--color-primary); font-size: 18px; opacity: 0; transition: opacity .2s; }
+    .page-link:hover .page-link-arrow { opacity: 1; }
+
+    .stats-bar {
+      display: flex; justify-content: center; gap: 48px;
+      padding: 24px; margin-bottom: 48px;
+      background: var(--color-surface); border-radius: var(--radius-md);
+    }
+    .stats-item { text-align: center; }
+    .stats-num { font-family: var(--font-serif); font-size: 32px; font-weight: 700; color: var(--color-primary); }
+    .stats-label { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- ════ HEADER ════ -->
+<div class="index-hero">
+  <div style="margin-bottom:16px;"><img src="./logo.png" alt="" style="height:80px;margin:0 auto;"></div>
+  <h1>Farm<em>Balance</em> UI Mockup</h1>
+  <p>전체 화면 설계 목록 — 각 링크를 클릭하여 페이지를 확인하세요</p>
+</div>
+
+<!-- ════ CONTENT ════ -->
+<div class="page">
+
+  <!-- 통계 바 -->
+  <div class="stats-bar">
+    <div class="stats-item"><div class="stats-num">38</div><div class="stats-label">전체 페이지</div></div>
+    <div class="stats-item"><div class="stats-num">12</div><div class="stats-label">도메인</div></div>
+    <div class="stats-item"><div class="stats-num">1</div><div class="stats-label">공통 스타일</div></div>
+  </div>
+
+  <!-- ──── Landing ──── -->
+  <div class="domain-section">
+    <div class="domain-header"><span class="domain-icon">🏠</span><span class="domain-name">Landing</span><span class="domain-count">1</span></div>
+    <div class="page-grid">
+      <a href="./landing.html" class="page-link"><span class="page-link-icon">🌾</span><div class="page-link-info"><div class="page-link-title">랜딩 페이지</div><div class="page-link-file">landing.html</div></div><span class="page-link-arrow">→</span></a>
+    </div>
+  </div>
+
+  <!-- ──── Auth ──── -->
+  <div class="domain-section">
+    <div class="domain-header"><span class="domain-icon">🔐</span><span class="domain-name">Auth (인증)</span><span class="domain-count">3</span></div>
+    <div class="page-grid">
+      <a href="./auth/login.html" class="page-link"><span class="page-link-icon">🔑</span><div class="page-link-info"><div class="page-link-title">로그인</div><div class="page-link-file">auth/login.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./auth/signup.html" class="page-link"><span class="page-link-icon">📝</span><div class="page-link-info"><div class="page-link-title">회원가입</div><div class="page-link-file">auth/signup.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./auth/password-reset.html" class="page-link"><span class="page-link-icon">🔒</span><div class="page-link-info"><div class="page-link-title">비밀번호 찾기</div><div class="page-link-file">auth/password-reset.html</div></div><span class="page-link-arrow">→</span></a>
+    </div>
+  </div>
+
+  <!-- ──── Farm ──── -->
+  <div class="domain-section">
+    <div class="domain-header"><span class="domain-icon">🌾</span><span class="domain-name">Farm (농장)</span><span class="domain-count">3</span></div>
+    <div class="page-grid">
+      <a href="./farm/farm-register.html" class="page-link"><span class="page-link-icon">📋</span><div class="page-link-info"><div class="page-link-title">농장 등록</div><div class="page-link-file">farm/farm-register.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./farm/farm-manage.html" class="page-link"><span class="page-link-icon">🏡</span><div class="page-link-info"><div class="page-link-title">농장 관리</div><div class="page-link-file">farm/farm-manage.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./farm/seed-register.html" class="page-link"><span class="page-link-icon">🌱</span><div class="page-link-info"><div class="page-link-title">종자 구매 등록</div><div class="page-link-file">farm/seed-register.html</div></div><span class="page-link-arrow">→</span></a>
+    </div>
+  </div>
+
+  <!-- ──── Balance ──── -->
+  <div class="domain-section">
+    <div class="domain-header"><span class="domain-icon">⚖️</span><span class="domain-name">Balance (수급)</span><span class="domain-count">2</span></div>
+    <div class="page-grid">
+      <a href="./balance/balance-list.html" class="page-link"><span class="page-link-icon">📊</span><div class="page-link-info"><div class="page-link-title">수급 밸런스 목록</div><div class="page-link-file">balance/balance-list.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./balance/balance-detail.html" class="page-link"><span class="page-link-icon">📈</span><div class="page-link-info"><div class="page-link-title">수급 밸런스 상세</div><div class="page-link-file">balance/balance-detail.html</div></div><span class="page-link-arrow">→</span></a>
+    </div>
+  </div>
+
+  <!-- ──── Recommend ──── -->
+  <div class="domain-section">
+    <div class="domain-header"><span class="domain-icon">🌟</span><span class="domain-name">Recommend (AI 추천)</span><span class="domain-count">2</span></div>
+    <div class="page-grid">
+      <a href="./recommend/recommend-list.html" class="page-link"><span class="page-link-icon">🤖</span><div class="page-link-info"><div class="page-link-title">추천 작물 목록</div><div class="page-link-file">recommend/recommend-list.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./recommend/recommend-detail.html" class="page-link"><span class="page-link-icon">🥬</span><div class="page-link-info"><div class="page-link-title">추천 상세</div><div class="page-link-file">recommend/recommend-detail.html</div></div><span class="page-link-arrow">→</span></a>
+    </div>
+  </div>
+
+  <!-- ──── Community ──── -->
+  <div class="domain-section">
+    <div class="domain-header"><span class="domain-icon">💬</span><span class="domain-name">Community (커뮤니티)</span><span class="domain-count">3</span></div>
+    <div class="page-grid">
+      <a href="./community/community-list.html" class="page-link"><span class="page-link-icon">📋</span><div class="page-link-info"><div class="page-link-title">게시판 목록</div><div class="page-link-file">community/community-list.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./community/community-detail.html" class="page-link"><span class="page-link-icon">📄</span><div class="page-link-info"><div class="page-link-title">게시글 상세</div><div class="page-link-file">community/community-detail.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./community/community-write.html" class="page-link"><span class="page-link-icon">✏️</span><div class="page-link-info"><div class="page-link-title">글 작성</div><div class="page-link-file">community/community-write.html</div></div><span class="page-link-arrow">→</span></a>
+    </div>
+  </div>
+
+  <!-- ──── Shop ──── -->
+  <div class="domain-section">
+    <div class="domain-header"><span class="domain-icon">🛒</span><span class="domain-name">Shop (상점)</span><span class="domain-count">4</span></div>
+    <div class="page-grid">
+      <a href="./shop/shop-browse.html" class="page-link"><span class="page-link-icon">🏪</span><div class="page-link-info"><div class="page-link-title">상품 목록</div><div class="page-link-file">shop/shop-browse.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./shop/product-detail.html" class="page-link"><span class="page-link-icon">📦</span><div class="page-link-info"><div class="page-link-title">상품 상세</div><div class="page-link-file">shop/product-detail.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./shop/cart.html" class="page-link"><span class="page-link-icon">🛒</span><div class="page-link-info"><div class="page-link-title">장바구니</div><div class="page-link-file">shop/cart.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./shop/checkout.html" class="page-link"><span class="page-link-icon">💳</span><div class="page-link-info"><div class="page-link-title">주문/결제</div><div class="page-link-file">shop/checkout.html</div></div><span class="page-link-arrow">→</span></a>
+    </div>
+  </div>
+
+  <!-- ──── Stores ──── -->
+  <div class="domain-section">
+    <div class="domain-header"><span class="domain-icon">🏪</span><span class="domain-name">Stores (가게)</span><span class="domain-count">1</span></div>
+    <div class="page-grid">
+      <a href="./stores/store-map.html" class="page-link"><span class="page-link-icon">🗺️</span><div class="page-link-info"><div class="page-link-title">가게 지도 조회</div><div class="page-link-file">stores/store-map.html</div></div><span class="page-link-arrow">→</span></a>
+    </div>
+  </div>
+
+  <!-- ──── Policy ──── -->
+  <div class="domain-section">
+    <div class="domain-header"><span class="domain-icon">📜</span><span class="domain-name">Policy (정책)</span><span class="domain-count">1</span></div>
+    <div class="page-grid">
+      <a href="./policy/policy-list.html" class="page-link"><span class="page-link-icon">📋</span><div class="page-link-info"><div class="page-link-title">정책 목록</div><div class="page-link-file">policy/policy-list.html</div></div><span class="page-link-arrow">→</span></a>
+    </div>
+  </div>
+
+  <!-- ──── Mypage ──── -->
+  <div class="domain-section">
+    <div class="domain-header"><span class="domain-icon">👤</span><span class="domain-name">Mypage (마이페이지)</span><span class="domain-count">5</span></div>
+    <div class="page-grid">
+      <a href="./mypage/profile.html" class="page-link"><span class="page-link-icon">👤</span><div class="page-link-info"><div class="page-link-title">프로필 관리</div><div class="page-link-file">mypage/profile.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./mypage/notifications.html" class="page-link"><span class="page-link-icon">🔔</span><div class="page-link-info"><div class="page-link-title">알림</div><div class="page-link-file">mypage/notifications.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./mypage/orders.html" class="page-link"><span class="page-link-icon">📦</span><div class="page-link-info"><div class="page-link-title">주문내역</div><div class="page-link-file">mypage/orders.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./mypage/seller-products.html" class="page-link"><span class="page-link-icon">🏷️</span><div class="page-link-info"><div class="page-link-title">판매 상품 관리</div><div class="page-link-file">mypage/seller-products.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./mypage/seller-orders.html" class="page-link"><span class="page-link-icon">📋</span><div class="page-link-info"><div class="page-link-title">판매 주문 관리</div><div class="page-link-file">mypage/seller-orders.html</div></div><span class="page-link-arrow">→</span></a>
+    </div>
+  </div>
+
+  <!-- ──── Gov ──── -->
+  <div class="domain-section">
+    <div class="domain-header"><span class="domain-icon">🏛️</span><span class="domain-name">Gov (지자체)</span><span class="domain-count">5</span></div>
+    <div class="page-grid">
+      <a href="./gov/gov-dashboard.html" class="page-link"><span class="page-link-icon">📊</span><div class="page-link-info"><div class="page-link-title">지자체 대시보드</div><div class="page-link-file">gov/gov-dashboard.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./gov/gov-cultivation.html" class="page-link"><span class="page-link-icon">🌾</span><div class="page-link-info"><div class="page-link-title">재배 현황</div><div class="page-link-file">gov/gov-cultivation.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./gov/gov-compare.html" class="page-link"><span class="page-link-icon">📈</span><div class="page-link-info"><div class="page-link-title">연도 비교</div><div class="page-link-file">gov/gov-compare.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./gov/gov-sales.html" class="page-link"><span class="page-link-icon">💰</span><div class="page-link-info"><div class="page-link-title">판매 현황</div><div class="page-link-file">gov/gov-sales.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./gov/gov-download.html" class="page-link"><span class="page-link-icon">📥</span><div class="page-link-info"><div class="page-link-title">데이터 다운로드</div><div class="page-link-file">gov/gov-download.html</div></div><span class="page-link-arrow">→</span></a>
+    </div>
+  </div>
+
+  <!-- ──── Admin ──── -->
+  <div class="domain-section">
+    <div class="domain-header"><span class="domain-icon">🔧</span><span class="domain-name">Admin (관리자)</span><span class="domain-count">8</span></div>
+    <div class="page-grid">
+      <a href="./admin/admin-dashboard.html" class="page-link"><span class="page-link-icon">📊</span><div class="page-link-info"><div class="page-link-title">관리자 대시보드</div><div class="page-link-file">admin/admin-dashboard.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./admin/admin-users.html" class="page-link"><span class="page-link-icon">👥</span><div class="page-link-info"><div class="page-link-title">회원 관리</div><div class="page-link-file">admin/admin-users.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./admin/admin-crops.html" class="page-link"><span class="page-link-icon">🌱</span><div class="page-link-info"><div class="page-link-title">작물 관리</div><div class="page-link-file">admin/admin-crops.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./admin/admin-approvals.html" class="page-link"><span class="page-link-icon">✅</span><div class="page-link-info"><div class="page-link-title">승인 관리</div><div class="page-link-file">admin/admin-approvals.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./admin/admin-community.html" class="page-link"><span class="page-link-icon">💬</span><div class="page-link-info"><div class="page-link-title">커뮤니티 관리</div><div class="page-link-file">admin/admin-community.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./admin/admin-data.html" class="page-link"><span class="page-link-icon">🗄️</span><div class="page-link-info"><div class="page-link-title">데이터 수집 관리</div><div class="page-link-file">admin/admin-data.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./admin/admin-engine.html" class="page-link"><span class="page-link-icon">⚙️</span><div class="page-link-info"><div class="page-link-title">수급 계산 엔진</div><div class="page-link-file">admin/admin-engine.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./admin/admin-shop.html" class="page-link"><span class="page-link-icon">🛒</span><div class="page-link-info"><div class="page-link-title">상점 관리</div><div class="page-link-file">admin/admin-shop.html</div></div><span class="page-link-arrow">→</span></a>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════ FOOTER ════ -->
+<footer class="footer">
+  <div class="footer-brand"><img src="./logo.png" alt="">FarmBalance</div>
+  <div class="footer-links">
+    <a href="./balance/balance-list.html">밸런스</a>
+    <a href="./recommend/recommend-list.html">AI 추천</a>
+    <a href="./community/community-list.html">커뮤니티</a>
+    <a href="./shop/shop-browse.html">상점</a>
+  </div>
+  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+</footer>
+
+</body>
+</html>

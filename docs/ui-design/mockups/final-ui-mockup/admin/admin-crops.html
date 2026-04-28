@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FarmBalance — 관리자: 작물 관리</title><link rel="stylesheet" href="../style.css"></head>
+<body>
+<nav class="nav" style="background:#111714;"><a href="../landing.html" class="nav-logo"><img src="../logo.png" alt="FarmBalance 로고"> FarmBalance <span class="badge badge-red" style="font-size:10px;margin-left:8px;">ADMIN</span></a><div class="nav-links"><a href="./admin-dashboard.html">대시보드</a><a href="./admin-users.html">회원</a><a href="./admin-crops.html" class="active">작물</a><a href="./admin-approvals.html">승인</a><a href="./admin-community.html">커뮤니티</a><a href="./admin-data.html">데이터</a><a href="./admin-engine.html">엔진</a><a href="./admin-shop.html">상점</a></div><div class="nav-right"><a href="../auth/login.html" class="btn-nav btn-nav-outline">로그아웃</a></div></nav>
+<div class="page">
+  <div class="page-header"><h1 class="page-title">🌱 작물 마스터 데이터 관리</h1></div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:24px;"><button class="btn btn-primary">＋ 작물 추가</button></div>
+  <div class="table-wrap">
+    <table class="tbl">
+      <thead><tr><th>코드</th><th>작물명</th><th>분류</th><th>적정 파종기</th><th>수확기</th><th>등록 농가</th><th>관리</th></tr></thead>
+      <tbody>
+        <tr><td>CRP001</td><td class="td-left">상추</td><td>엽채류</td><td>3~5월</td><td>파종 후 40~60일</td><td>45</td><td><button class="btn btn-outline btn-sm">수정</button></td></tr>
+        <tr><td>CRP002</td><td class="td-left">배추</td><td>엽채류</td><td>8~9월</td><td>파종 후 60~90일</td><td>38</td><td><button class="btn btn-outline btn-sm">수정</button></td></tr>
+        <tr><td>CRP003</td><td class="td-left">토마토</td><td>과채류</td><td>3~4월</td><td>파종 후 80~120일</td><td>32</td><td><button class="btn btn-outline btn-sm">수정</button></td></tr>
+        <tr><td>CRP004</td><td class="td-left">고추</td><td>과채류</td><td>2~3월</td><td>파종 후 120~150일</td><td>28</td><td><button class="btn btn-outline btn-sm">수정</button></td></tr>
+        <tr><td>CRP005</td><td class="td-left">감자</td><td>근채류</td><td>3~4월</td><td>파종 후 90~120일</td><td>22</td><td><button class="btn btn-outline btn-sm">수정</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<footer class="footer"><div class="footer-brand"><img src="../logo.png" alt="">FarmBalance</div><div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div></footer>
+</body></html>

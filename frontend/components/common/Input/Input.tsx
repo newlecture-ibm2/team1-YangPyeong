@@ -10,8 +10,7 @@ interface InputProps {
   required?: boolean;
   disabled?: boolean;
   className?: string;
-  as?: 'input' | 'textarea' | 'select';
-  options?: { value: string; label: string }[];
+  as?: 'input' | 'textarea';
   rows?: number;
 }
 
@@ -26,7 +25,6 @@ export default function Input({
   disabled = false,
   className = '',
   as = 'input',
-  options = [],
   rows = 4,
 }: InputProps) {
   const renderField = () => {
@@ -42,25 +40,6 @@ export default function Input({
           disabled={disabled}
           rows={rows}
         />
-      );
-    }
-
-    if (as === 'select') {
-      return (
-        <select
-          className={styles.input}
-          value={value}
-          onChange={onChange}
-          name={name}
-          required={required}
-          disabled={disabled}
-        >
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
       );
     }
 
