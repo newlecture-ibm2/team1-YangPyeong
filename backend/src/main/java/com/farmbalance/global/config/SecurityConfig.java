@@ -51,8 +51,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/gov/**").hasAnyRole("GOV", "ADMIN")
 
-                // 나머지 인증 필요
-                .anyRequest().authenticated()
+                // 나머지: 개발 단계에서는 모든 요청 허용 (추후 .authenticated()로 변경)
+                .anyRequest().permitAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
