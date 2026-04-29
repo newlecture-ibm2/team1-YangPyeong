@@ -115,6 +115,9 @@ resilience4j:
         base-config: default
       apiRetry:
         base-config: default
+      aiRetry:
+        base-config: default
+        wait-duration: 5000ms
   circuitbreaker:
     configs:
       default:

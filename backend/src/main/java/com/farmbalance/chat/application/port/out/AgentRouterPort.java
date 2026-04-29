@@ -1,0 +1,14 @@
+package com.farmbalance.chat.application.port.out;
+
+public interface AgentRouterPort {
+    /**
+     * 파이썬 Agent 서버로 유저 메시지를 전달하고 응답을 받아옵니다.
+     * @param userId 유저 식별자
+     * @param roomId 대화방 식별자
+     * @param category 채팅 카테고리 (CROP, POLICY 등)
+     * @param message 유저 질문 (마스킹 완료된 상태)
+     * @param metadata 프론트가 보낸 추가 정보
+     * @return 파이썬 Agent의 답변
+     */
+    String routeToAgent(Long userId, Long roomId, String category, String message, java.util.Map<String, Object> metadata);
+}
