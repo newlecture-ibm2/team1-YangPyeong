@@ -12,7 +12,13 @@ public interface AdminCropPort {
 
     List<AdminCrop> findAll();
 
+    List<AdminCrop> findByFilter(Long categoryId, String keyword, Boolean isActive);
+
     Optional<AdminCrop> findById(Long id);
+
+    boolean existsByName(String name);
+
+    boolean existsByNameExcludeId(String name, Long excludeId);
 
     Long save(AdminCrop crop);
 
@@ -20,3 +26,4 @@ public interface AdminCropPort {
 
     void deactivate(Long id);
 }
+
