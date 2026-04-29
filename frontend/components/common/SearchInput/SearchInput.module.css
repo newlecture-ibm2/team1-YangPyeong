@@ -1,0 +1,109 @@
+/* ════════════════════════════════════════════════════════
+   SearchInput — 검색 전용 인풋 (아이콘 + 인풋 + 버튼)
+   ════════════════════════════════════════════════════════ */
+
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  overflow: hidden;
+}
+
+.wrapper:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
+}
+
+.wrapper--full {
+  width: 100%;
+}
+
+/* ── 검색 아이콘 ── */
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* ── 인풋 ── */
+.input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  min-width: 0;
+}
+
+.input::placeholder {
+  color: #C0C0C0;
+}
+
+/* ── 검색 버튼 ── */
+.button {
+  flex-shrink: 0;
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  white-space: nowrap;
+}
+
+.button:hover {
+  background: var(--color-primary-light);
+}
+
+/* ── Sizes ── */
+.wrapper--sm {
+  height: 36px;
+}
+.wrapper--sm .icon {
+  padding-left: 10px;
+}
+.wrapper--sm .input {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.wrapper--sm .button {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.wrapper--md {
+  height: 44px;
+}
+.wrapper--md .icon {
+  padding-left: 14px;
+}
+.wrapper--md .input {
+  padding: 10px 14px;
+  font-size: 15px;
+}
+.wrapper--md .button {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.wrapper--lg {
+  height: 52px;
+}
+.wrapper--lg .icon {
+  padding-left: 16px;
+}
+.wrapper--lg .input {
+  padding: 14px 16px;
+  font-size: 16px;
+}
+.wrapper--lg .button {
+  padding: 14px 24px;
+  font-size: 15px;
+}

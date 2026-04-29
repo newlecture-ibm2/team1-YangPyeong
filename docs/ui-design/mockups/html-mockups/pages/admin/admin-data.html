@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>외부 데이터 연동 — FarmBalance</title><link rel="stylesheet" href="../../css/style.css"></head>
+<body>
+<div class="admin-layout">
+<aside class="sidebar"><div class="sidebar-logo"><span>🌿</span> FarmBalance</div><nav>
+  <a href="admin-dashboard.html">📊 대시보드</a><a href="admin-users.html">👥 사용자 관리</a><a href="admin-approvals.html">✅ 농부 승인/반려</a><a href="admin-crops.html">🌾 작물 마스터</a><a href="admin-data.html" class="active">🔗 외부 데이터 연동</a><a href="admin-engine.html">⚖️ 밸런스 엔진</a><a href="admin-community.html">💬 커뮤니티 관리</a><a href="admin-shop.html">🛒 상점 관리</a>
+</nav></aside>
+<main class="admin-main"><div class="page">
+  <h1 class="page-title"><span class="icon">🔗</span> 외부 데이터 연동 <span class="badge badge-phase2">Phase 2</span></h1>
+  <div class="grid-2">
+    <div class="card">
+      <div class="flex-between mb-8"><h2 class="card-title" style="margin:0;">KAMIS 도매가격</h2><span class="badge badge-green">연동중</span></div>
+      <table class="info-tbl"><tr><th>API URL</th><td>api.kamis.or.kr</td></tr><tr><th>갱신 주기</th><td>매일 06:00</td></tr><tr><th>최종 동기화</th><td>2026-04-23 06:00:12</td></tr><tr><th>수집 건수</th><td>1,248건</td></tr></table>
+      <div class="btn-row mt-16"><button class="btn btn-outline btn-sm">수동 동기화</button><button class="btn btn-gray btn-sm">로그 보기</button></div>
+    </div>
+    <div class="card">
+      <div class="flex-between mb-8"><h2 class="card-title" style="margin:0;">기상청 날씨</h2><span class="badge badge-green">연동중</span></div>
+      <table class="info-tbl"><tr><th>API URL</th><td>apis.data.go.kr/weather</td></tr><tr><th>갱신 주기</th><td>3시간</td></tr><tr><th>최종 동기화</th><td>2026-04-23 12:00:05</td></tr><tr><th>수집 건수</th><td>365건</td></tr></table>
+      <div class="btn-row mt-16"><button class="btn btn-outline btn-sm">수동 동기화</button><button class="btn btn-gray btn-sm">로그 보기</button></div>
+    </div>
+  </div>
+</div></main>
+</div>
+</body></html>

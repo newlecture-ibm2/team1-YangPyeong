@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FarmBalance — 관리자: 수급 엔진</title><link rel="stylesheet" href="../style.css"></head>
+<body>
+<nav class="nav" style="background:#111714;"><a href="../landing.html" class="nav-logo"><img src="../logo.png" alt="FarmBalance 로고"> FarmBalance <span class="badge badge-red" style="font-size:10px;margin-left:8px;">ADMIN</span></a><div class="nav-links"><a href="./admin-dashboard.html">대시보드</a><a href="./admin-users.html">회원</a><a href="./admin-crops.html">작물</a><a href="./admin-approvals.html">승인</a><a href="./admin-community.html">커뮤니티</a><a href="./admin-data.html">데이터</a><a href="./admin-engine.html" class="active">엔진</a><a href="./admin-shop.html">상점</a></div><div class="nav-right"><a href="../auth/login.html" class="btn-nav btn-nav-outline">로그아웃</a></div></nav>
+<div class="page">
+  <div class="page-header"><h1 class="page-title">⚙️ 수급 계산 엔진</h1><p class="page-sub">수급 밸런스 계산 엔진의 설정 및 실행 상태를 관리합니다.</p></div>
+  <div class="kpi-row mb-32">
+    <div class="kpi"><div class="kpi-label">마지막 실행</div><div class="kpi-value" style="font-size:20px;">04/27 06:00</div></div>
+    <div class="kpi"><div class="kpi-label">처리 작물</div><div class="kpi-value">15종</div></div>
+    <div class="kpi"><div class="kpi-label">알림 발송</div><div class="kpi-value">3건</div></div>
+    <div class="kpi"><div class="kpi-label">엔진 상태</div><div class="kpi-value"><span class="badge badge-green">정상</span></div></div>
+  </div>
+  <div class="grid-2 mb-32">
+    <div class="card">
+      <h2 class="card-title">엔진 설정</h2>
+      <div class="form-group"><label class="form-label">계산 주기</label><select class="form-select"><option>매일 06:00</option><option>매일 12:00</option><option>6시간마다</option></select></div>
+      <div class="form-group"><label class="form-label">과잉 알림 기준 (%)</label><input class="form-input" type="number" value="120"></div>
+      <div class="form-group"><label class="form-label">부족 알림 기준 (%)</label><input class="form-input" type="number" value="80"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;"><button class="btn btn-primary">설정 저장</button><button class="btn btn-outline">수동 실행</button></div>
+    </div>
+    <div class="card">
+      <h2 class="card-title">최근 실행 로그</h2>
+      <div style="background:#1B1C1E;border-radius:var(--radius-sm);padding:16px;font-family:monospace;font-size:13px;color:#E0E0E0;line-height:1.8;max-height:300px;overflow-y:auto;">
+        <div>[06:00:01] 수급 계산 엔진 시작</div>
+        <div>[06:00:02] 작물 데이터 로딩... 15종</div>
+        <div>[06:00:03] 공급량 계산 완료</div>
+        <div>[06:00:05] 수요량 예측 완료</div>
+        <div>[06:00:06] 밸런스 계산 완료</div>
+        <div style="color:#FF6B6B;">[06:00:07] ⚠️ 배추: 부족(-700톤) → 알림 발송</div>
+        <div style="color:#FFD93D;">[06:00:07] ⚠️ 토마토: 과잉(+200톤) → 알림 발송</div>
+        <div style="color:#6BCB77;">[06:00:08] ✅ 수급 계산 완료 (소요: 7.2s)</div>
+      </div>
+    </div>
+  </div>
+</div>
+<footer class="footer"><div class="footer-brand"><img src="../logo.png" alt="">FarmBalance</div><div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div></footer>
+</body></html>

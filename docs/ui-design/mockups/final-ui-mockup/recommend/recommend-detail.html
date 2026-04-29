@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBalance — 추천 상세</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .info-tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .info-tbl th { text-align: left; padding: 10px 16px; color: var(--color-text-secondary); font-weight: 500; width: 140px; border-bottom: 1px solid var(--color-border); }
+    .info-tbl td { padding: 10px 16px; border-bottom: 1px solid var(--color-border); }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="../landing.html" class="nav-logo"><img src="../logo.png" alt="FarmBalance 로고"> FarmBalance</a>
+  <div class="nav-links">
+    <a href="../balance/balance-list.html">밸런스</a><a href="../recommend/recommend-list.html" class="active">AI 추천</a>
+    <a href="../community/community-list.html">커뮤니티</a><a href="../shop/shop-browse.html">상점</a>
+    <a href="../policy/policy-list.html">정책</a><a href="../stores/store-map.html">가게</a>
+  </div>
+  <div class="nav-right"><a href="../auth/login.html" class="btn-nav btn-nav-outline">로그인</a><a href="../auth/signup.html" class="btn-nav btn-nav-fill">시작하기</a></div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../landing.html">홈</a> › <a href="../recommend/recommend-list.html">AI 추천</a> › <strong>상추 추천 상세</strong></div>
+    <h1 class="page-title">🥬 상추 — 추천 상세 <span class="badge badge-green">적합도 92%</span></h1>
+  </div>
+
+  <div class="grid-2 mb-32">
+    <div class="card">
+      <h2 class="card-title">추천 근거</h2>
+      <table class="info-tbl">
+        <tr><th>수급점수</th><td>95점 — 현재 적정 공급 상태</td></tr>
+        <tr><th>환경점수</th><td>90점 — 양토 + 온난기후 적합</td></tr>
+        <tr><th>수익점수</th><td>88점 — 예상 수익률 높음</td></tr>
+        <tr><th>역량점수</th><td>95점 — 재배 경험 충분</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h2 class="card-title">적합도 분석</h2>
+      <div class="placeholder" style="height:200px;">📊 4요소 레이더 차트 (수급/환경/수익/역량)</div>
+    </div>
+  </div>
+
+  <div class="card mb-32">
+    <h2 class="card-title">재배 가이드</h2>
+    <div class="grid-2">
+      <table class="info-tbl">
+        <tr><th>적정 파종시기</th><td>3월 ~ 5월</td></tr>
+        <tr><th>수확 시기</th><td>파종 후 40~60일</td></tr>
+        <tr><th>적정 온도</th><td>15~20°C</td></tr>
+        <tr><th>필요 면적</th><td>최소 200㎡</td></tr>
+      </table>
+      <table class="info-tbl">
+        <tr><th>예상 수확량</th><td>150kg / 800㎡</td></tr>
+        <tr><th>예상 수익</th><td>380만원 / 1,000㎡</td></tr>
+        <tr><th>주요 병해충</th><td>진딧물, 노균병</td></tr>
+        <tr><th>난이도</th><td>⭐⭐ (초보 가능)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card mb-32">
+    <h2 class="card-title">가격 추이 (최근 12개월)</h2>
+    <div class="placeholder" style="height:200px;">💰 상추 도매가 라인 차트</div>
+  </div>
+
+  <div style="display:flex;gap:12px;">
+    <button class="btn btn-outline" onclick="history.back()">← 목록으로</button>
+    <button class="btn btn-primary">이 작물로 파종 계획 등록 →</button>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-brand"><img src="../logo.png" alt="">FarmBalance</div>
+  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+</footer>
+</body>
+</html>

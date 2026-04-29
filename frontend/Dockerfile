@@ -1,0 +1,21 @@
+# Build stage
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+ARG NEXT_PUBLIC_KAKAO_MAP_JS_KEY
+ARG INTERNAL_BACKEND_URL
+ENV NEXT_PUBLIC_KAKAO_MAP_JS_KEY=$NEXT_PUBLIC_KAKAO_MAP_JS_KEY
+ENV INTERNAL_BACKEND_URL=$INTERNAL_BACKEND_URL
+RUN npm run build
+
+# Run stage
+FROM node:22-alpine
+WORKDIR /app
+COPY --from=build /app/package*.json ./
+COPY --from=build /app/.next ./.next
+COPY --from=build /app/public ./public
+COPY --from=build /app/node_modules ./node_modules
+EXPOSE 3000
+CMD ["npm", "start"]

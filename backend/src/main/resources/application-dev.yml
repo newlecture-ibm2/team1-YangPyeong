@@ -1,0 +1,19 @@
+# ── Dev 프로필 전용 설정 ──
+# application.yml의 설정을 상속받고, dev에서만 다른 부분만 덮어씁니다.
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5151/farm_db
+    username: farm
+    password: farmbalance1234!
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+

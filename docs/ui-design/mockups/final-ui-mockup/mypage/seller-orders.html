@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FarmBalance — 판매 주문 관리</title><link rel="stylesheet" href="../style.css"></head>
+<body>
+<nav class="nav"><a href="../landing.html" class="nav-logo"><img src="../logo.png" alt="FarmBalance 로고"> FarmBalance</a><div class="nav-links"><a href="../balance/balance-list.html">밸런스</a><a href="../recommend/recommend-list.html">AI 추천</a><a href="../community/community-list.html">커뮤니티</a><a href="../shop/shop-browse.html">상점</a><a href="../policy/policy-list.html">정책</a><a href="../stores/store-map.html">가게</a></div><div class="nav-right"><a href="../auth/login.html" class="btn-nav btn-nav-outline">로그인</a><a href="../auth/signup.html" class="btn-nav btn-nav-fill">시작하기</a></div></nav>
+<div class="page">
+  <div class="page-header"><div class="breadcrumb"><a href="../landing.html">홈</a> › 마이페이지 › <strong>판매 주문</strong></div><h1 class="page-title">📋 판매 주문 관리</h1></div>
+  <div class="tabs mb-32"><a href="./profile.html">프로필</a><a href="./notifications.html">알림</a><a href="./orders.html">주문내역</a><a href="./seller-products.html">판매 상품</a><a href="./seller-orders.html" class="active">판매 주문</a></div>
+  <div class="kpi-row mb-32">
+    <div class="kpi"><div class="kpi-label">신규 주문</div><div class="kpi-value">3</div></div>
+    <div class="kpi"><div class="kpi-label">배송 준비중</div><div class="kpi-value">5</div></div>
+    <div class="kpi"><div class="kpi-label">배송중</div><div class="kpi-value">2</div></div>
+    <div class="kpi"><div class="kpi-label">이번달 매출</div><div class="kpi-value">₩284,000</div></div>
+  </div>
+  <div class="table-wrap">
+    <table class="tbl">
+      <thead><tr><th>주문번호</th><th>주문일</th><th>구매자</th><th>상품</th><th>금액</th><th>상태</th><th>처리</th></tr></thead>
+      <tbody>
+        <tr><td>ORD-2026042702</td><td>2026-04-27</td><td>박농부</td><td class="td-left">유기농 상추 x2</td><td>₩16,000</td><td><span class="badge badge-orange">신규</span></td><td><button class="btn btn-primary btn-sm">확인</button></td></tr>
+        <tr><td>ORD-2026042601</td><td>2026-04-26</td><td>이소비</td><td class="td-left">GAP 토마토 x1</td><td>₩12,000</td><td><span class="badge badge-green">배송중</span></td><td><button class="btn btn-outline btn-sm">추적</button></td></tr>
+        <tr><td>ORD-2026042501</td><td>2026-04-25</td><td>최건강</td><td class="td-left">무농약 배추 x3</td><td>₩15,000</td><td><span class="badge badge-gray">완료</span></td><td><button class="btn btn-outline btn-sm">상세</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<footer class="footer"><div class="footer-brand"><img src="../logo.png" alt="">FarmBalance</div><div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div></footer>
+</body></html>
