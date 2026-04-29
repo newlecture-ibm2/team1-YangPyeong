@@ -36,7 +36,7 @@ export default function ComparePage() {
       .catch(() => setLoading(false));
   }, [baseYear, compareYear]);
 
-  const region = user?.region || "지자체";
+  const region = user?.regionName || user?.region || "지자체";
 
   return (
     <div className={styles.page}>

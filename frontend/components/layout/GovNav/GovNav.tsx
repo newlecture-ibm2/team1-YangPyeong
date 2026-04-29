@@ -48,7 +48,7 @@ export default function GovNav() {
           <option value="9041">가평군(9041)</option>
         </select>
 
-        <span className={styles.btnFill}>{user?.region ? `${user.region} 담당자` : "로딩 중..."}</span>
+        <span className={styles.btnFill}>{user?.regionName || user?.region ? `${user.regionName || user.region} 담당자` : "로딩 중..."}</span>
       </div>
     </nav>
   );
