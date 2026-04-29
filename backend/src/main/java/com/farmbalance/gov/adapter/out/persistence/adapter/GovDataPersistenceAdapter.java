@@ -42,9 +42,9 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
     @Override
     public GovUserInfo getGovUserInfo(Long userId) {
         String sql = """
-            SELECT u.id, u.name, u.role, u.region,
-                   COALESCE(u.region_code, '') AS region_code,
-                   COALESCE(r.name, u.region, '') AS region_name
+            SELECT u.id, u.name, u.role,
+                   u.region_code AS region_code,
+                   r.name AS region_name
             FROM users u
             LEFT JOIN regions r ON r.code = u.region_code AND r.type = 'CITY'
             WHERE u.id = ? AND u.deleted_at IS NULL
@@ -56,7 +56,6 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
             ((Number) row.get("id")).longValue(),
             (String) row.get("name"),
             (String) row.get("role"),
-            (String) row.get("region"),
             (String) row.get("region_code"),
             (String) row.get("region_name")
         );
@@ -166,40 +165,25 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
     }
 
     /**
-     * 지역 필터 SQL — govRegion이 코드(숫자)면 region_code로, 문자열이면 address LIKE로 필터
-     * 기존 로직과의 하위호환 유지
+     * 지역 필터 SQL — govRegion(코드)으로 users.region_code를 조회하여 필터링
      */
-    private String buildRegionFilter(String govRegion) {
-        if (govRegion == null || govRegion.isBlank()) return "";
-        // 숫자로만 구성되면 코드 기반 → users.region_code로 필터
-        if (govRegion.matches("\\d+")) {
-            return " AND f.user_id IN (SELECT u2.id FROM users u2 WHERE u2.region_code = '" + govRegion + "') ";
-        }
-        // 기존 문자열 방식 fallback
-        return " AND f.address LIKE '%" + govRegion + "%' ";
+    private String buildRegionFilter(String govRegionCode) {
+        if (govRegionCode == null || govRegionCode.isBlank()) return "";
+        return " AND f.user_id IN (SELECT u2.id FROM users u2 WHERE u2.region_code = '" + govRegionCode + "') ";
     }
 
     /**
      * balance_data용 region_code 해석
      * - 4자리(시군구 코드) → 10자리 보정 (예: 4183 → 4183000000)
-     * - 문자열(양평군) → regions 테이블에서 코드 조회 후 10자리로 보정
      * - 10자리 이상 → 그대로 사용
      */
-    private String resolveBalanceRegionCode(String govRegion) {
-        if (govRegion == null || govRegion.isBlank()) return "4183000000";
+    private String resolveBalanceRegionCode(String govRegionCode) {
+        if (govRegionCode == null || govRegionCode.isBlank()) return "4183000000";
         // 이미 10자리 코드
-        if (govRegion.length() >= 10 && govRegion.matches("\\d+")) return govRegion;
+        if (govRegionCode.length() >= 10 && govRegionCode.matches("\\d+")) return govRegionCode;
         // 4자리 시군구 코드 → 10자리 보정
-        if (govRegion.matches("\\d{4}")) return govRegion + "000000";
-        // 문자열(양평군 등) → DB 조회
-        try {
-            String code = jdbc.queryForObject(
-                "SELECT code FROM regions WHERE name = ? AND type = 'CITY' LIMIT 1",
-                String.class, govRegion);
-            return code != null ? code + "000000" : "4183000000";
-        } catch (Exception e) {
-            return "4183000000";
-        }
+        if (govRegionCode.matches("\\d{4}")) return govRegionCode + "000000";
+        return govRegionCode;
     }
 
     /**

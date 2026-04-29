@@ -4,7 +4,6 @@ export interface GovUser {
   id: number;
   name: string;
   role: string;
-  region: string;
   regionCode: string;
   regionName: string;
 }
