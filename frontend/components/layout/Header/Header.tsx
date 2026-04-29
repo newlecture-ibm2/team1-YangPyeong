@@ -59,6 +59,7 @@ export default function Header() {
     router.refresh();
   };
 
+
   /** 장바구니 클릭 — 로그인 체크 후 이동 */
   const handleCartClick = () => {
     if (!user) {

@@ -14,6 +14,7 @@ interface ButtonProps {
   disabled?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  id?: string;
 }
 
 export default function Button({
@@ -27,6 +28,7 @@ export default function Button({
   disabled = false,
   className = '',
   style,
+  id,
 }: ButtonProps) {
   const classNames = [
     styles.btn,
@@ -38,7 +40,7 @@ export default function Button({
 
   if (href) {
     return (
-      <Link href={href} className={classNames} style={style}>
+      <Link href={href} className={classNames} style={style} id={id}>
         {children}
       </Link>
     );
@@ -51,6 +53,7 @@ export default function Button({
       onClick={onClick}
       disabled={disabled}
       style={style}
+      id={id}
     >
       {children}
     </button>

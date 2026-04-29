@@ -26,7 +26,7 @@ export default function ShopBrowsePage() {
   const { success: toastSuccess } = useToast();
   const router = useRouter();
 
-  // TODO: 실제 인증 상태로 교체 (현재 더미)
+  // TODO: 실제 인증 상태로 교체
   const isLoggedIn = false;
 
   /** 로그인 필요 모달 */
