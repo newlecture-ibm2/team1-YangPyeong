@@ -7,10 +7,10 @@ import com.farmbalance.farm.application.port.in.RegisterFarmCommand;
 import com.farmbalance.farm.application.port.in.RegisterFarmUseCase;
 import com.farmbalance.farm.application.port.in.UpdateFarmCommand;
 import com.farmbalance.farm.application.port.in.UpdateFarmUseCase;
-import com.farmbalance.farm.application.port.out.GetCoordinatesPort;
+
 import com.farmbalance.farm.application.port.out.LoadFarmPort;
 import com.farmbalance.farm.application.port.out.SaveFarmPort;
-import com.farmbalance.farm.domain.Coordinates;
+
 import com.farmbalance.farm.domain.Farm;
 import com.farmbalance.farm.domain.CertificationStatus;
 import com.farmbalance.farm.domain.exception.FarmNotFoundException;
@@ -29,7 +29,6 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
     private final SaveFarmPort saveFarmPort;
     private final LoadFarmPort loadFarmPort;
     private final DeleteFarmPort deleteFarmPort;
-    private final GetCoordinatesPort getCoordinatesPort;
 
     @Override
     public Farm registerFarm(RegisterFarmCommand command) {
@@ -41,10 +40,9 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                 command.getSubNo()
         );
 
-        // 2. 카카오 주소 검색 API를 통해 위도/경도 조회
-        Coordinates coordinates = getCoordinatesPort.getCoordinates(command.getAddress());
 
-        // 3. 도메인 객체 생성 (순수 자바 객체)
+
+        // 2. 도메인 객체 생성 (좌표는 프론트엔드 카카오 Maps JS SDK에서 변환하여 전달받음)
         Farm farm = Farm.builder()
                 .userId(command.getUserId())
                 .name(command.getName())
@@ -53,14 +51,14 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                 .cropTypes(command.getCropTypes())
                 .bjdCode(command.getBjdCode())
                 .pnuCode(pnuCode)
-                .latitude(coordinates.getLatitude())
-                .longitude(coordinates.getLongitude())
+                .latitude(command.getLatitude())
+                .longitude(command.getLongitude())
                 .registrationNumber(command.getRegistrationNumber())
                 .documentUrl(command.getDocumentUrl())
                 .certificationStatus(CertificationStatus.PENDING)
                 .build();
 
-        // 4. 영속성 어댑터(Output Port) 호출하여 DB 저장
+        // 3. 영속성 어댑터(Output Port) 호출하여 DB 저장
         return saveFarmPort.saveFarm(farm);
     }
 
@@ -93,14 +91,9 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
             );
         }
 
-        // 3. 좌표 갱신 (주소가 변경된 경우)
+        // 3. 좌표는 기존 값 유지 (프론트엔드에서 수정 시 좌표를 같이 전달하도록 추후 개선)
         Double newLat = farm.getLatitude();
         Double newLng = farm.getLongitude();
-        if (command.getAddress() != null && !command.getAddress().equals(farm.getAddress())) {
-            Coordinates coordinates = getCoordinatesPort.getCoordinates(command.getAddress());
-            newLat = coordinates.getLatitude();
-            newLng = coordinates.getLongitude();
-        }
 
         // 4. 도메인 객체 업데이트
         farm.updateInfo(

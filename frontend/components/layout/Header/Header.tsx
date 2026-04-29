@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import styles from './Header.module.css';
 
 const NAV_LINKS = [
+  { href: '/farm', label: '내 농장' },
   { href: '/balance', label: '밸런스' },
   { href: '/recommend', label: 'AI 추천' },
   { href: '/community', label: '커뮤니티' },

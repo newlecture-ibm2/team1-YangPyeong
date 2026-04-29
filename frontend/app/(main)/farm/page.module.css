@@ -60,6 +60,45 @@
   align-items: center;
 }
 
+/* ── 농장 선택 탭 ── */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.tab:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.activeTab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background-color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 /* ── KPI 카드 Row ── */
 .kpiRow {
   display: grid;

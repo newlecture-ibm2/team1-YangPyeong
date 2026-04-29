@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
@@ -25,9 +26,10 @@ const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'li
 
 export default function FarmDashboardPage() {
   const { farms, isLoading } = useMyFarms();
+  const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
   
-  // 첫 번째 농장을 기본으로 표시 (추후 농장 선택 기능 추가 가능)
-  const farm = farms.length > 0 ? farms[0] : null;
+  // 선택된 농장 표시
+  const farm = farms.length > 0 ? farms[selectedFarmIdx] : null;
 
   if (isLoading) {
     return (
@@ -64,12 +66,27 @@ export default function FarmDashboardPage() {
           <p className={styles.breadcrumb}>
             <Link href="/" className={styles.breadcrumbLink}>홈</Link> / 내 농장
           </p>
-          <h1 className={styles.title}>내 농장 <span className={styles.italic}>관리</span></h1>
-          <p className={styles.subtitle}>{farm?.name}의 현황을 한눈에 확인하세요.</p>
+          <h1 className={styles.title}>{farm?.name} <span className={styles.italic}>현황</span></h1>
+          <p className={styles.subtitle}>선택하신 농장의 현황을 한눈에 확인하세요.</p>
+          
+          {/* 농장 선택 탭 */}
+          {farms.length > 0 && (
+            <div className={styles.tabs}>
+              {farms.map((f, idx) => (
+                <button 
+                  key={f.id} 
+                  className={idx === selectedFarmIdx ? styles.activeTab : styles.tab}
+                  onClick={() => setSelectedFarmIdx(idx)}
+                >
+                  {f.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className={styles.headerButtons}>
           <Link href="/farm/register">
-            <Button variant="outline">+ 농장 추가</Button>
+            <Button variant="outline">+ 새 농장 등록</Button>
           </Link>
         </div>
       </div>

@@ -37,9 +37,18 @@ public class FarmController {
             @AuthenticationPrincipal Long userId,
             @Valid @RequestBody FarmRegisterRequest request) {
         
+        System.out.println("[DEBUG] 농장 등록 요청 시작");
+        System.out.println("[DEBUG] userId: " + userId);
+        System.out.println("[DEBUG] name: " + request.getName());
+        System.out.println("[DEBUG] address: " + request.getAddress());
+        System.out.println("[DEBUG] bjdCode: " + request.getBjdCode());
+        System.out.println("[DEBUG] mainNo: " + request.getMainNo());
+        System.out.println("[DEBUG] subNo: " + request.getSubNo());
+        System.out.println("[DEBUG] area: " + request.getArea());
+        
         // TODO: 운영 전 제거 — 개발 환경에서 인증 없이 테스트하기 위한 임시 코드
         if (userId == null) {
-            userId = 1L;
+            userId = 9001L;
         }
 
         // DTO -> Command 매핑
@@ -55,6 +64,8 @@ public class FarmController {
                 .subNo(request.getSubNo())
                 .registrationNumber(request.getRegistrationNumber())
                 .documentUrl(request.getDocumentUrl())
+                .latitude(request.getLatitude())
+                .longitude(request.getLongitude())
                 .build();
 
         // UseCase 호출 (비즈니스 로직)
@@ -77,7 +88,7 @@ public class FarmController {
 
         // TODO: 운영 전 제거 — 개발 환경에서 인증 없이 테스트하기 위한 임시 코드
         if (userId == null) {
-            userId = 1L;
+            userId = 9001L;
         }
 
         List<Farm> farms = loadFarmUseCase.loadFarmsByUserId(userId);
@@ -87,6 +98,7 @@ public class FarmController {
                         .id(farm.getId())
                         .name(farm.getName())
                         .address(farm.getAddress())
+                        .area(farm.getArea())
                         .cropTypes(farm.getCropTypes())
                         .build())
                 .collect(Collectors.toList());

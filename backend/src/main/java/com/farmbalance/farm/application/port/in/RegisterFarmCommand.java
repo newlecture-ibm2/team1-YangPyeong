@@ -18,4 +18,6 @@ public class RegisterFarmCommand {
     private String subNo;
     private String registrationNumber;
     private String documentUrl;
+    private Double latitude;
+    private Double longitude;
 }

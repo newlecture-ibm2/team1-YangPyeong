@@ -102,7 +102,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .name(entity.getName())
                 .address(entity.getAddress())
                 .area(entity.getArea())
-                .cropTypes(entity.getCropTypes())
+                .cropTypes(entity.getCropTypes() != null ? new java.util.ArrayList<>(entity.getCropTypes()) : new java.util.ArrayList<>())
                 .bjdCode(entity.getBjdCode())
                 .pnuCode(entity.getPnuCode())
                 .latitude(entity.getLatitude())

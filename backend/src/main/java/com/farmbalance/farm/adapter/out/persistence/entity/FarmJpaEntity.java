@@ -70,7 +70,7 @@ public class FarmJpaEntity extends BaseTimeEntity {
     public FarmJpaEntity(UserJpaEntity user, String name, String address, Double area,
                          List<String> cropTypes, String bjdCode, String pnuCode,
                          Double latitude, Double longitude, String registrationNumber,
-                         String documentUrl,
+                         String documentUrl, String soilType,
                          com.farmbalance.farm.domain.CertificationStatus certificationStatus) {
         this.user = user;
         this.name = name;
@@ -83,6 +83,7 @@ public class FarmJpaEntity extends BaseTimeEntity {
         this.longitude = longitude;
         this.registrationNumber = registrationNumber;
         this.documentUrl = documentUrl;
+        this.soilType = soilType;
         this.certificationStatus = certificationStatus != null ? certificationStatus : com.farmbalance.farm.domain.CertificationStatus.PENDING;
     }
 
