@@ -24,4 +24,19 @@ public class Farm {
     public void updateCertificationStatus(CertificationStatus status) {
         this.certificationStatus = status;
     }
+
+    public void updateInfo(String name, String address, Double area, List<String> cropTypes, 
+                           String bjdCode, String pnuCode, Double latitude, Double longitude, 
+                           String registrationNumber, String documentUrl) {
+        this.name = name;
+        this.address = address;
+        this.area = area;
+        this.cropTypes = cropTypes;
+        this.bjdCode = bjdCode;
+        this.pnuCode = pnuCode;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.registrationNumber = registrationNumber;
+        this.documentUrl = documentUrl;
+    }
 }

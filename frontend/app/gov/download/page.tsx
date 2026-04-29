@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from '../gov.module.css';
-import { useGovUser, getTestHeaders } from '../_hooks/useGovUser';
+import { useGovUser, getTestHeaders } from '../useGovUser';
 import GovTabs from '../_components/GovTabs';
 
 /**
@@ -36,10 +36,7 @@ const TYPE_LABEL_MAP: Record<string, string> = {
   FARM: '농가 목록',
 };
 
-const TOWN_OPTIONS = [
-  '전체', '양평읍', '용문면', '강하면', '청운면', '양서면', '옥천면',
-  '지평면', '단월면', '개군면', '양동면', '서종면', '산북면',
-];
+
 
 const TABS = [
   { href: '/gov', label: '대시보드' },
@@ -58,8 +55,11 @@ export default function DownloadPage() {
   const [startDate, setStartDate] = useState('2026-01-01');
   const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
   const [format, setFormat] = useState<'XLSX' | 'CSV'>('XLSX');
-  const [town, setTown] = useState('전체');
+  const [town, setTown] = useState('');
   const [downloading, setDownloading] = useState(false);
+
+  // 읍면 목록 API 조회 (하드코딩 제거)
+  const [townOptions, setTownOptions] = useState<{code: string; name: string}[]>([]);
 
   // DB 이력
   const [history, setHistory] = useState<DownloadHistoryItem[]>([]);
@@ -77,16 +77,20 @@ export default function DownloadPage() {
     }
   }, []);
 
-  // 페이지 로드 시 이력 조회
+  // 페이지 로드 시 이력 + 읍면 목록 조회
   useEffect(() => {
     fetchHistory();
+    fetch('/api/gov/regions', { headers: getTestHeaders() })
+      .then(r => r.json())
+      .then(res => { if (res.data) setTownOptions(res.data); })
+      .catch(console.error);
   }, [fetchHistory]);
 
   /** 다운로드 실행 */
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const townParam = town === '전체' ? 'ALL' : town;
+      const townParam = town || 'ALL';
       const params = new URLSearchParams({
         type: dataType,
         format,
@@ -145,7 +149,7 @@ export default function DownloadPage() {
     });
   };
 
-  const region = user?.region || "지자체";
+  const region = user?.regionName || user?.region || "지자체";
 
   return (
     <div className={styles.page}>
@@ -229,8 +233,9 @@ export default function DownloadPage() {
               value={town}
               onChange={e => setTown(e.target.value)}
             >
-              {TOWN_OPTIONS.map(t => (
-                <option key={t} value={t}>{t}</option>
+              <option value="">전체</option>
+              {townOptions.map(t => (
+                <option key={t.code} value={t.code}>{t.name}</option>
               ))}
             </select>
           </div>

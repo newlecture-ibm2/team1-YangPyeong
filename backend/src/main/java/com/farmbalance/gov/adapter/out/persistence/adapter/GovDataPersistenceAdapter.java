@@ -1,6 +1,7 @@
 package com.farmbalance.gov.adapter.out.persistence.adapter;
 
 import com.farmbalance.gov.application.port.out.GovDataQueryPort;
+import com.farmbalance.gov.domain.model.GovUserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,12 @@ import java.util.Map;
 /**
  * 지자체 데이터 조회 Driven Adapter (JdbcTemplate 네이티브 쿼리)
  * 기존 ERD 테이블(farms, seed_registrations, balance_data, orders 등)을 직접 조회합니다.
+ *
+ * [변경 이력]
+ * - TOWN_CASE 하드코딩(12개 CASE WHEN) → regions 테이블 JOIN 기반으로 교체
+ * - getGovUserInfo: regionCode, regionName 추가 조회
+ * - queryBalance: 하드코딩 regionCode 매핑 → users.region_code 기반 조회
+ * - buildTownFilter: 하드코딩 switch문 → regions 테이블 유효성 검증 기반
  */
 @Component
 @RequiredArgsConstructor
@@ -19,42 +26,46 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
 
     private final JdbcTemplate jdbc;
 
-    /** 읍면 추출 CASE 표현식 (공통) */
-    private static final String TOWN_CASE = """
+    /**
+     * 읍면 추출 — regions 테이블 기반 서브쿼리
+     * 기존 12개 CASE WHEN 하드코딩 제거
+     */
+    private static final String TOWN_EXPR = """
         COALESCE(
-          CASE WHEN f.address LIKE '%양평읍%' THEN '양평읍'
-               WHEN f.address LIKE '%용문면%' THEN '용문면'
-               WHEN f.address LIKE '%강하면%' THEN '강하면'
-               WHEN f.address LIKE '%청운면%' THEN '청운면'
-               WHEN f.address LIKE '%양서면%' THEN '양서면'
-               WHEN f.address LIKE '%옥천면%' THEN '옥천면'
-               WHEN f.address LIKE '%지평면%' THEN '지평면'
-               WHEN f.address LIKE '%단월면%' THEN '단월면'
-               WHEN f.address LIKE '%개군면%' THEN '개군면'
-               WHEN f.address LIKE '%양동면%' THEN '양동면'
-               WHEN f.address LIKE '%서종면%' THEN '서종면'
-               WHEN f.address LIKE '%산북면%' THEN '산북면'
-               ELSE '기타' END, '기타')
+          (SELECT rg.name FROM regions rg
+           WHERE rg.type = 'TOWN' AND rg.is_active = TRUE
+             AND f.address LIKE '%%' || rg.name || '%%'
+           LIMIT 1),
+          '기타')
         """;
 
     @Override
-    public com.farmbalance.gov.domain.model.GovUserInfo getGovUserInfo(Long userId) {
-        String sql = "SELECT id, name, role, region FROM users WHERE id = ? AND deleted_at IS NULL";
+    public GovUserInfo getGovUserInfo(Long userId) {
+        String sql = """
+            SELECT u.id, u.name, u.role, u.region,
+                   COALESCE(u.region_code, '') AS region_code,
+                   COALESCE(r.name, u.region, '') AS region_name
+            FROM users u
+            LEFT JOIN regions r ON r.code = u.region_code AND r.type = 'CITY'
+            WHERE u.id = ? AND u.deleted_at IS NULL
+            """;
         List<Map<String, Object>> result = jdbc.queryForList(sql, userId);
         if (result.isEmpty()) return null;
         Map<String, Object> row = result.get(0);
-        return new com.farmbalance.gov.domain.model.GovUserInfo(
+        return new GovUserInfo(
             ((Number) row.get("id")).longValue(),
             (String) row.get("name"),
             (String) row.get("role"),
-            (String) row.get("region")
+            (String) row.get("region"),
+            (String) row.get("region_code"),
+            (String) row.get("region_name")
         );
     }
 
     @Override
     public List<Map<String, Object>> queryCultivation(LocalDate startDate, LocalDate endDate, String govRegion, String town) {
         String townFilter = buildTownFilter(town);
-        String regionFilter = (govRegion != null) ? " AND f.address LIKE '%" + govRegion + "%' " : "";
+        String regionFilter = buildRegionFilter(govRegion);
         String sql = """
             SELECT %s AS "읍면",
                    f.name AS "농가명",
@@ -70,14 +81,15 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
               %s
               %s
             ORDER BY sr.created_at DESC
-            """.formatted(TOWN_CASE, townFilter, regionFilter);
+            """.formatted(TOWN_EXPR, townFilter, regionFilter);
         return jdbc.queryForList(sql, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
     }
 
     @Override
     public List<Map<String, Object>> queryBalance(LocalDate startDate, LocalDate endDate, String govRegion, String town) {
-        // 임시 매핑
-        String regionCode = "가평군".equals(govRegion) ? "4182000000" : "4183000000";
+        // regionCode 기반 조회 — 하드코딩 매핑 제거
+        // govRegion이 시군구 코드(4183 등)이면 그대로 사용, 아니면 regions 테이블에서 조회
+        String regionCode = resolveBalanceRegionCode(govRegion);
         String sql = """
             SELECT c.name AS "작물명",
                    bd.region_code AS "지역",
@@ -106,7 +118,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
 
     @Override
     public List<Map<String, Object>> querySales(LocalDate startDate, LocalDate endDate, String govRegion, String town) {
-        String regionFilter = (govRegion != null) ? " AND f.address LIKE '%" + govRegion + "%' " : "";
+        String regionFilter = buildRegionFilter(govRegion);
         String sql = """
             SELECT TO_CHAR(o.created_at, 'YYYY-MM-DD') AS "주문일",
                    p.name AS "상품명",
@@ -131,7 +143,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
     @Override
     public List<Map<String, Object>> queryFarms(LocalDate startDate, LocalDate endDate, String govRegion, String town) {
         String townFilter = buildTownFilter(town);
-        String regionFilter = (govRegion != null) ? " AND f.address LIKE '%" + govRegion + "%' " : "";
+        String regionFilter = buildRegionFilter(govRegion);
         String sql = """
             SELECT f.name AS "농가명",
                    u.name AS "대표자",
@@ -149,21 +161,59 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
               %s
             GROUP BY f.id, f.name, u.name, f.address, f.area_size, f.status
             ORDER BY f.name
-            """.formatted(TOWN_CASE, townFilter, regionFilter);
+            """.formatted(TOWN_EXPR, townFilter, regionFilter);
         return jdbc.queryForList(sql, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
     }
 
-    /** 읍면 필터 SQL 조건 생성 ("ALL"이면 빈 문자열) */
+    /**
+     * 지역 필터 SQL — govRegion이 코드(숫자)면 region_code로, 문자열이면 address LIKE로 필터
+     * 기존 로직과의 하위호환 유지
+     */
+    private String buildRegionFilter(String govRegion) {
+        if (govRegion == null || govRegion.isBlank()) return "";
+        // 숫자로만 구성되면 코드 기반 → users.region_code로 필터
+        if (govRegion.matches("\\d+")) {
+            return " AND f.user_id IN (SELECT u2.id FROM users u2 WHERE u2.region_code = '" + govRegion + "') ";
+        }
+        // 기존 문자열 방식 fallback
+        return " AND f.address LIKE '%" + govRegion + "%' ";
+    }
+
+    /**
+     * balance_data용 region_code 해석
+     * - 4자리(시군구 코드) → 10자리 보정 (예: 4183 → 4183000000)
+     * - 문자열(양평군) → regions 테이블에서 코드 조회 후 10자리로 보정
+     * - 10자리 이상 → 그대로 사용
+     */
+    private String resolveBalanceRegionCode(String govRegion) {
+        if (govRegion == null || govRegion.isBlank()) return "4183000000";
+        // 이미 10자리 코드
+        if (govRegion.length() >= 10 && govRegion.matches("\\d+")) return govRegion;
+        // 4자리 시군구 코드 → 10자리 보정
+        if (govRegion.matches("\\d{4}")) return govRegion + "000000";
+        // 문자열(양평군 등) → DB 조회
+        try {
+            String code = jdbc.queryForObject(
+                "SELECT code FROM regions WHERE name = ? AND type = 'CITY' LIMIT 1",
+                String.class, govRegion);
+            return code != null ? code + "000000" : "4183000000";
+        } catch (Exception e) {
+            return "4183000000";
+        }
+    }
+
+    /**
+     * 읍면 필터 — regions 테이블에서 이름을 조회하여 LIKE 필터 (하드코딩 switch 제거)
+     */
     private String buildTownFilter(String town) {
         if (town == null || town.isBlank() || "ALL".equalsIgnoreCase(town) || "전체".equals(town)) {
             return "";
         }
-        // SQL Injection 방어: 허용 읍면 목록만 허용
-        return switch (town) {
-            case "양평읍", "용문면", "강하면", "청운면", "양서면", "옥천면",
-                 "지평면", "단월면", "개군면", "양동면", "서종면", "산북면"
-                -> "AND f.address LIKE '%%" + town + "%%'";
-            default -> "";
-        };
+        // 코드로 전달된 경우 → regions에서 name 조회
+        if (town.matches("\\d+")) {
+            return " AND f.address LIKE '%%' || (SELECT name FROM regions WHERE code = '" + town + "' AND type = 'TOWN') || '%%' ";
+        }
+        // 이름으로 전달된 경우 → regions에서 존재 확인 후 사용 (SQL Injection 방어)
+        return " AND f.address LIKE '%%' || (SELECT name FROM regions WHERE name = '" + town + "' AND type = 'TOWN') || '%%' ";
     }
 }

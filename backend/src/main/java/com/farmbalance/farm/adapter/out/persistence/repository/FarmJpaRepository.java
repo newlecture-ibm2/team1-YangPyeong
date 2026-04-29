@@ -15,4 +15,7 @@ public interface FarmJpaRepository extends JpaRepository<FarmJpaEntity, Long> {
 
     // PNU 중복 체크
     boolean existsByPnuCode(String pnuCode);
+
+    // PNU 코드로 조회
+    java.util.Optional<FarmJpaEntity> findByPnuCode(String pnuCode);
 }
