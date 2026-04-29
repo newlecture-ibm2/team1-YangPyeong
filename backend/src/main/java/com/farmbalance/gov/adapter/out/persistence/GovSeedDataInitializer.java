@@ -3,6 +3,7 @@ package com.farmbalance.gov.adapter.out.persistence;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -15,61 +16,125 @@ import java.util.List;
 
 /**
  * 지자체 Seed 데이터 초기화
- * seed-gov.sql 을 앱 기동 시 한 번 실행합니다.
- * 이미 데이터가 있으면 스킵 (멱등).
+ * - dev 프로필에서만 실행 (운영 서버 보호)
+ * - 식별자 기반 삭제 (email suffix, order_number prefix 등)
+ * - id BETWEEN 범위 삭제 절대 금지
  */
 @Slf4j
 @Component
+@Profile("dev")
 @RequiredArgsConstructor
 public class GovSeedDataInitializer {
 
     private final JdbcTemplate jdbc;
 
+    /** 시드 데이터 식별용 이메일 접미사 */
+    private static final String SEED_EMAIL = "%@gov-seed.local";
+
     @PostConstruct
     public void init() {
         try {
-            Integer userCount = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM users WHERE id BETWEEN 9000 AND 9040", Integer.class);
-            Integer orderCount = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM orders WHERE id BETWEEN 9000 AND 9100", Integer.class);
-            Integer farmCount = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM farms WHERE id BETWEEN 9000 AND 9030", Integer.class);
-            Integer balanceCount = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM balance_data WHERE id BETWEEN 9000 AND 9100", Integer.class);
+            int seedUserCount = countSeedUsers();
 
-            if (userCount != null && userCount >= 31 && 
-                orderCount != null && orderCount >= 23 &&
-                farmCount != null && farmCount >= 25 &&
-                balanceCount != null && balanceCount >= 28) {
-                log.info("[Gov Seed] 이미 시드 데이터가 완전히 존재합니다. 스킵합니다.");
+            if (seedUserCount >= 32) {
+                log.info("[Gov Seed] 시드 데이터가 완전히 존재합니다 ({}명/32명). 스킵합니다.", seedUserCount);
                 return;
             }
 
-            // 불완전 데이터가 있으면 정리
-            if (userCount != null && userCount > 0 || farmCount != null && farmCount > 0) {
-                log.info("[Gov Seed] 불완전 시드 데이터 감지 (유저 {}/31, 농가 {}/25). 정리 후 재삽입합니다.", userCount, farmCount);
-                
-                try {
-                    jdbc.execute("ALTER TABLE farms ALTER COLUMN area DROP NOT NULL");
-                } catch (Exception ignored) {}
-
-                try {
-                    jdbc.execute("DELETE FROM download_history WHERE user_id BETWEEN 9000 AND 9050");
-                } catch (Exception ignored) {}
-
-                jdbc.execute("DELETE FROM order_items WHERE id BETWEEN 9000 AND 9100");
-                jdbc.execute("DELETE FROM orders WHERE id BETWEEN 9000 AND 9100");
-                jdbc.execute("DELETE FROM balance_data WHERE id BETWEEN 9000 AND 9100");
-                jdbc.execute("DELETE FROM seed_registrations WHERE id BETWEEN 9000 AND 9200");
-                jdbc.execute("DELETE FROM products WHERE id BETWEEN 9000 AND 9020");
-                jdbc.execute("DELETE FROM product_categories WHERE id BETWEEN 9000 AND 9005");
-                jdbc.execute("DELETE FROM farms WHERE id BETWEEN 9000 AND 9030");
-                jdbc.execute("DELETE FROM crops WHERE id BETWEEN 9000 AND 9010");
-                jdbc.execute("DELETE FROM crop_categories WHERE id BETWEEN 9000 AND 9005");
-                jdbc.execute("DELETE FROM users WHERE id BETWEEN 9000 AND 9050");
+            if (seedUserCount > 0) {
+                log.info("[Gov Seed] 불완전 시드 데이터 감지 ({}명/32명). 정리 후 재삽입합니다.", seedUserCount);
+                cleanSeedData();
             }
 
-            ClassPathResource resource = new ClassPathResource("seed-gov.sql");
+            executeSeedSql();
+        } catch (Exception e) {
+            log.error("[Gov Seed] ❌ 시드 데이터 초기화 실패", e);
+        }
+    }
+
+    /** 시드 유저 수 조회 */
+    private int countSeedUsers() {
+        Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM users WHERE email LIKE ?", Integer.class, SEED_EMAIL);
+        return count != null ? count : 0;
+    }
+
+    /**
+     * 시드 데이터만 안전하게 삭제 (식별자 기반, FK 역순)
+     * - 이메일: %@gov-seed.local
+     * - 주문번호: GS-%
+     * - 작물코드: GS_%
+     * - 카테고리명: [GS]%
+     */
+    private void cleanSeedData() {
+        safeDelete("download_history",
+                "DELETE FROM download_history WHERE user_id IN (SELECT id FROM users WHERE email LIKE ?)",
+                SEED_EMAIL);
+
+        safeDelete("order_items",
+                "DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE order_number LIKE ?)",
+                "GS-%");
+
+        safeDelete("orders",
+                "DELETE FROM orders WHERE order_number LIKE ?",
+                "GS-%");
+
+        safeDelete("balance_data",
+                "DELETE FROM balance_data WHERE crop_id IN (SELECT id FROM crops WHERE code LIKE ?)",
+                "GS_%");
+
+        safeDelete("seed_registrations",
+                "DELETE FROM seed_registrations WHERE farm_id IN " +
+                "(SELECT id FROM farms WHERE user_id IN (SELECT id FROM users WHERE email LIKE ?))",
+                SEED_EMAIL);
+
+        safeDelete("products",
+                "DELETE FROM products WHERE seller_id IN (SELECT id FROM users WHERE email LIKE ?)",
+                SEED_EMAIL);
+
+        safeDelete("product_categories",
+                "DELETE FROM product_categories WHERE name LIKE ?",
+                "[GS]%");
+
+        safeDelete("farms",
+                "DELETE FROM farms WHERE user_id IN (SELECT id FROM users WHERE email LIKE ?)",
+                SEED_EMAIL);
+
+        safeDelete("crops",
+                "DELETE FROM crops WHERE code LIKE ?",
+                "GS_%");
+
+        safeDelete("crop_categories",
+                "DELETE FROM crop_categories WHERE name LIKE ?",
+                "[GS]%");
+
+        safeDelete("users",
+                "DELETE FROM users WHERE email LIKE ?",
+                SEED_EMAIL);
+    }
+
+    /** 삭제 건수 로깅 후 실행. 실패 시 에러 로그. */
+    private void safeDelete(String table, String sql, String param) {
+        try {
+            int deleted = jdbc.update(sql, param);
+            if (deleted > 0) {
+                log.info("[Gov Seed] {} 테이블에서 {}건 삭제", table, deleted);
+            }
+        } catch (Exception e) {
+            log.error("[Gov Seed] {} 삭제 실패: {}", table, e.getMessage());
+        }
+    }
+
+    /** seed-regions.sql → seed-gov.sql 순서로 실행 */
+    private void executeSeedSql() {
+        executeSqlFile("seed-regions.sql");
+        executeSqlFile("seed-gov.sql");
+    }
+
+    /** SQL 파일 읽어서 실행 */
+    private void executeSqlFile(String filename) {
+        try {
+            ClassPathResource resource = new ClassPathResource(filename);
             List<String> statements = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
 
@@ -78,13 +143,11 @@ public class GovSeedDataInitializer {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     String trimmed = line.trim();
-                    // 주석과 빈 줄 무시
                     if (trimmed.isEmpty() || trimmed.startsWith("--")) continue;
                     sb.append(line).append("\n");
                     if (trimmed.endsWith(";")) {
-                        // 세미콜론에서 분할
                         String stmt = sb.toString().trim();
-                        stmt = stmt.substring(0, stmt.length() - 1).trim(); // 세미콜론 제거
+                        stmt = stmt.substring(0, stmt.length() - 1).trim();
                         if (!stmt.isEmpty()) {
                             statements.add(stmt);
                         }
@@ -99,12 +162,13 @@ public class GovSeedDataInitializer {
                     jdbc.execute(stmt);
                     executed++;
                 } catch (Exception e) {
-                    log.warn("[Gov Seed] SQL 실행 실패: {}", e.getMessage());
+                    log.warn("[Gov Seed] [{}] SQL 실행 실패: {}", filename, e.getMessage());
                 }
             }
-            log.info("[Gov Seed] ✅ 시드 데이터 {} / {} 건 실행 완료", executed, statements.size());
+            log.info("[Gov Seed] ✅ {} — {} / {} 건 실행 완료", filename, executed, statements.size());
         } catch (Exception e) {
-            log.error("[Gov Seed] ❌ 시드 데이터 초기화 실패", e);
+            log.error("[Gov Seed] ❌ {} 파일 실행 실패", filename, e);
         }
     }
 }
+

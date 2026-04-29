@@ -7,6 +7,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+
 import java.util.Map;
 
 /**
@@ -21,6 +24,8 @@ public class GoogleOAuthClient {
 
     private final RestClient restClient = RestClient.create();
 
+    @Retry(name = "oauthRetry")
+    @CircuitBreaker(name = "oauthCircuitBreaker")
     public OAuthUserInfo getUserInfo(String accessToken) {
         try {
             @SuppressWarnings("unchecked")
