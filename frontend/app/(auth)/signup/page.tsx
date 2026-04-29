@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import styles from './page.module.css';
+import { getPasswordStrength } from '@/lib/utils';
 
 // ── 보안질문 목록 ──
 const SECURITY_QUESTIONS = [
@@ -17,20 +18,6 @@ const SECURITY_QUESTIONS = [
   '어머니의 고향은?',
   '첫 직장의 이름은?',
 ];
-
-// ── 비밀번호 강도 체크 ──
-function getPasswordStrength(pw: string): { level: number; text: string } {
-  if (pw.length < 6) return { level: 0, text: '' };
-  let score = 0;
-  if (pw.length >= 8) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-
-  if (score <= 1) return { level: 1, text: '약함' };
-  if (score <= 2) return { level: 2, text: '보통' };
-  return { level: 3, text: '강함' };
-}
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -90,7 +77,14 @@ export default function SignUpPage() {
     try {
       const result = await apiFetch('/api/auth/signup', {
         method: 'POST',
-        body: { email, password, name, phone: phone || null },
+        body: {
+          email,
+          password,
+          name,
+          phone: phone || null,
+          securityQuestion,
+          securityAnswer,
+        },
       });
 
       if (result.success) {

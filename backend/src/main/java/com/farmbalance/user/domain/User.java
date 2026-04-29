@@ -18,12 +18,31 @@ public class User {
     private String name;
     private String phone;
     private Role role;
+    private String region;
     private UserStatus status;
     private AuthProvider provider;
     private String providerId;
     private String profileImageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    /** 비밀번호만 변경한 새 User 인스턴스를 반환합니다. (불변 패턴) */
+    public User withPassword(String newPassword) {
+        return User.builder()
+                .id(this.id)
+                .email(this.email)
+                .password(newPassword)
+                .name(this.name)
+                .phone(this.phone)
+                .role(this.role)
+                .status(this.status)
+                .provider(this.provider)
+                .providerId(this.providerId)
+                .profileImageUrl(this.profileImageUrl)
+                .createdAt(this.createdAt)
+                .updatedAt(this.updatedAt)
+                .build();
+    }
 
     public void updateRole(Role role) {
         this.role = role;
