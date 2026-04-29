@@ -89,7 +89,7 @@ export default function ComparePage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="crop" />
                 <YAxis unit="%" />
-                <Tooltip formatter={(value: number) => `${value.toFixed(2)}%`} />
+                <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toFixed(2)}%` : `${value}%`} />
                 <Bar dataKey="diffRate" name="증감률(%)" fill="#CCFF33" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
