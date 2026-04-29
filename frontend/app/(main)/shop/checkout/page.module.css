@@ -150,6 +150,36 @@
   opacity: 0.6;
 }
 
+.formInputError {
+  border-color: #e53e3e;
+  background: rgba(229, 62, 62, 0.03);
+}
+
+.formInputError:focus {
+  border-color: #e53e3e;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+}
+
+.errorMessage {
+  font-size: 13px;
+  color: #e53e3e;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.errorMessage::before {
+  content: '⚠';
+  font-size: 12px;
+}
+
+.required {
+  color: #e53e3e;
+  font-weight: 400;
+  margin-left: 2px;
+}
+
 .formInputReadonly {
   background: var(--color-background);
   color: var(--color-text-secondary);

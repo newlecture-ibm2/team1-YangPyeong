@@ -73,11 +73,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     setShowCartSuccessModal(true);
   };
 
-  /** 바로 구매 확정 */
+  /** 바로 구매 확정 → 결제 페이지로 이동 */
   const handleConfirmBuy = () => {
-    toastSuccess(`${product?.name} ${quantity}개 주문을 진행합니다.`);
     closePurchaseModal();
-    // TODO: 결제 페이지로 이동
+    router.push(`/shop/checkout?productId=${id}&quantity=${quantity}`);
   };
 
   /** 라이트박스 키보드 이벤트 */

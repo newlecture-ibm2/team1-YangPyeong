@@ -1,7 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
+import Script from 'next/script';
 import Link from 'next/link';
 import { useCheckout } from './useCheckout';
+import Dropdown from '@/components/common/Dropdown';
 import {
   FREE_SHIPPING_THRESHOLD,
   DELIVERY_MEMO_OPTIONS,
@@ -13,8 +16,24 @@ function formatPrice(price: number): string {
   return `₩${price.toLocaleString()}`;
 }
 
-/** 주문/결제 페이지 */
+/** 주문/결제 페이지 (Suspense 래퍼) */
 export default function CheckoutPage() {
+  return (
+    <>
+      {/* 다음(카카오) 우편번호 검색 API 스크립트 */}
+      <Script
+        src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
+        strategy="lazyOnload"
+      />
+      <Suspense fallback={<div className={styles.page}>로딩 중...</div>}>
+        <CheckoutContent />
+      </Suspense>
+    </>
+  );
+}
+
+/** 주문/결제 콘텐츠 */
+function CheckoutContent() {
   const {
     orderItems,
     shippingForm,
@@ -28,10 +47,18 @@ export default function CheckoutPage() {
     isFormValid,
     isProcessing,
     paymentError,
+    errors,
+    touched,
+    handleBlur,
+    openDaumPostcode,
   } = useCheckout();
 
   /** 직접 입력 메모인지 체크 */
   const isCustomMemo = shippingForm.deliveryMemo === '직접 입력';
+
+  /** 에러 보여줄지 여부 (touched 된 필드에만 표시) */
+  const showError = (field: 'receiverName' | 'receiverPhone' | 'address') =>
+    touched[field] && errors[field];
 
   return (
     <div className={styles.page}>
@@ -69,29 +96,37 @@ export default function CheckoutPage() {
             <div className={styles.formGrid}>
               {/* 받는 분 */}
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>받는 분</label>
+                <label className={styles.formLabel}>받는 분 <span className={styles.required}>*</span></label>
                 <input
-                  className={styles.formInput}
+                  className={`${styles.formInput} ${showError('receiverName') ? styles.formInputError : ''}`}
                   placeholder="이름을 입력하세요"
                   value={shippingForm.receiverName}
                   onChange={(e) => updateShipping('receiverName', e.target.value)}
+                  onBlur={() => handleBlur('receiverName')}
                 />
+                {showError('receiverName') && (
+                  <span className={styles.errorMessage}>{errors.receiverName}</span>
+                )}
               </div>
 
               {/* 연락처 */}
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>연락처</label>
+                <label className={styles.formLabel}>연락처 <span className={styles.required}>*</span></label>
                 <input
-                  className={styles.formInput}
+                  className={`${styles.formInput} ${showError('receiverPhone') ? styles.formInputError : ''}`}
                   placeholder="010-0000-0000"
                   value={shippingForm.receiverPhone}
                   onChange={(e) => updateShipping('receiverPhone', e.target.value)}
+                  onBlur={() => handleBlur('receiverPhone')}
                 />
+                {showError('receiverPhone') && (
+                  <span className={styles.errorMessage}>{errors.receiverPhone}</span>
+                )}
               </div>
 
               {/* 배송지 */}
               <div className={styles.formGroupFull}>
-                <label className={styles.formLabel}>배송지</label>
+                <label className={styles.formLabel}>배송지 <span className={styles.required}>*</span></label>
                 <div className={styles.addressRow}>
                   <input
                     className={`${styles.formInput} ${styles.postcodeInput} ${styles.formInputReadonly}`}
@@ -101,21 +136,21 @@ export default function CheckoutPage() {
                   />
                   <button
                     className={styles.addressSearchBtn}
-                    onClick={() => {
-                      // TODO: 다음(카카오) 주소 검색 API 연동
-                      updateShipping('postcode', '12345');
-                      updateShipping('address', '경기도 양평군 양평읍 양평로 123');
-                    }}
+                    onClick={openDaumPostcode}
+                    type="button"
                   >
                     주소 검색
                   </button>
                 </div>
                 <input
-                  className={styles.formInput}
+                  className={`${styles.formInput} ${showError('address') ? styles.formInputError : ''}`}
                   value={shippingForm.address}
                   placeholder="주소를 검색해 주세요"
                   readOnly
                 />
+                {showError('address') && (
+                  <span className={styles.errorMessage}>{errors.address}</span>
+                )}
                 <input
                   className={`${styles.formInput} ${styles.addressDetailInput}`}
                   placeholder="상세 주소를 입력하세요"
@@ -127,15 +162,12 @@ export default function CheckoutPage() {
               {/* 배송 메모 */}
               <div className={styles.formGroupFull}>
                 <label className={styles.formLabel}>배송 메모</label>
-                <select
-                  className={styles.formSelect}
+                <Dropdown
+                  options={DELIVERY_MEMO_OPTIONS.map((opt) => ({ value: opt, label: opt }))}
                   value={shippingForm.deliveryMemo}
-                  onChange={(e) => updateShipping('deliveryMemo', e.target.value)}
-                >
-                  {DELIVERY_MEMO_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
+                  onChange={(val) => updateShipping('deliveryMemo', val)}
+                  fullWidth
+                />
                 {isCustomMemo && (
                   <input
                     className={`${styles.formInput} ${styles.addressDetailInput}`}
@@ -168,13 +200,6 @@ export default function CheckoutPage() {
               >
                 <span className={styles.paymentIcon}>🏦</span>
                 무통장 입금
-              </button>
-              <button
-                className={`${styles.paymentBtn} ${paymentMethod === 'kakaopay' ? styles.paymentBtnActive : ''}`}
-                onClick={() => setPaymentMethod('kakaopay')}
-              >
-                <span className={styles.paymentIcon}>💛</span>
-                카카오페이
               </button>
             </div>
           </div>
