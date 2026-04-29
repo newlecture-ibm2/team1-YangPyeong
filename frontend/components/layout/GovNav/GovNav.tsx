@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useGovUser } from '@/app/gov/_hooks/useGovUser';
+import { useGovUser } from '@/app/gov/useGovUser';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import styles from '@/components/layout/Header/Header.module.css';
