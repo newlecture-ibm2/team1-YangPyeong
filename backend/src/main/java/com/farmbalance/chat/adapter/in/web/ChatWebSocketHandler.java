@@ -36,7 +36,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         log.info("새로운 웹소켓 연결 시도: sessionId={}", session.getId());
         try {
             // URI 쿼리 파라미터에서 토큰 추출 (예: ws://localhost:8080/ws/chat?token=eyJhbGci...)
@@ -97,7 +97,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         log.info("웹소켓 연결 종료: sessionId={}, status={}", session.getId(), status);
         sessions.remove(session.getId());
     }
