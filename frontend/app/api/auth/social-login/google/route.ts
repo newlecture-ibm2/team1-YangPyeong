@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'authorization_code',
-        client_id: process.env.GOOGLE_CLIENT_ID || '',
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
         client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
         redirect_uri: redirectUri,
         code,

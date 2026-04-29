@@ -113,6 +113,18 @@
   gap: 10px;
 }
 
+/* ── Forgot Password ── */
+.forgotPassword {
+  text-align: right;
+  margin-top: 12px;
+  margin-bottom: -8px;
+}
+
+.forgotPassword .footerLink {
+  font-size: 13px;
+  font-weight: 500;
+}
+
 /* ── Footer ── */
 .authFooter {
   text-align: center;
