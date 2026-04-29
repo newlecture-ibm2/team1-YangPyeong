@@ -37,14 +37,11 @@ public class GovController {
     }
 
     /**
-     * 로그인한 GOV 사용자의 관할 지역(시군구)을 결정합니다.
-     * regionCode가 있으면 우선 사용, 없으면 기존 region 필드 fallback.
+     * 로그인한 GOV 사용자의 관할 지역 코드를 반환합니다.
+     * users.region_code → regions 마스터 테이블 기반
      */
     private String resolveRegion(GovUserInfo user) {
-        if (user.regionCode() != null && !user.regionCode().isBlank()) {
-            return user.regionCode();
-        }
-        return user.region();
+        return user.regionCode();
     }
 
     @GetMapping("/me")
