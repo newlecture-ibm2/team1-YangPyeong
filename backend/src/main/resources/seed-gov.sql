@@ -4,70 +4,72 @@
 -- ⚠ 운영 데이터 아님 — 발표/시연용
 -- ═══════════════════════════════════════════════════════════════
 
--- 1. 안전한 삭제 (FK 역순)
-DELETE FROM order_items WHERE id BETWEEN 9000 AND 9100;
-DELETE FROM orders WHERE id BETWEEN 9000 AND 9100;
-DELETE FROM balance_data WHERE id BETWEEN 9000 AND 9100;
-DELETE FROM seed_registrations WHERE id BETWEEN 9000 AND 9200;
-DELETE FROM products WHERE id BETWEEN 9000 AND 9020;
-DELETE FROM product_categories WHERE id BETWEEN 9000 AND 9005;
-DELETE FROM farms WHERE id BETWEEN 9000 AND 9030;
-DELETE FROM crops WHERE id BETWEEN 9000 AND 9010;
-DELETE FROM crop_categories WHERE id BETWEEN 9000 AND 9005;
-DELETE FROM users WHERE id BETWEEN 9000 AND 9040;
+-- 1. 안전한 삭제 (식별자 기반, FK 역순)
+-- ⚠ id BETWEEN 삭제 금지 — 반드시 식별자(email, order_number, code, name prefix)로 삭제
+DELETE FROM download_history WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@gov-seed.local');
+DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE order_number LIKE 'GS-%');
+DELETE FROM orders WHERE order_number LIKE 'GS-%';
+DELETE FROM balance_data WHERE crop_id IN (SELECT id FROM crops WHERE code LIKE 'GS_%');
+DELETE FROM seed_registrations WHERE farm_id IN (SELECT id FROM farms WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@gov-seed.local'));
+DELETE FROM products WHERE seller_id IN (SELECT id FROM users WHERE email LIKE '%@gov-seed.local');
+DELETE FROM product_categories WHERE name LIKE '[GS]%';
+DELETE FROM farms WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@gov-seed.local');
+DELETE FROM crops WHERE code LIKE 'GS_%';
+DELETE FROM crop_categories WHERE name LIKE '[GS]%';
+DELETE FROM users WHERE email LIKE '%@gov-seed.local';
 
 -- ═══════ 2. users (농업인 25명 + 구매자 5명 + 지자체 1명) ═══════
 INSERT INTO users (id, email, password, name, phone, role, status, created_at) VALUES
-(9001,'gov_farmer01@test.com','$2a$10$dummy','김양평','010-1111-0001','FARMER','ACTIVE','2025-01-10 09:00:00'),
-(9002,'gov_farmer02@test.com','$2a$10$dummy','이용문','010-1111-0002','FARMER','ACTIVE','2025-01-15 09:00:00'),
-(9003,'gov_farmer03@test.com','$2a$10$dummy','박강하','010-1111-0003','FARMER','ACTIVE','2025-02-01 09:00:00'),
-(9004,'gov_farmer04@test.com','$2a$10$dummy','최청운','010-1111-0004','FARMER','ACTIVE','2025-02-10 09:00:00'),
-(9005,'gov_farmer05@test.com','$2a$10$dummy','정양서','010-1111-0005','FARMER','ACTIVE','2025-03-01 09:00:00'),
-(9006,'gov_farmer06@test.com','$2a$10$dummy','한옥천','010-1111-0006','FARMER','ACTIVE','2025-03-15 09:00:00'),
-(9007,'gov_farmer07@test.com','$2a$10$dummy','오양평','010-1111-0007','FARMER','ACTIVE','2025-04-01 09:00:00'),
-(9008,'gov_farmer08@test.com','$2a$10$dummy','서용문','010-1111-0008','FARMER','ACTIVE','2025-04-10 09:00:00'),
-(9009,'gov_farmer09@test.com','$2a$10$dummy','장강하','010-1111-0009','FARMER','ACTIVE','2025-05-01 09:00:00'),
-(9010,'gov_farmer10@test.com','$2a$10$dummy','윤청운','010-1111-0010','FARMER','ACTIVE','2025-05-15 09:00:00'),
-(9011,'gov_farmer11@test.com','$2a$10$dummy','임양서','010-1111-0011','FARMER','ACTIVE','2025-06-01 09:00:00'),
-(9012,'gov_farmer12@test.com','$2a$10$dummy','강옥천','010-1111-0012','FARMER','ACTIVE','2025-06-10 09:00:00'),
-(9013,'gov_farmer13@test.com','$2a$10$dummy','조양평','010-1111-0013','FARMER','ACTIVE','2025-07-01 09:00:00'),
-(9014,'gov_farmer14@test.com','$2a$10$dummy','유용문','010-1111-0014','FARMER','ACTIVE','2025-07-15 09:00:00'),
-(9015,'gov_farmer15@test.com','$2a$10$dummy','배강하','010-1111-0015','FARMER','ACTIVE','2025-08-01 09:00:00'),
-(9016,'gov_farmer16@test.com','$2a$10$dummy','방청운','010-1111-0016','FARMER','ACTIVE','2025-08-10 09:00:00'),
-(9017,'gov_farmer17@test.com','$2a$10$dummy','송양서','010-1111-0017','FARMER','ACTIVE','2025-09-01 09:00:00'),
-(9018,'gov_farmer18@test.com','$2a$10$dummy','문옥천','010-1111-0018','FARMER','ACTIVE','2025-09-10 09:00:00'),
-(9019,'gov_farmer19@test.com','$2a$10$dummy','노양평','010-1111-0019','FARMER','ACTIVE','2025-10-01 09:00:00'),
-(9020,'gov_farmer20@test.com','$2a$10$dummy','하용문','010-1111-0020','FARMER','ACTIVE','2025-10-15 09:00:00'),
-(9021,'gov_farmer21@test.com','$2a$10$dummy','신강하','010-1111-0021','FARMER','ACTIVE','2025-11-01 09:00:00'),
-(9022,'gov_farmer22@test.com','$2a$10$dummy','권청운','010-1111-0022','FARMER','ACTIVE','2025-11-10 09:00:00'),
-(9023,'gov_farmer23@test.com','$2a$10$dummy','황양서','010-1111-0023','FARMER','ACTIVE','2025-12-01 09:00:00'),
-(9024,'gov_farmer24@test.com','$2a$10$dummy','안옥천','010-1111-0024','FARMER','ACTIVE','2025-12-10 09:00:00'),
-(9025,'gov_farmer25@test.com','$2a$10$dummy','전양평','010-1111-0025','FARMER','ACTIVE','2026-01-01 09:00:00'),
-(9031,'gov_buyer01@test.com','$2a$10$dummy','소비자A','010-2222-0001','USER','ACTIVE','2025-01-01 09:00:00'),
-(9032,'gov_buyer02@test.com','$2a$10$dummy','소비자B','010-2222-0002','USER','ACTIVE','2025-01-01 09:00:00'),
-(9033,'gov_buyer03@test.com','$2a$10$dummy','소비자C','010-2222-0003','USER','ACTIVE','2025-03-01 09:00:00'),
-(9034,'gov_buyer04@test.com','$2a$10$dummy','소비자D','010-2222-0004','USER','ACTIVE','2025-06-01 09:00:00'),
-(9035,'gov_buyer05@test.com','$2a$10$dummy','소비자E','010-2222-0005','USER','ACTIVE','2025-09-01 09:00:00'),
-(9040,'team1gov@yangpyeong.go.kr','$2a$10$dummy','양평군청','031-770-2001','GOV','ACTIVE','2025-01-01 09:00:00');
+(9001,'gov_farmer01@gov-seed.local','$2a$10$dummy','김양평','010-1111-0001','FARMER','ACTIVE','2025-01-10 09:00:00'),
+(9002,'gov_farmer02@gov-seed.local','$2a$10$dummy','이용문','010-1111-0002','FARMER','ACTIVE','2025-01-15 09:00:00'),
+(9003,'gov_farmer03@gov-seed.local','$2a$10$dummy','박강하','010-1111-0003','FARMER','ACTIVE','2025-02-01 09:00:00'),
+(9004,'gov_farmer04@gov-seed.local','$2a$10$dummy','최청운','010-1111-0004','FARMER','ACTIVE','2025-02-10 09:00:00'),
+(9005,'gov_farmer05@gov-seed.local','$2a$10$dummy','정양서','010-1111-0005','FARMER','ACTIVE','2025-03-01 09:00:00'),
+(9006,'gov_farmer06@gov-seed.local','$2a$10$dummy','한옥천','010-1111-0006','FARMER','ACTIVE','2025-03-15 09:00:00'),
+(9007,'gov_farmer07@gov-seed.local','$2a$10$dummy','오양평','010-1111-0007','FARMER','ACTIVE','2025-04-01 09:00:00'),
+(9008,'gov_farmer08@gov-seed.local','$2a$10$dummy','서용문','010-1111-0008','FARMER','ACTIVE','2025-04-10 09:00:00'),
+(9009,'gov_farmer09@gov-seed.local','$2a$10$dummy','장강하','010-1111-0009','FARMER','ACTIVE','2025-05-01 09:00:00'),
+(9010,'gov_farmer10@gov-seed.local','$2a$10$dummy','윤청운','010-1111-0010','FARMER','ACTIVE','2025-05-15 09:00:00'),
+(9011,'gov_farmer11@gov-seed.local','$2a$10$dummy','임양서','010-1111-0011','FARMER','ACTIVE','2025-06-01 09:00:00'),
+(9012,'gov_farmer12@gov-seed.local','$2a$10$dummy','강옥천','010-1111-0012','FARMER','ACTIVE','2025-06-10 09:00:00'),
+(9013,'gov_farmer13@gov-seed.local','$2a$10$dummy','조양평','010-1111-0013','FARMER','ACTIVE','2025-07-01 09:00:00'),
+(9014,'gov_farmer14@gov-seed.local','$2a$10$dummy','유용문','010-1111-0014','FARMER','ACTIVE','2025-07-15 09:00:00'),
+(9015,'gov_farmer15@gov-seed.local','$2a$10$dummy','배강하','010-1111-0015','FARMER','ACTIVE','2025-08-01 09:00:00'),
+(9016,'gov_farmer16@gov-seed.local','$2a$10$dummy','방청운','010-1111-0016','FARMER','ACTIVE','2025-08-10 09:00:00'),
+(9017,'gov_farmer17@gov-seed.local','$2a$10$dummy','송양서','010-1111-0017','FARMER','ACTIVE','2025-09-01 09:00:00'),
+(9018,'gov_farmer18@gov-seed.local','$2a$10$dummy','문옥천','010-1111-0018','FARMER','ACTIVE','2025-09-10 09:00:00'),
+(9019,'gov_farmer19@gov-seed.local','$2a$10$dummy','노양평','010-1111-0019','FARMER','ACTIVE','2025-10-01 09:00:00'),
+(9020,'gov_farmer20@gov-seed.local','$2a$10$dummy','하용문','010-1111-0020','FARMER','ACTIVE','2025-10-15 09:00:00'),
+(9021,'gov_farmer21@gov-seed.local','$2a$10$dummy','신강하','010-1111-0021','FARMER','ACTIVE','2025-11-01 09:00:00'),
+(9022,'gov_farmer22@gov-seed.local','$2a$10$dummy','권청운','010-1111-0022','FARMER','ACTIVE','2025-11-10 09:00:00'),
+(9023,'gov_farmer23@gov-seed.local','$2a$10$dummy','황양서','010-1111-0023','FARMER','ACTIVE','2025-12-01 09:00:00'),
+(9024,'gov_farmer24@gov-seed.local','$2a$10$dummy','안옥천','010-1111-0024','FARMER','ACTIVE','2025-12-10 09:00:00'),
+(9025,'gov_farmer25@gov-seed.local','$2a$10$dummy','전양평','010-1111-0025','FARMER','ACTIVE','2026-01-01 09:00:00'),
+(9031,'gov_buyer01@gov-seed.local','$2a$10$dummy','소비자A','010-2222-0001','USER','ACTIVE','2025-01-01 09:00:00'),
+(9032,'gov_buyer02@gov-seed.local','$2a$10$dummy','소비자B','010-2222-0002','USER','ACTIVE','2025-01-01 09:00:00'),
+(9033,'gov_buyer03@gov-seed.local','$2a$10$dummy','소비자C','010-2222-0003','USER','ACTIVE','2025-03-01 09:00:00'),
+(9034,'gov_buyer04@gov-seed.local','$2a$10$dummy','소비자D','010-2222-0004','USER','ACTIVE','2025-06-01 09:00:00'),
+(9035,'gov_buyer05@gov-seed.local','$2a$10$dummy','소비자E','010-2222-0005','USER','ACTIVE','2025-09-01 09:00:00'),
+(9040,'gov-yangpyeong@gov-seed.local','$2a$10$dummy','양평군청','031-770-2001','GOV','ACTIVE','2025-01-01 09:00:00');
 
-UPDATE users SET region = '양평군' WHERE role = 'GOV' AND id = 9040;
+UPDATE users SET region = '양평군' WHERE email = 'gov-yangpyeong@gov-seed.local';
 INSERT INTO users (id, email, password, name, phone, role, status, region, created_at) VALUES
-(9041, 'gapyeong@gapyeong.go.kr', '$2a$10$dummy', '가평군 담당자', '031-000-0000', 'GOV', 'ACTIVE', '가평군', NOW());
+(9041, 'gov-gapyeong@gov-seed.local', '$2a$10$dummy', '가평군 담당자', '031-000-0000', 'GOV', 'ACTIVE', '가평군', NOW());
 
 -- ═══════ 3. crop_categories ═══════
 INSERT INTO crop_categories (id, name, description, display_order, is_active, created_at) VALUES
-(9001,'채소','엽채류, 과채류 등',1,true,NOW()),
-(9002,'근채류','뿌리 작물',2,true,NOW());
+(9001,'[GS] 채소','엽채류, 과채류 등',1,true,NOW()),
+(9002,'[GS] 근채류','뿌리 작물',2,true,NOW());
 
 -- ═══════ 4. crops (7종) ═══════
 INSERT INTO crops (id, category_id, code, name, growth_days, yield_per_sqm, avg_cost_per_sqm, is_active, created_at) VALUES
-(9001,9001,'LETTUCE_001','상추',45,2.50,800,true,NOW()),
-(9002,9001,'CABBAGE_001','배추',90,5.00,600,true,NOW()),
-(9003,9001,'TOMATO_001','토마토',120,4.50,1200,true,NOW()),
-(9004,9001,'PEPPER_001','고추',150,1.80,1000,true,NOW()),
-(9005,9002,'POTATO_001','감자',100,3.50,500,true,NOW()),
-(9006,9002,'CARROT_001','당근',90,3.00,700,true,NOW()),
-(9007,9001,'BOKCHOY_001','청경채',40,2.20,900,true,NOW());
+(9001,9001,'GS_LETTUCE','상추',45,2.50,800,true,NOW()),
+(9002,9001,'GS_CABBAGE','배추',90,5.00,600,true,NOW()),
+(9003,9001,'GS_TOMATO','토마토',120,4.50,1200,true,NOW()),
+(9004,9001,'GS_PEPPER','고추',150,1.80,1000,true,NOW()),
+(9005,9002,'GS_POTATO','감자',100,3.50,500,true,NOW()),
+(9006,9002,'GS_CARROT','당근',90,3.00,700,true,NOW()),
+(9007,9001,'GS_BOKCHOY','청경채',40,2.20,900,true,NOW());
 
 -- ═══════ 5. farms (25개 — 각 읍면별 4~5개씩) ═══════
 INSERT INTO farms (id, user_id, name, address, area_size, status, created_at) VALUES
@@ -194,9 +196,9 @@ INSERT INTO balance_data (id, region_code, crop_id, year, season, supply_forecas
 
 -- ═══════ 8. product_categories ═══════
 INSERT INTO product_categories (id, name, description, display_order, is_active, created_at) VALUES
-(9001,'채소','신선 채소류',1,true,NOW()),
-(9002,'과일','제철 과일',2,true,NOW()),
-(9003,'가공식품','잼, 꿀 등',3,true,NOW());
+(9001,'[GS] 채소','신선 채소류',1,true,NOW()),
+(9002,'[GS] 과일','제철 과일',2,true,NOW()),
+(9003,'[GS] 가공식품','잼, 꿀 등',3,true,NOW());
 
 -- ═══════ 9. products (판매 상품 10개) ═══════
 INSERT INTO products (id, seller_id, category_id, name, price, stock, description, status, created_at) VALUES
@@ -214,11 +216,11 @@ INSERT INTO products (id, seller_id, category_id, name, price, stock, descriptio
 -- ═══════ 10. orders + order_items (월별 거래 데이터 — 1월~4월) ═══════
 -- 1월 주문
 INSERT INTO orders (id, buyer_id, order_number, total_amount, status, receiver_name, shipping_address, created_at) VALUES
-(9001,9031,'ORD-2026-0101',24000,'COMPLETED','소비자A','서울시 강남구','2026-01-05 14:00:00'),
-(9002,9032,'ORD-2026-0102',50000,'COMPLETED','소비자B','서울시 서초구','2026-01-10 11:00:00'),
-(9003,9033,'ORD-2026-0103',35000,'COMPLETED','소비자C','경기도 성남시','2026-01-15 16:00:00'),
-(9004,9031,'ORD-2026-0104',25000,'COMPLETED','소비자A','서울시 강남구','2026-01-20 10:00:00'),
-(9005,9034,'ORD-2026-0105',48000,'COMPLETED','소비자D','서울시 마포구','2026-01-25 15:00:00');
+(9001,9031,'GS-2026-0101',24000,'COMPLETED','소비자A','서울시 강남구','2026-01-05 14:00:00'),
+(9002,9032,'GS-2026-0102',50000,'COMPLETED','소비자B','서울시 서초구','2026-01-10 11:00:00'),
+(9003,9033,'GS-2026-0103',35000,'COMPLETED','소비자C','경기도 성남시','2026-01-15 16:00:00'),
+(9004,9031,'GS-2026-0104',25000,'COMPLETED','소비자A','서울시 강남구','2026-01-20 10:00:00'),
+(9005,9034,'GS-2026-0105',48000,'COMPLETED','소비자D','서울시 마포구','2026-01-25 15:00:00');
 INSERT INTO order_items (id, order_id, product_id, quantity, unit_price, subtotal, created_at) VALUES
 (9001,9001,9001,3,8000,24000,'2026-01-05 14:00:00'),
 (9002,9002,9005,2,25000,50000,'2026-01-10 11:00:00'),
@@ -230,11 +232,11 @@ INSERT INTO order_items (id, order_id, product_id, quantity, unit_price, subtota
 
 -- 2월 주문
 INSERT INTO orders (id, buyer_id, order_number, total_amount, status, receiver_name, shipping_address, created_at) VALUES
-(9006,9031,'ORD-2026-0201',40000,'COMPLETED','소비자A','서울시 강남구','2026-02-03 10:00:00'),
-(9007,9032,'ORD-2026-0202',36000,'COMPLETED','소비자B','서울시 서초구','2026-02-08 14:00:00'),
-(9008,9033,'ORD-2026-0203',60000,'COMPLETED','소비자C','경기도 성남시','2026-02-14 09:00:00'),
-(9009,9034,'ORD-2026-0204',30000,'COMPLETED','소비자D','서울시 마포구','2026-02-20 13:00:00'),
-(9010,9035,'ORD-2026-0205',45000,'COMPLETED','소비자E','인천시 연수구','2026-02-25 11:00:00');
+(9006,9031,'GS-2026-0201',40000,'COMPLETED','소비자A','서울시 강남구','2026-02-03 10:00:00'),
+(9007,9032,'GS-2026-0202',36000,'COMPLETED','소비자B','서울시 서초구','2026-02-08 14:00:00'),
+(9008,9033,'GS-2026-0203',60000,'COMPLETED','소비자C','경기도 성남시','2026-02-14 09:00:00'),
+(9009,9034,'GS-2026-0204',30000,'COMPLETED','소비자D','서울시 마포구','2026-02-20 13:00:00'),
+(9010,9035,'GS-2026-0205',45000,'COMPLETED','소비자E','인천시 연수구','2026-02-25 11:00:00');
 INSERT INTO order_items (id, order_id, product_id, quantity, unit_price, subtotal, created_at) VALUES
 (9008,9006,9001,5,8000,40000,'2026-02-03 10:00:00'),
 (9009,9007,9002,3,12000,36000,'2026-02-08 14:00:00'),
@@ -244,12 +246,12 @@ INSERT INTO order_items (id, order_id, product_id, quantity, unit_price, subtota
 
 -- 3월 주문
 INSERT INTO orders (id, buyer_id, order_number, total_amount, status, receiver_name, shipping_address, created_at) VALUES
-(9011,9031,'ORD-2026-0301',56000,'COMPLETED','소비자A','서울시 강남구','2026-03-05 10:00:00'),
-(9012,9032,'ORD-2026-0302',75000,'COMPLETED','소비자B','서울시 서초구','2026-03-10 14:00:00'),
-(9013,9033,'ORD-2026-0303',48000,'COMPLETED','소비자C','경기도 성남시','2026-03-15 09:00:00'),
-(9014,9034,'ORD-2026-0304',62000,'COMPLETED','소비자D','서울시 마포구','2026-03-20 13:00:00'),
-(9015,9035,'ORD-2026-0305',38000,'COMPLETED','소비자E','인천시 연수구','2026-03-25 11:00:00'),
-(9016,9031,'ORD-2026-0306',50000,'COMPLETED','소비자A','서울시 강남구','2026-03-28 16:00:00');
+(9011,9031,'GS-2026-0301',56000,'COMPLETED','소비자A','서울시 강남구','2026-03-05 10:00:00'),
+(9012,9032,'GS-2026-0302',75000,'COMPLETED','소비자B','서울시 서초구','2026-03-10 14:00:00'),
+(9013,9033,'GS-2026-0303',48000,'COMPLETED','소비자C','경기도 성남시','2026-03-15 09:00:00'),
+(9014,9034,'GS-2026-0304',62000,'COMPLETED','소비자D','서울시 마포구','2026-03-20 13:00:00'),
+(9015,9035,'GS-2026-0305',38000,'COMPLETED','소비자E','인천시 연수구','2026-03-25 11:00:00'),
+(9016,9031,'GS-2026-0306',50000,'COMPLETED','소비자A','서울시 강남구','2026-03-28 16:00:00');
 INSERT INTO order_items (id, order_id, product_id, quantity, unit_price, subtotal, created_at) VALUES
 (9013,9011,9001,7,8000,56000,'2026-03-05 10:00:00'),
 (9014,9012,9005,3,25000,75000,'2026-03-10 14:00:00'),
@@ -264,13 +266,13 @@ INSERT INTO order_items (id, order_id, product_id, quantity, unit_price, subtota
 
 -- 4월 주문
 INSERT INTO orders (id, buyer_id, order_number, total_amount, status, receiver_name, shipping_address, created_at) VALUES
-(9017,9031,'ORD-2026-0401',80000,'COMPLETED','소비자A','서울시 강남구','2026-04-02 10:00:00'),
-(9018,9032,'ORD-2026-0402',64000,'COMPLETED','소비자B','서울시 서초구','2026-04-07 14:00:00'),
-(9019,9033,'ORD-2026-0403',54000,'COMPLETED','소비자C','경기도 성남시','2026-04-12 09:00:00'),
-(9020,9034,'ORD-2026-0404',90000,'COMPLETED','소비자D','서울시 마포구','2026-04-17 13:00:00'),
-(9021,9035,'ORD-2026-0405',72000,'COMPLETED','소비자E','인천시 연수구','2026-04-22 11:00:00'),
-(9022,9031,'ORD-2026-0406',45000,'COMPLETED','소비자A','서울시 강남구','2026-04-25 16:00:00'),
-(9023,9032,'ORD-2026-0407',35000,'COMPLETED','소비자B','서울시 서초구','2026-04-27 10:00:00');
+(9017,9031,'GS-2026-0401',80000,'COMPLETED','소비자A','서울시 강남구','2026-04-02 10:00:00'),
+(9018,9032,'GS-2026-0402',64000,'COMPLETED','소비자B','서울시 서초구','2026-04-07 14:00:00'),
+(9019,9033,'GS-2026-0403',54000,'COMPLETED','소비자C','경기도 성남시','2026-04-12 09:00:00'),
+(9020,9034,'GS-2026-0404',90000,'COMPLETED','소비자D','서울시 마포구','2026-04-17 13:00:00'),
+(9021,9035,'GS-2026-0405',72000,'COMPLETED','소비자E','인천시 연수구','2026-04-22 11:00:00'),
+(9022,9031,'GS-2026-0406',45000,'COMPLETED','소비자A','서울시 강남구','2026-04-25 16:00:00'),
+(9023,9032,'GS-2026-0407',35000,'COMPLETED','소비자B','서울시 서초구','2026-04-27 10:00:00');
 INSERT INTO order_items (id, order_id, product_id, quantity, unit_price, subtotal, created_at) VALUES
 (9023,9017,9001,10,8000,80000,'2026-04-02 10:00:00'),
 (9024,9018,9002,4,12000,48000,'2026-04-07 14:00:00'),
