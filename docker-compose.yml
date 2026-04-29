@@ -55,7 +55,7 @@ services:
       - NONGSARO_API_KEY=${NONGSARO_API_KEY}
       - KOSIS_API_KEY=${KOSIS_API_KEY}
     volumes:
-      - uploads-data:/var/lib/farm/uploads
+      - uploads-data:/app/uploads
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -97,7 +97,7 @@ services:
       - AI_URL=http://ai-server:8000
       - GROQ_API_KEY=${GROQ_API_KEY}
     volumes:
-      - agent-data:/app/data/agent/logs
+      - agent-data:/app/data/agent
     depends_on:
       - ai-server
     develop:
