@@ -1,39 +1,22 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Badge from '@/components/common/Badge/Badge';
+import { useMyFarms } from './_hooks/useFarm';
 import styles from './page.module.css';
 
-// 임시 KPI 데이터
+// 임시 KPI 및 활동 데이터 (백엔드 연동 전까지 유지할 데이터 구조)
 const MOCK_KPI = {
-  totalArea: 3200,
-  cropCount: 4,
-  monthlyRevenue: 2400000,
-  aiScore: 87,
+  totalArea: 0,
+  cropCount: 0,
+  monthlyRevenue: 0,
+  aiScore: 0,
 };
 
-// 임시 최근 활동 데이터
-const MOCK_ACTIVITIES = [
-  { id: 1, date: '2026-04-25', activity: '파종 완료', crop: '배추', status: 'done' },
-  { id: 2, date: '2026-04-22', activity: '비료 시비', crop: '고추', status: 'done' },
-  { id: 3, date: '2026-04-20', activity: '수확 예정', crop: '감자', status: 'scheduled' },
-  { id: 4, date: '2026-04-18', activity: '병해충 점검', crop: '토마토', status: 'checking' },
-];
-
-// 임시 농장 정보
-const MOCK_FARM_INFO = {
-  name: '양평 해맑은 농장',
-  location: '경기도 양평군 양서면',
-  area: '3,200 ㎡',
-  soil: '양토 (pH 6.5)',
-  registeredAt: '2024-03-15',
-};
-
+// 최근 활동을 위한 타입 및 맵 (필요 시 유지)
 type ActivityStatus = 'done' | 'scheduled' | 'checking';
-
 const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'lime' | 'orange' }> = {
   done: { label: '완료', variant: 'green' },
   scheduled: { label: '예정', variant: 'lime' },
@@ -41,9 +24,37 @@ const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'li
 };
 
 export default function FarmDashboardPage() {
-  const [kpi] = useState(MOCK_KPI);
-  const [activities] = useState(MOCK_ACTIVITIES);
-  const [farmInfo] = useState(MOCK_FARM_INFO);
+  const { farms, isLoading } = useMyFarms();
+  
+  // 첫 번째 농장을 기본으로 표시 (추후 농장 선택 기능 추가 가능)
+  const farm = farms.length > 0 ? farms[0] : null;
+
+  if (isLoading) {
+    return (
+      <div className={styles.container}>
+        <p style={{ padding: '2rem', textAlign: 'center' }}>데이터를 불러오는 중...</p>
+      </div>
+    );
+  }
+
+  // 농장이 하나도 없는 경우
+  if (farms.length === 0) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <div>
+            <h1 className={styles.title}>내 농장 <span className={styles.italic}>관리</span></h1>
+            <p className={styles.subtitle}>등록된 농장이 없습니다. 새로운 농장을 등록해 보세요!</p>
+          </div>
+          <div className={styles.headerButtons}>
+            <Link href="/farm/register">
+              <Button variant="primary">+ 농장 등록하기</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -54,41 +65,38 @@ export default function FarmDashboardPage() {
             <Link href="/" className={styles.breadcrumbLink}>홈</Link> / 내 농장
           </p>
           <h1 className={styles.title}>내 농장 <span className={styles.italic}>관리</span></h1>
-          <p className={styles.subtitle}>{farmInfo.name}의 현황을 한눈에 확인하세요.</p>
+          <p className={styles.subtitle}>{farm?.name}의 현황을 한눈에 확인하세요.</p>
         </div>
         <div className={styles.headerButtons}>
           <Link href="/farm/register">
             <Button variant="outline">+ 농장 추가</Button>
           </Link>
-          <Link href="/farm/register">
-            <Button variant="primary">+ 작물 추가</Button>
-          </Link>
         </div>
       </div>
 
-      {/* KPI 카드 Row */}
+      {/* KPI 카드 Row (실제 farm 데이터 연동) */}
       <div className={styles.kpiRow}>
         <div className={styles.kpiCard}>
           <p className={styles.kpiLabel}>재배 면적</p>
-          <p className={styles.kpiValue}>{kpi.totalArea.toLocaleString()}㎡</p>
+          <p className={styles.kpiValue}>{farm?.area.toLocaleString()}㎡</p>
         </div>
         <div className={styles.kpiCard}>
           <p className={styles.kpiLabel}>재배 작물</p>
-          <p className={styles.kpiValue}>{kpi.cropCount}종</p>
+          <p className={styles.kpiValue}>{farm?.cropTypes.length}종</p>
         </div>
         <div className={styles.kpiCard}>
           <p className={styles.kpiLabel}>이번 달 수익</p>
-          <p className={styles.kpiValue}>₩{(kpi.monthlyRevenue / 1000000).toFixed(1)}M</p>
+          <p className={styles.kpiValue}>₩0M</p>
         </div>
         <div className={styles.kpiCard}>
           <p className={styles.kpiLabel}>AI 점수</p>
-          <p className={styles.kpiValue}>{kpi.aiScore}</p>
+          <p className={styles.kpiValue}>-</p>
         </div>
       </div>
 
       {/* 벤토 레이아웃: 최근 활동 + 농장 정보 */}
       <div className={styles.bento}>
-        {/* 최근 활동 테이블 (8/12) */}
+        {/* 최근 활동 테이블 (현재는 Mock 데이터 없이 빈 상태로 유지) */}
         <div className={styles.bentoMain}>
           <Card>
             <div className={styles.sectionHeader}>
@@ -106,43 +114,39 @@ export default function FarmDashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {activities.map((item) => {
-                    const statusInfo = STATUS_MAP[item.status as ActivityStatus];
-                    return (
-                      <tr key={item.id}>
-                        <td>{item.date}</td>
-                        <td>{item.activity}</td>
-                        <td>{item.crop}</td>
-                        <td>
-                          <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  <tr>
+                    <td colSpan={4} style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-light)' }}>
+                      최근 활동 내역이 없습니다.
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
           </Card>
         </div>
 
-        {/* 농장 정보 사이드 카드 (4/12) */}
+        {/* 농장 정보 사이드 카드 (실제 데이터 연동) */}
         <div className={styles.bentoSide}>
           <Card variant="dark">
             <h3 className={styles.farmInfoTitle}>농장 정보</h3>
             <dl className={styles.farmInfoList}>
-              <dt>위치</dt>
-              <dd>{farmInfo.location}</dd>
-
-              <dt>면적</dt>
-              <dd>{farmInfo.area}</dd>
-
-              <dt>토양</dt>
-              <dd>{farmInfo.soil}</dd>
-
-              <dt>등록일</dt>
-              <dd>{farmInfo.registeredAt}</dd>
+               <dt>위치</dt>
+               <dd>{farm?.address}</dd>
+ 
+               <dt>면적</dt>
+               <dd>{farm?.area.toLocaleString()} ㎡</dd>
+ 
+               <dt>주요 작물</dt>
+               <dd>{farm?.cropTypes.join(', ')}</dd>
+ 
+               <dt>상태</dt>
+               <dd>
+                 <Badge variant={farm?.certificationStatus === 'APPROVED' ? 'green' : 'orange'}>
+                   {farm?.certificationStatus === 'APPROVED' ? '인증됨' : '심사중'}
+                 </Badge>
+               </dd>
             </dl>
-            <Link href="/farm/register" className={styles.editBtnWrap}>
+            <Link href={`/farm/${farm?.id}/edit`} className={styles.editBtnWrap}>
               <Button variant="primary" style={{ width: '100%', justifyContent: 'center' }}>
                 정보 수정
               </Button>

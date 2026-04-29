@@ -21,7 +21,11 @@ interface DaumPostcodeData {
   autoJibunAddress: string;
   addressType: string;
   bname: string;
+  bcode: string;
   buildingName: string;
+  mountain: string;
+  main_address_no: string;
+  sub_address_no: string;
 }
 
 const CROP_OPTIONS = [
@@ -53,6 +57,11 @@ export default function FarmRegisterPage() {
     ph: '',
     organicMatter: '',
     documentUrl: '',
+    // PNU 생성용 필드 추가
+    bjdCode: '',
+    isMountain: false,
+    mainNo: '',
+    subNo: '',
   });
 
   const handleChange = (field: string, value: string) => {
@@ -131,6 +140,10 @@ export default function FarmRegisterPage() {
       ...prev,
       zipCode: data.zonecode,
       baseAddress: finalAddress,
+      bjdCode: data.bcode,
+      isMountain: data.mountain === 'Y',
+      mainNo: data.main_address_no,
+      subNo: data.sub_address_no || '0', // 부번이 없으면 0
     }));
     setIsPostcodeOpen(false);
     toast.success('주소가 입력되었습니다.');
@@ -171,10 +184,15 @@ export default function FarmRegisterPage() {
       ph: formData.ph ? Number(formData.ph) : null,
       organicMatter: formData.organicMatter ? Number(formData.organicMatter) : null,
       documentUrl: formData.documentUrl,
+      // PNU 생성용 필드 추가
+      bjdCode: formData.bjdCode,
+      isMountain: formData.isMountain,
+      mainNo: formData.mainNo,
+      subNo: formData.subNo,
     };
 
     try {
-      const res = await fetch('/api/farms', {
+      const res = await fetch('/api/farm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
