@@ -9,6 +9,8 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class ChatResponse {
+    private Long roomId; // 생성된 방 번호를 프론트가 알 수 있도록 반환
     private String sender; // AI, SYSTEM
     private String message;
+    private String timestamp;
 }

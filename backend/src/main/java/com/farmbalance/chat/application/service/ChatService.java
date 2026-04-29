@@ -19,8 +19,8 @@ public class ChatService implements ChatUseCase {
 
     @Override
     @Transactional
-    public String processUserMessage(Long userId, Long roomId, String category, String message) {
-        log.info("채팅 비즈니스 로직 시작 - userId: {}, category: {}", userId, category);
+    public String processUserMessage(Long userId, Long roomId, String category, String message, java.util.Map<String, Object> metadata) {
+        log.info("채팅 비즈니스 로직 시작 - userId: {}, category: {}, roomId: {}", userId, category, roomId);
         
         // 1. 개인정보 마스킹 처리 (AI 응답 파서 + 개인정보 마스킹 기능)
         String maskedMessage = PiiMaskingUtils.mask(message);
@@ -32,7 +32,7 @@ public class ChatService implements ChatUseCase {
         // chatMessageRepository.save(userChat);
 
         // 3. 메시지 의도 분석(미리 지정된 category 사용) 및 라우팅 (AgentRouterPort 호출)
-        String aiReply = agentRouterPort.routeToAgent(category, maskedMessage);
+        String aiReply = agentRouterPort.routeToAgent(userId, roomId, category, maskedMessage, metadata);
 
         // 4. 파이썬 Agent의 답변을 DB에 저장 (추후 JPA 구현)
         // ChatMessage aiChat = new ChatMessage(room, SenderRole.AI, aiReply);

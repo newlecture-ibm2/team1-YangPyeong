@@ -7,7 +7,8 @@ public interface ChatUseCase {
      * @param roomId 대화방 ID (없으면 생성)
      * @param category 대화 카테고리
      * @param message 유저가 입력한 메시지 내용
+     * @param metadata 프론트가 보낸 추가 정보
      * @return Agent의 응답 메시지
      */
-    String processUserMessage(Long userId, Long roomId, String category, String message);
+    String processUserMessage(Long userId, Long roomId, String category, String message, java.util.Map<String, Object> metadata);
 }

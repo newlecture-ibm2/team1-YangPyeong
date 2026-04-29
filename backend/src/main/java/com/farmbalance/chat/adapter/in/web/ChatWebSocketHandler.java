@@ -53,16 +53,21 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 dummyUserId, 
                 request.getRoomId(), 
                 request.getCategory(), 
-                request.getMessage()
+                request.getMessage(),
+                request.getMetadata()
             );
 
             // 3. 응답 전송 (JSON 포맷팅)
-            ChatResponse response = new ChatResponse("AI", aiReply);
+            // roomId가 null이었다면 새로운 방이 생성되었음을 프론트엔드에 알려주기 위해 할당된 ID를 보냄 (현재는 DB연결 전이므로 임시값)
+            Long responseRoomId = request.getRoomId() != null ? request.getRoomId() : 999L;
+            String timestamp = java.time.LocalDateTime.now().toString();
+            
+            ChatResponse response = new ChatResponse(responseRoomId, "AI", aiReply, timestamp);
             session.sendMessage(new TextMessage(objectMapper.writeValueAsString(response)));
             
         } catch (Exception e) {
             log.error("메시지 처리 실패: ", e);
-            ChatResponse errorResponse = new ChatResponse("SYSTEM", "시스템 오류가 발생했습니다.");
+            ChatResponse errorResponse = new ChatResponse(null, "SYSTEM", "시스템 오류가 발생했습니다.", java.time.LocalDateTime.now().toString());
             session.sendMessage(new TextMessage(objectMapper.writeValueAsString(errorResponse)));
         }
     }
