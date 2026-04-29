@@ -244,7 +244,7 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
                     User newUser = User.builder()
                             .email(userInfo.getEmail())
                             .password(null)
-                            .name(userInfo.getName())
+                            .name(userInfo.getName() != null ? userInfo.getName() : "소셜사용자")
                             .role(Role.USER)
                             .status(UserStatus.ACTIVE)
                             .provider(provider)

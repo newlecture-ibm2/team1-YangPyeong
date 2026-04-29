@@ -10,7 +10,7 @@
 CREATE TABLE users (
     id          BIGSERIAL    PRIMARY KEY,
     email       VARCHAR(255) NOT NULL UNIQUE,
-    password    VARCHAR(255) NOT NULL,
+    password    VARCHAR(255),
     name        VARCHAR(50)  NOT NULL,
     phone       VARCHAR(20),
     role        VARCHAR(20)  NOT NULL DEFAULT 'USER',   -- USER | FARMER | ADMIN | GOV
@@ -19,6 +19,16 @@ CREATE TABLE users (
     created_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMP,
     deleted_at  TIMESTAMP
+);
+
+-- 2.2 user_social_accounts
+CREATE TABLE user_social_accounts (
+    id          BIGSERIAL    PRIMARY KEY,
+    user_id     BIGINT       NOT NULL REFERENCES users(id),
+    provider    VARCHAR(20)  NOT NULL,   -- KAKAO, GOOGLE
+    provider_id VARCHAR(100) NOT NULL,
+    linked_at   TIMESTAMP    NOT NULL DEFAULT NOW(),
+    UNIQUE (provider, provider_id)
 );
 
 -- 2.2 farms
