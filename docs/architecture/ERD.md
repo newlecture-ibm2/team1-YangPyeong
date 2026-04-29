@@ -19,7 +19,7 @@ erDiagram
         varchar password
         varchar name
         varchar phone
-        varchar role "GENERAL | FARMER | ADMIN | GOV"
+        varchar role "USER | FARMER | ADMIN | GOV"
         varchar region
         varchar status "ACTIVE | SUSPENDED"
         timestamp created_at

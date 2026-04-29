@@ -13,7 +13,7 @@ CREATE TABLE users (
     password    VARCHAR(255) NOT NULL,
     name        VARCHAR(50)  NOT NULL,
     phone       VARCHAR(20),
-    role        VARCHAR(20)  NOT NULL DEFAULT 'GENERAL',   -- GENERAL | FARMER | ADMIN | GOV
+    role        VARCHAR(20)  NOT NULL DEFAULT 'USER',   -- USER | FARMER | ADMIN | GOV
     region      VARCHAR(50),
     status      VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',    -- ACTIVE | SUSPENDED
     created_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
