@@ -13,6 +13,7 @@ interface ButtonProps {
   fullWidth?: boolean;
   disabled?: boolean;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export default function Button({
@@ -25,6 +26,7 @@ export default function Button({
   fullWidth = false,
   disabled = false,
   className = '',
+  style,
 }: ButtonProps) {
   const classNames = [
     styles.btn,
@@ -36,7 +38,7 @@ export default function Button({
 
   if (href) {
     return (
-      <Link href={href} className={classNames}>
+      <Link href={href} className={classNames} style={style}>
         {children}
       </Link>
     );
@@ -48,6 +50,7 @@ export default function Button({
       className={classNames}
       onClick={onClick}
       disabled={disabled}
+      style={style}
     >
       {children}
     </button>
