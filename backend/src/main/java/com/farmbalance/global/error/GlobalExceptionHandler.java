@@ -62,4 +62,12 @@ public class GlobalExceptionHandler {
                 .status(ec.getStatus())
                 .body(ApiResponse.fail(ec.getCode(), ec.getMessage()));
     }
+
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResponseStatus(org.springframework.web.server.ResponseStatusException e) {
+        log.warn("[ResponseStatus] {} - {}", e.getStatusCode(), e.getReason());
+        return ResponseEntity
+                .status(e.getStatusCode())
+                .body(ApiResponse.fail("E-HTTP-" + e.getStatusCode().value(), e.getReason() != null ? e.getReason() : e.getMessage()));
+    }
 }
