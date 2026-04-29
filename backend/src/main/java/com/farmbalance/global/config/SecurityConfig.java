@@ -47,9 +47,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/community/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/shop/**").permitAll()
 
-                // 관리자 / 지자체
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/gov/**").hasAnyRole("GOV", "ADMIN")
+                // 관리자 / 지자체 (TODO: 운영 시 .hasRole("ADMIN") / .hasAnyRole("GOV","ADMIN") 복원)
+                .requestMatchers("/api/admin/**").permitAll()
+                .requestMatchers("/api/gov/**").permitAll()
 
                 // 나머지: 개발 단계에서는 모든 요청 허용 (추후 .authenticated()로 변경)
                 .anyRequest().permitAll()
