@@ -24,6 +24,7 @@ public class AuthController {
     private final RefreshTokenUseCase refreshTokenUseCase;
     private final LogoutUseCase logoutUseCase;
     private final SocialLoginUseCase socialLoginUseCase;
+    private final PasswordResetUseCase passwordResetUseCase;
 
     @PostMapping("/login")
     public ApiResponse<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
@@ -60,5 +61,21 @@ public class AuthController {
         return ApiResponse.ok(null);
     }
 
-    // TODO: POST /api/auth/password-reset — 비밀번호 찾기/재설정 (추후 구현)
+    /**
+     * 보안질문 조회 — 이메일로 등록된 보안질문을 반환합니다.
+     */
+    @PostMapping("/password-reset/question")
+    public ApiResponse<SecurityQuestionResponse> getSecurityQuestion(
+            @Valid @RequestBody SecurityQuestionVerifyRequest request) {
+        return ApiResponse.ok(passwordResetUseCase.getSecurityQuestion(request));
+    }
+
+    /**
+     * 비밀번호 재설정 — 보안질문 답변 검증 후 비밀번호를 변경합니다.
+     */
+    @PutMapping("/password-reset")
+    public ApiResponse<Void> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
+        passwordResetUseCase.resetPassword(request);
+        return ApiResponse.ok(null);
+    }
 }

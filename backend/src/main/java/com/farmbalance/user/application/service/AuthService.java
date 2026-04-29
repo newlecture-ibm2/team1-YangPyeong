@@ -9,6 +9,7 @@ import com.farmbalance.user.adapter.out.oauth.GoogleOAuthClient;
 import com.farmbalance.user.adapter.out.oauth.KakaoOAuthClient;
 import com.farmbalance.user.adapter.out.oauth.OAuthUserInfo;
 import com.farmbalance.user.application.port.in.*;
+import com.farmbalance.user.application.port.out.SecurityQuestionRepository;
 import com.farmbalance.user.application.port.out.UserRepository;
 import com.farmbalance.user.application.port.out.UserSocialAccountRepository;
 import com.farmbalance.user.domain.*;
@@ -29,6 +30,7 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
 
     private final UserRepository userRepository;
     private final UserSocialAccountRepository socialAccountRepository;
+    private final SecurityQuestionRepository securityQuestionRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenStore refreshTokenStore;
@@ -98,6 +100,18 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
                 .build();
 
         User saved = userRepository.save(user);
+
+        // 보안질문 저장 (답변은 정규화 후 BCrypt 해시)
+        if (request.getSecurityQuestion() != null && request.getSecurityAnswer() != null) {
+            String normalizedAnswer = request.getSecurityAnswer().trim().toLowerCase();
+            SecurityQuestion securityQuestion = SecurityQuestion.builder()
+                    .userId(saved.getId())
+                    .question(request.getSecurityQuestion())
+                    .answer(passwordEncoder.encode(normalizedAnswer))
+                    .build();
+            securityQuestionRepository.save(securityQuestion);
+        }
+
         log.info("회원가입 완료: userId={}, email={}", saved.getId(), saved.getEmail());
 
         return new SignUpResponse(saved.getId());
