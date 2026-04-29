@@ -47,20 +47,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } catch (Exception e) {
                 log.debug("JWT 인증 실패: {}", e.getMessage());
             }
-        } else {
-            // 개발서버/로컬 테스트용: 드롭다운으로 전달되는 X-USER-ID 헤더 처리
-            String testUserId = request.getHeader("X-USER-ID");
-            if (StringUtils.hasText(testUserId)) {
-                try {
-                    Long userId = Long.valueOf(testUserId);
-                    var authorities = List.of(new SimpleGrantedAuthority("ROLE_GOV"));
-                    var authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    log.debug("테스트용 X-USER-ID 기반 GOV 인증 설정 완료: {}", userId);
-                } catch (Exception e) {
-                    log.debug("테스트 X-USER-ID 인증 실패: {}", e.getMessage());
-                }
-            }
         }
 
         filterChain.doFilter(request, response);
