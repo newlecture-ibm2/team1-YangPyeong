@@ -19,7 +19,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const router = useRouter();
 
   // TODO: 실제 인증 상태로 교체 (개발 중 임시 true 처리)
-  const isLoggedIn = true; // ← 로그인 구현 후 false로 복원
+  const isLoggedIn = false;
 
   const {
     product,
