@@ -254,28 +254,24 @@ export default function DownloadPage() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th className={styles.thCenter}>일시</th>
+                <th className={styles.dateCell}>일시</th>
                 <th>데이터 유형</th>
-                <th className={styles.thCenter}>기간</th>
-                <th className={styles.thCenter}>형식</th>
-                <th className={styles.thCenter}>읍면</th>
+                <th className={styles.statusCell}>형식</th>
               </tr>
             </thead>
             <tbody>
               {history.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', color: '#6B7280' }}>
+                  <td colSpan={3} style={{ textAlign: 'center', color: '#6B7280' }}>
                     다운로드 이력이 없습니다.
                   </td>
                 </tr>
               ) : (
                 history.map((item, i) => (
                   <tr key={i}>
-                    <td className={styles.tdCenter}>{formatDate(item.createdAt)}</td>
+                    <td className={styles.dateCell}>{formatDate(item.createdAt)}</td>
                     <td>{TYPE_LABEL_MAP[item.type] || item.type}</td>
-                    <td className={styles.tdCenter}>{item.startDate} ~ {item.endDate}</td>
-                    <td className={styles.tdCenter}>{item.format === 'XLSX' ? 'Excel' : 'CSV'}</td>
-                    <td className={styles.tdCenter}>{item.town === 'ALL' ? '전체' : item.town}</td>
+                    <td className={styles.statusCell}>{item.format === 'XLSX' ? 'Excel' : 'CSV'}</td>
                   </tr>
                 ))
               )}

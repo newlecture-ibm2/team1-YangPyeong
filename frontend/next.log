@@ -1,0 +1,81 @@
+
+> farm-frontend@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.5.15
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.9:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1132ms
+ ✓ Compiled /middleware in 245ms (115 modules)
+ ○ Compiling /gov ...
+ ✓ Compiled /gov in 2.3s (1666 modules)
+ GET /gov 200 in 2632ms
+ ○ Compiling /api/gov/dashboard ...
+ ✓ Compiled /api/gov/dashboard in 739ms (1648 modules)
+ GET /api/gov/me 200 in 1204ms
+ GET /api/gov/dashboard 200 in 1208ms
+ GET /api/gov/me 200 in 15ms
+ ✓ Compiled /gov/cultivation in 160ms (1657 modules)
+ GET /gov/cultivation 200 in 219ms
+ GET /api/gov/me 200 in 50ms
+ ✓ Compiled /api/gov/cultivation in 220ms (1659 modules)
+ GET /api/gov/me 200 in 273ms
+ GET /api/gov/cultivation?year=2026 200 in 345ms
+ GET /api/gov/cultivation?year=2026 200 in 27ms
+ ○ Compiling /gov/compare ...
+ ✓ Compiled /gov/compare in 525ms (1668 modules)
+ GET /gov/compare 200 in 572ms
+ GET /api/gov/me 200 in 111ms
+ ✓ Compiled /api/gov/compare in 224ms (1670 modules)
+ GET /api/gov/me 200 in 141ms
+ GET /api/gov/compare?baseYear=2025&compareYear=2026 200 in 280ms
+ GET /api/gov/compare?baseYear=2025&compareYear=2026 200 in 32ms
+ ✓ Compiled /gov/sales in 167ms (1679 modules)
+ GET /gov/sales 200 in 200ms
+ GET /api/gov/me 200 in 28ms
+ ✓ Compiled /api/gov/sales in 282ms (1681 modules)
+ GET /api/gov/me 200 in 379ms
+ GET /api/gov/sales 200 in 425ms
+ GET /api/gov/sales 200 in 37ms
+ ✓ Compiled /gov/download in 170ms (1688 modules)
+ GET /gov/download 200 in 207ms
+ GET /api/gov/me 200 in 136ms
+ ✓ Compiled /api/gov/download/history in 367ms (1690 modules)
+ GET /api/gov/me 200 in 279ms
+ GET /api/gov/download/history 200 in 507ms
+ GET /api/gov/download/history 200 in 20ms
+ ✓ Compiled /api/gov/download in 158ms (1692 modules)
+ GET /api/gov/download?type=CULTIVATION&format=XLSX&startDate=2026-01-01&endDate=2026-04-28&town=ALL 200 in 257ms
+ GET /api/gov/download/history 200 in 30ms
+ GET /gov 200 in 51ms
+ GET /api/gov/me 200 in 111ms
+ GET /api/gov/me 200 in 19ms
+ GET /api/gov/dashboard 200 in 138ms
+ GET /api/gov/dashboard 200 in 33ms
+ ✓ Compiled in 1092ms (1670 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /gov 200 in 130ms
+ GET /gov 200 in 180ms
+ ✓ Compiled /api/gov/dashboard in 510ms (1682 modules)
+ GET /gov 200 in 262ms
+ GET /api/gov/dashboard 200 in 12046ms
+ GET /api/gov/me 200 in 12048ms
+ GET /gov 200 in 33ms
+ GET /api/gov/me 200 in 861ms
+ GET /api/gov/dashboard 200 in 863ms
+ GET /api/gov/dashboard 200 in 6677ms
+ GET /api/gov/me 200 in 6678ms
+ GET /gov 200 in 88ms
+ GET /api/gov/dashboard 200 in 30029ms
+ GET /api/gov/me 200 in 30033ms
+ GET /api/gov/me 200 in 30083ms
+ GET /gov 200 in 71ms
+ GET /gov 200 in 57ms
+ GET /api/gov/dashboard 200 in 15966ms
+ GET /api/gov/me 200 in 15966ms
+ GET /api/gov/dashboard 200 in 30041ms
+ GET /api/gov/me 200 in 30046ms
+ GET /api/gov/me 200 in 30032ms

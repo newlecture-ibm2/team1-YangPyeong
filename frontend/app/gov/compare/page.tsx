@@ -89,7 +89,7 @@ export default function ComparePage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="crop" />
                 <YAxis unit="%" />
-                <Tooltip formatter={(value) => `${value}%`} />
+                <Tooltip formatter={(value: number) => `${value.toFixed(2)}%`} />
                 <Bar dataKey="diffRate" name="증감률(%)" fill="#CCFF33" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -102,10 +102,10 @@ export default function ComparePage() {
           <thead>
             <tr>
               <th>작물</th>
-              <th className={styles.thRight}>{baseYear} 생산량</th>
-              <th className={styles.thRight}>{compareYear} 생산량</th>
-              <th className={styles.thRight}>증감</th>
-              <th className={styles.thCenter}>증감률</th>
+              <th className={styles.numberCell}>{baseYear} 생산량</th>
+              <th className={styles.numberCell}>{compareYear} 생산량</th>
+              <th className={styles.numberCell}>증감</th>
+              <th className={styles.numberCell}>증감률</th>
             </tr>
           </thead>
           <tbody>
@@ -113,14 +113,14 @@ export default function ComparePage() {
             {data.map((r, i) => (
               <tr key={i}>
                 <td className={styles.tdBold}>{r.crop}</td>
-                <td className={styles.tdRight}>{r.prevYearTon.toLocaleString()}kg</td>
-                <td className={styles.tdRight}>{r.currentYearTon.toLocaleString()}kg</td>
-                <td className={styles.tdRight} style={{ color: r.diffTon >= 0 ? 'var(--color-primary)' : 'var(--color-danger)' }}>
+                <td className={styles.numberCell}>{r.prevYearTon.toLocaleString()}kg</td>
+                <td className={styles.numberCell}>{r.currentYearTon.toLocaleString()}kg</td>
+                <td className={styles.numberCell} style={{ color: r.diffTon >= 0 ? 'var(--color-primary)' : 'var(--color-danger)' }}>
                   {r.diffTon >= 0 ? '+' : ''}{r.diffTon.toLocaleString()}kg
                 </td>
-                <td className={styles.tdCenter}>
+                <td className={styles.numberCell}>
                   <span className={`${styles.badge} ${r.diffRate >= 0 ? styles.badgeGreen : styles.badgeRed}`}>
-                    {r.diffRate >= 0 ? '+' : ''}{r.diffRate}%
+                    {r.diffRate >= 0 ? '+' : ''}{r.diffRate.toFixed(2)}%
                   </span>
                 </td>
               </tr>

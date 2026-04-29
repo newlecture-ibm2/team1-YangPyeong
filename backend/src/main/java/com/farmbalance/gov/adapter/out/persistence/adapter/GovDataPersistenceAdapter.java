@@ -106,7 +106,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
 
     @Override
     public List<Map<String, Object>> querySales(LocalDate startDate, LocalDate endDate, String govRegion, String town) {
-        String regionFilter = (govRegion != null) ? " AND u.region = '" + govRegion + "' " : "";
+        String regionFilter = (govRegion != null) ? " AND f.address LIKE '%" + govRegion + "%' " : "";
         String sql = """
             SELECT TO_CHAR(o.created_at, 'YYYY-MM-DD') AS "주문일",
                    p.name AS "상품명",
@@ -118,6 +118,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
             JOIN orders o ON o.id = oi.order_id
             JOIN products p ON p.id = oi.product_id
             JOIN users u ON u.id = p.seller_id
+            LEFT JOIN farms f ON f.user_id = u.id
             WHERE o.created_at BETWEEN ? AND ?
               AND o.status <> 'CANCELLED'
               AND o.deleted_at IS NULL

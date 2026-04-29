@@ -59,8 +59,6 @@ export default function CultivationPage() {
         </select>
       </div>
 
-      <GovTabs />
-
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>읍면별 재배 면적</h2>
         {loading ? <p>로딩 중...</p> : (
@@ -81,10 +79,10 @@ export default function CultivationPage() {
           <thead>
             <tr>
               <th>읍면</th>
-              <th className={styles.thRight}>농가 수</th>
-              <th className={styles.thRight}>재배 면적</th>
+              <th className={styles.numberCell}>농가 수</th>
+              <th className={styles.numberCell}>재배 면적</th>
               <th>주요 작물</th>
-              <th className={styles.thRight}>예상 생산량</th>
+              <th className={styles.numberCell}>예상 생산량</th>
             </tr>
           </thead>
           <tbody>
@@ -92,10 +90,10 @@ export default function CultivationPage() {
             {data.map((r, i) => (
               <tr key={i}>
                 <td className={styles.tdBold}>{r.region}</td>
-                <td className={styles.tdRight}>{r.farmCount.toLocaleString()}</td>
-                <td className={styles.tdRight}>{r.areaM2.toLocaleString()}㎡</td>
+                <td className={styles.numberCell}>{r.farmCount.toLocaleString()}</td>
+                <td className={styles.numberCell}>{r.areaM2.toLocaleString()}㎡</td>
                 <td>{r.mainCrop}</td>
-                <td className={styles.tdRight}>{r.expectedTon.toLocaleString()}kg</td>
+                <td className={styles.numberCell}>{r.expectedTon.toLocaleString()}kg</td>
               </tr>
             ))}
           </tbody>

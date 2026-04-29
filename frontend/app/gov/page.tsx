@@ -90,14 +90,14 @@ export default function GovDashboardPage() {
         <a className={styles.btnGhost} href="/balance">전체보기 →</a>
       </div>
       <div className={styles.tableWrap}>
-        <table className={styles.table}>
+        <table className={styles.table} style={{ tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th>작물</th>
-              <th className={styles.thRight}>현재 공급률</th>
-              <th className={styles.thCenter}>상태</th>
-              <th className={styles.thCenter}>경고 수준</th>
-              <th>권고 사항</th>
+              <th className={styles.colCrop}>작물</th>
+              <th className={`${styles.numberCell} ${styles.colSupply}`}>현재 공급률</th>
+              <th className={`${styles.statusCell} ${styles.colStatus}`}>상태</th>
+              <th className={`${styles.statusCell} ${styles.colLevel}`}>경고 수준</th>
+              <th className={styles.colAdvice}>권고 사항</th>
             </tr>
           </thead>
           <tbody>
@@ -105,10 +105,10 @@ export default function GovDashboardPage() {
             {warningItems.map((item, i) => (
               <tr key={i}>
                 <td className={styles.tdBold}>{item.cropName}</td>
-                <td className={styles.tdRight}>{item.supplyRate.toLocaleString()}%</td>
-                <td className={styles.tdCenter}><span className={`${styles.badge} ${item.status === '과잉' ? styles.badgeRed : styles.badgeOrange}`}>{item.status}</span></td>
-                <td className={styles.tdCenter}><span className={`${styles.badge} ${item.level === '긴급' ? styles.badgeRed : styles.badgeOrange}`}>{item.level}</span></td>
-                <td>{item.advice}</td>
+                <td className={styles.numberCell}>{Number(item.supplyRate).toFixed(2)}%</td>
+                <td className={styles.statusCell}><span className={`${styles.badge} ${item.status === '과잉' ? styles.badgeRed : styles.badgeOrange}`}>{item.status}</span></td>
+                <td className={styles.statusCell}><span className={`${styles.badge} ${item.level === '긴급' ? styles.badgeRed : styles.badgeOrange}`}>{item.level}</span></td>
+                <td className={styles.adviceCell}>{item.advice}</td>
               </tr>
             ))}
           </tbody>

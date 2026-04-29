@@ -66,8 +66,6 @@ export default function SalesPage() {
         <div className={styles.kpi}><div className={styles.kpiLabel}>전월 대비</div><div className={styles.kpiValue} style={{ color: 'var(--color-primary)' }}>{summary.momRate}</div></div>
       </div>
 
-      <GovTabs />
-
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>월별 거래액 추이</h2>
         <ResponsiveContainer width="100%" height={280}>
@@ -81,30 +79,28 @@ export default function SalesPage() {
         </ResponsiveContainer>
       </div>
 
-      <GovTabs />
-
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>인기 상품 TOP 5</h2>
         <div className={styles.tableWrap} style={{ marginBottom: 0 }}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th className={styles.thCenter}>순위</th>
+                <th className={styles.statusCell}>순위</th>
                 <th>상품</th>
                 <th>판매자</th>
-                <th className={styles.thRight}>판매량</th>
-                <th className={styles.thRight}>매출액</th>
+                <th className={styles.numberCell}>판매량</th>
+                <th className={styles.numberCell}>매출액</th>
               </tr>
             </thead>
             <tbody>
               {topProducts.length === 0 && <tr><td colSpan={5}>데이터가 없습니다.</td></tr>}
               {topProducts.map(p => (
                 <tr key={p.rank}>
-                  <td className={styles.tdCenter}>{p.rank}</td>
+                  <td className={styles.statusCell}>{p.rank}</td>
                   <td className={styles.tdBold}>{p.productName}</td>
                   <td>{p.seller}</td>
-                  <td className={styles.tdRight}>{p.salesVolume.toLocaleString()}개</td>
-                  <td className={styles.tdRight}>{p.revenue}</td>
+                  <td className={styles.numberCell}>{p.salesVolume.toLocaleString()}개</td>
+                  <td className={styles.numberCell}>{Number(p.revenue).toLocaleString()}원</td>
                 </tr>
               ))}
             </tbody>
