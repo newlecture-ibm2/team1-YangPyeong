@@ -1,6 +1,6 @@
 package com.farmbalance.admin.adapter.in.web;
 
-import com.farmbalance.admin.application.port.in.ManageApprovalUseCase;
+import com.farmbalance.admin.application.port.in.ManageFarmApprovalUseCase;
 import com.farmbalance.admin.domain.FarmApprovalView;
 import com.farmbalance.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +15,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admins/approvals")
 @RequiredArgsConstructor
-public class AdminApprovalController {
+public class AdminFarmApprovalController {
 
-    private final ManageApprovalUseCase manageApprovalUseCase;
+    private final ManageFarmApprovalUseCase manageFarmApprovalUseCase;
 
     /**
      * 상태별 승인 요청 목록 조회
@@ -26,7 +26,7 @@ public class AdminApprovalController {
     @GetMapping
     public ApiResponse<List<FarmApprovalView>> getApprovals(
             @RequestParam(required = false, defaultValue = "PENDING") String status) {
-        return ApiResponse.ok(manageApprovalUseCase.getApprovalsByStatus(status));
+        return ApiResponse.ok(manageFarmApprovalUseCase.getApprovalsByStatus(status));
     }
 
     /**
@@ -35,7 +35,7 @@ public class AdminApprovalController {
      */
     @PatchMapping("/{farmId}/approve")
     public ApiResponse<Void> approve(@PathVariable Long farmId) {
-        manageApprovalUseCase.approve(farmId);
+        manageFarmApprovalUseCase.approve(farmId);
         return ApiResponse.ok(null);
     }
 
@@ -45,7 +45,7 @@ public class AdminApprovalController {
      */
     @PatchMapping("/{farmId}/reject")
     public ApiResponse<Void> reject(@PathVariable Long farmId) {
-        manageApprovalUseCase.reject(farmId);
+        manageFarmApprovalUseCase.reject(farmId);
         return ApiResponse.ok(null);
     }
 }

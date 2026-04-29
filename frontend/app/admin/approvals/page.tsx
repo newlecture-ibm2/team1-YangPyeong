@@ -5,9 +5,9 @@ import Button from '@/components/common/Button/Button'
 import Badge from '@/components/common/Badge/Badge'
 import { useToast } from '@/components/common/Toast'
 import styles from './Approvals.module.css'
-import type { FarmApprovalView, ApprovalStatus } from '../_lib/approval.types'
-import { APPROVAL_STATUS_LABELS } from '../_lib/approval.types'
-import { fetchApprovals, approveFarm, rejectFarm } from '../_lib/approval.api'
+import type { FarmApprovalView, ApprovalStatus } from '../_lib/farmApproval.types'
+import { APPROVAL_STATUS_LABELS } from '../_lib/farmApproval.types'
+import { fetchApprovals, approveFarm, rejectFarm } from '../_lib/farmApproval.api'
 
 type Tab = 'PENDING' | 'APPROVED' | 'REJECTED'
 

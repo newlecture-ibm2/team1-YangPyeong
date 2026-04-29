@@ -13,11 +13,11 @@ export interface AdminUser {
   deletedAt: string | null
 }
 
-export type UserRole = 'GENERAL' | 'FARMER' | 'ADMIN' | 'GOV'
-export type UserStatus = 'ACTIVE' | 'SUSPENDED'
+export type UserRole = 'USER' | 'FARMER' | 'ADMIN' | 'GOV'
+export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING'
 
 /** 역할 변경 허용 값 (GOV 제외) */
-export type ChangeableRole = 'GENERAL' | 'FARMER'
+export type ChangeableRole = 'USER' | 'FARMER'
 
 export interface ChangeRoleRequest {
   role: ChangeableRole
@@ -48,7 +48,7 @@ export interface ApiResponse<T> {
 
 /** 역할 한글 매핑 */
 export const ROLE_LABELS: Record<UserRole, string> = {
-  GENERAL: '일반',
+  USER: '일반',
   FARMER: '농부',
   ADMIN: '관리자',
   GOV: '지자체',
@@ -58,4 +58,5 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 export const STATUS_LABELS: Record<UserStatus, string> = {
   ACTIVE: '활성',
   SUSPENDED: '정지',
+  PENDING: '대기',
 }

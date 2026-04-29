@@ -8,7 +8,7 @@ import java.util.List;
  * ADM-002 농부 승인/반려 Input Port
  * 농장 등록 신청 목록 조회, 승인, 반려
  */
-public interface ManageApprovalUseCase {
+public interface ManageFarmApprovalUseCase {
 
     /**
      * 상태별 농장 신청 목록 조회

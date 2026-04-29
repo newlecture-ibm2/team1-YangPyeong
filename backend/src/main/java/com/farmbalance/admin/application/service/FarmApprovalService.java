@@ -1,6 +1,6 @@
 package com.farmbalance.admin.application.service;
 
-import com.farmbalance.admin.application.port.in.ManageApprovalUseCase;
+import com.farmbalance.admin.application.port.in.ManageFarmApprovalUseCase;
 import com.farmbalance.admin.application.port.out.AdminFarmPort;
 import com.farmbalance.admin.application.port.out.AdminUserPort;
 import com.farmbalance.admin.domain.AdminFarm;
@@ -21,7 +21,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ApprovalService implements ManageApprovalUseCase {
+public class FarmApprovalService implements ManageFarmApprovalUseCase {
 
     private final AdminFarmPort adminFarmPort;
     private final AdminUserPort adminUserPort;

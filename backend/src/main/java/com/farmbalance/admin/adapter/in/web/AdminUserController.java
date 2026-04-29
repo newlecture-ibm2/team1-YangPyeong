@@ -61,7 +61,7 @@ public class AdminUserController {
     }
 
     /**
-     * 역할 변경 (GENERAL ↔ FARMER)
+     * 역할 변경 (USER ↔ FARMER)
      * PATCH /api/admins/users/{id}/role
      */
     @PatchMapping("/{id}/role")

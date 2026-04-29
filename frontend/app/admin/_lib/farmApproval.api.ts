@@ -1,4 +1,4 @@
-import type { ApiResponse, FarmApprovalView } from './approval.types'
+import type { ApiResponse, FarmApprovalView } from './farmApproval.types'
 
 const BASE = '/api/admin/approvals'
 
