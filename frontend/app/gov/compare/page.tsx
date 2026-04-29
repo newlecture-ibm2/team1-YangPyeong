@@ -98,14 +98,14 @@ export default function ComparePage() {
       </div>
 
       <div className={styles.tableWrap}>
-        <table className={styles.table}>
+        <table className={styles.table} style={{ tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th>작물</th>
-              <th className={styles.numberCell}>{baseYear} 생산량</th>
-              <th className={styles.numberCell}>{compareYear} 생산량</th>
-              <th className={styles.numberCell}>증감</th>
-              <th className={styles.numberCell}>증감률</th>
+              <th className={styles.colAuto}>작물</th>
+              <th className={`${styles.numberCell} ${styles.col150}`}>{baseYear} 생산량</th>
+              <th className={`${styles.numberCell} ${styles.col150}`}>{compareYear} 생산량</th>
+              <th className={`${styles.numberCell} ${styles.col150}`}>증감</th>
+              <th className={`${styles.numberCell} ${styles.col120}`}>증감률</th>
             </tr>
           </thead>
           <tbody>

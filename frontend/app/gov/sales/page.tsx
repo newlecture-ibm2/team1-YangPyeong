@@ -82,14 +82,14 @@ export default function SalesPage() {
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>인기 상품 TOP 5</h2>
         <div className={styles.tableWrap} style={{ marginBottom: 0 }}>
-          <table className={styles.table}>
+          <table className={styles.table} style={{ tableLayout: 'fixed' }}>
             <thead>
               <tr>
-                <th className={styles.statusCell}>순위</th>
-                <th>상품</th>
-                <th>판매자</th>
-                <th className={styles.numberCell}>판매량</th>
-                <th className={styles.numberCell}>매출액</th>
+                <th className={`${styles.statusCell} ${styles.col100}`}>순위</th>
+                <th className={styles.colAuto}>상품</th>
+                <th className={styles.col150}>판매자</th>
+                <th className={`${styles.numberCell} ${styles.col150}`}>판매량</th>
+                <th className={`${styles.numberCell} ${styles.col150}`}>매출액</th>
               </tr>
             </thead>
             <tbody>

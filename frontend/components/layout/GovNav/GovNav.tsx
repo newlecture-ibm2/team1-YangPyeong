@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useGovUser } from '@/app/gov/_hooks/useGovUser';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import styles from '@/components/layout/Nav/Nav.module.css';
+import styles from '@/components/layout/Header/Header.module.css';
 
 /**
  * 지자체 전용 네비게이션 바

@@ -5,6 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import styles from './gov.module.css';
 import { useGovUser, getTestHeaders } from './_hooks/useGovUser';
 import GovTabs from './_components/GovTabs';
+import Modal from '@/components/common/Modal';
 
 interface DashboardData {
   summary: { totalFarms: number; totalCrops: number; surplusCount: number; shortageCount: number };
@@ -17,6 +18,7 @@ export default function GovDashboardPage() {
   const { user, loading: userLoading } = useGovUser();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isBoardModalOpen, setIsBoardModalOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/gov/dashboard', { headers: getTestHeaders() })
@@ -87,7 +89,7 @@ export default function GovDashboardPage() {
       {/* Warning Table */}
       <div className={styles.sectionHeader}>
         <h3>⚠️ 수급 경고 품목</h3>
-        <a className={styles.btnGhost} href="/balance">전체보기 →</a>
+        <button className={styles.btnGhost} onClick={() => setIsBoardModalOpen(true)}>전체보기 →</button>
       </div>
       <div className={styles.tableWrap}>
         <table className={styles.table} style={{ tableLayout: 'fixed' }}>
@@ -114,6 +116,19 @@ export default function GovDashboardPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Balance Board Modal */}
+      <Modal
+        isOpen={isBoardModalOpen}
+        onClose={() => setIsBoardModalOpen(false)}
+        title="수급 경고 게시판"
+        size="lg"
+      >
+        <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-secondary)', minHeight: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+          <h3 style={{ margin: 0, color: 'var(--color-text)' }}>수급 경고 상세 게시판</h3>
+          <p>지자체 전용 수급 경고 게시판이 이 곳에 연동될 예정입니다.<br/>(추후 구현 시 본문 렌더링 영역)</p>
+        </div>
+      </Modal>
     </div>
   );
 }

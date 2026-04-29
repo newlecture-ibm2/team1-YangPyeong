@@ -37,10 +37,10 @@ public class GovSeedDataInitializer {
             Integer balanceCount = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM balance_data WHERE id BETWEEN 9000 AND 9100", Integer.class);
 
-            if (userCount != null && userCount == 31 && 
-                orderCount != null && orderCount >= 45 &&
-                farmCount != null && farmCount == 25 &&
-                balanceCount != null && balanceCount == 28) {
+            if (userCount != null && userCount >= 31 && 
+                orderCount != null && orderCount >= 23 &&
+                farmCount != null && farmCount >= 25 &&
+                balanceCount != null && balanceCount >= 28) {
                 log.info("[Gov Seed] 이미 시드 데이터가 완전히 존재합니다. 스킵합니다.");
                 return;
             }

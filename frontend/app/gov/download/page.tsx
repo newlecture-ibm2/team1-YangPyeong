@@ -251,12 +251,12 @@ export default function DownloadPage() {
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>최근 다운로드 이력</h2>
         <div className={styles.tableWrap} style={{ marginBottom: 0 }}>
-          <table className={styles.table}>
+          <table className={styles.table} style={{ tableLayout: 'fixed' }}>
             <thead>
               <tr>
-                <th className={styles.dateCell}>일시</th>
-                <th>데이터 유형</th>
-                <th className={styles.statusCell}>형식</th>
+                <th className={`${styles.dateCell} ${styles.col200}`}>일시</th>
+                <th className={styles.colAuto}>데이터 유형</th>
+                <th className={`${styles.statusCell} ${styles.col150}`}>형식</th>
               </tr>
             </thead>
             <tbody>

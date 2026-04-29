@@ -75,14 +75,14 @@ export default function CultivationPage() {
       </div>
 
       <div className={styles.tableWrap}>
-        <table className={styles.table}>
+        <table className={styles.table} style={{ tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th>읍면</th>
-              <th className={styles.numberCell}>농가 수</th>
-              <th className={styles.numberCell}>재배 면적</th>
-              <th>주요 작물</th>
-              <th className={styles.numberCell}>예상 생산량</th>
+              <th className={styles.col120}>읍면</th>
+              <th className={`${styles.numberCell} ${styles.col150}`}>농가 수</th>
+              <th className={`${styles.numberCell} ${styles.col150}`}>재배 면적</th>
+              <th className={styles.colAuto}>주요 작물</th>
+              <th className={`${styles.numberCell} ${styles.col150}`}>예상 생산량</th>
             </tr>
           </thead>
           <tbody>

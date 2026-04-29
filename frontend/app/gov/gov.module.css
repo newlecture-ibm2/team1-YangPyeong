@@ -225,6 +225,14 @@
   line-height: 1.5;
 }
 
+/* 범용 테이블 컬럼 넓이 */
+.table .col100 { width: 100px; }
+.table .col120 { width: 120px; }
+.table .col150 { width: 150px; }
+.table .col200 { width: 200px; }
+.table .colAuto { width: auto; }
+
+/* 수급 경고 대시보드 전용 넓이 (기존 유지) */
 .table .colCrop { width: 120px; }
 .table .colSupply { width: 120px; }
 .table .colStatus { width: 100px; }
