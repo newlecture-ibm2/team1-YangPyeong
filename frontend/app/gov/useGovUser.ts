@@ -14,11 +14,7 @@ export function useGovUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // For testing: localStorage.getItem('X-USER-ID') || '9040';
-    const testUserId = typeof window !== 'undefined' ? localStorage.getItem('X-USER-ID') || '9040' : '9040';
-    fetch('/api/gov/me', {
-      headers: { 'X-USER-ID': testUserId }
-    })
+    fetch('/api/gov/me')
       .then(res => res.json())
       .then(json => {
         if (json.success === false) throw new Error(json.error?.message);
@@ -35,6 +31,5 @@ export function useGovUser() {
 }
 
 export function getTestHeaders() {
-  const testUserId = typeof window !== 'undefined' ? localStorage.getItem('X-USER-ID') || '9040' : '9040';
-  return { 'X-USER-ID': testUserId };
+  return {};
 }
