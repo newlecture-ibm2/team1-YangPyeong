@@ -24,4 +24,8 @@ public class User {
     private String profileImageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public void updateRole(Role role) {
+        this.role = role;
+    }
 }
