@@ -18,8 +18,9 @@ spring:
   # ── JPA / Hibernate ──
   jpa:
     hibernate:
-      # 실무에서는 validate로 변경하지만, 개발 편의성을 위해 당분간 update 유지
-      ddl-auto: update
+      # Flyway를 도입했으므로 엔티티 구조와 DB 테이블 구조가 일치하는지만 깐깐하게 검사(validate)합니다.
+      # 이제부터 테이블을 수정하려면 무조건 Flyway V_ 버전 SQL 파일을 추가해야 합니다!
+      ddl-auto: validate
     open-in-view: false
     show-sql: false
     properties:
