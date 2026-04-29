@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -15,13 +16,31 @@ public class AgentRestAdapter implements AgentRouterPort {
     private final RestClient agentRestClient;
 
     @Override
-    public String routeToAgent(String message) {
-        log.info("Agent 서버로 메시지 전송: {}", message);
+    public String routeToAgent(String category, String message) {
+        log.info("Agent 서버로 메시지 전송 [카테고리: {}] : {}", category, message);
         
-        // TODO: (지윤님 구현 파트)
-        // agentRestClient를 이용해 POST 요청을 보내고 결과를 리턴하는 로직 작성
-        // 예: return agentRestClient.post().uri("/chat").body(...).retrieve().body(String.class);
-        
-        return "파이썬 에이전트의 답변입니다. (임시)";
+        // 파이썬 서버로 보낼 JSON Body
+        Map<String, String> requestBody = Map.of(
+            "category", category,
+            "message", message
+        );
+
+        try {
+            // 파이썬 서버 응답이 {"reply": "..."} 형태라고 가정 (응답 파서 구현)
+            @SuppressWarnings("unchecked")
+            Map<String, String> response = agentRestClient.post()
+                    .uri("/api/chat") // 파이썬팀과 맞춘 공통 엔드포인트 가정
+                    .body(requestBody)
+                    .retrieve()
+                    .body(Map.class);
+
+            if (response != null && response.containsKey("reply")) {
+                return response.get("reply");
+            }
+            return "AI 서버가 올바른 응답을 주지 않았습니다.";
+        } catch (Exception e) {
+            log.error("AI 서버 통신 실패: {}", e.getMessage());
+            return "현재 AI 서버와의 연결이 원활하지 않습니다. 잠시 후 다시 시도해주세요.";
+        }
     }
 }

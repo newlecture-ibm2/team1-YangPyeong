@@ -7,6 +7,9 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.farmbalance.chat.adapter.in.web.dto.ChatRequest;
+import com.farmbalance.chat.adapter.in.web.dto.ChatResponse;
 import com.farmbalance.chat.application.port.in.ChatUseCase;
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     private final ChatUseCase chatUseCase;
+    private final ObjectMapper objectMapper;
 
     // 현재 접속 중인 세션들을 관리하는 맵 (스레드 안전)
     private final ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
@@ -37,16 +41,30 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         String payload = message.getPayload();
         log.info("수신된 메시지: {}", payload);
 
-        // TODO: (지윤님 과제) 
-        // JWT 필터 등에서 저장한 인증 정보로부터 실제 유저 ID와 방 ID를 추출하는 로직 필요
-        Long dummyUserId = 1L; 
-        Long dummyRoomId = 1L; 
+        try {
+            // 1. JSON 파싱
+            ChatRequest request = objectMapper.readValue(payload, ChatRequest.class);
+            
+            // TODO: (지윤님 과제) JWT 필터 등에서 저장한 인증 정보로부터 실제 유저 ID 추출 로직 필요
+            Long dummyUserId = 1L; 
 
-        // 1. 유저의 메시지를 비즈니스 로직(Service)으로 넘겨 처리
-        chatUseCase.processUserMessage(dummyUserId, dummyRoomId, payload);
+            // 2. 비즈니스 로직 처리 (마스킹 -> 라우팅 -> 파이썬 서버 호출 -> 응답 파싱)
+            String aiReply = chatUseCase.processUserMessage(
+                dummyUserId, 
+                request.getRoomId(), 
+                request.getCategory(), 
+                request.getMessage()
+            );
 
-        // 임시 에코 메시지 (연결 테스트용)
-        session.sendMessage(new TextMessage("백엔드 라우팅 및 수신 완료: " + payload));
+            // 3. 응답 전송 (JSON 포맷팅)
+            ChatResponse response = new ChatResponse("AI", aiReply);
+            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(response)));
+            
+        } catch (Exception e) {
+            log.error("메시지 처리 실패: ", e);
+            ChatResponse errorResponse = new ChatResponse("SYSTEM", "시스템 오류가 발생했습니다.");
+            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(errorResponse)));
+        }
     }
 
     @Override
