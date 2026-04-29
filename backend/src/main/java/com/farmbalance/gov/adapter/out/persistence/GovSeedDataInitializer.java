@@ -125,10 +125,16 @@ public class GovSeedDataInitializer {
         }
     }
 
-    /** seed-gov.sql 파일 읽어서 실행 */
+    /** seed-regions.sql → seed-gov.sql 순서로 실행 */
     private void executeSeedSql() {
+        executeSqlFile("seed-regions.sql");
+        executeSqlFile("seed-gov.sql");
+    }
+
+    /** SQL 파일 읽어서 실행 */
+    private void executeSqlFile(String filename) {
         try {
-            ClassPathResource resource = new ClassPathResource("seed-gov.sql");
+            ClassPathResource resource = new ClassPathResource(filename);
             List<String> statements = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
 
@@ -156,12 +162,13 @@ public class GovSeedDataInitializer {
                     jdbc.execute(stmt);
                     executed++;
                 } catch (Exception e) {
-                    log.warn("[Gov Seed] SQL 실행 실패: {}", e.getMessage());
+                    log.warn("[Gov Seed] [{}] SQL 실행 실패: {}", filename, e.getMessage());
                 }
             }
-            log.info("[Gov Seed] ✅ 시드 데이터 {} / {} 건 실행 완료", executed, statements.size());
+            log.info("[Gov Seed] ✅ {} — {} / {} 건 실행 완료", filename, executed, statements.size());
         } catch (Exception e) {
-            log.error("[Gov Seed] ❌ SQL 파일 실행 실패", e);
+            log.error("[Gov Seed] ❌ {} 파일 실행 실패", filename, e);
         }
     }
 }
+

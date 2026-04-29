@@ -4,7 +4,7 @@
 > **DB**: PostgreSQL 16
 > **ORM**: Spring Data JPA (Hibernate)
 > **네이밍**: snake_case (DB) ↔ camelCase (Java Entity)
-> **테이블 수**: 25개 (기존 14 + 신규 11)
+> **테이블 수**: 26개 (기존 14 + 신규 12)
 
 ---
 
@@ -12,6 +12,19 @@
 
 ```mermaid
 erDiagram
+    %% ===== 지역 마스터 =====
+    regions {
+        bigint id PK
+        varchar code UK "지역 코드 (41, 4183, 4183010 등)"
+        varchar name "지역명"
+        varchar type "PROVINCE | CITY | TOWN"
+        bigint parent_id FK "상위 지역 (자기참조)"
+        boolean is_active
+        timestamp created_at
+    }
+
+    regions ||--o{ regions : "상위-하위"
+
     %% ===== 유저 도메인 =====
     users {
         bigint id PK
@@ -20,12 +33,15 @@ erDiagram
         varchar name
         varchar phone
         varchar role "USER | FARMER | ADMIN | GOV"
-        varchar region
+        varchar region "지역명 문자열 (하위호환)"
+        varchar region_code "FK → regions.code (시군구 코드)"
         varchar status "ACTIVE | SUSPENDED"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
     }
+
+    regions ||--o{ users : "관할지역"
 
     farms {
         bigint id PK
@@ -425,6 +441,23 @@ erDiagram
 
 ## 2. 테이블 상세 명세
 
+### 2.0 regions (지역 마스터) — 신규
+
+시도 → 시군구 → 읍면동 계층 구조의 지역 기준정보 테이블입니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| code | VARCHAR(10) | UNIQUE, NOT NULL | 지역 코드 ("41", "4183", "4183010" 등) |
+| name | VARCHAR(30) | NOT NULL | 지역명 (경기도, 양평군, 양평읍 등) |
+| type | VARCHAR(10) | NOT NULL, CHECK | PROVINCE / CITY / TOWN |
+| parent_id | BIGINT | FK → regions(id) | 상위 지역 (자기참조, 시도=NULL) |
+| is_active | BOOLEAN | DEFAULT true | 활성 여부 |
+| created_at | TIMESTAMP | DEFAULT NOW() | 등록일 |
+
+> **계층 예시**: 경기도(PROVINCE) → 양평군(CITY) → 양평읍(TOWN)
+> **용도**: GOV 사용자의 관할지역 결정, 읍면 필터 동적 조회, 하드코딩 제거
+
 ### 2.1 users (유저)
 
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -435,11 +468,15 @@ erDiagram
 | name | VARCHAR(50) | NOT NULL | 이름 |
 | phone | VARCHAR(20) | | 전화번호 |
 | role | VARCHAR(20) | NOT NULL, DEFAULT 'GENERAL' | GENERAL / FARMER / ADMIN / GOV |
-| region | VARCHAR(50) | | 지역 (양평군 등) |
+| region | VARCHAR(50) | | 지역 (양평군 등) — 하위호환용 유지 |
+| region_code | VARCHAR(10) | | 시군구 코드 (regions.code 참조, 예: "4183") — 신규 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | ACTIVE / SUSPENDED |
 | created_at | TIMESTAMP | NOT NULL | 가입일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **region_code 추가 이유**: GOV 사용자의 관할 시군구를 `regions` 테이블과 연결하여 하위 읍면동 목록을 동적으로 조회하기 위함.  
+> 기존 `region` 문자열 컬럼은 하위호환을 위해 삭제하지 않고 유지합니다.
 
 ### 2.2 farms (농장)
 
@@ -871,6 +908,8 @@ erDiagram
 
 | 관계 | 카디널리티 | FK | 설명 |
 |------|:---------:|:---:|------|
+| regions → regions | 1:N (자기참조) | ✅ | 시도 → 시군구 → 읍면동 계층 |
+| regions → users | 1:N | — | region_code로 논리적 참조 (GOV 관할) |
 | users → farms | 1:N | ✅ | 유저 한 명이 여러 농장 소유 가능 |
 | farms → seed_registrations | 1:N | ✅ | 농장별 여러 종자 등록 |
 | crops → balance_data | 1:N | ✅ | 작물별 지역·시즌 수급 데이터 |
@@ -905,10 +944,15 @@ erDiagram
 ## 4. 인덱스 권장
 
 ```sql
+-- 지역 마스터
+CREATE INDEX idx_regions_parent ON regions(parent_id);
+CREATE INDEX idx_regions_type ON regions(type);
+
 -- 유저 조회
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_region ON users(region);
+CREATE INDEX idx_users_region_code ON users(region_code);
 
 -- 농장
 CREATE INDEX idx_farms_user_id ON farms(user_id);

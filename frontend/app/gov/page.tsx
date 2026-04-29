@@ -32,7 +32,7 @@ export default function GovDashboardPage() {
   if (!data) return <div className={styles.page}><p>데이터를 불러올 수 없습니다.</p></div>;
 
   const { summary, warningItems, monthlySupply, regionDistribution } = data;
-  const region = user.region;
+  const region = user.regionName || user.region;
 
   return (
     <div className={styles.page}>
