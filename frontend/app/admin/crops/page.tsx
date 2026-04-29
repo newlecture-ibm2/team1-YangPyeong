@@ -131,13 +131,14 @@ export default function CropsPage() {
     <div className={styles.container}>
       {/* 헤더 */}
       <div className={styles.header}>
-        <h1 className={styles.title}>🌱 작물 마스터 데이터 관리</h1>
+        <h1 className={styles.title}>작물 기준정보 관리</h1>
         {activeTab === 'crops' ? (
           <Button variant="primary" onClick={openCreateCropModal}>＋ 작물 추가</Button>
         ) : (
           <Button variant="primary" onClick={openCreateCategoryModal}>＋ 카테고리 추가</Button>
         )}
       </div>
+      <p className={styles.subtitle}>작물 마스터 데이터와 카테고리를 관리합니다.</p>
 
       {/* 탭 */}
       <div className={styles.tabs}>
@@ -182,7 +183,6 @@ export default function CropsPage() {
               placeholder="작물명 또는 코드 검색..."
               value={filterKeyword}
               onChange={(e) => setFilterKeyword(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', minWidth: 200 }}
             />
           </div>
 
@@ -195,7 +195,7 @@ export default function CropsPage() {
               등록된 작물이 없습니다.
             </div>
           ) : (
-            <div className={styles.tableWrap}>
+            <div className={styles.tableWrapper}>
               <table className={styles.table}>
                 <thead>
                   <tr>
@@ -251,7 +251,7 @@ export default function CropsPage() {
               등록된 카테고리가 없습니다.
             </div>
           ) : (
-            <div className={styles.tableWrap}>
+            <div className={styles.tableWrapper}>
               <table className={styles.table}>
                 <thead>
                   <tr>
