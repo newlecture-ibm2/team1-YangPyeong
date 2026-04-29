@@ -31,6 +31,8 @@ public enum ErrorCode {
     AUTH_REFRESH_TOKEN_INVALID("E-AUTH-TOKEN-003", "유효하지 않은 리프레시 토큰입니다.", HttpStatus.UNAUTHORIZED),
     AUTH_SOCIAL_LOGIN_FAILED("E-AUTH-SOCIAL-001", "소셜 로그인에 실패했습니다.", HttpStatus.UNAUTHORIZED),
     AUTH_SOCIAL_EMAIL_REQUIRED("E-AUTH-SOCIAL-002", "소셜 계정에 이메일 정보가 없습니다. 이메일 제공에 동의해주세요.", HttpStatus.BAD_REQUEST),
+    SECURITY_QUESTION_NOT_FOUND("E-AUTH-SECURITY-001", "등록된 보안질문이 없습니다.", HttpStatus.NOT_FOUND),
+    SECURITY_ANSWER_MISMATCH("E-AUTH-SECURITY-002", "보안질문 답변이 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
 
     // ── 사용자 ──
     USER_NOT_FOUND("E-USER-001", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
