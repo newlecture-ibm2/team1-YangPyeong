@@ -5,6 +5,8 @@ export interface GovUser {
   name: string;
   role: string;
   region: string;
+  regionCode: string;
+  regionName: string;
 }
 
 export function useGovUser() {

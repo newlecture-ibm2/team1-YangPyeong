@@ -4,19 +4,19 @@
 -- ⚠ 운영 데이터 아님 — 발표/시연용
 -- ═══════════════════════════════════════════════════════════════
 
--- 1. 안전한 삭제 (식별자 기반, FK 역순)
--- ⚠ id BETWEEN 삭제 금지 — 반드시 식별자(email, order_number, code, name prefix)로 삭제
-DELETE FROM download_history WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@gov-seed.local');
-DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE order_number LIKE 'GS-%');
-DELETE FROM orders WHERE order_number LIKE 'GS-%';
-DELETE FROM balance_data WHERE crop_id IN (SELECT id FROM crops WHERE code LIKE 'GS_%');
-DELETE FROM seed_registrations WHERE farm_id IN (SELECT id FROM farms WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@gov-seed.local'));
-DELETE FROM products WHERE seller_id IN (SELECT id FROM users WHERE email LIKE '%@gov-seed.local');
-DELETE FROM product_categories WHERE name LIKE '[GS]%';
-DELETE FROM farms WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@gov-seed.local');
-DELETE FROM crops WHERE code LIKE 'GS_%';
-DELETE FROM crop_categories WHERE name LIKE '[GS]%';
-DELETE FROM users WHERE email LIKE '%@gov-seed.local';
+DELETE FROM download_history WHERE user_id >= 9000 AND user_id <= 9999;
+DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE buyer_id >= 9000 AND buyer_id <= 9999);
+DELETE FROM order_items WHERE product_id IN (SELECT id FROM products WHERE seller_id >= 9000 AND seller_id <= 9999);
+DELETE FROM orders WHERE buyer_id >= 9000 AND buyer_id <= 9999;
+DELETE FROM balance_data WHERE crop_id >= 9000 AND crop_id <= 9999;
+DELETE FROM seed_registrations WHERE farm_id IN (SELECT id FROM farms WHERE user_id >= 9000 AND user_id <= 9999);
+DELETE FROM products WHERE seller_id >= 9000 AND seller_id <= 9999;
+DELETE FROM product_categories WHERE id >= 9000 AND id <= 9999;
+DELETE FROM farm_crops WHERE farm_id IN (SELECT id FROM farms WHERE user_id >= 9000 AND user_id <= 9999);
+DELETE FROM farms WHERE user_id >= 9000 AND user_id <= 9999;
+DELETE FROM crops WHERE id >= 9000 AND id <= 9999;
+DELETE FROM crop_categories WHERE id >= 9000 AND id <= 9999;
+DELETE FROM users WHERE id >= 9000 AND id <= 9999;
 
 -- ═══════ 2. users (농업인 25명 + 구매자 5명 + 지자체 1명) ═══════
 INSERT INTO users (id, email, password, name, phone, role, status, created_at) VALUES
@@ -52,9 +52,9 @@ INSERT INTO users (id, email, password, name, phone, role, status, created_at) V
 (9035,'gov_buyer05@gov-seed.local','$2a$10$dummy','소비자E','010-2222-0005','USER','ACTIVE','2025-09-01 09:00:00'),
 (9040,'gov-yangpyeong@gov-seed.local','$2a$10$dummy','양평군청','031-770-2001','GOV','ACTIVE','2025-01-01 09:00:00');
 
-UPDATE users SET region = '양평군' WHERE email = 'gov-yangpyeong@gov-seed.local';
-INSERT INTO users (id, email, password, name, phone, role, status, region, created_at) VALUES
-(9041, 'gov-gapyeong@gov-seed.local', '$2a$10$dummy', '가평군 담당자', '031-000-0000', 'GOV', 'ACTIVE', '가평군', NOW());
+UPDATE users SET region = '양평군', region_code = '4183' WHERE email LIKE '%@gov-seed.local' AND id <= 9040;
+INSERT INTO users (id, email, password, name, phone, role, status, region, region_code, created_at) VALUES
+(9041, 'gov-gapyeong@gov-seed.local', '$2a$10$dummy', '가평군 담당자', '031-000-0000', 'GOV', 'ACTIVE', '가평군', '4182', NOW());
 
 -- ═══════ 3. crop_categories ═══════
 INSERT INTO crop_categories (id, name, description, display_order, is_active, created_at) VALUES

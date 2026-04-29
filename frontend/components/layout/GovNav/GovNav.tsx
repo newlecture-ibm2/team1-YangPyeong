@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useGovUser } from '@/app/gov/_hooks/useGovUser';
+import { useGovUser } from '@/app/gov/useGovUser';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import styles from '@/components/layout/Header/Header.module.css';
@@ -48,7 +48,7 @@ export default function GovNav() {
           <option value="9041">가평군(9041)</option>
         </select>
 
-        <span className={styles.btnFill}>{user?.region ? `${user.region} 담당자` : "로딩 중..."}</span>
+        <span className={styles.btnFill}>{user?.regionName || user?.region ? `${user.regionName || user.region} 담당자` : "로딩 중..."}</span>
       </div>
     </nav>
   );

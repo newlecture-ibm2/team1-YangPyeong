@@ -18,7 +18,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const id = Number(productId);
   const router = useRouter();
 
-  // TODO: 실제 인증 상태로 교체 (현재 더미)
+  // TODO: 실제 인증 상태로 교체 (개발 중 임시 true 처리)
   const isLoggedIn = false;
 
   const {
@@ -73,11 +73,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     setShowCartSuccessModal(true);
   };
 
-  /** 바로 구매 확정 */
+  /** 바로 구매 확정 → 결제 페이지로 이동 */
   const handleConfirmBuy = () => {
-    toastSuccess(`${product?.name} ${quantity}개 주문을 진행합니다.`);
     closePurchaseModal();
-    // TODO: 결제 페이지로 이동
+    router.push(`/shop/checkout?productId=${id}&quantity=${quantity}`);
   };
 
   /** 라이트박스 키보드 이벤트 */
