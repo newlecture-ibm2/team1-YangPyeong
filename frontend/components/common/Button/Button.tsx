@@ -5,6 +5,7 @@ import styles from './Button.module.css';
 
 interface ButtonProps {
   children: React.ReactNode;
+  id?: string;
   variant?: 'primary' | 'outline' | 'ghost' | 'dark' | 'kakao' | 'google';
   size?: 'sm' | 'md' | 'lg';
   href?: string;
@@ -18,6 +19,7 @@ interface ButtonProps {
 
 export default function Button({
   children,
+  id,
   variant = 'primary',
   size = 'md',
   href,
@@ -38,7 +40,7 @@ export default function Button({
 
   if (href) {
     return (
-      <Link href={href} className={classNames} style={style}>
+      <Link href={href} id={id} className={classNames} style={style}>
         {children}
       </Link>
     );
@@ -46,6 +48,7 @@ export default function Button({
 
   return (
     <button
+      id={id}
       type={type}
       className={classNames}
       onClick={onClick}
