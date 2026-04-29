@@ -129,7 +129,7 @@ export default function FarmRegisterPage() {
   };
 
   // 카카오 우편번호 검색 완료 핸들러
-  const handlePostcodeComplete = (data: DaumPostcodeData) => {
+  const handlePostcodeComplete = (data: any) => {
     // 농지의 특성을 고려한 주소 추출 우선순위 적용
     let finalAddress = data.roadAddress;
 
@@ -266,7 +266,7 @@ export default function FarmRegisterPage() {
               <div className={styles.row}>
                 <div>
                   <Input
-                    label="농업경영체 등록번호 (10자리)"
+                    label="농업경영체 등록번호"
                     placeholder="예: 1234567890"
                     value={formData.registrationNumber}
                     onChange={(e) => handleChange('registrationNumber', e.target.value)}

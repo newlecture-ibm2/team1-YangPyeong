@@ -12,4 +12,5 @@ public class FarmListResponse {
     private String address;
     private Double area;
     private List<String> cropTypes;
+    private String certificationStatus;
 }

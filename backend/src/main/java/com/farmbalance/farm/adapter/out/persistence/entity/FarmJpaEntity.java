@@ -48,6 +48,12 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(name = "soil_type", length = 50)
     private String soilType;
 
+    @Column(name = "soil_ph")
+    private Double ph;
+
+    @Column(name = "soil_organic_matter")
+    private Double organicMatter;
+
     @Column(name = "business_number", length = 12)
     private String registrationNumber;
 
@@ -58,7 +64,7 @@ public class FarmJpaEntity extends BaseTimeEntity {
     private Boolean landCertVerified = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "certification_status", length = 20)
     private com.farmbalance.farm.domain.CertificationStatus certificationStatus = com.farmbalance.farm.domain.CertificationStatus.PENDING;
 
     @ElementCollection(fetch = FetchType.LAZY)
@@ -70,7 +76,7 @@ public class FarmJpaEntity extends BaseTimeEntity {
     public FarmJpaEntity(UserJpaEntity user, String name, String address, Double area,
                          List<String> cropTypes, String bjdCode, String pnuCode,
                          Double latitude, Double longitude, String registrationNumber,
-                         String documentUrl, String soilType,
+                         String documentUrl, String soilType, Double ph, Double organicMatter,
                          com.farmbalance.farm.domain.CertificationStatus certificationStatus) {
         this.user = user;
         this.name = name;
@@ -84,12 +90,15 @@ public class FarmJpaEntity extends BaseTimeEntity {
         this.registrationNumber = registrationNumber;
         this.documentUrl = documentUrl;
         this.soilType = soilType;
+        this.ph = ph;
+        this.organicMatter = organicMatter;
         this.certificationStatus = certificationStatus != null ? certificationStatus : com.farmbalance.farm.domain.CertificationStatus.PENDING;
     }
 
     public void update(String name, String address, Double area, List<String> cropTypes,
                        String bjdCode, String pnuCode, Double latitude, Double longitude,
-                       String registrationNumber, String documentUrl) {
+                       String registrationNumber, String documentUrl,
+                       String soilType, Double ph, Double organicMatter) {
         this.name = name;
         this.address = address;
         this.area = area;
@@ -100,5 +109,8 @@ public class FarmJpaEntity extends BaseTimeEntity {
         this.longitude = longitude;
         this.registrationNumber = registrationNumber;
         this.documentUrl = documentUrl;
+        this.soilType = soilType;
+        this.ph = ph;
+        this.organicMatter = organicMatter;
     }
 }

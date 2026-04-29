@@ -20,4 +20,7 @@ public class RegisterFarmCommand {
     private String documentUrl;
     private Double latitude;
     private Double longitude;
+    private String soilType;
+    private Double ph;
+    private Double organicMatter;
 }
