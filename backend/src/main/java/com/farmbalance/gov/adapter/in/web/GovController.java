@@ -7,7 +7,9 @@ import com.farmbalance.gov.domain.model.GovUserInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
 import com.farmbalance.gov.adapter.in.web.dto.*;
@@ -33,19 +35,19 @@ public class GovController {
     }
 
     @GetMapping("/me")
-    public ApiResponse<GovUserResponse> getMe(@RequestHeader(value="X-USER-ID", required=false, defaultValue="9040") Long userId) {
+    public ApiResponse<GovUserResponse> getMe(@AuthenticationPrincipal Long userId) {
         return ApiResponse.ok(GovUserResponse.from(checkGovUser(userId)));
     }
 
     @GetMapping("/dashboard")
-    public ApiResponse<GovDashboardResponse> getDashboard(@RequestHeader(value="X-USER-ID", required=false, defaultValue="9040") Long userId) {
+    public ApiResponse<GovDashboardResponse> getDashboard(@AuthenticationPrincipal Long userId) {
         GovUserInfo user = checkGovUser(userId);
         return ApiResponse.ok(GovDashboardResponse.from(dashboardUseCase.getDashboardData(user.region())));
     }
 
     @GetMapping("/cultivation")
     public ApiResponse<List<GovCultivationResponse>> getCultivation(
-            @RequestHeader(value="X-USER-ID", required=false, defaultValue="9040") Long userId,
+            @AuthenticationPrincipal Long userId,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false, name = "town") String town,
             @RequestParam(required = false) String crop) {
@@ -57,7 +59,7 @@ public class GovController {
 
     @GetMapping("/compare")
     public ApiResponse<List<GovCompareResponse>> getCompare(
-            @RequestHeader(value="X-USER-ID", required=false, defaultValue="9040") Long userId,
+            @AuthenticationPrincipal Long userId,
             @RequestParam(required = false) Integer baseYear,
             @RequestParam(required = false) Integer compareYear,
             @RequestParam(required = false) String crop) {
@@ -68,7 +70,7 @@ public class GovController {
     }
 
     @GetMapping("/sales")
-    public ApiResponse<GovSalesResponse> getSales(@RequestHeader(value="X-USER-ID", required=false, defaultValue="9040") Long userId) {
+    public ApiResponse<GovSalesResponse> getSales(@AuthenticationPrincipal Long userId) {
         GovUserInfo user = checkGovUser(userId);
         return ApiResponse.ok(GovSalesResponse.from(salesUseCase.getSalesData(user.region())));
     }

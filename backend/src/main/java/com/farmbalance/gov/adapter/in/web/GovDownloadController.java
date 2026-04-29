@@ -14,7 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
 import com.farmbalance.gov.adapter.in.web.dto.DownloadHistoryResponse;
@@ -39,7 +41,7 @@ public class GovDownloadController {
 
     @GetMapping
     public ResponseEntity<byte[]> downloadData(
-            @RequestHeader(value="X-USER-ID", required=false, defaultValue="9040") Long userId,
+            @AuthenticationPrincipal Long userId,
             @RequestParam GovDownloadType type,
             @RequestParam GovDownloadFormat format) {
         
@@ -57,7 +59,7 @@ public class GovDownloadController {
 
     @GetMapping("/history")
     public ApiResponse<List<DownloadHistoryResponse>> getDownloadHistory(
-            @RequestHeader(value="X-USER-ID", required=false, defaultValue="9040") Long userId) {
+            @AuthenticationPrincipal Long userId) {
         checkGovUser(userId);
         List<DownloadHistoryResponse> res = historyUseCase.getHistory(userId).stream()
                 .map(DownloadHistoryResponse::from).toList();

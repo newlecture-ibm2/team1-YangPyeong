@@ -46,7 +46,6 @@ export default function GovNav() {
         >
           <option value="9040">양평군(9040)</option>
           <option value="9041">가평군(9041)</option>
-          <option value="9010">권한없음 유저</option>
         </select>
 
         <span className={styles.btnFill}>{user?.region ? `${user.region} 담당자` : "로딩 중..."}</span>
