@@ -35,3 +35,8 @@ textarea.input {
   resize: vertical;
   min-height: 100px;
 }
+
+.required {
+  color: #ef4444;
+  margin-left: 4px;
+}

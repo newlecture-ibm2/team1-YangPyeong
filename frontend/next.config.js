@@ -1,9 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // 도커 환경에서 이미지 최적화를 위해 필요한 설정
   images: {
     unoptimized: true,
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.INTERNAL_BACKEND_URL}/api/:path*`,
+      },
+    ]
   },
 }
 

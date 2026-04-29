@@ -1,0 +1,282 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.breadcrumb {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.breadcrumbLink {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.breadcrumbLink:hover {
+  text-decoration: underline;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.subtitle {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cardTitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--color-text);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.addressWrapper {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.addressWrapper>div {
+  flex: 1;
+}
+
+.infoList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: #ffffff; /* 어두운 배경에 맞게 밝은 색으로 변경 */
+  font-size: 14px;
+  line-height: 2;
+}
+
+.infoList li {
+  position: relative;
+  padding-left: 20px;
+}
+
+.infoList li::before {
+  content: '✅';
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.addressSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.addressRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.searchBtn {
+  margin-bottom: 20px; /* Input 컴포넌트의 .group 마진과 일치 */
+}
+
+.addressHelperText {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: -8px; /* 버튼과 텍스트 사이의 간격 좁히기 */
+}
+
+.addressRow > div:first-child {
+  flex: 0 0 160px;
+}
+
+.postcodeWrapper {
+  width: 100%;
+  min-height: 460px;
+}
+
+.fileUploadWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.fileLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tooltipIcon {
+  cursor: help;
+  font-size: 14px;
+}
+
+.fileInput {
+  font-size: 14px;
+  padding: 8px;
+  border: 1px dashed var(--color-border, #e2e8f0);
+  border-radius: 8px;
+  color: var(--color-text-secondary);
+  background-color: var(--color-surface, #ffffff);
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fileInput::file-selector-button {
+  background-color: var(--color-primary, #4f46e5);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.fileInput::file-selector-button:hover {
+  opacity: 0.9;
+}
+
+.uploadSuccess {
+  font-size: 13px;
+  color: #10b981;
+  margin-top: 4px;
+}
+
+.fileHelperText {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 4px;
+}
+
+.areaInputWrapper {
+  position: relative;
+}
+
+.areaConvertText {
+  position: absolute;
+  top: 4px;
+  right: 0;
+  font-size: 13px;
+  color: var(--color-primary, #4f46e5);
+  font-weight: 500;
+}
+
+.areaHelperText {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: -12px;
+  margin-bottom: 12px;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.tagRemoveBtn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.tagRemoveBtn:hover {
+  color: #ef4444;
+}
+
+.submitNotice {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid var(--color-primary, #4f46e5);
+}

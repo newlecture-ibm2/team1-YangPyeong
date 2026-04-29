@@ -67,7 +67,12 @@ export default function Input({
 
   return (
     <div className={`${styles.group} ${className}`}>
-      {label && <label className={styles.label} htmlFor={id}>{label}</label>}
+      {label && (
+        <label className={styles.label} htmlFor={id}>
+          {label}
+          {required && <span className={styles.required}>*</span>}
+        </label>
+      )}
       {renderField()}
     </div>
   );
