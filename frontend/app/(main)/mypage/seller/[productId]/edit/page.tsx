@@ -1,43 +1,13 @@
 'use client';
 
-import { useState, useCallback, use } from 'react';
+import { useState, useCallback, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/common/Button/Button';
 import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import { PRODUCT_CATEGORIES } from '../../../_lib/mypage.types';
+import { getProduct, updateProduct } from '@/app/(main)/shop/_lib/shop.api';
 import styles from './page.module.css';
-
-/** 더미 상품 데이터 (백엔드 연동 전 프리필용) */
-const DUMMY_PRODUCT_MAP: Record<string, {
-  name: string; price: number; stock: number;
-  categoryName: string; description: string; imageUrls: string[];
-}> = {
-  '1': {
-    name: '유기농 상추 (500g)',
-    price: 8000,
-    stock: 45,
-    categoryName: '채소류',
-    description: '양평에서 자란 신선한 유기농 상추입니다. 아침에 수확하여 당일 발송합니다.',
-    imageUrls: [],
-  },
-  '2': {
-    name: '무농약 배추 (1포기)',
-    price: 5000,
-    stock: 20,
-    categoryName: '채소류',
-    description: '겨울철 최고의 무농약 배추입니다. 김장용으로 추천합니다.',
-    imageUrls: [],
-  },
-  '3': {
-    name: 'GAP 토마토 (1kg)',
-    price: 12000,
-    stock: 0,
-    categoryName: '과일류',
-    description: 'GAP 인증 받은 양평 토마토. 당도가 높고 식감이 좋습니다.',
-    imageUrls: [],
-  },
-};
 
 interface EditPageProps {
   params: Promise<{ productId: string }>;
@@ -48,17 +18,39 @@ export default function SellerEditPage({ params }: EditPageProps) {
   const { productId } = use(params);
   const router = useRouter();
 
-  // 기존 데이터 프리필
-  const existingProduct = DUMMY_PRODUCT_MAP[productId];
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   const [form, setForm] = useState({
-    name: existingProduct?.name ?? '',
-    price: existingProduct ? String(existingProduct.price) : '',
-    stock: existingProduct ? String(existingProduct.stock) : '',
-    categoryName: existingProduct?.categoryName ?? '',
-    description: existingProduct?.description ?? '',
+    name: '',
+    price: '',
+    stock: '',
+    categoryName: '',
+    description: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 기존 상품 데이터 로드
+  useEffect(() => {
+    const fetchProduct = async () => {
+      setLoading(true);
+      const result = await getProduct(Number(productId));
+      if (result.success && result.data) {
+        setForm({
+          name: result.data.name,
+          price: String(result.data.price),
+          stock: String(result.data.stock),
+          categoryName: result.data.categoryName || '',
+          description: result.data.description || '',
+        });
+      } else {
+        setNotFound(true);
+      }
+      setLoading(false);
+    };
+
+    fetchProduct();
+  }, [productId]);
 
   /** 폼 필드 업데이트 */
   const updateField = useCallback((field: string, value: string) => {
@@ -79,15 +71,35 @@ export default function SellerEditPage({ params }: EditPageProps) {
     setIsSubmitting(true);
 
     try {
-      // TODO: API 호출 (PATCH /api/shop/seller/{id})
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await updateProduct(Number(productId), {
+        name: form.name,
+        price: Number(form.price),
+        stock: Number(form.stock),
+        description: form.description,
+        categoryName: form.categoryName,
+        imageUrls: [],
+      });
       router.push('/mypage/seller');
     } catch {
       setIsSubmitting(false);
     }
-  }, [isValid, isSubmitting, router]);
+  }, [isValid, isSubmitting, productId, form, router]);
 
-  if (!existingProduct) {
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.formCard}>
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <p style={{ fontSize: '16px', color: 'var(--color-text-secondary)' }}>
+              상품 정보를 불러오는 중...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound) {
     return (
       <div className={styles.container}>
         <div className={styles.formCard}>

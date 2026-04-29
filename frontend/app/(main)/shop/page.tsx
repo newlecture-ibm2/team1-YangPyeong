@@ -12,9 +12,13 @@ import styles from './page.module.css';
 export default function ShopBrowsePage() {
   const {
     products,
+    loading,
     category,
     sort,
     keyword,
+    page,
+    totalPages,
+    setPage,
     setCategory,
     setSort,
     setKeyword,
@@ -112,13 +116,47 @@ export default function ShopBrowsePage() {
       </div>
 
       {/* ════════ 페이지네이션 ════════ */}
-      {products.length > 0 && (
+      {totalPages > 1 && (
         <div className={styles.pagination}>
-          <button className={styles.pageBtn}>«</button>
-          <button className={`${styles.pageBtn} ${styles.pageBtnActive}`}>1</button>
-          <button className={styles.pageBtn}>2</button>
-          <button className={styles.pageBtn}>3</button>
-          <button className={styles.pageBtn}>»</button>
+          <button
+            className={styles.pageBtn}
+            disabled={page === 0}
+            onClick={() => setPage(0)}
+          >
+            «
+          </button>
+          <button
+            className={styles.pageBtn}
+            disabled={page === 0}
+            onClick={() => setPage(page - 1)}
+          >
+            ‹
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i)
+            .filter((p) => Math.abs(p - page) <= 2)
+            .map((p) => (
+              <button
+                key={p}
+                className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ''}`}
+                onClick={() => setPage(p)}
+              >
+                {p + 1}
+              </button>
+            ))}
+          <button
+            className={styles.pageBtn}
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage(page + 1)}
+          >
+            ›
+          </button>
+          <button
+            className={styles.pageBtn}
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage(totalPages - 1)}
+          >
+            »
+          </button>
         </div>
       )}
 

@@ -11,6 +11,9 @@ import java.util.List;
 
 /**
  * ADM-002 종자 등록 조회 Persistence Adapter (JdbcTemplate)
+ *
+ * [변경 사항] receipt_image_url 컬럼이 공통 uploads 테이블로 이관됨.
+ * uploads 테이블에서 entity_type='SEED_RECEIPT', entity_id=sr.id로 조회합니다.
  */
 @Component
 @RequiredArgsConstructor
@@ -35,13 +38,29 @@ public class AdminSeedRegistrationPersistenceAdapter implements AdminSeedRegistr
 
     @Override
     public List<AdminSeedRegistration> findByFarmId(Long farmId) {
-        String sql = "SELECT * FROM seed_registrations WHERE farm_id = ? AND deleted_at IS NULL";
+        String sql = """
+            SELECT sr.*,
+                   COALESCE(img.file_url, sr.receipt_image_url) AS receipt_image_url
+            FROM seed_registrations sr
+            LEFT JOIN uploads img ON img.entity_type = 'SEED_RECEIPT'
+                AND img.entity_id = sr.id AND img.deleted_at IS NULL AND img.display_order = 0
+            WHERE sr.farm_id = ? AND sr.deleted_at IS NULL
+            """;
         return jdbcTemplate.query(sql, rowMapper, farmId);
     }
 
     @Override
     public List<AdminSeedRegistration> findAll() {
-        String sql = "SELECT * FROM seed_registrations WHERE deleted_at IS NULL ORDER BY created_at DESC";
+        String sql = """
+            SELECT sr.*,
+                   COALESCE(img.file_url, sr.receipt_image_url) AS receipt_image_url
+            FROM seed_registrations sr
+            LEFT JOIN uploads img ON img.entity_type = 'SEED_RECEIPT'
+                AND img.entity_id = sr.id AND img.deleted_at IS NULL AND img.display_order = 0
+            WHERE sr.deleted_at IS NULL
+            ORDER BY sr.created_at DESC
+            """;
         return jdbcTemplate.query(sql, rowMapper);
     }
 }
+

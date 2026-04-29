@@ -1,69 +1,8 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
-import type { CartItem, Product } from '../_lib/shop.types';
-
-/* ════════════════════════════════════════════
-   더미 데이터 — 백엔드 연동 후 제거
-   ════════════════════════════════════════════ */
-const DUMMY_CART_ITEMS: CartItem[] = [
-  {
-    id: 1,
-    userId: 1,
-    productId: 1,
-    quantity: 2,
-    product: {
-      id: 1, sellerId: 1, sellerName: '양평 해맑은 농장', categoryId: 1,
-      categoryName: '채소류', name: '유기농 배추 1포기', price: 3500, stock: 50,
-      description: '', imageUrls: [
-        'https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f?w=200&h=200&fit=crop',
-      ],
-      status: 'ACTIVE', salesCount: 45, createdAt: '2026-04-20T10:00:00Z',
-    },
-  },
-  {
-    id: 2,
-    userId: 1,
-    productId: 2,
-    quantity: 1,
-    product: {
-      id: 2, sellerId: 2, sellerName: '양평 햇살 농장', categoryId: 1,
-      categoryName: '채소류', name: '청양고추 500g', price: 4800, stock: 30,
-      description: '', imageUrls: [
-        'https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31?w=200&h=200&fit=crop',
-      ],
-      status: 'ACTIVE', salesCount: 32, createdAt: '2026-04-21T10:00:00Z',
-    },
-  },
-  {
-    id: 3,
-    userId: 1,
-    productId: 3,
-    quantity: 3,
-    product: {
-      id: 3, sellerId: 1, sellerName: '양평 해맑은 농장', categoryId: 1,
-      categoryName: '채소류', name: '유기농 상추 300g', price: 2800, stock: 40,
-      description: '', imageUrls: [
-        'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=200&h=200&fit=crop',
-      ],
-      status: 'ACTIVE', salesCount: 55, createdAt: '2026-04-18T10:00:00Z',
-    },
-  },
-  {
-    id: 4,
-    userId: 1,
-    productId: 5,
-    quantity: 1,
-    product: {
-      id: 5, sellerId: 3, sellerName: '양평 두물머리 농원', categoryId: 2,
-      categoryName: '과일류', name: '한봉 꿀 500g', price: 18000, stock: 15,
-      description: '', imageUrls: [
-        'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=200&h=200&fit=crop',
-      ],
-      status: 'ACTIVE', salesCount: 28, createdAt: '2026-04-15T10:00:00Z',
-    },
-  },
-];
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import type { CartItem } from '../_lib/shop.types';
+import { getCart, updateCartItem, removeCartItem } from '../_lib/shop.api';
 
 /* ════════════════════════════════════════════
    useCart Hook
@@ -72,6 +11,8 @@ const DUMMY_CART_ITEMS: CartItem[] = [
 export interface UseCartReturn {
   /** 장바구니 아이템 목록 */
   items: CartItem[];
+  /** 로딩 상태 */
+  loading: boolean;
   /** 선택된 아이템 ID 집합 */
   selectedIds: Set<number>;
   /** 전체 선택 여부 */
@@ -97,11 +38,26 @@ export interface UseCartReturn {
 }
 
 export function useCart(): UseCartReturn {
-  // TODO: 백엔드 연동 시 API 호출로 교체
-  const [items, setItems] = useState<CartItem[]>(DUMMY_CART_ITEMS);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(
-    () => new Set(DUMMY_CART_ITEMS.map((item) => item.id))
-  );
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
+  // 장바구니 데이터 로드
+  useEffect(() => {
+    const fetchCart = async () => {
+      setLoading(true);
+      const result = await getCart();
+      if (result.success && result.data) {
+        setItems(result.data);
+        setSelectedIds(new Set(result.data.map((item) => item.id)));
+      } else {
+        setItems([]);
+      }
+      setLoading(false);
+    };
+
+    fetchCart();
+  }, []);
 
   /** 전체 선택 여부 */
   const isAllSelected = useMemo(
@@ -133,12 +89,14 @@ export function useCart(): UseCartReturn {
   /** 수량 변경 */
   const updateQuantity = useCallback((cartItemId: number, quantity: number) => {
     if (quantity < 1) return;
+    // 즉시 UI 반영
     setItems((prev) =>
       prev.map((item) =>
         item.id === cartItemId ? { ...item, quantity } : item
       )
     );
-    // TODO: updateCartItem API 호출
+    // 백엔드 동기화
+    updateCartItem(cartItemId, quantity);
   }, []);
 
   /** 아이템 삭제 */
@@ -149,13 +107,17 @@ export function useCart(): UseCartReturn {
       next.delete(cartItemId);
       return next;
     });
-    // TODO: removeCartItem API 호출
+    // 백엔드 동기화
+    removeCartItem(cartItemId);
   }, []);
 
   /** 선택 아이템 일괄 삭제 */
   const removeSelected = useCallback(() => {
+    const idsToRemove = Array.from(selectedIds);
     setItems((prev) => prev.filter((item) => !selectedIds.has(item.id)));
     setSelectedIds(new Set());
+    // 백엔드 동기화
+    idsToRemove.forEach((id) => removeCartItem(id));
   }, [selectedIds]);
 
   /** 선택 토글 */
@@ -182,6 +144,7 @@ export function useCart(): UseCartReturn {
 
   return {
     items,
+    loading,
     selectedIds,
     isAllSelected,
     selectedCount,
