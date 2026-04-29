@@ -31,6 +31,8 @@ interface DropdownProps {
   fullWidth?: boolean;
   /** 추가 className */
   className?: string;
+  /** 복수 선택 여부 */
+  multiple?: boolean;
 }
 
 export default function Dropdown({
@@ -45,13 +47,24 @@ export default function Dropdown({
   size = 'md',
   fullWidth = false,
   className = '',
+  multiple = false,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // 현재 선택된 라벨 찾기
-  const selectedOption = options.find((opt) => opt.value === value);
-  const displayLabel = selectedOption ? selectedOption.label : placeholder || '선택하세요';
+  const currentValues = value ? value.split(',').filter(Boolean) : [];
+  let displayLabel = placeholder || '선택하세요';
+  
+  if (multiple) {
+    if (currentValues.length > 0) {
+      const firstLabel = options.find(opt => opt.value === currentValues[0])?.label || currentValues[0];
+      displayLabel = currentValues.length > 1 ? `${firstLabel} 외 ${currentValues.length - 1}건` : firstLabel;
+    }
+  } else {
+    const selectedOption = options.find((opt) => opt.value === value);
+    if (selectedOption) displayLabel = selectedOption.label;
+  }
 
   // 외부 클릭 시 닫기
   useEffect(() => {
@@ -70,10 +83,20 @@ export default function Dropdown({
   }, [isOpen]);
 
   const handleSelect = (optionValue: string) => {
-    if (onChange) {
-      onChange(optionValue);
+    if (multiple) {
+      let newValues;
+      if (currentValues.includes(optionValue)) {
+        newValues = currentValues.filter(v => v !== optionValue);
+      } else {
+        newValues = [...currentValues, optionValue];
+      }
+      if (onChange) onChange(newValues.join(','));
+    } else {
+      if (onChange) {
+        onChange(optionValue);
+      }
+      setIsOpen(false);
     }
-    setIsOpen(false);
   };
 
   const selectClasses = [
@@ -108,7 +131,7 @@ export default function Dropdown({
             }
           }}
         >
-          <span className={!selectedOption ? styles.placeholderText : ''}>
+          <span className={(!multiple && !currentValues.length) || (multiple && currentValues.length === 0) ? styles.placeholderText : ''}>
             {displayLabel}
           </span>
           <span className={`${styles.arrow} ${isOpen ? styles.arrowUp : ''}`}>
@@ -120,22 +143,28 @@ export default function Dropdown({
 
         {isOpen && (
           <ul className={styles.dropdownMenu}>
-            {options.map((opt) => (
-              <li
-                key={opt.value}
-                className={`${styles.dropdownItem} ${value === opt.value ? styles.dropdownItemActive : ''}`}
-                onClick={() => handleSelect(opt.value)}
-              >
-                {opt.label}
-                {value === opt.value && (
-                  <span className={styles.checkIcon}>
-                    <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
-                      <path d="M1 5L5 9L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </span>
-                )}
-              </li>
-            ))}
+            {options.map((opt) => {
+              const isSelected = multiple ? currentValues.includes(opt.value) : value === opt.value;
+              return (
+                <li
+                  key={opt.value}
+                  className={`${styles.dropdownItem} ${isSelected ? styles.dropdownItemActive : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelect(opt.value);
+                  }}
+                >
+                  {opt.label}
+                  {isSelected && (
+                    <span className={styles.checkIcon}>
+                      <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+                        <path d="M1 5L5 9L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

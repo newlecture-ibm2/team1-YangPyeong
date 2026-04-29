@@ -11,9 +11,13 @@ import { clearSessionCookie } from '@/lib/cookie';
 export async function POST() {
   await clearSessionCookie();
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     success: true,
     data: { message: '로그아웃 성공' },
     error: null,
   });
+
+  response.cookies.delete('fb-user');
+
+  return response;
 }

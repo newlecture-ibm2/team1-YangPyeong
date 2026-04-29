@@ -20,6 +20,7 @@ export const PUBLIC_PATHS = [
   '/',
   '/login',
   '/signup',
+  '/auth',
   '/balance',
   '/recommend',
   '/community',
