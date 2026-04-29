@@ -7,6 +7,8 @@ services:
       context: ./frontend
       args:
         - NEXT_PUBLIC_KAKAO_MAP_JS_KEY=${NEXT_PUBLIC_KAKAO_MAP_JS_KEY}
+        - NEXT_PUBLIC_PORTONE_STORE_ID=${NEXT_PUBLIC_PORTONE_STORE_ID}
+        - NEXT_PUBLIC_PORTONE_CHANNEL_KEY=${NEXT_PUBLIC_PORTONE_CHANNEL_KEY}
     restart: unless-stopped
     ports:
       - "3131:3000"
@@ -15,6 +17,8 @@ services:
       - INTERNAL_BACKEND_URL=http://backend:8080
       - JWT_SECRET=${JWT_SECRET}
       - NEXT_PUBLIC_KAKAO_MAP_JS_KEY=${NEXT_PUBLIC_KAKAO_MAP_JS_KEY}
+      - NEXT_PUBLIC_PORTONE_STORE_ID=${NEXT_PUBLIC_PORTONE_STORE_ID}
+      - NEXT_PUBLIC_PORTONE_CHANNEL_KEY=${NEXT_PUBLIC_PORTONE_CHANNEL_KEY}
       - SKIP_AUTH=${SKIP_AUTH:-true}
     depends_on:
       - backend

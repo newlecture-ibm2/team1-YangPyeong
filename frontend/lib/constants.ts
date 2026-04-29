@@ -45,3 +45,22 @@ export interface ApiResponse<T = unknown> {
     totalPages?: number;
   };
 }
+
+/* ════════════════════════════════════════════════════════
+   Shop 도메인 — 공통 상수
+   ════════════════════════════════════════════════════════ */
+
+/** 무료배송 기준 금액 (원) */
+export const FREE_SHIPPING_THRESHOLD = 30000;
+
+/** 기본 배송비 (원) */
+export const DEFAULT_DELIVERY_FEE = 3000;
+
+/** 배송 메모 옵션 */
+export const DELIVERY_MEMO_OPTIONS = [
+  '부재 시 문 앞에 놓아주세요',
+  '전화 후 배송 부탁드립니다',
+  '경비실에 맡겨주세요',
+  '택배함에 넣어주세요',
+  '직접 입력',
+] as const;

@@ -18,8 +18,8 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // TODO: 실제 인증 상태로 교체 (현재 더미)
-  const isLoggedIn = false;
+  // TODO: 실제 인증 상태로 교체 (개발 중 임시 true 처리)
+  const isLoggedIn = true; // ← 로그인 구현 후 false로 복원
 
   /** 장바구니 클릭 — 로그인 체크 후 이동 */
   const handleCartClick = () => {
