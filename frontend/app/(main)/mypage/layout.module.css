@@ -1,0 +1,63 @@
+/* ════════════════════════════════════════════════════════
+   Mypage — 공유 레이아웃 스타일
+   ════════════════════════════════════════════════════════ */
+
+/* ── 탭 네비게이션 ── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: var(--space-xl);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--color-primary);
+}
+
+.tabActive {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.tabIcon {
+  font-size: 16px;
+}
+
+/* ── 페이지 컨텐츠 ── */
+.content {
+  min-height: 400px;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  .tabs {
+    gap: 0;
+  }
+
+  .tab {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .tabIcon {
+    display: none;
+  }
+}
