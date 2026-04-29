@@ -25,4 +25,10 @@ public class SignUpRequest {
     private String name;
 
     private String phone;
+
+    @NotBlank(message = "보안질문을 선택해주세요")
+    private String securityQuestion;
+
+    @NotBlank(message = "보안질문 답변을 입력해주세요")
+    private String securityAnswer;
 }

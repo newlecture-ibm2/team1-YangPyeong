@@ -104,6 +104,11 @@ export default function LoginPage() {
           </Button>
         </form>
 
+        {/* 비밀번호 찾기 링크 */}
+        <div className={styles.forgotPassword}>
+          <Link href="/password-reset" className={styles.footerLink}>비밀번호를 잊으셨나요?</Link>
+        </div>
+
         {/* 소셜 로그인 */}
         <div className={styles.authDivider}>
           <span className={styles.dividerText}>또는 소셜 계정으로 로그인</span>
