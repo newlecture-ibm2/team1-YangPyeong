@@ -50,13 +50,33 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // ── 6. 관리자/지자체 경로 권한 체크 (TODO: JWT 디코딩하여 role 확인) ──
-  // if (pathname.startsWith('/admin')) {
-  //   const role = decodeJwtRole(sessionCookie.value);
-  //   if (role !== 'ADMIN') {
-  //     return NextResponse.redirect(new URL('/unauthorized', request.url));
-  //   }
-  // }
+  // ── 6. 역할(Role) 기반 라우팅 및 접근 제어 ──
+  let userRole = '';
+  if (skipAuth) {
+    // 개발/시연 모드: GOV 역할로 시뮬레이션
+    userRole = 'GOV';
+  } else if (isAuthenticated && sessionCookie) {
+    try {
+      const tokenParts = sessionCookie.value.split('.');
+      if (tokenParts.length === 3) {
+        const payloadStr = Buffer.from(tokenParts[1], 'base64').toString('utf-8');
+        const payload = JSON.parse(payloadStr);
+        userRole = payload.role || '';
+      }
+    } catch {
+      // JWT 디코딩 실패 시 무시
+    }
+  }
+
+  // GOV 롤이 홈(/) 접근 시 → 지자체 대시보드로 리다이렉트
+  if (userRole === 'GOV' && pathname === '/') {
+    return NextResponse.redirect(new URL('/gov', request.url));
+  }
+
+  // /gov 경로 접근 시 GOV 권한 검증 (SKIP_AUTH 모드에서는 이미 GOV 부여됨)
+  if (pathname.startsWith('/gov') && !skipAuth && userRole !== 'GOV') {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
 
   return NextResponse.next();
 }

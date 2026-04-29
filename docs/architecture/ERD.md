@@ -19,7 +19,7 @@ erDiagram
         varchar password
         varchar name
         varchar phone
-        varchar role "GENERAL | FARMER | ADMIN | GOV"
+        varchar role "USER | FARMER | ADMIN | GOV"
         varchar region
         varchar status "ACTIVE | SUSPENDED"
         timestamp created_at
@@ -53,7 +53,7 @@ erDiagram
         varchar name UK "곡류 | 채소 | 과일 | 특용 등"
         varchar description
         int display_order
-        boolean is_active
+        boolean is_active![alt text](image.png)
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -255,6 +255,18 @@ erDiagram
         timestamp deleted_at
     }
 
+    %% ===== 지자체/관리자 도메인 =====
+    download_history {
+        bigint id PK
+        bigint user_id FK
+        varchar type "CULTIVATION | FARM 등"
+        varchar format "CSV | XLSX"
+        date start_date
+        date end_date
+        varchar town
+        timestamp created_at
+    }
+
     %% ===== 관계 정의 =====
     users ||--o{ farms : "소유"
     users ||--o{ products : "판매"
@@ -263,6 +275,7 @@ erDiagram
     users ||--o{ posts : "작성"
     users ||--o{ comments : "작성"
     users ||--o{ notifications : "수신"
+    users ||--o{ download_history : "다운로드이력"
 
     farms ||--o{ seed_registrations : "종자등록"
 
@@ -836,6 +849,21 @@ erDiagram
 
 > **설계 의도**: AI 챗봇(Bedrock RAG)에 인제스트할 소스 문서를 관리하는 테이블.  
 > 관리자가 파일(PDF 등)을 업로드하거나 텍스트를 직접 입력하여 RAG 벡터 DB의 원본 데이터를 CRUD 할 수 있다.
+
+### 2.26 download_history (데이터 다운로드 이력)
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 다운로드 이력 고유 ID |
+| user_id | BIGINT | FK → users(id), NOT NULL | 다운로드 요청자 |
+| type | VARCHAR(20) | NOT NULL | 데이터 유형 (CULTIVATION, FARM 등) |
+| format | VARCHAR(10) | NOT NULL | 파일 형식 (CSV, XLSX) |
+| start_date | DATE | | 필터: 시작일 |
+| end_date | DATE | | 필터: 종료일 |
+| town | VARCHAR(50) | | 필터: 읍면 |
+| created_at | TIMESTAMP | NOT NULL | 다운로드 일시 |
+
+> **설계 의도**: 지자체/관리자가 데이터를 엑셀/CSV로 다운로드(내보내기) 한 이력을 추적/보관합니다. 파일 원본은 시스템 내에 저장하지 않습니다.
 
 ---
 
