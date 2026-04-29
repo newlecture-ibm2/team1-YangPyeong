@@ -9,6 +9,7 @@ import org.springframework.web.client.RestClient;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import org.springframework.web.client.RestClientException;
 
 import java.util.Map;
 
@@ -71,6 +72,9 @@ public class KakaoOAuthClient {
 
         } catch (BusinessException e) {
             throw e;
+        } catch (RestClientException e) {
+            log.error("카카오 API 통신 에러 (Resilience4j가 재시도할 예정): {}", e.getMessage());
+            throw e; // Resilience4j 처리를 위해 그대로 던짐
         } catch (Exception e) {
             log.error("카카오 사용자 정보 조회 실패: {}", e.getMessage());
             throw new BusinessException(ErrorCode.AUTH_SOCIAL_LOGIN_FAILED, "카카오 인증에 실패했습니다.");
