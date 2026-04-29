@@ -7,6 +7,9 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.farmbalance.chat.application.port.in.ChatUseCase;
+import lombok.RequiredArgsConstructor;
+
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,7 +18,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class ChatWebSocketHandler extends TextWebSocketHandler {
+
+    private final ChatUseCase chatUseCase;
 
     // 현재 접속 중인 세션들을 관리하는 맵 (스레드 안전)
     private final ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
@@ -32,12 +38,15 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         log.info("수신된 메시지: {}", payload);
 
         // TODO: (지윤님 과제) 
-        // 1. 유저의 메시지를 파싱하여 의도 분석
-        // 2. 파이썬 Agent 서버로 RestClient를 이용해 질문 전송 (라우터 역할)
-        // 3. 응답이 오면 다시 이 WebSocketSession을 통해 프론트로 TextMessage 전송
+        // JWT 필터 등에서 저장한 인증 정보로부터 실제 유저 ID와 방 ID를 추출하는 로직 필요
+        Long dummyUserId = 1L; 
+        Long dummyRoomId = 1L; 
+
+        // 1. 유저의 메시지를 비즈니스 로직(Service)으로 넘겨 처리
+        chatUseCase.processUserMessage(dummyUserId, dummyRoomId, payload);
 
         // 임시 에코 메시지 (연결 테스트용)
-        session.sendMessage(new TextMessage("백엔드 수신 완료: " + payload));
+        session.sendMessage(new TextMessage("백엔드 라우팅 및 수신 완료: " + payload));
     }
 
     @Override
