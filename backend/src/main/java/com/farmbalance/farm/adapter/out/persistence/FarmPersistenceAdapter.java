@@ -2,6 +2,7 @@ package com.farmbalance.farm.adapter.out.persistence;
 
 import com.farmbalance.farm.adapter.out.persistence.entity.FarmJpaEntity;
 import com.farmbalance.farm.adapter.out.persistence.repository.FarmJpaRepository;
+import com.farmbalance.farm.application.port.out.DeleteFarmPort;
 import com.farmbalance.farm.application.port.out.LoadFarmPort;
 import com.farmbalance.farm.application.port.out.SaveFarmPort;
 import com.farmbalance.farm.domain.Farm;
@@ -16,42 +17,68 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort {
+public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, DeleteFarmPort {
 
     private final FarmJpaRepository farmJpaRepository;
     private final UserJpaRepository userJpaRepository;
 
     @Override
     public Farm saveFarm(Farm farm) {
-        // 1. PNU 중복 검증
-        if (farmJpaRepository.existsByPnuCode(farm.getPnuCode())) {
-            throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
+        // 1. PNU 중복 검증 (수정 시에는 본인 제외)
+        if (farm.getId() == null) {
+            if (farmJpaRepository.existsByPnuCode(farm.getPnuCode())) {
+                throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
+            }
+        } else {
+            farmJpaRepository.findByPnuCode(farm.getPnuCode())
+                    .ifPresent(existing -> {
+                        if (!existing.getId().equals(farm.getId())) {
+                            throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
+                        }
+                    });
         }
 
-        // 2. 연관된 UserJpaEntity 조회 (User 도메인의 Repository 사용)
-        UserJpaEntity userEntity = userJpaRepository.findById(farm.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + farm.getUserId()));
+        FarmJpaEntity entity;
+        if (farm.getId() == null) {
+            // 신규 등록: UserJpaEntity 조회 및 새 Entity 생성
+            UserJpaEntity userEntity = userJpaRepository.findById(farm.getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + farm.getUserId()));
 
-        // 3. Domain -> JpaEntity 매핑 (Builder 활용)
-        FarmJpaEntity entity = FarmJpaEntity.builder()
-                .user(userEntity)
-                .name(farm.getName())
-                .address(farm.getAddress())
-                .area(farm.getArea())
-                .cropTypes(farm.getCropTypes())
-                .bjdCode(farm.getBjdCode())
-                .pnuCode(farm.getPnuCode())
-                .latitude(farm.getLatitude())
-                .longitude(farm.getLongitude())
-                .registrationNumber(farm.getRegistrationNumber())
-                .documentUrl(farm.getDocumentUrl())
-                .certificationStatus(farm.getCertificationStatus())
-                .build();
+            entity = FarmJpaEntity.builder()
+                    .user(userEntity)
+                    .name(farm.getName())
+                    .address(farm.getAddress())
+                    .area(farm.getArea())
+                    .cropTypes(farm.getCropTypes())
+                    .bjdCode(farm.getBjdCode())
+                    .pnuCode(farm.getPnuCode())
+                    .latitude(farm.getLatitude())
+                    .longitude(farm.getLongitude())
+                    .registrationNumber(farm.getRegistrationNumber())
+                    .documentUrl(farm.getDocumentUrl())
+                    .certificationStatus(farm.getCertificationStatus())
+                    .build();
+        } else {
+            // 정보 수정: 기존 Entity 조회 및 필드 업데이트
+            entity = farmJpaRepository.findById(farm.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("농장을 찾을 수 없습니다: " + farm.getId()));
+            
+            entity.update(
+                    farm.getName(),
+                    farm.getAddress(),
+                    farm.getArea(),
+                    farm.getCropTypes(),
+                    farm.getBjdCode(),
+                    farm.getPnuCode(),
+                    farm.getLatitude(),
+                    farm.getLongitude(),
+                    farm.getRegistrationNumber(),
+                    farm.getDocumentUrl()
+            );
+        }
 
-        // 4. DB 저장
+        // 3. DB 저장 및 결과 반환
         FarmJpaEntity savedEntity = farmJpaRepository.save(entity);
-
-        // 5. JpaEntity -> Domain 변환 후 반환
         return mapToDomain(savedEntity);
     }
 
@@ -75,7 +102,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort {
                 .name(entity.getName())
                 .address(entity.getAddress())
                 .area(entity.getArea())
-                .cropTypes(entity.getCropTypes())
+                .cropTypes(entity.getCropTypes() != null ? new java.util.ArrayList<>(entity.getCropTypes()) : new java.util.ArrayList<>())
                 .bjdCode(entity.getBjdCode())
                 .pnuCode(entity.getPnuCode())
                 .latitude(entity.getLatitude())
@@ -84,5 +111,10 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort {
                 .documentUrl(entity.getDocumentUrl())
                 .certificationStatus(entity.getCertificationStatus())
                 .build();
+    }
+
+    @Override
+    public void deleteFarm(Long farmId) {
+        farmJpaRepository.deleteById(farmId);
     }
 }

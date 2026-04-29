@@ -6,8 +6,8 @@ import java.util.List;
 
 @Getter
 @Builder
-public class RegisterFarmCommand {
-    private Long userId; // 인증된 사용자의 ID
+public class UpdateFarmCommand {
+    private Long farmId;
     private String name;
     private String address;
     private Double area;
@@ -18,6 +18,4 @@ public class RegisterFarmCommand {
     private String subNo;
     private String registrationNumber;
     private String documentUrl;
-    private Double latitude;
-    private Double longitude;
 }
