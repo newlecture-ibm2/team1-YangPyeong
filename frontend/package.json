@@ -13,6 +13,7 @@
     "lucide-react": "^1.11.0",
     "next": "^15.5.15",
     "react": "^19.2.5",
+    "react-daum-postcode": "^4.0.0",
     "react-dom": "^19.2.5",
     "react-kakao-maps-sdk": "^1.2.1",
     "recharts": "^3.8.1"

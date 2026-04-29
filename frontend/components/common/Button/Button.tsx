@@ -5,7 +5,7 @@ import styles from './Button.module.css';
 
 interface ButtonProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'outline' | 'ghost' | 'dark' | 'kakao';
+  variant?: 'primary' | 'outline' | 'ghost' | 'dark' | 'kakao' | 'google';
   size?: 'sm' | 'md' | 'lg';
   href?: string;
   onClick?: () => void;

@@ -7,11 +7,13 @@ interface InputProps {
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   name?: string;
+  id?: string;
   required?: boolean;
   disabled?: boolean;
   className?: string;
   as?: 'input' | 'textarea';
   rows?: number;
+  autoComplete?: string;
 }
 
 export default function Input({
@@ -21,11 +23,13 @@ export default function Input({
   value,
   onChange,
   name,
+  id,
   required = false,
   disabled = false,
   className = '',
   as = 'input',
   rows = 4,
+  autoComplete,
 }: InputProps) {
   const renderField = () => {
     if (as === 'textarea') {
@@ -36,9 +40,11 @@ export default function Input({
           value={value}
           onChange={onChange}
           name={name}
+          id={id}
           required={required}
           disabled={disabled}
           rows={rows}
+          autoComplete={autoComplete}
         />
       );
     }
@@ -51,15 +57,22 @@ export default function Input({
         value={value}
         onChange={onChange}
         name={name}
+        id={id}
         required={required}
         disabled={disabled}
+        autoComplete={autoComplete}
       />
     );
   };
 
   return (
     <div className={`${styles.group} ${className}`}>
-      {label && <label className={styles.label}>{label}</label>}
+      {label && (
+        <label className={styles.label} htmlFor={id}>
+          {label}
+          {required && <span className={styles.required}>*</span>}
+        </label>
+      )}
       {renderField()}
     </div>
   );
