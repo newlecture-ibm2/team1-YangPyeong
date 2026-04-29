@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from '../gov.module.css';
-import { useGovUser, getTestHeaders } from '../_hooks/useGovUser';
+import { useGovUser, getTestHeaders } from '../useGovUser';
 import GovTabs from '../_components/GovTabs';
 
 /**

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import styles from '../gov.module.css';
-import { useGovUser, getTestHeaders } from '../_hooks/useGovUser';
+import { useGovUser, getTestHeaders } from '../useGovUser';
 import GovTabs from '../_components/GovTabs';
 
 interface SalesData {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import styles from './gov.module.css';
-import { useGovUser, getTestHeaders } from './_hooks/useGovUser';
+import { useGovUser, getTestHeaders } from './useGovUser';
 import GovTabs from './_components/GovTabs';
 import Modal from '@/components/common/Modal';
 
