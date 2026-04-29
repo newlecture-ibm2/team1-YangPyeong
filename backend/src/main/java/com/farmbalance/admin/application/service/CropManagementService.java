@@ -31,6 +31,44 @@ public class CropManagementService implements ManageCropUseCase {
     }
 
     @Override
+    @Transactional
+    public Long createCategory(AdminCropCategory category) {
+        if (adminCropCategoryPort.existsByName(category.getName())) {
+            throw new BusinessException(ErrorCode.ADMIN_ACTION_FAILED,
+                    "이미 등록된 카테고리명입니다: " + category.getName());
+        }
+        return adminCropCategoryPort.save(category);
+    }
+
+    @Override
+    @Transactional
+    public void updateCategory(Long id, AdminCropCategory category) {
+        adminCropCategoryPort.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_ACTION_FAILED, "카테고리를 찾을 수 없습니다."));
+
+        if (category.getName() != null && adminCropCategoryPort.existsByNameExcludeId(category.getName(), id)) {
+            throw new BusinessException(ErrorCode.ADMIN_ACTION_FAILED,
+                    "이미 등록된 카테고리명입니다: " + category.getName());
+        }
+
+        adminCropCategoryPort.update(AdminCropCategory.builder()
+                .id(id)
+                .name(category.getName())
+                .description(category.getDescription())
+                .displayOrder(category.getDisplayOrder())
+                .isActive(category.getIsActive())
+                .build());
+    }
+
+    @Override
+    @Transactional
+    public void deleteCategory(Long id) {
+        adminCropCategoryPort.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ADMIN_ACTION_FAILED, "카테고리를 찾을 수 없습니다."));
+        adminCropCategoryPort.delete(id);
+    }
+
+    @Override
     public List<AdminCrop> getCrops(Long categoryId, String keyword, Boolean isActive) {
         return adminCropPort.findByFilter(categoryId, keyword, isActive);
     }

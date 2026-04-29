@@ -41,6 +41,19 @@ export interface UpdateCropRequest {
   isActive?: boolean
 }
 
+export interface CreateCropCategoryRequest {
+  name: string
+  description?: string
+  displayOrder?: number
+}
+
+export interface UpdateCropCategoryRequest {
+  name?: string
+  description?: string
+  displayOrder?: number
+  isActive?: boolean
+}
+
 export interface ApiResponse<T> {
   success: boolean
   data: T

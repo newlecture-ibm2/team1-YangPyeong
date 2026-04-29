@@ -1,6 +1,8 @@
 package com.farmbalance.admin.adapter.in.web;
 
+import com.farmbalance.admin.adapter.in.web.dto.CreateCropCategoryRequest;
 import com.farmbalance.admin.adapter.in.web.dto.CreateCropRequest;
+import com.farmbalance.admin.adapter.in.web.dto.UpdateCropCategoryRequest;
 import com.farmbalance.admin.adapter.in.web.dto.UpdateCropRequest;
 import com.farmbalance.admin.application.port.in.ManageCropUseCase;
 import com.farmbalance.admin.domain.AdminCrop;
@@ -22,11 +24,47 @@ public class AdminCropController {
 
     private final ManageCropUseCase manageCropUseCase;
 
+    // ── 카테고리 ──
+
     /** 카테고리 목록 조회 */
     @GetMapping("/categories")
     public ApiResponse<List<AdminCropCategory>> getCategories() {
         return ApiResponse.ok(manageCropUseCase.getAllCategories());
     }
+
+    /** 카테고리 등록 */
+    @PostMapping("/categories")
+    public ApiResponse<Long> createCategory(@RequestBody CreateCropCategoryRequest request) {
+        AdminCropCategory category = AdminCropCategory.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .displayOrder(request.getDisplayOrder())
+                .build();
+        Long id = manageCropUseCase.createCategory(category);
+        return ApiResponse.ok(id);
+    }
+
+    /** 카테고리 수정 */
+    @PatchMapping("/categories/{id}")
+    public ApiResponse<Void> updateCategory(@PathVariable Long id, @RequestBody UpdateCropCategoryRequest request) {
+        AdminCropCategory category = AdminCropCategory.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .displayOrder(request.getDisplayOrder())
+                .isActive(request.getIsActive())
+                .build();
+        manageCropUseCase.updateCategory(id, category);
+        return ApiResponse.ok(null);
+    }
+
+    /** 카테고리 삭제 (soft delete) */
+    @DeleteMapping("/categories/{id}")
+    public ApiResponse<Void> deleteCategory(@PathVariable Long id) {
+        manageCropUseCase.deleteCategory(id);
+        return ApiResponse.ok(null);
+    }
+
+    // ── 작물 ──
 
     /** 작물 목록 조회 (필터링) */
     @GetMapping
@@ -81,3 +119,4 @@ public class AdminCropController {
         return ApiResponse.ok(null);
     }
 }
+

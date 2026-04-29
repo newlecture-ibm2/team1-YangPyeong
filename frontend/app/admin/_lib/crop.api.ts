@@ -1,6 +1,12 @@
-import type { ApiResponse, AdminCrop, AdminCropCategory, CreateCropRequest, UpdateCropRequest } from './crop.types'
+import type {
+  ApiResponse, AdminCrop, AdminCropCategory,
+  CreateCropRequest, UpdateCropRequest,
+  CreateCropCategoryRequest, UpdateCropCategoryRequest,
+} from './crop.types'
 
 const BASE = '/api/admin/crops'
+
+// ── 카테고리 ──
 
 /** 카테고리 목록 조회 */
 export async function fetchCropCategories(): Promise<AdminCropCategory[]> {
@@ -9,6 +15,38 @@ export async function fetchCropCategories(): Promise<AdminCropCategory[]> {
   if (!json.success) throw new Error(json.error?.message ?? '카테고리 조회 실패')
   return json.data
 }
+
+/** 카테고리 등록 */
+export async function createCropCategory(body: CreateCropCategoryRequest): Promise<number> {
+  const res = await fetch(`${BASE}/categories`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const json: ApiResponse<number> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '카테고리 등록 실패')
+  return json.data
+}
+
+/** 카테고리 수정 */
+export async function updateCropCategory(id: number, body: UpdateCropCategoryRequest): Promise<void> {
+  const res = await fetch(`${BASE}/categories/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '카테고리 수정 실패')
+}
+
+/** 카테고리 삭제 */
+export async function deleteCropCategory(id: number): Promise<void> {
+  const res = await fetch(`${BASE}/categories/${id}`, { method: 'DELETE' })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '카테고리 삭제 실패')
+}
+
+// ── 작물 ──
 
 /** 작물 목록 조회 (필터 선택) */
 export async function fetchCrops(categoryId?: number, keyword?: string, isActive?: boolean): Promise<AdminCrop[]> {
