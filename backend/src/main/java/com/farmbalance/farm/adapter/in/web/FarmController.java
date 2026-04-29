@@ -15,9 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import com.farmbalance.farm.application.port.out.UploadFilePort;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,13 +25,6 @@ public class FarmController {
 
     private final RegisterFarmUseCase registerFarmUseCase;
     private final LoadFarmUseCase loadFarmUseCase;
-    private final UploadFilePort uploadFilePort;
-
-    @PostMapping("/upload")
-    public ResponseEntity<ApiResponse<String>> uploadFile(@RequestParam("file") MultipartFile file) {
-        String fileUrl = uploadFilePort.upload(file);
-        return ResponseEntity.ok(ApiResponse.ok(fileUrl));
-    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<FarmRegisterResponse>> registerFarm(

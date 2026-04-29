@@ -1,6 +1,5 @@
-package com.farmbalance.farm.adapter.out.external;
+package com.farmbalance.global.upload;
 
-import com.farmbalance.farm.application.port.out.UploadFilePort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;

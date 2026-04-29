@@ -1,4 +1,4 @@
-package com.farmbalance.farm.application.port.out;
+package com.farmbalance.global.upload;
 
 import org.springframework.web.multipart.MultipartFile;
 

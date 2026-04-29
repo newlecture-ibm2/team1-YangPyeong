@@ -10,6 +10,7 @@ import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Modal from '@/components/common/Modal/Modal';
 import { useToast } from '@/components/common/Toast';
+import { uploadFile } from '@/lib/upload.api';
 import styles from './page.module.css';
 
 interface DaumPostcodeData {
@@ -99,19 +100,9 @@ export default function FarmRegisterPage() {
       return;
     }
 
-    const uploadData = new FormData();
-    uploadData.append('file', file);
-
     try {
-      const res = await fetch('/api/farms/upload', {
-        method: 'POST',
-        body: uploadData,
-      });
-
-      if (!res.ok) throw new Error();
-
-      const result = await res.json();
-      setFormData((prev) => ({ ...prev, documentUrl: result.data }));
+      const fileUrl = await uploadFile(file);
+      setFormData((prev) => ({ ...prev, documentUrl: fileUrl }));
       toast.success('증빙 서류가 업로드되었습니다.');
     } catch {
       toast.error('파일 업로드에 실패했습니다.');
