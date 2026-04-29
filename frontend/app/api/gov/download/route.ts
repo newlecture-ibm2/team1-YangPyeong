@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   try {
     const res = await fetch(`${BACKEND_URL}/api/gov/download?${searchParams.toString()}`, { 
-      headers: { 'X-USER-ID': userId }
+      headers: { 'Authorization': `Bearer ${session.token}` }
     });
     const blob = await res.blob();
     return new NextResponse(blob, {
