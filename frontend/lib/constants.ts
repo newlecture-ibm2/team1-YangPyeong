@@ -27,6 +27,7 @@ export const PUBLIC_PATHS = [
   '/community',
   '/shop',
   '/stores',
+  '/policy',
 ];
 
 /** 인증된 사용자가 접근하면 리다이렉트할 경로 */
