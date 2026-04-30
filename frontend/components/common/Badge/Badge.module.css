@@ -14,3 +14,5 @@
 .badge--gray { background: rgba(0, 0, 0, 0.06); color: #666; }
 .badge--outline { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-secondary); }
 .badge--dark { background: var(--color-text); color: #fff; }
+.badge--blue { background: rgba(0, 119, 182, 0.1); color: #0077B6; }
+.badge--purple { background: rgba(90, 24, 154, 0.1); color: #5A189A; }

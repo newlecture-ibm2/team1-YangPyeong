@@ -22,22 +22,20 @@ public class FarmUpdateRequest {
 
     private List<String> cropTypes;
     
-    // PNU 갱신용 필드
-    @NotBlank(message = "법정동 코드는 필수입니다.")
-    @Pattern(regexp = "^[0-9]{10}$", message = "법정동 코드는 10자리 숫자여야 합니다.")
+    // PNU 갱신용 필드 (선택 사항)
     private String bjdCode;
     
     private boolean isMountain;
     
-    @NotBlank(message = "본번은 필수입니다.")
-    @Pattern(regexp = "^[0-9]{1,4}$", message = "본번은 1~4자리 숫자여야 합니다.")
     private String mainNo;
     
-    @NotBlank(message = "부번은 필수입니다.")
-    @Pattern(regexp = "^[0-9]{1,4}$", message = "부번은 1~4자리 숫자여야 합니다.")
     private String subNo;
     
     private String registrationNumber;
     
     private String documentUrl;
+
+    private String soilType;
+    private Double ph;
+    private Double organicMatter;
 }

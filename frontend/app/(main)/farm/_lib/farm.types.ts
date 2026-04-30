@@ -17,6 +17,9 @@ export interface Farm {
   longitude?: number;
   registrationNumber?: string;
   documentUrl?: string;
+  soilType?: string;
+  ph?: number;
+  organicMatter?: number;
   certificationStatus: CertificationStatus;
   createdAt?: string;
   updatedAt?: string;
@@ -49,6 +52,9 @@ export interface FarmRegisterPayload {
   subNo: string;
   registrationNumber?: string;
   documentUrl?: string;
+  soilType?: string;
+  ph?: number;
+  organicMatter?: number;
 }
 
 /** 농장 수정 요청 페이로드 */
@@ -63,4 +69,7 @@ export interface FarmUpdatePayload {
   subNo?: string;
   registrationNumber?: string;
   documentUrl?: string;
+  soilType?: string;
+  ph?: number;
+  organicMatter?: number;
 }

@@ -12,6 +12,8 @@ import com.farmbalance.farm.application.port.out.LoadFarmPort;
 import com.farmbalance.farm.application.port.out.SaveFarmPort;
 
 import com.farmbalance.farm.domain.Farm;
+import com.farmbalance.farm.domain.event.FarmRegisteredEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import com.farmbalance.farm.domain.CertificationStatus;
 import com.farmbalance.farm.domain.exception.FarmNotFoundException;
 import com.farmbalance.farm.domain.util.PnuGeneratorUtil;
@@ -29,6 +31,7 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
     private final SaveFarmPort saveFarmPort;
     private final LoadFarmPort loadFarmPort;
     private final DeleteFarmPort deleteFarmPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public Farm registerFarm(RegisterFarmCommand command) {
@@ -55,11 +58,23 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                 .longitude(command.getLongitude())
                 .registrationNumber(command.getRegistrationNumber())
                 .documentUrl(command.getDocumentUrl())
+                .soilType(command.getSoilType())
+                .ph(command.getPh())
+                .organicMatter(command.getOrganicMatter())
                 .certificationStatus(CertificationStatus.PENDING)
                 .build();
 
         // 3. 영속성 어댑터(Output Port) 호출하여 DB 저장
-        return saveFarmPort.saveFarm(farm);
+        Farm savedFarm = saveFarmPort.saveFarm(farm);
+
+        // 4. 비동기 이력 저장을 위한 이벤트 발행
+        eventPublisher.publishEvent(new FarmRegisteredEvent(
+                savedFarm.getId(),
+                savedFarm.getName(),
+                savedFarm.getCropTypes()
+        ));
+
+        return savedFarm;
     }
 
     @Override
@@ -80,14 +95,22 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
         Farm farm = loadFarmPort.loadFarmById(command.getFarmId())
                 .orElseThrow(FarmNotFoundException::new);
 
-        // 2. PNU 재계산 (주소 구성 요소가 전달된 경우)
+        // 2. PNU 재계산 (정보가 넘어온 경우에만 갱신, 없으면 기존값 유지)
+        String newBjdCode = (command.getBjdCode() != null && !command.getBjdCode().isBlank()) 
+                ? command.getBjdCode() : farm.getBjdCode();
+        String newMainNo = (command.getMainNo() != null && !command.getMainNo().isBlank()) 
+                ? command.getMainNo() : (farm.getPnuCode() != null && farm.getPnuCode().length() == 19 ? farm.getPnuCode().substring(11, 15) : "0001");
+        String newSubNo = (command.getSubNo() != null && !command.getSubNo().isBlank()) 
+                ? command.getSubNo() : (farm.getPnuCode() != null && farm.getPnuCode().length() == 19 ? farm.getPnuCode().substring(15, 19) : "0000");
+        boolean isMountain = command.isMountain();
+
         String newPnuCode = farm.getPnuCode();
-        if (command.getBjdCode() != null) {
+        if (newBjdCode != null && !newBjdCode.isBlank()) {
             newPnuCode = PnuGeneratorUtil.generate(
-                    command.getBjdCode(),
-                    command.isMountain(),
-                    command.getMainNo(),
-                    command.getSubNo()
+                    newBjdCode,
+                    isMountain,
+                    newMainNo,
+                    newSubNo
             );
         }
 
@@ -101,12 +124,15 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                 command.getAddress(),
                 command.getArea(),
                 command.getCropTypes(),
-                command.getBjdCode(),
+                newBjdCode,
                 newPnuCode,
                 newLat,
                 newLng,
                 command.getRegistrationNumber(),
-                command.getDocumentUrl()
+                command.getDocumentUrl(),
+                command.getSoilType(),
+                command.getPh(),
+                command.getOrganicMatter()
         );
 
         // 5. 저장 (Output Port 호출)
