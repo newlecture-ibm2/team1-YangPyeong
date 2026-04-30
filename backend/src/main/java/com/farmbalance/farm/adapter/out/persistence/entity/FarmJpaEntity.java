@@ -42,7 +42,7 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(name = "longitude")
     private Double longitude;
 
-    @Column(name = "area_size", nullable = false)
+    @Column(name = "area", nullable = false)
     private Double area;
 
     @Column(name = "soil_type", length = 50)
@@ -64,7 +64,7 @@ public class FarmJpaEntity extends BaseTimeEntity {
     private Boolean landCertVerified = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "certification_status", length = 20)
+    @Column(name = "certification_status", nullable = false, length = 20)
     private com.farmbalance.farm.domain.CertificationStatus certificationStatus = com.farmbalance.farm.domain.CertificationStatus.PENDING;
 
     @ElementCollection(fetch = FetchType.LAZY)
