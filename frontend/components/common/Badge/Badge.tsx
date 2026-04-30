@@ -2,7 +2,7 @@ import styles from './Badge.module.css';
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'green' | 'lime' | 'orange' | 'red' | 'gray' | 'outline' | 'dark';
+  variant?: 'green' | 'lime' | 'orange' | 'red' | 'gray' | 'outline' | 'dark' | 'blue' | 'purple';
   className?: string;
 }
 

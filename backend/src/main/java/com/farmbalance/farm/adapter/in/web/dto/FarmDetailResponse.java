@@ -13,4 +13,10 @@ public class FarmDetailResponse {
     private Double area;
     private List<String> cropTypes;
     private String pnuCode;
+    private String bjdCode;
+    private String registrationNumber;
+    private String documentUrl;
+    private String soilType;
+    private Double ph;
+    private Double organicMatter;
 }

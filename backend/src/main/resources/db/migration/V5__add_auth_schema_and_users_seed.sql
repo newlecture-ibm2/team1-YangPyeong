@@ -24,6 +24,8 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS provider VARCHAR(20) NOT NULL DEFAULT
 ALTER TABLE users ADD COLUMN IF NOT EXISTS provider_id VARCHAR(100);
 -- 프로필 이미지 URL (로컬 업로드 경로 또는 외부 URL 저장용)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image_url VARCHAR(200);
+-- 관리자 및 지자체 소속 지역코드 (4183 등)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS region_code VARCHAR(10);
 
 -- ===== 3. user_social_accounts 테이블 =====
 CREATE TABLE IF NOT EXISTS user_social_accounts (

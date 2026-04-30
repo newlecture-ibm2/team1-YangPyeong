@@ -6,6 +6,9 @@ import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Badge from '@/components/common/Badge/Badge';
 import { useMyFarms } from './_hooks/useFarm';
+import { useHistory } from './_hooks/useHistory';
+import Timeline from './_components/Timeline/Timeline';
+import HistoryModal from './_components/HistoryModal/HistoryModal';
 import styles from './page.module.css';
 
 // 임시 KPI 및 활동 데이터 (백엔드 연동 전까지 유지할 데이터 구조)
@@ -25,11 +28,51 @@ const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'li
 };
 
 export default function FarmDashboardPage() {
-  const { farms, isLoading } = useMyFarms();
+  const { farms, isLoading: isFarmsLoading } = useMyFarms();
   const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
+  const [activeSubTab, setActiveSubTab] = useState<'POLICY' | 'HISTORY' | 'REPORT'>('HISTORY');
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   
-  // 선택된 농장 표시
+  // 수정을 위한 상태
+  const [editingHistoryId, setEditingHistoryId] = useState<number | null>(null);
+  const [editingContent, setEditingContent] = useState('');
+
+  // 선택된 농장
   const farm = farms.length > 0 ? farms[selectedFarmIdx] : null;
+  
+  // 히스토리 데이터 연동
+  const { 
+    histories, 
+    isLoading: isHistoryLoading, 
+    addHistory, 
+    updateHistory, 
+    removeHistory 
+  } = useHistory(farm?.id);
+
+  const isLoading = isFarmsLoading;
+
+  // 수정 버튼 클릭 핸들러
+  const handleEditClick = (id: number, content: string) => {
+    setEditingHistoryId(id);
+    setEditingContent(content);
+    setIsHistoryModalOpen(true);
+  };
+
+  // 모달 닫기 핸들러
+  const handleModalClose = () => {
+    setIsHistoryModalOpen(false);
+    setEditingHistoryId(null);
+    setEditingContent('');
+  };
+
+  // 저장/수정 실행 핸들러
+  const handleSaveHistory = async (content: string) => {
+    if (editingHistoryId) {
+      return await updateHistory(editingHistoryId, content);
+    } else {
+      return await addHistory(content);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -85,13 +128,23 @@ export default function FarmDashboardPage() {
           )}
         </div>
         <div className={styles.headerButtons}>
+          <Button variant="outline" onClick={() => setIsHistoryModalOpen(true)}>이력 기록하기</Button>
           <Link href="/farm/register">
-            <Button variant="outline">+ 새 농장 등록</Button>
+            <Button variant="primary">+ 새 농장 등록</Button>
           </Link>
         </div>
       </div>
 
-      {/* KPI 카드 Row (실제 farm 데이터 연동) */}
+      <HistoryModal 
+        isOpen={isHistoryModalOpen} 
+        onClose={handleModalClose} 
+        onSave={handleSaveHistory}
+        farmName={farm?.name || ''}
+        initialContent={editingContent}
+        mode={editingHistoryId ? 'edit' : 'create'}
+      />
+
+      {/* KPI 카드 Row */}
       <div className={styles.kpiRow}>
         <div className={styles.kpiCard}>
           <p className={styles.kpiLabel}>재배 면적</p>
@@ -113,36 +166,52 @@ export default function FarmDashboardPage() {
 
       {/* 벤토 레이아웃: 최근 활동 + 농장 정보 */}
       <div className={styles.bento}>
-        {/* 최근 활동 테이블 (현재는 Mock 데이터 없이 빈 상태로 유지) */}
         <div className={styles.bentoMain}>
           <Card>
-            <div className={styles.sectionHeader}>
-              <h3 className={styles.sectionTitle}>최근 활동</h3>
-              <Link href="#" className={styles.viewAllLink}>전체보기 →</Link>
+            <div className={styles.subTabs}>
+              <button 
+                className={activeSubTab === 'POLICY' ? styles.activeSubTab : styles.subTab} 
+                onClick={() => setActiveSubTab('POLICY')}
+              >
+                정책/혜택 안내
+              </button>
+              <button 
+                className={activeSubTab === 'HISTORY' ? styles.activeSubTab : styles.subTab} 
+                onClick={() => setActiveSubTab('HISTORY')}
+              >
+                재배 히스토리
+              </button>
+              <button 
+                className={activeSubTab === 'REPORT' ? styles.activeSubTab : styles.subTab} 
+                onClick={() => setActiveSubTab('REPORT')}
+              >
+                AI 분석 리포트
+              </button>
             </div>
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>날짜</th>
-                    <th>활동</th>
-                    <th>작물</th>
-                    <th>상태</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td colSpan={4} style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-light)' }}>
-                      최근 활동 내역이 없습니다.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            
+            <div className={styles.tabContent}>
+              {activeSubTab === 'POLICY' && (
+                <div style={{ padding: '3rem 0', textAlign: 'center', color: 'var(--color-text-light)' }}>
+                  {farm?.name} 농가를 위한 맞춤형 정책 및 혜택 정보가 준비 중입니다.
+                </div>
+              )}
+              {activeSubTab === 'HISTORY' && (
+                <Timeline 
+                  histories={histories} 
+                  onEdit={handleEditClick}
+                  onDelete={removeHistory}
+                />
+              )}
+              {activeSubTab === 'REPORT' && (
+                <div style={{ padding: '3rem 0', textAlign: 'center', color: 'var(--color-text-light)' }}>
+                  AI 분석 리포트는 준비 중입니다.
+                </div>
+              )}
             </div>
           </Card>
         </div>
 
-        {/* 농장 정보 사이드 카드 (실제 데이터 연동) */}
+        {/* 농장 정보 사이드 카드 */}
         <div className={styles.bentoSide}>
           <Card variant="dark">
             <h3 className={styles.farmInfoTitle}>농장 정보</h3>
@@ -174,3 +243,4 @@ export default function FarmDashboardPage() {
     </div>
   );
 }
+
