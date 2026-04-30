@@ -16,11 +16,11 @@ export async function getFarmHistories(farmId: number): Promise<CultivationHisto
     method: 'GET',
     cache: 'no-store',
   });
-  
+
   if (!res.ok) {
     throw new Error('이력 조회에 실패했습니다.');
   }
-  
+
   const response = await res.json();
   return response.data || [];
 }
@@ -39,7 +39,7 @@ export async function recordFarmHistory(farmId: number, content: string): Promis
       historyType: 'USER',
     }),
   });
-  
+
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.message || '이력 기록에 실패했습니다.');
@@ -60,7 +60,7 @@ export async function updateFarmHistory(farmId: number, historyId: number, conte
       historyType: 'USER',
     }),
   });
-  
+
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.message || '이력 수정에 실패했습니다.');
@@ -74,10 +74,9 @@ export async function deleteFarmHistory(farmId: number, historyId: number): Prom
   const res = await fetch(`/api/farm/${farmId}/histories/${historyId}`, {
     method: 'DELETE',
   });
-  
+
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.message || '이력 삭제에 실패했습니다.');
   }
 }
-
