@@ -52,7 +52,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           <div className={styles.bottom}>
             <strong className={styles.price}>₩{formattedPrice}</strong>
             {/* onMouseDown으로 Link 이벤트 차단, onClick으로 콜백 실행 */}
-            <span onMouseDown={handleCartMouseDown} onClick={(e) => e.stopPropagation()}>
+            <span onMouseDown={handleCartMouseDown} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
               <Button
                 variant="primary"
                 size="sm"

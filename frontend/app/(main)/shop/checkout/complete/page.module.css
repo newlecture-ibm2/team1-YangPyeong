@@ -1,0 +1,164 @@
+/* ════════════════════════════════════════════════════════
+   결제 완료 페이지 스타일
+   ════════════════════════════════════════════════════════ */
+
+.page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 80px var(--space-lg);
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* ── 성공 아이콘 ── */
+
+.successIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(72, 130, 80, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  margin-bottom: var(--space-xl);
+  animation: popIn 0.4s ease-out;
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ── 타이틀 ── */
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-xl);
+  line-height: 1.6;
+}
+
+/* ── 주문 정보 카드 ── */
+
+.infoCard {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  font-size: 15px;
+}
+
+.infoRow:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.infoLabel {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.infoValue {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.totalValue {
+  color: var(--color-primary-dark, #2d5e32);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* ── 버튼 영역 ── */
+
+.actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.primaryBtn {
+  flex: 1;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  transition: all var(--transition-base);
+}
+
+.primaryBtn:hover {
+  background: var(--color-primary-dark, #2d5e32);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(72, 130, 80, 0.3);
+}
+
+.secondaryBtn {
+  flex: 1;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  transition: all var(--transition-base);
+}
+
+.secondaryBtn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* ── 반응형 ── */
+
+@media (max-width: 480px) {
+  .page {
+    padding: 60px var(--space-md);
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}

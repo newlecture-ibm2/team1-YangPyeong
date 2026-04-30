@@ -1,7 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/components';
+import {
+  FREE_SHIPPING_THRESHOLD,
+  DEFAULT_DELIVERY_FEE,
+} from '@/lib/constants';
 import { useCart } from './useCart';
 import styles from './page.module.css';
 
@@ -38,18 +43,21 @@ export default function CartPage() {
     toastSuccess(`${selectedCount}개 상품을 삭제했습니다.`);
   };
 
+  const router = useRouter();
+
   /** 주문하기 핸들러 */
   const handleCheckout = () => {
     if (selectedCount === 0) {
       toastInfo('주문할 상품을 선택해주세요.');
       return;
     }
-    // TODO: checkout 페이지로 이동 + 선택 상품 전달
-    toastSuccess('주문 페이지로 이동합니다.');
+    // 선택된 장바구니 아이템 ID를 query로 전달
+    const cartIds = Array.from(selectedIds).join(',');
+    router.push(`/shop/checkout?cartIds=${cartIds}`);
   };
 
-  /** 배송비 (5만원 이상 무료) */
-  const deliveryFee = selectedTotalPrice >= 50000 ? 0 : 3000;
+  /** 배송비 (3만원 이상 무료) */
+  const deliveryFee = selectedTotalPrice >= FREE_SHIPPING_THRESHOLD ? 0 : DEFAULT_DELIVERY_FEE;
   const finalTotal = selectedTotalPrice + deliveryFee;
 
   return (
@@ -231,7 +239,7 @@ export default function CartPage() {
 
             {deliveryFee > 0 && selectedTotalPrice > 0 && (
               <div className={styles.deliveryNote}>
-                🚚 {formatPrice(50000 - selectedTotalPrice)} 더 담으면 무료배송!
+                🚚 {formatPrice(FREE_SHIPPING_THRESHOLD - selectedTotalPrice)} 더 담으면 무료배송!
               </div>
             )}
 

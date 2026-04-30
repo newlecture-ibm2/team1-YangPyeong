@@ -10,5 +10,7 @@ public class FarmListResponse {
     private Long id;
     private String name;
     private String address;
+    private Double area;
     private List<String> cropTypes;
+    private String certificationStatus;
 }

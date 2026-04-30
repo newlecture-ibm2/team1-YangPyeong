@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import DaumPostcodeEmbed from 'react-daum-postcode';
+import DaumPostcodeEmbed, { type Address } from 'react-daum-postcode';
+import { useKakaoLoader } from 'react-kakao-maps-sdk';
 import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import Button from '@/components/common/Button/Button';
@@ -12,17 +13,6 @@ import Modal from '@/components/common/Modal/Modal';
 import { useToast } from '@/components/common/Toast';
 import { uploadFile } from '@/lib/upload.api';
 import styles from './page.module.css';
-
-interface DaumPostcodeData {
-  zonecode: string;
-  address: string;
-  roadAddress: string;
-  jibunAddress: string;
-  autoJibunAddress: string;
-  addressType: string;
-  bname: string;
-  buildingName: string;
-}
 
 const CROP_OPTIONS = [
   { value: '배추', label: '🥬 배추' },
@@ -39,6 +29,12 @@ export default function FarmRegisterPage() {
 
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
 
+  // 카카오 Maps JS SDK 로드 (Geocoder 사용을 위해)
+  useKakaoLoader({
+    appkey: process.env.NEXT_PUBLIC_KAKAO_MAP_JS_KEY as string,
+    libraries: ['services'],
+  });
+
   const [formData, setFormData] = useState({
     name: '',
     registrationNumber: '',
@@ -53,6 +49,14 @@ export default function FarmRegisterPage() {
     ph: '',
     organicMatter: '',
     documentUrl: '',
+    // PNU 생성용 필드 추가
+    bjdCode: '',
+    isMountain: false,
+    mainNo: '',
+    subNo: '',
+    // 좌표 (카카오 Maps JS SDK에서 변환)
+    latitude: null as number | null,
+    longitude: null as number | null,
   });
 
   const handleChange = (field: string, value: string) => {
@@ -110,7 +114,10 @@ export default function FarmRegisterPage() {
   };
 
   // 카카오 우편번호 검색 완료 핸들러
-  const handlePostcodeComplete = (data: DaumPostcodeData) => {
+  const handlePostcodeComplete = (data: Address) => {
+    // Address 타입에 포함되지 않는 확장 필드는 안전하게 접근
+    const extended = data as Address & { mountain?: string; main_address_no?: string; sub_address_no?: string; autoJibunAddress?: string };
+
     // 농지의 특성을 고려한 주소 추출 우선순위 적용
     let finalAddress = data.roadAddress;
 
@@ -118,8 +125,8 @@ export default function FarmRegisterPage() {
       finalAddress = data.jibunAddress;
     }
 
-    if (!finalAddress) {
-      finalAddress = data.autoJibunAddress;
+    if (!finalAddress && extended.autoJibunAddress) {
+      finalAddress = extended.autoJibunAddress;
     }
 
     // 만약 위 3개 필드가 모두 비어있다면 기본 address로 대체 (안전망)
@@ -131,8 +138,27 @@ export default function FarmRegisterPage() {
       ...prev,
       zipCode: data.zonecode,
       baseAddress: finalAddress,
+      bjdCode: data.bcode,
+      isMountain: extended.mountain === 'Y',
+      mainNo: extended.main_address_no || '0001',
+      subNo: extended.sub_address_no || '0',
     }));
     setIsPostcodeOpen(false);
+
+    // 카카오 Maps JS SDK Geocoder로 주소 → 좌표 변환
+    if (window.kakao?.maps?.services) {
+      const geocoder = new window.kakao.maps.services.Geocoder();
+      geocoder.addressSearch(finalAddress, (result: Array<{ x: string; y: string }>, status: string) => {
+        if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            latitude: parseFloat(result[0].y),
+            longitude: parseFloat(result[0].x),
+          }));
+        }
+      });
+    }
+
     toast.success('주소가 입력되었습니다.');
   };
 
@@ -157,24 +183,32 @@ export default function FarmRegisterPage() {
       return;
     }
 
-    // 백엔드 API로 전송 (좌표 변환은 백엔드에서 처리)
+    // 백엔드 API로 전송 (좌표는 프론트엔드 카카오 Maps JS SDK에서 변환)
     const payload = {
       name: formData.name,
       registrationNumber: formData.registrationNumber,
       zipCode: formData.zipCode,
       address: formData.baseAddress,
       detailAddress: formData.detailAddress,
-      area: Number(formData.area),
+      area: Number(String(formData.area).replace(/,/g, '')),
       cropTypes: formData.cropTypes,
       operationStatus: formData.operationStatus,
       soilType: formData.soilType || null,
       ph: formData.ph ? Number(formData.ph) : null,
       organicMatter: formData.organicMatter ? Number(formData.organicMatter) : null,
       documentUrl: formData.documentUrl,
+      // PNU 생성용 필드
+      bjdCode: formData.bjdCode,
+      isMountain: formData.isMountain,
+      mainNo: formData.mainNo,
+      subNo: formData.subNo,
+      // 좌표 (카카오 Maps JS SDK에서 변환)
+      latitude: formData.latitude,
+      longitude: formData.longitude,
     };
 
     try {
-      const res = await fetch('/api/farms', {
+      const res = await fetch('/api/farm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -220,7 +254,7 @@ export default function FarmRegisterPage() {
               <div className={styles.row}>
                 <div>
                   <Input
-                    label="농업경영체 등록번호 (10자리)"
+                    label="농업경영체 등록번호"
                     placeholder="예: 1234567890"
                     value={formData.registrationNumber}
                     onChange={(e) => handleChange('registrationNumber', e.target.value)}
@@ -251,13 +285,15 @@ export default function FarmRegisterPage() {
               {/* 주소 검색 영역 */}
               <div className={styles.addressSection}>
                 <div className={styles.addressRow}>
-                  <Input
-                    label="우편번호"
-                    placeholder="우편번호"
-                    value={formData.zipCode}
-                    disabled
-                    required
-                  />
+                  <div style={{ flex: 1 }}>
+                    <Input
+                      label="우편번호"
+                      placeholder="우편번호"
+                      value={formData.zipCode}
+                      disabled
+                      required
+                    />
+                  </div>
                   <Button
                     type="button"
                     variant="outline"

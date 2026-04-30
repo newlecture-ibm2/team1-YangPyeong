@@ -10,7 +10,7 @@
 CREATE TABLE users (
     id          BIGSERIAL    PRIMARY KEY,
     email       VARCHAR(255) NOT NULL UNIQUE,
-    password    VARCHAR(255) NOT NULL,
+    password    VARCHAR(255),
     name        VARCHAR(50)  NOT NULL,
     phone       VARCHAR(20),
     role        VARCHAR(20)  NOT NULL DEFAULT 'USER',   -- USER | FARMER | ADMIN | GOV
@@ -19,6 +19,16 @@ CREATE TABLE users (
     created_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMP,
     deleted_at  TIMESTAMP
+);
+
+-- 2.2 user_social_accounts
+CREATE TABLE user_social_accounts (
+    id          BIGSERIAL    PRIMARY KEY,
+    user_id     BIGINT       NOT NULL REFERENCES users(id),
+    provider    VARCHAR(20)  NOT NULL,   -- KAKAO, GOOGLE
+    provider_id VARCHAR(100) NOT NULL,
+    linked_at   TIMESTAMP    NOT NULL DEFAULT NOW(),
+    UNIQUE (provider, provider_id)
 );
 
 -- 2.2 farms
@@ -131,12 +141,27 @@ CREATE TABLE products (
     price        DECIMAL(10,2) NOT NULL,
     stock        INT          NOT NULL DEFAULT 0,
     description  TEXT,
-    image_url    VARCHAR(500),
-    status       VARCHAR(20)  DEFAULT 'PENDING',    -- PENDING | ACTIVE | INACTIVE | REJECTED
+    sales_count  INT          NOT NULL DEFAULT 0,
+    status       VARCHAR(20)  DEFAULT 'ACTIVE',    -- ACTIVE | INACTIVE
     created_at   TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMP,
     deleted_at   TIMESTAMP
 );
+
+-- 2.8.1 uploads (공통 업로드 — 이미지/파일 통합 관리)
+CREATE TABLE uploads (
+    id             BIGSERIAL    PRIMARY KEY,
+    entity_type    VARCHAR(30)  NOT NULL,             -- PRODUCT | FARM_CERT | SEED_RECEIPT | POST 등
+    entity_id      BIGINT       NOT NULL,             -- 대상 엔티티 PK
+    file_type      VARCHAR(20)  NOT NULL DEFAULT 'IMAGE',  -- IMAGE | DOCUMENT
+    file_url       VARCHAR(500) NOT NULL,
+    original_name  VARCHAR(255),
+    display_order  INT          NOT NULL DEFAULT 0,   -- 0 = 대표
+    created_at     TIMESTAMP    NOT NULL DEFAULT NOW(),
+    deleted_at     TIMESTAMP
+);
+
+CREATE INDEX idx_uploads_entity ON uploads(entity_type, entity_id);
 
 -- 2.9 orders
 CREATE TABLE orders (

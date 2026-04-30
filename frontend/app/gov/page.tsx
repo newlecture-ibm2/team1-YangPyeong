@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import styles from './gov.module.css';
-import { useGovUser, getTestHeaders } from './_hooks/useGovUser';
+import { useGovUser, getTestHeaders } from './useGovUser';
 import GovTabs from './_components/GovTabs';
 import Modal from '@/components/common/Modal';
 
@@ -32,7 +32,7 @@ export default function GovDashboardPage() {
   if (!data) return <div className={styles.page}><p>데이터를 불러올 수 없습니다.</p></div>;
 
   const { summary, warningItems, monthlySupply, regionDistribution } = data;
-  const region = user.region;
+  const region = user.regionName || '지자체';
 
   return (
     <div className={styles.page}>
