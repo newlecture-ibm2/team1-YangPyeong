@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import DaumPostcodeEmbed from 'react-daum-postcode';
+import DaumPostcodeEmbed, { type Address } from 'react-daum-postcode';
 import { useKakaoLoader } from 'react-kakao-maps-sdk';
 import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
@@ -13,21 +13,6 @@ import Modal from '@/components/common/Modal/Modal';
 import { useToast } from '@/components/common/Toast';
 import { uploadFile } from '@/lib/upload.api';
 import styles from './page.module.css';
-
-interface DaumPostcodeData {
-  zonecode: string;
-  address: string;
-  roadAddress: string;
-  jibunAddress: string;
-  autoJibunAddress: string;
-  addressType: string;
-  bname: string;
-  bcode: string;
-  buildingName: string;
-  mountain: string;
-  main_address_no: string;
-  sub_address_no: string;
-}
 
 const CROP_OPTIONS = [
   { value: '배추', label: '🥬 배추' },
@@ -129,7 +114,10 @@ export default function FarmRegisterPage() {
   };
 
   // 카카오 우편번호 검색 완료 핸들러
-  const handlePostcodeComplete = (data: any) => {
+  const handlePostcodeComplete = (data: Address) => {
+    // Address 타입에 포함되지 않는 확장 필드는 안전하게 접근
+    const extended = data as Address & { mountain?: string; main_address_no?: string; sub_address_no?: string; autoJibunAddress?: string };
+
     // 농지의 특성을 고려한 주소 추출 우선순위 적용
     let finalAddress = data.roadAddress;
 
@@ -137,8 +125,8 @@ export default function FarmRegisterPage() {
       finalAddress = data.jibunAddress;
     }
 
-    if (!finalAddress) {
-      finalAddress = data.autoJibunAddress;
+    if (!finalAddress && extended.autoJibunAddress) {
+      finalAddress = extended.autoJibunAddress;
     }
 
     // 만약 위 3개 필드가 모두 비어있다면 기본 address로 대체 (안전망)
@@ -151,9 +139,9 @@ export default function FarmRegisterPage() {
       zipCode: data.zonecode,
       baseAddress: finalAddress,
       bjdCode: data.bcode,
-      isMountain: data.mountain === 'Y',
-      mainNo: data.main_address_no,
-      subNo: data.sub_address_no || '0', // 부번이 없으면 0
+      isMountain: extended.mountain === 'Y',
+      mainNo: extended.main_address_no || '0001',
+      subNo: extended.sub_address_no || '0',
     }));
     setIsPostcodeOpen(false);
 
@@ -297,13 +285,15 @@ export default function FarmRegisterPage() {
               {/* 주소 검색 영역 */}
               <div className={styles.addressSection}>
                 <div className={styles.addressRow}>
-                  <Input
-                    label="우편번호"
-                    placeholder="우편번호"
-                    value={formData.zipCode}
-                    disabled
-                    required
-                  />
+                  <div style={{ flex: 1 }}>
+                    <Input
+                      label="우편번호"
+                      placeholder="우편번호"
+                      value={formData.zipCode}
+                      disabled
+                      required
+                    />
+                  </div>
                   <Button
                     type="button"
                     variant="outline"

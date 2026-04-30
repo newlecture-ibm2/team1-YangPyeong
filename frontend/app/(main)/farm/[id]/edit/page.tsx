@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import DaumPostcodeEmbed from 'react-daum-postcode';
+import DaumPostcodeEmbed, { type Address } from 'react-daum-postcode';
 import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import Button from '@/components/common/Button/Button';
@@ -14,21 +14,6 @@ import { uploadFile } from '@/lib/upload.api';
 import { useFarmDetail } from '../../_hooks/useFarm';
 import { updateFarm } from '../../_lib/farm.api';
 import styles from '../../register/page.module.css';
-
-interface DaumPostcodeData {
-  zonecode: string;
-  address: string;
-  roadAddress: string;
-  jibunAddress: string;
-  autoJibunAddress: string;
-  addressType: string;
-  bname: string;
-  bcode: string;
-  buildingName: string;
-  mountain: string;
-  main_address_no: string;
-  sub_address_no: string;
-}
 
 const CROP_OPTIONS = [
   { value: '배추', label: '🥬 배추' },
@@ -138,16 +123,18 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     }
   };
 
-  const handlePostcodeComplete = (data: DaumPostcodeData) => {
+  const handlePostcodeComplete = (data: Address) => {
     const finalAddress = data.roadAddress || data.jibunAddress || data.address;
+    // Address 타입에 포함되지 않는 확장 필드는 안전하게 접근
+    const extended = data as Address & { mountain?: string; main_address_no?: string; sub_address_no?: string };
     setFormData((prev) => ({
       ...prev,
       zipCode: data.zonecode,
       baseAddress: finalAddress,
       bjdCode: data.bcode,
-      isMountain: data.mountain === 'Y',
-      mainNo: data.main_address_no,
-      subNo: data.sub_address_no || '0',
+      isMountain: extended.mountain === 'Y',
+      mainNo: extended.main_address_no || '0001',
+      subNo: extended.sub_address_no || '0',
     }));
     setIsPostcodeOpen(false);
     toast.success('주소가 변경되었습니다. 저장 시 PNU 정보가 갱신됩니다.');
@@ -234,7 +221,9 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
               </div>
               <div className={styles.addressSection}>
                 <div className={styles.addressRow}>
-                  <Input label="우편번호" value={formData.zipCode} disabled />
+                  <div style={{ flex: 1 }}>
+                    <Input label="우편번호" value={formData.zipCode} disabled />
+                  </div>
                   <Button type="button" variant="outline" className={styles.searchBtn} onClick={() => setIsPostcodeOpen(true)}>주소 검색</Button>
                 </div>
                 <Input label="기본 주소" value={formData.baseAddress} disabled required />

@@ -6,6 +6,7 @@ import Button from '@/components/common/Button/Button';
 import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import { uploadFile } from '@/lib/upload.api';
+import { registerProduct } from '@/app/(main)/shop/_lib/shop.api';
 import { PRODUCT_CATEGORIES } from '../../_lib/mypage.types';
 import styles from './page.module.css';
 
@@ -102,19 +103,25 @@ export default function SellerRegisterPage() {
         imageUrls.push(url);
       }
 
-      // TODO: 상품 등록 API 호출 (POST /api/shop/seller)
-      // await apiFetch('/api/proxy/shop/seller', {
-      //   method: 'POST',
-      //   body: { ...form, price: Number(form.price), stock: Number(form.stock), imageUrls },
-      // });
+      // 상품 등록 API 호출
+      const result = await registerProduct({
+        name: form.name,
+        price: Number(form.price),
+        stock: Number(form.stock),
+        description: form.description,
+        categoryName: form.categoryName,
+        imageUrls,
+      });
 
-      // 더미 딜레이 (백엔드 연동 전)
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      if (!result.success) {
+        throw new Error(result.error?.message || '상품 등록에 실패했습니다.');
+      }
+
       router.push('/mypage/seller');
     } catch {
       setIsSubmitting(false);
     }
-  }, [isValid, isSubmitting, images, router]);
+  }, [isValid, isSubmitting, form, images, router]);
 
   const categoryOptions = PRODUCT_CATEGORIES.map((cat) => ({ value: cat, label: cat }));
 

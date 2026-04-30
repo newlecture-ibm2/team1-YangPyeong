@@ -52,14 +52,11 @@ export const SORT_OPTIONS: { value: ProductSortType; label: string }[] = [
   { value: 'latest', label: '최신순' },
 ];
 
-/** 카테고리 탭 (전체 포함) */
-export const CATEGORY_TABS = [
-  { value: '', label: '전체' },
-  { value: '채소류', label: '채소류' },
-  { value: '과일류', label: '과일류' },
-  { value: '곡물·잡곡', label: '곡물·잡곡' },
-  { value: '가공식품', label: '가공식품' },
-];
+/** 카테고리 탭 아이템 타입 (프론트 UI용) */
+export interface CategoryTab {
+  value: string;
+  label: string;
+}
 
 /** 장바구니 아이템 */
 export interface CartItem {

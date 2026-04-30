@@ -4,8 +4,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 @Component
@@ -21,9 +23,10 @@ public class LocalUploadFileAdapter implements UploadFilePort {
         }
         
         try {
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
+            // 상대 경로를 절대 경로로 변환 (프로젝트 루트 기준)
+            Path dir = Paths.get(uploadDir).toAbsolutePath().normalize();
+            if (!Files.exists(dir)) {
+                Files.createDirectories(dir);
             }
 
             String originalFilename = file.getOriginalFilename();
@@ -32,8 +35,8 @@ public class LocalUploadFileAdapter implements UploadFilePort {
                 : "";
             String savedFilename = UUID.randomUUID().toString() + extension;
             
-            File dest = new File(dir, savedFilename);
-            file.transferTo(dest);
+            Path dest = dir.resolve(savedFilename);
+            file.transferTo(dest.toFile());
             
             return "/uploads/" + savedFilename;
         } catch (IOException e) {
@@ -41,3 +44,4 @@ public class LocalUploadFileAdapter implements UploadFilePort {
         }
     }
 }
+

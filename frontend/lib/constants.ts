@@ -43,7 +43,7 @@ export interface ApiResponse<T = unknown> {
   meta?: {
     page?: number;
     size?: number;
-    totalCount?: number;
+    total?: number;
     totalPages?: number;
   };
 }
