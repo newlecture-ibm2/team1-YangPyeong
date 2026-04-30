@@ -46,25 +46,16 @@ export async function deleteCropCategory(id: number): Promise<void> {
   if (!json.success) throw new Error(json.error?.message ?? '카테고리 삭제 실패')
 }
 
-// ── 작물 ──
+// ── 작물 CRUD ──
 
 /** 작물 목록 조회 (필터 선택) */
-export async function fetchCrops(categoryId?: number, keyword?: string, isActive?: boolean): Promise<AdminCrop[]> {
+export async function fetchCrops(categoryId?: number, keyword?: string): Promise<AdminCrop[]> {
   const params = new URLSearchParams()
   if (categoryId) params.set('categoryId', String(categoryId))
   if (keyword) params.set('keyword', keyword)
-  if (isActive !== undefined) params.set('isActive', String(isActive))
   const query = params.toString() ? `?${params}` : ''
   const res = await fetch(`${BASE}${query}`)
   const json: ApiResponse<AdminCrop[]> = await res.json()
-  if (!json.success) throw new Error(json.error?.message ?? '작물 조회 실패')
-  return json.data
-}
-
-/** 작물 단건 조회 */
-export async function fetchCropById(id: number): Promise<AdminCrop> {
-  const res = await fetch(`${BASE}/${id}`)
-  const json: ApiResponse<AdminCrop> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '작물 조회 실패')
   return json.data
 }
@@ -92,9 +83,9 @@ export async function updateCrop(id: number, body: UpdateCropRequest): Promise<v
   if (!json.success) throw new Error(json.error?.message ?? '작물 수정 실패')
 }
 
-/** 작물 비활성화 */
-export async function deactivateCrop(id: number): Promise<void> {
-  const res = await fetch(`${BASE}/${id}/deactivate`, { method: 'PATCH' })
+/** 작물 삭제 (soft delete) */
+export async function deleteCrop(id: number): Promise<void> {
+  const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' })
   const json: ApiResponse<null> = await res.json()
-  if (!json.success) throw new Error(json.error?.message ?? '비활성화 실패')
+  if (!json.success) throw new Error(json.error?.message ?? '작물 삭제 실패')
 }

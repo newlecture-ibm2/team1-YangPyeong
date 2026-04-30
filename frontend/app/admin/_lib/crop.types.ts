@@ -11,13 +11,7 @@ export interface AdminCropCategory {
 export interface AdminCrop {
   id: number
   categoryId: number
-  code: string
   name: string
-  growthDays: number | null
-  yieldPerSqm: number | null
-  avgCostPerSqm: number | null
-  climateConditions: string | null
-  isActive: boolean
   createdAt: string
   updatedAt: string | null
 }
@@ -25,20 +19,11 @@ export interface AdminCrop {
 export interface CreateCropRequest {
   categoryId: number
   name: string
-  growthDays?: number
-  yieldPerSqm?: number
-  avgCostPerSqm?: number
-  climateConditions?: string
 }
 
 export interface UpdateCropRequest {
-  categoryId?: number
-  name?: string
-  growthDays?: number
-  yieldPerSqm?: number
-  avgCostPerSqm?: number
-  climateConditions?: string
-  isActive?: boolean
+  categoryId: number
+  name: string
 }
 
 export interface CreateCropCategoryRequest {

@@ -20,7 +20,7 @@ public class FarmUpdateRequest {
     @NotNull(message = "면적은 필수입니다.")
     private Double area;
 
-    private List<String> cropTypes;
+    private List<Long> cropIds;
     
     // PNU 갱신용 필드 (선택 사항)
     private String bjdCode;

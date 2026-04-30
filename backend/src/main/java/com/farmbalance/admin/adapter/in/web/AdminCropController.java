@@ -16,6 +16,7 @@ import java.util.List;
 /**
  * ADM-003 작물 마스터 관리 Controller (Driving Adapter)
  * API URL: /api/admins/crops
+ * 작물 CRUD + 카테고리 CRUD
  */
 @RestController
 @RequestMapping("/api/admins/crops")
@@ -26,13 +27,11 @@ public class AdminCropController {
 
     // ── 카테고리 ──
 
-    /** 카테고리 목록 조회 */
     @GetMapping("/categories")
     public ApiResponse<List<AdminCropCategory>> getCategories() {
         return ApiResponse.ok(manageCropUseCase.getAllCategories());
     }
 
-    /** 카테고리 등록 */
     @PostMapping("/categories")
     public ApiResponse<Long> createCategory(@RequestBody CreateCropCategoryRequest request) {
         AdminCropCategory category = AdminCropCategory.builder()
@@ -44,7 +43,6 @@ public class AdminCropController {
         return ApiResponse.ok(id);
     }
 
-    /** 카테고리 수정 */
     @PatchMapping("/categories/{id}")
     public ApiResponse<Void> updateCategory(@PathVariable Long id, @RequestBody UpdateCropCategoryRequest request) {
         AdminCropCategory category = AdminCropCategory.builder()
@@ -57,7 +55,6 @@ public class AdminCropController {
         return ApiResponse.ok(null);
     }
 
-    /** 카테고리 삭제 (soft delete) */
     @DeleteMapping("/categories/{id}")
     public ApiResponse<Void> deleteCategory(@PathVariable Long id) {
         manageCropUseCase.deleteCategory(id);
@@ -66,57 +63,41 @@ public class AdminCropController {
 
     // ── 작물 ──
 
-    /** 작물 목록 조회 (필터링) */
     @GetMapping
     public ApiResponse<List<AdminCrop>> getCrops(
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Boolean isActive) {
-        return ApiResponse.ok(manageCropUseCase.getCrops(categoryId, keyword, isActive));
+            @RequestParam(required = false) String keyword) {
+        return ApiResponse.ok(manageCropUseCase.getCrops(categoryId, keyword));
     }
 
-    /** 작물 단건 조회 */
     @GetMapping("/{id}")
     public ApiResponse<AdminCrop> getCropById(@PathVariable Long id) {
         return ApiResponse.ok(manageCropUseCase.getCropById(id));
     }
 
-    /** 작물 등록 */
     @PostMapping
     public ApiResponse<Long> createCrop(@RequestBody CreateCropRequest request) {
         AdminCrop crop = AdminCrop.builder()
                 .categoryId(request.getCategoryId())
                 .name(request.getName())
-                .growthDays(request.getGrowthDays())
-                .yieldPerSqm(request.getYieldPerSqm())
-                .avgCostPerSqm(request.getAvgCostPerSqm())
-                .climateConditions(request.getClimateConditions())
                 .build();
         Long id = manageCropUseCase.createCrop(crop);
         return ApiResponse.ok(id);
     }
 
-    /** 작물 수정 */
     @PatchMapping("/{id}")
     public ApiResponse<Void> updateCrop(@PathVariable Long id, @RequestBody UpdateCropRequest request) {
         AdminCrop crop = AdminCrop.builder()
                 .categoryId(request.getCategoryId())
                 .name(request.getName())
-                .growthDays(request.getGrowthDays())
-                .yieldPerSqm(request.getYieldPerSqm())
-                .avgCostPerSqm(request.getAvgCostPerSqm())
-                .climateConditions(request.getClimateConditions())
-                .isActive(request.getIsActive())
                 .build();
         manageCropUseCase.updateCrop(id, crop);
         return ApiResponse.ok(null);
     }
 
-    /** 작물 비활성화 */
-    @PatchMapping("/{id}/deactivate")
-    public ApiResponse<Void> deactivateCrop(@PathVariable Long id) {
-        manageCropUseCase.deactivateCrop(id);
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteCrop(@PathVariable Long id) {
+        manageCropUseCase.deleteCrop(id);
         return ApiResponse.ok(null);
     }
 }
-

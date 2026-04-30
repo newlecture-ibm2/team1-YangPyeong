@@ -12,7 +12,7 @@ import java.util.Map;
 
 /**
  * 지자체 데이터 조회 Driven Adapter (JdbcTemplate 네이티브 쿼리)
- * 기존 ERD 테이블(farms, seed_registrations, balance_data, orders 등)을 직접 조회합니다.
+ * 기존 ERD 테이블(farms, farm_crops, balance_data, orders 등)을 직접 조회합니다.
  *
  * [변경 이력]
  * - TOWN_CASE 하드코딩(12개 CASE WHEN) → regions 테이블 JOIN 기반으로 교체
@@ -72,7 +72,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
                    COALESCE(f.area_size, 0) AS "재배면적㎡",
                    COALESCE(sr.estimated_yield, 0) AS "예상생산량kg",
                    TO_CHAR(sr.created_at, 'YYYY-MM-DD') AS "등록일"
-            FROM seed_registrations sr
+            FROM farm_crops sr
             JOIN farms f ON f.id = sr.farm_id
             JOIN crops c ON c.id = sr.crop_id
             WHERE sr.created_at BETWEEN ? AND ?
@@ -152,7 +152,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
                    f.status AS "승인상태"
             FROM farms f
             JOIN users u ON u.id = f.user_id
-            LEFT JOIN seed_registrations sr ON sr.farm_id = f.id AND sr.deleted_at IS NULL
+            LEFT JOIN farm_crops sr ON sr.farm_id = f.id AND sr.deleted_at IS NULL
             LEFT JOIN crops c ON c.id = sr.crop_id
             WHERE f.created_at BETWEEN ? AND ?
               AND f.deleted_at IS NULL

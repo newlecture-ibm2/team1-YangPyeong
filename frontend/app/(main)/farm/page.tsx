@@ -152,7 +152,7 @@ export default function FarmDashboardPage() {
         </div>
         <div className={styles.kpiCard}>
           <p className={styles.kpiLabel}>재배 작물</p>
-          <p className={styles.kpiValue}>{farm?.cropTypes.length}종</p>
+          <p className={styles.kpiValue}>{farm?.cropNames.length}종</p>
         </div>
         <div className={styles.kpiCard}>
           <p className={styles.kpiLabel}>이번 달 수익</p>
@@ -223,7 +223,7 @@ export default function FarmDashboardPage() {
                <dd>{farm?.area.toLocaleString()} ㎡</dd>
  
                <dt>주요 작물</dt>
-               <dd>{farm?.cropTypes.join(', ')}</dd>
+               <dd>{farm?.cropNames.join(', ')}</dd>
  
                <dt>상태</dt>
                <dd>

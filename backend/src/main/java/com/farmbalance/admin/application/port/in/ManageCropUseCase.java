@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * ADM-003 작물 마스터 관리 Input Port
- * 카테고리 CRUD + 작물 CRUD (등록/수정/비활성화)
+ * 카테고리 CRUD + 작물 CRUD (단순화: categoryId + name)
  */
 public interface ManageCropUseCase {
 
@@ -27,19 +27,18 @@ public interface ManageCropUseCase {
 
     // ── 작물 ──
 
-    /** 작물 목록 조회 (카테고리, 키워드, 활성 여부 필터) */
-    List<AdminCrop> getCrops(Long categoryId, String keyword, Boolean isActive);
+    /** 작물 목록 조회 (카테고리, 키워드 필터) */
+    List<AdminCrop> getCrops(Long categoryId, String keyword);
 
     /** 작물 단건 조회 */
     AdminCrop getCropById(Long id);
 
-    /** 작물 등록 (코드 자동 생성, 이름 중복 검사) */
+    /** 작물 등록 */
     Long createCrop(AdminCrop crop);
 
     /** 작물 수정 */
     void updateCrop(Long id, AdminCrop crop);
 
-    /** 작물 비활성화 */
-    void deactivateCrop(Long id);
+    /** 작물 삭제 (soft delete) */
+    void deleteCrop(Long id);
 }
-

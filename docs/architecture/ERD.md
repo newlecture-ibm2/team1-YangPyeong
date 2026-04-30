@@ -77,13 +77,7 @@ erDiagram
     crops {
         bigint id PK
         bigint category_id FK
-        varchar code UK "ex: RICE_001"
-        varchar name
-        int growth_days
-        decimal yield_per_sqm "㎡당 수확량(kg)"
-        decimal avg_cost_per_sqm "㎡당 평균 비용(원)"
-        jsonb climate_conditions "작물별 적정 재배 환경 조건"
-        boolean is_active
+        varchar name "작물명 (조회 전용 마스터)"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -91,15 +85,12 @@ erDiagram
 
     crop_categories ||--o{ crops : "분류"
 
-    seed_registrations {
+    farm_crops {
         bigint id PK
         bigint farm_id FK
         bigint crop_id FK
-        varchar seed_type "SEED | SEEDLING | SAPLING"
-        int quantity
         decimal estimated_yield "예상 총 수확량"
         varchar yield_unit "g | kg | ton"
-        boolean verified
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -304,9 +295,9 @@ erDiagram
     users ||--o{ notifications : "수신"
     users ||--o{ download_history : "다운로드이력"
 
-    farms ||--o{ seed_registrations : "종자등록"
+    farms ||--o{ farm_crops : "작물등록"
 
-    crops ||--o{ seed_registrations : "작물참조"
+    crops ||--o{ farm_crops : "작물참조"
     crops ||--o{ balance_data : "수급데이터"
 
     orders ||--|{ order_items : "주문항목"
@@ -529,29 +520,20 @@ erDiagram
 |------|------|------|------|
 | id | BIGINT | PK, AUTO | 작물 고유 ID |
 | category_id | BIGINT | FK -> crop_categories(id), NOT NULL | 작물 카테고리 |
-| code | VARCHAR(30) | UNIQUE, NOT NULL | 작물 코드 (ex: RICE_001) |
 | name | VARCHAR(50) | NOT NULL | 작물명 |
-| growth_days | INT | | 재배 기간 (일) |
-| yield_per_sqm | DECIMAL(10,2) | | ㎡당 수확량 (kg) |
-| avg_cost_per_sqm | DECIMAL(10,2) | | ㎡당 평균 비용 (원) |
-| climate_conditions | JSONB | | 작물별 적정 재배 환경 조건 (AI 추천용) |
-| is_active | BOOLEAN | DEFAULT true | 활성 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.5 seed_registrations (종자 등록)
+### 2.5 farm_crops (농장-작물 연결)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
-| id | BIGINT | PK, AUTO | 종자 등록 고유 ID |
+| id | BIGINT | PK, AUTO | 고유 ID |
 | farm_id | BIGINT | FK → farms(id), NOT NULL | 농장 |
 | crop_id | BIGINT | FK → crops(id), NOT NULL | 작물 |
-| seed_type | VARCHAR(20) | NOT NULL | SEED(씨앗) / SEEDLING(종자) / SAPLING(모종) |
-| quantity | INT | NOT NULL | 수량 |
 | estimated_yield | DECIMAL(12,2) | | 예상 총 수확량 |
 | yield_unit | VARCHAR(10) | | 수확량 단위 (g / kg / ton) |
-| verified | BOOLEAN | DEFAULT false | 인증 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
@@ -940,7 +922,7 @@ erDiagram
 | regions → regions | 1:N (자기참조) | ✅ | 시도 → 시군구 → 읍면동 계층 |
 | regions → users | 1:N | — | region_code로 논리적 참조 (GOV 관할) |
 | users → farms | 1:N | ✅ | 유저 한 명이 여러 농장 소유 가능 |
-| farms → seed_registrations | 1:N | ✅ | 농장별 여러 종자 등록 |
+| farms → farm_crops | 1:N | ✅ | 농장별 재배 작물 등록 |
 | crops → balance_data | 1:N | ✅ | 작물별 지역·시즌 수급 데이터 |
 | users → products | 1:N | ✅ | 판매자가 여러 상품 등록 |
 | users → orders | 1:N | ✅ | 구매자가 여러 주문 |
@@ -989,9 +971,9 @@ CREATE INDEX idx_farms_status ON farms(status);
 CREATE INDEX idx_farms_bjd_code ON farms(bjd_code);
 CREATE INDEX idx_farms_pnu_code ON farms(pnu_code);
 
--- 종자 등록
-CREATE INDEX idx_seed_reg_farm_id ON seed_registrations(farm_id);
-CREATE INDEX idx_seed_reg_crop_id ON seed_registrations(crop_id);
+-- 농장-작물 연결
+CREATE INDEX idx_farm_crops_farm_id ON farm_crops(farm_id);
+CREATE INDEX idx_farm_crops_crop_id ON farm_crops(crop_id);
 
 -- 수급 데이터 (핵심 조회)
 CREATE UNIQUE INDEX idx_balance_data_unique ON balance_data(region_code, crop_id, year, season);

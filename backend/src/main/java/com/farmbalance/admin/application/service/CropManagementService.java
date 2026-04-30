@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * ADM-003 작물 마스터 관리 Service
- * 카테고리 조회, 작물 등록/수정/비활성화
+ * 카테고리 CRUD + 작물 CRUD (단순화: categoryId + name)
  */
 @Service
 @RequiredArgsConstructor
@@ -24,6 +24,8 @@ public class CropManagementService implements ManageCropUseCase {
 
     private final AdminCropPort adminCropPort;
     private final AdminCropCategoryPort adminCropCategoryPort;
+
+    // ── 카테고리 ──
 
     @Override
     public List<AdminCropCategory> getAllCategories() {
@@ -68,9 +70,11 @@ public class CropManagementService implements ManageCropUseCase {
         adminCropCategoryPort.delete(id);
     }
 
+    // ── 작물 ──
+
     @Override
-    public List<AdminCrop> getCrops(Long categoryId, String keyword, Boolean isActive) {
-        return adminCropPort.findByFilter(categoryId, keyword, isActive);
+    public List<AdminCrop> getCrops(Long categoryId, String keyword) {
+        return adminCropPort.findByFilter(categoryId, keyword);
     }
 
     @Override
@@ -82,7 +86,6 @@ public class CropManagementService implements ManageCropUseCase {
     @Override
     @Transactional
     public Long createCrop(AdminCrop crop) {
-        // 작물명 중복 검사
         if (adminCropPort.existsByName(crop.getName())) {
             throw new BusinessException(ErrorCode.ADMIN_ACTION_FAILED,
                     "이미 등록된 작물명입니다: " + crop.getName());
@@ -93,11 +96,9 @@ public class CropManagementService implements ManageCropUseCase {
     @Override
     @Transactional
     public void updateCrop(Long id, AdminCrop crop) {
-        // 대상 존재 확인
         adminCropPort.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CROP_NOT_FOUND));
 
-        // 이름 변경 시 중복 검사 (자기 자신 제외)
         if (crop.getName() != null && adminCropPort.existsByNameExcludeId(crop.getName(), id)) {
             throw new BusinessException(ErrorCode.ADMIN_ACTION_FAILED,
                     "이미 등록된 작물명입니다: " + crop.getName());
@@ -107,19 +108,14 @@ public class CropManagementService implements ManageCropUseCase {
                 .id(id)
                 .categoryId(crop.getCategoryId())
                 .name(crop.getName())
-                .growthDays(crop.getGrowthDays())
-                .yieldPerSqm(crop.getYieldPerSqm())
-                .avgCostPerSqm(crop.getAvgCostPerSqm())
-                .climateConditions(crop.getClimateConditions())
-                .isActive(crop.getIsActive())
                 .build());
     }
 
     @Override
     @Transactional
-    public void deactivateCrop(Long id) {
+    public void deleteCrop(Long id) {
         adminCropPort.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CROP_NOT_FOUND));
-        adminCropPort.deactivate(id);
+        adminCropPort.delete(id);
     }
 }

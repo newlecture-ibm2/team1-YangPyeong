@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** POST /api/admin/crops → 백엔드 프록시 */
+/** POST /api/admin/crops → 작물 등록 */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()

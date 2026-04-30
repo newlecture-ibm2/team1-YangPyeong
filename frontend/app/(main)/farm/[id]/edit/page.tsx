@@ -15,14 +15,11 @@ import { useFarmDetail } from '../../_hooks/useFarm';
 import { updateFarm } from '../../_lib/farm.api';
 import styles from '../../register/page.module.css';
 
-const CROP_OPTIONS = [
-  { value: '배추', label: '🥬 배추' },
-  { value: '고추', label: '🌶️ 고추' },
-  { value: '당근', label: '🥕 당근' },
-  { value: '양파', label: '🧅 양파' },
-  { value: '감자', label: '🥔 감자' },
-  { value: '토마토', label: '🍅 토마토' },
-];
+interface CropOption {
+  id: number;
+  name: string;
+  categoryId: number;
+}
 
 export default function FarmEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -33,6 +30,15 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 작물 마스터 목록 가져오기
+  const [cropOptions, setCropOptions] = useState<CropOption[]>([]);
+  useEffect(() => {
+    fetch('/api/admin/crops')
+      .then(res => res.json())
+      .then(json => { if (json.success) setCropOptions(json.data || []); })
+      .catch(() => {});
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     registrationNumber: '',
@@ -41,7 +47,7 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     detailAddress: '',
     area: '',
     pyeong: '',
-    cropTypes: [] as string[],
+    cropIds: [] as number[],
     operationStatus: 'active',
     soilType: '',
     ph: '',
@@ -77,7 +83,7 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
         detailAddress: '', 
         area: farm.area.toString(),
         pyeong: (farm.area / 3.3058).toFixed(1),
-        cropTypes: farm.cropTypes,
+        cropIds: farm.cropIds || [],
         operationStatus: 'active',
         documentUrl: farm.documentUrl || '',
         bjdCode: bjdCode,
@@ -140,10 +146,10 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     toast.success('주소가 변경되었습니다. 저장 시 PNU 정보가 갱신됩니다.');
   };
 
-  const removeCrop = (crop: string) => {
+  const removeCrop = (cropId: number) => {
     setFormData(prev => ({
       ...prev,
-      cropTypes: prev.cropTypes.filter(t => t !== crop)
+      cropIds: prev.cropIds.filter(id => id !== cropId)
     }));
   };
 
@@ -156,7 +162,7 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
         name: formData.name,
         address: formData.baseAddress,
         area: Number(formData.area),
-        cropTypes: formData.cropTypes,
+        cropIds: formData.cropIds,
         bjdCode: formData.bjdCode || undefined,
         isMountain: formData.isMountain,
         mainNo: formData.mainNo || undefined,
@@ -250,19 +256,19 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
               </div>
               <div className={styles.inputGroup} style={{ gap: '8px' }}>
                 <Dropdown
-                  label="주요 작물"
-                  options={CROP_OPTIONS}
+                  label="재배 작물"
+                  options={cropOptions.map(c => ({ value: String(c.id), label: c.name }))}
                   multiple
                   required
-                  value={formData.cropTypes.join(',')}
-                  onChange={(val) => handleChange('cropTypes', val.split(',').filter(Boolean))}
+                  value={formData.cropIds.map(String).join(',')}
+                  onChange={(val) => handleChange('cropIds', val.split(',').filter(Boolean).map(Number))}
                 />
-                {formData.cropTypes.length > 0 && (
+                {formData.cropIds.length > 0 && (
                   <div className={styles.tagList}>
-                    {formData.cropTypes.map(crop => (
-                      <span key={crop} className={styles.tag}>
-                        {CROP_OPTIONS.find(o => o.value === crop)?.label || crop}
-                        <button type="button" className={styles.tagRemoveBtn} onClick={() => removeCrop(crop)}>×</button>
+                    {formData.cropIds.map(cropId => (
+                      <span key={cropId} className={styles.tag}>
+                        {cropOptions.find(c => c.id === cropId)?.name || cropId}
+                        <button type="button" className={styles.tagRemoveBtn} onClick={() => removeCrop(cropId)}>×</button>
                       </span>
                     ))}
                   </div>

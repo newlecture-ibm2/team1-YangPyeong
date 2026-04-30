@@ -11,7 +11,7 @@ public class RegisterFarmCommand {
     private String name;
     private String address;
     private Double area;
-    private List<String> cropTypes;
+    private List<Long> cropIds;
     private String bjdCode;
     private boolean isMountain;
     private String mainNo;

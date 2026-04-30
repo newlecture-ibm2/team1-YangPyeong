@@ -25,10 +25,7 @@ public class HistoryEventListener {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleFarmRegisteredEvent(FarmRegisteredEvent event) {
         try {
-            String cropNames = event.getCropTypes() != null && !event.getCropTypes().isEmpty()
-                    ? String.join(", ", event.getCropTypes())
-                    : "작물";
-            String content = String.format("시스템: [%s] 재배가 시작되었습니다.", cropNames);
+            String content = String.format("시스템: [%s] 농장이 등록되었습니다.", event.getFarmName());
 
             RecordHistoryCommand command = RecordHistoryCommand.builder()
                     .farmId(event.getFarmId())

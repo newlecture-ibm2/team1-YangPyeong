@@ -11,7 +11,8 @@ import type {
   CreateCropCategoryRequest, UpdateCropCategoryRequest,
 } from '../_lib/crop.types'
 import {
-  fetchCrops, fetchCropCategories, createCrop, updateCrop, deactivateCrop,
+  fetchCrops, fetchCropCategories,
+  createCrop, updateCrop, deleteCrop,
   createCropCategory, updateCropCategory, deleteCropCategory,
 } from '../_lib/crop.api'
 
@@ -28,7 +29,6 @@ export default function CropsPage() {
   // 필터
   const [filterCategory, setFilterCategory] = useState<number | undefined>(undefined)
   const [filterKeyword, setFilterKeyword] = useState('')
-  const [filterActive, setFilterActive] = useState<boolean | undefined>(undefined)
 
   // 모달
   const [showCropModal, setShowCropModal] = useState(false)
@@ -41,7 +41,7 @@ export default function CropsPage() {
     setLoading(true)
     try {
       const [cropsData, categoriesData] = await Promise.all([
-        fetchCrops(filterCategory, filterKeyword || undefined, filterActive),
+        fetchCrops(filterCategory, filterKeyword || undefined),
         fetchCropCategories(),
       ])
       setCrops(cropsData)
@@ -51,7 +51,7 @@ export default function CropsPage() {
     } finally {
       setLoading(false)
     }
-  }, [filterCategory, filterKeyword, filterActive, showToast])
+  }, [filterCategory, filterKeyword, showToast])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -64,29 +64,12 @@ export default function CropsPage() {
   const openEditCropModal = (crop: AdminCrop) => { setEditingCrop(crop); setShowCropModal(true) }
   const closeCropModal = () => { setShowCropModal(false); setEditingCrop(null) }
 
-  /* ── 카테고리 모달 ── */
-  const openCreateCategoryModal = () => { setEditingCategory(null); setShowCategoryModal(true) }
-  const openEditCategoryModal = (cat: AdminCropCategory) => { setEditingCategory(cat); setShowCategoryModal(true) }
-  const closeCategoryModal = () => { setShowCategoryModal(false); setEditingCategory(null) }
-
-  /* ── 작물 비활성화 ── */
-  const handleDeactivate = async (crop: AdminCrop) => {
-    if (!confirm(`"${crop.name}" 작물을 비활성화하시겠습니까?`)) return
-    try {
-      await deactivateCrop(crop.id)
-      showToast(`"${crop.name}" 비활성화 완료`, 'success')
-      loadData()
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : '비활성화 실패', 'error')
-    }
-  }
-
   /* ── 작물 폼 제출 ── */
   const handleCropSubmit = async (data: CreateCropRequest | UpdateCropRequest) => {
     try {
       if (editingCrop) {
         await updateCrop(editingCrop.id, data as UpdateCropRequest)
-        showToast('작물 정보가 수정되었습니다.', 'success')
+        showToast('작물이 수정되었습니다.', 'success')
       } else {
         await createCrop(data as CreateCropRequest)
         showToast('작물이 등록되었습니다.', 'success')
@@ -97,6 +80,23 @@ export default function CropsPage() {
       showToast(err instanceof Error ? err.message : '처리 실패', 'error')
     }
   }
+
+  /* ── 작물 삭제 ── */
+  const handleDeleteCrop = async (crop: AdminCrop) => {
+    if (!confirm(`"${crop.name}" 작물을 삭제하시겠습니까?`)) return
+    try {
+      await deleteCrop(crop.id)
+      showToast(`"${crop.name}" 삭제 완료`, 'success')
+      loadData()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : '삭제 실패', 'error')
+    }
+  }
+
+  /* ── 카테고리 모달 ── */
+  const openCreateCategoryModal = () => { setEditingCategory(null); setShowCategoryModal(true) }
+  const openEditCategoryModal = (cat: AdminCropCategory) => { setEditingCategory(cat); setShowCategoryModal(true) }
+  const closeCategoryModal = () => { setShowCategoryModal(false); setEditingCategory(null) }
 
   /* ── 카테고리 폼 제출 ── */
   const handleCategorySubmit = async (data: CreateCropCategoryRequest | UpdateCropCategoryRequest) => {
@@ -132,9 +132,10 @@ export default function CropsPage() {
       {/* 헤더 */}
       <div className={styles.header}>
         <h1 className={styles.title}>작물 기준정보 관리</h1>
-        {activeTab === 'crops' ? (
+        {activeTab === 'crops' && (
           <Button variant="primary" onClick={openCreateCropModal}>＋ 작물 추가</Button>
-        ) : (
+        )}
+        {activeTab === 'categories' && (
           <Button variant="primary" onClick={openCreateCategoryModal}>＋ 카테고리 추가</Button>
         )}
       </div>
@@ -170,17 +171,9 @@ export default function CropsPage() {
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
-            <select
-              value={filterActive === undefined ? '' : String(filterActive)}
-              onChange={(e) => setFilterActive(e.target.value === '' ? undefined : e.target.value === 'true')}
-            >
-              <option value="">상태: 전체</option>
-              <option value="true">활성</option>
-              <option value="false">비활성</option>
-            </select>
             <input
               type="text"
-              placeholder="작물명 또는 코드 검색..."
+              placeholder="작물명 검색..."
               value={filterKeyword}
               onChange={(e) => setFilterKeyword(e.target.value)}
             />
@@ -199,36 +192,22 @@ export default function CropsPage() {
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th>코드</th>
                     <th>작물명</th>
                     <th>분류</th>
-                    <th>재배기간(일)</th>
-                    <th>수확량(kg/㎡)</th>
-                    <th>생산비(원/㎡)</th>
-                    <th>상태</th>
+                    <th>등록일</th>
                     <th>관리</th>
                   </tr>
                 </thead>
                 <tbody>
                   {crops.map((crop) => (
                     <tr key={crop.id}>
-                      <td><span className={styles.cropCode}>{crop.code}</span></td>
                       <td><span className={styles.cropName}>{crop.name}</span></td>
                       <td>{getCategoryName(crop.categoryId)}</td>
-                      <td>{crop.growthDays ?? '-'}</td>
-                      <td>{crop.yieldPerSqm ?? '-'}</td>
-                      <td>{crop.avgCostPerSqm ? Number(crop.avgCostPerSqm).toLocaleString() : '-'}</td>
-                      <td>
-                        <Badge variant={crop.isActive ? 'green' : 'red'}>
-                          {crop.isActive ? '활성' : '비활성'}
-                        </Badge>
-                      </td>
+                      <td>{crop.createdAt ? new Date(crop.createdAt).toLocaleDateString() : '-'}</td>
                       <td>
                         <div className={styles.actions}>
                           <Button variant="outline" size="sm" onClick={() => openEditCropModal(crop)}>수정</Button>
-                          {crop.isActive && (
-                            <Button variant="ghost" size="sm" onClick={() => handleDeactivate(crop)}>비활성화</Button>
-                          )}
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteCrop(crop)}>삭제</Button>
                         </div>
                       </td>
                     </tr>
@@ -293,8 +272,8 @@ export default function CropsPage() {
       {/* 작물 등록/수정 모달 */}
       {showCropModal && (
         <CropFormModal
-          categories={categories}
           editingCrop={editingCrop}
+          categories={categories}
           onSubmit={handleCropSubmit}
           onClose={closeCropModal}
         />
@@ -313,55 +292,37 @@ export default function CropsPage() {
 }
 
 /* ═══════════════════════════════════════════════════ */
-/*  작물 등록/수정 모달                                  */
+/*  작물 등록/수정 모달 (단순: categoryId + name)         */
 /* ═══════════════════════════════════════════════════ */
 interface CropFormModalProps {
-  categories: AdminCropCategory[]
   editingCrop: AdminCrop | null
+  categories: AdminCropCategory[]
   onSubmit: (data: CreateCropRequest | UpdateCropRequest) => void
   onClose: () => void
 }
 
-function CropFormModal({ categories, editingCrop, onSubmit, onClose }: CropFormModalProps) {
-  const [categoryId, setCategoryId] = useState(editingCrop?.categoryId ?? (categories[0]?.id ?? 0))
+function CropFormModal({ editingCrop, categories, onSubmit, onClose }: CropFormModalProps) {
   const [name, setName] = useState(editingCrop?.name ?? '')
-  const [growthDays, setGrowthDays] = useState(editingCrop?.growthDays?.toString() ?? '')
-  const [yieldPerSqm, setYieldPerSqm] = useState(editingCrop?.yieldPerSqm?.toString() ?? '')
-  const [avgCostPerSqm, setAvgCostPerSqm] = useState(editingCrop?.avgCostPerSqm?.toString() ?? '')
-  const [climateConditions, setClimateConditions] = useState(editingCrop?.climateConditions ?? '')
-  const [isActive, setIsActive] = useState(editingCrop?.isActive ?? true)
+  const [categoryId, setCategoryId] = useState(editingCrop?.categoryId?.toString() ?? '')
 
   const handleSubmit = () => {
     if (!name.trim()) return alert('작물명을 입력해주세요.')
-    if (!categoryId) return alert('분류를 선택해주세요.')
+    if (!categoryId) return alert('카테고리를 선택해주세요.')
 
-    const data: CreateCropRequest | UpdateCropRequest = {
-      categoryId,
-      name: name.trim(),
-      growthDays: growthDays ? Number(growthDays) : undefined,
-      yieldPerSqm: yieldPerSqm ? Number(yieldPerSqm) : undefined,
-      avgCostPerSqm: avgCostPerSqm ? Number(avgCostPerSqm) : undefined,
-      climateConditions: climateConditions || undefined,
-    }
-
-    if (editingCrop) {
-      (data as UpdateCropRequest).isActive = isActive
-    }
-
-    onSubmit(data)
+    onSubmit({ categoryId: Number(categoryId), name: name.trim() })
   }
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <h2 className={styles.modalTitle}>
-          {editingCrop ? '작물 정보 수정' : '새 작물 등록'}
+          {editingCrop ? '작물 수정' : '새 작물 등록'}
         </h2>
 
         <div className={styles.formGroup}>
-          <label>분류 *</label>
-          <select value={categoryId} onChange={(e) => setCategoryId(Number(e.target.value))}>
-            <option value={0} disabled>선택하세요</option>
+          <label>카테고리 *</label>
+          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+            <option value="">카테고리 선택</option>
             {categories.map(cat => (
               <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
@@ -372,42 +333,6 @@ function CropFormModal({ categories, editingCrop, onSubmit, onClose }: CropFormM
           <label>작물명 *</label>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 상추" />
         </div>
-
-        <div className={styles.formRow}>
-          <div className={styles.formGroup}>
-            <label>재배기간 (일)</label>
-            <input type="number" value={growthDays} onChange={(e) => setGrowthDays(e.target.value)} placeholder="예: 60" />
-          </div>
-          <div className={styles.formGroup}>
-            <label>수확량 (kg/㎡)</label>
-            <input type="number" step="0.01" value={yieldPerSqm} onChange={(e) => setYieldPerSqm(e.target.value)} placeholder="예: 2.5" />
-          </div>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>평균 생산비 (원/㎡)</label>
-          <input type="number" step="0.01" value={avgCostPerSqm} onChange={(e) => setAvgCostPerSqm(e.target.value)} placeholder="예: 1500" />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label>기후 조건 (JSON)</label>
-          <textarea
-            value={climateConditions}
-            onChange={(e) => setClimateConditions(e.target.value)}
-            placeholder='{"minTemp": 15, "maxTemp": 30, "minRainfall": 500, "maxRainfall": 1200}'
-            rows={3}
-          />
-        </div>
-
-        {editingCrop && (
-          <div className={styles.formGroup}>
-            <label>활성 상태</label>
-            <select value={String(isActive)} onChange={(e) => setIsActive(e.target.value === 'true')}>
-              <option value="true">활성</option>
-              <option value="false">비활성</option>
-            </select>
-          </div>
-        )}
 
         <div className={styles.modalActions}>
           <Button variant="outline" onClick={onClose}>취소</Button>
