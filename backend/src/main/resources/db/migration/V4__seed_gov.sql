@@ -72,7 +72,7 @@ INSERT INTO crops (id, category_id, code, name, growth_days, yield_per_sqm, avg_
 (9007,9001,'GS_BOKCHOY','청경채',40,2.20,900,true,NOW());
 
 -- ═══════ 5. farms (25개 — 각 읍면별 4~5개씩) ═══════
-INSERT INTO farms (id, user_id, name, address, area_size, status, created_at) VALUES
+INSERT INTO farms (id, user_id, name, address, area, status, created_at) VALUES
 (9001,9001,'해맑은농장','경기도 양평군 양평읍 양근리 123',15000,'APPROVED','2025-01-10 09:00:00'),
 (9002,9002,'늘푸른농원','경기도 양평군 용문면 마룡리 45',12000,'APPROVED','2025-01-15 09:00:00'),
 (9003,9003,'들녘농장','경기도 양평군 강하면 전수리 78',8500,'APPROVED','2025-02-01 09:00:00'),
