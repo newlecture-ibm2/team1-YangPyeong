@@ -39,8 +39,8 @@ CREATE TABLE farms (
     address               VARCHAR(255) NOT NULL,
     bjd_code              VARCHAR(10),                       -- 법정동코드 (카카오 address.b_code)
     pnu_code              VARCHAR(19),                       -- 필지코드 (bjd_code + 본번부번 조합)
-    latitude              DECIMAL(10,7),                     -- 위도 (카카오 address.y)
-    longitude             DECIMAL(10,7),                     -- 경도 (카카오 address.x)
+    latitude              DOUBLE PRECISION,                  -- 위도 (카카오 address.y)
+    longitude             DOUBLE PRECISION,                  -- 경도 (카카오 address.x)
     area                  DOUBLE PRECISION NOT NULL,         -- 면적 (㎡)
     soil_type             VARCHAR(50),
     registration_number   VARCHAR(12),                       -- 사업자 등록번호
