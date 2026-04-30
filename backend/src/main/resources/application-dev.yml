@@ -2,6 +2,10 @@
 # application.yml의 설정을 상속받고, dev에서만 다른 부분만 덮어씁니다.
 
 spring:
+  # 운영 DB에 SSH 터널로 붙어 개발할 때, 이미 적용된 마이그레이션 파일의
+  # 체크섬 불일치 에러를 방지. 새 마이그레이션 적용은 정상 동작함.
+  flyway:
+    validate-on-migrate: false
   datasource:
     url: jdbc:postgresql://localhost:5151/farm_db
     username: farm
