@@ -117,7 +117,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ./scripts/init-schema.sql:/docker-entrypoint-initdb.d/01-init-schema.sql:ro
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d farm_db" ]
+      test: [ "CMD-SHELL", "pg_isready -U $${DB_USERNAME:-farm} -d farm_db" ]
       interval: 10s
       timeout: 5s
       retries: 5
