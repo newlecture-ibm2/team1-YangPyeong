@@ -58,7 +58,7 @@ public class FarmJpaEntity extends BaseTimeEntity {
     private Boolean landCertVerified = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "certification_status", nullable = false, length = 20)
     private com.farmbalance.farm.domain.CertificationStatus certificationStatus = com.farmbalance.farm.domain.CertificationStatus.PENDING;
 
     @ElementCollection(fetch = FetchType.LAZY)

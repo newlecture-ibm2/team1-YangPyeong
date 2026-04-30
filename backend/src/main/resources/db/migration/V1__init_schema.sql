@@ -46,10 +46,16 @@ CREATE TABLE farms (
     business_number       VARCHAR(12),                       -- 사업자 등록번호
     land_cert_image_url   VARCHAR(500),                      -- 토지증명서 이미지/PDF URL
     land_cert_verified    BOOLEAN      DEFAULT false,        -- 관리자 토지증명서 검증 완료 여부
-    status                VARCHAR(20)  NOT NULL DEFAULT 'PENDING',  -- PENDING | APPROVED | REJECTED
+    certification_status  VARCHAR(20)  NOT NULL DEFAULT 'PENDING',  -- PENDING | APPROVED | REJECTED
     created_at            TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_at            TIMESTAMP,
     deleted_at            TIMESTAMP
+);
+
+-- 2.2-1 farm_crops (ElementCollection for FarmJpaEntity)
+CREATE TABLE farm_crops (
+    farm_id BIGINT NOT NULL REFERENCES farms(id),
+    crop_name VARCHAR(50) NOT NULL
 );
 
 -- ===== 2. 작물 도메인 =====
