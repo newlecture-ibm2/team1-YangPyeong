@@ -157,15 +157,15 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
         address: formData.baseAddress,
         area: Number(formData.area),
         cropTypes: formData.cropTypes,
-        bjdCode: formData.bjdCode || null,
+        bjdCode: formData.bjdCode || undefined,
         isMountain: formData.isMountain,
-        mainNo: formData.mainNo || null,
-        subNo: formData.subNo || null,
-        registrationNumber: formData.registrationNumber,
-        documentUrl: formData.documentUrl,
-        soilType: formData.soilType || null,
-        ph: formData.ph ? Number(formData.ph) : null,
-        organicMatter: formData.organicMatter ? Number(formData.organicMatter) : null,
+        mainNo: formData.mainNo || undefined,
+        subNo: formData.subNo || undefined,
+        registrationNumber: formData.registrationNumber || undefined,
+        documentUrl: formData.documentUrl || undefined,
+        soilType: formData.soilType || undefined,
+        ph: formData.ph ? Number(formData.ph) : undefined,
+        organicMatter: formData.organicMatter ? Number(formData.organicMatter) : undefined,
       });
       toast.success('농장 정보가 수정되었습니다.');
       router.push('/farm');
