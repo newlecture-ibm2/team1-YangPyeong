@@ -43,8 +43,8 @@ CREATE TABLE farms (
     longitude             DECIMAL(10,7),                     -- 경도 (카카오 address.x)
     area                  DOUBLE PRECISION NOT NULL,         -- 면적 (㎡)
     soil_type             VARCHAR(50),
-    business_number       VARCHAR(12),                       -- 사업자 등록번호
-    land_cert_image_url   VARCHAR(500),                      -- 토지증명서 이미지/PDF URL
+    registration_number   VARCHAR(12),                       -- 사업자 등록번호
+    document_url          VARCHAR(500),                      -- 토지증명서 이미지/PDF URL
     land_cert_verified    BOOLEAN      DEFAULT false,        -- 관리자 토지증명서 검증 완료 여부
     certification_status  VARCHAR(20)  NOT NULL DEFAULT 'PENDING',  -- PENDING | APPROVED | REJECTED
     created_at            TIMESTAMP    NOT NULL DEFAULT NOW(),
