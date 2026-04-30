@@ -52,12 +52,6 @@ CREATE TABLE farms (
     deleted_at            TIMESTAMP
 );
 
--- 2.2-1 farm_crops (ElementCollection for FarmJpaEntity)
-CREATE TABLE farm_crops (
-    farm_id BIGINT NOT NULL REFERENCES farms(id),
-    crop_name VARCHAR(50) NOT NULL
-);
-
 -- ===== 2. 작물 도메인 =====
 
 -- 2.3 crop_categories
@@ -143,8 +137,8 @@ CREATE TABLE products (
     id           BIGSERIAL    PRIMARY KEY,
     seller_id    BIGINT       NOT NULL REFERENCES users(id),
     category_id  BIGINT       REFERENCES product_categories(id),
-    name         VARCHAR(100) NOT NULL,
-    price        DECIMAL(10,2) NOT NULL,
+    name         VARCHAR(200) NOT NULL,
+    price        INT NOT NULL,
     stock        INT          NOT NULL DEFAULT 0,
     description  TEXT,
     image_url    VARCHAR(500),
@@ -159,7 +153,7 @@ CREATE TABLE orders (
     id                BIGSERIAL    PRIMARY KEY,
     buyer_id          BIGINT       NOT NULL REFERENCES users(id),
     order_number      VARCHAR(30)  NOT NULL UNIQUE,
-    total_amount      DECIMAL(12,2) NOT NULL,
+    total_amount      INT NOT NULL,
     status            VARCHAR(20)  DEFAULT 'ORDERED',  -- ORDERED | ACCEPTED | SHIPPED | COMPLETED | CANCELLED
     receiver_name     VARCHAR(50),
     receiver_phone    VARCHAR(20),
@@ -176,8 +170,8 @@ CREATE TABLE order_items (
     order_id    BIGINT       NOT NULL REFERENCES orders(id),
     product_id  BIGINT       NOT NULL REFERENCES products(id),
     quantity    INT          NOT NULL,
-    unit_price  DECIMAL(10,2) NOT NULL,
-    subtotal    DECIMAL(10,2) NOT NULL,
+    unit_price  INT NOT NULL,
+    subtotal    INT NOT NULL,
     created_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMP,
     deleted_at  TIMESTAMP
