@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 정책 조회 서비스.
@@ -29,5 +30,10 @@ public class PolicyQueryService implements SearchPolicyUseCase {
     @Override
     public long countPolicies(PolicySearchCondition condition) {
         return policyQueryPort.countByCondition(condition);
+    }
+
+    @Override
+    public Optional<PolicyData> findById(Long id) {
+        return policyQueryPort.findById(id);
     }
 }

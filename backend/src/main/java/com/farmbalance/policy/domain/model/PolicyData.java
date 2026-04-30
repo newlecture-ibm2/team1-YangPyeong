@@ -1,5 +1,6 @@
 package com.farmbalance.policy.domain.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -23,6 +24,10 @@ public class PolicyData {
     private LocalDate applyEnd;
     private String sourceUrl;
     private String rawData;
+    /** AI Analyzer가 정규화한 JSON 결과 */
+    private String normalizedData;
+    /** AI 분석 신뢰도 (0.00 ~ 1.00) */
+    private BigDecimal confidence;
     private LocalDateTime fetchedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -37,7 +42,8 @@ public class PolicyData {
                       String title, String organization, String regionCode,
                       String category, String target, String content,
                       String supportAmount, LocalDate applyStart, LocalDate applyEnd,
-                      String sourceUrl, String rawData, LocalDateTime fetchedAt,
+                      String sourceUrl, String rawData, String normalizedData,
+                      BigDecimal confidence, LocalDateTime fetchedAt,
                       LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
         this.id = id;
         this.externalId = externalId;
@@ -53,6 +59,8 @@ public class PolicyData {
         this.applyEnd = applyEnd;
         this.sourceUrl = sourceUrl;
         this.rawData = rawData;
+        this.normalizedData = normalizedData;
+        this.confidence = confidence;
         this.fetchedAt = fetchedAt;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -75,6 +83,8 @@ public class PolicyData {
     public LocalDate getApplyEnd() { return applyEnd; }
     public String getSourceUrl() { return sourceUrl; }
     public String getRawData() { return rawData; }
+    public String getNormalizedData() { return normalizedData; }
+    public BigDecimal getConfidence() { return confidence; }
     public LocalDateTime getFetchedAt() { return fetchedAt; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
@@ -96,6 +106,8 @@ public class PolicyData {
     public void setApplyEnd(LocalDate applyEnd) { this.applyEnd = applyEnd; }
     public void setSourceUrl(String sourceUrl) { this.sourceUrl = sourceUrl; }
     public void setRawData(String rawData) { this.rawData = rawData; }
+    public void setNormalizedData(String normalizedData) { this.normalizedData = normalizedData; }
+    public void setConfidence(BigDecimal confidence) { this.confidence = confidence; }
     public void setFetchedAt(LocalDateTime fetchedAt) { this.fetchedAt = fetchedAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }

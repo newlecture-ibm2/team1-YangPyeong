@@ -1,5 +1,6 @@
 package com.farmbalance.policy.adapter.in.web.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -17,6 +18,12 @@ public record PolicyListResponse(
         String supportAmount,
         LocalDate applyEnd,
         String source,
-        String sourceUrl
+        String sourceUrl,
+        /** AI 분석 신뢰도 */
+        BigDecimal aiConfidence,
+        /** AI 신뢰도 낮음 여부 */
+        boolean isLowConfidence,
+        /** AI 분석 완료 여부 */
+        boolean isAnalyzed
 ) {
 }

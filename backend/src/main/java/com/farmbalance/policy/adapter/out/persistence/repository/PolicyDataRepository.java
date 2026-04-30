@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 /**
@@ -37,6 +38,7 @@ public interface PolicyDataRepository extends JpaRepository<PolicyDataJpaEntity,
           AND (:period IS NULL OR :period = ''
                OR (:period = 'active' AND (p.applyEnd IS NULL OR p.applyEnd >= CURRENT_DATE))
                OR (:period = 'closed' AND p.applyEnd IS NOT NULL AND p.applyEnd < CURRENT_DATE))
+          AND (:minConfidence IS NULL OR p.confidence >= :minConfidence)
         ORDER BY p.applyEnd ASC NULLS LAST, p.createdAt DESC
     """)
     Page<PolicyDataJpaEntity> searchPolicies(
@@ -44,6 +46,12 @@ public interface PolicyDataRepository extends JpaRepository<PolicyDataJpaEntity,
             @Param("regionCode") String regionCode,
             @Param("category") String category,
             @Param("period") String period,
+            @Param("minConfidence") BigDecimal minConfidence,
             Pageable pageable
     );
+
+    /**
+     * source 기준 일괄 삭제 (Mock 데이터 정리용).
+     */
+    void deleteBySource(String source);
 }

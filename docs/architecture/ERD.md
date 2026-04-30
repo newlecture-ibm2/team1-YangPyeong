@@ -235,7 +235,7 @@ erDiagram
     policy_data {
         bigint id PK
         varchar external_id "외부 API 제공 정책 고유번호"
-        varchar source "수집 소스 (GOV24, MAFRA, CRAWL, SEED)"
+        varchar source "수집 소스 (GOV24, MAFRA, FARM_MACHINE, NONGSARO, SOIL, AGRIEDU, GREENDAERO, MANUAL, CRAWL, SEED)"
         varchar title "정책명"
         varchar organization "지원기관"
         varchar region_code "지역코드 (regions.code 참조)"
@@ -246,7 +246,10 @@ erDiagram
         date apply_start "신청 시작일"
         date apply_end "신청 마감일"
         varchar source_url "외부 원문 링크"
+        jsonb data "하위호환용 원본 JSONB (레거시)"
         jsonb raw_data "정책 API 응답 원본 JSON"
+        jsonb normalized_data "AI Analyzer 정규화 결과 JSON"
+        decimal confidence "AI 분석 신뢰도 (0.00~1.00)"
         timestamp fetched_at "수집 시각"
         timestamp created_at
         timestamp updated_at
@@ -702,7 +705,7 @@ erDiagram
 |------|------|------|------|
 | id | BIGINT | PK, AUTO | 내부 고유 ID |
 | external_id | VARCHAR(200) | NOT NULL | 외부 API 제공 정책 고유번호 |
-| source | VARCHAR(30) | | 수집 소스 (GOV24 / MAFRA / CRAWL / SEED) |
+| source | VARCHAR(30) | | 수집 소스 (GOV24 / MAFRA / FARM_MACHINE / NONGSARO / SOIL / AGRIEDU / GREENDAERO / MANUAL / CRAWL / SEED) |
 | title | VARCHAR(500) | | 정책명 |
 | organization | VARCHAR(200) | | 지원기관명 |
 | region_code | VARCHAR(10) | | 지역코드 (regions.code 논리적 참조) |
@@ -713,14 +716,18 @@ erDiagram
 | apply_start | DATE | | 신청 시작일 |
 | apply_end | DATE | | 신청 마감일 |
 | source_url | VARCHAR(1000) | | 외부 원문 링크 URL |
+| data | JSONB | | 하위호환용 레거시 컬럼 (기존 데이터 유지) |
 | raw_data | JSONB | | 정책 API 응답 원본 JSON |
+| normalized_data | JSONB | | AI Analyzer 정규화 결과 JSON |
+| confidence | DECIMAL(5,2) | | AI 분석 신뢰도 (0.00~1.00) |
 | fetched_at | TIMESTAMP | NOT NULL | 수집 시각 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
 > **UNIQUE 제약**: (external_id, source) 복합 유니크 — 동일 소스에서 같은 정책을 중복 저장하지 않습니다.
-> **설계 변경 이력**: 기존 `data` JSONB 단일 컬럼 → `raw_data`로 리네임 + 정규화 컬럼 추가 (목록 조회 성능 최적화)
+> **JSONB 컬럼 역할 분리**: `data`는 하위호환용 레거시 유지, `raw_data`는 외부 API 원본 보관, `normalized_data`는 AI Analyzer가 정규화한 결과 저장
+> **설계 변경 이력**: 기존 `data` JSONB 단일 컬럼 → `raw_data`로 리네임 + 정규화 컬럼 추가 (목록 조회 성능 최적화) → `normalized_data` + `confidence` 추가 (AI 분석 결과 저장)
 
 
 ### 2.16 guide_messages (권고 메시지)

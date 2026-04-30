@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -70,8 +71,19 @@ public class PolicyDataJpaEntity extends BaseTimeEntity {
     @Column(name = "raw_data", columnDefinition = "jsonb")
     private String rawData;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "normalized_data", columnDefinition = "jsonb")
+    private String normalizedData;
+
+    @Column(name = "confidence", precision = 5, scale = 2)
+    private BigDecimal confidence;
+
     @Column(name = "fetched_at", nullable = false)
     private LocalDateTime fetchedAt;
+
+    /** 기존 하위호환용 data 컬럼 (NOT NULL). content와 동일값 저장. */
+    @Column(name = "data", nullable = false, columnDefinition = "TEXT")
+    private String data;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -81,7 +93,8 @@ public class PolicyDataJpaEntity extends BaseTimeEntity {
                                 String title, String organization, String regionCode,
                                 String category, String target, String content,
                                 String supportAmount, LocalDate applyStart, LocalDate applyEnd,
-                                String sourceUrl, String rawData, LocalDateTime fetchedAt,
+                                String sourceUrl, String rawData, String normalizedData,
+                                BigDecimal confidence, LocalDateTime fetchedAt,
                                 LocalDateTime deletedAt) {
         this.id = id;
         this.externalId = externalId;
@@ -97,8 +110,12 @@ public class PolicyDataJpaEntity extends BaseTimeEntity {
         this.applyEnd = applyEnd;
         this.sourceUrl = sourceUrl;
         this.rawData = rawData;
+        this.normalizedData = normalizedData;
+        this.confidence = confidence;
         this.fetchedAt = fetchedAt;
         this.deletedAt = deletedAt;
+        // data 컬럼: source + raw 정보를 JSON 형태로 저장
+        this.data = buildDataField(source, rawData, content);
     }
 
     /**
@@ -107,7 +124,8 @@ public class PolicyDataJpaEntity extends BaseTimeEntity {
     public void updateFrom(String title, String organization, String regionCode,
                            String category, String target, String content,
                            String supportAmount, LocalDate applyStart, LocalDate applyEnd,
-                           String sourceUrl, String rawData, LocalDateTime fetchedAt) {
+                           String sourceUrl, String rawData, String normalizedData,
+                           BigDecimal confidence, LocalDateTime fetchedAt) {
         this.title = title;
         this.organization = organization;
         this.regionCode = regionCode;
@@ -119,6 +137,28 @@ public class PolicyDataJpaEntity extends BaseTimeEntity {
         this.applyEnd = applyEnd;
         this.sourceUrl = sourceUrl;
         this.rawData = rawData;
+        this.normalizedData = normalizedData;
+        this.confidence = confidence;
         this.fetchedAt = fetchedAt;
+        // data 컬럼 갱신
+        this.data = buildDataField(this.source, rawData, content);
+    }
+
+    /**
+     * data 컬럼용 JSON 문자열 생성.
+     * 원본 데이터를 구조화하여 저장합니다.
+     */
+    private static String buildDataField(String source, String rawData, String content) {
+        if (rawData != null && !rawData.isBlank()) {
+            return String.format("{\"source\":\"%s\",\"type\":\"raw\",\"content\":%s}",
+                    source != null ? source : "unknown", rawData);
+        }
+        if (content != null && !content.isBlank()) {
+            // JSON 특수문자 이스케이프
+            String escaped = content.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+            return String.format("{\"source\":\"%s\",\"type\":\"text\",\"content\":\"%s\"}",
+                    source != null ? source : "unknown", escaped);
+        }
+        return "{}";
     }
 }

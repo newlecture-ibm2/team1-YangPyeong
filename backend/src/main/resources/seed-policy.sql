@@ -25,6 +25,10 @@ ALTER TABLE policy_data ADD COLUMN IF NOT EXISTS source_url VARCHAR(1000);
 -- 만약 data → raw_data 마이그레이션이 필요하면 아래 주석을 해제하세요.
 ALTER TABLE policy_data ADD COLUMN IF NOT EXISTS raw_data JSONB;
 
+-- AI Analyzer 정규화 결과 + 신뢰도 점수
+ALTER TABLE policy_data ADD COLUMN IF NOT EXISTS normalized_data JSONB;
+ALTER TABLE policy_data ADD COLUMN IF NOT EXISTS confidence DECIMAL(5,2);
+
 -- [MIGRATION 옵션] 기존 data 컬럼이 있고 raw_data로 이전하려면 아래 주석 해제:
 -- DO $$
 -- BEGIN

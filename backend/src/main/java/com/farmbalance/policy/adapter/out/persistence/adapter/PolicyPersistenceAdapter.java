@@ -34,6 +34,7 @@ public class PolicyPersistenceAdapter implements PolicyQueryPort, PolicySavePort
                 condition.hasRegionCode() ? condition.getRegionCode() : null,
                 condition.hasCategory() ? condition.getCategory() : null,
                 condition.hasPeriod() ? condition.getPeriod() : null,
+                condition.hasMinConfidence() ? condition.getMinConfidence() : null,
                 PageRequest.of(condition.getPage(), condition.getSize())
         );
         return page.getContent().stream().map(this::toDomain).toList();
@@ -46,14 +47,23 @@ public class PolicyPersistenceAdapter implements PolicyQueryPort, PolicySavePort
                 condition.hasRegionCode() ? condition.getRegionCode() : null,
                 condition.hasCategory() ? condition.getCategory() : null,
                 condition.hasPeriod() ? condition.getPeriod() : null,
+                condition.hasMinConfidence() ? condition.getMinConfidence() : null,
                 PageRequest.of(0, 1)
         );
         return page.getTotalElements();
     }
 
+    @Override
+    public Optional<PolicyData> findById(Long id) {
+        return repository.findById(id)
+                .filter(entity -> entity.getDeletedAt() == null)
+                .map(this::toDomain);
+    }
+
     // ── PolicySavePort ──
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public PolicyData save(PolicyData domain) {
         PolicyDataJpaEntity entity;
 
@@ -65,7 +75,8 @@ public class PolicyPersistenceAdapter implements PolicyQueryPort, PolicySavePort
                     domain.getTitle(), domain.getOrganization(), domain.getRegionCode(),
                     domain.getCategory(), domain.getTarget(), domain.getContent(),
                     domain.getSupportAmount(), domain.getApplyStart(), domain.getApplyEnd(),
-                    domain.getSourceUrl(), domain.getRawData(), domain.getFetchedAt()
+                    domain.getSourceUrl(), domain.getRawData(), domain.getNormalizedData(),
+                    domain.getConfidence(), domain.getFetchedAt()
             );
         } else {
             // 신규 엔티티 생성
@@ -99,6 +110,8 @@ public class PolicyPersistenceAdapter implements PolicyQueryPort, PolicySavePort
         domain.setApplyEnd(entity.getApplyEnd());
         domain.setSourceUrl(entity.getSourceUrl());
         domain.setRawData(entity.getRawData());
+        domain.setNormalizedData(entity.getNormalizedData());
+        domain.setConfidence(entity.getConfidence());
         domain.setFetchedAt(entity.getFetchedAt());
         domain.setCreatedAt(entity.getCreatedAt());
         domain.setUpdatedAt(entity.getUpdatedAt());
@@ -121,6 +134,8 @@ public class PolicyPersistenceAdapter implements PolicyQueryPort, PolicySavePort
                 .applyEnd(domain.getApplyEnd())
                 .sourceUrl(domain.getSourceUrl())
                 .rawData(domain.getRawData())
+                .normalizedData(domain.getNormalizedData())
+                .confidence(domain.getConfidence())
                 .fetchedAt(domain.getFetchedAt())
                 .build();
     }
