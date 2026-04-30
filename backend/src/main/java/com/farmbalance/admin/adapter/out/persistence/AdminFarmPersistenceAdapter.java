@@ -13,6 +13,10 @@ import java.util.Optional;
 
 /**
  * ADM-002 농부 승인/반려 Persistence Adapter (JdbcTemplate)
+ *
+ * [변경 사항] land_cert_image_url 컬럼이 공통 uploads 테이블로 이관됨.
+ * uploads 테이블에서 entity_type='FARM_LAND_CERT', entity_id=farm.id로 조회합니다.
+ * 도메인 객체의 landCertImageUrl 필드명은 API 하위 호환을 위해 유지합니다.
  */
 @Component
 @RequiredArgsConstructor
@@ -20,6 +24,7 @@ public class AdminFarmPersistenceAdapter implements AdminFarmPort {
 
     private final JdbcTemplate jdbcTemplate;
 
+    /** farms + uploads LEFT JOIN RowMapper */
     private final RowMapper<AdminFarm> rowMapper = (rs, rowNum) -> AdminFarm.builder()
             .id(rs.getLong("id"))
             .userId(rs.getLong("user_id"))
@@ -40,7 +45,7 @@ public class AdminFarmPersistenceAdapter implements AdminFarmPort {
             .deletedAt(rs.getTimestamp("deleted_at") != null ? rs.getTimestamp("deleted_at").toLocalDateTime() : null)
             .build();
 
-    /** 승인 목록 뷰용 RowMapper (farms + users JOIN) */
+    /** 승인 목록 뷰용 RowMapper (farms + users + uploads JOIN) */
     private final RowMapper<FarmApprovalView> approvalViewRowMapper = (rs, rowNum) -> FarmApprovalView.builder()
             .farmId(rs.getLong("farm_id"))
             .farmName(rs.getString("farm_name"))
@@ -59,19 +64,42 @@ public class AdminFarmPersistenceAdapter implements AdminFarmPort {
 
     @Override
     public List<AdminFarm> findAll() {
-        String sql = "SELECT * FROM farms WHERE deleted_at IS NULL ORDER BY created_at DESC";
+        String sql = """
+            SELECT f.*,
+                   COALESCE(img.file_url, f.land_cert_image_url) AS land_cert_image_url
+            FROM farms f
+            LEFT JOIN uploads img ON img.entity_type = 'FARM_LAND_CERT'
+                AND img.entity_id = f.id AND img.deleted_at IS NULL AND img.display_order = 0
+            WHERE f.deleted_at IS NULL
+            ORDER BY f.created_at DESC
+            """;
         return jdbcTemplate.query(sql, rowMapper);
     }
 
     @Override
     public List<AdminFarm> findByStatus(String status) {
-        String sql = "SELECT * FROM farms WHERE status = ? AND deleted_at IS NULL ORDER BY created_at DESC";
+        String sql = """
+            SELECT f.*,
+                   COALESCE(img.file_url, f.land_cert_image_url) AS land_cert_image_url
+            FROM farms f
+            LEFT JOIN uploads img ON img.entity_type = 'FARM_LAND_CERT'
+                AND img.entity_id = f.id AND img.deleted_at IS NULL AND img.display_order = 0
+            WHERE f.status = ? AND f.deleted_at IS NULL
+            ORDER BY f.created_at DESC
+            """;
         return jdbcTemplate.query(sql, rowMapper, status);
     }
 
     @Override
     public Optional<AdminFarm> findById(Long id) {
-        String sql = "SELECT * FROM farms WHERE id = ? AND deleted_at IS NULL";
+        String sql = """
+            SELECT f.*,
+                   COALESCE(img.file_url, f.land_cert_image_url) AS land_cert_image_url
+            FROM farms f
+            LEFT JOIN uploads img ON img.entity_type = 'FARM_LAND_CERT'
+                AND img.entity_id = f.id AND img.deleted_at IS NULL AND img.display_order = 0
+            WHERE f.id = ? AND f.deleted_at IS NULL
+            """;
         List<AdminFarm> result = jdbcTemplate.query(sql, rowMapper, id);
         return result.stream().findFirst();
     }
@@ -92,11 +120,15 @@ public class AdminFarmPersistenceAdapter implements AdminFarmPort {
     public List<FarmApprovalView> findApprovalsByStatus(String status) {
         String sql = """
             SELECT f.id AS farm_id, f.name AS farm_name, f.address, f.area_size,
-                   f.business_number, f.land_cert_image_url, f.land_cert_verified,
+                   f.business_number,
+                   COALESCE(img.file_url, f.land_cert_image_url) AS land_cert_image_url,
+                   f.land_cert_verified,
                    f.status, f.created_at,
                    u.id AS user_id, u.name AS user_name, u.email AS user_email, u.phone AS user_phone
             FROM farms f
             JOIN users u ON f.user_id = u.id
+            LEFT JOIN uploads img ON img.entity_type = 'FARM_LAND_CERT'
+                AND img.entity_id = f.id AND img.deleted_at IS NULL AND img.display_order = 0
             WHERE f.status = ? AND f.deleted_at IS NULL
             ORDER BY f.created_at DESC
             """;

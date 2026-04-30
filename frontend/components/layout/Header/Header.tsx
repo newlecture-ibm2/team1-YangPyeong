@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import styles from './Header.module.css';
 
 const NAV_LINKS = [
+  { href: '/farm', label: '내 농장' },
   { href: '/balance', label: '밸런스' },
   { href: '/recommend', label: 'AI 추천' },
   { href: '/community', label: '커뮤니티' },
@@ -32,6 +33,7 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<{ email: string; role: string } | null>(null);
+  const [cartCount, setCartCount] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -39,6 +41,30 @@ export default function Header() {
   useEffect(() => {
     setUser(getUserFromCookie());
   }, [pathname]);
+
+  // 장바구니 수량 조회 (로그인 상태 + 페이지 이동 시 + cart-updated 이벤트)
+  useEffect(() => {
+    if (!user) {
+      setCartCount(0);
+      return;
+    }
+    const fetchCartCount = async () => {
+      try {
+        const res = await apiFetch<Array<{ id: number }>>('/api/shop/cart');
+        if (res.success && res.data) {
+          setCartCount(res.data.length);
+        }
+      } catch {
+        // 장바구니 조회 실패 시 무시
+      }
+    };
+    fetchCartCount();
+
+    // 장바구니 변경 이벤트 구독 (추가/삭제 시 즉시 반영)
+    const handleCartUpdate = () => fetchCartCount();
+    window.addEventListener('cart-updated', handleCartUpdate);
+    return () => window.removeEventListener('cart-updated', handleCartUpdate);
+  }, [user, pathname]);
 
   // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
@@ -58,6 +84,7 @@ export default function Header() {
     router.push('/');
     router.refresh();
   };
+
 
   /** 장바구니 클릭 — 로그인 체크 후 이동 */
   const handleCartClick = () => {
@@ -103,6 +130,11 @@ export default function Header() {
             <circle cx="20" cy="21" r="1" />
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
           </svg>
+          {cartCount > 0 && (
+            <span className={styles.cartBadge}>
+              {cartCount > 99 ? '99+' : cartCount}
+            </span>
+          )}
         </button>
 
         {user ? (

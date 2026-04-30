@@ -29,15 +29,15 @@ public class FarmRegisterRequest {
     
     private boolean isMountain; // 산 여부
     
-    @NotBlank(message = "본번은 필수입니다.")
-    @Pattern(regexp = "^[0-9]{1,4}$", message = "본번은 1~4자리 숫자여야 합니다.")
     private String mainNo;      // 본번
     
-    @NotBlank(message = "부번은 필수입니다.")
-    @Pattern(regexp = "^[0-9]{1,4}$", message = "부번은 1~4자리 숫자여야 합니다.")
     private String subNo;       // 부번
     
     private String registrationNumber; // 농업경영체 등록번호 (프론트에서 전달)
     
     private String documentUrl; // 증빙 서류 경로
+
+    // 프론트엔드 카카오 Maps JS SDK에서 변환한 좌표
+    private Double latitude;
+    private Double longitude;
 }

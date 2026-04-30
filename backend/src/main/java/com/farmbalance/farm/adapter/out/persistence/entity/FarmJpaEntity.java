@@ -30,14 +30,6 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(nullable = false, length = 255)
     private String address;
 
-    @Column(nullable = false)
-    private Double area;
-
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "farm_crops", joinColumns = @JoinColumn(name = "farm_id"))
-    @Column(name = "crop_name")
-    private List<String> cropTypes = new ArrayList<>();
-
     @Column(name = "bjd_code", length = 10)
     private String bjdCode;
 
@@ -50,18 +42,36 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(name = "longitude")
     private Double longitude;
 
-    @Column(name = "registration_number", length = 50)
+    @Column(name = "area", nullable = false)
+    private Double area;
+
+    @Column(name = "soil_type", length = 50)
+    private String soilType;
+
+    @Column(name = "business_number", length = 12)
     private String registrationNumber;
 
-    @Column(name = "document_url", length = 500)
+    @Column(name = "land_cert_image_url", length = 500)
     private String documentUrl;
 
+    @Column(name = "land_cert_verified")
+    private Boolean landCertVerified = false;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "certification_status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 20)
     private com.farmbalance.farm.domain.CertificationStatus certificationStatus = com.farmbalance.farm.domain.CertificationStatus.PENDING;
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "farm_crops", joinColumns = @JoinColumn(name = "farm_id"))
+    @Column(name = "crop_name")
+    private List<String> cropTypes = new ArrayList<>();
+
     @Builder
-    public FarmJpaEntity(UserJpaEntity user, String name, String address, Double area, List<String> cropTypes, String bjdCode, String pnuCode, Double latitude, Double longitude, String registrationNumber, String documentUrl, com.farmbalance.farm.domain.CertificationStatus certificationStatus) {
+    public FarmJpaEntity(UserJpaEntity user, String name, String address, Double area,
+                         List<String> cropTypes, String bjdCode, String pnuCode,
+                         Double latitude, Double longitude, String registrationNumber,
+                         String documentUrl, String soilType,
+                         com.farmbalance.farm.domain.CertificationStatus certificationStatus) {
         this.user = user;
         this.name = name;
         this.address = address;
@@ -73,6 +83,22 @@ public class FarmJpaEntity extends BaseTimeEntity {
         this.longitude = longitude;
         this.registrationNumber = registrationNumber;
         this.documentUrl = documentUrl;
+        this.soilType = soilType;
         this.certificationStatus = certificationStatus != null ? certificationStatus : com.farmbalance.farm.domain.CertificationStatus.PENDING;
+    }
+
+    public void update(String name, String address, Double area, List<String> cropTypes,
+                       String bjdCode, String pnuCode, Double latitude, Double longitude,
+                       String registrationNumber, String documentUrl) {
+        this.name = name;
+        this.address = address;
+        this.area = area;
+        this.cropTypes = cropTypes;
+        this.bjdCode = bjdCode;
+        this.pnuCode = pnuCode;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.registrationNumber = registrationNumber;
+        this.documentUrl = documentUrl;
     }
 }

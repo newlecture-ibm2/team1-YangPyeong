@@ -21,9 +21,22 @@ public class PnuGeneratorUtil {
 
         String landType = isMountain ? "2" : "1";
         
-        // 본번과 부번을 4자리 0 패딩
-        String paddedMainNo = String.format("%04d", Integer.parseInt(mainNo));
-        String paddedSubNo = String.format("%04d", Integer.parseInt(subNo));
+        // 본번과 부번을 숫자로 변환 (비어있거나 형식이 잘못된 경우 0으로 처리)
+        int mainNum = 0;
+        int subNum = 0;
+        try {
+            if (mainNo != null && !mainNo.trim().isEmpty()) {
+                mainNum = Integer.parseInt(mainNo.replaceAll("[^0-9]", ""));
+            }
+            if (subNo != null && !subNo.trim().isEmpty()) {
+                subNum = Integer.parseInt(subNo.replaceAll("[^0-9]", ""));
+            }
+        } catch (NumberFormatException e) {
+            // 숫자 변환 실패 시 0 유지
+        }
+
+        String paddedMainNo = String.format("%04d", mainNum);
+        String paddedSubNo = String.format("%04d", subNum);
 
         return bjdCode + landType + paddedMainNo + paddedSubNo;
     }

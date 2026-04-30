@@ -18,13 +18,22 @@ spring:
   # ── JPA / Hibernate ──
   jpa:
     hibernate:
-      ddl-auto: update
+      # Flyway를 도입했으므로 엔티티 구조와 DB 테이블 구조가 일치하는지만 깐깐하게 검사(validate)합니다.
+      # 이제부터 테이블을 수정하려면 무조건 Flyway V_ 버전 SQL 파일을 추가해야 합니다!
+      ddl-auto: validate
     open-in-view: false
     show-sql: false
     properties:
       hibernate:
         format_sql: true
         default_schema: public
+
+  # ── Flyway (DB 마이그레이션) ──
+  flyway:
+    enabled: true
+    baseline-on-migrate: true # 기존에 테이블이 있는 DB라도 충돌 없이 베이스라인부터 시작하도록 허용
+    baseline-version: 1
+    locations: classpath:db/migration
 
   # ── Redis ──
   data:
@@ -88,3 +97,37 @@ springdoc:
     path: /swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
+
+# ── Resilience4j (Retry / CircuitBreaker) ──
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 2000ms
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+    instances:
+      oauthRetry:
+        base-config: default
+      apiRetry:
+        base-config: default
+      aiRetry:
+        base-config: default
+        wait-duration: 5000ms
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000ms
+        permitted-number-of-calls-in-half-open-state: 3
+        ignore-exceptions:
+          - org.springframework.web.client.HttpClientErrorException
+          - com.farmbalance.global.error.BusinessException
+    instances:
+      oauthCircuitBreaker:
+        base-config: default

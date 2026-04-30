@@ -4,7 +4,7 @@
 > **DB**: PostgreSQL 16
 > **ORM**: Spring Data JPA (Hibernate)
 > **네이밍**: snake_case (DB) ↔ camelCase (Java Entity)
-> **테이블 수**: 25개 (기존 14 + 신규 11)
+> **테이블 수**: 26개 (기존 14 + 신규 12)
 
 ---
 
@@ -12,6 +12,19 @@
 
 ```mermaid
 erDiagram
+    %% ===== 지역 마스터 =====
+    regions {
+        bigint id PK
+        varchar code UK "지역 코드 (41, 4183, 4183010 등)"
+        varchar name "지역명"
+        varchar type "PROVINCE | CITY | TOWN"
+        bigint parent_id FK "상위 지역 (자기참조)"
+        boolean is_active
+        timestamp created_at
+    }
+
+    regions ||--o{ regions : "상위-하위"
+
     %% ===== 유저 도메인 =====
     users {
         bigint id PK
@@ -20,12 +33,15 @@ erDiagram
         varchar name
         varchar phone
         varchar role "USER | FARMER | ADMIN | GOV"
-        varchar region
+        varchar region "지역명 문자열 (하위호환)"
+        varchar region_code "FK → regions.code (시군구 코드)"
         varchar status "ACTIVE | SUSPENDED"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
     }
+
+    regions ||--o{ users : "관할지역"
 
     farms {
         bigint id PK
@@ -39,7 +55,6 @@ erDiagram
         decimal area_size "㎡"
         varchar soil_type
         varchar business_number "사업자 등록번호"
-        varchar land_cert_image_url
         boolean land_cert_verified
         varchar status "PENDING | APPROVED | REJECTED"
         timestamp created_at
@@ -84,7 +99,6 @@ erDiagram
         int quantity
         decimal estimated_yield "예상 총 수확량"
         varchar yield_unit "g | kg | ton"
-        varchar receipt_image_url
         boolean verified
         timestamp created_at
         timestamp updated_at
@@ -130,10 +144,23 @@ erDiagram
         decimal price
         int stock
         text description
-        varchar image_url
+        int sales_count "누적 판매 수량"
         varchar status "PENDING | ACTIVE | INACTIVE | REJECTED"
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
+    }
+
+    %% ===== 공통 업로드 =====
+    uploads {
+        bigint id PK
+        varchar entity_type "PRODUCT | FARM_CERT | POST 등"
+        bigint entity_id "대상 엔티티 PK"
+        varchar file_type "IMAGE | DOCUMENT"
+        varchar file_url
+        varchar original_name "원본 파일명"
+        int display_order "0 = 대표"
+        timestamp created_at
         timestamp deleted_at
     }
 
@@ -425,6 +452,23 @@ erDiagram
 
 ## 2. 테이블 상세 명세
 
+### 2.0 regions (지역 마스터) — 신규
+
+시도 → 시군구 → 읍면동 계층 구조의 지역 기준정보 테이블입니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| code | VARCHAR(10) | UNIQUE, NOT NULL | 지역 코드 ("41", "4183", "4183010" 등) |
+| name | VARCHAR(30) | NOT NULL | 지역명 (경기도, 양평군, 양평읍 등) |
+| type | VARCHAR(10) | NOT NULL, CHECK | PROVINCE / CITY / TOWN |
+| parent_id | BIGINT | FK → regions(id) | 상위 지역 (자기참조, 시도=NULL) |
+| is_active | BOOLEAN | DEFAULT true | 활성 여부 |
+| created_at | TIMESTAMP | DEFAULT NOW() | 등록일 |
+
+> **계층 예시**: 경기도(PROVINCE) → 양평군(CITY) → 양평읍(TOWN)
+> **용도**: GOV 사용자의 관할지역 결정, 읍면 필터 동적 조회, 하드코딩 제거
+
 ### 2.1 users (유저)
 
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -435,11 +479,15 @@ erDiagram
 | name | VARCHAR(50) | NOT NULL | 이름 |
 | phone | VARCHAR(20) | | 전화번호 |
 | role | VARCHAR(20) | NOT NULL, DEFAULT 'GENERAL' | GENERAL / FARMER / ADMIN / GOV |
-| region | VARCHAR(50) | | 지역 (양평군 등) |
+| region | VARCHAR(50) | | 지역 (양평군 등) — 하위호환용 유지 |
+| region_code | VARCHAR(10) | | 시군구 코드 (regions.code 참조, 예: "4183") — 신규 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | ACTIVE / SUSPENDED |
 | created_at | TIMESTAMP | NOT NULL | 가입일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **region_code 추가 이유**: GOV 사용자의 관할 시군구를 `regions` 테이블과 연결하여 하위 읍면동 목록을 동적으로 조회하기 위함.  
+> 기존 `region` 문자열 컬럼은 하위호환을 위해 삭제하지 않고 유지합니다.
 
 ### 2.2 farms (농장)
 
@@ -456,7 +504,6 @@ erDiagram
 | area_size | DECIMAL(10,2) | NOT NULL | 면적 (㎡) |
 | soil_type | VARCHAR(50) | | 토양 유형 |
 | business_number | VARCHAR(12) | | 사업자 등록번호 |
-| land_cert_image_url | VARCHAR(500) | | 토지증명서 이미지/PDF URL |
 | land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
@@ -504,7 +551,6 @@ erDiagram
 | quantity | INT | NOT NULL | 수량 |
 | estimated_yield | DECIMAL(12,2) | | 예상 총 수확량 |
 | yield_unit | VARCHAR(10) | | 수확량 단위 (g / kg / ton) |
-| receipt_image_url | VARCHAR(500) | | 영수증 사진 URL |
 | verified | BOOLEAN | DEFAULT false | 인증 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
@@ -550,15 +596,35 @@ erDiagram
 | id | BIGINT | PK, AUTO | 상품 고유 ID |
 | seller_id | BIGINT | FK → users(id), NOT NULL | 판매자 |
 | category_id | BIGINT | FK → product_categories(id) | 상품 카테고리 |
-| name | VARCHAR(100) | NOT NULL | 상품명 |
+| name | VARCHAR(200) | NOT NULL | 상품명 |
 | price | DECIMAL(10,2) | NOT NULL | 가격 (원) |
 | stock | INT | NOT NULL, DEFAULT 0 | 재고 |
 | description | TEXT | | 상품 설명 |
-| image_url | VARCHAR(500) | | 상품 이미지 URL |
+| sales_count | INT | NOT NULL, DEFAULT 0 | 누적 판매 수량 |
 | status | VARCHAR(20) | DEFAULT 'PENDING' | PENDING / ACTIVE / INACTIVE / REJECTED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
+
+### 2.8.1 uploads (공통 업로드)
+
+모든 도메인의 파일 첨부 및 이미지 업로드를 통합 관리하는 다형성(polymorphic) 테이블입니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| entity_type | VARCHAR(30) | NOT NULL | 용도 구분 (PRODUCT / FARM_CERT / SEED_RECEIPT / POST 등) |
+| entity_id | BIGINT | NOT NULL | 대상 엔티티의 PK |
+| file_type | VARCHAR(20) | NOT NULL | 파일 종류 (IMAGE / DOCUMENT) |
+| file_url | VARCHAR(500) | NOT NULL | 파일 URL |
+| original_name | VARCHAR(255) | | 원본 파일명 |
+| display_order | INT | DEFAULT 0 | 표시 순서 (0 = 대표) |
+| created_at | TIMESTAMP | NOT NULL | 등록일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **인덱스**: (entity_type, entity_id) 복합 인덱스 권장  
+> **entity_type 값**: `PRODUCT` (상품), `FARM_CERT` (토지증명서), `SEED_RECEIPT` (종자 영수증), `POST` (게시글)  
+> **file_type 값**: `IMAGE` (이미지 파일), `DOCUMENT` (문서 파일)
 
 ### 2.9 orders (주문)
 
@@ -871,6 +937,8 @@ erDiagram
 
 | 관계 | 카디널리티 | FK | 설명 |
 |------|:---------:|:---:|------|
+| regions → regions | 1:N (자기참조) | ✅ | 시도 → 시군구 → 읍면동 계층 |
+| regions → users | 1:N | — | region_code로 논리적 참조 (GOV 관할) |
 | users → farms | 1:N | ✅ | 유저 한 명이 여러 농장 소유 가능 |
 | farms → seed_registrations | 1:N | ✅ | 농장별 여러 종자 등록 |
 | crops → balance_data | 1:N | ✅ | 작물별 지역·시즌 수급 데이터 |
@@ -905,10 +973,15 @@ erDiagram
 ## 4. 인덱스 권장
 
 ```sql
+-- 지역 마스터
+CREATE INDEX idx_regions_parent ON regions(parent_id);
+CREATE INDEX idx_regions_type ON regions(type);
+
 -- 유저 조회
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_region ON users(region);
+CREATE INDEX idx_users_region_code ON users(region_code);
 
 -- 농장
 CREATE INDEX idx_farms_user_id ON farms(user_id);

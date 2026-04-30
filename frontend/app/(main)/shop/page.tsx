@@ -1,20 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dropdown, SearchInput, Modal, Button } from '@/components';
 import { useToast } from '@/components';
 import ProductCard from './ProductCard';
 import { useProducts } from './useProducts';
+import { addToCart } from './_lib/shop.api';
 import styles from './page.module.css';
 
 /** 상점 — 상품 목록 페이지 */
 export default function ShopBrowsePage() {
   const {
     products,
+    loading,
     category,
     sort,
     keyword,
+    page,
+    totalPages,
+    setPage,
     setCategory,
     setSort,
     setKeyword,
@@ -26,21 +31,27 @@ export default function ShopBrowsePage() {
   const { success: toastSuccess } = useToast();
   const router = useRouter();
 
-  // TODO: 실제 인증 상태로 교체 (현재 더미)
-  const isLoggedIn = false;
+  // 쿠키 기반 로그인 상태 확인 (fb-user는 httpOnly: false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  useEffect(() => {
+    setIsLoggedIn(document.cookie.includes('fb-user'));
+  }, []);
 
   /** 로그인 필요 모달 */
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   /** 장바구니 담기 핸들러 (로그인 체크 포함) */
-  const handleAddToCart = (productId: number) => {
+  const handleAddToCart = async (productId: number) => {
     if (!isLoggedIn) {
       setShowLoginModal(true);
       return;
     }
-    // TODO: 백엔드 연동 시 addToCart() API 호출로 교체
-    const product = products.find((p) => p.id === productId);
-    toastSuccess(`🛒 ${product?.name || '상품'}을(를) 장바구니에 담았습니다.`);
+    const result = await addToCart(productId, 1);
+    if (result.success) {
+      const product = products.find((p) => p.id === productId);
+      toastSuccess(`🛒 ${product?.name || '상품'}을(를) 장바구니에 담았습니다.`);
+      window.dispatchEvent(new CustomEvent('cart-updated'));
+    }
   };
 
   return (
@@ -112,13 +123,47 @@ export default function ShopBrowsePage() {
       </div>
 
       {/* ════════ 페이지네이션 ════════ */}
-      {products.length > 0 && (
+      {totalPages > 1 && (
         <div className={styles.pagination}>
-          <button className={styles.pageBtn}>«</button>
-          <button className={`${styles.pageBtn} ${styles.pageBtnActive}`}>1</button>
-          <button className={styles.pageBtn}>2</button>
-          <button className={styles.pageBtn}>3</button>
-          <button className={styles.pageBtn}>»</button>
+          <button
+            className={styles.pageBtn}
+            disabled={page === 0}
+            onClick={() => setPage(0)}
+          >
+            «
+          </button>
+          <button
+            className={styles.pageBtn}
+            disabled={page === 0}
+            onClick={() => setPage(page - 1)}
+          >
+            ‹
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i)
+            .filter((p) => Math.abs(p - page) <= 2)
+            .map((p) => (
+              <button
+                key={p}
+                className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ''}`}
+                onClick={() => setPage(p)}
+              >
+                {p + 1}
+              </button>
+            ))}
+          <button
+            className={styles.pageBtn}
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage(page + 1)}
+          >
+            ›
+          </button>
+          <button
+            className={styles.pageBtn}
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage(totalPages - 1)}
+          >
+            »
+          </button>
         </div>
       )}
 
