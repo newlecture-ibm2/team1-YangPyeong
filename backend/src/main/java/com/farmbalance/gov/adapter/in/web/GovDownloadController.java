@@ -46,7 +46,7 @@ public class GovDownloadController {
             @RequestParam GovDownloadFormat format) {
         
         GovUserInfo user = checkGovUser(userId);
-        byte[] data = downloadUseCase.download(type, format, userId, user.region());
+        byte[] data = downloadUseCase.download(type, format, userId, user.regionCode());
         String fileName = downloadUseCase.getFileName(type, format);
         
         String contentType = format == GovDownloadFormat.CSV ? "text/csv" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";

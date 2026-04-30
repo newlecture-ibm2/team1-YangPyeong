@@ -34,6 +34,9 @@ public class GovSeedDataInitializer {
     @PostConstruct
     public void init() {
         try {
+            // regions 마스터 테이블은 시드 유저 존재 여부와 무관하게 항상 확인
+            ensureRegionsTable();
+
             int seedUserCount = countSeedUsers();
 
             if (seedUserCount >= 32) {
@@ -50,6 +53,24 @@ public class GovSeedDataInitializer {
         } catch (Exception e) {
             log.error("[Gov Seed] ❌ 시드 데이터 초기화 실패", e);
         }
+    }
+
+    /**
+     * regions 마스터 테이블이 비어있으면 seed-regions.sql을 실행합니다.
+     * 시드 유저와 독립적으로, 지역 마스터 데이터는 항상 존재해야 합니다.
+     */
+    private void ensureRegionsTable() {
+        try {
+            Integer count = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM regions WHERE type = 'CITY'", Integer.class);
+            if (count != null && count > 0) {
+                log.info("[Gov Seed] regions 마스터 테이블 정상 (CITY {}건)", count);
+                return;
+            }
+        } catch (Exception e) {
+            log.info("[Gov Seed] regions 테이블 미존재 또는 비어있음 — 생성합니다.");
+        }
+        executeSqlFile("seed-regions.sql");
     }
 
     /** 시드 유저 수 조회 */
