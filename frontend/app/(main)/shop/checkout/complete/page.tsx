@@ -15,13 +15,13 @@ function CompleteContent() {
   const searchParams = useSearchParams();
   const paymentId = searchParams.get('paymentId') || '-';
 
-  // TODO: paymentId로 서버에서 실제 주문 정보를 조회
+  // query parameter에서 결제 정보 조회
   const orderInfo = {
     paymentId,
     orderNumber: paymentId.replace('payment-', '').slice(0, 8).toUpperCase(),
-    orderName: '유기농 딸기 500g 외 1건',
-    totalAmount: 24300,
-    paymentMethod: '카드 결제',
+    orderName: searchParams.get('orderName') || '주문 상품',
+    totalAmount: Number(searchParams.get('totalAmount')) || 0,
+    paymentMethod: searchParams.get('payMethod') || '카드 결제',
     orderDate: new Date().toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'long',

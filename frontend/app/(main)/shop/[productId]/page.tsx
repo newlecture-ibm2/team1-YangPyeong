@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button, Badge, Card, Modal } from '@/components';
 import { useToast } from '@/components';
 import { useProductDetail } from './useProductDetail';
+import { addToCart } from '../_lib/shop.api';
 import styles from './page.module.css';
 
 interface ProductDetailPageProps {
@@ -18,8 +19,11 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const id = Number(productId);
   const router = useRouter();
 
-  // TODO: 실제 인증 상태로 교체 (개발 중 임시 true 처리)
-  const isLoggedIn = false;
+  // 쿠키 기반 로그인 상태 확인 (fb-user는 httpOnly: false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  useEffect(() => {
+    setIsLoggedIn(document.cookie.includes('fb-user'));
+  }, []);
 
   const {
     product,
@@ -66,11 +70,14 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('ko-KR').format(price);
 
-  /** 장바구니 확정 → 성공 모달 표시 */
-  const handleConfirmCart = () => {
-    // TODO: addToCart API 호출
+  /** 장바구니 확정 → API 호출 → 성공 모달 표시 */
+  const handleConfirmCart = async () => {
+    const result = await addToCart(id, quantity);
     closePurchaseModal();
-    setShowCartSuccessModal(true);
+    if (result.success) {
+      setShowCartSuccessModal(true);
+      window.dispatchEvent(new CustomEvent('cart-updated'));
+    }
   };
 
   /** 바로 구매 확정 → 결제 페이지로 이동 */

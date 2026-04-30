@@ -27,7 +27,9 @@ export interface FarmListItem {
   id: number;
   name: string;
   address: string;
+  area: number;
   cropTypes: string[];
+  certificationStatus: CertificationStatus;
 }
 
 /** 농장 상세 정보 응답 */
