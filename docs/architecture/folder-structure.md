@@ -205,70 +205,80 @@ frontend/
 │   │   │
 │   │   ├── farm/                             ← 🌾 농장 도메인
 │   │   │   ├── page.tsx                      ← /farm
-│   │   │   ├── _hooks/
-│   │   │   │   ├── useFarm.ts
-│   │   │   │   └── useSeed.ts
+│   │   │   ├── useFarm.ts                    ← 훅은 사용하는 파일과 같은 폴더
 │   │   │   ├── _lib/
 │   │   │   │   ├── farm.api.ts
 │   │   │   │   └── farm.types.ts
 │   │   │   ├── _components/
 │   │   │   │   ├── FarmCard.tsx
-│   │   │   │   └── FarmCard.module.css
+│   │   │   │   ├── FarmCard.module.css
+│   │   │   │   └── useFarmCard.ts              ← 컴포넌트 전용 훅도 같은 폴더
 │   │   │   ├── register/page.tsx
 │   │   │   ├── seed/
 │   │   │   │   ├── page.tsx
-│   │   │   │   └── _hooks/useSeedForm.ts
+│   │   │   │   └── useSeedForm.ts             ← seed 전용 훅도 같은 폴더
 │   │   │   ├── plan/page.tsx
 │   │   │   └── harvest/page.tsx
 │   │   │
 │   │   ├── balance/                          ← 📊 밸런스
 │   │   │   ├── page.tsx
+│   │   │   ├── useBalance.ts
 │   │   │   ├── [cropCode]/page.tsx
-│   │   │   ├── _hooks/useBalance.ts
 │   │   │   ├── _lib/
 │   │   │   └── _components/
 │   │   │
 │   │   ├── recommend/                        ← 🤖 AI 추천
 │   │   │   ├── page.tsx
+│   │   │   ├── useRecommend.ts
 │   │   │   ├── [cropCode]/page.tsx
-│   │   │   ├── _hooks/useRecommend.ts
 │   │   │   └── _lib/
 │   │   │
 │   │   ├── shop/                             ← 🛒 상점
 │   │   │   ├── page.tsx
-│   │   │   ├── [productId]/page.tsx
-│   │   │   ├── cart/page.tsx
+│   │   │   ├── useProducts.ts                ← 훅 = 사용하는 파일과 같은 폴더
+│   │   │   ├── [productId]/
+│   │   │   │   ├── page.tsx
+│   │   │   │   └── useProductDetail.ts
+│   │   │   ├── cart/
+│   │   │   │   ├── page.tsx
+│   │   │   │   └── useCart.ts
 │   │   │   ├── checkout/page.tsx
 │   │   │   ├── orders/page.tsx
 │   │   │   ├── seller/{page,orders/page}.tsx
-│   │   │   ├── _hooks/
 │   │   │   └── _lib/
 │   │   │
 │   │   ├── community/                        ← 💬 커뮤니티
 │   │   │   ├── page.tsx
+│   │   │   ├── useCommunity.ts
 │   │   │   ├── [postId]/page.tsx
 │   │   │   ├── write/page.tsx
-│   │   │   ├── _hooks/useCommunity.ts
 │   │   │   └── _lib/
 │   │   │
 │   │   ├── policy/                           ← 📜 정책 매칭
 │   │   ├── stores/                           ← 📍 가게 정보
 │   │   └── mypage/                           ← 👤 마이페이지
+│   │       ├── page.tsx
+│   │       ├── useProfile.ts                 ← 프로필 훅
+│   │       ├── _lib/
+│   │       ├── _components/
+│   │       └── seller/
+│   │           ├── page.tsx
+│   │           └── useSellerProducts.ts
 │   │
 │   ├── admin/                                ← ⚙️ 관리자
 │   │   ├── layout.tsx
 │   │   ├── page.tsx
+│   │   ├── useAdmin.ts
 │   │   ├── users/page.tsx
 │   │   ├── approvals/page.tsx
-│   │   ├── _hooks/useAdmin.ts
 │   │   └── _lib/
 │   │
 │   └── gov/                                  ← 📈 지자체
 │       ├── layout.tsx
 │       ├── page.tsx
+│       ├── useGovUser.ts
 │       ├── compare/page.tsx
 │       ├── cultivation/page.tsx
-│       ├── _hooks/useGov.ts
 │       └── _lib/
 │
 ├── components/                               ← 🧩 공유 UI (도메인 무관)
@@ -303,45 +313,36 @@ frontend/
 
 | 문법 | 역할 | 예시 |
 |------|------|------|
-| `_폴더명` | **비공개 폴더** (라우트 제외) | `_hooks/`, `_lib/`, `_components/` |
+| `_폴더명` | **비공개 폴더** (라우트 제외) | `_lib/`, `_components/` |
 | `(그룹명)` | **라우트 그룹** (URL 미포함) | `(auth)/`, `(main)/` |
 | `[param]` | **동적 라우트** | `[cropCode]/`, `[postId]/` |
 
-#### `_` 접두사 = 라우트 제외
+#### `_` 접두사 = 라우트 제외 / Hook 파일은 사용처와 같은 폴더 배치
 
 ```
 farm/
 ├── page.tsx           ← ✅ /farm 으로 접근 가능
-├── _hooks/            ← ❌ 라우트 아님
-├── _lib/              ← ❌ 라우트 아님
-├── _components/       ← ❌ 라우트 아님
+├── useFarm.ts         ← page.tsx에서 사용하는 훅 → 같은 폴더
+├── _lib/              ← ❌ 라우트 아님 (API, 타입 등)
+├── _components/
+│   ├── FarmCard.tsx   ← 도메인 전용 컴포넌트
+│   └── useFarmCard.ts ← FarmCard에서 사용하는 훅 → 같은 폴더
 └── register/
     └── page.tsx       ← ✅ /farm/register 로 접근 가능
 ```
 
-### 3.4 코로케이션 핵심 규칙
-
-#### 파일 배치 기준
-
 | 파일 종류 | 위치 | 예시 |
 |-----------|------|------|
-| 도메인 전용 Hook | `해당 도메인/_hooks/` | `farm/_hooks/useFarm.ts` |
-| 하위 전용 Hook | `해당 하위/_hooks/` | `farm/seed/_hooks/useSeedForm.ts` |
+| **Hook** | **사용하는 파일과 같은 폴더** | `farm/useFarm.ts`, `_components/useFarmCard.ts` |
 | API 호출 함수 | `해당 도메인/_lib/` | `farm/_lib/farm.api.ts` |
 | 타입 정의 | `해당 도메인/_lib/` | `farm/_lib/farm.types.ts` |
 | 도메인 전용 UI | `해당 도메인/_components/` | `farm/_components/FarmCard.tsx` |
 | 공유 UI 컴포넌트 | 루트 `components/common/` | `components/common/Button/` |
 | 전역 유틸 | 루트 `lib/` | `lib/api-client.ts` |
 
-#### 참조 규칙
-
-```
-farm/seed/page.tsx 에서:
-✅ import { useFarm } from '../_hooks/useFarm'           ← 상위 Hook 사용 가능
-✅ import { useSeedForm } from './_hooks/useSeedForm'     ← 자기 전용 Hook
-✅ import { Button } from '@/components/common/Button'    ← 공유 컴포넌트
-❌ import { useShop } from '../../shop/_hooks/useShop'    ← 다른 도메인 직접 참조 금지
-```
+> ⚠️ **`_hooks/` 폴더는 사용하지 않습니다.** 훅 파일(`useXxx.ts`)은 그것을 **사용하는 파일**(page, component 등)과 동일한 디렉터리에 배치합니다.
+>
+> 예: `FarmCard.tsx`가 `useFarmCard.ts`를 사용한다면, 둘 다 `_components/` 안에 나란히 배치합니다.
 
 > 다른 도메인의 데이터가 필요하면 **API를 통해 조회**하거나, **공유 `lib/`로 올린다.**
 
@@ -349,7 +350,7 @@ farm/seed/page.tsx 에서:
 
 ```
 [브라우저 Page]
-    │  farm/_hooks/useFarm.ts
+    │  farm/useFarm.ts
     │  → farm/_lib/farm.api.ts
     │  → fetch('/api/farm')
     ▼
@@ -460,3 +461,4 @@ ai/
 | v2 | 2026-04-23 | Backend `infrastructure/` → `adapter/in`, `adapter/out` 수정 |
 | v3 | 2026-04-23 | Frontend `domains/` 제거 → 코로케이션 방식 적용 |
 | v4 | 2026-04-23 | AI `app/` 패키지 기반 + `llm/`, `agents/`, `rag/` 추가 |
+| v5 | 2026-04-30 | **`_hooks/` 폴더 제거** — Hook 파일을 사용처(Page/Component)와 같은 폴더에 배치하는 colocation 방식 적용 |
