@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/farms")
+@RequestMapping({"/api/farms", "/api/farm"})
 @RequiredArgsConstructor
 public class FarmController {
 

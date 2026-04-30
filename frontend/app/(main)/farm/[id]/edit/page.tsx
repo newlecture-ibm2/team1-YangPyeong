@@ -24,6 +24,26 @@ const CROP_OPTIONS = [
   { value: '토마토', label: '🍅 토마토' },
 ];
 
+interface FarmFormData {
+  name: string;
+  registrationNumber: string;
+  zipCode: string;
+  baseAddress: string;
+  detailAddress: string;
+  area: string;
+  pyeong: string;
+  cropTypes: string[];
+  operationStatus: string;
+  soilType: string;
+  ph: string;
+  organicMatter: string;
+  documentUrl: string;
+  bjdCode: string;
+  isMountain: boolean;
+  mainNo: string;
+  subNo: string;
+}
+
 export default function FarmEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -33,7 +53,7 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FarmFormData>({
     name: '',
     registrationNumber: '',
     zipCode: '',
@@ -41,7 +61,7 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     detailAddress: '',
     area: '',
     pyeong: '',
-    cropTypes: [] as string[],
+    cropTypes: [],
     operationStatus: 'active',
     soilType: '',
     ph: '',
@@ -91,8 +111,8 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     }
   }, [farm]);
 
-  const handleChange = (field: string, value: any) => {
-    if (field === 'registrationNumber') {
+  const handleChange = (field: keyof FarmFormData, value: string | boolean | string[]) => {
+    if (field === 'registrationNumber' && typeof value === 'string') {
       const onlyNumbers = value.replace(/[^0-9]/g, '').slice(0, 10);
       setFormData((prev) => ({ ...prev, [field]: onlyNumbers }));
       return;
@@ -169,8 +189,9 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
       });
       toast.success('농장 정보가 수정되었습니다.');
       router.push('/farm');
-    } catch (err: any) {
-      toast.error(err.message || '수정에 실패했습니다.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '수정에 실패했습니다.';
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
