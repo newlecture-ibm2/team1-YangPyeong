@@ -144,6 +144,54 @@
   min-height: 0;
 }
 
+/* 서브 탭 스타일 (정보수정, 히스토리, 리포트) */
+.subTabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 1.5rem;
+}
+
+.subTab {
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text-light);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.subTab:hover {
+  color: var(--color-text);
+}
+
+.activeSubTab {
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-primary);
+  cursor: pointer;
+  position: relative;
+}
+
+.activeSubTab::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-primary);
+}
+
+.tabContent {
+  padding: 0.5rem 0;
+}
+
 .bentoMain > div {
   height: 100%;
 }

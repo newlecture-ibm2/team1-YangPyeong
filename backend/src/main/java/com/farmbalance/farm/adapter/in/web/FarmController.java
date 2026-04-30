@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/farms")
+@RequestMapping({"/api/farms", "/api/farm"})
 @RequiredArgsConstructor
 public class FarmController {
 
@@ -66,6 +66,9 @@ public class FarmController {
                 .documentUrl(request.getDocumentUrl())
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
+                .soilType(request.getSoilType())
+                .ph(request.getPh())
+                .organicMatter(request.getOrganicMatter())
                 .build();
 
         // UseCase 호출 (비즈니스 로직)
@@ -100,6 +103,7 @@ public class FarmController {
                         .address(farm.getAddress())
                         .area(farm.getArea())
                         .cropTypes(farm.getCropTypes())
+                        .certificationStatus(farm.getCertificationStatus() != null ? farm.getCertificationStatus().name() : "PENDING")
                         .build())
                 .collect(Collectors.toList());
 
@@ -119,6 +123,12 @@ public class FarmController {
                 .area(farm.getArea())
                 .cropTypes(farm.getCropTypes())
                 .pnuCode(farm.getPnuCode())
+                .bjdCode(farm.getBjdCode())
+                .registrationNumber(farm.getRegistrationNumber())
+                .documentUrl(farm.getDocumentUrl())
+                .soilType(farm.getSoilType())
+                .ph(farm.getPh())
+                .organicMatter(farm.getOrganicMatter())
                 .build();
 
         return ResponseEntity.ok(ApiResponse.ok(responseData));
@@ -141,6 +151,9 @@ public class FarmController {
                 .subNo(request.getSubNo())
                 .registrationNumber(request.getRegistrationNumber())
                 .documentUrl(request.getDocumentUrl())
+                .soilType(request.getSoilType())
+                .ph(request.getPh())
+                .organicMatter(request.getOrganicMatter())
                 .build();
 
         Farm updatedFarm = updateFarmUseCase.updateFarm(command);
@@ -152,6 +165,12 @@ public class FarmController {
                 .area(updatedFarm.getArea())
                 .cropTypes(updatedFarm.getCropTypes())
                 .pnuCode(updatedFarm.getPnuCode())
+                .bjdCode(updatedFarm.getBjdCode())
+                .registrationNumber(updatedFarm.getRegistrationNumber())
+                .documentUrl(updatedFarm.getDocumentUrl())
+                .soilType(updatedFarm.getSoilType())
+                .ph(updatedFarm.getPh())
+                .organicMatter(updatedFarm.getOrganicMatter())
                 .build();
 
         return ResponseEntity.ok(ApiResponse.ok(responseData));

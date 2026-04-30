@@ -10,7 +10,6 @@ public record GovUserInfo(
     Long id,
     String name,
     String role,
-    String region,
     String regionCode,
     String regionName
 ) {}

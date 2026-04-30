@@ -78,7 +78,7 @@ export default function Dropdown({
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
 

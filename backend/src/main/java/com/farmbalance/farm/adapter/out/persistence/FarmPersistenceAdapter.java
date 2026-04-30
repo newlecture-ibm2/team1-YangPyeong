@@ -56,6 +56,9 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                     .longitude(farm.getLongitude())
                     .registrationNumber(farm.getRegistrationNumber())
                     .documentUrl(farm.getDocumentUrl())
+                    .soilType(farm.getSoilType())
+                    .ph(farm.getPh())
+                    .organicMatter(farm.getOrganicMatter())
                     .certificationStatus(farm.getCertificationStatus())
                     .build();
         } else {
@@ -73,7 +76,10 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                     farm.getLatitude(),
                     farm.getLongitude(),
                     farm.getRegistrationNumber(),
-                    farm.getDocumentUrl()
+                    farm.getDocumentUrl(),
+                    farm.getSoilType(),
+                    farm.getPh(),
+                    farm.getOrganicMatter()
             );
         }
 
@@ -109,7 +115,10 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .longitude(entity.getLongitude())
                 .registrationNumber(entity.getRegistrationNumber())
                 .documentUrl(entity.getDocumentUrl())
-                .certificationStatus(entity.getCertificationStatus())
+                .soilType(entity.getSoilType())
+                .ph(entity.getPh())
+                .organicMatter(entity.getOrganicMatter())
+                .certificationStatus(entity.getCertificationStatus() != null ? entity.getCertificationStatus() : com.farmbalance.farm.domain.CertificationStatus.PENDING)
                 .build();
     }
 

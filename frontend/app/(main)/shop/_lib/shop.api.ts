@@ -3,8 +3,15 @@
    클라이언트 컴포넌트에서 BFF Route Handler 호출
    ════════════════════════════════════════════════════════ */
 
-import { apiFetch } from '@/lib/api-client';
-import type { Product, ProductListParams, CartItem } from './shop.types';
+import { apiFetch } from '@/lib/api-fetch';
+import type { Product, ProductCategory, ProductListParams, CartItem, Order } from './shop.types';
+
+/* ── 카테고리 ── */
+
+/** 활성 카테고리 목록 조회 */
+export async function getCategories() {
+  return apiFetch<ProductCategory[]>('/api/shop/category');
+}
 
 /* ── 상품 ── */
 
@@ -53,5 +60,83 @@ export async function updateCartItem(cartItemId: number, quantity: number) {
 export async function removeCartItem(cartItemId: number) {
   return apiFetch<null>(`/api/shop/cart/${cartItemId}`, {
     method: 'DELETE',
+  });
+}
+
+/* ── 주문 ── */
+
+/** 주문 생성 */
+export async function createOrder(data: {
+  receiverName: string;
+  receiverPhone: string;
+  shippingAddress: string;
+  shippingMemo: string;
+  items: { productId: number; quantity: number }[];
+}) {
+  return apiFetch<Order>('/api/shop/order', {
+    method: 'POST',
+    body: data,
+  });
+}
+
+/** 내 주문 내역 조회 */
+export async function getMyOrders() {
+  return apiFetch<Order[]>('/api/shop/order');
+}
+
+/* ── 판매자 ── */
+
+/** 판매자 상품 목록 */
+export async function getSellerProducts() {
+  return apiFetch<Product[]>('/api/shop/seller');
+}
+
+/** 판매자 상품 등록 */
+export async function registerProduct(data: {
+  name: string;
+  price: number;
+  stock: number;
+  description: string;
+  categoryName: string;
+  imageUrls: string[];
+}) {
+  return apiFetch<Product>('/api/shop/seller', {
+    method: 'POST',
+    body: data,
+  });
+}
+
+/** 판매자 상품 수정 */
+export async function updateProduct(id: number, data: {
+  name: string;
+  price: number;
+  stock: number;
+  description: string;
+  categoryName: string;
+  imageUrls: string[];
+}) {
+  return apiFetch<Product>(`/api/shop/seller/${id}`, {
+    method: 'PATCH',
+    body: data,
+  });
+}
+
+/** 판매자 상품 삭제 */
+export async function deleteProduct(id: number) {
+  return apiFetch<null>(`/api/shop/seller/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+/** 판매자 주문 목록 */
+export async function getSellerOrders() {
+  return apiFetch<Order[]>('/api/shop/seller/order');
+}
+
+/** 판매자 주문 상태 변경 */
+export async function updateOrderStatus(orderId: number, action: 'advance' | 'cancel') {
+  return apiFetch<Order>(`/api/shop/seller/order/${orderId}`, {
+    method: 'PATCH',
+    body: { action },
   });
 }
