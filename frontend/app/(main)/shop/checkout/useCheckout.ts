@@ -145,10 +145,16 @@ export function useCheckout(): UseCheckoutReturn {
           }]);
         }
       } else {
-        // 장바구니 경유
+        // 장바구니 경유 — 선택된 아이템만 필터링
         const result = await getCart();
         if (result.success && result.data) {
-          setOrderItems(result.data);
+          const cartIdsParam = searchParams.get('cartIds');
+          if (cartIdsParam) {
+            const selectedIds = new Set(cartIdsParam.split(',').map(Number));
+            setOrderItems(result.data.filter((item) => selectedIds.has(item.id)));
+          } else {
+            setOrderItems(result.data);
+          }
         }
       }
     };
@@ -344,8 +350,14 @@ export function useCheckout(): UseCheckoutReturn {
         console.warn('[결제 검증] 백엔드 연결 실패:', verifyErr);
       }
 
-      // 4. 결제 완료 → 완료 페이지로 이동
-      router.push(`/shop/checkout/complete?paymentId=${paymentId}`);
+      // 4. 결제 완료 → 완료 페이지로 이동 (주문 정보 전달)
+      const completeParams = new URLSearchParams({
+        paymentId,
+        orderName,
+        totalAmount: String(finalTotal),
+        payMethod: paymentMethod === 'card' ? '카드 결제' : '가상계좌',
+      });
+      router.push(`/shop/checkout/complete?${completeParams.toString()}`);
 
     } catch (err) {
       const message = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';

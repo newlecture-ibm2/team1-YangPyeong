@@ -3,12 +3,15 @@ package com.farmbalance.shop.adapter.in.web;
 import com.farmbalance.global.response.ApiResponse;
 import com.farmbalance.global.security.SecurityUtil;
 import com.farmbalance.shop.adapter.in.web.dto.*;
+import com.farmbalance.shop.adapter.out.persistence.entity.ProductCategoryJpaEntity;
+import com.farmbalance.shop.adapter.out.persistence.repository.ProductCategoryJpaRepository;
 import com.farmbalance.shop.application.port.in.GetProductUseCase;
 import com.farmbalance.shop.application.port.in.ManageProductUseCase;
 import com.farmbalance.shop.domain.Product;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 상품 Controller (Driving Adapter).
@@ -20,11 +23,31 @@ public class ProductController {
 
     private final GetProductUseCase getProductUseCase;
     private final ManageProductUseCase manageProductUseCase;
+    private final ProductCategoryJpaRepository categoryRepository;
 
     public ProductController(GetProductUseCase getProductUseCase,
-                             ManageProductUseCase manageProductUseCase) {
+                             ManageProductUseCase manageProductUseCase,
+                             ProductCategoryJpaRepository categoryRepository) {
         this.getProductUseCase = getProductUseCase;
         this.manageProductUseCase = manageProductUseCase;
+        this.categoryRepository = categoryRepository;
+    }
+
+    // ── 카테고리 ──
+
+    /** 활성 카테고리 목록 조회 */
+    @GetMapping("/category")
+    public ApiResponse<List<Map<String, Object>>> getCategories() {
+        List<Map<String, Object>> categories = categoryRepository
+                .findByActiveTrueOrderByDisplayOrderAsc()
+                .stream()
+                .map(c -> Map.<String, Object>of(
+                        "id", c.getId(),
+                        "name", c.getName(),
+                        "displayOrder", c.getDisplayOrder()
+                ))
+                .toList();
+        return ApiResponse.ok(categories);
     }
 
     // ── 공통 상품 조회 ──

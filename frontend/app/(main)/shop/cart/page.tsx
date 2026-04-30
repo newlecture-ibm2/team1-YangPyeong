@@ -51,8 +51,9 @@ export default function CartPage() {
       toastInfo('주문할 상품을 선택해주세요.');
       return;
     }
-    // TODO: 선택 상품 데이터를 checkout 페이지에 전달 (현재는 라우트 이동만)
-    router.push('/shop/checkout');
+    // 선택된 장바구니 아이템 ID를 query로 전달
+    const cartIds = Array.from(selectedIds).join(',');
+    router.push(`/shop/checkout?cartIds=${cartIds}`);
   };
 
   /** 배송비 (3만원 이상 무료) */

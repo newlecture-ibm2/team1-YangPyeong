@@ -29,5 +29,5 @@ public class ProductCategoryJpaEntity {
     private int displayOrder;
 
     @Column(name = "is_active")
-    private boolean isActive;
+    private boolean active;
 }

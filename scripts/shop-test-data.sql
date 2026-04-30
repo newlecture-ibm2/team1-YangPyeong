@@ -1,10 +1,22 @@
 -- ============================================================
 -- Shop 도메인 테스트 데이터 (10건씩)
--- 실행 순서: users → product_categories → products → uploads → cart_items → orders → order_items
+-- 실행 순서: 삭제(역순) → users → product_categories → products → uploads → cart_items → orders → order_items
 -- ============================================================
+
+-- 0. 기존 테스트 데이터 삭제 (FK 역순)
+DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE buyer_id IN (SELECT id FROM users WHERE email LIKE '%@test.com'));
+DELETE FROM orders WHERE buyer_id IN (SELECT id FROM users WHERE email LIKE '%@test.com');
+DELETE FROM cart_items WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@test.com');
+DELETE FROM uploads WHERE entity_type = 'PRODUCT' AND entity_id IN (SELECT id FROM products WHERE seller_id IN (SELECT id FROM users WHERE email LIKE '%@test.com'));
+DELETE FROM products WHERE seller_id IN (SELECT id FROM users WHERE email LIKE '%@test.com');
+DELETE FROM product_categories WHERE name IN ('채소류', '과일류', '곡물·잡곡', '가공식품');
+DELETE FROM users WHERE email LIKE '%@test.com';
 
 -- 1. 테스트 유저 (판매자 2명 + 구매자 2명)
 -- 비밀번호: test1234 (BCrypt 해시)
+-- 시퀀스를 현재 최대 id 이후로 리셋 (PK 충돌 방지)
+SELECT setval('users_id_seq', (SELECT COALESCE(MAX(id), 0) FROM users));
+
 INSERT INTO users (email, password, name, phone, role, region, status, created_at) VALUES
 ('seller1@test.com', '$2a$10$xKTcWrqRNaGWTZ2aQS0AEOqiY0AIzLPh0jcvVxZ5lc5JYs9Xf3xOq', '양평농장 김씨', '010-1111-1111', 'FARMER', '양평군', 'ACTIVE', NOW()),
 ('seller2@test.com', '$2a$10$xKTcWrqRNaGWTZ2aQS0AEOqiY0AIzLPh0jcvVxZ5lc5JYs9Xf3xOq', '양평과수원 박씨', '010-2222-2222', 'FARMER', '양평군', 'ACTIVE', NOW()),

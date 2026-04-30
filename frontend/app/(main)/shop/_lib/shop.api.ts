@@ -4,7 +4,14 @@
    ════════════════════════════════════════════════════════ */
 
 import { apiFetch } from '@/lib/api-fetch';
-import type { Product, ProductListParams, CartItem, Order } from './shop.types';
+import type { Product, ProductCategory, ProductListParams, CartItem, Order } from './shop.types';
+
+/* ── 카테고리 ── */
+
+/** 활성 카테고리 목록 조회 */
+export async function getCategories() {
+  return apiFetch<ProductCategory[]>('/api/shop/category');
+}
 
 /* ── 상품 ── */
 

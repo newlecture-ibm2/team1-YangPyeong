@@ -109,6 +109,8 @@ export function useCart(): UseCartReturn {
     });
     // 백엔드 동기화
     removeCartItem(cartItemId);
+    // 헤더 장바구니 맱지 업데이트
+    window.dispatchEvent(new CustomEvent('cart-updated'));
   }, []);
 
   /** 선택 아이템 일괄 삭제 */
@@ -118,6 +120,8 @@ export function useCart(): UseCartReturn {
     setSelectedIds(new Set());
     // 백엔드 동기화
     idsToRemove.forEach((id) => removeCartItem(id));
+    // 헤더 장바구니 맱지 업데이트
+    window.dispatchEvent(new CustomEvent('cart-updated'));
   }, [selectedIds]);
 
   /** 선택 토글 */

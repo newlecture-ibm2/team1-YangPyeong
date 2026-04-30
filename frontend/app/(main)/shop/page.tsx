@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dropdown, SearchInput, Modal, Button } from '@/components';
 import { useToast } from '@/components';
 import ProductCard from './ProductCard';
 import { useProducts } from './useProducts';
+import { addToCart } from './_lib/shop.api';
 import styles from './page.module.css';
 
 /** 상점 — 상품 목록 페이지 */
@@ -30,21 +31,27 @@ export default function ShopBrowsePage() {
   const { success: toastSuccess } = useToast();
   const router = useRouter();
 
-  // TODO: 실제 인증 상태로 교체
-  const isLoggedIn = false;
+  // 쿠키 기반 로그인 상태 확인 (fb-user는 httpOnly: false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  useEffect(() => {
+    setIsLoggedIn(document.cookie.includes('fb-user'));
+  }, []);
 
   /** 로그인 필요 모달 */
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   /** 장바구니 담기 핸들러 (로그인 체크 포함) */
-  const handleAddToCart = (productId: number) => {
+  const handleAddToCart = async (productId: number) => {
     if (!isLoggedIn) {
       setShowLoginModal(true);
       return;
     }
-    // TODO: 백엔드 연동 시 addToCart() API 호출로 교체
-    const product = products.find((p) => p.id === productId);
-    toastSuccess(`🛒 ${product?.name || '상품'}을(를) 장바구니에 담았습니다.`);
+    const result = await addToCart(productId, 1);
+    if (result.success) {
+      const product = products.find((p) => p.id === productId);
+      toastSuccess(`🛒 ${product?.name || '상품'}을(를) 장바구니에 담았습니다.`);
+      window.dispatchEvent(new CustomEvent('cart-updated'));
+    }
   };
 
   return (

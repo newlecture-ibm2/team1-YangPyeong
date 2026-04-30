@@ -11,4 +11,7 @@ import java.util.Optional;
 public interface ProductCategoryJpaRepository extends JpaRepository<ProductCategoryJpaEntity, Long> {
 
     Optional<ProductCategoryJpaEntity> findByName(String name);
+
+    /** 활성 카테고리 목록 (정렬순) */
+    java.util.List<ProductCategoryJpaEntity> findByActiveTrueOrderByDisplayOrderAsc();
 }

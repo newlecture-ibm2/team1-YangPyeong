@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import type { Product, ProductSortType } from './_lib/shop.types';
-import { SORT_OPTIONS, CATEGORY_TABS } from './_lib/shop.types';
-import { getProducts } from './_lib/shop.api';
+import type { Product, ProductSortType, CategoryTab } from './_lib/shop.types';
+import { SORT_OPTIONS } from './_lib/shop.types';
+import { getProducts, getCategories } from './_lib/shop.api';
 
 const PAGE_SIZE = 8;
 
@@ -16,10 +16,31 @@ export function useProducts() {
   const [keyword, setKeyword] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // 카테고리 탭 (DB에서 동적 로드)
+  const [categoryTabs, setCategoryTabs] = useState<CategoryTab[]>([
+    { value: '', label: '전체' },
+  ]);
+
   // 페이지네이션 상태
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  // 카테고리 목록 API 호출 (최초 1회)
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const result = await getCategories();
+      if (result.success && result.data) {
+        const tabs: CategoryTab[] = [
+          { value: '', label: '전체' },
+          ...result.data.map((c) => ({ value: c.name, label: c.name })),
+        ];
+        setCategoryTabs(tabs);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // 백엔드 API 호출
   useEffect(() => {
@@ -85,6 +106,6 @@ export function useProducts() {
     handleSearch,
     // 상수
     sortOptions: SORT_OPTIONS,
-    categoryTabs: CATEGORY_TABS,
+    categoryTabs,
   };
 }
