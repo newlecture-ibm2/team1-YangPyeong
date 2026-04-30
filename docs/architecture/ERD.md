@@ -55,7 +55,6 @@ erDiagram
         decimal area_size "㎡"
         varchar soil_type
         varchar business_number "사업자 등록번호"
-        varchar land_cert_image_url
         boolean land_cert_verified
         varchar status "PENDING | APPROVED | REJECTED"
         timestamp created_at
@@ -100,7 +99,6 @@ erDiagram
         int quantity
         decimal estimated_yield "예상 총 수확량"
         varchar yield_unit "g | kg | ton"
-        varchar receipt_image_url
         boolean verified
         timestamp created_at
         timestamp updated_at
@@ -146,10 +144,23 @@ erDiagram
         decimal price
         int stock
         text description
-        varchar image_url
+        int sales_count "누적 판매 수량"
         varchar status "PENDING | ACTIVE | INACTIVE | REJECTED"
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
+    }
+
+    %% ===== 공통 업로드 =====
+    uploads {
+        bigint id PK
+        varchar entity_type "PRODUCT | FARM_CERT | POST 등"
+        bigint entity_id "대상 엔티티 PK"
+        varchar file_type "IMAGE | DOCUMENT"
+        varchar file_url
+        varchar original_name "원본 파일명"
+        int display_order "0 = 대표"
+        timestamp created_at
         timestamp deleted_at
     }
 
@@ -507,7 +518,6 @@ erDiagram
 | area_size | DECIMAL(10,2) | NOT NULL | 면적 (㎡) |
 | soil_type | VARCHAR(50) | | 토양 유형 |
 | business_number | VARCHAR(12) | | 사업자 등록번호 |
-| land_cert_image_url | VARCHAR(500) | | 토지증명서 이미지/PDF URL |
 | land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
@@ -555,7 +565,6 @@ erDiagram
 | quantity | INT | NOT NULL | 수량 |
 | estimated_yield | DECIMAL(12,2) | | 예상 총 수확량 |
 | yield_unit | VARCHAR(10) | | 수확량 단위 (g / kg / ton) |
-| receipt_image_url | VARCHAR(500) | | 영수증 사진 URL |
 | verified | BOOLEAN | DEFAULT false | 인증 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
@@ -601,15 +610,35 @@ erDiagram
 | id | BIGINT | PK, AUTO | 상품 고유 ID |
 | seller_id | BIGINT | FK → users(id), NOT NULL | 판매자 |
 | category_id | BIGINT | FK → product_categories(id) | 상품 카테고리 |
-| name | VARCHAR(100) | NOT NULL | 상품명 |
+| name | VARCHAR(200) | NOT NULL | 상품명 |
 | price | DECIMAL(10,2) | NOT NULL | 가격 (원) |
 | stock | INT | NOT NULL, DEFAULT 0 | 재고 |
 | description | TEXT | | 상품 설명 |
-| image_url | VARCHAR(500) | | 상품 이미지 URL |
+| sales_count | INT | NOT NULL, DEFAULT 0 | 누적 판매 수량 |
 | status | VARCHAR(20) | DEFAULT 'PENDING' | PENDING / ACTIVE / INACTIVE / REJECTED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
+
+### 2.8.1 uploads (공통 업로드)
+
+모든 도메인의 파일 첨부 및 이미지 업로드를 통합 관리하는 다형성(polymorphic) 테이블입니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| entity_type | VARCHAR(30) | NOT NULL | 용도 구분 (PRODUCT / FARM_CERT / SEED_RECEIPT / POST 등) |
+| entity_id | BIGINT | NOT NULL | 대상 엔티티의 PK |
+| file_type | VARCHAR(20) | NOT NULL | 파일 종류 (IMAGE / DOCUMENT) |
+| file_url | VARCHAR(500) | NOT NULL | 파일 URL |
+| original_name | VARCHAR(255) | | 원본 파일명 |
+| display_order | INT | DEFAULT 0 | 표시 순서 (0 = 대표) |
+| created_at | TIMESTAMP | NOT NULL | 등록일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **인덱스**: (entity_type, entity_id) 복합 인덱스 권장  
+> **entity_type 값**: `PRODUCT` (상품), `FARM_CERT` (토지증명서), `SEED_RECEIPT` (종자 영수증), `POST` (게시글)  
+> **file_type 값**: `IMAGE` (이미지 파일), `DOCUMENT` (문서 파일)
 
 ### 2.9 orders (주문)
 

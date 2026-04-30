@@ -1,66 +1,15 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import * as PortOne from '@portone/browser-sdk/v2';
-import type { CartItem, Product } from '../_lib/shop.types';
+import type { CartItem } from '../_lib/shop.types';
+import { getProduct, getCart } from '../_lib/shop.api';
 import {
   FREE_SHIPPING_THRESHOLD,
   DEFAULT_DELIVERY_FEE,
   DELIVERY_MEMO_OPTIONS,
 } from '@/lib/constants';
-
-// TODO: 백엔드 연동 후 API 호출로 교체
-const DUMMY_PRODUCTS: Record<number, Product> = {
-  1: {
-    id: 1, sellerId: 1, sellerName: '양평 해맑은 농장', categoryId: 1,
-    categoryName: '채소류', name: '유기농 배추 1포기', price: 3500, stock: 50,
-    description: '', imageUrls: ['https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f?w=800&h=600&fit=crop'],
-    status: 'ACTIVE', salesCount: 45, createdAt: '2026-04-20',
-  },
-  2: {
-    id: 2, sellerId: 2, sellerName: '양평 햇살 농장', categoryId: 1,
-    categoryName: '채소류', name: '청양고추 500g', price: 4800, stock: 30,
-    description: '', imageUrls: ['https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31?w=800&h=600&fit=crop'],
-    status: 'ACTIVE', salesCount: 32, createdAt: '2026-04-19',
-  },
-  3: {
-    id: 3, sellerId: 3, sellerName: '양평 초록 농원', categoryId: 2,
-    categoryName: '과일류', name: '방울토마토 1kg', price: 6200, stock: 20,
-    description: '', imageUrls: ['https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&h=600&fit=crop'],
-    status: 'ACTIVE', salesCount: 78, createdAt: '2026-04-18',
-  },
-  4: {
-    id: 4, sellerId: 4, sellerName: '양평 들녘 농장', categoryId: 3,
-    categoryName: '곡물·잡곡', name: '햅쌀 5kg', price: 15000, stock: 100,
-    description: '', imageUrls: ['https://images.unsplash.com/photo-1508313880080-c8bef1a3ed96?w=800&h=600&fit=crop'],
-    status: 'ACTIVE', salesCount: 120, createdAt: '2026-04-17',
-  },
-  5: {
-    id: 5, sellerId: 1, sellerName: '양평 해맑은 농장', categoryId: 2,
-    categoryName: '과일류', name: '유기농 딸기 500g', price: 8900, stock: 15,
-    description: '', imageUrls: ['https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=800&h=600&fit=crop'],
-    status: 'ACTIVE', salesCount: 95, createdAt: '2026-04-16',
-  },
-  6: {
-    id: 6, sellerId: 5, sellerName: '양평 꿀 공방', categoryId: 4,
-    categoryName: '가공식품', name: '천연 아카시아 꿀 500g', price: 22000, stock: 25,
-    description: '', imageUrls: ['https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&h=600&fit=crop'],
-    status: 'ACTIVE', salesCount: 18, createdAt: '2026-04-15',
-  },
-  7: {
-    id: 7, sellerId: 2, sellerName: '양평 햇살 농장', categoryId: 1,
-    categoryName: '채소류', name: '유기농 상추 300g', price: 2800, stock: 40,
-    description: '', imageUrls: ['https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=800&h=600&fit=crop'],
-    status: 'ACTIVE', salesCount: 55, createdAt: '2026-04-14',
-  },
-  8: {
-    id: 8, sellerId: 3, sellerName: '양평 초록 농원', categoryId: 2,
-    categoryName: '과일류', name: '사과 3kg (부사)', price: 12000, stock: 60,
-    description: '', imageUrls: ['https://images.unsplash.com/photo-1568702846914-96b305d2uj38?w=800&h=600&fit=crop'],
-    status: 'ACTIVE', salesCount: 63, createdAt: '2026-04-13',
-  },
-};
 
 /** 배송 정보 폼 */
 interface ShippingForm {
@@ -172,75 +121,46 @@ export function useCheckout(): UseCheckoutReturn {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // ── 주문 아이템 초기화 ──
-  // URL에 productId가 있으면 바로 구매 모드, 없으면 장바구니 더미 데이터
-  const [orderItems] = useState<CartItem[]>(() => {
-    const directProductId = searchParams.get('productId');
-    const directQuantity = searchParams.get('quantity');
+  // ── 주문 아이템 ──
+  const [orderItems, setOrderItems] = useState<CartItem[]>([]);
 
-    // 바로 구매 모드: 상품 상세에서 넘어온 경우
-    if (directProductId) {
-      const pid = Number(directProductId);
-      const qty = Math.max(1, Number(directQuantity) || 1);
-      const product = DUMMY_PRODUCTS[pid];
+  // 주문 아이템 로드 (바로구매 또는 장바구니)
+  useEffect(() => {
+    const loadItems = async () => {
+      const directProductId = searchParams.get('productId');
+      const directQuantity = searchParams.get('quantity');
 
-      if (product) {
-        return [{
-          id: Date.now(), // 임시 ID
-          userId: 1,
-          productId: pid,
-          quantity: qty,
-          product,
-        }];
+      if (directProductId) {
+        // 바로 구매 모드
+        const pid = Number(directProductId);
+        const qty = Math.max(1, Number(directQuantity) || 1);
+        const result = await getProduct(pid);
+        if (result.success && result.data) {
+          setOrderItems([{
+            id: Date.now(),
+            userId: 0,
+            productId: pid,
+            quantity: qty,
+            product: result.data,
+          }]);
+        }
+      } else {
+        // 장바구니 경유 — 선택된 아이템만 필터링
+        const result = await getCart();
+        if (result.success && result.data) {
+          const cartIdsParam = searchParams.get('cartIds');
+          if (cartIdsParam) {
+            const selectedIds = new Set(cartIdsParam.split(',').map(Number));
+            setOrderItems(result.data.filter((item) => selectedIds.has(item.id)));
+          } else {
+            setOrderItems(result.data);
+          }
+        }
       }
-    }
+    };
 
-    // 장바구니 경유: 더미 데이터 (TODO: 실제로는 장바구니에서 선택된 상품 데이터를 전달받아야 함)
-    return [
-      {
-        id: 1,
-        userId: 1,
-        productId: 2,
-        quantity: 1,
-        product: {
-          id: 2,
-          sellerId: 1,
-          sellerName: '양평 해맑은 농장',
-          categoryId: 2,
-          categoryName: '과일류',
-          name: '유기농 딸기 500g',
-          price: 8900,
-          stock: 50,
-          description: '',
-          imageUrls: ['/images/strawberry.jpg'],
-          status: 'ACTIVE',
-          salesCount: 85,
-          createdAt: '2026-04-20',
-        },
-      },
-      {
-        id: 3,
-        userId: 1,
-        productId: 3,
-        quantity: 2,
-        product: {
-          id: 3,
-          sellerId: 2,
-          sellerName: '양평 초록 농원',
-          categoryId: 2,
-          categoryName: '과일류',
-          name: '방울토마토 1kg',
-          price: 6200,
-          stock: 80,
-          description: '',
-          imageUrls: ['/images/tomato.jpg'],
-          status: 'ACTIVE',
-          salesCount: 62,
-          createdAt: '2026-04-18',
-        },
-      },
-    ];
-  });
+    loadItems();
+  }, [searchParams]);
 
   // ── 배송 정보 ──
   const [shippingForm, setShippingForm] = useState<ShippingForm>({
@@ -430,8 +350,14 @@ export function useCheckout(): UseCheckoutReturn {
         console.warn('[결제 검증] 백엔드 연결 실패:', verifyErr);
       }
 
-      // 4. 결제 완료 → 완료 페이지로 이동
-      router.push(`/shop/checkout/complete?paymentId=${paymentId}`);
+      // 4. 결제 완료 → 완료 페이지로 이동 (주문 정보 전달)
+      const completeParams = new URLSearchParams({
+        paymentId,
+        orderName,
+        totalAmount: String(finalTotal),
+        payMethod: paymentMethod === 'card' ? '카드 결제' : '가상계좌',
+      });
+      router.push(`/shop/checkout/complete?${completeParams.toString()}`);
 
     } catch (err) {
       const message = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';

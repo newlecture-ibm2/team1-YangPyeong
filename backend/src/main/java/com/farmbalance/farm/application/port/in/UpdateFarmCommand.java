@@ -18,4 +18,7 @@ public class UpdateFarmCommand {
     private String subNo;
     private String registrationNumber;
     private String documentUrl;
+    private String soilType;
+    private Double ph;
+    private Double organicMatter;
 }
