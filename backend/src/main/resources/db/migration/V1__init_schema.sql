@@ -41,7 +41,7 @@ CREATE TABLE farms (
     pnu_code              VARCHAR(19),                       -- 필지코드 (bjd_code + 본번부번 조합)
     latitude              DECIMAL(10,7),                     -- 위도 (카카오 address.y)
     longitude             DECIMAL(10,7),                     -- 경도 (카카오 address.x)
-    area                  DECIMAL(10,2) NOT NULL,            -- 면적 (㎡)
+    area                  DOUBLE PRECISION NOT NULL,         -- 면적 (㎡)
     soil_type             VARCHAR(50),
     business_number       VARCHAR(12),                       -- 사업자 등록번호
     land_cert_image_url   VARCHAR(500),                      -- 토지증명서 이미지/PDF URL
