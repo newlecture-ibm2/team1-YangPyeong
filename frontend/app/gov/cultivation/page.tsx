@@ -35,7 +35,7 @@ export default function CultivationPage() {
       .catch(() => setLoading(false));
   }, [year]);
 
-  const region = user?.regionName || user?.region || "지자체";
+  const region = user?.regionName || "지자체";
 
   return (
     <div className={styles.page}>
