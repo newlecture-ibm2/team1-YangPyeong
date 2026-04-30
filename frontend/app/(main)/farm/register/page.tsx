@@ -254,7 +254,7 @@ export default function FarmRegisterPage() {
               <div className={styles.row}>
                 <div>
                   <Input
-                    label="농업경영체 등록번호 (10자리)"
+                    label="농업경영체 등록번호"
                     placeholder="예: 1234567890"
                     value={formData.registrationNumber}
                     onChange={(e) => handleChange('registrationNumber', e.target.value)}
@@ -285,13 +285,15 @@ export default function FarmRegisterPage() {
               {/* 주소 검색 영역 */}
               <div className={styles.addressSection}>
                 <div className={styles.addressRow}>
-                  <Input
-                    label="우편번호"
-                    placeholder="우편번호"
-                    value={formData.zipCode}
-                    disabled
-                    required
-                  />
+                  <div style={{ flex: 1 }}>
+                    <Input
+                      label="우편번호"
+                      placeholder="우편번호"
+                      value={formData.zipCode}
+                      disabled
+                      required
+                    />
+                  </div>
                   <Button
                     type="button"
                     variant="outline"

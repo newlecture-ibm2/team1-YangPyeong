@@ -10,6 +10,7 @@ import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Modal from '@/components/common/Modal/Modal';
 import { useToast } from '@/components/common/Toast';
+import { uploadFile } from '@/lib/upload.api';
 import { useFarmDetail } from '../../_hooks/useFarm';
 import { updateFarm } from '../../_lib/farm.api';
 import styles from '../../register/page.module.css';
@@ -42,37 +43,60 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     pyeong: '',
     cropTypes: [] as string[],
     operationStatus: 'active',
+    soilType: '',
+    ph: '',
+    organicMatter: '',
     documentUrl: '',
-    // PNU 갱신을 위한 지번 주소 정보 (초기화는 상세 데이터 로드 후)
-    bjdCode: '1111010100', // 임시 기본값
+    bjdCode: '',
     isMountain: false,
-    mainNo: '0001',
-    subNo: '0000',
+    mainNo: '',
+    subNo: '',
   });
 
   // 상세 데이터 로드 시 폼에 채우기
   useEffect(() => {
     if (farm) {
+      // PNU 파싱 (19자리: 법정동10 + 산구분1 + 본번4 + 부번4)
+      let bjdCode = farm.bjdCode || '';
+      let isMountain = false;
+      let mainNo = '0001';
+      let subNo = '0000';
+      
+      if (farm.pnuCode && farm.pnuCode.length === 19) {
+        if (!bjdCode) bjdCode = farm.pnuCode.substring(0, 10); // bjdCode가 없으면 PNU에서 추출
+        isMountain = farm.pnuCode.substring(10, 11) === '2';
+        mainNo = farm.pnuCode.substring(11, 15);
+        subNo = farm.pnuCode.substring(15, 19);
+      }
+
       setFormData({
         name: farm.name,
         registrationNumber: farm.registrationNumber || '',
-        zipCode: '', // 백엔드에서 추가 저장 필요 시 보완
+        zipCode: '', 
         baseAddress: farm.address,
-        detailAddress: '', // 상세 주소 분리 저장 시 보완
+        detailAddress: '', 
         area: farm.area.toString(),
         pyeong: (farm.area / 3.3058).toFixed(1),
         cropTypes: farm.cropTypes,
         operationStatus: 'active',
         documentUrl: farm.documentUrl || '',
-        bjdCode: farm.bjdCode || '1111010100',
-        isMountain: false, // PNU에서 파싱 필요할 수 있음
-        mainNo: '0001', // PNU에서 파싱 필요할 수 있음
-        subNo: '0000', // PNU에서 파싱 필요할 수 있음
+        bjdCode: bjdCode,
+        isMountain: isMountain,
+        mainNo: mainNo,
+        subNo: subNo,
+        soilType: farm.soilType || '',
+        ph: farm.ph?.toString() || '',
+        organicMatter: farm.organicMatter?.toString() || '',
       });
     }
   }, [farm]);
 
   const handleChange = (field: string, value: any) => {
+    if (field === 'registrationNumber') {
+      const onlyNumbers = value.replace(/[^0-9]/g, '').slice(0, 10);
+      setFormData((prev) => ({ ...prev, [field]: onlyNumbers }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -84,6 +108,19 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
   const handlePyeongChange = (value: string) => {
     const m2Value = value && !isNaN(Number(value)) ? (Number(value) * 3.3058).toFixed(1) : '';
     setFormData((prev) => ({ ...prev, pyeong: value, area: m2Value }));
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const fileUrl = await uploadFile(file);
+      setFormData((prev) => ({ ...prev, documentUrl: fileUrl }));
+      toast.success('증빙 서류가 업로드되었습니다.');
+    } catch {
+      toast.error('파일 업로드에 실패했습니다.');
+    }
   };
 
   const handlePostcodeComplete = (data: Address) => {
@@ -103,6 +140,13 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     toast.success('주소가 변경되었습니다. 저장 시 PNU 정보가 갱신됩니다.');
   };
 
+  const removeCrop = (crop: string) => {
+    setFormData(prev => ({
+      ...prev,
+      cropTypes: prev.cropTypes.filter(t => t !== crop)
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -113,12 +157,15 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
         address: formData.baseAddress,
         area: Number(formData.area),
         cropTypes: formData.cropTypes,
-        bjdCode: formData.bjdCode,
+        bjdCode: formData.bjdCode || undefined,
         isMountain: formData.isMountain,
-        mainNo: formData.mainNo,
-        subNo: formData.subNo,
-        registrationNumber: formData.registrationNumber,
-        documentUrl: formData.documentUrl,
+        mainNo: formData.mainNo || undefined,
+        subNo: formData.subNo || undefined,
+        registrationNumber: formData.registrationNumber || undefined,
+        documentUrl: formData.documentUrl || undefined,
+        soilType: formData.soilType || undefined,
+        ph: formData.ph ? Number(formData.ph) : undefined,
+        organicMatter: formData.organicMatter ? Number(formData.organicMatter) : undefined,
       });
       toast.success('농장 정보가 수정되었습니다.');
       router.push('/farm');
@@ -159,12 +206,25 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
               />
+              <div className={styles.row}>
+                <Input
+                  label="농업경영체 등록번호"
+                  placeholder="예: 1234567890"
+                  value={formData.registrationNumber}
+                  onChange={(e) => handleChange('registrationNumber', e.target.value)}
+                />
+                <div className={styles.fileUploadWrapper}>
+                  <label className={styles.fileLabel}>증빙 서류 업로드</label>
+                  <input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={handleFileUpload} className={styles.fileInput} />
+                  {formData.documentUrl && <p className={styles.uploadSuccess}>✅ 업로드됨</p>}
+                </div>
+              </div>
               <div className={styles.addressSection}>
                 <div className={styles.addressRow}>
                   <div style={{ flex: 1 }}>
                     <Input label="우편번호" value={formData.zipCode} disabled />
                   </div>
-                  <Button type="button" variant="outline" onClick={() => setIsPostcodeOpen(true)}>주소 검색</Button>
+                  <Button type="button" variant="outline" className={styles.searchBtn} onClick={() => setIsPostcodeOpen(true)}>주소 검색</Button>
                 </div>
                 <Input label="기본 주소" value={formData.baseAddress} disabled required />
                 <Input
@@ -188,14 +248,26 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
                   onChange={(e) => handleAreaChange(e.target.value)}
                 />
               </div>
-              <Dropdown
-                label="주요 작물"
-                options={CROP_OPTIONS}
-                multiple
-                required
-                value={formData.cropTypes.join(',')}
-                onChange={(val) => handleChange('cropTypes', val.split(',').filter(Boolean))}
-              />
+              <div className={styles.inputGroup} style={{ gap: '8px' }}>
+                <Dropdown
+                  label="주요 작물"
+                  options={CROP_OPTIONS}
+                  multiple
+                  required
+                  value={formData.cropTypes.join(',')}
+                  onChange={(val) => handleChange('cropTypes', val.split(',').filter(Boolean))}
+                />
+                {formData.cropTypes.length > 0 && (
+                  <div className={styles.tagList}>
+                    {formData.cropTypes.map(crop => (
+                      <span key={crop} className={styles.tag}>
+                        {CROP_OPTIONS.find(o => o.value === crop)?.label || crop}
+                        <button type="button" className={styles.tagRemoveBtn} onClick={() => removeCrop(crop)}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </Card>
         </div>
@@ -206,6 +278,37 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
             <p style={{ color: 'white', fontSize: '14px', lineHeight: '1.6' }}>
               주소를 변경할 경우 필지 정보(PNU)가 재계산되며, 위치 기반 서비스 데이터가 갱신됩니다.
             </p>
+          </Card>
+
+          <Card>
+            <h3 className={styles.cardTitle}>토양 정보 (선택)</h3>
+            <div className={styles.inputGroup}>
+              <Dropdown
+                label="토양 유형"
+                options={[
+                  { value: 'sand', label: '사질토' },
+                  { value: 'loam', label: '양토' },
+                  { value: 'clay', label: '점토' },
+                  { value: 'sandy_loam', label: '사양토' },
+                ]}
+                value={formData.soilType}
+                onChange={(val) => handleChange('soilType', val)}
+              />
+              <div className={styles.row}>
+                <Input
+                  label="pH"
+                  placeholder="6.0 ~ 7.0"
+                  value={formData.ph}
+                  onChange={(e) => handleChange('ph', e.target.value)}
+                />
+                <Input
+                  label="유기물 (%)"
+                  placeholder="2.5"
+                  value={formData.organicMatter}
+                  onChange={(e) => handleChange('organicMatter', e.target.value)}
+                />
+              </div>
+            </div>
           </Card>
 
           <div className={styles.buttonGroup} style={{ marginTop: '2rem' }}>

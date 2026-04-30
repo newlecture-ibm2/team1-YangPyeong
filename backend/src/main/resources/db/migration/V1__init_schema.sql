@@ -39,14 +39,14 @@ CREATE TABLE farms (
     address               VARCHAR(255) NOT NULL,
     bjd_code              VARCHAR(10),                       -- 법정동코드 (카카오 address.b_code)
     pnu_code              VARCHAR(19),                       -- 필지코드 (bjd_code + 본번부번 조합)
-    latitude              DECIMAL(10,7),                     -- 위도 (카카오 address.y)
-    longitude             DECIMAL(10,7),                     -- 경도 (카카오 address.x)
-    area                  DECIMAL(10,2) NOT NULL,            -- 면적 (㎡)
+    latitude              DOUBLE PRECISION,                  -- 위도 (카카오 address.y)
+    longitude             DOUBLE PRECISION,                  -- 경도 (카카오 address.x)
+    area                  DOUBLE PRECISION NOT NULL,         -- 면적 (㎡)
     soil_type             VARCHAR(50),
-    business_number       VARCHAR(12),                       -- 사업자 등록번호
-    land_cert_image_url   VARCHAR(500),                      -- 토지증명서 이미지/PDF URL
+    registration_number   VARCHAR(12),                       -- 사업자 등록번호
+    document_url          VARCHAR(500),                      -- 토지증명서 이미지/PDF URL
     land_cert_verified    BOOLEAN      DEFAULT false,        -- 관리자 토지증명서 검증 완료 여부
-    status                VARCHAR(20)  NOT NULL DEFAULT 'PENDING',  -- PENDING | APPROVED | REJECTED
+    certification_status  VARCHAR(20)  NOT NULL DEFAULT 'PENDING',  -- PENDING | APPROVED | REJECTED
     created_at            TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_at            TIMESTAMP,
     deleted_at            TIMESTAMP
@@ -137,8 +137,8 @@ CREATE TABLE products (
     id           BIGSERIAL    PRIMARY KEY,
     seller_id    BIGINT       NOT NULL REFERENCES users(id),
     category_id  BIGINT       REFERENCES product_categories(id),
-    name         VARCHAR(100) NOT NULL,
-    price        DECIMAL(10,2) NOT NULL,
+    name         VARCHAR(200) NOT NULL,
+    price        INT NOT NULL,
     stock        INT          NOT NULL DEFAULT 0,
     description  TEXT,
     image_url    VARCHAR(500),
@@ -153,7 +153,7 @@ CREATE TABLE orders (
     id                BIGSERIAL    PRIMARY KEY,
     buyer_id          BIGINT       NOT NULL REFERENCES users(id),
     order_number      VARCHAR(30)  NOT NULL UNIQUE,
-    total_amount      DECIMAL(12,2) NOT NULL,
+    total_amount      INT NOT NULL,
     status            VARCHAR(20)  DEFAULT 'ORDERED',  -- ORDERED | ACCEPTED | SHIPPED | COMPLETED | CANCELLED
     receiver_name     VARCHAR(50),
     receiver_phone    VARCHAR(20),
@@ -170,8 +170,8 @@ CREATE TABLE order_items (
     order_id    BIGINT       NOT NULL REFERENCES orders(id),
     product_id  BIGINT       NOT NULL REFERENCES products(id),
     quantity    INT          NOT NULL,
-    unit_price  DECIMAL(10,2) NOT NULL,
-    subtotal    DECIMAL(10,2) NOT NULL,
+    unit_price  INT NOT NULL,
+    subtotal    INT NOT NULL,
     created_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMP,
     deleted_at  TIMESTAMP
