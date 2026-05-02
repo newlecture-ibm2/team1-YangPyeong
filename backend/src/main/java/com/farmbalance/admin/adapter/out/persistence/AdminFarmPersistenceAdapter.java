@@ -65,8 +65,12 @@ public class AdminFarmPersistenceAdapter implements AdminFarmPort {
     @Override
     public List<AdminFarm> findAll() {
         String sql = """
-            SELECT f.*,
-                   COALESCE(img.file_url, f.land_cert_image_url) AS land_cert_image_url
+            SELECT f.id, f.user_id, f.name, f.address, f.bjd_code, f.pnu_code,
+                   f.latitude, f.longitude, f.area AS area_size, f.soil_type,
+                   f.registration_number AS business_number,
+                   COALESCE(img.file_url, f.land_cert_image_url) AS land_cert_image_url,
+                   f.land_cert_verified, f.certification_status AS status,
+                   f.created_at, f.updated_at, f.deleted_at
             FROM farms f
             LEFT JOIN uploads img ON img.entity_type = 'FARM_LAND_CERT'
                 AND img.entity_id = f.id AND img.deleted_at IS NULL AND img.display_order = 0
@@ -79,12 +83,16 @@ public class AdminFarmPersistenceAdapter implements AdminFarmPort {
     @Override
     public List<AdminFarm> findByStatus(String status) {
         String sql = """
-            SELECT f.*,
-                   COALESCE(img.file_url, f.land_cert_image_url) AS land_cert_image_url
+            SELECT f.id, f.user_id, f.name, f.address, f.bjd_code, f.pnu_code,
+                   f.latitude, f.longitude, f.area AS area_size, f.soil_type,
+                   f.registration_number AS business_number,
+                   COALESCE(img.file_url, f.land_cert_image_url) AS land_cert_image_url,
+                   f.land_cert_verified, f.certification_status AS status,
+                   f.created_at, f.updated_at, f.deleted_at
             FROM farms f
             LEFT JOIN uploads img ON img.entity_type = 'FARM_LAND_CERT'
                 AND img.entity_id = f.id AND img.deleted_at IS NULL AND img.display_order = 0
-            WHERE f.status = ? AND f.deleted_at IS NULL
+            WHERE f.certification_status = ? AND f.deleted_at IS NULL
             ORDER BY f.created_at DESC
             """;
         return jdbcTemplate.query(sql, rowMapper, status);
@@ -93,8 +101,12 @@ public class AdminFarmPersistenceAdapter implements AdminFarmPort {
     @Override
     public Optional<AdminFarm> findById(Long id) {
         String sql = """
-            SELECT f.*,
-                   COALESCE(img.file_url, f.land_cert_image_url) AS land_cert_image_url
+            SELECT f.id, f.user_id, f.name, f.address, f.bjd_code, f.pnu_code,
+                   f.latitude, f.longitude, f.area AS area_size, f.soil_type,
+                   f.registration_number AS business_number,
+                   COALESCE(img.file_url, f.land_cert_image_url) AS land_cert_image_url,
+                   f.land_cert_verified, f.certification_status AS status,
+                   f.created_at, f.updated_at, f.deleted_at
             FROM farms f
             LEFT JOIN uploads img ON img.entity_type = 'FARM_LAND_CERT'
                 AND img.entity_id = f.id AND img.deleted_at IS NULL AND img.display_order = 0
@@ -106,7 +118,7 @@ public class AdminFarmPersistenceAdapter implements AdminFarmPort {
 
     @Override
     public void updateStatus(Long id, String status) {
-        String sql = "UPDATE farms SET status = ?, updated_at = NOW() WHERE id = ?";
+        String sql = "UPDATE farms SET certification_status = ?, updated_at = NOW() WHERE id = ?";
         jdbcTemplate.update(sql, status, id);
     }
 
@@ -119,17 +131,17 @@ public class AdminFarmPersistenceAdapter implements AdminFarmPort {
     @Override
     public List<FarmApprovalView> findApprovalsByStatus(String status) {
         String sql = """
-            SELECT f.id AS farm_id, f.name AS farm_name, f.address, f.area_size,
-                   f.business_number,
+            SELECT f.id AS farm_id, f.name AS farm_name, f.address, f.area AS area_size,
+                   f.registration_number AS business_number,
                    COALESCE(img.file_url, f.land_cert_image_url) AS land_cert_image_url,
                    f.land_cert_verified,
-                   f.status, f.created_at,
+                   f.certification_status AS status, f.created_at,
                    u.id AS user_id, u.name AS user_name, u.email AS user_email, u.phone AS user_phone
             FROM farms f
             JOIN users u ON f.user_id = u.id
             LEFT JOIN uploads img ON img.entity_type = 'FARM_LAND_CERT'
                 AND img.entity_id = f.id AND img.deleted_at IS NULL AND img.display_order = 0
-            WHERE f.status = ? AND f.deleted_at IS NULL
+            WHERE f.certification_status = ? AND f.deleted_at IS NULL
             ORDER BY f.created_at DESC
             """;
         return jdbcTemplate.query(sql, approvalViewRowMapper, status);

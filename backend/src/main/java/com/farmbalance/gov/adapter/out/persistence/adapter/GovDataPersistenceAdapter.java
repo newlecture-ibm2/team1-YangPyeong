@@ -69,7 +69,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
             SELECT %s AS "읍면",
                    f.name AS "농가명",
                    c.name AS "작물명",
-                   COALESCE(f.area_size, 0) AS "재배면적㎡",
+                   COALESCE(f.area, 0) AS "재배면적㎡",
                    COALESCE(sr.estimated_yield, 0) AS "예상생산량kg",
                    TO_CHAR(sr.created_at, 'YYYY-MM-DD') AS "등록일"
             FROM farm_crops sr
@@ -147,9 +147,9 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
             SELECT f.name AS "농가명",
                    u.name AS "대표자",
                    %s AS "읍면",
-                   COALESCE(f.area_size, 0) AS "면적㎡",
+                   COALESCE(f.area, 0) AS "면적㎡",
                    COALESCE(STRING_AGG(DISTINCT c.name, ', '), '-') AS "주요작물",
-                   f.status AS "승인상태"
+                   f.certification_status AS "승인상태"
             FROM farms f
             JOIN users u ON u.id = f.user_id
             LEFT JOIN farm_crops sr ON sr.farm_id = f.id AND sr.deleted_at IS NULL
@@ -158,7 +158,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
               AND f.deleted_at IS NULL
               %s
               %s
-            GROUP BY f.id, f.name, u.name, f.address, f.area_size, f.status
+            GROUP BY f.id, f.name, u.name, f.address, f.area, f.certification_status
             ORDER BY f.name
             """.formatted(TOWN_EXPR, townFilter, regionFilter);
         return jdbc.queryForList(sql, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
