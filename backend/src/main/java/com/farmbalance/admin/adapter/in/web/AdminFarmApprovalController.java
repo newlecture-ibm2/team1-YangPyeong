@@ -1,8 +1,10 @@
 package com.farmbalance.admin.adapter.in.web;
 
+import com.farmbalance.admin.adapter.in.web.dto.RejectRequest;
 import com.farmbalance.admin.application.port.in.ManageFarmApprovalUseCase;
 import com.farmbalance.admin.domain.FarmApprovalView;
 import com.farmbalance.global.response.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,12 +42,14 @@ public class AdminFarmApprovalController {
     }
 
     /**
-     * 농장 반려 (farm → REJECTED)
+     * 농장 반려 (farm → REJECTED + 반려 사유 저장)
      * PATCH /api/admins/approvals/{farmId}/reject
      */
     @PatchMapping("/{farmId}/reject")
-    public ApiResponse<Void> reject(@PathVariable Long farmId) {
-        manageFarmApprovalUseCase.reject(farmId);
+    public ApiResponse<Void> reject(@PathVariable Long farmId,
+                                     @Valid @RequestBody RejectRequest request) {
+        manageFarmApprovalUseCase.reject(farmId, request.getReason());
         return ApiResponse.ok(null);
     }
 }
+

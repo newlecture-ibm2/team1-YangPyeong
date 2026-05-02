@@ -51,7 +51,7 @@ public class FarmApprovalService implements ManageFarmApprovalUseCase {
 
     @Override
     @Transactional
-    public void reject(Long farmId) {
+    public void reject(Long farmId, String reason) {
         AdminFarm farm = adminFarmPort.findById(farmId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
 
@@ -60,7 +60,7 @@ public class FarmApprovalService implements ManageFarmApprovalUseCase {
                     "이미 처리된 신청입니다. (현재 상태: " + farm.getStatus() + ")");
         }
 
-        // 농장 상태 → REJECTED (역할은 변경하지 않음)
-        adminFarmPort.updateStatus(farmId, "REJECTED");
+        // 농장 상태 → REJECTED + 반려 사유 저장
+        adminFarmPort.updateStatusWithReason(farmId, "REJECTED", reason);
     }
 }

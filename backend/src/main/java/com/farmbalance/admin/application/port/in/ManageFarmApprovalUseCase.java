@@ -22,7 +22,7 @@ public interface ManageFarmApprovalUseCase {
     void approve(Long farmId);
 
     /**
-     * 농장 반려 (farm.status → REJECTED)
+     * 농장 반려 (farm.certification_status → REJECTED, 반려 사유 저장)
      */
-    void reject(Long farmId);
+    void reject(Long farmId, String reason);
 }

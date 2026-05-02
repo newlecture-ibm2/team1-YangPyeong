@@ -80,6 +80,7 @@ erDiagram
         varchar land_cert_image_url "인증 이미지 URL (V7 추가)"
         boolean land_cert_verified "(V1 + V7 IF NOT EXISTS)"
         varchar certification_status "PENDING | APPROVED | REJECTED (V1 + V7)"
+        varchar reject_reason "반려 사유 (V12 추가)"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -634,6 +635,7 @@ erDiagram
 | land_cert_image_url | VARCHAR(500) | | 인증 이미지 URL (V7 추가) |
 | land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 (V1 + V7) |
 | certification_status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED (V1 + V7) |
+| reject_reason | VARCHAR(500) | | 반려 사유 (V12 추가) |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |

@@ -123,6 +123,12 @@ public class AdminFarmPersistenceAdapter implements AdminFarmPort {
     }
 
     @Override
+    public void updateStatusWithReason(Long id, String status, String reason) {
+        String sql = "UPDATE farms SET certification_status = ?, reject_reason = ?, updated_at = NOW() WHERE id = ?";
+        jdbcTemplate.update(sql, status, reason, id);
+    }
+
+    @Override
     public void updateLandCertVerified(Long id, Boolean verified) {
         String sql = "UPDATE farms SET land_cert_verified = ?, updated_at = NOW() WHERE id = ?";
         jdbcTemplate.update(sql, verified, id);

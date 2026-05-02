@@ -1,7 +1,6 @@
 /* ══════════════════════════════════════════════
-   농부 승인/반려 페이지 스타일
+   농장 관리 페이지 스타일
    Design tokens: globals.css 참조
-   Mockup: final-ui-mockup/admin/admin-approvals.html
    ══════════════════════════════════════════════ */
 
 .container {
@@ -33,7 +32,7 @@
   margin-bottom: 40px;
 }
 
-/* ── 탭 (목업: pill 스타일) ── */
+/* ── 탭 (pill 스타일) ── */
 .tabs {
   display: flex;
   gap: var(--space-sm);
@@ -64,7 +63,7 @@
   border-color: var(--color-primary);
 }
 
-/* ── 신청 카드 (목업: card 스타일) ── */
+/* ── 신청 카드 ── */
 .cardList {
   display: flex;
   flex-direction: column;
@@ -165,4 +164,44 @@
 .emptyIcon {
   font-size: 48px;
   margin-bottom: var(--space-md);
+}
+
+/* ── 반려 사유 모달 ── */
+.rejectModal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.rejectModalDesc {
+  font-size: 15px;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.rejectTextarea {
+  width: 100%;
+  padding: var(--space-md);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 100px;
+  transition: border-color var(--transition-fast);
+}
+
+.rejectTextarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.rejectTextarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.rejectModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
 }

@@ -3,18 +3,24 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Button from '@/components/common/Button/Button'
 import Badge from '@/components/common/Badge/Badge'
+import Modal from '@/components/common/Modal/Modal'
 import { useToast } from '@/components/common/Toast'
-import styles from './Approvals.module.css'
+import styles from './Farms.module.css'
 import type { FarmApprovalView, ApprovalStatus } from '../_lib/farmApproval.types'
 import { APPROVAL_STATUS_LABELS } from '../_lib/farmApproval.types'
 import { fetchApprovals, approveFarm, rejectFarm } from '../_lib/farmApproval.api'
 
 type Tab = 'PENDING' | 'APPROVED' | 'REJECTED'
 
-export default function ApprovalsPage() {
+export default function FarmsPage() {
   const [tab, setTab] = useState<Tab>('PENDING')
   const [approvals, setApprovals] = useState<FarmApprovalView[]>([])
   const [loading, setLoading] = useState(true)
+
+  // 반려 사유 모달 상태
+  const [rejectTarget, setRejectTarget] = useState<FarmApprovalView | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+  const [rejecting, setRejecting] = useState(false)
 
   const toast = useToast()
   const toastRef = useRef(toast)
@@ -51,16 +57,32 @@ export default function ApprovalsPage() {
     }
   }
 
+  // 반려 모달 열기
+  const openRejectModal = (item: FarmApprovalView) => {
+    setRejectTarget(item)
+    setRejectReason('')
+  }
+
   // 반려 처리
-  const handleReject = async (item: FarmApprovalView) => {
-    if (!window.confirm(`"${item.farmName}" 농장을 반려하시겠습니까?`)) return
+  const handleRejectConfirm = async () => {
+    if (!rejectTarget) return
+    if (!rejectReason.trim()) {
+      toast.error('반려 사유를 입력해주세요.')
+      return
+    }
+
+    setRejecting(true)
     try {
-      await rejectFarm(item.farmId)
-      toast.success(`${item.farmName} 농장이 반려되었습니다.`)
+      await rejectFarm(rejectTarget.farmId, rejectReason.trim())
+      toast.success(`${rejectTarget.farmName} 농장이 반려되었습니다.`)
+      setRejectTarget(null)
+      setRejectReason('')
       await loadApprovals()
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : '반려 처리에 실패했습니다.'
       toast.error(msg)
+    } finally {
+      setRejecting(false)
     }
   }
 
@@ -78,12 +100,12 @@ export default function ApprovalsPage() {
     <div className={styles.container}>
       {/* 헤더 */}
       <div className={styles.header}>
-        <h1 className={styles.title}>✅ 승인 관리</h1>
+        <h1 className={styles.title}>🌾 농장 관리</h1>
         {tab === 'PENDING' && approvals.length > 0 && (
           <Badge variant="red">{approvals.length}건 대기</Badge>
         )}
       </div>
-      <p className={styles.subtitle}>농장 등록, 판매자 신청 등 승인이 필요한 항목을 관리합니다.</p>
+      <p className={styles.subtitle}>농장 등록 신청을 검토하고 승인 또는 반려합니다.</p>
 
       {/* 탭 (pill 스타일) */}
       <div className={styles.tabs}>
@@ -109,7 +131,7 @@ export default function ApprovalsPage() {
             : `${APPROVAL_STATUS_LABELS[tab]} 내역이 없습니다.`}
         </div>
       ) : (
-        /* 카드 목록 (목업: card + flex-between 레이아웃) */
+        /* 카드 목록 */
         <div className={styles.cardList}>
           {approvals.map((item) => (
             <div key={item.farmId} className={styles.approvalCard}>
@@ -171,7 +193,7 @@ export default function ApprovalsPage() {
               {/* 액션 버튼 (PENDING만 표시) */}
               {item.status === 'PENDING' && (
                 <div className={styles.cardActions}>
-                  <Button variant="outline" size="sm" onClick={() => handleReject(item)}>
+                  <Button variant="outline" size="sm" onClick={() => openRejectModal(item)}>
                     반려
                   </Button>
                   <Button variant="primary" size="sm" onClick={() => handleApprove(item)}>
@@ -182,6 +204,43 @@ export default function ApprovalsPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* 반려 사유 입력 모달 */}
+      {rejectTarget && (
+        <Modal
+          isOpen={true}
+          onClose={() => setRejectTarget(null)}
+          title="농장 반려"
+        >
+          <div className={styles.rejectModal}>
+            <p className={styles.rejectModalDesc}>
+              <strong>{rejectTarget.farmName}</strong> 농장을 반려합니다.
+              <br />반려 사유를 입력해주세요.
+            </p>
+            <textarea
+              className={styles.rejectTextarea}
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="반려 사유를 입력해주세요."
+              rows={4}
+              maxLength={500}
+            />
+            <div className={styles.rejectModalActions}>
+              <Button variant="outline" size="sm" onClick={() => setRejectTarget(null)}>
+                취소
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleRejectConfirm}
+                disabled={rejecting || !rejectReason.trim()}
+              >
+                {rejecting ? '처리 중...' : '반려 확인'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   )
