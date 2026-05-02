@@ -38,28 +38,29 @@ export default function Timeline({ histories, onEdit, onDelete }: TimelineProps)
 
   return (
     <div className={styles.container}>
-      {/* 필터 버튼 그룹 */}
-      <div className={styles.filters}>
+      {/* 필터 그룹 */}
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '32px' }}>
+
         <button
-          className={`${styles.filterBtn} ${filter === 'ALL' ? styles.active : ''}`}
+          className={filter === 'ALL' ? styles.filterActive : styles.filterLink}
           onClick={() => setFilter('ALL')}
         >
           전체보기
         </button>
         <button
-          className={`${styles.filterBtn} ${filter === 'USER' ? styles.active : ''}`}
+          className={filter === 'USER' ? styles.filterActive : styles.filterLink}
           onClick={() => setFilter('USER')}
         >
           🌱 사용자 기록
         </button>
         <button
-          className={`${styles.filterBtn} ${filter === 'WEATHER' ? styles.active : ''}`}
+          className={filter === 'WEATHER' ? styles.filterActive : styles.filterLink}
           onClick={() => setFilter('WEATHER')}
         >
           ☁️ 날씨/환경
         </button>
         <button
-          className={`${styles.filterBtn} ${filter === 'SYSTEM' ? styles.active : ''}`}
+          className={filter === 'SYSTEM' ? styles.filterActive : styles.filterLink}
           onClick={() => setFilter('SYSTEM')}
         >
           🤖 시스템 알림

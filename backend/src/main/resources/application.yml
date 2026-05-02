@@ -57,8 +57,10 @@ jwt:
 external:
   kakao:
     rest-api-key: ${KAKAO_REST_API_KEY:}
-  kma:
-    api-key: ${KMA_API_KEY:}
+  weather:
+    base-url: "https://apis.data.go.kr/1360000/AsosDalyInfoService"
+
+    api-key: ${WEATHER_API_KEY:}
   soil:
     api-key: ${SOIL_API_KEY:}
   nongsaro:

@@ -9,7 +9,8 @@ import lombok.Builder;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class WeatherInfo {
+public class WeatherData {
     private Double avgTa; // 평균 기온
     private Double sumRn; // 일 강수량
 }
+

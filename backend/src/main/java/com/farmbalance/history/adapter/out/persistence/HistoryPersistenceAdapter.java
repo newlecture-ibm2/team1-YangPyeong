@@ -38,6 +38,18 @@ public class HistoryPersistenceAdapter implements SaveHistoryPort, LoadHistoryPo
     }
 
     @Override
+    public void saveAllHistories(List<CultivationHistory> histories) {
+        List<HistoryJpaEntity> entities = histories.stream()
+                .map(history -> HistoryJpaEntity.builder()
+                        .farmId(history.getFarmId())
+                        .historyType(history.getHistoryType())
+                        .content(history.getContent())
+                        .build())
+                .collect(Collectors.toList());
+        repository.saveAll(entities);
+    }
+
+    @Override
     public List<CultivationHistory> loadHistoriesByFarmId(Long farmId) {
         return repository.findByFarmIdOrderByCreatedAtDesc(farmId).stream()
                 .map(this::mapToDomain)
