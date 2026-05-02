@@ -4,7 +4,7 @@
 > **DB**: PostgreSQL 16
 > **ORM**: Spring Data JPA (Hibernate)
 > **네이밍**: snake_case (DB) ↔ camelCase (Java Entity)
-> **테이블 수**: 31개 (기존 14 + 신규 17)
+> **테이블 수**: 34개 (기존 14 + 신규 20)
 
 ---
 
@@ -24,6 +24,24 @@ erDiagram
     }
 
     regions ||--o{ regions : "상위-하위"
+
+    %% ===== 챗봇 도메인 (V2) =====
+    chat_rooms {
+        bigint id PK
+        bigint user_id "사용자 (논리적 참조)"
+        varchar title "대화방 제목"
+        timestamp created_at
+    }
+
+    chat_messages {
+        bigint id PK
+        bigint chat_room_id FK
+        varchar sender_role "USER | AI | SYSTEM"
+        text content "메시지 내용"
+        timestamp created_at
+    }
+
+    chat_rooms ||--o{ chat_messages : "메시지"
 
     %% ===== 유저 도메인 =====
     users {
@@ -50,13 +68,18 @@ erDiagram
         varchar address
         varchar bjd_code "법정동코드 10자리"
         varchar pnu_code "필지코드 19자리"
-        decimal latitude
-        decimal longitude
-        decimal area_size "㎡"
-        varchar soil_type
-        varchar business_number "사업자 등록번호"
-        boolean land_cert_verified
-        varchar status "PENDING | APPROVED | REJECTED"
+        double_precision latitude
+        double_precision longitude
+        double_precision area "면적 (㎡)"
+        varchar soil_type "토양 유형 (V1)"
+        double_precision soil_ph "산도 (V8 추가)"
+        double_precision soil_organic_matter "유기물 (V8 추가)"
+        varchar registration_number "농업경영체 등록번호 (V1)"
+        varchar business_number "사업자 등록번호 (V8 추가)"
+        varchar document_url "토지증명서 URL (V1)"
+        varchar land_cert_image_url "인증 이미지 URL (V7 추가)"
+        boolean land_cert_verified "(V1 + V7 IF NOT EXISTS)"
+        varchar certification_status "PENDING | APPROVED | REJECTED (V1 + V7)"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -94,6 +117,14 @@ erDiagram
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
+    }
+
+    cultivation_history {
+        bigint id PK
+        bigint farm_id FK
+        varchar history_type "이력 유형"
+        text content "이력 내용"
+        timestamp created_at
     }
 
 
@@ -296,6 +327,7 @@ erDiagram
     users ||--o{ download_history : "다운로드이력"
 
     farms ||--o{ farm_crops : "작물등록"
+    farms ||--o{ cultivation_history : "재배이력"
 
     crops ||--o{ farm_crops : "작물참조"
     crops ||--o{ balance_data : "수급데이터"
@@ -541,6 +573,25 @@ erDiagram
 > **계층 예시**: 경기도(PROVINCE) → 양평군(CITY) → 양평읍(TOWN)
 > **용도**: GOV 사용자의 관할지역 결정, 읍면 필터 동적 조회, 하드코딩 제거
 
+### 2.0.1 chat_rooms (챗봇 대화방) — V2 추가
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 대화방 고유 ID |
+| user_id | BIGINT | NOT NULL | 사용자 (논리적 참조) |
+| title | VARCHAR(100) | NOT NULL | 대화방 제목 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 생성일 |
+
+### 2.0.2 chat_messages (챗봇 메시지) — V2 추가
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 메시지 고유 ID |
+| chat_room_id | BIGINT | FK → chat_rooms(id) ON DELETE CASCADE, NOT NULL | 대화방 |
+| sender_role | VARCHAR(20) | NOT NULL | USER / AI / SYSTEM |
+| content | TEXT | NOT NULL | 메시지 내용 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 생성일 |
+
 ### 2.1 users (유저)
 
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -550,7 +601,7 @@ erDiagram
 | password | VARCHAR(255) | NOT NULL | BCrypt 해싱 |
 | name | VARCHAR(50) | NOT NULL | 이름 |
 | phone | VARCHAR(20) | | 전화번호 |
-| role | VARCHAR(20) | NOT NULL, DEFAULT 'GENERAL' | GENERAL / FARMER / ADMIN / GOV |
+| role | VARCHAR(20) | NOT NULL, DEFAULT 'USER' | USER / FARMER / ADMIN / GOV |
 | region | VARCHAR(50) | | 지역 (양평군 등) — 하위호환용 유지 |
 | region_code | VARCHAR(10) | | 시군구 코드 (regions.code 참조, 예: "4183") — 신규 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | ACTIVE / SUSPENDED |
@@ -571,13 +622,18 @@ erDiagram
 | address | VARCHAR(255) | NOT NULL | 농장 주소 |
 | bjd_code | VARCHAR(10) | | 법정동코드 (카카오 address.b_code) |
 | pnu_code | VARCHAR(19) | | 필지코드 (bjd_code + 본번부번 조합) |
-| latitude | DECIMAL(10,7) | | 위도 (카카오 address.y) |
-| longitude | DECIMAL(10,7) | | 경도 (카카오 address.x) |
-| area_size | DECIMAL(10,2) | NOT NULL | 면적 (㎡) |
-| soil_type | VARCHAR(50) | | 토양 유형 |
-| business_number | VARCHAR(12) | | 사업자 등록번호 |
-| land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 |
-| status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
+| latitude | DOUBLE PRECISION | | 위도 (카카오 address.y) |
+| longitude | DOUBLE PRECISION | | 경도 (카카오 address.x) |
+| area | DOUBLE PRECISION | NOT NULL | 면적 (㎡) |
+| soil_type | VARCHAR(50) | | 토양 유형 (V1) |
+| soil_ph | DOUBLE PRECISION | | 산도 (V8 추가) |
+| soil_organic_matter | DOUBLE PRECISION | | 유기물 (V8 추가) |
+| registration_number | VARCHAR(12) | | 농업경영체 등록번호 (V1) |
+| business_number | VARCHAR(12) | | 사업자 등록번호 (V8 추가) |
+| document_url | VARCHAR(500) | | 토지증명서 이미지/PDF URL (V1) |
+| land_cert_image_url | VARCHAR(500) | | 인증 이미지 URL (V7 추가) |
+| land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 (V1 + V7) |
+| certification_status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED (V1 + V7) |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
@@ -608,6 +664,8 @@ erDiagram
 
 ### 2.5 farm_crops (농장-작물 연결)
 
+> **V11 리팩토링**: 기존 `seed_registrations` 테이블을 rename하고 불필요 컬럼(seed_type, quantity, receipt_image_url, verified)을 삭제하여 순수 농장-작물 조인 테이블로 전환.
+
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
 | id | BIGINT | PK, AUTO | 고유 ID |
@@ -618,6 +676,20 @@ erDiagram
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
+
+### 2.5.1 cultivation_history (재배 이력) — V6 추가
+
+농장별 재배 활동 이력을 기록하는 테이블입니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| farm_id | BIGINT | FK → farms(id) ON DELETE CASCADE, NOT NULL | 농장 |
+| history_type | VARCHAR(20) | NOT NULL | 이력 유형 |
+| content | TEXT | NOT NULL | 이력 내용 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 등록일 |
+
+> **인덱스**: `idx_history_farm_id` ON cultivation_history(farm_id)
 
 ### 2.6 balance_data (수급 데이터)
 
@@ -660,10 +732,11 @@ erDiagram
 | seller_id | BIGINT | FK → users(id), NOT NULL | 판매자 |
 | category_id | BIGINT | FK → product_categories(id) | 상품 카테고리 |
 | name | VARCHAR(200) | NOT NULL | 상품명 |
-| price | DECIMAL(10,2) | NOT NULL | 가격 (원) |
+| price | INT | NOT NULL | 가격 (원) |
 | stock | INT | NOT NULL, DEFAULT 0 | 재고 |
 | description | TEXT | | 상품 설명 |
-| sales_count | INT | NOT NULL, DEFAULT 0 | 누적 판매 수량 |
+| image_url | VARCHAR(500) | | 대표 이미지 URL |
+| sales_count | INT | NOT NULL, DEFAULT 0 | 누적 판매 수량 (V3 추가) |
 | status | VARCHAR(20) | DEFAULT 'PENDING' | PENDING / ACTIVE / INACTIVE / REJECTED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
@@ -696,7 +769,7 @@ erDiagram
 | id | BIGINT | PK, AUTO | 주문 고유 ID |
 | buyer_id | BIGINT | FK → users(id), NOT NULL | 구매자 |
 | order_number | VARCHAR(30) | UNIQUE, NOT NULL | 주문 번호 |
-| total_amount | DECIMAL(12,2) | NOT NULL | 총 금액 |
+| total_amount | INT | NOT NULL | 총 금액 (원) |
 | status | VARCHAR(20) | DEFAULT 'ORDERED' | ORDERED / ACCEPTED / SHIPPED / COMPLETED / CANCELLED |
 | receiver_name | VARCHAR(50) | | 받는 분 |
 | receiver_phone | VARCHAR(20) | | 받는 분 연락처 |
@@ -714,8 +787,8 @@ erDiagram
 | order_id | BIGINT | FK → orders(id), NOT NULL | 주문 |
 | product_id | BIGINT | FK → products(id), NOT NULL | 상품 |
 | quantity | INT | NOT NULL | 수량 |
-| unit_price | DECIMAL(10,2) | NOT NULL | 단가 (주문 시점 스냅샷) |
-| subtotal | DECIMAL(10,2) | NOT NULL | 소계 |
+| unit_price | INT | NOT NULL | 단가 (주문 시점 스냅샷) |
+| subtotal | INT | NOT NULL | 소계 |
 | created_at | TIMESTAMP | NOT NULL | 생성일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
@@ -1116,6 +1189,7 @@ erDiagram
 | regions → users | 1:N | — | region_code로 논리적 참조 (GOV 관할) |
 | users → farms | 1:N | ✅ | 유저 한 명이 여러 농장 소유 가능 |
 | farms → farm_crops | 1:N | ✅ | 농장별 재배 작물 등록 |
+| farms → cultivation_history | 1:N | ✅ | 농장별 재배 활동 이력 (V6) |
 | crops → balance_data | 1:N | ✅ | 작물별 지역·시즌 수급 데이터 |
 | users → products | 1:N | ✅ | 판매자가 여러 상품 등록 |
 | users → orders | 1:N | ✅ | 구매자가 여러 주문 |
