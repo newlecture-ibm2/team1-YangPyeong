@@ -91,11 +91,11 @@ erDiagram
 
     crop_categories ||--o{ crops : "분류"
 
-    seed_registrations {
+    cultivation_registrations {
         bigint id PK
         bigint farm_id FK
         bigint crop_id FK
-        varchar seed_type "SEED | SEEDLING | SAPLING"
+        varchar cultivation_type "SEED | SEEDLING | SAPLING"
         int quantity
         decimal estimated_yield "예상 총 수확량"
         varchar yield_unit "g | kg | ton"
@@ -304,9 +304,9 @@ erDiagram
     users ||--o{ notifications : "수신"
     users ||--o{ download_history : "다운로드이력"
 
-    farms ||--o{ seed_registrations : "종자등록"
+    farms ||--o{ cultivation_registrations : "재배등록"
 
-    crops ||--o{ seed_registrations : "작물참조"
+    crops ||--o{ cultivation_registrations : "작물참조"
     crops ||--o{ balance_data : "수급데이터"
 
     orders ||--|{ order_items : "주문항목"
@@ -621,14 +621,14 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.5 seed_registrations (종자 등록)
+### 2.5 cultivation_registrations (재배 등록)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
-| id | BIGINT | PK, AUTO | 종자 등록 고유 ID |
+| id | BIGINT | PK, AUTO | 재배 등록 고유 ID |
 | farm_id | BIGINT | FK → farms(id), NOT NULL | 농장 |
 | crop_id | BIGINT | FK → crops(id), NOT NULL | 작물 |
-| seed_type | VARCHAR(20) | NOT NULL | SEED(씨앗) / SEEDLING(종자) / SAPLING(모종) |
+| cultivation_type | VARCHAR(20) | NOT NULL | SEED(씨앗) / SEEDLING(종자) / SAPLING(모종) |
 | quantity | INT | NOT NULL | 수량 |
 | estimated_yield | DECIMAL(12,2) | | 예상 총 수확량 |
 | yield_unit | VARCHAR(10) | | 수확량 단위 (g / kg / ton) |
@@ -694,7 +694,7 @@ erDiagram
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
 | id | BIGINT | PK, AUTO | 고유 ID |
-| entity_type | VARCHAR(30) | NOT NULL | 용도 구분 (PRODUCT / FARM_CERT / SEED_RECEIPT / POST 등) |
+| entity_type | VARCHAR(30) | NOT NULL | 용도 구분 (PRODUCT / FARM_CERT / CULTIVATION_RECEIPT / POST 등) |
 | entity_id | BIGINT | NOT NULL | 대상 엔티티의 PK |
 | file_type | VARCHAR(20) | NOT NULL | 파일 종류 (IMAGE / DOCUMENT) |
 | file_url | VARCHAR(500) | NOT NULL | 파일 URL |
@@ -704,7 +704,7 @@ erDiagram
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
 > **인덱스**: (entity_type, entity_id) 복합 인덱스 권장  
-> **entity_type 값**: `PRODUCT` (상품), `FARM_CERT` (토지증명서), `SEED_RECEIPT` (종자 영수증), `POST` (게시글)  
+> **entity_type 값**: `PRODUCT` (상품), `FARM_CERT` (토지증명서), `CULTIVATION_RECEIPT` (재배 영수증), `POST` (게시글)  
 > **file_type 값**: `IMAGE` (이미지 파일), `DOCUMENT` (문서 파일)
 
 ### 2.9 orders (주문)
@@ -1133,7 +1133,7 @@ erDiagram
 | regions → regions | 1:N (자기참조) | ✅ | 시도 → 시군구 → 읍면동 계층 |
 | regions → users | 1:N | — | region_code로 논리적 참조 (GOV 관할) |
 | users → farms | 1:N | ✅ | 유저 한 명이 여러 농장 소유 가능 |
-| farms → seed_registrations | 1:N | ✅ | 농장별 여러 종자 등록 |
+| farms → cultivation_registrations | 1:N | ✅ | 농장별 여러 재배 등록 |
 | crops → balance_data | 1:N | ✅ | 작물별 지역·시즌 수급 데이터 |
 | users → products | 1:N | ✅ | 판매자가 여러 상품 등록 |
 | users → orders | 1:N | ✅ | 구매자가 여러 주문 |
@@ -1187,9 +1187,9 @@ CREATE INDEX idx_farms_status ON farms(status);
 CREATE INDEX idx_farms_bjd_code ON farms(bjd_code);
 CREATE INDEX idx_farms_pnu_code ON farms(pnu_code);
 
--- 종자 등록
-CREATE INDEX idx_seed_reg_farm_id ON seed_registrations(farm_id);
-CREATE INDEX idx_seed_reg_crop_id ON seed_registrations(crop_id);
+-- 재배 등록
+CREATE INDEX idx_cultivation_reg_farm_id ON cultivation_registrations(farm_id);
+CREATE INDEX idx_cultivation_reg_crop_id ON cultivation_registrations(crop_id);
 
 -- 수급 데이터 (핵심 조회)
 CREATE UNIQUE INDEX idx_balance_data_unique ON balance_data(region_code, crop_id, year, season);
