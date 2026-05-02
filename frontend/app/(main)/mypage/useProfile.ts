@@ -127,19 +127,22 @@ export function useProfile() {
     setIsEditing(false);
   }, [profile]);
 
-  /** 프로필 저장 */
-  const saveProfile = useCallback(async () => {
+  /** 프로필 저장 (overrides로 저장 시점 데이터 덮어쓰기 가능) */
+  const saveProfile = useCallback(async (overrides?: Partial<ProfileUpdateRequest>) => {
     if (!formData || !profile) return false;
     setIsSaving(true);
     try {
+      const dataToSave = overrides ? { ...formData, ...overrides } : formData;
+
       const res = await apiFetch<void>('/api/users/me', {
         method: 'PUT',
-        body: formData,
+        body: dataToSave,
       });
 
       if (res.success) {
-        const updatedProfile = { ...profile, ...formData };
+        const updatedProfile = { ...profile, ...dataToSave };
         setProfile(updatedProfile);
+        setFormData(dataToSave);
         
         // 브라우저 쿠키(fb-user) 동기화
         if (typeof document !== 'undefined') {

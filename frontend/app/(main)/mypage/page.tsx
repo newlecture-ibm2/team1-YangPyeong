@@ -9,6 +9,7 @@ import { ProfileHeader } from './_components/Header/ProfileHeader';
 import ProfileInfoView from './_components/Info/ProfileInfoView';
 import ProfileEditForm from './_components/Form/ProfileEditForm';
 import { ChangePasswordModal, DeleteAccountModal } from './_components/Account/AccountModals';
+import type { ProfileUpdateRequest } from './_lib/profile.types';
 import styles from './page.module.css';
 
 /**
@@ -35,8 +36,8 @@ export default function MyPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   /** 프로필 저장 핸들러 */
-  const handleSave = async () => {
-    const success = await saveProfile();
+  const handleSave = async (overrides?: Partial<ProfileUpdateRequest>) => {
+    const success = await saveProfile(overrides);
     if (success) {
       toast('프로필이 성공적으로 수정되었습니다.', 'success');
     } else {
