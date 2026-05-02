@@ -10,109 +10,27 @@ import Input from '@/components/common/Input';
 import styles from './page.module.css';
 import { getPasswordStrength } from '@/lib/utils';
 
+import usePasswordReset from './usePasswordReset';
+
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  // Step 1: 이메일 입력
-  const [email, setEmail] = useState('');
-
-  // Step 2: 보안질문 답변
-  const [securityQuestion, setSecurityQuestion] = useState('');
-  const [securityAnswer, setSecurityAnswer] = useState('');
-
-  // Step 3: 새 비밀번호 설정
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
-  const strength = getPasswordStrength(newPassword);
-
-  // ── Step 1: 이메일로 보안질문 조회 ──
-  const handleEmailSubmit = async () => {
-    if (!email.trim()) {
-      setError('이메일을 입력해주세요.');
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('올바른 이메일 형식을 입력해주세요.');
-      return;
-    }
-
-    setError('');
-    setLoading(true);
-
-    try {
-      const result = await apiFetch<{ question: string }>('/api/auth/password-reset/question', {
-        method: 'POST',
-        body: { email },
-      });
-
-      if (result.success && result.data) {
-        setSecurityQuestion(result.data.question);
-        setStep(2);
-      } else {
-        setError(result.error?.message || '등록된 계정을 찾을 수 없습니다.');
-      }
-    } catch {
-      setError('서버에 연결할 수 없습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ── Step 2 → Step 3 전환 ──
-  const handleAnswerSubmit = () => {
-    if (!securityAnswer.trim()) {
-      setError('보안질문 답변을 입력해주세요.');
-      return;
-    }
-    setError('');
-    setStep(3);
-  };
-
-  // ── Step 3: 비밀번호 재설정 ──
-  const handleResetSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (newPassword.length < 8) {
-      setError('비밀번호는 8자 이상이어야 합니다.');
-      return;
-    }
-    if (strength.level < 2) {
-      setError('보안을 위해 더 강력한 비밀번호를 설정해주세요.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.');
-      return;
-    }
-
-    setError('');
-    setLoading(true);
-
-    try {
-      const result = await apiFetch('/api/auth/password-reset', {
-        method: 'PUT',
-        body: {
-          email,
-          securityAnswer,
-          newPassword,
-        },
-      });
-
-      if (result.success) {
-        setSuccess(true);
-      } else {
-        setError(result.error?.message || '비밀번호 재설정에 실패했습니다.');
-      }
-    } catch {
-      setError('서버에 연결할 수 없습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    step,
+    error,
+    setError,
+    success,
+    loading,
+    email, setEmail,
+    securityQuestion,
+    securityAnswer, setSecurityAnswer,
+    newPassword, setNewPassword,
+    confirmPassword, setConfirmPassword,
+    strength,
+    handleEmailSubmit,
+    handleAnswerSubmit,
+    handleResetSubmit,
+    handlePrev,
+  } = usePasswordReset();
 
   // ── 재설정 성공 화면 ──
   if (success) {

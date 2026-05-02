@@ -19,4 +19,6 @@ public interface UserRepository {
     Optional<User> findByProviderAndProviderId(String provider, String providerId);
 
     boolean existsByEmail(String email);
+
+    boolean existsByName(String name);
 }

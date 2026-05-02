@@ -38,11 +38,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null) {
             try {
                 var claims = jwtTokenProvider.validateAndGetClaims(token);
-                Long userId = jwtTokenProvider.getUserId(claims);
+                String email = claims.get("email", String.class);
                 String role = jwtTokenProvider.getRole(claims);
 
                 var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
-                var authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
+                var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception e) {
                 log.debug("JWT 인증 실패: {}", e.getMessage());

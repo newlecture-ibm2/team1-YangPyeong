@@ -23,6 +23,8 @@ public class User {
     private AuthProvider provider;
     private String providerId;
     private String profileImageUrl;
+    private String address;
+    private String bio;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -39,6 +41,8 @@ public class User {
                 .provider(this.provider)
                 .providerId(this.providerId)
                 .profileImageUrl(this.profileImageUrl)
+                .address(this.address)
+                .bio(this.bio)
                 .createdAt(this.createdAt)
                 .updatedAt(this.updatedAt)
                 .build();
@@ -46,5 +50,17 @@ public class User {
 
     public void updateRole(Role role) {
         this.role = role;
+    }
+
+    /** 프로필 정보를 업데이트합니다. */
+    public void updateProfile(String name, String phone, String region, String address, String bio) {
+        if (name != null && !name.isBlank()) {
+            this.name = name;
+        }
+        this.phone = phone;
+        this.region = region;
+        this.address = address;
+        this.bio = bio;
+        this.updatedAt = LocalDateTime.now();
     }
 }

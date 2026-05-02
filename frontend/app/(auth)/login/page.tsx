@@ -9,56 +9,20 @@ import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import styles from './page.module.css';
 
-// ── OAuth 설정 ──
-const KAKAO_CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID || '';
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-const REDIRECT_BASE = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+import useLogin from './useLogin';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  // ── 일반 로그인 ──
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const result = await apiFetch('/api/auth/login', {
-        method: 'POST',
-        body: { email, password },
-      });
-
-      if (result.success) {
-        router.push('/');
-        router.refresh();
-      } else {
-        setError(result.error?.message || '로그인에 실패했습니다.');
-      }
-    } catch {
-      setError('서버에 연결할 수 없습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ── 카카오 로그인 (OAuth redirect) ──
-  const handleKakaoLogin = () => {
-    const redirectUri = `${REDIRECT_BASE}/auth/kakao/callback`;
-    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
-    window.location.href = kakaoAuthUrl;
-  };
-
-  // ── 구글 로그인 (OAuth redirect) ──
-  const handleGoogleLogin = () => {
-    const redirectUri = `${REDIRECT_BASE}/auth/google/callback`;
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent('email profile')}&access_type=offline&prompt=consent`;
-    window.location.href = googleAuthUrl;
-  };
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    error,
+    loading,
+    handleSubmit,
+    handleKakaoLogin,
+    handleGoogleLogin,
+  } = useLogin();
 
   return (
     <div className={styles.authPage}>

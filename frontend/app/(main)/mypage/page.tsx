@@ -1,22 +1,104 @@
-import Card from '@/components/common/Card/Card';
+'use client';
+
+import { useToast } from '@/components/common/Toast/ToastContext';
+import { useProfile } from './useProfile';
+import { ProfileHeader } from './_components/Header/ProfileHeader';
+import ProfileInfoView from './_components/Info/ProfileInfoView';
+import ProfileEditForm from './_components/Form/ProfileEditForm';
+import styles from './page.module.css';
 
 /**
- * 마이페이지 — 프로필 관리
- * TODO: 다른 팀원이 구현 예정 (프로필 수정, 비밀번호 변경, 농장 정보 연동)
+ * 마이페이지 프로필 메인 (Deep Colocation Structure)
  */
-export default function MypageProfilePage() {
-  return (
-    <Card>
-      <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <p style={{ fontSize: '48px', marginBottom: '16px' }}>👤</p>
-        <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>프로필 관리</h2>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '15px' }}>
-          프로필 수정, 비밀번호 변경, 농장 정보를 관리할 수 있습니다.
-        </p>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px', marginTop: '24px' }}>
-          🚧 구현 예정입니다.
-        </p>
+export default function MyPage() {
+  const { toast } = useToast();
+  const {
+    profile,
+    formData,
+    isEditing,
+    isSaving,
+    isUploading,
+    loading,
+    handleChange,
+    startEditing,
+    cancelEditing,
+    saveProfile,
+    uploadImage,
+  } = useProfile();
+
+  /** 프로필 저장 핸들러 */
+  const handleSave = async () => {
+    const success = await saveProfile();
+    if (success) {
+      toast('프로필이 성공적으로 수정되었습니다.', 'success');
+    } else {
+      toast('프로필 수정에 실패했습니다. 다시 시도해주세요.', 'error');
+    }
+  };
+
+  /** 이미지 업로드 핸들러 */
+  const handleImageUpload = async (file: File) => {
+    const success = await uploadImage(file);
+    if (success) {
+      toast('프로필 이미지가 변경되었습니다.', 'success');
+    } else {
+      toast('이미지 업로드에 실패했습니다.', 'error');
+    }
+    return success;
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.spinner} />
+        <p>프로필 정보를 불러오는 중입니다...</p>
       </div>
-    </Card>
+    );
+  }
+
+  if (!profile) return null;
+
+  return (
+    <div className={styles.container}>
+      {/* 1. 헤더 영역 (Header 폴더 자원 사용) */}
+      <ProfileHeader 
+        profile={profile} 
+        isUploading={isUploading} 
+        onImageUpload={handleImageUpload} 
+      />
+
+      <div className={styles.contentCard}>
+        {/* 2. 정보 영역 (Info/Form 폴더 자원 사용) */}
+        {isEditing && formData ? (
+          <ProfileEditForm
+            formData={formData}
+            isSaving={isSaving}
+            onChange={handleChange}
+            onSave={handleSave}
+            onCancel={cancelEditing}
+          />
+        ) : (
+          <ProfileInfoView 
+            profile={profile} 
+            onEdit={startEditing} 
+          />
+        )}
+      </div>
+
+      {/* 3. 계정 설정 영역 (현재 페이지 자원 사용) */}
+      <div className={styles.accountSettings}>
+        <h2 className={styles.sectionTitle}>계정 설정</h2>
+        <div className={styles.settingsList}>
+          <div className={styles.settingItem}>
+            <span>비밀번호 변경</span>
+            <button className={styles.settingBtn}>변경</button>
+          </div>
+          <div className={styles.settingItem}>
+            <span className={styles.dangerText}>회원 탈퇴</span>
+            <button className={`${styles.settingBtn} ${styles.dangerBtn}`}>탈퇴하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

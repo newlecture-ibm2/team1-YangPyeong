@@ -10,94 +10,29 @@ import Input from '@/components/common/Input';
 import styles from './page.module.css';
 import { getPasswordStrength } from '@/lib/utils';
 
-// ── 보안질문 목록 ──
-const SECURITY_QUESTIONS = [
-  '어릴 적 키우던 반려동물 이름은?',
-  '처음 다녔던 학교 이름은?',
-  '가장 좋아하는 음식은?',
-  '어머니의 고향은?',
-  '첫 직장의 이름은?',
-];
+import useSignUp from './useSignUp';
+import { SECURITY_QUESTIONS } from './_lib/constants';
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  // Step 1: 기본 정보
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-
-  // Step 2: 비밀번호
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
-  // Step 3: 보안질문
-  const [securityQuestion, setSecurityQuestion] = useState('');
-  const [securityAnswer, setSecurityAnswer] = useState('');
-
-  const strength = getPasswordStrength(password);
-
-  // ── Step 1 유효성 검사 ──
-  const validateStep1 = (): boolean => {
-    if (!name.trim()) { setError('이름을 입력해주세요.'); return false; }
-    if (!email.trim()) { setError('이메일을 입력해주세요.'); return false; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('올바른 이메일 형식을 입력해주세요.'); return false; }
-    setError('');
-    return true;
-  };
-
-  // ── Step 2 유효성 검사 ──
-  const validateStep2 = (): boolean => {
-    if (password.length < 8) { setError('비밀번호는 8자 이상이어야 합니다.'); return false; }
-    if (password !== confirmPassword) { setError('비밀번호가 일치하지 않습니다.'); return false; }
-    if (strength.level < 2) { setError('보안을 위해 더 강력한 비밀번호를 설정해주세요.'); return false; }
-    setError('');
-    return true;
-  };
-
-  // ── 다음 단계 ──
-  const handleNext = () => {
-    if (step === 1 && validateStep1()) setStep(2);
-    else if (step === 2 && validateStep2()) setStep(3);
-  };
-
-  // ── 최종 제출 ──
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!securityQuestion) { setError('보안질문을 선택해주세요.'); return; }
-    if (!securityAnswer.trim()) { setError('보안질문 답변을 입력해주세요.'); return; }
-
-    setError('');
-    setLoading(true);
-
-    try {
-      const result = await apiFetch('/api/auth/signup', {
-        method: 'POST',
-        body: {
-          email,
-          password,
-          name,
-          phone: phone || null,
-          securityQuestion,
-          securityAnswer,
-        },
-      });
-
-      if (result.success) {
-        setSuccess(true);
-      } else {
-        setError(result.error?.message || '회원가입에 실패했습니다.');
-      }
-    } catch {
-      setError('서버에 연결할 수 없습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    step,
+    error,
+    setError,
+    success,
+    loading,
+    name, setName,
+    email, setEmail,
+    phone, setPhone,
+    password, setPassword,
+    confirmPassword, setConfirmPassword,
+    securityQuestion, setSecurityQuestion,
+    securityAnswer, setSecurityAnswer,
+    strength,
+    handleNext,
+    handlePrev,
+    handleSubmit,
+  } = useSignUp();
 
   // ── 가입 성공 화면 ──
   if (success) {
@@ -209,7 +144,7 @@ export default function SignUpPage() {
                   type="password"
                   placeholder="8자 이상, 대문자·숫자·특수문자 포함"
                   value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                  onChange={(e) => { setPassword(e.target.value); if (error) setError(''); }}
                   required
                   autoComplete="new-password"
                 />
@@ -247,7 +182,7 @@ export default function SignUpPage() {
                   type="password"
                   placeholder="비밀번호를 다시 입력해주세요"
                   value={confirmPassword}
-                  onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
+                  onChange={(e) => { setConfirmPassword(e.target.value); if (error) setError(''); }}
                   required
                   autoComplete="new-password"
                 />
@@ -257,7 +192,7 @@ export default function SignUpPage() {
               </div>
 
               <div className={styles.btnGroup}>
-                <Button type="button" variant="outline" size="lg" onClick={() => { setStep(1); setError(''); }}>
+                <Button type="button" variant="outline" size="lg" onClick={handlePrev}>
                   이전
                 </Button>
                 <Button type="button" variant="dark" size="lg" onClick={handleNext}>
@@ -292,12 +227,12 @@ export default function SignUpPage() {
                 id="signup-security-a"
                 placeholder="답변을 입력해주세요"
                 value={securityAnswer}
-                onChange={(e) => { setSecurityAnswer(e.target.value); setError(''); }}
+                onChange={(e) => { setSecurityAnswer(e.target.value); if (error) setError(''); }}
                 required
               />
 
               <div className={styles.btnGroup}>
-                <Button type="button" variant="outline" size="lg" onClick={() => { setStep(2); setError(''); }}>
+                <Button type="button" variant="outline" size="lg" onClick={handlePrev}>
                   이전
                 </Button>
                 <Button type="submit" variant="primary" size="lg" disabled={loading}>
