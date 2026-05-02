@@ -3,6 +3,7 @@ package com.farmbalance.user.application.service;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.user.application.port.in.CheckNicknameUseCase;
+import com.farmbalance.user.application.port.in.GetProfileUseCase;
 import com.farmbalance.user.application.port.in.UpdateProfileCommand;
 import com.farmbalance.user.application.port.in.UpdateProfileUseCase;
 import com.farmbalance.user.application.port.out.UserRepository;
@@ -17,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserService implements UpdateProfileUseCase, CheckNicknameUseCase {
+public class UserService implements UpdateProfileUseCase, CheckNicknameUseCase, GetProfileUseCase {
 
     private final UserRepository userRepository;
 
@@ -44,5 +45,20 @@ public class UserService implements UpdateProfileUseCase, CheckNicknameUseCase {
             return false;
         }
         return !userRepository.existsByName(name);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public User getProfile(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    @Override
+    public void updateProfileImage(String email, String imageUrl) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        user.updateProfileImageUrl(imageUrl);
+        userRepository.save(user);
     }
 }

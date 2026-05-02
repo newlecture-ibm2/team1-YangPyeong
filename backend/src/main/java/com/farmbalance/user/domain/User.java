@@ -63,4 +63,10 @@ public class User {
         this.bio = bio;
         this.updatedAt = LocalDateTime.now();
     }
+
+    /** 프로필 이미지 URL을 업데이트합니다. */
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

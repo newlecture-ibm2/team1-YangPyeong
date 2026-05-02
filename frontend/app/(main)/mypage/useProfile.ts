@@ -26,30 +26,69 @@ export function useProfile() {
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // 초기 데이터 로드
+  // 초기 데이터 로드 — 백엔드 API에서 최신 프로필 조회
   useEffect(() => {
-    const cookieUser = getUserFromCookie();
-    if (cookieUser && cookieUser.email) {
-      const initialProfile: UserProfile = {
-        email: cookieUser.email,
-        name: cookieUser.name || '사용자',
-        phone: cookieUser.phone || '',
-        region: cookieUser.region || '',
-        address: cookieUser.address || '',
-        bio: cookieUser.bio || '',
-        role: (cookieUser.role as UserProfile['role']) || 'USER',
-        profileImageUrl: cookieUser.profileImageUrl || null,
-      };
-      setProfile(initialProfile);
-      setFormData({
-        name: initialProfile.name,
-        phone: initialProfile.phone,
-        region: initialProfile.region,
-        address: initialProfile.address || '',
-        bio: initialProfile.bio || '',
-      });
-    }
-    setLoading(false);
+    let cancelled = false;
+
+    const fetchProfile = async () => {
+      try {
+        const res = await apiFetch<UserProfile>('/api/users/me');
+        if (!cancelled && res.success && res.data) {
+          const fetched = res.data;
+          const profileData: UserProfile = {
+            email: fetched.email,
+            name: fetched.name || '사용자',
+            phone: fetched.phone || '',
+            region: fetched.region || '',
+            address: fetched.address || '',
+            bio: fetched.bio || '',
+            role: (fetched.role as UserProfile['role']) || 'USER',
+            profileImageUrl: fetched.profileImageUrl || null,
+          };
+          setProfile(profileData);
+          setFormData({
+            name: profileData.name,
+            phone: profileData.phone,
+            region: profileData.region,
+            address: profileData.address || '',
+            bio: profileData.bio || '',
+          });
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // API 실패 시 쿠키 fallback
+      }
+
+      // fallback: 쿠키에서 읽기
+      if (!cancelled) {
+        const cookieUser = getUserFromCookie();
+        if (cookieUser && cookieUser.email) {
+          const initialProfile: UserProfile = {
+            email: cookieUser.email,
+            name: cookieUser.name || '사용자',
+            phone: cookieUser.phone || '',
+            region: cookieUser.region || '',
+            address: cookieUser.address || '',
+            bio: cookieUser.bio || '',
+            role: (cookieUser.role as UserProfile['role']) || 'USER',
+            profileImageUrl: cookieUser.profileImageUrl || null,
+          };
+          setProfile(initialProfile);
+          setFormData({
+            name: initialProfile.name,
+            phone: initialProfile.phone,
+            region: initialProfile.region,
+            address: initialProfile.address || '',
+            bio: initialProfile.bio || '',
+          });
+        }
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+    return () => { cancelled = true; };
   }, []);
 
   /** 입력 변경 핸들러 */
@@ -130,22 +169,29 @@ export function useProfile() {
     }
   }, []);
 
-  /** 프로필 이미지 업로드 */
+  /** 프로필 이미지 업로드 (서버에 저장) */
   const uploadImage = useCallback(async (file: File) => {
     setIsUploading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      const previewUrl = URL.createObjectURL(file);
-      
-      setProfile((prev) => {
-        const next = prev ? { ...prev, profileImageUrl: previewUrl } : prev;
-        if (next && typeof document !== 'undefined') {
-          document.cookie = `fb-user=${encodeURIComponent(JSON.stringify(next))}; path=/`;
-        }
-        return next;
+      const formDataObj = new FormData();
+      formDataObj.append('file', file);
+
+      const response = await fetch('/api/users/me/profile-image', {
+        method: 'POST',
+        body: formDataObj,
+        credentials: 'include',
       });
-      
-      return true;
+
+      const result = await response.json();
+
+      if (result.success && result.data?.profileImageUrl) {
+        const imageUrl = result.data.profileImageUrl;
+        setProfile((prev) => prev ? { ...prev, profileImageUrl: imageUrl } : prev);
+        return true;
+      }
+
+      console.error('Image upload failed:', result.error);
+      return false;
     } catch (error) {
       console.error('Image upload failed', error);
       return false;

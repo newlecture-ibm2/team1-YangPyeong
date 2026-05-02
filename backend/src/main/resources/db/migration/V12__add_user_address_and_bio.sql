@@ -1,9 +1,6 @@
 -- ═══════════════════════════════════════════════════════════════
--- V9: 기존 시드 데이터 비밀번호 업데이트 (test1234!)
---   - 모든 사용자의 비밀번호를 팀 컨벤션(특수문자 포함)에 맞춰 업데이트합니다.
---   - 평문: test1234!
+-- V12: 사용자 상세 주소 및 자기소개 컬럼 추가
 -- ═══════════════════════════════════════════════════════════════
 
-UPDATE users 
-SET password = '$2a$10$m8S.fO/qfGvVxZ5lc5JYs9Xf3xOqB.ae7vH7O2SgX8y7m/6U2/X.Tq7q'
-WHERE provider = 'LOCAL';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS address VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT;

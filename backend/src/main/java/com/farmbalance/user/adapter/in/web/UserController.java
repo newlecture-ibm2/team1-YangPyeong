@@ -2,16 +2,33 @@ package com.farmbalance.user.adapter.in.web;
 
 import com.farmbalance.global.response.ApiResponse;
 import com.farmbalance.user.application.port.in.CheckNicknameUseCase;
+import com.farmbalance.user.application.port.in.GetProfileUseCase;
 import com.farmbalance.user.application.port.in.UpdateProfileCommand;
 import com.farmbalance.user.application.port.in.UpdateProfileUseCase;
+import com.farmbalance.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.Principal;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * 사용자 정보 관리 컨트롤러
  */
+    @Slf4j
     @RestController
     @RequestMapping("/api/users")
     @RequiredArgsConstructor
@@ -19,6 +36,26 @@ import java.security.Principal;
 
     private final UpdateProfileUseCase updateProfileUseCase;
     private final CheckNicknameUseCase checkNicknameUseCase;
+    private final GetProfileUseCase getProfileUseCase;
+
+    /** 프로필 이미지 저장 디렉토리 */
+    private static final Path UPLOAD_DIR = Paths.get("uploads", "profiles");
+
+    /**
+     * 프로필 응답 DTO
+     */
+    @lombok.Getter
+    @lombok.Builder
+    public static class ProfileResponse {
+        private String email;
+        private String name;
+        private String phone;
+        private String region;
+        private String address;
+        private String bio;
+        private String role;
+        private String profileImageUrl;
+    }
 
     /**
      * 프로필 수정 요청 DTO
@@ -41,6 +78,32 @@ import java.security.Principal;
 
         @jakarta.validation.constraints.Size(max = 1000)
         private String bio;
+    }
+
+    /**
+     * 내 프로필 조회
+     */
+    @GetMapping("/me")
+    public ApiResponse<ProfileResponse> getMyProfile(Principal principal) {
+        if (principal == null) {
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.ACCESS_DENIED);
+        }
+
+        String email = principal.getName();
+        User user = getProfileUseCase.getProfile(email);
+
+        ProfileResponse response = ProfileResponse.builder()
+                .email(user.getEmail())
+                .name(user.getName())
+                .phone(user.getPhone())
+                .region(user.getRegion())
+                .address(user.getAddress())
+                .bio(user.getBio())
+                .role(user.getRole() != null ? user.getRole().name() : "USER")
+                .profileImageUrl(user.getProfileImageUrl())
+                .build();
+
+        return ApiResponse.ok(response);
     }
 
     /**
@@ -68,6 +131,88 @@ import java.security.Principal;
 
         updateProfileUseCase.updateProfile(command);
         return ApiResponse.ok(null);
+    }
+
+    /**
+     * 프로필 이미지 업로드
+     */
+    @PostMapping("/me/profile-image")
+    public ApiResponse<Map<String, String>> uploadProfileImage(
+            @RequestParam("file") MultipartFile file,
+            Principal principal) {
+
+        if (principal == null) {
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.ACCESS_DENIED);
+        }
+
+        // 파일 유효성 검사
+        if (file.isEmpty()) {
+            throw new com.farmbalance.global.error.BusinessException(
+                    com.farmbalance.global.error.ErrorCode.VALIDATION_ERROR, "파일이 비어있습니다.");
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new com.farmbalance.global.error.BusinessException(
+                    com.farmbalance.global.error.ErrorCode.VALIDATION_ERROR, "이미지 파일만 업로드 가능합니다.");
+        }
+
+        try {
+            // 디렉토리 생성
+            Files.createDirectories(UPLOAD_DIR);
+
+            // 고유 파일명 생성
+            String originalFilename = file.getOriginalFilename();
+            String ext = originalFilename != null && originalFilename.contains(".")
+                    ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                    : ".jpg";
+            String storedFilename = UUID.randomUUID() + ext;
+
+            // 파일 저장
+            Path filePath = UPLOAD_DIR.resolve(storedFilename);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            // DB에 이미지 URL 저장
+            String imageUrl = "/api/users/profile-image/" + storedFilename;
+            String email = principal.getName();
+            User user = getProfileUseCase.getProfile(email);
+            user.updateProfileImageUrl(imageUrl);
+            // UserService를 통해 저장
+            updateProfileUseCase.updateProfileImage(email, imageUrl);
+
+            log.info("프로필 이미지 업로드 완료: email={}, file={}", email, storedFilename);
+
+            return ApiResponse.ok(Map.of("profileImageUrl", imageUrl));
+        } catch (IOException e) {
+            log.error("프로필 이미지 업로드 실패", e);
+            throw new com.farmbalance.global.error.BusinessException(
+                    com.farmbalance.global.error.ErrorCode.INTERNAL_ERROR, "이미지 저장에 실패했습니다.");
+        }
+    }
+
+    /**
+     * 프로필 이미지 조회 (정적 파일 서빙)
+     */
+    @GetMapping("/profile-image/{filename}")
+    public ResponseEntity<Resource> getProfileImage(@PathVariable String filename) {
+        try {
+            Path filePath = UPLOAD_DIR.resolve(filename).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (!resource.exists() || !resource.isReadable()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            String contentType = Files.probeContentType(filePath);
+            if (contentType == null) contentType = "application/octet-stream";
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_TYPE, contentType)
+                    .header(HttpHeaders.CACHE_CONTROL, "public, max-age=86400")
+                    .body(resource);
+        } catch (IOException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     /**
