@@ -1,10 +1,7 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api-fetch';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import styles from './page.module.css';
@@ -19,7 +16,10 @@ export default function LoginPage() {
     setPassword,
     error,
     loading,
+    showReactivate,
     handleSubmit,
+    handleReactivate,
+    cancelReactivate,
     handleKakaoLogin,
     handleGoogleLogin,
   } = useLogin();
@@ -103,6 +103,30 @@ export default function LoginPage() {
           <Link href="/signup" className={styles.footerLink}>회원가입</Link>
         </p>
       </div>
+
+      {/* 탈퇴 계정 재활성화 모달 */}
+      {showReactivate && (
+        <div className={styles.reactivateOverlay}>
+          <div className={styles.reactivateModal}>
+            <h2 className={styles.reactivateTitle}>계정 복구</h2>
+            <p className={styles.reactivateDesc}>
+              이전에 탈퇴한 계정입니다.<br />
+              다시 FarmBalance를 이용하시겠습니까?
+            </p>
+            <p className={styles.reactivateNote}>
+              계정을 복구하면 기존 프로필 정보로 다시 로그인됩니다.
+            </p>
+            <div className={styles.reactivateActions}>
+              <Button variant="outline" onClick={cancelReactivate} disabled={loading}>
+                취소
+              </Button>
+              <Button variant="dark" onClick={handleReactivate} disabled={loading}>
+                {loading ? '복구 중...' : '다시 시작하기'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

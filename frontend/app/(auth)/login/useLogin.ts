@@ -15,6 +15,8 @@ export default function useLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showReactivate, setShowReactivate] = useState(false);
+  const [reactivateEmail, setReactivateEmail] = useState('');
 
   const handleSubmit = useCallback(async (e: FormEvent) => {
     e.preventDefault();
@@ -31,7 +33,13 @@ export default function useLogin() {
         router.push('/');
         router.refresh();
       } else {
-        setError(result.error?.message || '로그인에 실패했습니다.');
+        // 탈퇴 계정 감지
+        if (result.error?.code === 'E-USER-004') {
+          setReactivateEmail(email);
+          setShowReactivate(true);
+        } else {
+          setError(result.error?.message || '로그인에 실패했습니다.');
+        }
       }
     } catch {
       setError('서버에 연결할 수 없습니다.');
@@ -39,6 +47,46 @@ export default function useLogin() {
       setLoading(false);
     }
   }, [email, password, router]);
+
+  /** 탈퇴 계정 재활성화 후 자동 로그인 */
+  const handleReactivate = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const reactivateResult = await apiFetch('/api/users/reactivate', {
+        method: 'POST',
+        body: { email: reactivateEmail },
+      });
+
+      if (reactivateResult.success) {
+        // 재활성화 성공 → 자동 로그인 시도
+        const loginResult = await apiFetch('/api/auth/login', {
+          method: 'POST',
+          body: { email: reactivateEmail, password },
+        });
+
+        if (loginResult.success) {
+          setShowReactivate(false);
+          router.push('/');
+          router.refresh();
+        } else {
+          setError('계정이 복구되었습니다. 다시 로그인해주세요.');
+          setShowReactivate(false);
+        }
+      } else {
+        setError(reactivateResult.error?.message || '계정 복구에 실패했습니다.');
+      }
+    } catch {
+      setError('계정 복구 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [reactivateEmail, password, router]);
+
+  const cancelReactivate = useCallback(() => {
+    setShowReactivate(false);
+    setReactivateEmail('');
+  }, []);
 
   const handleKakaoLogin = useCallback(() => {
     const redirectUri = `${REDIRECT_BASE}/auth/kakao/callback`;
@@ -59,7 +107,10 @@ export default function useLogin() {
     setPassword,
     error,
     loading,
+    showReactivate,
     handleSubmit,
+    handleReactivate,
+    cancelReactivate,
     handleKakaoLogin,
     handleGoogleLogin,
   };

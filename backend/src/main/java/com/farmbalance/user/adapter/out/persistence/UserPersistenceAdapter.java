@@ -53,4 +53,9 @@ public class UserPersistenceAdapter implements UserRepository {
     public boolean existsByName(String name) {
         return userJpaRepository.existsByName(name);
     }
+
+    @Override
+    public void deleteByEmail(String email) {
+        userJpaRepository.deleteByEmail(email);
+    }
 }

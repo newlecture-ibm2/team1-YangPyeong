@@ -66,7 +66,7 @@ export default function ProfileImageUpload({
   );
 }
 
-import { UserProfile, ROLE_LABEL_MAP } from '../../_lib/profile.types';
+import { UserProfile, ROLE_LABEL_MAP, PROVIDER_LABEL_MAP } from '../../_lib/profile.types';
 
 interface ProfileHeaderProps {
   profile: UserProfile;
@@ -88,6 +88,19 @@ export function ProfileHeader({ profile, isUploading, onImageUpload }: ProfileHe
           <span className={styles.roleBadge}>{ROLE_LABEL_MAP[profile.role]}</span>
         </div>
         <p className={styles.profileEmail}>{profile.email}</p>
+        <div className={styles.metaRow}>
+          <span className={styles.metaItem}>
+            {profile.provider === 'KAKAO' && '🟡 '}
+            {profile.provider === 'GOOGLE' && '🔵 '}
+            {profile.provider === 'LOCAL' && '✉️ '}
+            {PROVIDER_LABEL_MAP[profile.provider]}
+          </span>
+          {profile.createdAt && (
+            <span className={styles.metaItem}>
+              📅 {new Date(profile.createdAt).getFullYear()}년 {new Date(profile.createdAt).getMonth() + 1}월 가입
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

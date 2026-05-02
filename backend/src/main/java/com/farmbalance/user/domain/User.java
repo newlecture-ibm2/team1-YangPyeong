@@ -69,4 +69,23 @@ public class User {
         this.profileImageUrl = profileImageUrl;
         this.updatedAt = LocalDateTime.now();
     }
+
+    /** 비밀번호를 변경합니다. (이미 인코딩된 비밀번호) */
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /** 계정을 탈퇴 처리합니다. (Soft Delete) */
+    public void withdraw() {
+        this.status = UserStatus.WITHDRAWN;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /** 탈퇴된 계정을 다시 활성화합니다. */
+    public void reactivate() {
+        this.status = UserStatus.ACTIVE;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
+

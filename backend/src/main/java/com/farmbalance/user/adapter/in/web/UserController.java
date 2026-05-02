@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,6 +38,7 @@ import java.util.UUID;
     private final UpdateProfileUseCase updateProfileUseCase;
     private final CheckNicknameUseCase checkNicknameUseCase;
     private final GetProfileUseCase getProfileUseCase;
+    private final PasswordEncoder passwordEncoder;
 
     /** 프로필 이미지 저장 디렉토리 */
     private static final Path UPLOAD_DIR = Paths.get("uploads", "profiles");
@@ -54,7 +56,9 @@ import java.util.UUID;
         private String address;
         private String bio;
         private String role;
+        private String provider;
         private String profileImageUrl;
+        private String createdAt;
     }
 
     /**
@@ -100,7 +104,9 @@ import java.util.UUID;
                 .address(user.getAddress())
                 .bio(user.getBio())
                 .role(user.getRole() != null ? user.getRole().name() : "USER")
+                .provider(user.getProvider() != null ? user.getProvider().name() : "LOCAL")
                 .profileImageUrl(user.getProfileImageUrl())
+                .createdAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null)
                 .build();
 
         return ApiResponse.ok(response);
@@ -222,5 +228,107 @@ import java.util.UUID;
     public ApiResponse<Boolean> checkNickname(@RequestParam String name) {
         boolean available = checkNicknameUseCase.isNicknameAvailable(name);
         return ApiResponse.ok(available);
+    }
+
+    /**
+     * 비밀번호 변경 요청 DTO
+     */
+    @lombok.Getter
+    @lombok.NoArgsConstructor
+    public static class ChangePasswordRequest {
+        @jakarta.validation.constraints.NotBlank(message = "현재 비밀번호를 입력해주세요.")
+        private String currentPassword;
+
+        @jakarta.validation.constraints.NotBlank(message = "새 비밀번호를 입력해주세요.")
+        @jakarta.validation.constraints.Size(min = 8, max = 100, message = "비밀번호는 8자 이상이어야 합니다.")
+        private String newPassword;
+    }
+
+    /**
+     * 비밀번호 변경
+     */
+    @PutMapping("/me/password")
+    public ApiResponse<Void> changePassword(
+            @jakarta.validation.Valid @RequestBody ChangePasswordRequest request,
+            Principal principal) {
+
+        if (principal == null) {
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.ACCESS_DENIED);
+        }
+
+        String email = principal.getName();
+        User user = getProfileUseCase.getProfile(email);
+
+        // 현재 비밀번호 검증
+        if (user.getPassword() == null || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new com.farmbalance.global.error.BusinessException(
+                    com.farmbalance.global.error.ErrorCode.AUTH_INVALID_CREDENTIALS, "현재 비밀번호가 올바르지 않습니다.");
+        }
+
+        // 새 비밀번호 암호화 후 저장
+        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+        updateProfileUseCase.changePassword(email, encodedPassword);
+
+        log.info("비밀번호 변경 완료: email={}", email);
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 회원 탈퇴 요청 DTO
+     * - LOCAL 유저: password 필수
+     * - SOCIAL 유저: password 없이 탈퇴 가능
+     */
+    @lombok.Getter
+    @lombok.NoArgsConstructor
+    public static class DeleteAccountRequest {
+        private String password;
+    }
+
+    /**
+     * 회원 탈퇴 (Soft Delete → WITHDRAWN 상태로 변경)
+     */
+    @DeleteMapping("/me")
+    public ApiResponse<Void> deleteAccount(
+            @RequestBody DeleteAccountRequest request,
+            Principal principal) {
+
+        if (principal == null) {
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.ACCESS_DENIED);
+        }
+
+        String email = principal.getName();
+        User user = getProfileUseCase.getProfile(email);
+
+        // LOCAL 유저인 경우 비밀번호 검증 필수
+        if (user.getProvider() == com.farmbalance.user.domain.AuthProvider.LOCAL) {
+            if (request.getPassword() == null || request.getPassword().isBlank()) {
+                throw new com.farmbalance.global.error.BusinessException(
+                        com.farmbalance.global.error.ErrorCode.VALIDATION_ERROR, "비밀번호를 입력해주세요.");
+            }
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                throw new com.farmbalance.global.error.BusinessException(
+                        com.farmbalance.global.error.ErrorCode.AUTH_INVALID_CREDENTIALS, "비밀번호가 올바르지 않습니다.");
+            }
+        }
+
+        updateProfileUseCase.withdrawAccount(email);
+        log.info("회원 탈퇴 완료 (WITHDRAWN): email={}", email);
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 탈퇴 계정 재활성화
+     */
+    @PostMapping("/reactivate")
+    public ApiResponse<Void> reactivateAccount(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.isBlank()) {
+            throw new com.farmbalance.global.error.BusinessException(
+                    com.farmbalance.global.error.ErrorCode.VALIDATION_ERROR, "이메일을 입력해주세요.");
+        }
+
+        updateProfileUseCase.reactivateAccount(email);
+        log.info("계정 재활성화 완료: email={}", email);
+        return ApiResponse.ok(null);
     }
 }

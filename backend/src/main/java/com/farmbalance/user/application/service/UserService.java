@@ -6,6 +6,7 @@ import com.farmbalance.user.application.port.in.CheckNicknameUseCase;
 import com.farmbalance.user.application.port.in.GetProfileUseCase;
 import com.farmbalance.user.application.port.in.UpdateProfileCommand;
 import com.farmbalance.user.application.port.in.UpdateProfileUseCase;
+import com.farmbalance.user.application.port.out.SecurityQuestionRepository;
 import com.farmbalance.user.application.port.out.UserRepository;
 import com.farmbalance.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService implements UpdateProfileUseCase, CheckNicknameUseCase, GetProfileUseCase {
 
     private final UserRepository userRepository;
+    private final SecurityQuestionRepository securityQuestionRepository;
 
     @Override
     public void updateProfile(UpdateProfileCommand command) {
@@ -59,6 +61,32 @@ public class UserService implements UpdateProfileUseCase, CheckNicknameUseCase, 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         user.updateProfileImageUrl(imageUrl);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void changePassword(String email, String encodedPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        user.changePassword(encodedPassword);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void withdrawAccount(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        user.withdraw();
+        userRepository.save(user);
+    }
+
+    @Override
+    public void reactivateAccount(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        user.reactivate();
         userRepository.save(user);
     }
 }

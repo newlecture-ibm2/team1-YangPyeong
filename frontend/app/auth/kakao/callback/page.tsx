@@ -27,7 +27,13 @@ function KakaoCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState('');
+  const [isWithdrawn, setIsWithdrawn] = useState(false);
+  const [withdrawnEmail, setWithdrawnEmail] = useState('');
+  const [isReactivating, setIsReactivating] = useState(false);
   const calledRef = useRef(false);
+
+  // 소셜 로그인 시도에 필요한 정보 보관
+  const loginInfoRef = useRef<{ code: string; redirectUri: string } | null>(null);
 
   useEffect(() => {
     if (calledRef.current) return;
@@ -47,6 +53,7 @@ function KakaoCallbackContent() {
     }
 
     const redirectUri = `${window.location.origin}/auth/kakao/callback`;
+    loginInfoRef.current = { code, redirectUri };
 
     apiFetch('/api/auth/social-login/kakao', {
       method: 'POST',
@@ -55,11 +62,40 @@ function KakaoCallbackContent() {
       if (result.success) {
         router.push('/');
         router.refresh();
+      } else if (result.error?.code === 'E-USER-004') {
+        // 탈퇴 계정 — 에러 메시지에서 이메일 추출 (WITHDRAWN:email 형식)
+        const msg = result.error?.message || '';
+        const emailMatch = msg.startsWith('WITHDRAWN:') ? msg.replace('WITHDRAWN:', '') : '';
+        setIsWithdrawn(true);
+        setWithdrawnEmail(emailMatch);
       } else {
         setError(result.error?.message || '카카오 로그인에 실패했습니다.');
       }
     });
   }, [searchParams, router]);
+
+  /** 계정 재활성화 후 로그인 페이지로 이동 */
+  const handleReactivate = async () => {
+    setIsReactivating(true);
+    try {
+      // 이메일이 없으면 BFF에서 social-login 에러 응답에서 얻어야 하지만,
+      // 현재 백엔드 에러에는 이메일이 포함되지 않으므로 직접 재로그인 유도
+      if (withdrawnEmail) {
+        const result = await apiFetch('/api/users/reactivate', {
+          method: 'POST',
+          body: { email: withdrawnEmail },
+        });
+        if (result.success) {
+          router.push('/login');
+          return;
+        }
+      }
+      // 이메일을 모르면 로그인 페이지로 보내서 다시 시도하게 함
+      router.push('/login');
+    } catch {
+      router.push('/login');
+    }
+  };
 
   return (
     <div style={containerStyle}>
@@ -68,19 +104,46 @@ function KakaoCallbackContent() {
         <p style={{ fontWeight: 700, fontSize: 22, marginBottom: 24 }}>
           Farm<em>Balance</em>
         </p>
-        {error ? (
+        {isWithdrawn ? (
+          <>
+            <p style={{ color: '#334155', fontSize: 16, lineHeight: 1.6, marginBottom: 8 }}>
+              이전에 탈퇴한 계정입니다.<br />
+              다시 FarmBalance를 이용하시겠습니까?
+            </p>
+            <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 24 }}>
+              계정을 복구하면 기존 정보로 다시 이용할 수 있습니다.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                onClick={() => router.push('/login')}
+                disabled={isReactivating}
+                style={{
+                  padding: '12px 24px', borderRadius: 999, border: '1px solid #d1d5db',
+                  background: '#fff', color: '#374151', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleReactivate}
+                disabled={isReactivating}
+                style={{
+                  padding: '12px 24px', borderRadius: 999, border: 'none',
+                  background: '#2D6A4F', color: '#fff', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                {isReactivating ? '복구 중...' : '다시 시작하기'}
+              </button>
+            </div>
+          </>
+        ) : error ? (
           <>
             <p style={{ color: '#dc2626', marginBottom: 16 }}>{error}</p>
             <button
               onClick={() => router.push('/login')}
               style={{
-                padding: '12px 28px',
-                borderRadius: 999,
-                border: 'none',
-                background: '#2D6A4F',
-                color: '#fff',
-                fontWeight: 600,
-                cursor: 'pointer',
+                padding: '12px 28px', borderRadius: 999, border: 'none',
+                background: '#2D6A4F', color: '#fff', fontWeight: 600, cursor: 'pointer',
               }}
             >
               로그인 페이지로 돌아가기

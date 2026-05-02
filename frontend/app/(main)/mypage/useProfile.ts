@@ -43,7 +43,9 @@ export function useProfile() {
             address: fetched.address || '',
             bio: fetched.bio || '',
             role: (fetched.role as UserProfile['role']) || 'USER',
+            provider: (fetched.provider as UserProfile['provider']) || 'LOCAL',
             profileImageUrl: fetched.profileImageUrl || null,
+            createdAt: fetched.createdAt || null,
           };
           setProfile(profileData);
           setFormData({

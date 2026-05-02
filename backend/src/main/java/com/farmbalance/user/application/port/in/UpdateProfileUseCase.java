@@ -6,4 +6,7 @@ package com.farmbalance.user.application.port.in;
 public interface UpdateProfileUseCase {
     void updateProfile(UpdateProfileCommand command);
     void updateProfileImage(String email, String imageUrl);
+    void changePassword(String email, String encodedPassword);
+    void withdrawAccount(String email);
+    void reactivateAccount(String email);
 }

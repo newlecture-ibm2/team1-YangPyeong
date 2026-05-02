@@ -61,3 +61,17 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+/** DELETE /api/users/me — 회원 탈퇴 */
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    return await proxyToBackend(request, 'DELETE', body);
+  } catch (error) {
+    console.error('[BFF] 회원 탈퇴 실패:', error);
+    return NextResponse.json(
+      { success: false, data: null, error: { code: 'DELETE_ACCOUNT_ERROR', message: '회원 탈퇴 중 오류가 발생했습니다.' } },
+      { status: 500 },
+    );
+  }
+}

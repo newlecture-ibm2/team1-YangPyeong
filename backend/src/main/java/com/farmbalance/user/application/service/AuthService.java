@@ -215,6 +215,10 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
 
     /** 계정 상태 검사 (공통) */
     private void validateUserStatus(User user) {
+        if (user.getStatus() == UserStatus.WITHDRAWN) {
+            throw new BusinessException(ErrorCode.USER_WITHDRAWN,
+                    "WITHDRAWN:" + user.getEmail());
+        }
         if (user.getStatus() == UserStatus.SUSPENDED) {
             throw new BusinessException(ErrorCode.AUTH_ACCOUNT_SUSPENDED);
         }
