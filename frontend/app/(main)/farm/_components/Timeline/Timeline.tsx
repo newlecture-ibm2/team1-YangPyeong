@@ -2,13 +2,13 @@ import { useState } from 'react';
 import Badge from '@/components/common/Badge/Badge';
 import styles from './Timeline.module.css';
 
-export type HistoryType = 'USER' | 'WEATHER' | 'SYSTEM';
+export type HistoryType = 'USER' | 'WEATHER' | 'SYSTEM' | 'WATER' | 'FERTILIZER' | 'PESTICIDE' | 'ETC';
 
 export interface CultivationHistory {
   id: number;
   farmId: number;
-  historyType: HistoryType;
-  content: string;
+  activityType: HistoryType;
+  activityContent: string;
   createdAt: string;
 }
 
@@ -22,7 +22,7 @@ export default function Timeline({ histories, onEdit, onDelete }: TimelineProps)
   const [filter, setFilter] = useState<HistoryType | 'ALL'>('ALL');
 
   const filteredHistories = histories.filter(
-    (h) => filter === 'ALL' || h.historyType === filter
+    (h) => filter === 'ALL' || h.activityType === filter
   );
 
   const getTheme = (type: HistoryType) => {
@@ -33,6 +33,14 @@ export default function Timeline({ histories, onEdit, onDelete }: TimelineProps)
         return { icon: '☁️', badgeName: '날씨/환경', variant: 'blue' as const, dotClass: styles.dotWeather };
       case 'SYSTEM':
         return { icon: '🤖', badgeName: '시스템 알림', variant: 'purple' as const, dotClass: styles.dotSystem };
+      case 'WATER':
+        return { icon: '💧', badgeName: '관수', variant: 'blue' as const, dotClass: styles.dotWeather };
+      case 'FERTILIZER':
+        return { icon: '🧪', badgeName: '비료', variant: 'lime' as const, dotClass: styles.dotUser };
+      case 'PESTICIDE':
+        return { icon: '🛡️', badgeName: '방제', variant: 'orange' as const, dotClass: styles.dotSystem };
+      default:
+        return { icon: '📝', badgeName: '기타', variant: 'green' as const, dotClass: styles.dotUser };
     }
   };
 
@@ -73,7 +81,7 @@ export default function Timeline({ histories, onEdit, onDelete }: TimelineProps)
           <p className={styles.empty}>해당 카테고리의 기록이 없습니다.</p>
         ) : (
           filteredHistories.map((history) => {
-            const theme = getTheme(history.historyType);
+            const theme = getTheme(history.activityType);
             const dateStr = new Date(history.createdAt).toLocaleString('ko-KR', {
               year: 'numeric',
               month: 'long',
@@ -98,11 +106,11 @@ export default function Timeline({ histories, onEdit, onDelete }: TimelineProps)
                     </div>
                     
                     {/* 사용자 기록일 경우에만 수정/삭제 버튼 표시 */}
-                    {history.historyType === 'USER' && (
+                    {history.activityType === 'USER' && (
                       <div className={styles.actions}>
                         <button 
                           className={styles.actionBtn} 
-                          onClick={() => onEdit?.(history.id, history.content)}
+                          onClick={() => onEdit?.(history.id, history.activityContent)}
                           title="수정"
                         >
                           ✏️
@@ -117,7 +125,7 @@ export default function Timeline({ histories, onEdit, onDelete }: TimelineProps)
                       </div>
                     )}
                   </div>
-                  <p className={styles.content}>{history.content}</p>
+                  <p className={styles.content}>{history.activityContent}</p>
                 </div>
               </div>
             );

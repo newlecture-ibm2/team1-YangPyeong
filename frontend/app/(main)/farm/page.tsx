@@ -299,10 +299,10 @@ export default function FarmDashboardPage() {
                   {histories.slice(0, 5).map(h => (
                     <tr key={h.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                       <td style={{ padding: '12px 8px', fontSize: '14px' }}>{new Date(h.createdAt).toLocaleDateString()}</td>
-                      <td style={{ padding: '12px 8px', fontSize: '14px' }}>{h.content}</td>
+                      <td style={{ padding: '12px 8px', fontSize: '14px' }}>{h.activityContent}</td>
                       <td style={{ padding: '12px 8px' }}>
-                        <Badge variant={h.historyType === 'USER' ? 'green' : 'lime'}>
-                          {h.historyType === 'USER' ? '완료' : '시스템'}
+                        <Badge variant={h.activityType === 'USER' ? 'green' : 'lime'}>
+                          {h.activityType === 'USER' ? '완료' : '시스템'}
                         </Badge>
                       </td>
                     </tr>

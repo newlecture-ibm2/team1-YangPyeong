@@ -26,8 +26,12 @@ public class HistoryService implements RecordHistoryUseCase, LoadHistoryUseCase,
     public void recordHistory(RecordHistoryCommand command) {
         CultivationHistory history = CultivationHistory.builder()
                 .farmId(command.getFarmId())
-                .historyType(command.getHistoryType())
-                .content(command.getContent())
+                .cultivationRegistrationId(command.getCultivationRegistrationId())
+                .recordDate(command.getRecordDate() != null ? command.getRecordDate() : java.time.LocalDate.now())
+                .activityType(command.getActivityType())
+                .activityContent(command.getActivityContent())
+                .avgTemp(command.getAvgTemp())
+                .totalRain(command.getTotalRain())
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -41,15 +45,19 @@ public class HistoryService implements RecordHistoryUseCase, LoadHistoryUseCase,
     }
 
     @Override
-    public void updateHistory(Long historyId, String content, HistoryType historyType) {
+    public void updateHistory(Long historyId, String activityContent, HistoryType activityType) {
         CultivationHistory history = loadHistoryPort.loadHistoryById(historyId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 히스토리입니다."));
 
         CultivationHistory updatedHistory = CultivationHistory.builder()
                 .id(history.getId())
                 .farmId(history.getFarmId())
-                .historyType(historyType != null ? historyType : history.getHistoryType())
-                .content(content)
+                .cultivationRegistrationId(history.getCultivationRegistrationId())
+                .recordDate(history.getRecordDate())
+                .activityType(activityType != null ? activityType : history.getActivityType())
+                .activityContent(activityContent)
+                .avgTemp(history.getAvgTemp())
+                .totalRain(history.getTotalRain())
                 .createdAt(history.getCreatedAt())
                 .build();
 

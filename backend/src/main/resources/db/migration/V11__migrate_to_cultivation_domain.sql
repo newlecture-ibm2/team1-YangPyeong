@@ -19,21 +19,30 @@ ALTER TABLE cultivation_registrations
     DROP COLUMN IF EXISTS estimated_yield,
     DROP COLUMN IF EXISTS receipt_image_url;
 
--- 2. cultivation_history (기존 테이블 삭제 후 재생성 또는 구조 변경)
--- 기존 데이터가 중요하지 않은 초기 단계이므로 DROP 후 재생성하여 ERD와 맞춤
-DROP TABLE IF EXISTS cultivation_history;
+-- 2. cultivation_history (데이터 보존을 위해 ALTER 사용)
+DO $$ 
+BEGIN
+    -- 컬럼명 변경 (기존 데이터 보존)
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='cultivation_history' AND column_name='content') THEN
+        ALTER TABLE cultivation_history RENAME COLUMN content TO activity_content;
+    END IF;
 
-CREATE TABLE cultivation_history (
-    id                          BIGSERIAL    PRIMARY KEY,
-    farm_id                     BIGINT       NOT NULL REFERENCES farms(id) ON DELETE CASCADE,
-    cultivation_registration_id BIGINT       REFERENCES cultivation_registrations(id) ON DELETE CASCADE,
-    record_date                 DATE         NOT NULL,
-    activity_type               VARCHAR(20),  -- WATER | FERTILIZER | PESTICIDE | ETC
-    activity_content            TEXT,
-    avg_temp                    DECIMAL(5,1), -- 해당일 평균 기온 (API)
-    total_rain                  DECIMAL(7,1), -- 해당일 강수량 (API)
-    created_at                  TIMESTAMP    NOT NULL DEFAULT NOW()
-);
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='cultivation_history' AND column_name='history_type') THEN
+        ALTER TABLE cultivation_history RENAME COLUMN history_type TO activity_type;
+    END IF;
+
+    -- 새로운 컬럼 추가
+    ALTER TABLE cultivation_history 
+        ADD COLUMN IF NOT EXISTS cultivation_registration_id BIGINT REFERENCES cultivation_registrations(id) ON DELETE CASCADE,
+        ADD COLUMN IF NOT EXISTS record_date DATE DEFAULT CURRENT_DATE,
+        ADD COLUMN IF NOT EXISTS avg_temp DECIMAL(5,1),
+        ADD COLUMN IF NOT EXISTS total_rain DECIMAL(7,1);
+
+    -- record_date가 null인 기존 데이터는 생성일자로 채움
+    UPDATE cultivation_history SET record_date = created_at::DATE WHERE record_date IS NULL;
+    
+    ALTER TABLE cultivation_history ALTER COLUMN record_date SET NOT NULL;
+END $$;
 
 -- 3. harvest_records (수확 이력) 신규 생성
 CREATE TABLE harvest_records (
