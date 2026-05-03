@@ -173,6 +173,8 @@ export function useProfile() {
   /** 닉네임 중복 확인 (프로필 수정 시 자기 자신은 제외) */
   const checkNickname = useCallback(async (name: string) => {
     if (!name || name.trim().length < 2) return false;
+    // 현재 프로필 이름과 동일하면 중복 검사 불필요 → 즉시 통과
+    if (profile?.name && profile.name.trim() === name.trim()) return true;
     try {
       const excludeParam = profile?.email ? `&excludeEmail=${encodeURIComponent(profile.email)}` : '';
       const res = await apiFetch<boolean>(`/api/users/check-nickname?name=${encodeURIComponent(name)}${excludeParam}`);
@@ -180,7 +182,7 @@ export function useProfile() {
     } catch {
       return false;
     }
-  }, [profile?.email]);
+  }, [profile?.email, profile?.name]);
 
   /** 프로필 이미지 업로드 (서버에 저장) */
   const uploadImage = useCallback(async (file: File) => {
