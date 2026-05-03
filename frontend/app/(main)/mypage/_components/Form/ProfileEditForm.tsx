@@ -6,7 +6,7 @@ import { ProfileUpdateRequest } from '../../_lib/profile.types';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input/Input';
 import Modal from '@/components/common/Modal/Modal';
-import { formatPhone, validatePhoneOptional } from '@/lib/phone';
+import { formatPhone, validatePhone } from '@/lib/phone';
 import styles from './Form.module.css';
 
 // 다음 우편번호 검색 (SSR 방지)
@@ -90,7 +90,7 @@ export default function ProfileEditForm({
           newErrors.name = formData.name.trim().length < 2 ? '이름은 2자 이상 입력해주세요.' : undefined;
           break;
         case 'phone':
-          newErrors.phone = validatePhoneOptional(formData.phone);
+          newErrors.phone = validatePhone(formData.phone);
           break;
         case 'region':
           newErrors.region = validateRegion(formData.region);
@@ -110,7 +110,7 @@ export default function ProfileEditForm({
     onChange(syntheticEvent);
 
     if (touched.phone) {
-      setErrors(prev => ({ ...prev, phone: validatePhoneOptional(formatted) }));
+      setErrors(prev => ({ ...prev, phone: validatePhone(formatted) }));
     }
   }, [onChange, touched.phone]);
 
@@ -134,7 +134,7 @@ export default function ProfileEditForm({
   /** 저장 시 전체 유효성 검사 + 닉네임 중복 검사 + 주소 합치기 */
   const handleSave = useCallback(async () => {
     const nameErr = formData.name.trim().length < 2 ? '이름은 2자 이상 입력해주세요.' : undefined;
-    const phoneErr = validatePhoneOptional(formData.phone);
+    const phoneErr = validatePhone(formData.phone);
     const regionErr = validateRegion(formData.region);
 
     // 닉네임 중복 검사 (아직 체크하지 않은 경우)
@@ -197,6 +197,7 @@ export default function ProfileEditForm({
             onChange={handlePhoneChange}
             onBlur={() => handleBlur('phone')}
             placeholder="010-0000-0000"
+            required
           />
           {touched.phone && errors.phone && (
             <span className={styles.fieldError}>{errors.phone}</span>
