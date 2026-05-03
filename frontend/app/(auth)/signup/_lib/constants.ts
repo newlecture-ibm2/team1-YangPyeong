@@ -6,3 +6,10 @@ export const SECURITY_QUESTIONS = [
   '어머니의 고향은?',
   '첫 직장의 이름은?',
 ];
+
+/** 회원가입 스텝 정의 */
+export const SIGNUP_STEPS = [
+  { label: '기본 정보' },
+  { label: '비밀번호' },
+  { label: '보안질문' },
+];

@@ -1,44 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import Button from '@/components/common/Button';
 import AuthBrand from '../_components/AuthBrand/AuthBrand';
 import StepIndicator from '../_components/StepIndicator/StepIndicator';
 import Step1Email from './_components/Step1Email';
 import Step2Answer from './_components/Step2Answer';
 import Step3NewPassword from './_components/Step3NewPassword';
+import ResetSuccess from './_components/ResetSuccess';
+import { RESET_STEPS } from './_lib/constants';
 import styles from './page.module.css';
 import usePasswordReset from './usePasswordReset';
 
-const RESET_STEPS = [
-  { label: '이메일 확인' },
-  { label: '본인 확인' },
-  { label: '새 비밀번호' },
-];
-
 export default function ResetPasswordPage() {
-  const router = useRouter();
   const hook = usePasswordReset();
 
-  // ── 재설정 성공 화면 ──
-  if (hook.success) {
-    return (
-      <div className={styles.authPage}>
-        <div className={styles.authCard}>
-          <AuthBrand />
-          <h1 className={styles.authTitle}>재설정 완료! 🔐</h1>
-          <div className={styles.successMsg}>
-            비밀번호가 성공적으로 변경되었습니다.<br />
-            새 비밀번호로 로그인해주세요.
-          </div>
-          <Button id="reset-go-login" variant="dark" size="lg" fullWidth onClick={() => router.push('/login')}>
-            로그인하러 가기
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  if (hook.success) return <ResetSuccess />;
 
   return (
     <div className={styles.authPage}>
