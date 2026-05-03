@@ -10,13 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL } from '@/lib/constants';
 import { setSessionCookie } from '@/lib/cookie';
-
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const payload = token.split('.')[1];
-    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
-  } catch { return null; }
-}
+import { decodeJwtPayload } from '@/lib/jwt';
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,7 +72,13 @@ export async function POST(request: NextRequest) {
         email: payload.email || payload.sub || '',
         role: payload.role || 'USER',
         name: payload.name || '',
-      }), { httpOnly: false, sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60 });
+      }), {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60,
+      });
     }
 
     return response;

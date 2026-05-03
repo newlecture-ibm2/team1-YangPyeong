@@ -91,7 +91,7 @@ export default function usePasswordReset() {
   }, []);
 
   return {
-    step, setStep,
+    step,
     error, setError,
     success,
     loading,

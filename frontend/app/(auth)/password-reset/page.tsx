@@ -1,14 +1,11 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api-fetch';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import styles from './page.module.css';
-import { getPasswordStrength } from '@/lib/utils';
 
 import usePasswordReset from './usePasswordReset';
 
@@ -156,7 +153,7 @@ export default function ResetPasswordPage() {
                   type="button"
                   variant="outline"
                   size="lg"
-                  onClick={() => { handlePrev(); setError(''); }}
+                  onClick={handlePrev}
                 >
                   이전
                 </Button>
@@ -236,7 +233,7 @@ export default function ResetPasswordPage() {
                   type="button"
                   variant="outline"
                   size="lg"
-                  onClick={() => { handlePrev(); setError(''); }}
+                  onClick={handlePrev}
                 >
                   이전
                 </Button>
