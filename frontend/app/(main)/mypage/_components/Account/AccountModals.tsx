@@ -214,21 +214,24 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, onError, isSoci
   const [password, setPassword] = useState('');
   const [confirmText, setConfirmText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inlineError, setInlineError] = useState('');
 
   const handleClose = () => {
     setPassword('');
     setConfirmText('');
+    setInlineError('');
     onClose();
   };
 
   const handleSubmit = async () => {
+    setInlineError('');
     // LOCAL 유저는 비밀번호 필수
     if (!isSocial && !password) {
-      onError('비밀번호를 입력해주세요.');
+      setInlineError('비밀번호를 입력해주세요.');
       return;
     }
     if (confirmText !== '탈퇴합니다') {
-      onError("확인을 위해 '탈퇴합니다'를 정확히 입력해주세요.");
+      setInlineError("확인을 위해 '탈퇴합니다'를 정확히 입력해주세요.");
       return;
     }
 
@@ -251,10 +254,12 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, onError, isSoci
       if (data.success) {
         onSuccess();
       } else {
-        onError(data.error?.message || '회원 탈퇴에 실패했습니다.');
+        const errMsg = data.error?.message || '회원 탈퇴에 실패했습니다.';
+        // 비밀번호 관련 에러는 인라인, 그 외는 인라인으로 통일
+        setInlineError(errMsg);
       }
     } catch {
-      onError('회원 탈퇴 중 오류가 발생했습니다.');
+      setInlineError('회원 탈퇴 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -266,6 +271,11 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, onError, isSoci
     <div className={styles.overlay}>
       <div className={styles.modal}>
         <h2 className={`${styles.title} ${styles.dangerTitle}`}>회원 탈퇴</h2>
+
+        {/* 인라인 에러 메시지 */}
+        {inlineError && (
+          <div className={styles.inlineError}>{inlineError}</div>
+        )}
 
         <div className={styles.warningBox}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

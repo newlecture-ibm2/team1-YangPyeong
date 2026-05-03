@@ -191,6 +191,27 @@ export default function ResetPasswordPage() {
                   required
                   autoComplete="new-password"
                 />
+                {newPassword.length >= 1 && (() => {
+                  const hasLetter = /[A-Za-z]/.test(newPassword);
+                  const hasNumber = /[0-9]/.test(newPassword);
+                  const hasSpecial = /[^A-Za-z0-9]/.test(newPassword);
+                  const hasLength = newPassword.length >= 8;
+                  const items = [
+                    { ok: hasLetter, label: '영문자' },
+                    { ok: hasNumber, label: '숫자' },
+                    { ok: hasSpecial, label: '특수문자' },
+                    { ok: hasLength, label: '8자 이상' },
+                  ];
+                  return (
+                    <div style={{ display: 'flex', gap: '12px', fontSize: '0.82rem', marginTop: '6px', flexWrap: 'wrap' }}>
+                      {items.map((item) => (
+                        <span key={item.label} style={{ color: item.ok ? '#2d6a4f' : '#adb5bd' }}>
+                          {item.ok ? '✓' : '✕'} {item.label}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })()}
                 {newPassword.length >= 6 && (
                   <>
                     <div className={styles.strengthBar}>

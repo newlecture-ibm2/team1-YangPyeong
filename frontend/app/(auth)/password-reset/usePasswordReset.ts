@@ -7,6 +7,7 @@ import { getPasswordStrength } from '@/lib/utils';
 export default function usePasswordReset() {
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
+  const [answerError, setAnswerError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -47,7 +48,6 @@ export default function usePasswordReset() {
   }, [email]);
 
   // Step 2: 답변 제출 (서버에서 검증 후 다음 단계)
-  const [answerError, setAnswerError] = useState('');
 
   const handleAnswerSubmit = useCallback(async () => {
     if (!securityAnswer.trim()) { setAnswerError('보안질문 답변을 입력해주세요.'); return; }
@@ -77,6 +77,14 @@ export default function usePasswordReset() {
   const handleResetSubmit = useCallback(async (e: FormEvent) => {
     e.preventDefault();
     if (newPassword.length < 8) { setError('비밀번호는 8자 이상이어야 합니다.'); return; }
+    // 조합 검증: 영문자 + 숫자 + 특수문자 필수
+    const hasLetter = /[A-Za-z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    const hasSpecial = /[^A-Za-z0-9]/.test(newPassword);
+    if (!hasLetter || !hasNumber || !hasSpecial) {
+      setError('비밀번호는 영문자, 숫자, 특수문자를 모두 포함해야 합니다.');
+      return;
+    }
     if (strength.level < 2) { setError('보안을 위해 더 강력한 비밀번호를 설정해주세요.'); return; }
     if (newPassword !== confirmPassword) { setError('비밀번호가 일치하지 않습니다.'); return; }
 
@@ -107,6 +115,7 @@ export default function usePasswordReset() {
 
   const handlePrev = useCallback(() => {
     setError('');
+    setAnswerError('');
     setStep((prev) => Math.max(1, prev - 1));
   }, []);
 
