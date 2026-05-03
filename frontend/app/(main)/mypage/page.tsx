@@ -150,7 +150,6 @@ export default function MyPage() {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onSuccess={handleDeleteSuccess}
-        onError={(msg) => toast(msg, 'error')}
         isSocial={profile?.provider !== 'LOCAL'}
       />
     </div>

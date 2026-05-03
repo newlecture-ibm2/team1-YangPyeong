@@ -206,11 +206,10 @@ interface DeleteAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  onError: (msg: string) => void;
   isSocial?: boolean;
 }
 
-export function DeleteAccountModal({ isOpen, onClose, onSuccess, onError, isSocial = false }: DeleteAccountModalProps) {
+export function DeleteAccountModal({ isOpen, onClose, onSuccess, isSocial = false }: DeleteAccountModalProps) {
   const [password, setPassword] = useState('');
   const [confirmText, setConfirmText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -296,7 +295,7 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, onError, isSoci
               type="password"
               className={styles.input}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); setInlineError(''); }}
               placeholder="현재 비밀번호 입력"
             />
           </div>
@@ -310,7 +309,7 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, onError, isSoci
             type="text"
             className={styles.input}
             value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
+            onChange={(e) => { setConfirmText(e.target.value); setInlineError(''); }}
             placeholder="탈퇴합니다"
           />
         </div>

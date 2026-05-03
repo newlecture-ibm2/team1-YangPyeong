@@ -158,6 +158,13 @@ export default function useSignUp() {
 
   const validateStep2 = useCallback(() => {
     if (password.length < 8) { setError('비밀번호는 8자 이상이어야 합니다.'); return false; }
+    const hasLetter = /[A-Za-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[^A-Za-z0-9]/.test(password);
+    if (!hasLetter || !hasNumber || !hasSpecial) {
+      setError('비밀번호는 영문자, 숫자, 특수문자를 모두 포함해야 합니다.');
+      return false;
+    }
     if (password !== confirmPassword) { setError('비밀번호가 일치하지 않습니다.'); return false; }
     if (strength.level < 2) { setError('보안을 위해 더 강력한 비밀번호를 설정해주세요.'); return false; }
     setError('');
