@@ -18,6 +18,7 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inlineError, setInlineError] = useState('');
+  const [currentPwError, setCurrentPwError] = useState('');
 
   const strength = useMemo(() => getPasswordStrength(newPassword), [newPassword]);
 
@@ -34,6 +35,7 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
     setNewPassword('');
     setConfirmPassword('');
     setInlineError('');
+    setCurrentPwError('');
   }, []);
 
   const handleClose = () => {
@@ -43,6 +45,7 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
 
   const handleSubmit = async () => {
     setInlineError('');
+    setCurrentPwError('');
 
     if (!currentPassword || !newPassword || !confirmPassword) {
       setInlineError('모든 필드를 입력해주세요.');
@@ -85,8 +88,13 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
         onSuccess();
         onClose();
       } else {
-        // 현재 비밀번호 불일치 등 백엔드 에러를 인라인으로 표시
-        setInlineError(data.error?.message || '비밀번호 변경에 실패했습니다.');
+        const errMsg = data.error?.message || '비밀번호 변경에 실패했습니다.';
+        // 현재 비밀번호 관련 에러는 해당 필드 아래에 표시
+        if (errMsg.includes('현재 비밀번호') || errMsg.includes('올바르지')) {
+          setCurrentPwError(errMsg);
+        } else {
+          setInlineError(errMsg);
+        }
       }
     } catch {
       setInlineError('비밀번호 변경 중 오류가 발생했습니다.');
@@ -102,7 +110,7 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <h2 className={styles.title}>비밀번호 변경</h2>
 
-        {/* 인라인 에러 메시지 */}
+        {/* 인라인 에러 메시지 (현재 비밀번호 에러 제외) */}
         {inlineError && (
           <div className={styles.inlineError}>{inlineError}</div>
         )}
@@ -111,11 +119,14 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
           <label className={styles.label}>현재 비밀번호</label>
           <input
             type="password"
-            className={styles.input}
+            className={`${styles.input} ${currentPwError ? styles.inputError : ''}`}
             value={currentPassword}
-            onChange={(e) => { setCurrentPassword(e.target.value); setInlineError(''); }}
+            onChange={(e) => { setCurrentPassword(e.target.value); setInlineError(''); setCurrentPwError(''); }}
             placeholder="현재 비밀번호 입력"
           />
+          {currentPwError && (
+            <div className={styles.fieldHint}>{currentPwError}</div>
+          )}
         </div>
 
         <div className={styles.field}>
