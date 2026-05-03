@@ -37,7 +37,33 @@ export default function SignUpPage() {
     showReactivateModal,
     setShowReactivateModal,
     handleReactivate,
+    reactivated,
   } = useSignUp();
+
+  // ── 재활성화 성공 화면 — 로그인으로 안내 ──
+  if (reactivated) {
+    return (
+      <div className={styles.authPage}>
+        <div className={styles.authCard}>
+          <div className={styles.logoArea}>
+            <Image src="/logo.png" alt="FarmBalance 로고" width={80} height={80} />
+            <span className={styles.logoText}>Farm<em>Balance</em></span>
+          </div>
+
+          <h1 className={styles.authTitle}>계정이 복구되었습니다! 🎉</h1>
+
+          <div className={styles.successMsg}>
+            <strong>{email}</strong> 계정이 다시 활성화되었습니다.<br />
+            기존 비밀번호로 로그인해주세요.
+          </div>
+
+          <Button variant="dark" size="lg" fullWidth onClick={() => router.push('/login')}>
+            로그인하러 가기
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // ── 가입 성공 화면 ──
   if (success) {

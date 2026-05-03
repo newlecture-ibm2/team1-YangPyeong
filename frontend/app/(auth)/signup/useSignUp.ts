@@ -190,7 +190,8 @@ export default function useSignUp() {
     setStep((prev) => Math.max(1, prev - 1));
   }, []);
 
-  /** 탈퇴 계정 재활성화 후 가입 진행 */
+  /** 탈퇴 계정 재활성화 후 로그인 페이지로 안내 */
+  const [reactivated, setReactivated] = useState(false);
   const handleReactivate = useCallback(async () => {
     try {
       const result = await apiFetch('/api/users/reactivate', {
@@ -199,9 +200,7 @@ export default function useSignUp() {
       });
       if (result.success) {
         setShowReactivateModal(false);
-        setEmailStatus('available');
-        setError('');
-        setFieldErrors(prev => ({ ...prev, email: '' }));
+        setReactivated(true);
       } else {
         setError('계정 재활성화에 실패했습니다.');
       }
@@ -267,5 +266,6 @@ export default function useSignUp() {
     showReactivateModal,
     setShowReactivateModal,
     handleReactivate,
+    reactivated,
   };
 }
