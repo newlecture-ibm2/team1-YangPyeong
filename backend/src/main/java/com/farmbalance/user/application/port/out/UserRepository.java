@@ -22,5 +22,7 @@ public interface UserRepository {
 
     boolean existsByName(String name);
 
+    boolean existsByNameAndEmailNot(String name, String email);
+
     void deleteByEmail(String email);
 }

@@ -22,6 +22,9 @@ public interface UserJpaRepository extends JpaRepository<UserJpaEntity, Long> {
 
     boolean existsByName(String name);
 
+    /** 닉네임 중복 검사 (특정 이메일 제외 — 프로필 수정 시 자기 자신 제외용) */
+    boolean existsByNameAndEmailNot(String name, String email);
+
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM UserJpaEntity u WHERE u.email = :email")
     void deleteByEmail(@Param("email") String email);

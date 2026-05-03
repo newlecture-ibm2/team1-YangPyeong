@@ -51,6 +51,18 @@ public class UserService implements UpdateProfileUseCase, CheckNicknameUseCase, 
 
     @Override
     @Transactional(readOnly = true)
+    public boolean isNicknameAvailable(String name, String excludeEmail) {
+        if (name == null || name.isBlank()) {
+            return false;
+        }
+        if (excludeEmail == null || excludeEmail.isBlank()) {
+            return !userRepository.existsByName(name);
+        }
+        return !userRepository.existsByNameAndEmailNot(name, excludeEmail);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public User getProfile(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));

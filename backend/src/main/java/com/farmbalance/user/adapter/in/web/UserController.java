@@ -223,10 +223,15 @@ import java.util.UUID;
 
     /**
      * 닉네임 중복 확인
+     * - excludeEmail: 프로필 수정 시 자기 자신 제외 (선택)
      */
     @GetMapping("/check-nickname")
-    public ApiResponse<Boolean> checkNickname(@RequestParam String name) {
-        boolean available = checkNicknameUseCase.isNicknameAvailable(name);
+    public ApiResponse<Boolean> checkNickname(
+            @RequestParam String name,
+            @RequestParam(required = false) String excludeEmail) {
+        boolean available = (excludeEmail != null && !excludeEmail.isBlank())
+                ? checkNicknameUseCase.isNicknameAvailable(name, excludeEmail)
+                : checkNicknameUseCase.isNicknameAvailable(name);
         return ApiResponse.ok(available);
     }
 

@@ -170,16 +170,17 @@ export function useProfile() {
     }
   }, [formData, profile]);
 
-  /** 닉네임 중복 확인 */
+  /** 닉네임 중복 확인 (프로필 수정 시 자기 자신은 제외) */
   const checkNickname = useCallback(async (name: string) => {
     if (!name || name.trim().length < 2) return false;
     try {
-      const res = await apiFetch<boolean>(`/api/users/check-nickname?name=${encodeURIComponent(name)}`);
+      const excludeParam = profile?.email ? `&excludeEmail=${encodeURIComponent(profile.email)}` : '';
+      const res = await apiFetch<boolean>(`/api/users/check-nickname?name=${encodeURIComponent(name)}${excludeParam}`);
       return res.success && res.data === true;
     } catch {
       return false;
     }
-  }, []);
+  }, [profile?.email]);
 
   /** 프로필 이미지 업로드 (서버에 저장) */
   const uploadImage = useCallback(async (file: File) => {
