@@ -106,8 +106,8 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
   if (!isOpen) return null;
 
   return (
-    <div className={styles.overlay} onClick={handleClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.overlay}>
+      <div className={styles.modal}>
         <h2 className={styles.title}>비밀번호 변경</h2>
 
         {/* 인라인 에러 메시지 (현재 비밀번호 에러 제외) */}
@@ -263,8 +263,8 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, onError, isSoci
   if (!isOpen) return null;
 
   return (
-    <div className={styles.overlay} onClick={handleClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.overlay}>
+      <div className={styles.modal}>
         <h2 className={`${styles.title} ${styles.dangerTitle}`}>회원 탈퇴</h2>
 
         <div className={styles.warningBox}>
