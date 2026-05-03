@@ -281,7 +281,7 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, onError, isSoci
         {/* LOCAL 유저만 비밀번호 입력 표시 */}
         {!isSocial && (
           <div className={styles.field}>
-            <label className={styles.label}>비밀번호 확인</label>
+            <label className={styles.label} style={{ fontWeight: 500 }}>비밀번호 확인</label>
             <input
               type="password"
               className={styles.input}
@@ -293,8 +293,8 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, onError, isSoci
         )}
 
         <div className={styles.field}>
-          <label className={styles.label}>
-            확인을 위해 <strong style={{ color: '#ef4444' }}>&apos;탈퇴합니다&apos;</strong>를 입력해주세요
+          <label className={styles.label} style={{ fontWeight: 500 }}>
+            확인을 위해 <span style={{ color: '#ef4444', fontWeight: 600 }}>&apos;탈퇴합니다&apos;</span>를 입력해주세요
           </label>
           <input
             type="text"
