@@ -30,9 +30,7 @@ export default function Step2Answer({ hook }: Step2Props) {
         required
       />
       {hook.answerError && (
-        <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '4px', fontWeight: 500 }}>
-          {hook.answerError}
-        </p>
+        <div className={styles.fieldError}>{hook.answerError}</div>
       )}
 
       <div className={styles.btnGroup}>
