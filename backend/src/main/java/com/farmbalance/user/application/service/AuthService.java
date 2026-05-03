@@ -81,9 +81,16 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
     @Override
     @Transactional
     public SignUpResponse signUp(SignUpRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException(ErrorCode.USER_EMAIL_DUPLICATE);
-        }
+        // 이메일 중복 검사: WITHDRAWN(탈퇴) 상태가 아닌 활성 계정만 중복으로 판단
+        userRepository.findByEmail(request.getEmail()).ifPresent(existingUser -> {
+            if (existingUser.getStatus() == UserStatus.WITHDRAWN) {
+                // 탈퇴 계정의 보안질문 및 유저 레코드 삭제 후 새로 생성 (unique constraint 충돌 방지)
+                securityQuestionRepository.deleteByUserId(existingUser.getId());
+                userRepository.deleteByEmail(existingUser.getEmail());
+            } else {
+                throw new BusinessException(ErrorCode.USER_EMAIL_DUPLICATE);
+            }
+        });
 
         // 회원가입은 항상 USER/ACTIVE
         // - FARMER: USER 가입 후 조건 충족 시 자동 승격

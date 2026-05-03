@@ -231,6 +231,28 @@ import java.util.UUID;
     }
 
     /**
+     * 이메일 상태 확인 (회원가입 시 실시간 검증용)
+     * - available: 사용 가능
+     * - exists: 이미 활성 계정 존재
+     * - withdrawn: 탈퇴 계정 (재가입 가능)
+     */
+    @GetMapping("/check-email")
+    public ApiResponse<Map<String, String>> checkEmail(@RequestParam String email) {
+        java.util.Optional<User> userOpt = getProfileUseCase.findByEmail(email);
+
+        if (userOpt.isEmpty()) {
+            return ApiResponse.ok(Map.of("status", "available"));
+        }
+
+        User user = userOpt.get();
+        if (user.getStatus() == com.farmbalance.user.domain.UserStatus.WITHDRAWN) {
+            return ApiResponse.ok(Map.of("status", "withdrawn"));
+        }
+
+        return ApiResponse.ok(Map.of("status", "exists"));
+    }
+
+    /**
      * 비밀번호 변경 요청 DTO
      */
     @lombok.Getter

@@ -57,6 +57,12 @@ public class UserService implements UpdateProfileUseCase, CheckNicknameUseCase, 
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
     public void updateProfileImage(String email, String imageUrl) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));

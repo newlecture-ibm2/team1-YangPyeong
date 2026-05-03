@@ -1,14 +1,12 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api-fetch';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
+import Modal from '@/components/common/Modal/Modal';
 import styles from './page.module.css';
-import { getPasswordStrength } from '@/lib/utils';
 
 import useSignUp from './useSignUp';
 import { SECURITY_QUESTIONS } from './_lib/constants';
@@ -22,16 +20,23 @@ export default function SignUpPage() {
     success,
     loading,
     name, setName,
-    email, setEmail,
-    phone, setPhone,
+    email, handleEmailChange,
+    phone, handlePhoneChange,
     password, setPassword,
     confirmPassword, setConfirmPassword,
     securityQuestion, setSecurityQuestion,
     securityAnswer, setSecurityAnswer,
     strength,
+    fieldErrors,
+    touched,
+    emailStatus,
+    handleBlur,
     handleNext,
     handlePrev,
     handleSubmit,
+    showReactivateModal,
+    setShowReactivateModal,
+    handleReactivate,
   } = useSignUp();
 
   // ── 가입 성공 화면 ──
@@ -97,36 +102,68 @@ export default function SignUpPage() {
           {/* ── Step 1: 기본 정보 ── */}
           {step === 1 && (
             <div className={styles.stepContent}>
-              <Input
-                label="이름 *"
-                id="signup-name"
-                placeholder="홍길동"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                autoComplete="name"
-              />
+              {/* 이름 */}
+              <div className={styles.fieldGroup}>
+                <Input
+                  label="이름"
+                  id="signup-name"
+                  placeholder="홍길동"
+                  value={name}
+                  onChange={(e) => { setName(e.target.value); if (error) setError(''); }}
+                  required
+                  autoComplete="name"
+                />
+                {touched.name && fieldErrors.name && (
+                  <div className={styles.fieldError}>{fieldErrors.name}</div>
+                )}
+              </div>
 
-              <Input
-                label="이메일 *"
-                id="signup-email"
-                type="email"
-                placeholder="example@farmbalance.kr"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-              />
+              {/* 이메일 (실시간 체크) */}
+              <div className={styles.fieldGroup}>
+                <Input
+                  label="이메일"
+                  id="signup-email"
+                  type="email"
+                  placeholder="example@farmbalance.kr"
+                  value={email}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+                {/* 이메일 상태 표시 — 입력 즉시 안내 */}
+                {emailStatus === 'checking' && (
+                  <div className={styles.fieldChecking}>확인 중...</div>
+                )}
+                {emailStatus === 'available' && (
+                  <div className={styles.fieldSuccess}>✓ 사용 가능한 이메일입니다.</div>
+                )}
+                {emailStatus === 'exists' && (
+                  <div className={styles.fieldError}>이미 등록된 이메일입니다.</div>
+                )}
+                {emailStatus === 'invalid' && (
+                  <div className={styles.fieldError}>올바른 이메일 형식을 입력해주세요.</div>
+                )}
+                {emailStatus !== 'exists' && emailStatus !== 'invalid' && touched.email && fieldErrors.email && (
+                  <div className={styles.fieldError}>{fieldErrors.email}</div>
+                )}
+              </div>
 
-              <Input
-                label="연락처 (선택)"
-                id="signup-phone"
-                type="tel"
-                placeholder="010-0000-0000"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                autoComplete="tel"
-              />
+              {/* 연락처 (필수 + 자동 포맷) */}
+              <div className={styles.fieldGroup}>
+                <Input
+                  label="연락처"
+                  id="signup-phone"
+                  type="tel"
+                  placeholder="010-0000-0000"
+                  value={phone}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  required
+                  autoComplete="tel"
+                />
+                {touched.phone && fieldErrors.phone && (
+                  <div className={styles.fieldError}>{fieldErrors.phone}</div>
+                )}
+              </div>
 
               <Button type="button" variant="dark" size="lg" fullWidth onClick={handleNext}>
                 다음
@@ -139,7 +176,7 @@ export default function SignUpPage() {
             <div className={styles.stepContent}>
               <div>
                 <Input
-                  label="비밀번호 *"
+                  label="비밀번호"
                   id="signup-password"
                   type="password"
                   placeholder="8자 이상, 대문자·숫자·특수문자 포함"
@@ -154,21 +191,19 @@ export default function SignUpPage() {
                       {[1, 2, 3].map((seg) => (
                         <div
                           key={seg}
-                          className={`${styles.strengthSegment} ${
-                            strength.level >= seg
-                              ? seg === 1 ? styles.strengthWeak
-                                : seg === 2 ? styles.strengthMedium
+                          className={`${styles.strengthSegment} ${strength.level >= seg
+                            ? seg === 1 ? styles.strengthWeak
+                              : seg === 2 ? styles.strengthMedium
                                 : styles.strengthStrong
-                              : ''
-                          }`}
+                            : ''
+                            }`}
                         />
                       ))}
                     </div>
-                    <div className={`${styles.strengthText} ${
-                      strength.level === 1 ? styles.strengthTextWeak
-                        : strength.level === 2 ? styles.strengthTextMedium
+                    <div className={`${styles.strengthText} ${strength.level === 1 ? styles.strengthTextWeak
+                      : strength.level === 2 ? styles.strengthTextMedium
                         : styles.strengthTextStrong
-                    }`}>
+                      }`}>
                       비밀번호 강도: {strength.text}
                     </div>
                   </>
@@ -177,7 +212,7 @@ export default function SignUpPage() {
 
               <div>
                 <Input
-                  label="비밀번호 확인 *"
+                  label="비밀번호 확인"
                   id="signup-confirm"
                   type="password"
                   placeholder="비밀번호를 다시 입력해주세요"
@@ -206,7 +241,7 @@ export default function SignUpPage() {
           {step === 3 && (
             <div className={styles.stepContent}>
               <div className={styles.selectGroup}>
-                <label className={styles.selectLabel} htmlFor="signup-security-q">보안질문 *</label>
+                <label className={styles.selectLabel} htmlFor="signup-security-q">보안질문</label>
                 <select
                   id="signup-security-q"
                   className={styles.fieldSelect}
@@ -223,7 +258,7 @@ export default function SignUpPage() {
               </div>
 
               <Input
-                label="답변 *"
+                label="답변"
                 id="signup-security-a"
                 placeholder="답변을 입력해주세요"
                 value={securityAnswer}
@@ -249,6 +284,31 @@ export default function SignUpPage() {
           <Link href="/login" className={styles.footerLink}>로그인</Link>
         </p>
       </div>
+
+      {/* 탈퇴 계정 재가입 안내 모달 */}
+      <Modal
+        isOpen={showReactivateModal}
+        onClose={() => setShowReactivateModal(false)}
+        title="탈퇴 계정 안내"
+      >
+        <div className={styles.reactivateModal}>
+          <p className={styles.reactivateText}>
+            해당 이메일(<strong>{email}</strong>)은 이전에 탈퇴한 계정입니다.<br />
+            기존 계정을 재활성화하시겠습니까?
+          </p>
+          <p className={styles.reactivateHint}>
+            재활성화하면 이전 정보로 다시 로그인할 수 있습니다.
+          </p>
+          <div className={styles.reactivateBtnGroup}>
+            <Button variant="outline" size="lg" onClick={() => setShowReactivateModal(false)}>
+              취소
+            </Button>
+            <Button variant="primary" size="lg" onClick={handleReactivate}>
+              재활성화 후 로그인
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
