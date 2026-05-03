@@ -159,3 +159,31 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ── Password Strength Bar ── */
+.strengthBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.strengthSegment {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: #e2e8f0;
+  transition: background 0.2s;
+}
+
+.strengthWeak { background: #ef4444; }
+.strengthMedium { background: #f59e0b; }
+.strengthStrong { background: #22c55e; }
+
+.strengthLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  margin-left: 8px;
+  white-space: nowrap;
+}

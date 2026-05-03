@@ -6,6 +6,7 @@ import { ProfileUpdateRequest } from '../../_lib/profile.types';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input/Input';
 import Modal from '@/components/common/Modal/Modal';
+import { formatPhone, validatePhoneOptional } from '@/lib/phone';
 import styles from './Form.module.css';
 
 // 다음 우편번호 검색 (SSR 방지)
@@ -13,22 +14,10 @@ const DaumPostcodeEmbed = dynamic(() => import('react-daum-postcode'), { ssr: fa
 
 /** 필드별 유효성 검사 에러 */
 interface FormErrors {
+  name?: string;
   phone?: string;
   region?: string;
   address?: string;
-}
-
-/** 전화번호 유효성 검사 (빈 값 허용, 입력 시 형식 검사) */
-function validatePhone(value: string): string | undefined {
-  if (!value.trim()) return undefined;
-  const cleaned = value.replace(/[\s-]/g, '');
-  if (!/^\d{10,11}$/.test(cleaned)) {
-    return '올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)';
-  }
-  if (!cleaned.startsWith('01')) {
-    return '휴대폰 번호는 01로 시작해야 합니다.';
-  }
-  return undefined;
 }
 
 /** 활동 지역 유효성 검사 (빈 값 허용, 입력 시 최소 2자) */
@@ -43,21 +32,15 @@ function validateRegion(value: string): string | undefined {
   return undefined;
 }
 
-/** 전화번호 자동 포맷 (01012345678 → 010-1234-5678) */
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '');
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
-}
-
 interface ProfileEditFormProps {
   formData: ProfileUpdateRequest;
   isSaving: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   onSave: (overrides?: Partial<ProfileUpdateRequest>) => Promise<void>;
   onCancel: () => void;
+  onCheckNickname?: (name: string) => Promise<boolean>;
   error?: string | null;
+
 }
 
 export default function ProfileEditForm({
@@ -66,9 +49,11 @@ export default function ProfileEditForm({
   onChange,
   onSave,
   onCancel,
+  onCheckNickname,
   error
 }: ProfileEditFormProps) {
   const bioLength = formData.bio?.length || 0;
+  const [nicknameChecked, setNicknameChecked] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
@@ -85,14 +70,27 @@ export default function ProfileEditForm({
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
 
   /** 개별 필드 blur 시 유효성 검사 */
-  const handleBlur = useCallback((fieldName: string) => {
+  const handleBlur = useCallback(async (fieldName: string) => {
     setTouched(prev => ({ ...prev, [fieldName]: true }));
+
+    if (fieldName === 'name' && onCheckNickname && formData.name.trim().length >= 2) {
+      const isAvailable = await onCheckNickname(formData.name);
+      setNicknameChecked(true);
+      setErrors(prev => ({
+        ...prev,
+        name: isAvailable ? undefined : '이미 사용 중인 이름입니다.',
+      }));
+      return;
+    }
 
     setErrors(prev => {
       const newErrors = { ...prev };
       switch (fieldName) {
+        case 'name':
+          newErrors.name = formData.name.trim().length < 2 ? '이름은 2자 이상 입력해주세요.' : undefined;
+          break;
         case 'phone':
-          newErrors.phone = validatePhone(formData.phone);
+          newErrors.phone = validatePhoneOptional(formData.phone);
           break;
         case 'region':
           newErrors.region = validateRegion(formData.region);
@@ -100,7 +98,7 @@ export default function ProfileEditForm({
       }
       return newErrors;
     });
-  }, [formData]);
+  }, [formData, onCheckNickname]);
 
   /** 전화번호 입력 시 자동 포맷 + onChange 호출 */
   const handlePhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -112,7 +110,7 @@ export default function ProfileEditForm({
     onChange(syntheticEvent);
 
     if (touched.phone) {
-      setErrors(prev => ({ ...prev, phone: validatePhone(formatted) }));
+      setErrors(prev => ({ ...prev, phone: validatePhoneOptional(formatted) }));
     }
   }, [onChange, touched.phone]);
 
@@ -133,20 +131,29 @@ export default function ProfileEditForm({
     setIsPostcodeOpen(false);
   }, [onChange]);
 
-  /** 저장 시 전체 유효성 검사 + 주소 합치기 */
+  /** 저장 시 전체 유효성 검사 + 닉네임 중복 검사 + 주소 합치기 */
   const handleSave = useCallback(async () => {
-    const phoneErr = validatePhone(formData.phone);
+    const nameErr = formData.name.trim().length < 2 ? '이름은 2자 이상 입력해주세요.' : undefined;
+    const phoneErr = validatePhoneOptional(formData.phone);
     const regionErr = validateRegion(formData.region);
 
+    // 닉네임 중복 검사 (아직 체크하지 않은 경우)
+    let nicknameErr: string | undefined;
+    if (!nameErr && onCheckNickname) {
+      const isAvailable = await onCheckNickname(formData.name);
+      if (!isAvailable) nicknameErr = '이미 사용 중인 이름입니다.';
+    }
+
     const newErrors: FormErrors = {
+      name: nameErr || nicknameErr,
       phone: phoneErr,
       region: regionErr,
     };
 
     setErrors(newErrors);
-    setTouched({ phone: true, region: true, address: true });
+    setTouched({ name: true, phone: true, region: true, address: true });
 
-    if (phoneErr || regionErr) return;
+    if (newErrors.name || phoneErr || regionErr) return;
 
     // 기본주소 + 상세주소 합쳐서 overrides로 직접 전달
     const fullAddress = detailAddress.trim()
@@ -154,23 +161,32 @@ export default function ProfileEditForm({
       : baseAddress;
 
     await onSave({ address: fullAddress });
-  }, [formData, onSave, baseAddress, detailAddress]);
+  }, [formData, onSave, onCheckNickname, baseAddress, detailAddress]);
 
-  const hasErrors = !!(errors.phone || errors.region);
+  const hasErrors = !!(errors.name || errors.phone || errors.region);
 
   return (
     <div className={styles.editForm}>
       {error && <div className={styles.errorMsg}>{error}</div>}
       
       <div className={styles.formGrid}>
-        <Input
-          label="이름/닉네임"
-          name="name"
-          value={formData.name}
-          onChange={onChange}
-          placeholder="닉네임을 입력하세요"
-          required
-        />
+        <div className={styles.fieldWrapper}>
+          <Input
+            label="이름/닉네임"
+            name="name"
+            value={formData.name}
+            onChange={(e) => { onChange(e); setNicknameChecked(false); setErrors(prev => ({ ...prev, name: undefined })); }}
+            onBlur={() => handleBlur('name')}
+            placeholder="닉네임을 입력하세요"
+            required
+          />
+          {touched.name && errors.name && (
+            <span className={styles.fieldError}>{errors.name}</span>
+          )}
+          {nicknameChecked && !errors.name && formData.name.trim().length >= 2 && (
+            <span className={styles.fieldSuccess}>✓ 사용 가능한 이름입니다.</span>
+          )}
+        </div>
 
         {/* 연락처 (자동포맷 + 유효성 검사) */}
         <div className={styles.fieldWrapper}>
@@ -179,6 +195,7 @@ export default function ProfileEditForm({
             name="phone"
             value={formData.phone}
             onChange={handlePhoneChange}
+            onBlur={() => handleBlur('phone')}
             placeholder="010-0000-0000"
           />
           {touched.phone && errors.phone && (
@@ -198,6 +215,7 @@ export default function ProfileEditForm({
                 setErrors(prev => ({ ...prev, region: validateRegion(e.target.value) }));
               }
             }}
+            onBlur={() => handleBlur('region')}
             placeholder="예: 양평군 강상면"
           />
           {touched.region && errors.region && (

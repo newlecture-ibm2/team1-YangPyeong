@@ -156,7 +156,7 @@ export default function ResetPasswordPage() {
                   type="button"
                   variant="outline"
                   size="lg"
-                  onClick={() => { setStep(1); setError(''); }}
+                  onClick={() => { handlePrev(); setError(''); }}
                 >
                   이전
                 </Button>
@@ -236,7 +236,7 @@ export default function ResetPasswordPage() {
                   type="button"
                   variant="outline"
                   size="lg"
-                  onClick={() => { setStep(2); setError(''); }}
+                  onClick={() => { handlePrev(); setError(''); }}
                 >
                   이전
                 </Button>

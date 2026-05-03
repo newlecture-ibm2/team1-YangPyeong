@@ -136,6 +136,7 @@ export default function SignUpPage() {
                   placeholder="홍길동"
                   value={name}
                   onChange={(e) => { setName(e.target.value); if (error) setError(''); }}
+                  onBlur={() => handleBlur('name')}
                   required
                   autoComplete="name"
                 />
@@ -183,6 +184,7 @@ export default function SignUpPage() {
                   placeholder="010-0000-0000"
                   value={phone}
                   onChange={(e) => handlePhoneChange(e.target.value)}
+                  onBlur={() => handleBlur('phone')}
                   required
                   autoComplete="tel"
                 />

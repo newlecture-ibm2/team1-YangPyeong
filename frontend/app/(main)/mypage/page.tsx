@@ -29,6 +29,7 @@ export default function MyPage() {
     startEditing,
     cancelEditing,
     saveProfile,
+    checkNickname,
     uploadImage,
   } = useProfile();
 
@@ -98,6 +99,7 @@ export default function MyPage() {
             onChange={handleChange}
             onSave={handleSave}
             onCancel={cancelEditing}
+            onCheckNickname={checkNickname}
           />
         ) : (
           <ProfileInfoView 

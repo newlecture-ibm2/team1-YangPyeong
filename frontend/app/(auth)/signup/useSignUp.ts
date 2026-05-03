@@ -3,23 +3,7 @@
 import { useState, FormEvent, useCallback, useMemo, useRef } from 'react';
 import { apiFetch } from '@/lib/api-fetch';
 import { getPasswordStrength } from '@/lib/utils';
-
-/** 전화번호 자동 포맷 */
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '');
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
-}
-
-/** 전화번호 유효성 검사 */
-function validatePhone(value: string): string | undefined {
-  if (!value.trim()) return '연락처를 입력해주세요.';
-  const cleaned = value.replace(/[\s-]/g, '');
-  if (!/^\d{10,11}$/.test(cleaned)) return '올바른 전화번호 형식이 아닙니다.';
-  if (!cleaned.startsWith('01')) return '휴대폰 번호는 01로 시작해야 합니다.';
-  return undefined;
-}
+import { formatPhone, validatePhone } from '@/lib/phone';
 
 export type EmailStatus = 'idle' | 'checking' | 'available' | 'exists' | 'withdrawn' | 'invalid';
 

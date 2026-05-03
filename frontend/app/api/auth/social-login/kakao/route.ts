@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
       response.cookies.set('fb-user', JSON.stringify({
         email: payload.email || payload.sub || '',
         role: payload.role || 'USER',
+        name: payload.name || '',
       }), { httpOnly: false, sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60 });
     }
 

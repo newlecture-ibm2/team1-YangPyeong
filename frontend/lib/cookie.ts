@@ -6,10 +6,8 @@
 import { cookies } from 'next/headers';
 import { SESSION_COOKIE_NAME } from './constants';
 
-// ─── 간단한 Base64 인코딩/디코딩 (프로덕션에서는 iron-session 또는 jose 사용 권장) ───
-// TODO: iron-session 또는 jose 라이브러리로 교체하여 AES-256 암호화 적용
-
-const COOKIE_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-in-production';
+// ─── 간단한 Base64 인코딩/디코딩 (httpOnly 쿠키이므로 JS 접근은 차단됨) ───
+// TODO: 프로덕션 환경에서는 iron-session 또는 jose 라이브러리로 교체하여 AES-256 암호화 적용
 
 /**
  * JWT를 암호화하여 httpOnly 쿠키에 저장

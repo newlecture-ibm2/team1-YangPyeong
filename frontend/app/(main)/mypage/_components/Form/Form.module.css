@@ -22,9 +22,24 @@
   display: block;
   color: #ef4444;
   font-size: 0.8rem;
-  margin-top: 4px;
+  margin-top: 2px;
   padding-left: 2px;
   animation: fadeIn 0.2s ease;
+}
+
+.fieldSuccess {
+  display: block;
+  color: #2d6a4f;
+  font-size: 0.8rem;
+  margin-top: 2px;
+  padding-left: 2px;
+  font-weight: 500;
+  animation: fadeIn 0.2s ease;
+}
+
+/* fieldWrapper 내부 Input의 하단 여백 제거 */
+.fieldWrapper > div {
+  margin-bottom: 0;
 }
 
 @keyframes fadeIn {

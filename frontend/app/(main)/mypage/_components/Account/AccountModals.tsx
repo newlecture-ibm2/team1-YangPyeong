@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { getPasswordStrength } from '@/lib/utils';
 import styles from './AccountModals.module.css';
 
 /* ── 비밀번호 변경 모달 ── */
@@ -16,6 +17,8 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const strength = useMemo(() => getPasswordStrength(newPassword), [newPassword]);
 
   const resetForm = useCallback(() => {
     setCurrentPassword('');
@@ -43,6 +46,10 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
     }
     if (currentPassword === newPassword) {
       onError('현재 비밀번호와 다른 비밀번호를 입력해주세요.');
+      return;
+    }
+    if (strength.level < 2) {
+      onError('보안을 위해 더 강력한 비밀번호를 설정해주세요.');
       return;
     }
 
@@ -96,8 +103,25 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
             className={styles.input}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="8자 이상 입력"
+            placeholder="8자 이상, 대문자·숫자·특수문자 포함"
           />
+          {newPassword.length >= 6 && (
+            <div className={styles.strengthBar}>
+              {[1, 2, 3].map((seg) => (
+                <div
+                  key={seg}
+                  className={`${styles.strengthSegment} ${
+                    strength.level >= seg
+                      ? seg === 1 ? styles.strengthWeak
+                        : seg === 2 ? styles.strengthMedium
+                          : styles.strengthStrong
+                      : ''
+                  }`}
+                />
+              ))}
+              <span className={styles.strengthLabel}>{strength.text}</span>
+            </div>
+          )}
         </div>
 
         <div className={styles.field}>

@@ -74,7 +74,9 @@ export function useProfile() {
             address: cookieUser.address || '',
             bio: cookieUser.bio || '',
             role: (cookieUser.role as UserProfile['role']) || 'USER',
+            provider: (cookieUser.provider as UserProfile['provider']) || 'LOCAL',
             profileImageUrl: cookieUser.profileImageUrl || null,
+            createdAt: cookieUser.createdAt || null,
           };
           setProfile(initialProfile);
           setFormData({
@@ -144,11 +146,16 @@ export function useProfile() {
         setProfile(updatedProfile);
         setFormData(dataToSave);
         
-        // 브라우저 쿠키(fb-user) 동기화
+        // 브라우저 쿠키(fb-user) 동기화 — 최소 정보만 저장 (XSS 대비)
         if (typeof document !== 'undefined') {
           const expiration = new Date();
-          expiration.setDate(expiration.getDate() + 7); // 7일 유지
-          document.cookie = `fb-user=${encodeURIComponent(JSON.stringify(updatedProfile))}; path=/; expires=${expiration.toUTCString()}`;
+          expiration.setDate(expiration.getDate() + 7);
+          const cookieData = {
+            email: updatedProfile.email,
+            role: updatedProfile.role,
+            name: updatedProfile.name,
+          };
+          document.cookie = `fb-user=${encodeURIComponent(JSON.stringify(cookieData))}; path=/; expires=${expiration.toUTCString()}`;
         }
 
         setIsEditing(false);
