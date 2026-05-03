@@ -207,7 +207,7 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
     /** JWT 토큰 쌍 발급 (공통) */
     private TokenResponse issueTokens(User user) {
         String accessToken = jwtTokenProvider.createAccessToken(
-                user.getId(), user.getEmail(), user.getRole().name()
+                user.getId(), user.getEmail(), user.getRole().name(), user.getName()
         );
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
