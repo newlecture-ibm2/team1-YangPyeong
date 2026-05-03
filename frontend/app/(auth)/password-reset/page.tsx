@@ -20,6 +20,7 @@ export default function ResetPasswordPage() {
     email, setEmail,
     securityQuestion,
     securityAnswer, setSecurityAnswer,
+    answerError, setAnswerError,
     newPassword, setNewPassword,
     confirmPassword, setConfirmPassword,
     strength,
@@ -143,9 +144,14 @@ export default function ResetPasswordPage() {
                 id="reset-security-answer"
                 placeholder="보안질문에 대한 답변을 입력해주세요"
                 value={securityAnswer}
-                onChange={(e) => { setSecurityAnswer(e.target.value); setError(''); }}
+                onChange={(e) => { setSecurityAnswer(e.target.value); setError(''); setAnswerError(''); }}
                 required
               />
+              {answerError && (
+                <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '4px', fontWeight: 500 }}>
+                  {answerError}
+                </p>
+              )}
 
               <div className={styles.btnGroup}>
                 <Button
@@ -162,9 +168,10 @@ export default function ResetPasswordPage() {
                   type="button"
                   variant="dark"
                   size="lg"
+                  disabled={loading}
                   onClick={handleAnswerSubmit}
                 >
-                  다음
+                  {loading ? '확인 중...' : '다음'}
                 </Button>
               </div>
             </div>

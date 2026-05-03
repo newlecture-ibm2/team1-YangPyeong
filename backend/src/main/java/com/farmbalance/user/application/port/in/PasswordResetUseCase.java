@@ -8,6 +8,9 @@ public interface PasswordResetUseCase {
     /** 이메일로 보안질문 조회 */
     SecurityQuestionResponse getSecurityQuestion(SecurityQuestionVerifyRequest request);
 
+    /** 보안질문 답변 검증 (답변만 확인, 비밀번호 변경 없음) */
+    boolean verifyAnswer(String email, String securityAnswer);
+
     /** 보안질문 답변 검증 + 비밀번호 재설정 */
     void resetPassword(PasswordResetRequest request);
 }

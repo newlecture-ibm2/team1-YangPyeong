@@ -46,12 +46,32 @@ export default function usePasswordReset() {
     }
   }, [email]);
 
-  // Step 2: 답변 제출
-  const handleAnswerSubmit = useCallback(() => {
-    if (!securityAnswer.trim()) { setError('보안질문 답변을 입력해주세요.'); return; }
+  // Step 2: 답변 제출 (서버에서 검증 후 다음 단계)
+  const [answerError, setAnswerError] = useState('');
+
+  const handleAnswerSubmit = useCallback(async () => {
+    if (!securityAnswer.trim()) { setAnswerError('보안질문 답변을 입력해주세요.'); return; }
+    setAnswerError('');
     setError('');
-    setStep(3);
-  }, [securityAnswer]);
+    setLoading(true);
+
+    try {
+      const result = await apiFetch<boolean>('/api/auth/password-reset/verify-answer', {
+        method: 'POST',
+        body: { email, securityAnswer },
+      });
+
+      if (result.success && result.data === true) {
+        setStep(3);
+      } else {
+        setAnswerError('보안질문 답변이 일치하지 않습니다.');
+      }
+    } catch {
+      setAnswerError('서버에 연결할 수 없습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [email, securityAnswer]);
 
   // Step 3: 비밀번호 재설정 제출
   const handleResetSubmit = useCallback(async (e: FormEvent) => {
@@ -98,6 +118,7 @@ export default function usePasswordReset() {
     email, setEmail,
     securityQuestion,
     securityAnswer, setSecurityAnswer,
+    answerError, setAnswerError,
     newPassword, setNewPassword,
     confirmPassword, setConfirmPassword,
     strength,
