@@ -2,7 +2,7 @@
 
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
-import PasswordStrength from '../../_components/PasswordStrength';
+import PasswordStrength from '../../_components/PasswordStrength/PasswordStrength';
 import type usePasswordReset from '../usePasswordReset';
 import styles from '../page.module.css';
 

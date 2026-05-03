@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/common/Button';
-import AuthBrand from '../_components/AuthBrand';
-import StepIndicator from '../_components/StepIndicator';
+import AuthBrand from '../_components/AuthBrand/AuthBrand';
+import StepIndicator from '../_components/StepIndicator/StepIndicator';
 import Step1Email from './_components/Step1Email';
 import Step2Answer from './_components/Step2Answer';
 import Step3NewPassword from './_components/Step3NewPassword';

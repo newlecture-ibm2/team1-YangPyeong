@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import AuthBrand from '../_components/AuthBrand';
+import AuthBrand from '../_components/AuthBrand/AuthBrand';
 import SocialButtons from './_components/SocialButtons';
 import ReactivateModal from './_components/ReactivateModal';
 import Input from '@/components/common/Input';
