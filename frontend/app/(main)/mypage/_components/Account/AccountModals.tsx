@@ -17,13 +17,23 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inlineError, setInlineError] = useState('');
 
   const strength = useMemo(() => getPasswordStrength(newPassword), [newPassword]);
+
+  /** 비밀번호 조합 검증: 문자 + 숫자 + 특수문자 */
+  const composition = useMemo(() => {
+    const hasLetter = /[A-Za-z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    const hasSpecial = /[^A-Za-z0-9]/.test(newPassword);
+    return { hasLetter, hasNumber, hasSpecial, isValid: hasLetter && hasNumber && hasSpecial };
+  }, [newPassword]);
 
   const resetForm = useCallback(() => {
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
+    setInlineError('');
   }, []);
 
   const handleClose = () => {
@@ -32,24 +42,30 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
   };
 
   const handleSubmit = async () => {
+    setInlineError('');
+
     if (!currentPassword || !newPassword || !confirmPassword) {
-      onError('모든 필드를 입력해주세요.');
+      setInlineError('모든 필드를 입력해주세요.');
       return;
     }
     if (newPassword.length < 8) {
-      onError('새 비밀번호는 8자 이상이어야 합니다.');
+      setInlineError('새 비밀번호는 8자 이상이어야 합니다.');
+      return;
+    }
+    if (!composition.isValid) {
+      setInlineError('비밀번호는 영문자, 숫자, 특수문자를 모두 포함해야 합니다.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      onError('새 비밀번호가 일치하지 않습니다.');
+      setInlineError('새 비밀번호가 일치하지 않습니다.');
       return;
     }
     if (currentPassword === newPassword) {
-      onError('현재 비밀번호와 다른 비밀번호를 입력해주세요.');
+      setInlineError('현재 비밀번호와 다른 비밀번호를 입력해주세요.');
       return;
     }
     if (strength.level < 2) {
-      onError('보안을 위해 더 강력한 비밀번호를 설정해주세요.');
+      setInlineError('보안을 위해 더 강력한 비밀번호를 설정해주세요.');
       return;
     }
 
@@ -69,10 +85,11 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
         onSuccess();
         onClose();
       } else {
-        onError(data.error?.message || '비밀번호 변경에 실패했습니다.');
+        // 현재 비밀번호 불일치 등 백엔드 에러를 인라인으로 표시
+        setInlineError(data.error?.message || '비밀번호 변경에 실패했습니다.');
       }
     } catch {
-      onError('비밀번호 변경 중 오류가 발생했습니다.');
+      setInlineError('비밀번호 변경 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -85,13 +102,18 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <h2 className={styles.title}>비밀번호 변경</h2>
 
+        {/* 인라인 에러 메시지 */}
+        {inlineError && (
+          <div className={styles.inlineError}>{inlineError}</div>
+        )}
+
         <div className={styles.field}>
           <label className={styles.label}>현재 비밀번호</label>
           <input
             type="password"
             className={styles.input}
             value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
+            onChange={(e) => { setCurrentPassword(e.target.value); setInlineError(''); }}
             placeholder="현재 비밀번호 입력"
           />
         </div>
@@ -102,9 +124,26 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
             type="password"
             className={styles.input}
             value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="8자 이상, 대문자·숫자·특수문자 포함"
+            onChange={(e) => { setNewPassword(e.target.value); setInlineError(''); }}
+            placeholder="8자 이상, 영문자·숫자·특수문자 포함"
           />
+          {/* 비밀번호 조합 체크리스트 */}
+          {newPassword.length > 0 && (
+            <div className={styles.compositionChecks}>
+              <span className={composition.hasLetter ? styles.checkPass : styles.checkFail}>
+                {composition.hasLetter ? '✓' : '✕'} 영문자
+              </span>
+              <span className={composition.hasNumber ? styles.checkPass : styles.checkFail}>
+                {composition.hasNumber ? '✓' : '✕'} 숫자
+              </span>
+              <span className={composition.hasSpecial ? styles.checkPass : styles.checkFail}>
+                {composition.hasSpecial ? '✓' : '✕'} 특수문자
+              </span>
+              <span className={newPassword.length >= 8 ? styles.checkPass : styles.checkFail}>
+                {newPassword.length >= 8 ? '✓' : '✕'} 8자 이상
+              </span>
+            </div>
+          )}
           {newPassword.length >= 6 && (
             <div className={styles.strengthBar}>
               {[1, 2, 3].map((seg) => (
@@ -130,9 +169,12 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
             type="password"
             className={styles.input}
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) => { setConfirmPassword(e.target.value); setInlineError(''); }}
             placeholder="새 비밀번호 재입력"
           />
+          {confirmPassword && newPassword !== confirmPassword && (
+            <div className={styles.fieldHint}>비밀번호가 일치하지 않습니다.</div>
+          )}
         </div>
 
         <div className={styles.actions}>
