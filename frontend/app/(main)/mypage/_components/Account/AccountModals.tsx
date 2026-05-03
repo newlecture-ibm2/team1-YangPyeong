@@ -294,7 +294,7 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, onError, isSoci
 
         <div className={styles.field}>
           <label className={styles.label}>
-            확인을 위해 <strong>&apos;탈퇴합니다&apos;</strong>를 입력해주세요
+            확인을 위해 <strong style={{ color: '#ef4444' }}>&apos;탈퇴합니다&apos;</strong>를 입력해주세요
           </label>
           <input
             type="text"
