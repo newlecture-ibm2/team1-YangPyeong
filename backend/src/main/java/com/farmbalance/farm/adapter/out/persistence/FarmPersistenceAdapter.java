@@ -123,6 +123,13 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
     }
 
     @Override
+    public List<Farm> loadAllFarms() {
+        return farmJpaRepository.findAll().stream()
+                .map(this::mapToDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void deleteFarm(Long farmId) {
         farmJpaRepository.deleteById(farmId);
     }

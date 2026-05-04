@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -62,7 +62,8 @@
     .stats-item { text-align: center; }
     .stats-num { font-family: var(--font-serif); font-size: 32px; font-weight: 700; color: var(--color-primary); }
     .stats-label { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
-  </style>
+    .tag-v2 { display: inline-block; padding: 2px 6px; font-size: 10px; font-weight: 700; color: #8B5CF6; background: rgba(139,92,246,0.1); border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+</style>
 </head>
 <body>
 
@@ -78,7 +79,7 @@
 
   <!-- 통계 바 -->
   <div class="stats-bar">
-    <div class="stats-item"><div class="stats-num">38</div><div class="stats-label">전체 페이지</div></div>
+    <div class="stats-item"><div class="stats-num">40</div><div class="stats-label">전체 페이지</div></div>
     <div class="stats-item"><div class="stats-num">12</div><div class="stats-label">도메인</div></div>
     <div class="stats-item"><div class="stats-num">1</div><div class="stats-label">공통 스타일</div></div>
   </div>
@@ -103,11 +104,14 @@
 
   <!-- ──── Farm ──── -->
   <div class="domain-section">
-    <div class="domain-header"><span class="domain-icon">🌾</span><span class="domain-name">Farm (농장)</span><span class="domain-count">3</span></div>
+    <div class="domain-header"><span class="domain-icon">🚜</span><span class="domain-name">Farm (농장)</span><span class="domain-count">6</span></div>
     <div class="page-grid">
+      <a href="./farm/farm-list.html" class="page-link"><span class="page-link-icon">🏢</span><div class="page-link-info"><div class="page-link-title">내 농장 선택 (목록)</div><div class="page-link-file">farm/farm-list.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./farm/farm-register.html" class="page-link"><span class="page-link-icon">📋</span><div class="page-link-info"><div class="page-link-title">농장 등록</div><div class="page-link-file">farm/farm-register.html</div></div><span class="page-link-arrow">→</span></a>
-      <a href="./farm/farm-manage.html" class="page-link"><span class="page-link-icon">🏡</span><div class="page-link-info"><div class="page-link-title">농장 관리</div><div class="page-link-file">farm/farm-manage.html</div></div><span class="page-link-arrow">→</span></a>
-      <a href="./farm/seed-register.html" class="page-link"><span class="page-link-icon">🌱</span><div class="page-link-info"><div class="page-link-title">종자 구매 등록</div><div class="page-link-file">farm/seed-register.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./farm/farm-manage.html" class="page-link"><span class="page-link-icon">🏡</span><div class="page-link-info"><div class="page-link-title">농장 관리 (대시보드)</div><div class="page-link-file">farm/farm-manage.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./farm/farm-info.html" class="page-link"><span class="page-link-icon">📜</span><div class="page-link-info"><div class="page-link-title">농장 정보 (히스토리)</div><div class="page-link-file">farm/farm-info.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./farm/cultivation-register.html" class="page-link"><span class="page-link-icon">🌱</span><div class="page-link-info"><div class="page-link-title">재배 등록 (계획)</div><div class="page-link-file">farm/cultivation-register.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./farm/harvest-register.html" class="page-link"><span class="page-link-icon">🌾</span><div class="page-link-info"><div class="page-link-title">수확 등록</div><div class="page-link-file">farm/harvest-register.html</div></div><span class="page-link-arrow">→</span></a>
     </div>
   </div>
 
@@ -141,10 +145,11 @@
 
   <!-- ──── Shop ──── -->
   <div class="domain-section">
-    <div class="domain-header"><span class="domain-icon">🛒</span><span class="domain-name">Shop (상점)</span><span class="domain-count">4</span></div>
+    <div class="domain-header"><span class="domain-icon">🛒</span><span class="domain-name">Shop (상점)</span><span class="domain-count">5</span></div>
     <div class="page-grid">
       <a href="./shop/shop-browse.html" class="page-link"><span class="page-link-icon">🏪</span><div class="page-link-info"><div class="page-link-title">상품 목록</div><div class="page-link-file">shop/shop-browse.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./shop/product-detail.html" class="page-link"><span class="page-link-icon">📦</span><div class="page-link-info"><div class="page-link-title">상품 상세</div><div class="page-link-file">shop/product-detail.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./shop/product-register.html" class="page-link"><span class="page-link-icon">➕</span><div class="page-link-info"><div class="page-link-title">판매 상품 등록</div><div class="page-link-file">shop/product-register.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./shop/cart.html" class="page-link"><span class="page-link-icon">🛒</span><div class="page-link-info"><div class="page-link-title">장바구니</div><div class="page-link-file">shop/cart.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./shop/checkout.html" class="page-link"><span class="page-link-icon">💳</span><div class="page-link-info"><div class="page-link-title">주문/결제</div><div class="page-link-file">shop/checkout.html</div></div><span class="page-link-arrow">→</span></a>
     </div>
@@ -154,7 +159,7 @@
   <div class="domain-section">
     <div class="domain-header"><span class="domain-icon">🏪</span><span class="domain-name">Stores (가게)</span><span class="domain-count">1</span></div>
     <div class="page-grid">
-      <a href="./stores/store-map.html" class="page-link"><span class="page-link-icon">🗺️</span><div class="page-link-info"><div class="page-link-title">가게 지도 조회</div><div class="page-link-file">stores/store-map.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./stores/store-map.html" class="page-link"><span class="page-link-icon">🗺️</span><div class="page-link-info"><div class="page-link-title">가게 지도 조회<span class="tag-v2">V2</span></div><div class="page-link-file">stores/store-map.html</div></div><span class="page-link-arrow">→</span></a>
     </div>
   </div>
 
@@ -172,7 +177,7 @@
     <div class="page-grid">
       <a href="./mypage/profile.html" class="page-link"><span class="page-link-icon">👤</span><div class="page-link-info"><div class="page-link-title">프로필 관리</div><div class="page-link-file">mypage/profile.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./mypage/notifications.html" class="page-link"><span class="page-link-icon">🔔</span><div class="page-link-info"><div class="page-link-title">알림</div><div class="page-link-file">mypage/notifications.html</div></div><span class="page-link-arrow">→</span></a>
-      <a href="./mypage/orders.html" class="page-link"><span class="page-link-icon">📦</span><div class="page-link-info"><div class="page-link-title">주문내역</div><div class="page-link-file">mypage/orders.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./mypage/orders.html" class="page-link"><span class="page-link-icon">📦</span><div class="page-link-info"><div class="page-link-title">주문내역<span class="tag-v2">V2</span></div><div class="page-link-file">mypage/orders.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./mypage/seller-products.html" class="page-link"><span class="page-link-icon">🏷️</span><div class="page-link-info"><div class="page-link-title">판매 상품 관리</div><div class="page-link-file">mypage/seller-products.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./mypage/seller-orders.html" class="page-link"><span class="page-link-icon">📋</span><div class="page-link-info"><div class="page-link-title">판매 주문 관리</div><div class="page-link-file">mypage/seller-orders.html</div></div><span class="page-link-arrow">→</span></a>
     </div>
@@ -180,19 +185,20 @@
 
   <!-- ──── Gov ──── -->
   <div class="domain-section">
-    <div class="domain-header"><span class="domain-icon">🏛️</span><span class="domain-name">Gov (지자체)</span><span class="domain-count">5</span></div>
+    <div class="domain-header"><span class="domain-icon">🏛️</span><span class="domain-name">Gov (지자체)</span><span class="domain-count">6</span></div>
     <div class="page-grid">
       <a href="./gov/gov-dashboard.html" class="page-link"><span class="page-link-icon">📊</span><div class="page-link-info"><div class="page-link-title">지자체 대시보드</div><div class="page-link-file">gov/gov-dashboard.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./gov/gov-cultivation.html" class="page-link"><span class="page-link-icon">🌾</span><div class="page-link-info"><div class="page-link-title">재배 현황</div><div class="page-link-file">gov/gov-cultivation.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./gov/gov-compare.html" class="page-link"><span class="page-link-icon">📈</span><div class="page-link-info"><div class="page-link-title">연도 비교</div><div class="page-link-file">gov/gov-compare.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./gov/gov-sales.html" class="page-link"><span class="page-link-icon">💰</span><div class="page-link-info"><div class="page-link-title">판매 현황</div><div class="page-link-file">gov/gov-sales.html</div></div><span class="page-link-arrow">→</span></a>
+      <a href="./gov/gov-message.html" class="page-link"><span class="page-link-icon">📢</span><div class="page-link-info"><div class="page-link-title">행정 알림(권고) 발송</div><div class="page-link-file">gov/gov-message.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./gov/gov-download.html" class="page-link"><span class="page-link-icon">📥</span><div class="page-link-info"><div class="page-link-title">데이터 다운로드</div><div class="page-link-file">gov/gov-download.html</div></div><span class="page-link-arrow">→</span></a>
     </div>
   </div>
 
   <!-- ──── Admin ──── -->
   <div class="domain-section">
-    <div class="domain-header"><span class="domain-icon">🔧</span><span class="domain-name">Admin (관리자)</span><span class="domain-count">8</span></div>
+    <div class="domain-header"><span class="domain-icon">🔧</span><span class="domain-name">Admin (관리자)</span><span class="domain-count">9</span></div>
     <div class="page-grid">
       <a href="./admin/admin-dashboard.html" class="page-link"><span class="page-link-icon">📊</span><div class="page-link-info"><div class="page-link-title">관리자 대시보드</div><div class="page-link-file">admin/admin-dashboard.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./admin/admin-users.html" class="page-link"><span class="page-link-icon">👥</span><div class="page-link-info"><div class="page-link-title">회원 관리</div><div class="page-link-file">admin/admin-users.html</div></div><span class="page-link-arrow">→</span></a>
@@ -202,7 +208,8 @@
       <a href="./admin/admin-data.html" class="page-link"><span class="page-link-icon">🗄️</span><div class="page-link-info"><div class="page-link-title">데이터 수집 관리</div><div class="page-link-file">admin/admin-data.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./admin/admin-engine.html" class="page-link"><span class="page-link-icon">⚙️</span><div class="page-link-info"><div class="page-link-title">수급 계산 엔진</div><div class="page-link-file">admin/admin-engine.html</div></div><span class="page-link-arrow">→</span></a>
       <a href="./admin/admin-shop.html" class="page-link"><span class="page-link-icon">🛒</span><div class="page-link-info"><div class="page-link-title">상점 관리</div><div class="page-link-file">admin/admin-shop.html</div></div><span class="page-link-arrow">→</span></a>
-    </div>
+      <a href="./admin/admin-stores.html" class="page-link"><span class="page-link-icon">🏪</span><div class="page-link-info"><div class="page-link-title">가게 정보 관리<span class="tag-v2">V2</span></div><div class="page-link-file">admin/admin-stores.html</div></div><span class="page-link-arrow">→</span></a>
+      </div>
   </div>
 
 </div>
@@ -221,3 +228,12 @@
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
