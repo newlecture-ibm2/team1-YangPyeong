@@ -11,7 +11,8 @@ public class FarmDetailResponse {
     private String name;
     private String address;
     private Double area;
-    private List<String> cropTypes;
+    private List<String> cropNames;
+    private List<Long> cropIds;
     private String pnuCode;
     private String bjdCode;
     private String registrationNumber;
