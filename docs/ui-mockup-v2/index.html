@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="FarmBalance — 양평군 스마트 농업 수급 밸런스 플랫폼" />
+  <title>FarmBalance — 스마트 농업 플랫폼</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- 수직 흰색 선 장식 (Olha-style dashes) -->
+  <div class="bg-dashes" aria-hidden="true"></div>
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <header class="header" id="header">
+    <!-- 왼쪽: 배너 버튼 (로고 + 순환 텍스트) -->
+    <div class="header__group header__group--left">
+      <a class="header__pill header__pill--banner" href="#hero">
+        <img class="header__banner-logo" src="logo.png" alt="FarmBalance" width="48" height="48" />
+        <div class="header__banner-text">
+          <div class="header__banner-carousel">
+            <span class="header__banner-item">스마트 농업</span>
+            <span class="header__banner-item">수급 밸런스</span>
+            <span class="header__banner-item">양평군</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 가운데: 페이지 링크 (Olha-style 연결 세그먼트) -->
+    <nav class="header__group header__group--center">
+      <div class="header__nav-segment">
+        <a class="header__nav-link" href="#about">소개</a>
+        <a class="header__nav-link" href="#features">기능</a>
+        <a class="header__nav-link" href="#values">가치</a>
+        <a class="header__nav-link" href="#contact">문의</a>
+      </div>
+    </nav>
+
+    <!-- 오른쪽: 사용자 버튼 -->
+    <div class="header__group header__group--right">
+      <a class="header__pill header__pill--ghost" href="#">로그인</a>
+      <a class="header__pill header__pill--solid" href="#">
+        회원가입
+        <svg class="header__pill-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 13L13 1M13 1H3M13 1V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <section class="hero" id="hero">
+    <div class="hero__wrapper">
+      <div class="hero__ball-container">
+        <img class="hero__ball" src="hero-ball.png" alt="FarmBalance 새싹" />
+      </div>
+      <div class="hero__title">
+        <div class="hero__name" data-animate="slide-up">Farm</div>
+        <div class="hero__surname" data-animate="slide-up" data-delay="0.15">Balance</div>
+      </div>
+      <p class="hero__subtitle" data-animate="slide-up" data-delay="0.3">
+        <span class="italic">농업</span>의 중심에는 <span class="italic">균형</span>이 있습니다.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════ CONTENT (자산 2 디자인) ═══════════ -->
+  <section class="content-flow" id="about">
+
+    <!-- ▼ 상단 둥근 세이지 카드 (소개) -->
+    <div class="flow-card flow-card--top show-up">
+      <h2 class="flow-card__title" data-animate="title">
+        안녕하세요,<br /><span class="font-italic">양평입니다.</span>
+      </h2>
+      <div class="flow-card__desc">
+        <p>FarmBalance는 양평군 농업의 수급 불균형을</p>
+        <p>데이터 기반으로 해결하는 스마트 플랫폼입니다</p>
+        <p>농민과 소비자를 직접 연결하고</p>
+        <p>안정적인 농업 생태계를 구축합니다</p>
+      </div>
+      <div class="flow-card__ball">
+        <img src="hero-ball.png" alt="" />
+      </div>
+    </div>
+
+    <!-- ▼ 텍스트 항목 리스트 (기능) -->
+    <div class="flow-items" id="features">
+      <div class="flow-item show-up">
+        <h3 class="flow-item__title">수급 밸런스</h3>
+        <p class="flow-item__sub">실시간 데이터 분석 &amp; 예측으로 과잉·부족을 사전에 방지</p>
+      </div>
+      <div class="flow-item show-up">
+        <h3 class="flow-item__title">직거래 마켓</h3>
+        <p class="flow-item__sub">중간 유통 없이 신선한 양평 농산물을 소비자에게 직접 전달</p>
+      </div>
+      <div class="flow-item show-up">
+        <h3 class="flow-item__title">농업 정보</h3>
+        <p class="flow-item__sub">작물별 재배 가이드와 정부 지원 정책을 자동 매칭</p>
+      </div>
+      <div class="flow-item show-up">
+        <h3 class="flow-item__title">커뮤니티</h3>
+        <p class="flow-item__sub">양평 농민들의 경험과 노하우를 공유하며 함께 성장</p>
+      </div>
+    </div>
+
+    <!-- ▼ 아웃라인 장식 원 -->
+    <div class="flow-outline-circle" aria-hidden="true"></div>
+
+    <!-- ▼ 하단 둥근 세이지 카드 (CTA) -->
+    <div class="flow-card flow-card--bottom show-up" id="contact">
+      <div class="flow-card__pill-wrap">
+        <a class="flow-card__pill" href="#">스마트 수급 밸런스 플랫폼</a>
+      </div>
+      <h2 class="flow-card__title flow-card__title--cta" data-animate="title">
+        함께 <span class="font-italic">시작</span>할<br />준비 되셨나요?
+      </h2>
+      <p class="flow-card__cta-text">FarmBalance와 함께 양평 농업의 새로운 미래를 만들어보세요.</p>
+      <div class="flow-card__buttons">
+        <a href="#" class="flow-btn flow-btn--primary">플랫폼 시작하기</a>
+        <a href="#" class="flow-btn flow-btn--secondary">문의하기</a>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════ STATS ═══════════ -->
+  <section class="stats">
+    <div class="stats__inner">
+      <div class="stats__item">
+        <div class="stats__number" data-count="2500">0</div>
+        <div class="stats__label">등록 농가</div>
+      </div>
+      <div class="stats__item">
+        <div class="stats__number" data-count="150">0</div>
+        <div class="stats__label">취급 작물 종</div>
+      </div>
+      <div class="stats__item">
+        <div class="stats__number" data-count="98">0</div>
+        <div class="stats__label">수급 예측 정확도 %</div>
+      </div>
+      <div class="stats__item">
+        <div class="stats__number" data-count="30">0</div>
+        <div class="stats__label">유통 비용 절감 %</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ LINKS (외부 연결) ═══════════ -->
+  <section class="links" id="links">
+    <h2 class="links__title show-up">
+      함께하는 <span class="font-italic">파트너</span>
+    </h2>
+    <p class="links__desc show-up">농업과 지역을 잇는 유용한 채널들을 만나보세요.</p>
+    <div class="links__grid">
+      <a class="links__card show-up" href="https://www.nongsaro.go.kr" target="_blank" rel="noopener">
+        <span class="links__card-icon">🌾</span>
+        <span class="links__card-name">농사로</span>
+        <span class="links__card-desc">농촌진흥청 공식 영농정보</span>
+      </a>
+      <a class="links__card show-up" href="https://www.yp21.go.kr" target="_blank" rel="noopener">
+        <span class="links__card-icon">🏛️</span>
+        <span class="links__card-name">양평군청</span>
+        <span class="links__card-desc">양평군 공식 홈페이지</span>
+      </a>
+      <a class="links__card show-up" href="https://www.instagram.com" target="_blank" rel="noopener">
+        <span class="links__card-icon">📸</span>
+        <span class="links__card-name">Instagram</span>
+        <span class="links__card-desc">FarmBalance 소식 팔로우</span>
+      </a>
+      <a class="links__card show-up" href="https://www.youtube.com" target="_blank" rel="noopener">
+        <span class="links__card-icon">▶️</span>
+        <span class="links__card-name">YouTube</span>
+        <span class="links__card-desc">농업 가이드 영상 채널</span>
+      </a>
+      <a class="links__card show-up" href="https://www.kamis.or.kr" target="_blank" rel="noopener">
+        <span class="links__card-icon">📊</span>
+        <span class="links__card-name">KAMIS</span>
+        <span class="links__card-desc">농산물 유통정보 시스템</span>
+      </a>
+      <a class="links__card show-up" href="https://blog.naver.com" target="_blank" rel="noopener">
+        <span class="links__card-icon">📝</span>
+        <span class="links__card-name">Blog</span>
+        <span class="links__card-desc">양평 농업 이야기</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__left">
+        <div class="footer__logo">
+          <img src="../../frontend/public/images/새싹.png" alt="FarmBalance" width="28" height="28" />
+          <span>FarmBalance</span>
+        </div>
+        <p class="footer__copy">© 2026 FarmBalance. 양평군 스마트 농업 플랫폼</p>
+      </div>
+      <div class="footer__right">
+        <a class="footer__link" href="#">이용약관</a>
+        <a class="footer__link" href="#">개인정보처리방침</a>
+        <a class="footer__link" href="#">고객센터</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
