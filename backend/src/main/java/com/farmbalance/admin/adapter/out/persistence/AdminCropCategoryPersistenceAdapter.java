@@ -7,10 +7,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * ADM-003 작물 카테고리 조회 Persistence Adapter (JdbcTemplate)
+ * ADM-003 작물 카테고리 관리 Persistence Adapter (JdbcTemplate)
  */
 @Component
 @RequiredArgsConstructor
@@ -34,4 +36,57 @@ public class AdminCropCategoryPersistenceAdapter implements AdminCropCategoryPor
         String sql = "SELECT * FROM crop_categories WHERE deleted_at IS NULL ORDER BY display_order";
         return jdbcTemplate.query(sql, rowMapper);
     }
+
+    @Override
+    public Optional<AdminCropCategory> findById(Long id) {
+        String sql = "SELECT * FROM crop_categories WHERE id = ? AND deleted_at IS NULL";
+        List<AdminCropCategory> result = jdbcTemplate.query(sql, rowMapper, id);
+        return result.stream().findFirst();
+    }
+
+    @Override
+    public boolean existsByName(String name) {
+        String sql = "SELECT COUNT(*) FROM crop_categories WHERE name = ? AND deleted_at IS NULL";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class, name);
+        return count != null && count > 0;
+    }
+
+    @Override
+    public boolean existsByNameExcludeId(String name, Long excludeId) {
+        String sql = "SELECT COUNT(*) FROM crop_categories WHERE name = ? AND id != ? AND deleted_at IS NULL";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class, name, excludeId);
+        return count != null && count > 0;
+    }
+
+    @Override
+    public Long save(AdminCropCategory category) {
+        String sql = "INSERT INTO crop_categories (name, description, display_order, is_active, created_at) " +
+                "VALUES (?, ?, ?, true, NOW()) RETURNING id";
+        return jdbcTemplate.queryForObject(sql, Long.class,
+                category.getName(), category.getDescription(),
+                category.getDisplayOrder() != null ? category.getDisplayOrder() : 0);
+    }
+
+    @Override
+    public void update(AdminCropCategory category) {
+        StringBuilder sql = new StringBuilder("UPDATE crop_categories SET updated_at = NOW()");
+        List<Object> params = new ArrayList<>();
+
+        if (category.getName() != null) { sql.append(", name = ?"); params.add(category.getName()); }
+        if (category.getDescription() != null) { sql.append(", description = ?"); params.add(category.getDescription()); }
+        if (category.getDisplayOrder() != null) { sql.append(", display_order = ?"); params.add(category.getDisplayOrder()); }
+        if (category.getIsActive() != null) { sql.append(", is_active = ?"); params.add(category.getIsActive()); }
+
+        sql.append(" WHERE id = ?");
+        params.add(category.getId());
+
+        jdbcTemplate.update(sql.toString(), params.toArray());
+    }
+
+    @Override
+    public void delete(Long id) {
+        String sql = "UPDATE crop_categories SET deleted_at = NOW(), updated_at = NOW() WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+    }
 }
+
