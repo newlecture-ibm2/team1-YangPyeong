@@ -65,6 +65,12 @@ public class UserJpaEntity {
     @Column(length = 200)
     private String profileImageUrl;
 
+    @Column(length = 255)
+    private String address;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -87,6 +93,8 @@ public class UserJpaEntity {
                 .provider(provider)
                 .providerId(providerId)
                 .profileImageUrl(profileImageUrl)
+                .address(address)
+                .bio(bio)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .build();
@@ -105,6 +113,9 @@ public class UserJpaEntity {
                 .provider(user.getProvider())
                 .providerId(user.getProviderId())
                 .profileImageUrl(user.getProfileImageUrl())
+                .address(user.getAddress())
+                .bio(user.getBio())
+                .updatedAt(user.getUpdatedAt())
                 .build();
     }
 }
