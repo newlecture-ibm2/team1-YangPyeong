@@ -9,17 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL } from '@/lib/constants';
 import { setSessionCookie } from '@/lib/cookie';
-
-/** JWT payload에서 사용자 정보 추출 (서명 검증 없이 payload만 디코딩) */
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const payload = token.split('.')[1];
-    const decoded = Buffer.from(payload, 'base64url').toString('utf-8');
-    return JSON.parse(decoded);
-  } catch {
-    return null;
-  }
-}
+import { decodeJwtPayload } from '@/lib/jwt';
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,9 +42,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (payload) {
+      // 클라이언트 읽기용 쿠키: 최소 정보만 저장 (email, role, name)
       response.cookies.set('fb-user', JSON.stringify({
         email: payload.email || payload.sub || '',
         role: payload.role || 'USER',
+        name: payload.name || '',
       }), {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',

@@ -17,8 +17,14 @@ const NAV_LINKS = [
   { href: '/stores', label: '가게' },
 ];
 
+interface HeaderUser {
+  email: string;
+  role: string;
+  profileImageUrl?: string | null;
+}
+
 /** 클라이언트 쿠키에서 fb-user 읽기 */
-function getUserFromCookie(): { email: string; role: string } | null {
+function getUserFromCookie(): HeaderUser | null {
   if (typeof document === 'undefined') return null;
   const match = document.cookie.match(/(?:^|;\s*)fb-user=([^;]*)/);
   if (!match) return null;
@@ -32,14 +38,26 @@ function getUserFromCookie(): { email: string; role: string } | null {
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<{ email: string; role: string } | null>(null);
+  const [user, setUser] = useState<HeaderUser | null>(null);
   const [cartCount, setCartCount] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 쿠키에서 사용자 정보 읽기 (매 pathname 변경 시)
+  // 쿠키에서 사용자 정보 읽기 + API에서 프로필 이미지 조회
   useEffect(() => {
-    setUser(getUserFromCookie());
+    const cookieUser = getUserFromCookie();
+    setUser(cookieUser);
+
+    // 프로필 이미지가 쿠키에 없으면 API에서 조회
+    if (cookieUser && !cookieUser.profileImageUrl) {
+      apiFetch<{ profileImageUrl?: string }>('/api/users/me')
+        .then((res) => {
+          if (res.success && res.data?.profileImageUrl) {
+            setUser((prev) => prev ? { ...prev, profileImageUrl: res.data!.profileImageUrl } : prev);
+          }
+        })
+        .catch(() => { /* ignore */ });
+    }
   }, [pathname]);
 
   // 장바구니 수량 조회 (로그인 상태 + 페이지 이동 시 + cart-updated 이벤트)
@@ -144,9 +162,21 @@ export default function Header() {
               className={styles.userBtn}
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
-              <span className={styles.avatar}>
-                {displayName.charAt(0).toUpperCase()}
-              </span>
+              {user.profileImageUrl ? (
+                <span className={styles.avatar}>
+                  <Image
+                    src={user.profileImageUrl}
+                    alt="프로필"
+                    width={32}
+                    height={32}
+                    className={styles.avatarImg}
+                  />
+                </span>
+              ) : (
+                <span className={styles.avatar}>
+                  {displayName.charAt(0).toUpperCase()}
+                </span>
+              )}
               <span className={styles.userName}>{displayName}</span>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style={{ opacity: 0.5 }}>
                 <path d="M2 4l4 4 4-4" />

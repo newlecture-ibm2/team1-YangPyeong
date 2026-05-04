@@ -15,4 +15,6 @@ public interface SecurityQuestionRepository {
     Optional<SecurityQuestion> findByUserId(Long userId);
 
     boolean existsByUserId(Long userId);
+
+    void deleteByUserId(Long userId);
 }
