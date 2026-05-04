@@ -100,7 +100,7 @@ public class OrderPersistenceAdapter implements OrderRepository {
                 entity.getTotalAmount(), OrderStatus.valueOf(entity.getStatus()),
                 entity.getReceiverName(), entity.getReceiverPhone(),
                 entity.getShippingAddress(), entity.getShippingMemo(),
-                items, entity.getCreatedAt()
+                items, entity.getCreatedAt(), entity.getUpdatedAt()
         );
     }
 

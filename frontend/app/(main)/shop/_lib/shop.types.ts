@@ -83,6 +83,7 @@ export interface Order {
   shippingMemo: string;
   items: OrderItem[];
   createdAt: string;
+  updatedAt: string;
 }
 
 /** 주문 항목 */

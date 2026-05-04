@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/common/Button/Button';
 import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
-import { PRODUCT_CATEGORIES } from '../../../_lib/mypage.types';
-import { getProduct, updateProduct } from '@/app/(main)/shop/_lib/shop.api';
+import { getProduct, updateProduct, getCategories } from '@/app/(main)/shop/_lib/shop.api';
 import { uploadFile } from '@/lib/upload.api';
 import styles from './page.module.css';
 
@@ -41,6 +40,16 @@ export default function SellerEditPage({ params }: EditPageProps) {
 
   // 전체 이미지 수 (기존 + 새로)
   const totalImageCount = existingImages.length + newImages.length;
+
+  // DB에서 카테고리 목록 로드
+  const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([]);
+  useEffect(() => {
+    getCategories().then((res) => {
+      if (res.success && res.data) {
+        setCategoryOptions(res.data.map((cat) => ({ value: cat.name, label: cat.name })));
+      }
+    });
+  }, []);
 
   // 기존 상품 데이터 로드
   useEffect(() => {
@@ -179,7 +188,7 @@ export default function SellerEditPage({ params }: EditPageProps) {
     );
   }
 
-  const categoryOptions = PRODUCT_CATEGORIES.map((cat) => ({ value: cat, label: cat }));
+
 
   return (
     <div className={styles.container}>

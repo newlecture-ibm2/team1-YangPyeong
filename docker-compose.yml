@@ -59,6 +59,8 @@ services:
       - NONGSARO_API_KEY_DEFAULT=${NONGSARO_API_KEY_DEFAULT}
       - NONGSARO_API_KEY_CROP_EBOOK=${NONGSARO_API_KEY_CROP_EBOOK}
       - KOSIS_API_KEY=${KOSIS_API_KEY}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
     volumes:
       - uploads-data:/app/uploads
     depends_on:

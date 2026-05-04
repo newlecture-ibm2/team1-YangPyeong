@@ -45,6 +45,8 @@ export interface SellerOrder {
   totalAmount: number;
   status: OrderStatus;
   orderedAt: string;
+  /** 접수(상태변경) 시각 — 배송 예정 시간 계산용 */
+  acceptedAt?: string;
 }
 
 /** 판매자 주문 KPI */

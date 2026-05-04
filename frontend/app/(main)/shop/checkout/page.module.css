@@ -242,6 +242,35 @@
   margin-top: 8px;
 }
 
+/* ── 기본 배송지 저장 체크박스 ── */
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 12px 0 4px;
+  user-select: none;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkboxText {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.checkboxLabel:hover .checkboxText {
+  color: var(--color-text);
+}
+
 /* ══════════════════════════════════════════
    결제 수단 버튼
    ══════════════════════════════════════════ */
