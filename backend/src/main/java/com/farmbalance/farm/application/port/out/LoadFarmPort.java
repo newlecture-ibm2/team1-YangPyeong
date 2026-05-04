@@ -7,4 +7,5 @@ import java.util.Optional;
 public interface LoadFarmPort {
     List<Farm> loadFarmsByUserId(Long userId);
     Optional<Farm> loadFarmById(Long farmId);
+    List<Farm> loadAllFarms();
 }

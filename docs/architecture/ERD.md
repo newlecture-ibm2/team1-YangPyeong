@@ -4,7 +4,7 @@
 > **DB**: PostgreSQL 16
 > **ORM**: Spring Data JPA (Hibernate)
 > **네이밍**: snake_case (DB) ↔ camelCase (Java Entity)
-> **테이블 수**: 34개 (기존 14 + 신규 20)
+> **테이블 수**: 31개 (기존 14 + 신규 17)
 
 ---
 
@@ -24,24 +24,6 @@ erDiagram
     }
 
     regions ||--o{ regions : "상위-하위"
-
-    %% ===== 챗봇 도메인 (V2) =====
-    chat_rooms {
-        bigint id PK
-        bigint user_id "사용자 (논리적 참조)"
-        varchar title "대화방 제목"
-        timestamp created_at
-    }
-
-    chat_messages {
-        bigint id PK
-        bigint chat_room_id FK
-        varchar sender_role "USER | AI | SYSTEM"
-        text content "메시지 내용"
-        timestamp created_at
-    }
-
-    chat_rooms ||--o{ chat_messages : "메시지"
 
     %% ===== 유저 도메인 =====
     users {
@@ -68,19 +50,13 @@ erDiagram
         varchar address
         varchar bjd_code "법정동코드 10자리"
         varchar pnu_code "필지코드 19자리"
-        double_precision latitude
-        double_precision longitude
-        double_precision area "면적 (㎡)"
-        varchar soil_type "토양 유형 (V1)"
-        double_precision soil_ph "산도 (V8 추가)"
-        double_precision soil_organic_matter "유기물 (V8 추가)"
-        varchar registration_number "농업경영체 등록번호 (V1)"
-        varchar business_number "사업자 등록번호 (V8 추가)"
-        varchar document_url "토지증명서 URL (V1)"
-        varchar land_cert_image_url "인증 이미지 URL (V7 추가)"
-        boolean land_cert_verified "(V1 + V7 IF NOT EXISTS)"
-        varchar certification_status "PENDING | APPROVED | REJECTED (V1 + V7)"
-        varchar reject_reason "반려 사유 (V12 추가)"
+        decimal latitude
+        decimal longitude
+        decimal area_size "㎡"
+        varchar soil_type
+        varchar business_number "사업자 등록번호"
+        boolean land_cert_verified
+        varchar status "PENDING | APPROVED | REJECTED"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -101,7 +77,13 @@ erDiagram
     crops {
         bigint id PK
         bigint category_id FK
-        varchar name "작물명 (조회 전용 마스터)"
+        varchar code UK "ex: RICE_001"
+        varchar name
+        int growth_days
+        decimal yield_per_sqm "㎡당 수확량(kg)"
+        decimal avg_cost_per_sqm "㎡당 평균 비용(원)"
+        jsonb climate_conditions "작물별 적정 재배 환경 조건"
+        boolean is_active
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -109,22 +91,41 @@ erDiagram
 
     crop_categories ||--o{ crops : "분류"
 
-    farm_crops {
+    cultivation_registrations {
         bigint id PK
         bigint farm_id FK
         bigint crop_id FK
-        decimal estimated_yield "예상 총 수확량"
+        varchar cultivation_type "SEED | SEEDLING | SAPLING"
+        decimal cultivation_area "재배 면적(㎡)"
+        decimal farmer_estimated_yield "농가 입력 예상 생산량"
+        decimal ai_predicted_yield "AI 예측 수확량"
         varchar yield_unit "g | kg | ton"
+        boolean verified
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
     }
 
+    harvest_records {
+        bigint id PK
+        bigint cultivation_registration_id FK
+        date harvest_date
+        decimal yield_amount
+        varchar yield_unit
+        varchar grade "A | B | C"
+        boolean to_shop "상점 노출 여부"
+        timestamp created_at
+    }
+
     cultivation_history {
         bigint id PK
         bigint farm_id FK
-        varchar history_type "이력 유형"
-        text content "이력 내용"
+        bigint cultivation_registration_id FK
+        date record_date
+        varchar activity_type "WATER | FERTILIZER | PESTICIDE | ETC"
+        text activity_content
+        decimal avg_temp "해당일 평균 기온"
+        decimal total_rain "해당일 강수량"
         timestamp created_at
     }
 
@@ -163,6 +164,7 @@ erDiagram
         bigint id PK
         bigint seller_id FK
         bigint category_id FK
+        bigint harvest_record_id FK "논리적 참조 (농가 직거래 시)"
         varchar name
         decimal price
         int stock
@@ -327,11 +329,16 @@ erDiagram
     users ||--o{ notifications : "수신"
     users ||--o{ download_history : "다운로드이력"
 
-    farms ||--o{ farm_crops : "작물등록"
-    farms ||--o{ cultivation_history : "재배이력"
+    farms ||--o{ cultivation_registrations : "재배등록"
+    farms ||--o{ cultivation_history : "이력관리"
 
-    crops ||--o{ farm_crops : "작물참조"
+    crops ||--o{ cultivation_registrations : "작물참조"
     crops ||--o{ balance_data : "수급데이터"
+
+    cultivation_registrations ||--o{ harvest_records : "수확기록"
+    cultivation_registrations ||--o{ cultivation_history : "활동기록"
+
+    harvest_records ||--o{ products : "상품매핑"
 
     orders ||--|{ order_items : "주문항목"
     products ||--o{ order_items : "상품참조"
@@ -574,25 +581,6 @@ erDiagram
 > **계층 예시**: 경기도(PROVINCE) → 양평군(CITY) → 양평읍(TOWN)
 > **용도**: GOV 사용자의 관할지역 결정, 읍면 필터 동적 조회, 하드코딩 제거
 
-### 2.0.1 chat_rooms (챗봇 대화방) — V2 추가
-
-| 컬럼 | 타입 | 제약 | 설명 |
-|------|------|------|------|
-| id | BIGINT | PK, AUTO | 대화방 고유 ID |
-| user_id | BIGINT | NOT NULL | 사용자 (논리적 참조) |
-| title | VARCHAR(100) | NOT NULL | 대화방 제목 |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 생성일 |
-
-### 2.0.2 chat_messages (챗봇 메시지) — V2 추가
-
-| 컬럼 | 타입 | 제약 | 설명 |
-|------|------|------|------|
-| id | BIGINT | PK, AUTO | 메시지 고유 ID |
-| chat_room_id | BIGINT | FK → chat_rooms(id) ON DELETE CASCADE, NOT NULL | 대화방 |
-| sender_role | VARCHAR(20) | NOT NULL | USER / AI / SYSTEM |
-| content | TEXT | NOT NULL | 메시지 내용 |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 생성일 |
-
 ### 2.1 users (유저)
 
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -602,7 +590,7 @@ erDiagram
 | password | VARCHAR(255) | NOT NULL | BCrypt 해싱 |
 | name | VARCHAR(50) | NOT NULL | 이름 |
 | phone | VARCHAR(20) | | 전화번호 |
-| role | VARCHAR(20) | NOT NULL, DEFAULT 'USER' | USER / FARMER / ADMIN / GOV |
+| role | VARCHAR(20) | NOT NULL, DEFAULT 'GENERAL' | GENERAL / FARMER / ADMIN / GOV |
 | region | VARCHAR(50) | | 지역 (양평군 등) — 하위호환용 유지 |
 | region_code | VARCHAR(10) | | 시군구 코드 (regions.code 참조, 예: "4183") — 신규 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | ACTIVE / SUSPENDED |
@@ -623,19 +611,13 @@ erDiagram
 | address | VARCHAR(255) | NOT NULL | 농장 주소 |
 | bjd_code | VARCHAR(10) | | 법정동코드 (카카오 address.b_code) |
 | pnu_code | VARCHAR(19) | | 필지코드 (bjd_code + 본번부번 조합) |
-| latitude | DOUBLE PRECISION | | 위도 (카카오 address.y) |
-| longitude | DOUBLE PRECISION | | 경도 (카카오 address.x) |
-| area | DOUBLE PRECISION | NOT NULL | 면적 (㎡) |
-| soil_type | VARCHAR(50) | | 토양 유형 (V1) |
-| soil_ph | DOUBLE PRECISION | | 산도 (V8 추가) |
-| soil_organic_matter | DOUBLE PRECISION | | 유기물 (V8 추가) |
-| registration_number | VARCHAR(12) | | 농업경영체 등록번호 (V1) |
-| business_number | VARCHAR(12) | | 사업자 등록번호 (V8 추가) |
-| document_url | VARCHAR(500) | | 토지증명서 이미지/PDF URL (V1) |
-| land_cert_image_url | VARCHAR(500) | | 인증 이미지 URL (V7 추가) |
-| land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 (V1 + V7) |
-| certification_status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED (V1 + V7) |
-| reject_reason | VARCHAR(500) | | 반려 사유 (V12 추가) |
+| latitude | DECIMAL(10,7) | | 위도 (카카오 address.y) |
+| longitude | DECIMAL(10,7) | | 경도 (카카오 address.x) |
+| area_size | DECIMAL(10,2) | NOT NULL | 면적 (㎡) |
+| soil_type | VARCHAR(50) | | 토양 유형 |
+| business_number | VARCHAR(12) | | 사업자 등록번호 |
+| land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 |
+| status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
@@ -659,39 +641,62 @@ erDiagram
 |------|------|------|------|
 | id | BIGINT | PK, AUTO | 작물 고유 ID |
 | category_id | BIGINT | FK -> crop_categories(id), NOT NULL | 작물 카테고리 |
+| code | VARCHAR(30) | UNIQUE, NOT NULL | 작물 코드 (ex: RICE_001) |
 | name | VARCHAR(50) | NOT NULL | 작물명 |
+| growth_days | INT | | 재배 기간 (일) |
+| yield_per_sqm | DECIMAL(10,2) | | ㎡당 수확량 (kg) |
+| avg_cost_per_sqm | DECIMAL(10,2) | | ㎡당 평균 비용 (원) |
+| climate_conditions | JSONB | | 작물별 적정 재배 환경 조건 (AI 추천용) |
+| is_active | BOOLEAN | DEFAULT true | 활성 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.5 farm_crops (농장-작물 연결)
-
-> **V11 리팩토링**: 기존 `seed_registrations` 테이블을 rename하고 불필요 컬럼(seed_type, quantity, receipt_image_url, verified)을 삭제하여 순수 농장-작물 조인 테이블로 전환.
+### 2.5 cultivation_registrations (재배 등록)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
-| id | BIGINT | PK, AUTO | 고유 ID |
+| id | BIGINT | PK, AUTO | 재배 등록 고유 ID |
 | farm_id | BIGINT | FK → farms(id), NOT NULL | 농장 |
 | crop_id | BIGINT | FK → crops(id), NOT NULL | 작물 |
-| estimated_yield | DECIMAL(12,2) | | 예상 총 수확량 |
+| cultivation_type | VARCHAR(20) | NOT NULL | SEED(씨앗) / SEEDLING(종자) / SAPLING(모종) |
+| cultivation_area | DECIMAL(10,2) | NOT NULL | 재배 면적 (㎡) |
+| farmer_estimated_yield | DECIMAL(12,2) | | 농가 입력 예상 생산량 |
+| ai_predicted_yield | DECIMAL(12,2) | | AI 예측 수확량 |
 | yield_unit | VARCHAR(10) | | 수확량 단위 (g / kg / ton) |
+| verified | BOOLEAN | DEFAULT false | 인증 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.5.1 cultivation_history (재배 이력) — V6 추가
-
-농장별 재배 활동 이력을 기록하는 테이블입니다.
+### 2.5.1 harvest_records (수확 이력)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
-| id | BIGINT | PK, AUTO | 고유 ID |
-| farm_id | BIGINT | FK → farms(id) ON DELETE CASCADE, NOT NULL | 농장 |
-| history_type | VARCHAR(20) | NOT NULL | 이력 유형 |
-| content | TEXT | NOT NULL | 이력 내용 |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 등록일 |
+| id | BIGINT | PK, AUTO | 수확 이력 고유 ID |
+| cultivation_registration_id | BIGINT | FK → cultivation_registrations(id) | 재배 등록 참조 |
+| harvest_date | DATE | NOT NULL | 수확일 |
+| yield_amount | DECIMAL(12,2) | NOT NULL | 실제 수확량 |
+| yield_unit | VARCHAR(10) | NOT NULL | 수확량 단위 |
+| grade | VARCHAR(10) | | 등급 (A / B / C) |
+| to_shop | BOOLEAN | DEFAULT false | 상점 노출 여부 |
+| created_at | TIMESTAMP | NOT NULL | 등록일 |
 
-> **인덱스**: `idx_history_farm_id` ON cultivation_history(farm_id)
+### 2.5.2 cultivation_history (재배/기상 이력)
+
+농가 활동 기록과 당시 기상 데이터를 결합하여 타임라인 형태로 저장합니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 이력 고유 ID |
+| farm_id | BIGINT | FK → farms(id), NOT NULL | 농장 |
+| cultivation_registration_id | BIGINT | FK → cultivation_registrations(id) | 관련 재배 등록 |
+| record_date | DATE | NOT NULL | 기록일 |
+| activity_type | VARCHAR(20) | | WATER / FERTILIZER / PESTICIDE / ETC |
+| activity_content | TEXT | | 활동 내용 |
+| avg_temp | DECIMAL(5,1) | | 해당일 평균 기온 (기상 API 스냅샷) |
+| total_rain | DECIMAL(7,1) | | 해당일 강수량 (기상 API 스냅샷) |
+| created_at | TIMESTAMP | NOT NULL | 등록일 |
 
 ### 2.6 balance_data (수급 데이터)
 
@@ -733,12 +738,12 @@ erDiagram
 | id | BIGINT | PK, AUTO | 상품 고유 ID |
 | seller_id | BIGINT | FK → users(id), NOT NULL | 판매자 |
 | category_id | BIGINT | FK → product_categories(id) | 상품 카테고리 |
+| harvest_record_id | BIGINT | FK → harvest_records(id) | 수확 이력 참조 (선택) |
 | name | VARCHAR(200) | NOT NULL | 상품명 |
-| price | INT | NOT NULL | 가격 (원) |
+| price | DECIMAL(10,2) | NOT NULL | 가격 (원) |
 | stock | INT | NOT NULL, DEFAULT 0 | 재고 |
 | description | TEXT | | 상품 설명 |
-| image_url | VARCHAR(500) | | 대표 이미지 URL |
-| sales_count | INT | NOT NULL, DEFAULT 0 | 누적 판매 수량 (V3 추가) |
+| sales_count | INT | NOT NULL, DEFAULT 0 | 누적 판매 수량 |
 | status | VARCHAR(20) | DEFAULT 'PENDING' | PENDING / ACTIVE / INACTIVE / REJECTED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
@@ -751,7 +756,7 @@ erDiagram
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
 | id | BIGINT | PK, AUTO | 고유 ID |
-| entity_type | VARCHAR(30) | NOT NULL | 용도 구분 (PRODUCT / FARM_CERT / SEED_RECEIPT / POST 등) |
+| entity_type | VARCHAR(30) | NOT NULL | 용도 구분 (PRODUCT / FARM_CERT / CULTIVATION_RECEIPT / POST 등) |
 | entity_id | BIGINT | NOT NULL | 대상 엔티티의 PK |
 | file_type | VARCHAR(20) | NOT NULL | 파일 종류 (IMAGE / DOCUMENT) |
 | file_url | VARCHAR(500) | NOT NULL | 파일 URL |
@@ -761,7 +766,7 @@ erDiagram
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
 > **인덱스**: (entity_type, entity_id) 복합 인덱스 권장  
-> **entity_type 값**: `PRODUCT` (상품), `FARM_CERT` (토지증명서), `SEED_RECEIPT` (종자 영수증), `POST` (게시글)  
+> **entity_type 값**: `PRODUCT` (상품), `FARM_CERT` (토지증명서), `CULTIVATION_RECEIPT` (재배 영수증), `POST` (게시글)  
 > **file_type 값**: `IMAGE` (이미지 파일), `DOCUMENT` (문서 파일)
 
 ### 2.9 orders (주문)
@@ -771,7 +776,7 @@ erDiagram
 | id | BIGINT | PK, AUTO | 주문 고유 ID |
 | buyer_id | BIGINT | FK → users(id), NOT NULL | 구매자 |
 | order_number | VARCHAR(30) | UNIQUE, NOT NULL | 주문 번호 |
-| total_amount | INT | NOT NULL | 총 금액 (원) |
+| total_amount | DECIMAL(12,2) | NOT NULL | 총 금액 |
 | status | VARCHAR(20) | DEFAULT 'ORDERED' | ORDERED / ACCEPTED / SHIPPED / COMPLETED / CANCELLED |
 | receiver_name | VARCHAR(50) | | 받는 분 |
 | receiver_phone | VARCHAR(20) | | 받는 분 연락처 |
@@ -789,8 +794,8 @@ erDiagram
 | order_id | BIGINT | FK → orders(id), NOT NULL | 주문 |
 | product_id | BIGINT | FK → products(id), NOT NULL | 상품 |
 | quantity | INT | NOT NULL | 수량 |
-| unit_price | INT | NOT NULL | 단가 (주문 시점 스냅샷) |
-| subtotal | INT | NOT NULL | 소계 |
+| unit_price | DECIMAL(10,2) | NOT NULL | 단가 (주문 시점 스냅샷) |
+| subtotal | DECIMAL(10,2) | NOT NULL | 소계 |
 | created_at | TIMESTAMP | NOT NULL | 생성일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
@@ -1189,9 +1194,10 @@ erDiagram
 |------|:---------:|:---:|------|
 | regions → regions | 1:N (자기참조) | ✅ | 시도 → 시군구 → 읍면동 계층 |
 | regions → users | 1:N | — | region_code로 논리적 참조 (GOV 관할) |
-| users → farms | 1:N | ✅ | 유저 한 명이 여러 농장 소유 가능 |
-| farms → farm_crops | 1:N | ✅ | 농장별 재배 작물 등록 |
-| farms → cultivation_history | 1:N | ✅ | 농장별 재배 활동 이력 (V6) |
+| farms → cultivation_registrations | 1:N | ✅ | 농장별 여러 재배 등록 |
+| farms → cultivation_history | 1:N | ✅ | 농장별 재배/기상 이력 적재 |
+| cultivation_registrations → harvest_records | 1:N | ✅ | 파종 건별 수확 기록 트래킹 |
+| harvest_records → products | 1:N | ✅ | 수확물 데이터를 커머스 상품에 매핑 |
 | crops → balance_data | 1:N | ✅ | 작물별 지역·시즌 수급 데이터 |
 | users → products | 1:N | ✅ | 판매자가 여러 상품 등록 |
 | users → orders | 1:N | ✅ | 구매자가 여러 주문 |
@@ -1244,10 +1250,12 @@ CREATE INDEX idx_farms_user_id ON farms(user_id);
 CREATE INDEX idx_farms_status ON farms(status);
 CREATE INDEX idx_farms_bjd_code ON farms(bjd_code);
 CREATE INDEX idx_farms_pnu_code ON farms(pnu_code);
+CREATE INDEX idx_history_farm_id ON cultivation_history(farm_id);
+CREATE INDEX idx_harvest_cult_reg ON harvest_records(cultivation_registration_id);
 
--- 농장-작물 연결
-CREATE INDEX idx_farm_crops_farm_id ON farm_crops(farm_id);
-CREATE INDEX idx_farm_crops_crop_id ON farm_crops(crop_id);
+-- 재배 등록
+CREATE INDEX idx_cultivation_reg_farm_id ON cultivation_registrations(farm_id);
+CREATE INDEX idx_cultivation_reg_crop_id ON cultivation_registrations(crop_id);
 
 -- 수급 데이터 (핵심 조회)
 CREATE UNIQUE INDEX idx_balance_data_unique ON balance_data(region_code, crop_id, year, season);
@@ -1255,6 +1263,7 @@ CREATE INDEX idx_balance_data_status ON balance_data(balance_status);
 
 -- 상품
 CREATE INDEX idx_products_seller_id ON products(seller_id);
+CREATE INDEX idx_products_harvest_id ON products(harvest_record_id);
 CREATE INDEX idx_products_status ON products(status);
 
 -- 주문

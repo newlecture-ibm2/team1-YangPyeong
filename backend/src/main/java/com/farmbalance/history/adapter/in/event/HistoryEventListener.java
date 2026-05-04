@@ -29,8 +29,9 @@ public class HistoryEventListener {
 
             RecordHistoryCommand command = RecordHistoryCommand.builder()
                     .farmId(event.getFarmId())
-                    .historyType(HistoryType.SYSTEM)
-                    .content(content)
+                    .recordDate(java.time.LocalDate.now())
+                    .activityType(HistoryType.SYSTEM)
+                    .activityContent(content)
                     .build();
 
             recordHistoryUseCase.recordHistory(command);

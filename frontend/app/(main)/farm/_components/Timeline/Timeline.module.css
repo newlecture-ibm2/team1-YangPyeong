@@ -9,32 +9,37 @@
   margin-bottom: 2rem;
 }
 
-.filterBtn {
-  padding: 0.5rem 1rem;
-  border-radius: 99px;
-  border: 1px solid var(--color-border);
-  background: white;
-  color: var(--color-text);
-  cursor: pointer;
+.filterLink {
+  background: none;
+  border: none;
   font-size: 14px;
+  color: var(--color-text-light);
   font-weight: 500;
-  transition: all 0.2s;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
 }
 
-.filterBtn:hover {
-  background: var(--color-bg-secondary);
+.filterLink:hover {
+  color: var(--color-text);
 }
 
-.filterBtn.active {
-  background: var(--color-text);
-  color: white;
-  border-color: var(--color-text);
+.filterActive {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: var(--color-text);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
 }
+
 
 .timeline {
   position: relative;
-  padding-left: 3rem;
+  padding-left: 48px;
   min-height: 100px;
+  margin-top: 32px;
 }
 
 .timeline::before {
@@ -42,7 +47,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 15px; /* 선 위치 중앙 조정 */
+  left: 21px; /* 44px / 2 - 1 */
   width: 2px;
   background: var(--color-border);
 }
@@ -60,9 +65,9 @@
 
 .dot {
   position: absolute;
-  left: -3rem; /* padding-left 만큼 빼기 */
-  width: 32px;
-  height: 32px;
+  left: -48px; /* padding-left 만큼 빼기 */
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: white;
   border: 2px solid var(--color-border);
@@ -70,7 +75,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px; /* 아이콘 크기 */
+  font-size: 24px; /* 아이콘 크기 확대 */
   z-index: 1; /* 선 위로 올라오도록 */
 }
 

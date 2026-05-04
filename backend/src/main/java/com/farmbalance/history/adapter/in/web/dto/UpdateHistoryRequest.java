@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UpdateHistoryRequest {
     @NotBlank(message = "기록 내용을 입력해주세요.")
-    private String content;
+    private String activityContent;
     
-    private HistoryType historyType;
+    private HistoryType activityType;
 }

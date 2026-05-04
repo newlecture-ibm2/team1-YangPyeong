@@ -19,7 +19,9 @@ export function useMyFarms() {
     setIsLoading(true);
     try {
       const data = await getMyFarms();
-      setFarms(data);
+      // 생성된 순서(ID 오름차순)로 정렬하여 UI 위치가 바뀌지 않도록 보장
+      const sortedData = [...data].sort((a, b) => a.id - b.id);
+      setFarms(sortedData);
     } catch (err: any) {
       toast.error(err.message || '농장 목록을 불러오지 못했습니다.');
     } finally {
