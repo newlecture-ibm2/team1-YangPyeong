@@ -36,4 +36,9 @@ public class SecurityQuestionPersistenceAdapter implements SecurityQuestionRepos
     public boolean existsByUserId(Long userId) {
         return securityQuestionJpaRepository.existsByUserId(userId);
     }
+
+    @Override
+    public void deleteByUserId(Long userId) {
+        securityQuestionJpaRepository.deleteByUserId(userId);
+    }
 }

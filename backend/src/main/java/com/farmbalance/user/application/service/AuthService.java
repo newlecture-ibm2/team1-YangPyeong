@@ -81,9 +81,16 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
     @Override
     @Transactional
     public SignUpResponse signUp(SignUpRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException(ErrorCode.USER_EMAIL_DUPLICATE);
-        }
+        // 이메일 중복 검사: WITHDRAWN(탈퇴) 상태가 아닌 활성 계정만 중복으로 판단
+        userRepository.findByEmail(request.getEmail()).ifPresent(existingUser -> {
+            if (existingUser.getStatus() == UserStatus.WITHDRAWN) {
+                // 탈퇴 계정의 보안질문 및 유저 레코드 삭제 후 새로 생성 (unique constraint 충돌 방지)
+                securityQuestionRepository.deleteByUserId(existingUser.getId());
+                userRepository.deleteByEmail(existingUser.getEmail());
+            } else {
+                throw new BusinessException(ErrorCode.USER_EMAIL_DUPLICATE);
+            }
+        });
 
         // 회원가입은 항상 USER/ACTIVE
         // - FARMER: USER 가입 후 조건 충족 시 자동 승격
@@ -200,7 +207,7 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
     /** JWT 토큰 쌍 발급 (공통) */
     private TokenResponse issueTokens(User user) {
         String accessToken = jwtTokenProvider.createAccessToken(
-                user.getId(), user.getEmail(), user.getRole().name()
+                user.getId(), user.getEmail(), user.getRole().name(), user.getName()
         );
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
@@ -215,6 +222,10 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
 
     /** 계정 상태 검사 (공통) */
     private void validateUserStatus(User user) {
+        if (user.getStatus() == UserStatus.WITHDRAWN) {
+            throw new BusinessException(ErrorCode.USER_WITHDRAWN,
+                    "WITHDRAWN:" + user.getEmail());
+        }
         if (user.getStatus() == UserStatus.SUSPENDED) {
             throw new BusinessException(ErrorCode.AUTH_ACCOUNT_SUSPENDED);
         }

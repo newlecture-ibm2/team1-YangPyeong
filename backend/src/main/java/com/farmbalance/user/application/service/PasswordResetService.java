@@ -47,6 +47,18 @@ public class PasswordResetService implements PasswordResetUseCase {
     }
 
     @Override
+    public boolean verifyAnswer(String email, String securityAnswer) {
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) return false;
+
+        SecurityQuestion sq = securityQuestionRepository.findByUserId(user.getId()).orElse(null);
+        if (sq == null) return false;
+
+        String normalizedInput = securityAnswer.trim().toLowerCase();
+        return passwordEncoder.matches(normalizedInput, sq.getAnswer());
+    }
+
+    @Override
     @Transactional
     public void resetPassword(PasswordResetRequest request) {
         // 1. 사용자 조회 (이메일 열거 공격 방지: 미등록 시에도 동일한 에러 반환)

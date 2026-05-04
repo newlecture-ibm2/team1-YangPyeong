@@ -1,0 +1,152 @@
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px;
+}
+
+/* ── 섹션 구분 라벨 ── */
+.sectionLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: -8px;
+}
+
+.infoItem label {
+  display: block;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.infoItem p {
+  font-size: 1.05rem;
+  color: #334155;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── 역할 뱃지 ── */
+.roleBadgeInline {
+  display: inline-block;
+  background-color: #ecf3f0;
+  color: #2d6a4f;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.fullWidth {
+  grid-column: span 2;
+}
+
+/* ── 로그인 방식 ── */
+.providerInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.providerIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.providerIcon.kakao {
+  background: #FEE500;
+  color: #3C1E1E;
+}
+
+.providerIcon.google {
+  background: #f1f3f4;
+  color: #4285F4;
+}
+
+.providerIcon.local {
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+/* ── 자기소개 ── */
+.bioText {
+  white-space: pre-wrap;
+  background-color: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
+  min-height: 80px;
+}
+
+/* ── 내 농장 링크 ── */
+.farmLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.farmLink:hover {
+  background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
+  border-color: #86efac;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+}
+
+.farmLinkIcon {
+  font-size: 1.4rem;
+}
+
+.farmLinkText {
+  flex: 1;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #166534;
+}
+
+.farmLinkArrow {
+  font-size: 1.1rem;
+  color: #22c55e;
+  transition: transform 0.2s ease;
+}
+
+.farmLink:hover .farmLinkArrow {
+  transform: translateX(4px);
+}
+
+/* ── 액션 ── */
+.actions {
+  grid-column: span 2;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+@media (max-width: 640px) {
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+  .fullWidth {
+    grid-column: span 1;
+  }
+  .actions {
+    grid-column: span 1;
+  }
+}
