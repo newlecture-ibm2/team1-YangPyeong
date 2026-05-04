@@ -55,6 +55,35 @@ export interface SellerOrderKpi {
   monthlySales: number;
 }
 
+// ── 구매자 주문 관련 ──
+
+/** 구매자 주문 DTO */
+export interface BuyerOrder {
+  id: number;
+  orderNumber: string;
+  productSummary: string;
+  items: BuyerOrderItem[];
+  totalAmount: number;
+  status: OrderStatus;
+  receiverName: string;
+  receiverPhone: string;
+  shippingAddress: string;
+  shippingMemo?: string;
+  orderedAt: string;
+}
+
+/** 구매자 주문 항목 */
+export interface BuyerOrderItem {
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+}
+
+/** 구매자 주문 필터 탭 (판매자와 동일 — ORDER_FILTER_TABS 재사용) */
+export const BUYER_ORDER_FILTER_TABS = ORDER_FILTER_TABS;
+
 // ── 상품 관련 ──
 
 /** 상품 상태 */
