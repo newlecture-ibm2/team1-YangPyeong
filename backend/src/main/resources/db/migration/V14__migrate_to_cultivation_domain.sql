@@ -6,18 +6,28 @@
 -- 4. products 테이블과 수확 이력 연결
 -- ===================================================================
 
--- 1. seed_registrations -> cultivation_registrations
-ALTER TABLE seed_registrations RENAME TO cultivation_registrations;
-ALTER TABLE cultivation_registrations RENAME COLUMN seed_type TO cultivation_type;
+-- 1. seed_registrations -> cultivation_registrations (데이터 보존 및 중복 실행 방지)
+DO $$ 
+BEGIN
+    -- 테이블명 변경
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='seed_registrations') THEN
+        ALTER TABLE seed_registrations RENAME TO cultivation_registrations;
+    END IF;
 
--- 1.1 cultivation_registrations 컬럼 수정
-ALTER TABLE cultivation_registrations 
-    ADD COLUMN cultivation_area DECIMAL(10,2),
-    ADD COLUMN farmer_estimated_yield DECIMAL(12,2),
-    ADD COLUMN ai_predicted_yield DECIMAL(12,2),
-    DROP COLUMN IF EXISTS quantity,
-    DROP COLUMN IF EXISTS estimated_yield,
-    DROP COLUMN IF EXISTS receipt_image_url;
+    -- 컬럼명 변경
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='cultivation_registrations' AND column_name='seed_type') THEN
+        ALTER TABLE cultivation_registrations RENAME COLUMN seed_type TO cultivation_type;
+    END IF;
+
+    -- 컬럼 수정 및 추가
+    ALTER TABLE cultivation_registrations 
+        ADD COLUMN IF NOT EXISTS cultivation_area DECIMAL(10,2),
+        ADD COLUMN IF NOT EXISTS farmer_estimated_yield DECIMAL(12,2),
+        ADD COLUMN IF NOT EXISTS ai_predicted_yield DECIMAL(12,2),
+        DROP COLUMN IF EXISTS quantity,
+        DROP COLUMN IF EXISTS estimated_yield,
+        DROP COLUMN IF EXISTS receipt_image_url;
+END $$;
 
 -- 2. cultivation_history (데이터 보존을 위해 ALTER 사용)
 DO $$ 
@@ -45,7 +55,7 @@ BEGIN
 END $$;
 
 -- 3. harvest_records (수확 이력) 신규 생성
-CREATE TABLE harvest_records (
+CREATE TABLE IF NOT EXISTS harvest_records (
     id                          BIGSERIAL    PRIMARY KEY,
     cultivation_registration_id BIGINT       NOT NULL REFERENCES cultivation_registrations(id) ON DELETE CASCADE,
     harvest_date                DATE         NOT NULL,
@@ -57,15 +67,19 @@ CREATE TABLE harvest_records (
 );
 
 -- 4. products 테이블에 수확 이력 연결
-ALTER TABLE products 
-    ADD COLUMN harvest_record_id BIGINT REFERENCES harvest_records(id);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='harvest_record_id') THEN
+        ALTER TABLE products ADD COLUMN harvest_record_id BIGINT REFERENCES harvest_records(id);
+    END IF;
+END $$;
 
 -- 5. 인덱스 정리
-CREATE INDEX idx_cultivation_reg_farm_id ON cultivation_registrations(farm_id);
-CREATE INDEX idx_cultivation_reg_crop_id ON cultivation_registrations(crop_id);
-CREATE INDEX idx_history_cult_reg ON cultivation_history(cultivation_registration_id);
-CREATE INDEX idx_harvest_cult_reg ON harvest_records(cultivation_registration_id);
-CREATE INDEX idx_products_harvest_id ON products(harvest_record_id);
+CREATE INDEX IF NOT EXISTS idx_cultivation_reg_farm_id ON cultivation_registrations(farm_id);
+CREATE INDEX IF NOT EXISTS idx_cultivation_reg_crop_id ON cultivation_registrations(crop_id);
+CREATE INDEX IF NOT EXISTS idx_history_cult_reg ON cultivation_history(cultivation_registration_id);
+CREATE INDEX IF NOT EXISTS idx_harvest_cult_reg ON harvest_records(cultivation_registration_id);
+CREATE INDEX IF NOT EXISTS idx_products_harvest_id ON products(harvest_record_id);
 
 -- 기존 인덱스 삭제 (필요시)
 DROP INDEX IF EXISTS idx_seed_reg_farm_id;
