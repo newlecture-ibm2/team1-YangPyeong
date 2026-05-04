@@ -14,7 +14,7 @@ import java.util.Set;
 
 /**
  * ADM-001 사용자 관리 Service
- * 목록 조회(검색/필터/페이징), 역할 변경(GENERAL ↔ FARMER), 정지/재활성화
+ * 목록 조회(검색/필터/페이징), 역할 변경(USER ↔ FARMER), 정지/재활성화
  */
 @Service
 @RequiredArgsConstructor
@@ -24,7 +24,7 @@ public class AdminUserService implements ManageUserUseCase {
     private final AdminUserPort adminUserPort;
 
     /** 역할 변경 시 허용되는 값 */
-    private static final Set<String> ALLOWED_ROLES = Set.of("GENERAL", "FARMER");
+    private static final Set<String> ALLOWED_ROLES = Set.of("USER", "FARMER");
 
     /** 상태 변경 시 허용되는 값 */
     private static final Set<String> ALLOWED_STATUSES = Set.of("ACTIVE", "SUSPENDED");

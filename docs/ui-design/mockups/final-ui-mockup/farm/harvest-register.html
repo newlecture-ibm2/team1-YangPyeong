@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBalance — 수확 등록</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .harvest-card { background: var(--color-surface); border-radius: var(--radius-md); padding: 32px; border: 1px solid var(--color-border); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="../landing.html" class="nav-logo"><img src="../logo.png" alt="FarmBalance 로고"> FarmBalance</a>
+  <div class="nav-links"><a href="../farm/farm-manage.html" class="active">내 농장</a><a href="../shop/shop-browse.html">상점</a><a href="../stores/store-map.html">가게</a><a href="../community/community-list.html">커뮤니티</a></div>
+  <div class="nav-right"><a href="../mypage/profile.html" class="btn-nav">마이페이지</a></div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../landing.html">홈</a> › <a href="./farm-manage.html">농장관리</a> › <strong>수확 등록</strong></div>
+    <h1 class="page-title">🌾 수확 등록</h1>
+    <p class="page-sub">수확한 작물의 정보를 기록하고, 상점 판매(상품화) 여부를 결정합니다.</p>
+  </div>
+
+  <div class="harvest-card">
+    <div class="form-group">
+      <label class="form-label">수확 대상 작물 (재배 등록 건) <span style="color:var(--color-danger);">*</span></label>
+      <select class="form-select">
+        <option>2026년 봄감자 (재배면적 800㎡)</option>
+        <option>2026년 노지 양파 (재배면적 1,200㎡)</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">실제 수확일 <span style="color:var(--color-danger);">*</span></label>
+        <input type="date" class="form-input" value="2026-05-02">
+      </div>
+      <div class="form-group">
+        <label class="form-label">품질 등급</label>
+        <select class="form-select">
+          <option>특</option>
+          <option>상</option>
+          <option>보통</option>
+          <option>등외</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group" style="grid-column: span 2;">
+        <label class="form-label">실제 수확량 <span style="color:var(--color-danger);">*</span></label>
+        <div style="display:flex;gap:8px;">
+          <input type="number" class="form-input" placeholder="예) 850">
+          <select class="form-select" style="width:90px;">
+            <option>kg</option>
+            <option>ton</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top: 24px;">
+      <label class="form-label">상점 판매(상품화) 여부 <span style="color:var(--color-danger);">*</span></label>
+      <div style="display:flex; gap: 16px; align-items: center; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+        <label style="display:flex; align-items:center; gap:8px;">
+          <input type="radio" name="to_commerce" checked> 예, 바로 상품으로 등록합니다.
+        </label>
+        <label style="display:flex; align-items:center; gap:8px;">
+          <input type="radio" name="to_commerce"> 아니오, 자가 소비 또는 오프라인 판매용입니다.
+        </label>
+      </div>
+      <p class="text-small" style="margin-top:8px; color:rgba(0,0,0,0.5);">* 예를 선택하시면 상품 등록 페이지로 이동합니다.</p>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:32px;">
+      <button class="btn btn-outline">취소</button>
+      <button class="btn btn-primary">수확 등록 완료</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-brand"><img src="../logo.png" alt=""> FarmBalance</div>
+  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+</footer>
+</body>
+</html>
+

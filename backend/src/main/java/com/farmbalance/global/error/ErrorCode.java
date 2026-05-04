@@ -20,6 +20,8 @@ public enum ErrorCode {
     RESOURCE_NOT_FOUND("E-COMMON-003", "요청한 리소스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     ACCESS_DENIED("E-COMMON-004", "접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
     FILE_UPLOAD_FAILED("E-COMMON-005", "파일 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    EXTERNAL_API_ERROR("E-COMMON-006", "외부 API 연동 중 오류가 발생했습니다.", HttpStatus.BAD_GATEWAY),
+
 
     // ── 인증 ──
     AUTH_INVALID_CREDENTIALS("E-AUTH-LOGIN-001", "이메일 또는 비밀번호가 올바르지 않습니다.", HttpStatus.UNAUTHORIZED),
@@ -38,6 +40,7 @@ public enum ErrorCode {
     USER_NOT_FOUND("E-USER-001", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     USER_EMAIL_DUPLICATE("E-USER-002", "이미 등록된 이메일입니다.", HttpStatus.CONFLICT),
     USER_INVALID_ROLE("E-USER-003", "올바르지 않은 역할입니다.", HttpStatus.BAD_REQUEST),
+    USER_WITHDRAWN("E-USER-004", "탈퇴한 계정입니다. 다시 가입하시겠습니까?", HttpStatus.FORBIDDEN),
 
     // ── 농장 ──
     FARM_NOT_FOUND("E-FARM-001", "농장을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

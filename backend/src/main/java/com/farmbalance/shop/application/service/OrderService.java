@@ -90,6 +90,9 @@ public class OrderService implements OrderUseCase {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
+        // 판매자 소유 주문인지 검증
+        validateSellerOwnership(sellerId, orderId);
+
         order.advanceStatus();
         return orderRepository.save(order);
     }
@@ -100,8 +103,21 @@ public class OrderService implements OrderUseCase {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
+        // 판매자 소유 주문인지 검증
+        validateSellerOwnership(sellerId, orderId);
+
         order.cancel();
         return orderRepository.save(order);
+    }
+
+    /** 해당 주문이 판매자의 상품을 포함하는지 검증 */
+    private void validateSellerOwnership(Long sellerId, Long orderId) {
+        boolean isOwner = orderRepository.findBySellerId(sellerId)
+                .stream()
+                .anyMatch(o -> o.getId().equals(orderId));
+        if (!isOwner) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
     }
 
     /** 주문번호 생성: ORD-yyyyMMddHHmm-XXXX */

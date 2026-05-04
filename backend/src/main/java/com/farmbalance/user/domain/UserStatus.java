@@ -6,5 +6,6 @@ package com.farmbalance.user.domain;
 public enum UserStatus {
     ACTIVE,
     SUSPENDED,
-    PENDING
+    PENDING,
+    WITHDRAWN
 }

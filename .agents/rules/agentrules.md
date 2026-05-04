@@ -177,30 +177,32 @@ interface FarmCardProps {
 ```
 app/(main)/farm/
 ├── page.tsx              ← 페이지
-├── _hooks/               ← 도메인 전용 Hook (라우트 제외)
+├── useFarm.ts            ← 도메인 전용 Hook (page.tsx와 같은 폴더)
 ├── _lib/                 ← API 호출 + 타입 정의 (라우트 제외)
 ├── _components/          ← 도메인 전용 UI (라우트 제외)
+│   ├── FarmCard.tsx
+│   └── useFarmCard.ts    ← 컴포넌트 전용 Hook (FarmCard.tsx와 같은 폴더)
 ├── register/page.tsx     ← 하위 라우트
 └── seed/
     ├── page.tsx
-    └── _hooks/           ← seed 전용 Hook
+    └── useSeedForm.ts    ← seed 전용 Hook (page.tsx와 같은 폴더)
 ```
 
 ### 3.5 폴더 네이밍 규칙
 
 | 문법 | 역할 | 예시 |
 |------|------|------|
-| `_폴더명` | **비공개 폴더** (라우트 제외) | `_hooks/`, `_lib/`, `_components/` |
+| `_폴더명` | **비공개 폴더** (라우트 제외) | `_lib/`, `_components/` |
 | `(그룹명)` | **라우트 그룹** (URL 미포함) | `(auth)/`, `(main)/` |
 | `[param]` | **동적 라우트** | `[cropCode]/`, `[postId]/` |
 
 ### 3.6 참조 규칙 (DO NOT VIOLATE)
 
 ```
-✅ 상위 도메인의 _hooks/ 참조 가능   → import from '../_hooks/useFarm'
-✅ 자기 도메인의 _hooks/ 참조 가능   → import from './_hooks/useSeedForm'
+✅ 같은 도메인 내 Hook 참조 가능       → import from './useFarm'
+✅ 하위 도메인 내 Hook 참조 가능       → import from './_components/useFarmCard'
 ✅ 공유 컴포넌트 참조 가능           → import from '@/components/common/Button'
-❌ 다른 도메인의 _hooks/ 직접 참조 금지 → DO NOT import from '../../shop/_hooks/useShop'
+❌ 다른 도메인의 Hook 직접 참조 금지 → DO NOT import from '../../shop/useShop'
 ```
 
 > 다른 도메인의 데이터가 필요하면 **API를 통해 조회**하거나 **공유 `lib/`로 이동**합니다.
@@ -246,7 +248,7 @@ app/(main)/farm/
 
 | 대상 | 규칙 | 예시 |
 |------|------|------|
-| **폴더 (docs/, frontend/)** | kebab-case | `external-api/`, `_hooks/` |
+| **폴더 (docs/, frontend/)** | kebab-case | `external-api/`, `_lib/` |
 | **Java 클래스** | PascalCase | `AuthService`, `UserJpaEntity` |
 | **Java 패키지** | 소문자 | `com.farmbalance.user` |
 | **TypeScript 파일** | camelCase | `useFarm.ts`, `farm.api.ts` |
@@ -275,10 +277,11 @@ app/(main)/farm/
 | 1 | `domain/`에 Spring 어노테이션(`@Entity`, `@Service` 등) 사용 금지 |
 | 2 | `application/`에서 `adapter/` 직접 import 금지 |
 | 3 | `application/service/`에서 DTO, JPA Entity 직접 사용 금지 (Domain만 사용) |
-| 4 | Frontend에서 다른 도메인의 `_hooks/` 직접 참조 금지 |
+| 4 | Frontend에서 다른 도메인의 Hook 직접 참조 금지 |
 | 5 | 클라이언트 사이드에서 JWT 토큰 직접 접근 금지 (BFF 경유 필수) |
 | 6 | TailwindCSS 사용 금지 (Vanilla CSS + CSS Modules만 사용) |
 | 7 | TypeScript에서 `any` 타입 사용 금지 (`unknown` + 타입 가드 또는 명시적 타입) |
 | 8 | `docs/` 내 최종 문서의 한국어 폴더명 사용 금지 (영어 kebab-case) |
 | 9 | AI `llm/` 모듈에서 특정 Provider 하드코딩 금지 (`BaseLLM` 추상화 사용) |
 | 10 | Controller에서 직접 try-catch 금지 (GlobalExceptionHandler 사용) |
+| 11 | **`_hooks/` 폴더 생성 및 사용 금지** (Hook은 사용하는 파일과 동일 폴더 배치) |

@@ -19,4 +19,10 @@ public interface UserRepository {
     Optional<User> findByProviderAndProviderId(String provider, String providerId);
 
     boolean existsByEmail(String email);
+
+    boolean existsByName(String name);
+
+    boolean existsByNameAndEmailNot(String name, String email);
+
+    void deleteByEmail(String email);
 }

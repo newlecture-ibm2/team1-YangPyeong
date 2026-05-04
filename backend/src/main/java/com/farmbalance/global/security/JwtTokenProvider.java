@@ -43,12 +43,13 @@ public class JwtTokenProvider {
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String createAccessToken(Long userId, String email, String role) {
+    public String createAccessToken(Long userId, String email, String role, String name) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("email", email)
                 .claim("role", role)
+                .claim("name", name)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + accessTokenExpiration))
                 .signWith(secretKey)

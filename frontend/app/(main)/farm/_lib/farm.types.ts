@@ -10,7 +10,8 @@ export interface Farm {
   name: string;
   address: string;
   area: number;
-  cropTypes: string[];
+  cropNames: string[];
+  cropIds?: number[];
   bjdCode?: string;
   pnuCode?: string;
   latitude?: number;
@@ -31,7 +32,7 @@ export interface FarmListItem {
   name: string;
   address: string;
   area: number;
-  cropTypes: string[];
+  cropNames: string[];
   certificationStatus: CertificationStatus;
 }
 
@@ -45,7 +46,7 @@ export interface FarmRegisterPayload {
   name: string;
   address: string;
   area: number;
-  cropTypes: string[];
+  cropIds: number[];
   bjdCode: string;
   isMountain: boolean;
   mainNo: string;
@@ -62,7 +63,7 @@ export interface FarmUpdatePayload {
   name?: string;
   address?: string;
   area?: number;
-  cropTypes?: string[];
+  cropIds?: number[];
   bjdCode?: string;
   isMountain?: boolean;
   mainNo?: string;

@@ -8,8 +8,15 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class CreateHistoryRequest {
-    @NotBlank(message = "내용은 필수입니다.")
-    private String content;
+    private Long cultivationRegistrationId;
     
-    private HistoryType historyType = HistoryType.USER;
+    private java.time.LocalDate recordDate;
+
+    @NotBlank(message = "내용은 필수입니다.")
+    private String activityContent;
+    
+    private HistoryType activityType = HistoryType.USER;
+
+    private Double avgTemp;
+    private Double totalRain;
 }

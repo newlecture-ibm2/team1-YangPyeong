@@ -20,7 +20,7 @@ public class FarmRegisterRequest {
     @NotNull(message = "면적은 필수입니다.")
     private Double area;
 
-    private List<String> cropTypes;
+    private List<Long> cropIds;
     
     // PNU 생성용 필드
     @NotBlank(message = "주소 검색을 통해 지역 정보를 입력해주세요.")

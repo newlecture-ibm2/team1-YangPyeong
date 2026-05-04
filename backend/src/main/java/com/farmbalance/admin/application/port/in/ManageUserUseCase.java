@@ -26,7 +26,7 @@ public interface ManageUserUseCase {
     AdminUser getUserById(Long id);
 
     /**
-     * 역할 변경 (GENERAL ↔ FARMER)
+     * 역할 변경 (USER ↔ FARMER)
      */
     void changeRole(Long id, String role);
 

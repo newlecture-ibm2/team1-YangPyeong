@@ -10,7 +10,11 @@ import java.time.LocalDateTime;
 public class HistoryResponse {
     private Long id;
     private Long farmId;
-    private HistoryType historyType;
-    private String content;
+    private Long cultivationRegistrationId;
+    private java.time.LocalDate recordDate;
+    private HistoryType activityType;
+    private String activityContent;
+    private Double avgTemp;
+    private Double totalRain;
     private LocalDateTime createdAt;
 }

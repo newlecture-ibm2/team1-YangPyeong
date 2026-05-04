@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBalance — 내 농장 선택</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .farm-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .farm-card:hover {
+      border-color: var(--color-primary);
+      box-shadow: 0 8px 24px rgba(45,106,79,0.1);
+      transform: translateY(-2px);
+    }
+    .farm-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .farm-title { font-size: 20px; font-weight: 700; color: var(--color-text); margin-bottom: 4px; }
+    .farm-address { font-size: 14px; color: rgba(0,0,0,0.5); }
+    .farm-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: auto; border-top: 1px solid var(--color-border); padding-top: 16px; }
+    .stat-box { background: rgba(0,0,0,0.03); padding: 12px; border-radius: var(--radius-sm); text-align: center; }
+    .stat-label { font-size: 12px; color: rgba(0,0,0,0.5); margin-bottom: 4px; }
+    .stat-val { font-size: 16px; font-weight: 700; color: var(--color-primary); }
+    
+    .add-farm-card {
+      border: 2px dashed var(--color-border);
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: rgba(0,0,0,0.4);
+    }
+    .add-farm-card:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+      background: rgba(45,106,79,0.02);
+    }
+    .add-icon { font-size: 32px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="../landing.html" class="nav-logo"><img src="../logo.png" alt="FarmBalance 로고"> FarmBalance</a>
+  <div class="nav-links"><a href="./farm-list.html" class="active">내 농장</a><a href="../shop/shop-browse.html">상점</a><a href="../stores/store-map.html">가게</a><a href="../community/community-list.html">커뮤니티</a></div>
+  <div class="nav-right"><a href="../mypage/profile.html" class="btn-nav">마이페이지</a></div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1 class="page-title">내 농장 <span class="italic">선택</span></h1>
+    <p class="page-sub">관리할 농장을 선택하거나 새로운 농장을 등록하세요.</p>
+  </div>
+
+  <div class="grid-3">
+    <!-- Farm Card 1 -->
+    <a href="./farm-manage.html" style="text-decoration:none;">
+      <div class="farm-card">
+        <div class="farm-card-header">
+          <div>
+            <div class="farm-title">양평 해맑은 농장</div>
+            <div class="farm-address">경기도 양평군 양서면 북한강로 123</div>
+          </div>
+          <span class="badge badge-green">승인됨</span>
+        </div>
+        <div class="farm-stats">
+          <div class="stat-box">
+            <div class="stat-label">재배 면적</div>
+            <div class="stat-val">3,200 ㎡</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">재배 작물</div>
+            <div class="stat-val">4 종</div>
+          </div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Farm Card 2 -->
+    <a href="./farm-manage.html" style="text-decoration:none;">
+      <div class="farm-card">
+        <div class="farm-card-header">
+          <div>
+            <div class="farm-title">강하 들녘 농장</div>
+            <div class="farm-address">경기도 양평군 강하면 운심리 45-2</div>
+          </div>
+          <span class="badge badge-green">승인됨</span>
+        </div>
+        <div class="farm-stats">
+          <div class="stat-box">
+            <div class="stat-label">재배 면적</div>
+            <div class="stat-val">1,500 ㎡</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">재배 작물</div>
+            <div class="stat-val">2 종</div>
+          </div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Add New Farm -->
+    <a href="./farm-register.html" style="text-decoration:none;">
+      <div class="farm-card add-farm-card">
+        <div class="add-icon">＋</div>
+        <div style="font-weight:600; font-size:16px;">새로운 농장 등록하기</div>
+        <p style="font-size:14px; margin-top:8px;">또 다른 농장이 있으신가요?</p>
+      </div>
+    </a>
+  </div>
+
+  <div style="margin-top:48px; padding:24px; background:rgba(0,0,0,0.03); border-radius:var(--radius-md); font-size:14px; color:rgba(0,0,0,0.6);">
+    <strong style="color:var(--color-primary);">💡 UX 라우팅 로직:</strong> 사용자가 로그인 후 '내 농장' 메뉴를 클릭했을 때, 등록된 농장이 <strong>1개</strong>뿐이라면 이 화면을 건너뛰고 바로 해당 농장의 대시보드(<code>farm-manage.html</code>)로 이동합니다. 농장이 <strong>2개 이상</strong>이거나 <strong>아직 등록된 농장이 없는 경우</strong>에만 이 화면이 표시됩니다.
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-brand"><img src="../logo.png" alt=""> FarmBalance</div>
+  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+</footer>
+</body>
+</html>
