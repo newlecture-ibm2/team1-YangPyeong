@@ -77,13 +77,7 @@ erDiagram
     crops {
         bigint id PK
         bigint category_id FK
-        varchar code UK "ex: RICE_001"
         varchar name
-        int growth_days
-        decimal yield_per_sqm "㎡당 수확량(kg)"
-        decimal avg_cost_per_sqm "㎡당 평균 비용(원)"
-        jsonb climate_conditions "작물별 적정 재배 환경 조건"
-        boolean is_active
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
