@@ -20,6 +20,8 @@ public enum ErrorCode {
     RESOURCE_NOT_FOUND("E-COMMON-003", "요청한 리소스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     ACCESS_DENIED("E-COMMON-004", "접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
     FILE_UPLOAD_FAILED("E-COMMON-005", "파일 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    EXTERNAL_API_ERROR("E-COMMON-006", "외부 API 연동 중 오류가 발생했습니다.", HttpStatus.BAD_GATEWAY),
+
 
     // ── 인증 ──
     AUTH_INVALID_CREDENTIALS("E-AUTH-LOGIN-001", "이메일 또는 비밀번호가 올바르지 않습니다.", HttpStatus.UNAUTHORIZED),

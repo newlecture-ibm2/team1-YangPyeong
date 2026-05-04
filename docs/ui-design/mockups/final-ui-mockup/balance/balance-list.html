@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,14 +8,22 @@
 <body>
 <nav class="nav">
   <a href="../index.html" class="nav-logo"><img src="../logo.png" alt=""> Farm<span class="italic">Balance</span></a>
-  <div class="nav-links"><a href="../farm/farm-manage.html">내 농장</a><a href="../balance/balance-list.html" class="active">수급현황</a><a href="../recommend/recommend-list.html">AI 추천</a><a href="../shop/shop-browse.html">상점</a><a href="../community/community-list.html">커뮤니티</a></div>
+  <div class="nav-links"><a href="../farm/farm-manage.html" class="active">내 농장</a><a href="../shop/shop-browse.html">상점</a><a href="../stores/store-map.html">가게</a><a href="../community/community-list.html">커뮤니티</a></div>
   <div class="nav-right"><a class="btn-nav btn-nav-fill" href="#">홍길동 님</a></div>
 </nav>
 
 <div class="page">
-  <div class="page-header">
+  <div class="page-header" style="margin-bottom:0;padding-bottom:16px;">
+    <p class="breadcrumb"><a href="#">홈</a> / 내 농장 / 수급 현황</p>
     <h1 class="page-title">수급 <span class="italic">현황</span></h1>
     <p class="page-sub">양평군 주요 작물의 실시간 공급·수요 밸런스를 확인하세요.</p>
+  </div>
+  
+  <div class="tabs mb-32" style="border-bottom:1px solid var(--color-border); padding-bottom:0;">
+    <a href="../farm/farm-manage.html">대시보드</a>
+    <a href="../balance/balance-list.html" class="active">수급 분석</a>
+    <a href="../recommend/recommend-list.html">AI 작물 추천</a>
+    <a href="../farm/farm-info.html">농장 정보</a>
   </div>
 
   <!-- GAUGE SUMMARY -->
@@ -74,3 +82,5 @@
 </footer>
 </body>
 </html>
+
+

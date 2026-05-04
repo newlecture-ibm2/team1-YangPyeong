@@ -25,26 +25,43 @@ public class HistoryJpaEntity {
     @Column(nullable = false)
     private Long farmId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private HistoryType historyType;
+    @Column
+    private Long cultivationRegistrationId;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
+    @Column(nullable = false)
+    private java.time.LocalDate recordDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "activity_type", length = 20)
+    private HistoryType activityType;
+
+    @Column(name = "activity_content", columnDefinition = "TEXT")
+    private String activityContent;
+
+    @Column(name = "avg_temp")
+    private Double avgTemp;
+
+    @Column(name = "total_rain")
+    private Double totalRain;
 
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @Builder
-    public HistoryJpaEntity(Long farmId, HistoryType historyType, String content) {
+    public HistoryJpaEntity(Long farmId, Long cultivationRegistrationId, java.time.LocalDate recordDate, 
+                          HistoryType activityType, String activityContent, Double avgTemp, Double totalRain) {
         this.farmId = farmId;
-        this.historyType = historyType;
-        this.content = content;
+        this.cultivationRegistrationId = cultivationRegistrationId;
+        this.recordDate = recordDate;
+        this.activityType = activityType;
+        this.activityContent = activityContent;
+        this.avgTemp = avgTemp;
+        this.totalRain = totalRain;
     }
 
-    public void update(String content, HistoryType historyType) {
-        this.content = content;
-        this.historyType = historyType;
+    public void update(String activityContent, HistoryType activityType) {
+        this.activityContent = activityContent;
+        this.activityType = activityType;
     }
 }
