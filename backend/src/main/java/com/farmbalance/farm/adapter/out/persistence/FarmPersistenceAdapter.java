@@ -9,8 +9,10 @@ import com.farmbalance.farm.domain.Farm;
 import com.farmbalance.user.adapter.out.persistence.entity.UserJpaEntity;
 import com.farmbalance.user.adapter.out.persistence.repository.UserJpaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -21,6 +23,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
 
     private final FarmJpaRepository farmJpaRepository;
     private final UserJpaRepository userJpaRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public Farm saveFarm(Farm farm) {
@@ -49,7 +52,6 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                     .name(farm.getName())
                     .address(farm.getAddress())
                     .area(farm.getArea())
-                    .cropTypes(farm.getCropTypes())
                     .bjdCode(farm.getBjdCode())
                     .pnuCode(farm.getPnuCode())
                     .latitude(farm.getLatitude())
@@ -70,7 +72,6 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                     farm.getName(),
                     farm.getAddress(),
                     farm.getArea(),
-                    farm.getCropTypes(),
                     farm.getBjdCode(),
                     farm.getPnuCode(),
                     farm.getLatitude(),
@@ -83,8 +84,14 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
             );
         }
 
-        // 3. DB 저장 및 결과 반환
+        // 3. DB 저장
         FarmJpaEntity savedEntity = farmJpaRepository.save(entity);
+
+        // 4. farm_crops 테이블 갱신 (cropIds가 있는 경우)
+        if (farm.getCropIds() != null) {
+            saveFarmCrops(savedEntity.getId(), farm.getCropIds());
+        }
+
         return mapToDomain(savedEntity);
     }
 
@@ -101,6 +108,40 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .map(this::mapToDomain);
     }
 
+    /**
+     * farm_crops 테이블 갱신: 기존 데이터 삭제 후 새 데이터 삽입
+     */
+    private void saveFarmCrops(Long farmId, List<Long> cropIds) {
+        // 기존 farm_crops 삭제
+        jdbcTemplate.update("DELETE FROM farm_crops WHERE farm_id = ?", farmId);
+
+        // 새 farm_crops 삽입
+        if (cropIds != null && !cropIds.isEmpty()) {
+            for (Long cropId : cropIds) {
+                jdbcTemplate.update(
+                        "INSERT INTO farm_crops (farm_id, crop_id, created_at) VALUES (?, ?, NOW())",
+                        farmId, cropId
+                );
+            }
+        }
+    }
+
+    /**
+     * farm_crops + crops JOIN으로 작물명 목록 조회
+     */
+    private List<String> loadCropNames(Long farmId) {
+        String sql = "SELECT c.name FROM farm_crops fc JOIN crops c ON c.id = fc.crop_id WHERE fc.farm_id = ? AND fc.deleted_at IS NULL ORDER BY c.name";
+        return jdbcTemplate.queryForList(sql, String.class, farmId);
+    }
+
+    /**
+     * farm_crops에서 crop_id 목록 조회
+     */
+    private List<Long> loadCropIds(Long farmId) {
+        String sql = "SELECT crop_id FROM farm_crops WHERE farm_id = ? AND deleted_at IS NULL";
+        return jdbcTemplate.queryForList(sql, Long.class, farmId);
+    }
+
     private Farm mapToDomain(FarmJpaEntity entity) {
         return Farm.builder()
                 .id(entity.getId())
@@ -108,7 +149,8 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .name(entity.getName())
                 .address(entity.getAddress())
                 .area(entity.getArea())
-                .cropTypes(entity.getCropTypes() != null ? new java.util.ArrayList<>(entity.getCropTypes()) : new java.util.ArrayList<>())
+                .cropIds(loadCropIds(entity.getId()))
+                .cropNames(loadCropNames(entity.getId()))
                 .bjdCode(entity.getBjdCode())
                 .pnuCode(entity.getPnuCode())
                 .latitude(entity.getLatitude())
