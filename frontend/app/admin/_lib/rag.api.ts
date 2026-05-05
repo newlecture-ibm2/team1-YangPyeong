@@ -56,7 +56,26 @@ export async function fetchDocuments(categoryId?: number): Promise<RagDocument[]
   return json.data
 }
 
-export async function createDocument(body: CreateRagDocumentRequest): Promise<number> {
+export async function createDocument(body: CreateRagDocumentRequest, file?: File): Promise<number> {
+  // FILE 타입이고 실제 파일이 있으면 multipart/form-data로 전송
+  if (body.contentType === 'FILE' && file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('categoryId', String(body.categoryId))
+    formData.append('title', body.title)
+    formData.append('contentType', body.contentType)
+    if (body.fileType) formData.append('fileType', body.fileType)
+
+    const res = await fetch(`${BASE}/documents`, {
+      method: 'POST',
+      body: formData,
+    })
+    const json: ApiResponse<number> = await res.json()
+    if (!json.success) throw new Error(json.error?.message ?? '문서 생성 실패')
+    return json.data
+  }
+
+  // TEXT 타입은 기존 JSON 방식
   const res = await fetch(`${BASE}/documents`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

@@ -4,7 +4,7 @@
 > **DB**: PostgreSQL 16
 > **ORM**: Spring Data JPA (Hibernate)
 > **네이밍**: snake_case (DB) ↔ camelCase (Java Entity)
-> **테이블 수**: 31개 (기존 14 + 신규 17)
+> **테이블 수**: 32개
 
 ---
 
@@ -77,13 +77,7 @@ erDiagram
     crops {
         bigint id PK
         bigint category_id FK
-        varchar code UK "ex: RICE_001"
         varchar name
-        int growth_days
-        decimal yield_per_sqm "㎡당 수확량(kg)"
-        decimal avg_cost_per_sqm "㎡당 평균 비용(원)"
-        jsonb climate_conditions "작물별 적정 재배 환경 조건"
-        boolean is_active
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -552,6 +546,20 @@ erDiagram
         varchar file_name "원본 파일명"
         varchar file_type "PDF | TXT | MD | DOCX"
         varchar status "ACTIVE | DELETED"
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    api_sync_status {
+        bigint id PK
+        varchar api_name UK
+        varchar display_name
+        timestamp last_synced
+        varchar sync_status "PENDING | RUNNING | SUCCESS | FAILED"
+        int last_record_count
+        text error_message
+        boolean is_active
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -1186,6 +1194,24 @@ erDiagram
 
 > **설계 의도**: 지자체/관리자가 데이터를 엑셀/CSV로 다운로드(내보내기) 한 이력을 추적/보관합니다. 파일 원본은 시스템 내에 저장하지 않습니다.
 
+### 2.32 api_sync_status (API별 동기화 상태 모니터링)
+
+외부 API 데이터 수집의 최신 상태, 성공 여부, 제어 상태를 관리합니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 상태 고유 ID |
+| api_name | VARCHAR(50) | NOT NULL, UNIQUE | API 식별자 (WEATHER 등, 코드 매칭용) |
+| display_name | VARCHAR(100) | NOT NULL | 관리자 UI 표시명 |
+| last_synced | TIMESTAMP | | 마지막 동기화 시각 |
+| sync_status | VARCHAR(20) | DEFAULT 'PENDING' | PENDING / RUNNING / SUCCESS / FAILED |
+| last_record_count | INT | | 마지막 수집 건수 |
+| error_message | TEXT | | 동기화 실패 시 에러 내용 |
+| is_active | BOOLEAN | DEFAULT true | 관리자 수집 On/Off 제어 |
+| created_at | TIMESTAMP | NOT NULL | 등록일 |
+| updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
+
 ---
 
 ## 3. 핵심 관계 요약
@@ -1226,7 +1252,6 @@ erDiagram
 | nongsaro_disaster_prevention | — | — | 농사로 재해예방정보 (~320건) |
 | nongsaro_eco_farming | — | — | 농사로 친환경 우수사례 (~66건) |
 | nongsaro_advanced_tech | — | — | 농사로 첨단농업기술 (~171건) |
-
 
 > **설계 근거**: 외부 API에서 배치 수집하는 AI용 데이터이므로, 내부 도메인 테이블과 FK로 결합하지 않고 독립적으로 관리합니다.
 
@@ -1297,5 +1322,9 @@ CREATE INDEX idx_disaster_type ON nongsaro_disaster_prevention(disaster_type);
 CREATE INDEX idx_rag_docs_category ON rag_documents(category);
 CREATE INDEX idx_rag_docs_status ON rag_documents(status);
 CREATE INDEX idx_rag_docs_content_type ON rag_documents(content_type);
+
+-- API 관리 (admin 전용)
+CREATE INDEX idx_api_sync_status ON api_sync_status(sync_status);
+CREATE INDEX idx_api_sync_active ON api_sync_status(is_active);
 
 ```
