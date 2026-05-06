@@ -1,10 +1,14 @@
 package com.farmbalance.farm.adapter.out.persistence;
 
+import com.farmbalance.farm.adapter.out.persistence.entity.CultivationRegistrationJpaEntity;
 import com.farmbalance.farm.adapter.out.persistence.entity.FarmJpaEntity;
+import com.farmbalance.farm.adapter.out.persistence.repository.CultivationRegistrationJpaRepository;
 import com.farmbalance.farm.adapter.out.persistence.repository.FarmJpaRepository;
 import com.farmbalance.farm.application.port.out.DeleteFarmPort;
 import com.farmbalance.farm.application.port.out.LoadFarmPort;
+import com.farmbalance.farm.application.port.out.SaveCultivationPort;
 import com.farmbalance.farm.application.port.out.SaveFarmPort;
+import com.farmbalance.farm.domain.CultivationRegistration;
 import com.farmbalance.farm.domain.Farm;
 import com.farmbalance.user.adapter.out.persistence.entity.UserJpaEntity;
 import com.farmbalance.user.adapter.out.persistence.repository.UserJpaRepository;
@@ -12,17 +16,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, DeleteFarmPort {
+public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, DeleteFarmPort, SaveCultivationPort {
 
     private final FarmJpaRepository farmJpaRepository;
     private final UserJpaRepository userJpaRepository;
+    private final CultivationRegistrationJpaRepository cultivationRepository;
     private final JdbcTemplate jdbcTemplate;
 
     @Override
@@ -87,10 +92,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
         // 3. DB 저장
         FarmJpaEntity savedEntity = farmJpaRepository.save(entity);
 
-        // 4. farm_crops 테이블 갱신 (cropIds가 있는 경우)
-        if (farm.getCropIds() != null) {
-            saveFarmCrops(savedEntity.getId(), farm.getCropIds());
-        }
+        // (기존 farm_crops 갱신 로직 삭제됨. 작물 등록은 별도의 cultivation_registrations를 통해 수행)
 
         return mapToDomain(savedEntity);
     }
@@ -109,36 +111,18 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
     }
 
     /**
-     * farm_crops 테이블 갱신: 기존 데이터 삭제 후 새 데이터 삽입
-     */
-    private void saveFarmCrops(Long farmId, List<Long> cropIds) {
-        // 기존 farm_crops 삭제
-        jdbcTemplate.update("DELETE FROM farm_crops WHERE farm_id = ?", farmId);
-
-        // 새 farm_crops 삽입
-        if (cropIds != null && !cropIds.isEmpty()) {
-            for (Long cropId : cropIds) {
-                jdbcTemplate.update(
-                        "INSERT INTO farm_crops (farm_id, crop_id, created_at) VALUES (?, ?, NOW())",
-                        farmId, cropId
-                );
-            }
-        }
-    }
-
-    /**
-     * farm_crops + crops JOIN으로 작물명 목록 조회
+     * cultivation_registrations + crops JOIN으로 작물명 목록 조회
      */
     private List<String> loadCropNames(Long farmId) {
-        String sql = "SELECT c.name FROM farm_crops fc JOIN crops c ON c.id = fc.crop_id WHERE fc.farm_id = ? AND fc.deleted_at IS NULL ORDER BY c.name";
+        String sql = "SELECT c.name FROM cultivation_registrations cr JOIN crops c ON c.id = cr.crop_id WHERE cr.farm_id = ? AND cr.deleted_at IS NULL ORDER BY c.name";
         return jdbcTemplate.queryForList(sql, String.class, farmId);
     }
 
     /**
-     * farm_crops에서 crop_id 목록 조회
+     * cultivation_registrations에서 crop_id 목록 조회
      */
     private List<Long> loadCropIds(Long farmId) {
-        String sql = "SELECT crop_id FROM farm_crops WHERE farm_id = ? AND deleted_at IS NULL";
+        String sql = "SELECT crop_id FROM cultivation_registrations WHERE farm_id = ? AND deleted_at IS NULL";
         return jdbcTemplate.queryForList(sql, Long.class, farmId);
     }
 
@@ -174,5 +158,94 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
     @Override
     public void deleteFarm(Long farmId) {
         farmJpaRepository.deleteById(farmId);
+    }
+
+    @Override
+    public void saveCultivationRegistrations(Long farmId, List<CultivationRegistration> registrations) {
+        if (registrations == null || registrations.isEmpty()) {
+            return;
+        }
+
+        // 기존 재배 등록 소프트 삭제
+        List<CultivationRegistrationJpaEntity> existing = cultivationRepository.findByFarmIdAndDeletedAtIsNull(farmId);
+        existing.forEach(CultivationRegistrationJpaEntity::softDelete);
+        cultivationRepository.saveAll(existing);
+
+        // 새 재배 등록 저장
+        List<CultivationRegistrationJpaEntity> entities = registrations.stream()
+                .map(reg -> CultivationRegistrationJpaEntity.builder()
+                        .farmId(farmId)
+                        .cropId(reg.getCropId())
+                        .cultivationArea(reg.getCultivationArea() != null ? BigDecimal.valueOf(reg.getCultivationArea()) : null)
+                        .farmerEstimatedYield(reg.getFarmerEstimatedYield() != null ? BigDecimal.valueOf(reg.getFarmerEstimatedYield()) : null)
+                        .yieldUnit(reg.getYieldUnit() != null ? reg.getYieldUnit() : "kg")
+                        .build())
+                .collect(Collectors.toList());
+        cultivationRepository.saveAll(entities);
+    }
+
+    @Override
+    public CultivationRegistration addCultivationRegistration(CultivationRegistration reg) {
+        CultivationRegistrationJpaEntity entity = CultivationRegistrationJpaEntity.builder()
+                .farmId(reg.getFarmId())
+                .cropId(reg.getCropId())
+                .cultivationArea(reg.getCultivationArea() != null ? BigDecimal.valueOf(reg.getCultivationArea()) : null)
+                .farmerEstimatedYield(reg.getFarmerEstimatedYield() != null ? BigDecimal.valueOf(reg.getFarmerEstimatedYield()) : null)
+                .yieldUnit(reg.getYieldUnit() != null ? reg.getYieldUnit() : "kg")
+                .build();
+
+        CultivationRegistrationJpaEntity saved = cultivationRepository.save(entity);
+
+        return CultivationRegistration.builder()
+                .id(saved.getId())
+                .farmId(saved.getFarmId())
+                .cropId(saved.getCropId())
+                .cultivationArea(saved.getCultivationArea() != null ? saved.getCultivationArea().doubleValue() : null)
+                .farmerEstimatedYield(saved.getFarmerEstimatedYield() != null ? saved.getFarmerEstimatedYield().doubleValue() : null)
+                .yieldUnit(saved.getYieldUnit())
+                .build();
+    }
+    @Override
+    public List<CultivationRegistration> loadCultivationsByFarmId(Long farmId) {
+        String sql = """
+            SELECT cr.id, cr.farm_id, cr.crop_id, c.name as crop_name, 
+                   cr.cultivation_area, cr.farmer_estimated_yield, cr.yield_unit
+            FROM cultivation_registrations cr
+            JOIN crops c ON cr.crop_id = c.id
+            WHERE cr.farm_id = ? AND cr.deleted_at IS NULL
+            """;
+        
+        return jdbcTemplate.query(sql, (rs, rowNum) -> CultivationRegistration.builder()
+                .id(rs.getLong("id"))
+                .farmId(rs.getLong("farm_id"))
+                .cropId(rs.getLong("crop_id"))
+                .cropName(rs.getString("crop_name"))
+                .cultivationArea(rs.getBigDecimal("cultivation_area") != null ? rs.getBigDecimal("cultivation_area").doubleValue() : null)
+                .farmerEstimatedYield(rs.getBigDecimal("farmer_estimated_yield") != null ? rs.getBigDecimal("farmer_estimated_yield").doubleValue() : null)
+                .yieldUnit(rs.getString("yield_unit"))
+                .build(), farmId);
+    }
+
+    @Override
+    public Optional<CultivationRegistration> loadCultivationById(Long id) {
+        String sql = """
+            SELECT cr.id, cr.farm_id, cr.crop_id, c.name as crop_name, 
+                   cr.cultivation_area, cr.farmer_estimated_yield, cr.yield_unit
+            FROM cultivation_registrations cr
+            JOIN crops c ON cr.crop_id = c.id
+            WHERE cr.id = ? AND cr.deleted_at IS NULL
+            """;
+        
+        List<CultivationRegistration> list = jdbcTemplate.query(sql, (rs, rowNum) -> CultivationRegistration.builder()
+                .id(rs.getLong("id"))
+                .farmId(rs.getLong("farm_id"))
+                .cropId(rs.getLong("crop_id"))
+                .cropName(rs.getString("crop_name"))
+                .cultivationArea(rs.getBigDecimal("cultivation_area") != null ? rs.getBigDecimal("cultivation_area").doubleValue() : null)
+                .farmerEstimatedYield(rs.getBigDecimal("farmer_estimated_yield") != null ? rs.getBigDecimal("farmer_estimated_yield").doubleValue() : null)
+                .yieldUnit(rs.getString("yield_unit"))
+                .build(), id);
+                
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
     }
 }

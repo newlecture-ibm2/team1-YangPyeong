@@ -40,7 +40,8 @@ export default function FarmRegisterPage() {
     detailAddress: '',
     area: '',
     pyeong: '',
-    cropIds: [] as number[],
+    // 작물별 상세 등록 정보
+    cultivations: [] as { cropId: number; area: string; expectedYield: string; unit: string }[],
     operationStatus: 'active',
     soilType: '',
     ph: '',
@@ -85,11 +86,42 @@ export default function FarmRegisterPage() {
     setFormData((prev) => ({ ...prev, pyeong: value, area: m2Value }));
   };
 
+  const handleCropSelect = (cropIdStr: string) => {
+    const cropId = Number(cropIdStr);
+    if (!cropId) return;
+    
+    // 이미 있는 작물이면 무시, 아니면 추가
+    if (!formData.cultivations.find(c => c.cropId === cropId)) {
+      setFormData(prev => ({
+        ...prev,
+        cultivations: [...prev.cultivations, { cropId, area: '', expectedYield: '', unit: 'kg' }]
+      }));
+    }
+  };
+
   const removeCrop = (cropId: number) => {
     setFormData(prev => ({
       ...prev,
-      cropIds: prev.cropIds.filter(id => id !== cropId)
+      cultivations: prev.cultivations.filter(c => c.cropId !== cropId)
     }));
+  };
+
+  const handleCultivationChange = (cropId: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      cultivations: prev.cultivations.map(c => 
+        c.cropId === cropId ? { ...c, [field]: value } : c
+      )
+    }));
+  };
+
+  // 임시 가이드: 작물별 대략적인 1㎡당 평균 생산량(kg) (실제 데이터 연동 전 임시값)
+  const getAverageYieldPerSqm = (cropName: string) => {
+    if (cropName.includes('감자')) return 3.5;
+    if (cropName.includes('양파')) return 5.0;
+    if (cropName.includes('벼') || cropName.includes('쌀')) return 0.5;
+    if (cropName.includes('고구마')) return 2.8;
+    return 2.0; // 기본값
   };
 
   // 이미지 파일 업로드 핸들러
@@ -184,7 +216,7 @@ export default function FarmRegisterPage() {
       toast.error('유효한 면적(숫자)을 입력해주세요.');
       return;
     }
-    if (formData.cropIds.length === 0) {
+    if (formData.cultivations.length === 0) {
       toast.error('재배 작물을 선택해주세요.');
       return;
     }
@@ -197,7 +229,13 @@ export default function FarmRegisterPage() {
       address: formData.baseAddress,
       detailAddress: formData.detailAddress,
       area: Number(String(formData.area).replace(/,/g, '')),
-      cropIds: formData.cropIds,
+      // cropIds 대신 cultivations 전달 (cropIds는 하위호환용으로 일단 유지)
+      cropIds: formData.cultivations.map(c => c.cropId),
+      cultivations: formData.cultivations.map(c => ({
+        cropId: c.cropId,
+        area: Number(c.area) || 0,
+        expectedYield: Number(c.expectedYield) || null
+      })),
       operationStatus: formData.operationStatus,
       soilType: formData.soilType || null,
       ph: formData.ph ? Number(formData.ph) : null,
@@ -350,28 +388,69 @@ export default function FarmRegisterPage() {
               <div className={styles.row}>
                 <div className={styles.inputGroup} style={{ gap: '8px' }}>
                   <Dropdown
-                    label="재배 작물"
+                    label="재배 작물 추가"
                     options={cropOptions.map(c => ({ value: String(c.id), label: c.name }))}
-                    placeholder="작물을 선택하세요"
-                    multiple
-                    required
-                    value={formData.cropIds.map(String).join(',')}
-                    onChange={(val) => setFormData(prev => ({ ...prev, cropIds: val.split(',').filter(Boolean).map(Number) }))}
+                    placeholder="재배할 작물을 선택하세요"
+                    value=""
+                    onChange={handleCropSelect}
                   />
-                  {formData.cropIds.length > 0 && (
-                    <div className={styles.tagList}>
-                      {formData.cropIds.map(cropId => (
-                        <span key={cropId} className={styles.tag}>
-                          {cropOptions.find(c => c.id === cropId)?.name || cropId}
-                          <button 
-                            type="button" 
-                            className={styles.tagRemoveBtn}
-                            onClick={() => removeCrop(cropId)}
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
+                  
+                  {formData.cultivations.length > 0 && (
+                    <div className={styles.cultivationList}>
+                      {formData.cultivations.map((cult, idx) => {
+                        const cropName = cropOptions.find(c => c.id === cult.cropId)?.name || `작물 ${cult.cropId}`;
+                        const avgPerSqm = getAverageYieldPerSqm(cropName);
+                        const expectedAvg = cult.area && !isNaN(Number(cult.area)) 
+                          ? (Number(cult.area) * avgPerSqm).toLocaleString() 
+                          : '0';
+
+                        return (
+                          <div key={cult.cropId} className={styles.cultivationItem} style={{ border: '1px solid var(--color-border)', padding: '16px', borderRadius: '8px', marginTop: '12px', position: 'relative' }}>
+                            <button 
+                              type="button" 
+                              onClick={() => removeCrop(cult.cropId)}
+                              style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', fontSize: '18px' }}
+                            >
+                              ✕
+                            </button>
+                            <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: 'var(--color-text)' }}>🌱 {cropName}</h4>
+                            
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                              <Input
+                                label={`${cropName} 재배 면적 (㎡)`}
+                                placeholder="예: 500"
+                                type="number"
+                                required
+                                value={cult.area}
+                                onChange={(e) => handleCultivationChange(cult.cropId, 'area', e.target.value)}
+                              />
+                              <Input
+                                label="예상 총생산량 (kg)"
+                                placeholder="예: 2500"
+                                type="number"
+                                required
+                                value={cult.expectedYield}
+                                onChange={(e) => handleCultivationChange(cult.cropId, 'expectedYield', e.target.value)}
+                              />
+                            </div>
+                            
+                            {/* 초급농업인 가이드 힌트 */}
+                            <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--color-secondary)', display: 'flex', alignItems: 'flex-start', gap: '6px', background: 'rgba(45,106,79,0.05)', padding: '10px', borderRadius: '6px' }}>
+                              <span>💡</span>
+                              <div>
+                                <strong>가이드:</strong> 평균적으로 <strong>{cropName}</strong>은(는) 1㎡당 약 {avgPerSqm}kg 생산됩니다.<br/>
+                                {cult.area ? (
+                                  <span style={{ color: 'var(--color-primary)' }}>
+                                    입력하신 면적({cult.area}㎡) 기준, 대략 <strong>{expectedAvg}kg</strong> 수확을 예상해 볼 수 있습니다.
+                                  </span>
+                                ) : (
+                                  <span>면적을 입력하시면 지역 평균 예상 수확량을 계산해 드립니다.</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

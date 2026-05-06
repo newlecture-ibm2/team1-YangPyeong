@@ -9,9 +9,11 @@ import com.farmbalance.farm.application.port.in.UpdateFarmCommand;
 import com.farmbalance.farm.application.port.in.UpdateFarmUseCase;
 
 import com.farmbalance.farm.application.port.out.LoadFarmPort;
+import com.farmbalance.farm.application.port.out.SaveCultivationPort;
 import com.farmbalance.farm.application.port.out.SaveFarmPort;
-
+import com.farmbalance.farm.domain.CultivationRegistration;
 import com.farmbalance.farm.domain.Farm;
+import com.farmbalance.farm.domain.event.CultivationRegisteredEvent;
 import com.farmbalance.farm.domain.event.FarmRegisteredEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import com.farmbalance.farm.domain.CertificationStatus;
@@ -21,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -31,6 +34,7 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
     private final SaveFarmPort saveFarmPort;
     private final LoadFarmPort loadFarmPort;
     private final DeleteFarmPort deleteFarmPort;
+    private final SaveCultivationPort saveCultivationPort;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -67,7 +71,30 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
         // 3. 영속성 어댑터(Output Port) 호출하여 DB 저장
         Farm savedFarm = saveFarmPort.saveFarm(farm);
 
-        // 4. 비동기 이력 저장을 위한 이벤트 발행
+        // 4. 재배 등록 상세 저장 (cultivations 데이터가 있는 경우)
+        if (command.getCultivations() != null && !command.getCultivations().isEmpty()) {
+            List<CultivationRegistration> registrations = command.getCultivations().stream()
+                    .map(c -> CultivationRegistration.builder()
+                            .farmId(savedFarm.getId())
+                            .cropId(c.getCropId())
+                            .cultivationArea(c.getArea())
+                            .farmerEstimatedYield(c.getExpectedYield())
+                            .yieldUnit("kg")
+                            .build())
+                    .collect(java.util.stream.Collectors.toList());
+            saveCultivationPort.saveCultivationRegistrations(savedFarm.getId(), registrations);
+
+            // 각 재배 등록별 히스토리 자동 생성 이벤트 발행
+            for (RegisterFarmCommand.CultivationDetail c : command.getCultivations()) {
+                eventPublisher.publishEvent(new CultivationRegisteredEvent(
+                        savedFarm.getId(),
+                        c.getCropId(),
+                        c.getArea()
+                ));
+            }
+        }
+
+        // 5. 비동기 이력 저장을 위한 이벤트 발행
         eventPublisher.publishEvent(new FarmRegisteredEvent(
                 savedFarm.getId(),
                 savedFarm.getName()
@@ -145,6 +172,10 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
             throw new FarmNotFoundException();
         }
         deleteFarmPort.deleteFarm(farmId);
+    }
+    @Override
+    public List<CultivationRegistration> loadCultivationsByFarmId(Long farmId) {
+        return loadFarmPort.loadCultivationsByFarmId(farmId);
     }
 }
 

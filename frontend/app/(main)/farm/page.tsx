@@ -209,7 +209,7 @@ export default function FarmDashboardPage() {
         <div className={styles.headerButtons}>
           {activeSubTab === 'DASHBOARD' ? (
             <>
-              <Link href="/farm/plan">
+              <Link href="/farm/cultivation-register">
                 <Button variant="outline">+ 재배 등록</Button>
               </Link>
               <Link href="/farm/harvest">
