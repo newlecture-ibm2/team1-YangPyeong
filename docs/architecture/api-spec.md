@@ -57,9 +57,10 @@
 | :--- | :---: | :--- | :---: | :--- |
 | FRM-005 | `GET` | `/api/analysis/balance` | 🔑 | 수급 밸런스 실시간 데이터 |
 | FRM-006 | `GET` | `/api/analysis/recommend` | 🔑 | AI 작물 추천 결과 |
-| FRM-012 | `GET` | `/api/policies/match` | 🔑 | 맞춤 지원 정책 매칭 리스트 |
-| FRM-012 | `POST` | `/api/policies/document` | 🔑 | AI 신청 공문 초안 생성 |
-| FRM-012 | `GET` | `/api/policies/document` | 🔑 | 생성된 공문 이력 조회 |
+| POL-001 | `GET` | `/api/policies` | 🔓 | 정책 목록 조회 (필터: keyword, regionCode, category, period, minConfidence + 페이지네이션) |
+| POL-002 | `GET` | `/api/policies/{id}` | 🔓 | 정책 상세 조회 (normalizedData JSON 객체 포함) |
+| POL-003 | `POST` | `/api/admin/policies/sync` | ⚙️ | Gov24 + Mock 정책 동기화 실행 (AI 분석 포함) |
+| POL-004 | `DELETE` | `/api/admin/policies?source=` | ⚙️ | 소스별 정책 삭제 — `@Profile("local")` 전용 |
 
 ### 2.4 커뮤니티 도메인 (Communities)
 | 기능 ID | 메서드 | 엔드포인트 | 권한 | 설명 |
@@ -108,7 +109,7 @@
 | ADM-003 | `GET` | `/api/admins/crop` | ⚙️ | 작물 마스터 조회 |
 | ADM-003 | `POST` | `/api/admins/crop` | ⚙️ | 작물 마스터 등록 |
 | ADM-003 | `PATCH` | `/api/admins/crop/{id}` | ⚙️ | 작물 정보 수정 |
-| ADM-012 | `GET/POST` | `/api/admins/policy` | ⚙️ | 정책 데이터 조회/등록 |
+| ADM-012 | `POST` | `/api/admin/policies/sync` | ⚙️ | 정책 동기화 (Gov24 API + AI 분석) — POL-003 참조 |
 | ADM-010 | `GET/POST` | `/api/admins/store` | ⚙️ | 가게 데이터 조회/등록 |
 | ADM-005 | `PATCH` | `/api/admins/engine` | ⚙️ | 수급 엔진 설정 변경 |
 | ADM-009 | `PATCH` | `/api/admins/shop` | ⚙️ | 상점 상품 승인/관리 |
