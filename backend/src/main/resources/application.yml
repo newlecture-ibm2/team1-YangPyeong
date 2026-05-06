@@ -42,6 +42,20 @@ spring:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
 
+  # ── Mail (SMTP) ──
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    default-encoding: UTF-8
+
   # ── Servlet (파일 업로드) ──
   servlet:
     multipart:

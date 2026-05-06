@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/common/Button/Button';
 import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import { uploadFile } from '@/lib/upload.api';
-import { registerProduct } from '@/app/(main)/shop/_lib/shop.api';
-import { PRODUCT_CATEGORIES } from '../../_lib/mypage.types';
+import { registerProduct, getCategories } from '@/app/(main)/shop/_lib/shop.api';
 import styles from './page.module.css';
 
 /** S-35b. 상품 등록 페이지 */
@@ -24,6 +23,16 @@ export default function SellerRegisterPage() {
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // DB에서 카테고리 목록 로드
+  const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([]);
+  useEffect(() => {
+    getCategories().then((res) => {
+      if (res.success && res.data) {
+        setCategoryOptions(res.data.map((cat) => ({ value: cat.name, label: cat.name })));
+      }
+    });
+  }, []);
 
   /** 폼 필드 업데이트 */
   const updateField = useCallback((field: string, value: string) => {
@@ -118,12 +127,14 @@ export default function SellerRegisterPage() {
       }
 
       router.push('/mypage/seller');
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '상품 등록에 실패했습니다.';
+      alert(message);
       setIsSubmitting(false);
     }
   }, [isValid, isSubmitting, form, images, router]);
 
-  const categoryOptions = PRODUCT_CATEGORIES.map((cat) => ({ value: cat, label: cat }));
+
 
   return (
     <div className={styles.container}>

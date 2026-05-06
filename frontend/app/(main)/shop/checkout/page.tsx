@@ -51,6 +51,8 @@ function CheckoutContent() {
     touched,
     handleBlur,
     openDaumPostcode,
+    saveAsDefault,
+    setSaveAsDefault,
   } = useCheckout();
 
   /** 직접 입력 메모인지 체크 */
@@ -176,6 +178,19 @@ function CheckoutContent() {
                     onChange={(e) => updateShipping('customMemo', e.target.value)}
                   />
                 )}
+              </div>
+
+              {/* 기본 배송지로 저장 */}
+              <div className={styles.formGroupFull}>
+                <label className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    className={styles.checkbox}
+                    checked={saveAsDefault}
+                    onChange={(e) => setSaveAsDefault(e.target.checked)}
+                  />
+                  <span className={styles.checkboxText}>이 주소를 기본 배송지로 저장</span>
+                </label>
               </div>
             </div>
           </div>

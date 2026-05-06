@@ -4,11 +4,9 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { SellerOrder, SellerOrderKpi, OrderStatus } from '../../_lib/mypage.types';
 import { getSellerOrders, updateOrderStatus } from '@/app/(main)/shop/_lib/shop.api';
 
-/** 주문 상태 전환 규칙 */
+/** 주문 상태 전환 규칙 (판매자는 접수만 가능) */
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   ORDERED: 'ACCEPTED',
-  ACCEPTED: 'SHIPPED',
-  SHIPPED: 'COMPLETED',
 };
 
 /** useSellerOrders — 판매 주문 관리 훅 */
@@ -39,6 +37,7 @@ export default function useSellerOrders() {
           totalAmount: o.totalAmount,
           status: o.status as OrderStatus,
           orderedAt: o.createdAt,
+          acceptedAt: o.updatedAt,
         }));
         setOrders(mapped);
       } else {
@@ -60,7 +59,7 @@ export default function useSellerOrders() {
   const kpi: SellerOrderKpi = useMemo(() => ({
     newOrders: orders.filter((o) => o.status === 'ORDERED').length,
     preparing: orders.filter((o) => o.status === 'ACCEPTED').length,
-    shipping: orders.filter((o) => o.status === 'SHIPPED').length,
+    shipping: orders.filter((o) => o.status === 'SHIPPED' || o.status === 'COMPLETED').length,
     monthlySales: orders
       .filter((o) => o.status !== 'CANCELLED')
       .reduce((sum, o) => sum + o.totalAmount, 0),
