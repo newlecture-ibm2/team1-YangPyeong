@@ -8,7 +8,7 @@ import Dropdown from '@/components/common/Dropdown/Dropdown';
 import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import { useToast } from '@/components/common/Toast';
-import { useMyFarms } from '../_hooks/useFarm';
+import { useMyFarms } from '../useFarm';
 import { getCultivations, type CultivationRegistration } from '../_lib/cultivation.api';
 import { recordHarvest } from '../_lib/harvest.api';
 import styles from './page.module.css';
