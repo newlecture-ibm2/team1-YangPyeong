@@ -21,6 +21,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.farmbalance.farm.domain.CultivationRegistration;
+import com.farmbalance.farm.application.port.out.LoadFarmPort;
 
 @RestController
 @RequestMapping({"/api/farms", "/api/farm"})
@@ -52,6 +54,18 @@ public class FarmController {
         }
 
         // DTO -> Command 매핑
+        // 재배 등록 상세 정보 변환
+        List<RegisterFarmCommand.CultivationDetail> cultivationDetails = null;
+        if (request.getCultivations() != null && !request.getCultivations().isEmpty()) {
+            cultivationDetails = request.getCultivations().stream()
+                    .map(c -> RegisterFarmCommand.CultivationDetail.builder()
+                            .cropId(c.getCropId())
+                            .area(c.getArea())
+                            .expectedYield(c.getExpectedYield())
+                            .build())
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
         RegisterFarmCommand command = RegisterFarmCommand.builder()
                 .userId(userId)
                 .name(request.getName())
@@ -69,6 +83,7 @@ public class FarmController {
                 .soilType(request.getSoilType())
                 .ph(request.getPh())
                 .organicMatter(request.getOrganicMatter())
+                .cultivations(cultivationDetails)
                 .build();
 
         // UseCase 호출 (비즈니스 로직)
@@ -134,6 +149,8 @@ public class FarmController {
 
         return ResponseEntity.ok(ApiResponse.ok(responseData));
     }
+
+
 
     @PatchMapping("/{farmId}")
     public ResponseEntity<ApiResponse<FarmDetailResponse>> updateFarm(
