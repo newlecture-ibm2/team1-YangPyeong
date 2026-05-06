@@ -3,8 +3,8 @@
    ════════════════════════════════════════════════════════ */
 
 import { useState, useEffect, useCallback } from 'react';
-import { getMyFarms, getFarmDetail, deleteFarm } from '../_lib/farm.api';
-import { FarmListItem, FarmDetail } from '../_lib/farm.types';
+import { getMyFarms, getFarmDetail, deleteFarm } from './_lib/farm.api';
+import { FarmListItem, FarmDetail } from './_lib/farm.types';
 import { useToast } from '@/components/common/Toast';
 
 /**
