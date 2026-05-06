@@ -70,9 +70,19 @@ public class Product {
         this.stock -= quantity;
     }
 
+    /** 재고 복구 (주문 취소 시) */
+    public void increaseStock(int quantity) {
+        this.stock += quantity;
+    }
+
     /** 판매 수량 증가 */
     public void increaseSalesCount(int quantity) {
         this.salesCount += quantity;
+    }
+
+    /** 판매 수량 감소 (주문 취소 시) */
+    public void decreaseSalesCount(int quantity) {
+        this.salesCount = Math.max(0, this.salesCount - quantity);
     }
 
     /** 상품 수정 */

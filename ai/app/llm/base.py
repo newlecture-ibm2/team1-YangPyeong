@@ -1,43 +1,57 @@
 """
-LLM 추상 클래스.
-모든 LLM Provider는 이 클래스를 상속합니다.
+LLM 추상 클래스 (BaseLLM)
+모든 LLM Provider는 이 클래스를 상속하여 구현합니다.
 """
+
 from abc import ABC, abstractmethod
+from typing import AsyncIterator, Optional
 
 
 class BaseLLM(ABC):
-    """LLM Provider 추상 인터페이스."""
+    """LLM Provider 공통 인터페이스"""
 
     @abstractmethod
-    async def generate(self, prompt: str, **kwargs) -> str:
+    async def generate(
+        self,
+        prompt: str,
+        *,
+        system_instruction: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> str:
         """
-        프롬프트를 받아 텍스트 응답을 반환합니다.
+        프롬프트를 받아 텍스트 응답을 생성합니다.
 
         Args:
-            prompt: LLM에 전달할 프롬프트 문자열
-            **kwargs: temperature, max_tokens 등 Provider별 추가 옵션
+            prompt: 사용자 프롬프트
+            system_instruction: 시스템 지시문 (선택)
+            temperature: 창의성 (0.0 ~ 1.0)
+            max_tokens: 최대 토큰 수
 
         Returns:
-            LLM 응답 텍스트
+            생성된 텍스트 응답
         """
         ...
 
     @abstractmethod
-    async def generate_json(self, prompt: str, **kwargs) -> str:
+    async def generate_stream(
+        self,
+        prompt: str,
+        *,
+        system_instruction: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> AsyncIterator[str]:
         """
-        프롬프트를 받아 JSON 형식의 텍스트를 반환합니다.
-        JSON mode 지원 Provider는 해당 옵션을 활성화합니다.
+        프롬프트를 받아 스트리밍 응답을 생성합니다.
 
         Args:
-            prompt: LLM에 전달할 프롬프트 문자열
-            **kwargs: Provider별 추가 옵션
+            prompt: 사용자 프롬프트
+            system_instruction: 시스템 지시문 (선택)
+            temperature: 창의성 (0.0 ~ 1.0)
+            max_tokens: 최대 토큰 수
 
-        Returns:
-            JSON 문자열
+        Yields:
+            텍스트 청크
         """
-        ...
-
-    @abstractmethod
-    def get_provider_name(self) -> str:
-        """Provider 이름을 반환합니다 (예: 'gemini', 'groq')."""
         ...

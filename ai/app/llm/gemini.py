@@ -1,71 +1,88 @@
 """
-Google Gemini LLM Provider.
-BaseLLM을 상속하여 Gemini API를 호출합니다.
-google-generativeai 0.8.x SDK 사용.
+Gemini LLM Provider 구현체
+google-generativeai SDK를 사용합니다.
 """
+
 import logging
+from typing import AsyncIterator, Optional
 
 import google.generativeai as genai
 
+from app.config import settings
 from app.llm.base import BaseLLM
-from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
 
 class GeminiLLM(BaseLLM):
-    """Gemini 기반 LLM Provider."""
+    """Google Gemini API를 사용하는 LLM 구현체"""
 
     def __init__(self) -> None:
-        settings = get_settings()
-        if not settings.gemini_api_key:
-            raise ValueError("GEMINI_API_KEY가 설정되지 않았습니다.")
-        genai.configure(api_key=settings.gemini_api_key)
-        self._model = genai.GenerativeModel(settings.gemini_model)
+        if not settings.GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.")
 
-    async def generate(self, prompt: str, **kwargs) -> str:
-        """Gemini에 프롬프트를 전달하고 텍스트 응답을 반환합니다."""
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        self._model_name = settings.GEMINI_MODEL
+        logger.info("GeminiLLM 초기화 완료 (모델: %s)", self._model_name)
+
+    def _get_model(
+        self, system_instruction: Optional[str] = None
+    ) -> genai.GenerativeModel:
+        """GenerativeModel 인스턴스 생성"""
+        return genai.GenerativeModel(
+            model_name=self._model_name,
+            system_instruction=system_instruction,
+        )
+
+    async def generate(
+        self,
+        prompt: str,
+        *,
+        system_instruction: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> str:
+        model = self._get_model(system_instruction)
+
+        generation_config = genai.types.GenerationConfig(
+            temperature=temperature,
+            max_output_tokens=max_tokens,
+        )
+
         try:
-            temperature = kwargs.get("temperature", 0.3)
-            max_tokens = kwargs.get("max_tokens", 4096)
-
-            generation_config = genai.types.GenerationConfig(
-                temperature=temperature,
-                max_output_tokens=max_tokens,
-            )
-
-            response = self._model.generate_content(
+            response = await model.generate_content_async(
                 prompt,
                 generation_config=generation_config,
             )
-            return response.text or ""
+            return response.text
         except Exception as e:
-            logger.error(f"[GeminiLLM] generate 실패: {e}")
+            logger.error("Gemini generate 실패: %s", e)
             raise
 
-    async def generate_json(self, prompt: str, **kwargs) -> str:
-        """
-        JSON 응답을 요구하는 프롬프트를 전달합니다.
-        response_mime_type으로 JSON 형식을 강제합니다.
-        """
+    async def generate_stream(
+        self,
+        prompt: str,
+        *,
+        system_instruction: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> AsyncIterator[str]:
+        model = self._get_model(system_instruction)
+
+        generation_config = genai.types.GenerationConfig(
+            temperature=temperature,
+            max_output_tokens=max_tokens,
+        )
+
         try:
-            temperature = kwargs.get("temperature", 0.1)
-            max_tokens = kwargs.get("max_tokens", 4096)
-
-            generation_config = genai.types.GenerationConfig(
-                temperature=temperature,
-                max_output_tokens=max_tokens,
-                response_mime_type="application/json",
-            )
-
-            response = self._model.generate_content(
+            response = await model.generate_content_async(
                 prompt,
                 generation_config=generation_config,
+                stream=True,
             )
-            return response.text or "{}"
+            async for chunk in response:
+                if chunk.text:
+                    yield chunk.text
         except Exception as e:
-            logger.error(f"[GeminiLLM] generate_json 실패: {e}")
+            logger.error("Gemini generate_stream 실패: %s", e)
             raise
-
-    def get_provider_name(self) -> str:
-        return "gemini"
