@@ -1,6 +1,5 @@
 """
-FarmBalance AI 서버 공통 설정
-환경변수에서 값을 읽어오며, .env 파일도 지원합니다.
+FarmBalance Agent 서버 공통 설정
 """
 
 from pydantic_settings import BaseSettings
@@ -28,11 +27,8 @@ class Settings(BaseSettings):
     BEDROCK_MODEL: str = "anthropic.claude-3-haiku-20240307-v1:0"
 
     # ── 서버 설정 ──
-    AI_SERVER_PORT: int = 8000
+    AGENT_SERVER_PORT: int = 8001
     DEBUG: bool = False
-
-    # ── DB (추후 RAG용) ──
-    DATABASE_URL: Optional[str] = None
 
     model_config = {
         "env_file": ".env",
@@ -41,5 +37,4 @@ class Settings(BaseSettings):
     }
 
 
-# 싱글톤 인스턴스
 settings = Settings()

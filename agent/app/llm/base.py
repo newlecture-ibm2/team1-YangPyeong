@@ -19,18 +19,7 @@ class BaseLLM(ABC):
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> str:
-        """
-        프롬프트를 받아 텍스트 응답을 생성합니다.
-
-        Args:
-            prompt: 사용자 프롬프트
-            system_instruction: 시스템 지시문 (선택)
-            temperature: 창의성 (0.0 ~ 1.0)
-            max_tokens: 최대 토큰 수
-
-        Returns:
-            생성된 텍스트 응답
-        """
+        """프롬프트를 받아 텍스트 응답을 생성합니다."""
         ...
 
     @abstractmethod
@@ -42,16 +31,5 @@ class BaseLLM(ABC):
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> AsyncIterator[str]:
-        """
-        프롬프트를 받아 스트리밍 응답을 생성합니다.
-
-        Args:
-            prompt: 사용자 프롬프트
-            system_instruction: 시스템 지시문 (선택)
-            temperature: 창의성 (0.0 ~ 1.0)
-            max_tokens: 최대 토큰 수
-
-        Yields:
-            텍스트 청크
-        """
+        """프롬프트를 받아 스트리밍 응답을 생성합니다."""
         ...
