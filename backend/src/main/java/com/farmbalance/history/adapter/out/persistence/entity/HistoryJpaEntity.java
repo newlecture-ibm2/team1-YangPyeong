@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -38,11 +39,11 @@ public class HistoryJpaEntity {
     @Column(name = "activity_content", columnDefinition = "TEXT")
     private String activityContent;
 
-    @Column(name = "avg_temp")
-    private Double avgTemp;
+    @Column(name = "avg_temp", precision = 5, scale = 1)
+    private BigDecimal avgTemp;
 
-    @Column(name = "total_rain")
-    private Double totalRain;
+    @Column(name = "total_rain", precision = 7, scale = 1)
+    private BigDecimal totalRain;
 
     @CreatedDate
     @Column(updatable = false)
@@ -50,7 +51,7 @@ public class HistoryJpaEntity {
 
     @Builder
     public HistoryJpaEntity(Long farmId, Long cultivationRegistrationId, java.time.LocalDate recordDate, 
-                          HistoryType activityType, String activityContent, Double avgTemp, Double totalRain) {
+                          HistoryType activityType, String activityContent, BigDecimal avgTemp, BigDecimal totalRain) {
         this.farmId = farmId;
         this.cultivationRegistrationId = cultivationRegistrationId;
         this.recordDate = recordDate;
