@@ -9,6 +9,8 @@ import Dropdown from '@/components/common/Dropdown/Dropdown';
 import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Modal from '@/components/common/Modal/Modal';
+import ModalDialog from '@/components/common/Modal/ModalDialog';
+import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import { useToast } from '@/components/common/Toast';
 import { uploadFile } from '@/lib/upload.api';
 import { useFarmDetail } from '../../_hooks/useFarm';
@@ -49,6 +51,7 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
 
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
   // 작물 마스터 목록 가져오기
   const [cropOptions, setCropOptions] = useState<CropOption[]>([]);
@@ -204,7 +207,8 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
   };
 
   const handleDelete = async () => {
-    if (confirm('정말로 이 농장을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+    const confirmed = await showConfirm('정말로 이 농장을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.');
+    if (confirmed) {
       const success = await removeFarm();
       if (success) router.push('/farm');
     }
@@ -361,6 +365,12 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
           <DaumPostcodeEmbed onComplete={handlePostcodeComplete} style={{ width: '100%', height: '460px' }} />
         </div>
       </Modal>
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   );
 }

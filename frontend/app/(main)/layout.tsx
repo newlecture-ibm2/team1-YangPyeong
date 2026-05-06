@@ -11,9 +11,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
   return (
     <>
       <Header />
-      <main>{children}</main>
+      <GuideBot>
+        <main>{children}</main>
+      </GuideBot>
       <Footer />
-      <GuideBot />
     </>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/common/Toast/ToastContext';
+import { Spinner } from '@/components';
 import { apiFetch } from '@/lib/api-fetch';
 import { useProfile } from './useProfile';
 import { ProfileHeader } from './_components/Header/ProfileHeader';
@@ -71,12 +72,7 @@ export default function MyPage() {
   };
 
   if (loading) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.spinner} />
-        <p>프로필 정보를 불러오는 중입니다...</p>
-      </div>
-    );
+    return <Spinner message="프로필 정보를 불러오는 중입니다..." fullHeight={true} />;
   }
 
   if (!profile) return null;

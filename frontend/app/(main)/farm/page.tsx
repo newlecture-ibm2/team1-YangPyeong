@@ -9,6 +9,8 @@ import { useMyFarms } from './_hooks/useFarm';
 import { useHistory } from './_hooks/useHistory';
 import Timeline from './_components/Timeline/Timeline';
 import HistoryModal from './_components/HistoryModal/HistoryModal';
+import ModalDialog from '@/components/common/Modal/ModalDialog';
+import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import styles from './page.module.css';
 
 // 임시 KPI 및 활동 데이터 (백엔드 연동 전까지 유지할 데이터 구조)
@@ -34,6 +36,7 @@ export default function FarmDashboardPage() {
   const [isListView, setIsListView] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'DASHBOARD' | 'HISTORY' | 'POLICY' | 'REPORT'>('DASHBOARD');
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
   // 농장 목록이 로드되었을 때, 2개 이상이면 목록 뷰를 기본으로 설정
   useEffect(() => {
@@ -65,6 +68,14 @@ export default function FarmDashboardPage() {
     setEditingHistoryId(id);
     setEditingContent(content);
     setIsHistoryModalOpen(true);
+  };
+
+  // 삭제 버튼 클릭 핸들러
+  const handleDeleteHistory = async (id: number) => {
+    const confirmed = await showConfirm('정말 삭제하시겠습니까?');
+    if (confirmed) {
+      await removeHistory(id);
+    }
   };
 
 
@@ -380,7 +391,7 @@ export default function FarmDashboardPage() {
               <Timeline 
                 histories={histories} 
                 onEdit={handleEditClick}
-                onDelete={removeHistory}
+                onDelete={handleDeleteHistory}
               />
             </div>
 
@@ -407,6 +418,12 @@ export default function FarmDashboardPage() {
           </div>
         </>
       )}
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   );
 }
