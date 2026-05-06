@@ -127,6 +127,43 @@
   font-size: 13px;
 }
 
+/* ── 파일 업로드 ── */
+.fileLabel {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+}
+
+.fileInput {
+  display: block;
+  margin-top: var(--space-sm);
+  width: 100%;
+  padding: 14px var(--space-md);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: var(--font-sans);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.fileInput:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.fileInfo {
+  margin-top: var(--space-sm);
+  font-size: 14px;
+  color: var(--color-primary);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-primary-pale);
+  border-radius: var(--radius-sm);
+}
+
 /* ── 로딩 ── */
 .loading {
   text-align: center;

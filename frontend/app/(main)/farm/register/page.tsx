@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import DaumPostcodeEmbed, { type Address } from 'react-daum-postcode';
@@ -14,14 +14,11 @@ import { useToast } from '@/components/common/Toast';
 import { uploadFile } from '@/lib/upload.api';
 import styles from './page.module.css';
 
-const CROP_OPTIONS = [
-  { value: '배추', label: '🥬 배추' },
-  { value: '고추', label: '🌶️ 고추' },
-  { value: '당근', label: '🥕 당근' },
-  { value: '양파', label: '🧅 양파' },
-  { value: '감자', label: '🥔 감자' },
-  { value: '토마토', label: '🍅 토마토' },
-];
+interface CropOption {
+  id: number;
+  name: string;
+  categoryId: number;
+}
 
 export default function FarmRegisterPage() {
   const router = useRouter();
@@ -43,7 +40,7 @@ export default function FarmRegisterPage() {
     detailAddress: '',
     area: '',
     pyeong: '',
-    cropTypes: [] as string[],
+    cropIds: [] as number[],
     operationStatus: 'active',
     soilType: '',
     ph: '',
@@ -58,6 +55,15 @@ export default function FarmRegisterPage() {
     latitude: null as number | null,
     longitude: null as number | null,
   });
+
+  // 작물 마스터 목록 가져오기
+  const [cropOptions, setCropOptions] = useState<CropOption[]>([]);
+  useEffect(() => {
+    fetch('/api/admin/crops')
+      .then(res => res.json())
+      .then(json => { if (json.success) setCropOptions(json.data || []); })
+      .catch(() => {});
+  }, []);
 
   const handleChange = (field: string, value: string) => {
     if (field === 'registrationNumber') {
@@ -79,10 +85,10 @@ export default function FarmRegisterPage() {
     setFormData((prev) => ({ ...prev, pyeong: value, area: m2Value }));
   };
 
-  const removeCrop = (crop: string) => {
+  const removeCrop = (cropId: number) => {
     setFormData(prev => ({
       ...prev,
-      cropTypes: prev.cropTypes.filter(t => t !== crop)
+      cropIds: prev.cropIds.filter(id => id !== cropId)
     }));
   };
 
@@ -178,8 +184,8 @@ export default function FarmRegisterPage() {
       toast.error('유효한 면적(숫자)을 입력해주세요.');
       return;
     }
-    if (formData.cropTypes.length === 0) {
-      toast.error('주요 작물을 선택해주세요.');
+    if (formData.cropIds.length === 0) {
+      toast.error('재배 작물을 선택해주세요.');
       return;
     }
 
@@ -191,7 +197,7 @@ export default function FarmRegisterPage() {
       address: formData.baseAddress,
       detailAddress: formData.detailAddress,
       area: Number(String(formData.area).replace(/,/g, '')),
-      cropTypes: formData.cropTypes,
+      cropIds: formData.cropIds,
       operationStatus: formData.operationStatus,
       soilType: formData.soilType || null,
       ph: formData.ph ? Number(formData.ph) : null,
@@ -344,23 +350,23 @@ export default function FarmRegisterPage() {
               <div className={styles.row}>
                 <div className={styles.inputGroup} style={{ gap: '8px' }}>
                   <Dropdown
-                    label="주요 작물"
-                    options={CROP_OPTIONS}
-                    placeholder="선택하세요"
+                    label="재배 작물"
+                    options={cropOptions.map(c => ({ value: String(c.id), label: c.name }))}
+                    placeholder="작물을 선택하세요"
                     multiple
                     required
-                    value={formData.cropTypes.join(',')}
-                    onChange={(val) => setFormData(prev => ({ ...prev, cropTypes: val.split(',').filter(Boolean) }))}
+                    value={formData.cropIds.map(String).join(',')}
+                    onChange={(val) => setFormData(prev => ({ ...prev, cropIds: val.split(',').filter(Boolean).map(Number) }))}
                   />
-                  {formData.cropTypes.length > 0 && (
+                  {formData.cropIds.length > 0 && (
                     <div className={styles.tagList}>
-                      {formData.cropTypes.map(crop => (
-                        <span key={crop} className={styles.tag}>
-                          {CROP_OPTIONS.find(o => o.value === crop)?.label || crop}
+                      {formData.cropIds.map(cropId => (
+                        <span key={cropId} className={styles.tag}>
+                          {cropOptions.find(c => c.id === cropId)?.name || cropId}
                           <button 
                             type="button" 
                             className={styles.tagRemoveBtn}
-                            onClick={() => removeCrop(crop)}
+                            onClick={() => removeCrop(cropId)}
                           >
                             ×
                           </button>

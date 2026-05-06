@@ -104,7 +104,7 @@ export default function UserManagementPage() {
   // 필터 드롭다운 옵션
   const roleOptions = [
     { label: '역할: 전체', value: 'ALL' },
-    { label: '일반', value: 'GENERAL' },
+    { label: '일반', value: 'USER' },
     { label: '농부', value: 'FARMER' },
     { label: '지자체', value: 'GOV' },
   ]
@@ -117,7 +117,7 @@ export default function UserManagementPage() {
 
   // 역할 변경 드롭다운 옵션
   const changeableRoleOptions = [
-    { label: '일반', value: 'GENERAL' },
+    { label: '일반', value: 'USER' },
     { label: '농부', value: 'FARMER' },
   ]
 

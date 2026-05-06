@@ -27,7 +27,7 @@ export default function FarmCard({ farm, isCompact = false }: FarmCardProps) {
       
       {!isCompact && (
         <div className={styles.cropList}>
-          {farm.cropTypes.map(crop => (
+          {farm.cropNames.map(crop => (
             <span key={crop} className={styles.cropTag}>#{crop}</span>
           ))}
         </div>

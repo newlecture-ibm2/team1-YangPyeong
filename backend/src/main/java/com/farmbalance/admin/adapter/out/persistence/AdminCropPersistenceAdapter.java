@@ -7,11 +7,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * ADM-003 작물 마스터 관리 Persistence Adapter (JdbcTemplate)
+ * 작물 마스터 관리 Persistence Adapter (JdbcTemplate)
+ * CRUD 지원 (단순화: categoryId + name)
  */
 @Component
 @RequiredArgsConstructor
@@ -22,13 +24,7 @@ public class AdminCropPersistenceAdapter implements AdminCropPort {
     private final RowMapper<AdminCrop> rowMapper = (rs, rowNum) -> AdminCrop.builder()
             .id(rs.getLong("id"))
             .categoryId(rs.getLong("category_id"))
-            .code(rs.getString("code"))
             .name(rs.getString("name"))
-            .growthDays(rs.getInt("growth_days"))
-            .yieldPerSqm(rs.getBigDecimal("yield_per_sqm"))
-            .avgCostPerSqm(rs.getBigDecimal("avg_cost_per_sqm"))
-            .climateConditions(rs.getString("climate_conditions"))
-            .isActive(rs.getBoolean("is_active"))
             .createdAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null)
             .updatedAt(rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null)
             .deletedAt(rs.getTimestamp("deleted_at") != null ? rs.getTimestamp("deleted_at").toLocalDateTime() : null)
@@ -36,8 +32,26 @@ public class AdminCropPersistenceAdapter implements AdminCropPort {
 
     @Override
     public List<AdminCrop> findAll() {
-        String sql = "SELECT * FROM crops WHERE deleted_at IS NULL ORDER BY code";
+        String sql = "SELECT * FROM crops WHERE deleted_at IS NULL ORDER BY name";
         return jdbcTemplate.query(sql, rowMapper);
+    }
+
+    @Override
+    public List<AdminCrop> findByFilter(Long categoryId, String keyword) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM crops WHERE deleted_at IS NULL");
+        List<Object> params = new ArrayList<>();
+
+        if (categoryId != null) {
+            sql.append(" AND category_id = ?");
+            params.add(categoryId);
+        }
+        if (keyword != null && !keyword.isBlank()) {
+            sql.append(" AND name LIKE ?");
+            params.add("%" + keyword.trim() + "%");
+        }
+
+        sql.append(" ORDER BY name");
+        return jdbcTemplate.query(sql.toString(), rowMapper, params.toArray());
     }
 
     @Override
@@ -48,28 +62,34 @@ public class AdminCropPersistenceAdapter implements AdminCropPort {
     }
 
     @Override
+    public boolean existsByName(String name) {
+        String sql = "SELECT COUNT(*) FROM crops WHERE name = ? AND deleted_at IS NULL";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, name);
+        return count != null && count > 0;
+    }
+
+    @Override
+    public boolean existsByNameExcludeId(String name, Long excludeId) {
+        String sql = "SELECT COUNT(*) FROM crops WHERE name = ? AND id != ? AND deleted_at IS NULL";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, name, excludeId);
+        return count != null && count > 0;
+    }
+
+    @Override
     public Long save(AdminCrop crop) {
-        String sql = "INSERT INTO crops (category_id, code, name, growth_days, yield_per_sqm, avg_cost_per_sqm, climate_conditions, is_active, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, NOW()) RETURNING id";
-        return jdbcTemplate.queryForObject(sql, Long.class,
-                crop.getCategoryId(), crop.getCode(), crop.getName(), crop.getGrowthDays(),
-                crop.getYieldPerSqm(), crop.getAvgCostPerSqm(), crop.getClimateConditions(),
-                crop.getIsActive());
+        String sql = "INSERT INTO crops (category_id, name, created_at) VALUES (?, ?, NOW()) RETURNING id";
+        return jdbcTemplate.queryForObject(sql, Long.class, crop.getCategoryId(), crop.getName());
     }
 
     @Override
     public void update(AdminCrop crop) {
-        String sql = "UPDATE crops SET category_id = ?, code = ?, name = ?, growth_days = ?, " +
-                "yield_per_sqm = ?, avg_cost_per_sqm = ?, climate_conditions = ?::jsonb, is_active = ?, updated_at = NOW() WHERE id = ?";
-        jdbcTemplate.update(sql,
-                crop.getCategoryId(), crop.getCode(), crop.getName(), crop.getGrowthDays(),
-                crop.getYieldPerSqm(), crop.getAvgCostPerSqm(), crop.getClimateConditions(),
-                crop.getIsActive(), crop.getId());
+        String sql = "UPDATE crops SET category_id = ?, name = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL";
+        jdbcTemplate.update(sql, crop.getCategoryId(), crop.getName(), crop.getId());
     }
 
     @Override
-    public void deactivate(Long id) {
-        String sql = "UPDATE crops SET is_active = false, updated_at = NOW() WHERE id = ?";
+    public void delete(Long id) {
+        String sql = "UPDATE crops SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL";
         jdbcTemplate.update(sql, id);
     }
 }

@@ -25,6 +25,7 @@ public final class SecurityUtil {
 
     /**
      * 현재 로그인한 사용자의 ID를 반환합니다.
+     * JwtAuthenticationFilter에서 authentication.setDetails(userId)로 저장된 값을 사용합니다.
      * @throws BusinessException 인증되지 않은 경우
      */
     public static Long getCurrentUserId() {
@@ -33,7 +34,25 @@ public final class SecurityUtil {
                 || "anonymousUser".equals(authentication.getPrincipal())) {
             throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID, "인증 정보가 없습니다.");
         }
-        return (Long) authentication.getPrincipal();
+        Object details = authentication.getDetails();
+        if (details instanceof Long) {
+            return (Long) details;
+        }
+        throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID, "사용자 ID를 확인할 수 없습니다.");
+    }
+
+    /**
+     * 현재 로그인한 사용자의 이메일을 반환합니다.
+     * JwtAuthenticationFilter에서 principal(email)로 저장된 값을 사용합니다.
+     * @throws BusinessException 인증되지 않은 경우
+     */
+    public static String getCurrentEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new BusinessException(ErrorCode.AUTH_TOKEN_INVALID, "인증 정보가 없습니다.");
+        }
+        return (String) authentication.getPrincipal();
     }
 
     /**

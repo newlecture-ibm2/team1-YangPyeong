@@ -51,7 +51,7 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                 .name(command.getName())
                 .address(command.getAddress())
                 .area(command.getArea())
-                .cropTypes(command.getCropTypes())
+                .cropIds(command.getCropIds())
                 .bjdCode(command.getBjdCode())
                 .pnuCode(pnuCode)
                 .latitude(command.getLatitude())
@@ -70,8 +70,7 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
         // 4. 비동기 이력 저장을 위한 이벤트 발행
         eventPublisher.publishEvent(new FarmRegisteredEvent(
                 savedFarm.getId(),
-                savedFarm.getName(),
-                savedFarm.getCropTypes()
+                savedFarm.getName()
         ));
 
         return savedFarm;
@@ -123,7 +122,7 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                 command.getName(),
                 command.getAddress(),
                 command.getArea(),
-                command.getCropTypes(),
+                command.getCropIds(),
                 newBjdCode,
                 newPnuCode,
                 newLat,

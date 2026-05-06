@@ -6,6 +6,7 @@ interface InputProps {
   placeholder?: string;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onBlur?: () => void;
   name?: string;
   id?: string;
   required?: boolean;
@@ -22,6 +23,7 @@ export default function Input({
   placeholder,
   value,
   onChange,
+  onBlur,
   name,
   id,
   required = false,
@@ -39,6 +41,7 @@ export default function Input({
           placeholder={placeholder}
           value={value}
           onChange={onChange}
+          onBlur={onBlur}
           name={name}
           id={id}
           required={required}
@@ -56,6 +59,7 @@ export default function Input({
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         name={name}
         id={id}
         required={required}

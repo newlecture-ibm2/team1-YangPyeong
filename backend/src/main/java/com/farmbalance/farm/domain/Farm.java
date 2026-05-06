@@ -12,7 +12,8 @@ public class Farm {
     private String name;
     private String address;
     private Double area;
-    private List<String> cropTypes;
+    private List<Long> cropIds;       // 입력용: farm_crops에 저장할 crop ID 목록
+    private List<String> cropNames;   // 출력용: farm_crops JOIN crops에서 추출한 작물명
     private String bjdCode;
     private String pnuCode;
     private Double latitude;   // 위도
@@ -28,14 +29,14 @@ public class Farm {
         this.certificationStatus = status;
     }
 
-    public void updateInfo(String name, String address, Double area, List<String> cropTypes, 
+    public void updateInfo(String name, String address, Double area, List<Long> cropIds,
                            String bjdCode, String pnuCode, Double latitude, Double longitude, 
                            String registrationNumber, String documentUrl,
                            String soilType, Double ph, Double organicMatter) {
         this.name = name;
         this.address = address;
         this.area = area;
-        this.cropTypes = cropTypes;
+        this.cropIds = cropIds;
         this.bjdCode = bjdCode;
         this.pnuCode = pnuCode;
         this.latitude = latitude;
