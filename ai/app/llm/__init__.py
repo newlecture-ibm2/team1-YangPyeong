@@ -16,7 +16,7 @@ Provider를 지정하거나 환경변수 기본값으로 LLM 인스턴스를 반
 import logging
 from typing import Optional
 
-from app.config import settings
+from app.config import get_settings
 from app.llm.base import BaseLLM
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ def get_llm(provider: Optional[str] = None) -> BaseLLM:
     Returns:
         BaseLLM 구현체 인스턴스 (Provider별 싱글톤)
     """
+    settings = get_settings()
     target = (provider or settings.LLM_PROVIDER).lower()
 
     if target in _instances:

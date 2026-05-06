@@ -34,6 +34,15 @@ class Settings(BaseSettings):
     # ── DB (추후 RAG용) ──
     DATABASE_URL: Optional[str] = None
 
+    # ── 외부 API 키 ──
+    GOV24_API_KEY: Optional[str] = None
+    NONGSARO_API_KEY: Optional[str] = None
+    SOIL_API_KEY: Optional[str] = None
+    KMA_API_KEY: Optional[str] = None
+
+    # ── 스케줄러 ──
+    SCHEDULER_ENABLED: bool = False
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
@@ -43,3 +52,6 @@ class Settings(BaseSettings):
 
 # 싱글톤 인스턴스
 settings = Settings()
+
+def get_settings():
+    return settings
