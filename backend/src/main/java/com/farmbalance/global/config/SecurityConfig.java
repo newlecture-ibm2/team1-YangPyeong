@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/recommend/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/community/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/shop/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/policies/**").permitAll()
 
                 // 관리자 / 지자체 (TODO: 운영 시 .hasRole("ADMIN") / .hasAnyRole("GOV","ADMIN") 복원)
                 .requestMatchers("/api/admin/**").permitAll()

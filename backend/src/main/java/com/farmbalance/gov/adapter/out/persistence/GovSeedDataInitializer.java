@@ -104,8 +104,8 @@ public class GovSeedDataInitializer {
                 "DELETE FROM balance_data WHERE crop_id IN (SELECT id FROM crops WHERE category_id IN (SELECT id FROM crop_categories WHERE name LIKE ?))",
                 "[GS]%");
 
-        safeDelete("farm_crops",
-                "DELETE FROM farm_crops WHERE farm_id IN " +
+        safeDelete("cultivation_registrations",
+                "DELETE FROM cultivation_registrations WHERE farm_id IN " +
                 "(SELECT id FROM farms WHERE user_id IN (SELECT id FROM users WHERE email LIKE ?))",
                 SEED_EMAIL);
 

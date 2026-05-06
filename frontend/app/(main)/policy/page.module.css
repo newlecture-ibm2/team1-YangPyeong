@@ -1,0 +1,316 @@
+/* ═══════════════════════════════════════════════════════
+   정책 목록 페이지 스타일
+   ═══════════════════════════════════════════════════════ */
+
+/* ── 페이지 헤더 ── */
+.pageHeader {
+  margin-bottom: 40px;
+}
+
+.breadcrumb {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.breadcrumb a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.pageTitle {
+  font-family: var(--font-serif);
+  font-size: 40px;
+  color: var(--color-text);
+  line-height: 1.15;
+  margin-bottom: 8px;
+  font-weight: 400;
+}
+
+.pageSub {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  max-width: 600px;
+  line-height: 1.7;
+}
+
+/* ── 필터 영역 ── */
+.filterSection {
+  margin-bottom: var(--space-xl);
+}
+
+/* ── 결과 요약 ── */
+.resultSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.resultCount {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.resultCount strong {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ── 정책 카드 리스트 ── */
+.policyList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.policyCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  padding: var(--space-lg);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  cursor: pointer;
+}
+
+.policyCard:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+.cardTitle {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.supportBadge {
+  flex-shrink: 0;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-lg);
+  margin-bottom: var(--space-sm);
+}
+
+.metaItem {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.metaLabel {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.cardContent {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-sm);
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+.applyDeadline {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.deadlineDate {
+  font-weight: 500;
+}
+
+.deadlineExpired {
+  color: var(--color-danger);
+}
+
+.deadlineActive {
+  color: var(--color-primary);
+}
+
+.detailLink {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color var(--transition-fast);
+}
+
+.detailLink:hover {
+  color: var(--color-primary-light);
+}
+
+/* sourceUrl 없는 카드: 클릭 불가 */
+.policyCardNoLink {
+  cursor: default;
+}
+
+.policyCardNoLink:hover {
+  box-shadow: none;
+  transform: none;
+}
+
+/* 상세보기 비활성 상태 */
+.detailLinkDisabled {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── 상태 메시지 (로딩/에러/빈) ── */
+.stateContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.stateIcon {
+  font-size: 48px;
+  margin-bottom: var(--space-md);
+}
+
+.stateTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+}
+
+.stateMessage {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* ── 로딩 스켈레톤 ── */
+.skeletonCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-border);
+  padding: var(--space-lg);
+}
+
+.skeletonLine {
+  height: 16px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: var(--space-sm);
+}
+
+.skeletonLine:nth-child(1) { width: 60%; height: 20px; }
+.skeletonLine:nth-child(2) { width: 40%; }
+.skeletonLine:nth-child(3) { width: 80%; }
+.skeletonLine:nth-child(4) { width: 30%; }
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── 페이지네이션 ── */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+}
+
+.pageButton {
+  min-width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pageButton:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.pageButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageButtonActive {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.pageButtonActive:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+  color: #fff;
+}
+
+/* ── 태그 배지 ── */
+.categoryTag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-pale);
+  color: var(--color-primary);
+  font-weight: 500;
+  margin-right: var(--space-xs);
+}
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  .pageTitle { font-size: 28px; }
+  .cardHeader { flex-direction: column; gap: var(--space-xs); }
+  .cardMeta { flex-direction: column; gap: var(--space-xs); }
+  .cardFooter { flex-direction: column; gap: var(--space-sm); align-items: flex-start; }
+  .pagination { flex-wrap: wrap; }
+}
