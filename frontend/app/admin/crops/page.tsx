@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import Button from '@/components/common/Button/Button'
 import Badge from '@/components/common/Badge/Badge'
 import { useToast } from '@/components/common/Toast'
+import ModalDialog from '@/components/common/Modal/ModalDialog'
+import { useModalDialog } from '@/components/common/Modal/useModalDialog'
 import styles from './Crops.module.css'
 import type {
   AdminCrop, AdminCropCategory,
@@ -25,6 +27,7 @@ export default function CropsPage() {
   const [loading, setLoading] = useState(true)
   const { toast: showToast } = useToast()
   const [activeTab, setActiveTab] = useState<TabType>('crops')
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
   // 필터
   const [filterCategory, setFilterCategory] = useState<number | undefined>(undefined)
@@ -83,7 +86,8 @@ export default function CropsPage() {
 
   /* ── 작물 삭제 ── */
   const handleDeleteCrop = async (crop: AdminCrop) => {
-    if (!confirm(`"${crop.name}" 작물을 삭제하시겠습니까?`)) return
+    const confirmed = await showConfirm(`"${crop.name}" 작물을 삭제하시겠습니까?`)
+    if (!confirmed) return
     try {
       await deleteCrop(crop.id)
       showToast(`"${crop.name}" 삭제 완료`, 'success')
@@ -117,7 +121,8 @@ export default function CropsPage() {
 
   /* ── 카테고리 삭제 ── */
   const handleDeleteCategory = async (cat: AdminCropCategory) => {
-    if (!confirm(`"${cat.name}" 카테고리를 삭제하시겠습니까?`)) return
+    const confirmed = await showConfirm(`"${cat.name}" 카테고리를 삭제하시겠습니까?`)
+    if (!confirmed) return
     try {
       await deleteCropCategory(cat.id)
       showToast(`"${cat.name}" 삭제 완료`, 'success')
@@ -287,6 +292,12 @@ export default function CropsPage() {
           onClose={closeCategoryModal}
         />
       )}
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   )
 }
@@ -304,10 +315,11 @@ interface CropFormModalProps {
 function CropFormModal({ editingCrop, categories, onSubmit, onClose }: CropFormModalProps) {
   const [name, setName] = useState(editingCrop?.name ?? '')
   const [categoryId, setCategoryId] = useState(editingCrop?.categoryId?.toString() ?? '')
+  const { dialog, showAlert, handleConfirm, handleClose } = useModalDialog()
 
   const handleSubmit = () => {
-    if (!name.trim()) return alert('작물명을 입력해주세요.')
-    if (!categoryId) return alert('카테고리를 선택해주세요.')
+    if (!name.trim()) return showAlert('작물명을 입력해주세요.')
+    if (!categoryId) return showAlert('카테고리를 선택해주세요.')
 
     onSubmit({ categoryId: Number(categoryId), name: name.trim() })
   }
@@ -341,6 +353,7 @@ function CropFormModal({ editingCrop, categories, onSubmit, onClose }: CropFormM
           </Button>
         </div>
       </div>
+      <ModalDialog {...dialog} onConfirm={handleConfirm} onClose={handleClose} />
     </div>
   )
 }
@@ -359,9 +372,10 @@ function CategoryFormModal({ editingCategory, onSubmit, onClose }: CategoryFormM
   const [description, setDescription] = useState(editingCategory?.description ?? '')
   const [displayOrder, setDisplayOrder] = useState(editingCategory?.displayOrder?.toString() ?? '0')
   const [isActive, setIsActive] = useState(editingCategory?.isActive ?? true)
+  const { dialog, showAlert, handleConfirm, handleClose } = useModalDialog()
 
   const handleSubmit = () => {
-    if (!name.trim()) return alert('카테고리명을 입력해주세요.')
+    if (!name.trim()) return showAlert('카테고리명을 입력해주세요.')
 
     const data: CreateCropCategoryRequest | UpdateCropCategoryRequest = {
       name: name.trim(),
@@ -415,6 +429,7 @@ function CategoryFormModal({ editingCategory, onSubmit, onClose }: CategoryFormM
           </Button>
         </div>
       </div>
+      <ModalDialog {...dialog} onConfirm={handleConfirm} onClose={handleClose} />
     </div>
   )
 }

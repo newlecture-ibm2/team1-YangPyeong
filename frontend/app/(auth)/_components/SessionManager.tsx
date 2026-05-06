@@ -3,6 +3,8 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { apiFetch } from '@/lib/api-fetch';
+import ModalDialog from '@/components/common/Modal/ModalDialog';
+import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 
 /**
  * 30분 무활동 시 자동 로그아웃 매니저
@@ -11,6 +13,7 @@ export default function SessionManager() {
   const router = useRouter();
   const pathname = usePathname();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { dialog, showAlert, handleConfirm, handleClose } = useModalDialog();
 
   // 자동 로그아웃 시간 (30분)
   const TIMEOUT_MS = 30 * 60 * 1000;
@@ -21,7 +24,7 @@ export default function SessionManager() {
       // 쿠키 삭제 (클라이언트 사이드에서도 시도)
       document.cookie = 'fb-user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       
-      alert('30분 동안 활동이 없어 자동 로그아웃 되었습니다.');
+      showAlert('30분 동안 활동이 없어 자동 로그아웃 되었습니다.', '자동 로그아웃');
       router.push('/login');
       router.refresh();
     } catch (error) {
@@ -64,5 +67,11 @@ export default function SessionManager() {
     };
   }, [resetTimer]);
 
-  return null; // UI는 없음
+  return (
+    <ModalDialog
+      {...dialog}
+      onConfirm={handleConfirm}
+      onClose={handleClose}
+    />
+  );
 }

@@ -53,5 +53,7 @@ class Settings(BaseSettings):
 # 싱글톤 인스턴스
 settings = Settings()
 
-def get_settings():
+
+def get_settings() -> Settings:
+    """settings 싱글톤을 반환합니다."""
     return settings
