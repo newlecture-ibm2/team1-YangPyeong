@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import Badge from '@/components/common/Badge/Badge'
 import { useToast } from '@/components/common/Toast'
+import ModalDialog from '@/components/common/Modal/ModalDialog'
+import { useModalDialog } from '@/components/common/Modal/useModalDialog'
 import styles from './Community.module.css'
 import type { AdminPost } from '../_lib/community.types'
 import { fetchPosts, deletePost, toggleNotice } from '../_lib/community.api'
@@ -17,6 +19,7 @@ export default function CommunityPage() {
   const [posts, setPosts] = useState<AdminPost[]>([])
   const [loading, setLoading] = useState(true)
   const toast = useToast()
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
   const loadData = useCallback(async () => {
     try {
@@ -32,7 +35,8 @@ export default function CommunityPage() {
   useEffect(() => { loadData() }, [loadData])
 
   const handleDelete = async (postId: number) => {
-    if (!confirm('이 게시글을 삭제하시겠습니까?')) return
+    const confirmed = await showConfirm('이 게시글을 삭제하시겠습니까?')
+    if (!confirmed) return
     try {
       await deletePost(postId)
       toast.success('게시글이 삭제되었습니다.')
@@ -120,6 +124,12 @@ export default function CommunityPage() {
           </table>
         </div>
       )}
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   )
 }

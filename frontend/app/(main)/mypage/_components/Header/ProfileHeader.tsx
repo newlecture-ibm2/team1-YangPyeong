@@ -2,6 +2,8 @@
 
 import { useRef, ChangeEvent } from 'react';
 import Image from 'next/image';
+import ModalDialog from '@/components/common/Modal/ModalDialog';
+import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import styles from './Header.module.css';
 
 interface ProfileImageUploadProps {
@@ -16,6 +18,7 @@ export default function ProfileImageUpload({
   disabled = false,
 }: ProfileImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { dialog, showAlert, handleConfirm, handleClose } = useModalDialog();
 
   const handleClick = () => {
     if (!disabled) fileInputRef.current?.click();
@@ -25,11 +28,11 @@ export default function ProfileImageUpload({
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        alert('이미지 파일만 업로드 가능합니다.');
+        showAlert('이미지 파일만 업로드 가능합니다.', '업로드 오류');
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        alert('파일 크기는 5MB 이하여야 합니다.');
+        showAlert('파일 크기는 5MB 이하여야 합니다.', '업로드 오류');
         return;
       }
       await onUpload(file);
@@ -62,6 +65,7 @@ export default function ProfileImageUpload({
         )}
       </div>
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
+      <ModalDialog {...dialog} onConfirm={handleConfirm} onClose={handleClose} />
     </div>
   );
 }

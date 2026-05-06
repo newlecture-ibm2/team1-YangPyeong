@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import styles from '../gov.module.css';
 import { useGovUser, getTestHeaders } from '../useGovUser';
 import GovTabs from '../_components/GovTabs';
+import ModalDialog from '@/components/common/Modal/ModalDialog';
+import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 
 /**
  * 데이터 다운로드 (gov-download.html 설계서 기반)
@@ -49,6 +51,7 @@ const TABS = [
 export default function DownloadPage() {
   const { user, loading: userLoading } = useGovUser();
   const pathname = usePathname();
+  const { dialog, showAlert, handleConfirm, handleClose } = useModalDialog();
 
   // 폼 상태
   const [dataType, setDataType] = useState('CULTIVATION');
@@ -106,7 +109,7 @@ export default function DownloadPage() {
       if (!res.ok) {
         const errBody = await res.json().catch(() => null);
         const msg = errBody?.error?.message || '데이터 내보내기에 실패했습니다.';
-        alert(msg);
+        showAlert(msg, '다운로드 오류');
         return;
       }
 
@@ -133,7 +136,7 @@ export default function DownloadPage() {
       await fetchHistory();
     } catch (e) {
       console.error('[Download]', e);
-      alert('네트워크 오류가 발생했습니다.');
+      showAlert('네트워크 오류가 발생했습니다.', '다운로드 오류');
     } finally {
       setDownloading(false);
     }
@@ -284,6 +287,12 @@ export default function DownloadPage() {
           </table>
         </div>
       </div>
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   );
 }
