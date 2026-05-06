@@ -1,25 +1,22 @@
 package com.farmbalance.farm.adapter.in.web;
 
-import com.farmbalance.farm.application.port.in.DeleteCultivationUseCase;
-import com.farmbalance.farm.application.port.in.LoadFarmUseCase;
-import com.farmbalance.farm.application.port.in.RegisterCultivationCommand;
-import com.farmbalance.farm.application.port.in.RegisterCultivationUseCase;
-import com.farmbalance.farm.application.port.in.UpdateCultivationCommand;
-import com.farmbalance.farm.application.port.in.UpdateCultivationUseCase;
+import com.farmbalance.farm.application.port.in.*;
 import com.farmbalance.farm.domain.CultivationRegistration;
 import com.farmbalance.global.response.ApiResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
- * 재배 등록 REST Controller
+ * 재배 등록 및 관리 REST Controller
  */
 @RestController
 @RequestMapping("/api/farms/{farmId}/cultivations")
@@ -29,16 +26,18 @@ public class CultivationController {
     private final RegisterCultivationUseCase registerCultivationUseCase;
     private final UpdateCultivationUseCase updateCultivationUseCase;
     private final DeleteCultivationUseCase deleteCultivationUseCase;
-    private final LoadFarmUseCase loadFarmUseCase;
+    private final LoadCultivationUseCase loadCultivationUseCase;
 
     /**
      * 특정 농장의 재배 등록 목록 조회
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CultivationRegistration>>> getCultivations(
-            @PathVariable Long farmId) {
-        List<CultivationRegistration> list = loadFarmUseCase.loadCultivationsByFarmId(farmId);
-        return ResponseEntity.ok(ApiResponse.ok(list));
+    public ResponseEntity<ApiResponse<List<CultivationResponse>>> getCultivations(@PathVariable Long farmId) {
+        List<CultivationRegistration> results = loadCultivationUseCase.getCultivationsByFarmId(farmId);
+        List<CultivationResponse> response = results.stream()
+                .map(CultivationResponse::from)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     /**
@@ -58,14 +57,7 @@ public class CultivationController {
                 .build();
 
         CultivationRegistration saved = registerCultivationUseCase.registerCultivation(command);
-
-        CultivationResponse response = new CultivationResponse(
-                saved.getId(), saved.getFarmId(), saved.getCropId(),
-                saved.getCultivationArea(),
-                saved.getFarmerEstimatedYield(), saved.getYieldUnit()
-        );
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(CultivationResponse.from(saved)));
     }
 
     /**
@@ -86,14 +78,7 @@ public class CultivationController {
                 .build();
 
         CultivationRegistration updated = updateCultivationUseCase.updateCultivation(command);
-
-        CultivationResponse response = new CultivationResponse(
-                updated.getId(), farmId, updated.getCropId(),
-                updated.getCultivationArea(),
-                updated.getFarmerEstimatedYield(), updated.getYieldUnit()
-        );
-
-        return ResponseEntity.ok(ApiResponse.ok(response));
+        return ResponseEntity.ok(ApiResponse.ok(CultivationResponse.from(updated)));
     }
 
     /**
@@ -105,7 +90,6 @@ public class CultivationController {
             @PathVariable Long cultivationId) {
 
         deleteCultivationUseCase.deleteCultivation(cultivationId);
-
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
@@ -115,14 +99,32 @@ public class CultivationController {
     @NoArgsConstructor
     static class CultivationRequest {
         private Long cropId;
-        private Double cultivationArea;    // 재배 면적 (㎡)
-        private Double expectedYield;     // 예상 수확량
-        private String yieldUnit;         // g | kg | ton
+        private BigDecimal cultivationArea;    // 재배 면적 (㎡)
+        private BigDecimal expectedYield;      // 예상 수확량
+        private String yieldUnit;              // g | kg | ton
     }
 
-    record CultivationResponse(
-            Long id, Long farmId, Long cropId,
-            Double cultivationArea,
-            Double farmerEstimatedYield, String yieldUnit
-    ) {}
+    @Getter
+    @RequiredArgsConstructor
+    static class CultivationResponse {
+        private final Long id;
+        private final Long farmId;
+        private final Long cropId;
+        private final String cropName;
+        private final BigDecimal cultivationArea;
+        private final BigDecimal farmerEstimatedYield;
+        private final String yieldUnit;
+
+        public static CultivationResponse from(CultivationRegistration domain) {
+            return new CultivationResponse(
+                    domain.getId(),
+                    domain.getFarmId(),
+                    domain.getCropId(),
+                    domain.getCropName(),
+                    domain.getCultivationArea(),
+                    domain.getFarmerEstimatedYield(),
+                    domain.getYieldUnit()
+            );
+        }
+    }
 }

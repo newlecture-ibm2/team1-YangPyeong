@@ -1,10 +1,6 @@
 package com.farmbalance.farm.application.service;
 
-import com.farmbalance.farm.application.port.in.DeleteCultivationUseCase;
-import com.farmbalance.farm.application.port.in.RegisterCultivationCommand;
-import com.farmbalance.farm.application.port.in.RegisterCultivationUseCase;
-import com.farmbalance.farm.application.port.in.UpdateCultivationCommand;
-import com.farmbalance.farm.application.port.in.UpdateCultivationUseCase;
+import com.farmbalance.farm.application.port.in.*;
 import com.farmbalance.farm.application.port.out.LoadFarmPort;
 import com.farmbalance.farm.application.port.out.SaveCultivationPort;
 import com.farmbalance.farm.domain.CultivationRegistration;
@@ -15,13 +11,15 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
- * 재배 등록 서비스 (기존 농장에 작물 재배 정보 추가)
+ * 재배 관리 서비스 (Application Service)
  */
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class CultivationService implements RegisterCultivationUseCase, UpdateCultivationUseCase, DeleteCultivationUseCase {
+public class CultivationService implements RegisterCultivationUseCase, UpdateCultivationUseCase, DeleteCultivationUseCase, LoadCultivationUseCase {
 
     private final SaveCultivationPort saveCultivationPort;
     private final LoadFarmPort loadFarmPort;
@@ -75,5 +73,12 @@ public class CultivationService implements RegisterCultivationUseCase, UpdateCul
             // 삭제 이벤트 발행
             eventPublisher.publishEvent(new CultivationDeletedEvent(id, cult.getFarmId()));
         });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CultivationRegistration> getCultivationsByFarmId(Long farmId) {
+        // LoadFarmPort를 통해 농장별 재배 목록 조회
+        return loadFarmPort.loadCultivationsByFarmId(farmId);
     }
 }

@@ -1,11 +1,12 @@
-/* ════════════════════════════════════════════════════════
-   BFF API Route — 재배 등록 (Cultivation Registration)
-   POST /api/farm/[id]/cultivations → POST {BACKEND_URL}/api/farms/{id}/cultivations
-   ════════════════════════════════════════════════════════ */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL } from '@/lib/constants';
 import { getSessionFromCookie } from '@/lib/cookie';
+
+/* ════════════════════════════════════════════════════════
+   BFF API Route — 재배 목록 조회 및 등록
+   GET /api/farm/[id]/cultivations → {BACKEND_URL}/api/farms/{id}/cultivations
+   POST /api/farm/[id]/cultivations → {BACKEND_URL}/api/farms/{id}/cultivations
+   ════════════════════════════════════════════════════════ */
 
 /**
  * 농장별 재배 등록 목록 조회
@@ -17,13 +18,6 @@ export async function GET(
   try {
     const session = await getSessionFromCookie();
     const { id } = await params;
-
-    if (!session?.token && process.env.SKIP_AUTH !== 'true') {
-      return NextResponse.json(
-        { success: false, error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다.' } },
-        { status: 401 }
-      );
-    }
 
     const backendResponse = await fetch(`${BACKEND_URL}/api/farms/${id}/cultivations`, {
       method: 'GET',
@@ -55,13 +49,6 @@ export async function POST(
     const session = await getSessionFromCookie();
     const { id } = await params;
     const body = await request.json();
-
-    if (!session?.token && process.env.SKIP_AUTH !== 'true') {
-      return NextResponse.json(
-        { success: false, error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다.' } },
-        { status: 401 }
-      );
-    }
 
     const backendResponse = await fetch(`${BACKEND_URL}/api/farms/${id}/cultivations`, {
       method: 'POST',

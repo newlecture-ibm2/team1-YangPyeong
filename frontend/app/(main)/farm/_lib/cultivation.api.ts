@@ -1,5 +1,5 @@
 /**
- * 재배 등록 API
+ * 재배 관리 API 연동 라이브러리
  */
 
 export interface CultivationRegisterRequest {
