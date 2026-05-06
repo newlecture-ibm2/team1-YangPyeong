@@ -35,6 +35,8 @@ erDiagram
         varchar role "USER | FARMER | ADMIN | GOV"
         varchar region "지역명 문자열 (하위호환)"
         varchar region_code "FK → regions.code (시군구 코드)"
+        varchar address "상세 주소"
+        text bio "자기소개"
         varchar status "ACTIVE | SUSPENDED"
         timestamp created_at
         timestamp updated_at
@@ -54,8 +56,13 @@ erDiagram
         decimal longitude
         decimal area_size "㎡"
         varchar soil_type
+        double soil_ph "토양 산도"
+        double soil_organic_matter "토양 유기물"
         varchar business_number "사업자 등록번호"
+        varchar land_cert_image_url "토지증명서 이미지"
         boolean land_cert_verified
+        varchar certification_status "PENDING | APPROVED | REJECTED"
+        varchar reject_reason "반려 사유"
         varchar status "PENDING | APPROVED | REJECTED"
         timestamp created_at
         timestamp updated_at
@@ -615,6 +622,8 @@ erDiagram
 | role | VARCHAR(20) | NOT NULL, DEFAULT 'GENERAL' | GENERAL / FARMER / ADMIN / GOV |
 | region | VARCHAR(50) | | 지역 (양평군 등) — 하위호환용 유지 |
 | region_code | VARCHAR(10) | | 시군구 코드 (regions.code 참조, 예: "4183") — 신규 |
+| address | VARCHAR(255) | | 상세 주소 |
+| bio | TEXT | | 자기소개 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | ACTIVE / SUSPENDED |
 | created_at | TIMESTAMP | NOT NULL | 가입일 |
 | updated_at | TIMESTAMP | | 수정일 |
@@ -637,8 +646,13 @@ erDiagram
 | longitude | DECIMAL(10,7) | | 경도 (카카오 address.x) |
 | area_size | DECIMAL(10,2) | NOT NULL | 면적 (㎡) |
 | soil_type | VARCHAR(50) | | 토양 유형 |
+| soil_ph | DOUBLE PRECISION | | 토양 산도 (pH) |
+| soil_organic_matter | DOUBLE PRECISION | | 토양 유기물 함량 |
 | business_number | VARCHAR(12) | | 사업자 등록번호 |
+| land_cert_image_url | VARCHAR(500) | | 토지증명서 이미지 URL |
 | land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 |
+| certification_status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
+| reject_reason | VARCHAR(500) | | 반려 사유 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
@@ -663,16 +677,12 @@ erDiagram
 |------|------|------|------|
 | id | BIGINT | PK, AUTO | 작물 고유 ID |
 | category_id | BIGINT | FK -> crop_categories(id), NOT NULL | 작물 카테고리 |
-| code | VARCHAR(30) | UNIQUE, NOT NULL | 작물 코드 (ex: RICE_001) |
 | name | VARCHAR(50) | NOT NULL | 작물명 |
-| growth_days | INT | | 재배 기간 (일) |
-| yield_per_sqm | DECIMAL(10,2) | | ㎡당 수확량 (kg) |
-| avg_cost_per_sqm | DECIMAL(10,2) | | ㎡당 평균 비용 (원) |
-| climate_conditions | JSONB | | 작물별 적정 재배 환경 조건 (AI 추천용) |
-| is_active | BOOLEAN | DEFAULT true | 활성 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **V15 적용**: `code`, `growth_days`, `yield_per_sqm`, `avg_cost_per_sqm`, `climate_conditions`, `is_active` 컬럼이 삭제되었습니다. crops 테이블은 조회 전용 마스터 데이터로 전환되었습니다.
 
 ### 2.5 cultivation_registrations (재배 등록)
 
