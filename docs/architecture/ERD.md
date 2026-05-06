@@ -265,17 +265,17 @@ erDiagram
     policy_data {
         bigint id PK
         varchar external_id "외부 API 제공 정책 고유번호"
-        varchar source "수집 소스 (GOV24, MAFRA, FARM_MACHINE, NONGSARO, SOIL, AGRIEDU, GREENDAERO, MANUAL, CRAWL, SEED)"
+        varchar source "수집 소스 (GOV24 운영 / SEED 테스트 / MAFRA TODO)"
         varchar title "정책명"
         varchar organization "지원기관"
         varchar region_code "지역코드 (regions.code 참조)"
-        varchar category "분류 (청년농, 친환경 등)"
+        varchar category "AI 분류 (보조금/교육/임대/검정/세금/융자/기타)"
         varchar target "지원대상"
         text content "지원내용 상세"
         varchar support_amount "지원금/규모"
         date apply_start "신청 시작일"
         date apply_end "신청 마감일"
-        varchar source_url "외부 원문 링크"
+        varchar source_url "원문 링크 (gov.kr URL)"
         jsonb data "하위호환용 원본 JSONB (레거시)"
         jsonb raw_data "정책 API 응답 원본 JSON"
         jsonb normalized_data "AI Analyzer 정규화 결과 JSON"
@@ -885,17 +885,17 @@ erDiagram
 |------|------|------|------|
 | id | BIGINT | PK, AUTO | 내부 고유 ID |
 | external_id | VARCHAR(200) | NOT NULL | 외부 API 제공 정책 고유번호 |
-| source | VARCHAR(30) | | 수집 소스 (GOV24 / MAFRA / FARM_MACHINE / NONGSARO / SOIL / AGRIEDU / GREENDAERO / MANUAL / CRAWL / SEED) |
+| source | VARCHAR(30) | | 수집 소스 (GOV24 ✅운영 / SEED 테스트용 / MAFRA TODO) |
 | title | VARCHAR(500) | | 정책명 |
 | organization | VARCHAR(200) | | 지원기관명 |
 | region_code | VARCHAR(10) | | 지역코드 (regions.code 논리적 참조) |
-| category | VARCHAR(50) | | 정책 분류 (청년농, 친환경, 스마트팜 등) |
+| category | VARCHAR(50) | | AI 분석 카테고리 (보조금/교육/임대/검정/세금/융자/기타) |
 | target | VARCHAR(200) | | 지원 대상 |
 | content | TEXT | | 지원 내용 상세 |
 | support_amount | VARCHAR(100) | | 지원 금액/규모 |
 | apply_start | DATE | | 신청 시작일 |
 | apply_end | DATE | | 신청 마감일 |
-| source_url | VARCHAR(1000) | | 외부 원문 링크 URL |
+| source_url | VARCHAR(1000) | | 원문 링크 (Gov24: https://www.gov.kr/portal/...) |
 | data | JSONB | | 하위호환용 레거시 컬럼 (기존 데이터 유지) |
 | raw_data | JSONB | | 정책 API 응답 원본 JSON |
 | normalized_data | JSONB | | AI Analyzer 정규화 결과 JSON |
@@ -907,7 +907,8 @@ erDiagram
 
 > **UNIQUE 제약**: (external_id, source) 복합 유니크 — 동일 소스에서 같은 정책을 중복 저장하지 않습니다.
 > **JSONB 컬럼 역할 분리**: `data`는 하위호환용 레거시 유지, `raw_data`는 외부 API 원본 보관, `normalized_data`는 AI Analyzer가 정규화한 결과 저장
-> **설계 변경 이력**: 기존 `data` JSONB 단일 컬럼 → `raw_data`로 리네임 + 정규화 컬럼 추가 (목록 조회 성능 최적화) → `normalized_data` + `confidence` 추가 (AI 분석 결과 저장)
+> **설계 변경 이력**: 기존 `data` JSONB 단일 컬럼 → `raw_data`로 리네임 + 정규화 컬럼 추가 → `normalized_data` + `confidence` 추가 (AI 분석 결과) → Gov24 실 API 연동 완료 (2026-04-30)
+> **데이터 현황**: GOV24 실 데이터 26건 운영 중. SEED(Mock) 데이터는 `app.policy.mock-fetcher-enabled=true` 시에만 생성됨.
 
 
 ### 2.16 guide_messages (권고 메시지)
