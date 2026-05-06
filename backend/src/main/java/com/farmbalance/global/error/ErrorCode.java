@@ -81,6 +81,7 @@ public enum ErrorCode {
     // ── 정책 ──
     POLICY_NOT_FOUND("E-POLICY-001", "정책 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     POLICY_MATCH_FAILED("E-POLICY-002", "정책 매칭에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    POLICY_SYNC_FAILED("E-POLICY-003", "정책 데이터 동기화에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // ── 관리자 ──
     ADMIN_ACTION_FAILED("E-ADMIN-001", "관리자 작업에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
