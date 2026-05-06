@@ -7,6 +7,7 @@ export type HistoryType = 'USER' | 'WEATHER' | 'SYSTEM' | 'WATER' | 'FERTILIZER'
 export interface CultivationHistory {
   id: number;
   farmId: number;
+  cultivationRegistrationId?: number;
   activityType: HistoryType;
   activityContent: string;
   createdAt: string;
@@ -16,9 +17,11 @@ interface TimelineProps {
   histories: CultivationHistory[];
   onEdit?: (historyId: number, content: string) => void;
   onDelete?: (historyId: number) => void;
+  onEditCultivation?: (cultivationId: number) => void;
+  onDeleteCultivation?: (cultivationId: number) => void;
 }
 
-export default function Timeline({ histories, onEdit, onDelete }: TimelineProps) {
+export default function Timeline({ histories, onEdit, onDelete, onEditCultivation, onDeleteCultivation }: TimelineProps) {
   const [filter, setFilter] = useState<HistoryType | 'ALL'>('ALL');
 
   const filteredHistories = histories.filter(
@@ -105,19 +108,31 @@ export default function Timeline({ histories, onEdit, onDelete }: TimelineProps)
                       <Badge variant={theme.variant}>{theme.badgeName}</Badge>
                     </div>
                     
-                    {/* 사용자 기록일 경우에만 수정/삭제 버튼 표시 */}
-                    {history.activityType === 'USER' && (
+                    {/* 사용자 기록이거나 재배 등록 정보인 경우 수정/삭제 버튼 표시 */}
+                    {(history.activityType === 'USER' || history.cultivationRegistrationId) && (
                       <div className={styles.actions}>
                         <button 
                           className={styles.actionBtn} 
-                          onClick={() => onEdit?.(history.id, history.activityContent)}
+                          onClick={() => {
+                            if (history.cultivationRegistrationId) {
+                              onEditCultivation?.(history.cultivationRegistrationId);
+                            } else {
+                              onEdit?.(history.id, history.activityContent);
+                            }
+                          }}
                           title="수정"
                         >
                           ✏️
                         </button>
                         <button 
                           className={`${styles.actionBtn} ${styles.delete}`} 
-                          onClick={() => onDelete?.(history.id)}
+                          onClick={() => {
+                            if (history.cultivationRegistrationId) {
+                              onDeleteCultivation?.(history.cultivationRegistrationId);
+                            } else {
+                              onDelete?.(history.id);
+                            }
+                          }}
                           title="삭제"
                         >
                           🗑️

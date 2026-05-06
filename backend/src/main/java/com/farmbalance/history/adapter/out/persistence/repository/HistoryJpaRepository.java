@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface HistoryJpaRepository extends JpaRepository<HistoryJpaEntity, Long> {
     List<HistoryJpaEntity> findByFarmIdOrderByCreatedAtDesc(Long farmId);
+    void deleteByCultivationRegistrationId(Long cultivationRegistrationId);
 }

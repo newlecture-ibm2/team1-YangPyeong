@@ -43,13 +43,9 @@ export async function getGovAuth(): Promise<{ skip: boolean; token: string | nul
       console.error('[govAuth] SKIP_AUTH 로그인 실패:', e);
     }
 
-    // 로그인 실패해도 skip은 true (me 라우트에서 목 유저 반환 가능)
+    // 로그인 실패 시 에러
     return { skip: true, token: null };
   }
 
   return { skip: false, token: null };
 }
-
-/** SKIP_AUTH용 기본 GOV 유저 ID (seed 데이터 기준 양평군 담당자) */
-export const SKIP_AUTH_GOV_USER_ID = 9047;
-
