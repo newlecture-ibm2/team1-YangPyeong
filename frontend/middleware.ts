@@ -51,19 +51,41 @@ export function middleware(request: NextRequest) {
   }
 
   // ── 6. 역할(Role) 기반 라우팅 및 접근 제어 ──
+  // ⚠️ 이 middleware는 UX용 라우트 가드입니다.
+  //    실제 API 권한 검증은 반드시 백엔드(Spring Security)에서 수행합니다.
+  //    fb-user 쿠키는 클라이언트에서 조작 가능하므로 보안 목적으로 신뢰하지 않습니다.
   let userRole = '';
   if (skipAuth) {
     // 개발/시연 모드: GOV 역할로 시뮬레이션
     userRole = 'GOV';
   } else if (isAuthenticated) {
-    // fb-user 쿠키에서 role 읽기 (로그인 시 BFF가 설정한 non-httpOnly 쿠키)
+    // 방법 1: fb-user 쿠키에서 role 읽기 (로그인 시 BFF가 설정한 non-httpOnly 쿠키)
     const userCookie = request.cookies.get('fb-user');
     if (userCookie?.value) {
       try {
         const userData = JSON.parse(decodeURIComponent(userCookie.value));
-        userRole = userData.role || '';
+        userRole = (userData.role || '').toUpperCase();
       } catch {
-        // 쿠키 파싱 실패 시 무시
+        // fb-user 쿠키 파싱 실패 → fallback 시도
+      }
+    }
+
+    // 방법 2: fb-user가 없으면 fb-session에서 JWT 추출 후 role 파싱 (fallback)
+    if (!userRole && sessionCookie?.value) {
+      try {
+        // fb-session = Base64(JSON { token, refreshToken })
+        const decoded = Buffer.from(sessionCookie.value, 'base64').toString('utf-8');
+        const sessionData = JSON.parse(decoded);
+        const jwt = sessionData.token || sessionData.accessToken;
+        if (jwt) {
+          const parts = jwt.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+            userRole = (payload.role || '').toUpperCase();
+          }
+        }
+      } catch {
+        // JWT fallback 파싱 실패 시 무시
       }
     }
   }
@@ -73,9 +95,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/gov', request.url));
   }
 
-  // /gov 경로 접근 시 GOV 권한 검증 (SKIP_AUTH 모드에서는 이미 GOV 부여됨)
-  if (pathname.startsWith('/gov') && !skipAuth && userRole !== 'GOV') {
-    return NextResponse.redirect(new URL('/', request.url));
+  // /gov 경로 접근 시 GOV 또는 ADMIN 권한 필요
+  if (pathname.startsWith('/gov') && !skipAuth) {
+    if (userRole !== 'GOV' && userRole !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
   }
 
   return NextResponse.next();
