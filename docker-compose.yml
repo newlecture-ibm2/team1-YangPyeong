@@ -53,7 +53,6 @@ services:
       - REDIS_HOST=redis
       - JWT_SECRET=${JWT_SECRET}
       - AI_SERVER_URL=http://ai-server:8000
-      - AGENT_SERVER_URL=http://agent-server:8001
       - KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}
       - KMA_API_KEY=${KMA_API_KEY}
       - SOIL_API_KEY=${SOIL_API_KEY}
@@ -97,25 +96,6 @@ services:
           path: ./ai
           target: /app
 
-  # 4. Agent Server (FastAPI + Groq 챗봇)
-  agent-server:
-    container_name: farm-agent
-    image: farm-agent:latest
-    build: ./agent
-    restart: unless-stopped
-    environment:
-      - AI_URL=http://ai-server:8000
-      - GROQ_API_KEY=${GROQ_API_KEY}
-    volumes:
-      - agent-data:/app/data/agent
-    depends_on:
-      - ai-server
-    develop:
-      watch:
-        - action: sync
-          path: ./agent
-          target: /app
-
   # 5. Database (PostgreSQL)
   db:
     container_name: farm-db
@@ -154,5 +134,3 @@ volumes:
     name: farm-uploads-data
   chroma-data:
     name: farm-chroma-data
-  agent-data:
-    name: farm-agent-data

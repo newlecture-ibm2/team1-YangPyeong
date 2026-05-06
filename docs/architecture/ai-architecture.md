@@ -418,32 +418,26 @@ python -m scripts.test_models --provider gemini
 
 ### 4.1 Docker 컨테이너 구성
 
-> **ai-server**와 **agent-server**는 역할과 사용하는 LLM Provider가 다르므로 별도 컨테이너로 분리합니다.
+> 챗봇(Agent)과 AI 분석 기능은 **단일 ai-server 컨테이너**에 통합되어 있습니다.
+> LLM Provider는 `get_llm("gemini")`, `get_llm("groq")` 팩토리를 통해 용도별로 선택합니다.
 
-| 컨테이너 | 이미지 | LLM Provider | 역할 | 포트 |
-|----------|--------|:---:|------|:---:|
-| `farm-ai` | farm-ai:latest | **Gemini** | 데이터 분석, 추천, 정책 매칭, RAG | 8000 |
-| `farm-agent` | farm-agent:latest | **Groq** | 실시간 챗봇 대화 (빠른 응답) | 8001 |
+| 컨테이너 | 이미지 | 역할 | 포트 |
+|----------|--------|------|:---:|
+| `farm-ai` | farm-ai:latest | 데이터 분석, 추천, 정책 매칭, RAG, **챗봇** | 8000 |
 
 ```
 ┌───────────────── Docker Compose ─────────────────┐
 │                                                   │
-│  ┌─── ai-server (farm-ai) ─────────────────────┐ │
-│  │  FastAPI (uvicorn) :8000                     │ │
+│  ┌─── ai-server (farm-ai) :8000 ───────────────┐ │
+│  │  FastAPI (uvicorn)                           │ │
 │  │  ├── Gemini API (데이터 분석·추천·정책)       │ │
+│  │  ├── Groq API (실시간 챗봇 응답)              │ │
 │  │  ├── RAG (ChromaDB) ← chroma-data 볼륨      │ │
 │  │  └── PostgreSQL 직접 조회                     │ │
 │  └─────────────────────────────────────────────┘ │
-│                     ▲                             │
-│                     │ HTTP                        │
-│  ┌─── agent-server (farm-agent) ───────────────┐ │
-│  │  FastAPI (uvicorn) :8001                     │ │
-│  │  ├── Groq API (실시간 챗봇 응답)              │ │
-│  │  └── ai-server API 조합 호출                  │ │
-│  └─────────────────────────────────────────────┘ │
 │                                                   │
 │  ┌─── backend (farm-backend) :8080 ────────────┐ │
-│  │  Spring Boot → ai-server / agent-server 호출 │ │
+│  │  Spring Boot → ai-server 호출               │ │
 │  └─────────────────────────────────────────────┘ │
 │                                                   │
 │  ┌─── frontend (farm-frontend) :3000 → 3131 ───┐ │
@@ -456,14 +450,14 @@ python -m scripts.test_models --provider gemini
 └───────────────────────────────────────────────────┘
 ```
 
-### 4.2 LLM Provider 분리 이유
+### 4.2 LLM Provider 용도별 사용
 
-| 기준 | Gemini (ai-server) | Groq (agent-server) |
+| 기준 | Gemini | Groq |
 |------|:---:|:---:|
 | **응답 속도** | 보통 | ⚡ 매우 빠름 (LPU) |
 | **분석 능력** | ✅ 대용량 컨텍스트 | 보통 |
-| **주 용도** | 데이터 분석·점수 산정 | 실시간 대화 |
-| **부하 격리** | 분석 작업이 채팅에 영향 없음 | 채팅이 분석에 영향 없음 |
+| **주 용도** | 데이터 분석·점수 산정 | 실시간 챗봇 대화 |
+| **선택 방법** | `get_llm("gemini")` | `get_llm("groq")` |
 
 ---
 

@@ -87,7 +87,6 @@ external:
 # ── AI Server ──
 ai:
   server-url: ${AI_SERVER_URL:http://ai-server:8000}
-  agent-url: ${AGENT_SERVER_URL:http://agent-server:8001}
 
 # ── Server ──
 server:

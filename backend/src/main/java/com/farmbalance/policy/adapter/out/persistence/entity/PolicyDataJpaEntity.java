@@ -82,7 +82,8 @@ public class PolicyDataJpaEntity extends BaseTimeEntity {
     private LocalDateTime fetchedAt;
 
     /** 기존 하위호환용 data 컬럼 (NOT NULL). content와 동일값 저장. */
-    @Column(name = "data", nullable = false, columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "data", nullable = false, columnDefinition = "jsonb")
     private String data;
 
     @Column(name = "deleted_at")
