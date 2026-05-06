@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * 농장-작물 연결 조회 Persistence Adapter (JdbcTemplate)
- * farm_crops 테이블 직접 조회 (seed_registrations에서 rename됨)
+ * cultivation_registrations 테이블 직접 조회
  */
 @Component
 @RequiredArgsConstructor
@@ -23,6 +23,7 @@ public class AdminFarmCropPersistenceAdapter implements AdminFarmCropPort {
             .id(rs.getLong("id"))
             .farmId(rs.getLong("farm_id"))
             .cropId(rs.getLong("crop_id"))
+            .cultivationArea(rs.getBigDecimal("cultivation_area"))
             .estimatedYield(rs.getBigDecimal("estimated_yield"))
             .yieldUnit(rs.getString("yield_unit"))
             .createdAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null)
@@ -34,9 +35,10 @@ public class AdminFarmCropPersistenceAdapter implements AdminFarmCropPort {
     public List<AdminFarmCrop> findByFarmId(Long farmId) {
         String sql = """
             SELECT fc.id, fc.farm_id, fc.crop_id,
-                   fc.estimated_yield, fc.yield_unit,
+                   fc.cultivation_area,
+                   fc.farmer_estimated_yield as estimated_yield, fc.yield_unit,
                    fc.created_at, fc.updated_at, fc.deleted_at
-            FROM farm_crops fc
+            FROM cultivation_registrations fc
             WHERE fc.farm_id = ? AND fc.deleted_at IS NULL
             """;
         return jdbcTemplate.query(sql, rowMapper, farmId);
@@ -46,9 +48,10 @@ public class AdminFarmCropPersistenceAdapter implements AdminFarmCropPort {
     public List<AdminFarmCrop> findAll() {
         String sql = """
             SELECT fc.id, fc.farm_id, fc.crop_id,
-                   fc.estimated_yield, fc.yield_unit,
+                   fc.cultivation_area,
+                   fc.farmer_estimated_yield as estimated_yield, fc.yield_unit,
                    fc.created_at, fc.updated_at, fc.deleted_at
-            FROM farm_crops fc
+            FROM cultivation_registrations fc
             WHERE fc.deleted_at IS NULL
             ORDER BY fc.created_at DESC
             """;

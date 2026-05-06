@@ -75,7 +75,7 @@ erDiagram
         varchar name UK "곡류 | 채소 | 과일 | 특용 등"
         varchar description
         int display_order
-        boolean is_active![alt text](image.png)
+        boolean is_active
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at

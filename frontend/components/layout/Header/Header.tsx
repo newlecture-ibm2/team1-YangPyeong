@@ -8,13 +8,11 @@ import { apiFetch } from '@/lib/api-fetch';
 import styles from './Header.module.css';
 
 const NAV_LINKS = [
-  { href: '/farm', label: '내 농장' },
-  { href: '/balance', label: '밸런스' },
-  { href: '/recommend', label: 'AI 추천' },
-  { href: '/community', label: '커뮤니티' },
+  { href: '/farm', label: '내농장' },
+  { href: '/shop', label: '장터' },
+  { href: '/community', label: '수다방' },
+  { href: '/stores', label: '동네구경' },
   { href: '/policy', label: '정책' },
-  { href: '/shop', label: '상점' },
-  { href: '/stores', label: '가게' },
 ];
 
 interface HeaderUser {
