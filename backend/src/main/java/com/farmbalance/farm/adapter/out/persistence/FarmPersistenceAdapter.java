@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -91,8 +90,6 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
 
         // 3. DB 저장
         FarmJpaEntity savedEntity = farmJpaRepository.save(entity);
-
-        // (기존 farm_crops 갱신 로직 삭제됨. 작물 등록은 별도의 cultivation_registrations를 통해 수행)
 
         return mapToDomain(savedEntity);
     }
@@ -176,8 +173,8 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .map(reg -> CultivationRegistrationJpaEntity.builder()
                         .farmId(farmId)
                         .cropId(reg.getCropId())
-                        .cultivationArea(reg.getCultivationArea() != null ? BigDecimal.valueOf(reg.getCultivationArea()) : null)
-                        .farmerEstimatedYield(reg.getFarmerEstimatedYield() != null ? BigDecimal.valueOf(reg.getFarmerEstimatedYield()) : null)
+                        .cultivationArea(reg.getCultivationArea())
+                        .farmerEstimatedYield(reg.getFarmerEstimatedYield())
                         .yieldUnit(reg.getYieldUnit() != null ? reg.getYieldUnit() : "kg")
                         .build())
                 .collect(Collectors.toList());
@@ -189,8 +186,8 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                         .id(saved.getId())
                         .farmId(saved.getFarmId())
                         .cropId(saved.getCropId())
-                        .cultivationArea(saved.getCultivationArea() != null ? saved.getCultivationArea().doubleValue() : null)
-                        .farmerEstimatedYield(saved.getFarmerEstimatedYield() != null ? saved.getFarmerEstimatedYield().doubleValue() : null)
+                        .cultivationArea(saved.getCultivationArea())
+                        .farmerEstimatedYield(saved.getFarmerEstimatedYield())
                         .yieldUnit(saved.getYieldUnit())
                         .build())
                 .collect(Collectors.toList());
@@ -201,8 +198,8 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
         CultivationRegistrationJpaEntity entity = CultivationRegistrationJpaEntity.builder()
                 .farmId(reg.getFarmId())
                 .cropId(reg.getCropId())
-                .cultivationArea(reg.getCultivationArea() != null ? BigDecimal.valueOf(reg.getCultivationArea()) : null)
-                .farmerEstimatedYield(reg.getFarmerEstimatedYield() != null ? BigDecimal.valueOf(reg.getFarmerEstimatedYield()) : null)
+                .cultivationArea(reg.getCultivationArea())
+                .farmerEstimatedYield(reg.getFarmerEstimatedYield())
                 .yieldUnit(reg.getYieldUnit() != null ? reg.getYieldUnit() : "kg")
                 .build();
 
@@ -212,8 +209,8 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .id(saved.getId())
                 .farmId(saved.getFarmId())
                 .cropId(saved.getCropId())
-                .cultivationArea(saved.getCultivationArea() != null ? saved.getCultivationArea().doubleValue() : null)
-                .farmerEstimatedYield(saved.getFarmerEstimatedYield() != null ? saved.getFarmerEstimatedYield().doubleValue() : null)
+                .cultivationArea(saved.getCultivationArea())
+                .farmerEstimatedYield(saved.getFarmerEstimatedYield())
                 .yieldUnit(saved.getYieldUnit())
                 .build();
     }
@@ -225,8 +222,8 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
 
         entity.updateInfo(
                 registration.getCropId(),
-                registration.getCultivationArea() != null ? BigDecimal.valueOf(registration.getCultivationArea()) : null,
-                registration.getFarmerEstimatedYield() != null ? BigDecimal.valueOf(registration.getFarmerEstimatedYield()) : null,
+                registration.getCultivationArea(),
+                registration.getFarmerEstimatedYield(),
                 registration.getYieldUnit()
         );
         
@@ -257,8 +254,8 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .farmId(rs.getLong("farm_id"))
                 .cropId(rs.getLong("crop_id"))
                 .cropName(rs.getString("crop_name"))
-                .cultivationArea(rs.getBigDecimal("cultivation_area") != null ? rs.getBigDecimal("cultivation_area").doubleValue() : null)
-                .farmerEstimatedYield(rs.getBigDecimal("farmer_estimated_yield") != null ? rs.getBigDecimal("farmer_estimated_yield").doubleValue() : null)
+                .cultivationArea(rs.getObject("cultivation_area") != null ? rs.getDouble("cultivation_area") : null)
+                .farmerEstimatedYield(rs.getObject("farmer_estimated_yield") != null ? rs.getDouble("farmer_estimated_yield") : null)
                 .yieldUnit(rs.getString("yield_unit"))
                 .build(), farmId);
     }
@@ -278,8 +275,8 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .farmId(rs.getLong("farm_id"))
                 .cropId(rs.getLong("crop_id"))
                 .cropName(rs.getString("crop_name"))
-                .cultivationArea(rs.getBigDecimal("cultivation_area") != null ? rs.getBigDecimal("cultivation_area").doubleValue() : null)
-                .farmerEstimatedYield(rs.getBigDecimal("farmer_estimated_yield") != null ? rs.getBigDecimal("farmer_estimated_yield").doubleValue() : null)
+                .cultivationArea(rs.getObject("cultivation_area") != null ? rs.getDouble("cultivation_area") : null)
+                .farmerEstimatedYield(rs.getObject("farmer_estimated_yield") != null ? rs.getDouble("farmer_estimated_yield") : null)
                 .yieldUnit(rs.getString("yield_unit"))
                 .build(), id);
                 

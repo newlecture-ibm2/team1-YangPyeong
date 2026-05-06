@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -31,12 +30,12 @@ public class CultivationRegistrationJpaEntity extends BaseTimeEntity {
     private Long cropId;
 
     /** 재배 면적 (㎡) — V14에서 신규 추가 */
-    @Column(name = "cultivation_area", precision = 10, scale = 2)
-    private BigDecimal cultivationArea;
+    @Column(name = "cultivation_area")
+    private Double cultivationArea;
 
     /** 농가 예상 수확량 (kg) — V14에서 신규 추가 */
-    @Column(name = "farmer_estimated_yield", precision = 12, scale = 2)
-    private BigDecimal farmerEstimatedYield;
+    @Column(name = "farmer_estimated_yield")
+    private Double farmerEstimatedYield;
 
     /** 수확량 단위 (g | kg | ton) */
     @Column(name = "yield_unit", length = 10)
@@ -47,9 +46,10 @@ public class CultivationRegistrationJpaEntity extends BaseTimeEntity {
     private LocalDateTime deletedAt;
 
     @Builder
-    public CultivationRegistrationJpaEntity(Long farmId, Long cropId,
-                                            BigDecimal cultivationArea, BigDecimal farmerEstimatedYield,
+    public CultivationRegistrationJpaEntity(Long id, Long farmId, Long cropId,
+                                            Double cultivationArea, Double farmerEstimatedYield,
                                             String yieldUnit) {
+        this.id = id;
         this.farmId = farmId;
         this.cropId = cropId;
         this.cultivationArea = cultivationArea;
@@ -61,7 +61,7 @@ public class CultivationRegistrationJpaEntity extends BaseTimeEntity {
         this.deletedAt = LocalDateTime.now();
     }
 
-    public void updateInfo(Long cropId, BigDecimal cultivationArea, BigDecimal farmerEstimatedYield, String yieldUnit) {
+    public void updateInfo(Long cropId, Double cultivationArea, Double farmerEstimatedYield, String yieldUnit) {
         if (cropId != null) {
             this.cropId = cropId;
         }

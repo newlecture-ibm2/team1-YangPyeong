@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -99,9 +98,9 @@ public class CultivationController {
     @NoArgsConstructor
     static class CultivationRequest {
         private Long cropId;
-        private BigDecimal cultivationArea;    // 재배 면적 (㎡)
-        private BigDecimal expectedYield;      // 예상 수확량
-        private String yieldUnit;              // g | kg | ton
+        private Double cultivationArea;    // 재배 면적 (㎡)
+        private Double expectedYield;      // 예상 수확량
+        private String yieldUnit;          // g | kg | ton
     }
 
     @Getter
@@ -111,8 +110,8 @@ public class CultivationController {
         private final Long farmId;
         private final Long cropId;
         private final String cropName;
-        private final BigDecimal cultivationArea;
-        private final BigDecimal farmerEstimatedYield;
+        private final Double cultivationArea;
+        private final Double farmerEstimatedYield;
         private final String yieldUnit;
 
         public static CultivationResponse from(CultivationRegistration domain) {

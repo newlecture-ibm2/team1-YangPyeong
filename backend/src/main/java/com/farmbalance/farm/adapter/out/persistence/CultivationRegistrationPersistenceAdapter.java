@@ -24,12 +24,9 @@ public class CultivationRegistrationPersistenceAdapter implements SaveCultivatio
                 .id(domain.getId())
                 .farmId(domain.getFarmId())
                 .cropId(domain.getCropId())
-                .cultivationType(domain.getCultivationType())
                 .cultivationArea(domain.getCultivationArea())
                 .farmerEstimatedYield(domain.getFarmerEstimatedYield())
-                .aiPredictedYield(domain.getAiPredictedYield())
                 .yieldUnit(domain.getYieldUnit())
-                .verified(domain.getVerified() != null ? domain.getVerified() : false)
                 .build();
         CultivationRegistrationJpaEntity savedEntity = repository.save(entity);
         return mapToDomain(savedEntity);
@@ -52,12 +49,9 @@ public class CultivationRegistrationPersistenceAdapter implements SaveCultivatio
                 .id(entity.getId())
                 .farmId(entity.getFarmId())
                 .cropId(entity.getCropId())
-                .cultivationType(entity.getCultivationType())
                 .cultivationArea(entity.getCultivationArea())
                 .farmerEstimatedYield(entity.getFarmerEstimatedYield())
-                .aiPredictedYield(entity.getAiPredictedYield())
                 .yieldUnit(entity.getYieldUnit())
-                .verified(entity.getVerified())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

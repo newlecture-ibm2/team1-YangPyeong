@@ -3,7 +3,6 @@ package com.farmbalance.farm.domain;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -17,8 +16,8 @@ public class CultivationRegistration {
     private final Long farmId;
     private final Long cropId;
     private final String cropName; // 출력용: JOIN 결과
-    private final BigDecimal cultivationArea;
-    private final BigDecimal farmerEstimatedYield;
+    private final Double cultivationArea;
+    private final Double farmerEstimatedYield;
     private final String yieldUnit;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
