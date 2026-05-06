@@ -55,16 +55,16 @@ export function middleware(request: NextRequest) {
   if (skipAuth) {
     // 개발/시연 모드: GOV 역할로 시뮬레이션
     userRole = 'GOV';
-  } else if (isAuthenticated && sessionCookie) {
-    try {
-      const tokenParts = sessionCookie.value.split('.');
-      if (tokenParts.length === 3) {
-        const payloadStr = Buffer.from(tokenParts[1], 'base64').toString('utf-8');
-        const payload = JSON.parse(payloadStr);
-        userRole = payload.role || '';
+  } else if (isAuthenticated) {
+    // fb-user 쿠키에서 role 읽기 (로그인 시 BFF가 설정한 non-httpOnly 쿠키)
+    const userCookie = request.cookies.get('fb-user');
+    if (userCookie?.value) {
+      try {
+        const userData = JSON.parse(decodeURIComponent(userCookie.value));
+        userRole = userData.role || '';
+      } catch {
+        // 쿠키 파싱 실패 시 무시
       }
-    } catch {
-      // JWT 디코딩 실패 시 무시
     }
   }
 
