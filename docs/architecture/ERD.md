@@ -35,6 +35,8 @@ erDiagram
         varchar role "USER | FARMER | ADMIN | GOV"
         varchar region "지역명 문자열 (하위호환)"
         varchar region_code "FK → regions.code (시군구 코드)"
+        varchar address "상세 주소"
+        text bio "자기소개"
         varchar status "ACTIVE | SUSPENDED"
         timestamp created_at
         timestamp updated_at
@@ -54,8 +56,13 @@ erDiagram
         decimal longitude
         decimal area_size "㎡"
         varchar soil_type
+        double soil_ph "토양 산도"
+        double soil_organic_matter "토양 유기물"
         varchar business_number "사업자 등록번호"
+        varchar land_cert_image_url "토지증명서 이미지"
         boolean land_cert_verified
+        varchar certification_status "PENDING | APPROVED | REJECTED"
+        varchar reject_reason "반려 사유"
         varchar status "PENDING | APPROVED | REJECTED"
         timestamp created_at
         timestamp updated_at
@@ -265,7 +272,21 @@ erDiagram
     policy_data {
         bigint id PK
         varchar external_id "외부 API 제공 정책 고유번호"
-        jsonb data "정책 API 응답 원본 JSON"
+        varchar source "수집 소스 (GOV24 운영 / SEED 테스트 / MAFRA TODO)"
+        varchar title "정책명"
+        varchar organization "지원기관"
+        varchar region_code "지역코드 (regions.code 참조)"
+        varchar category "AI 분류 (보조금/교육/임대/검정/세금/융자/기타)"
+        varchar target "지원대상"
+        text content "지원내용 상세"
+        varchar support_amount "지원금/규모"
+        date apply_start "신청 시작일"
+        date apply_end "신청 마감일"
+        varchar source_url "원문 링크 (gov.kr URL)"
+        jsonb data "하위호환용 원본 JSONB (레거시)"
+        jsonb raw_data "정책 API 응답 원본 JSON"
+        jsonb normalized_data "AI Analyzer 정규화 결과 JSON"
+        decimal confidence "AI 분석 신뢰도 (0.00~1.00)"
         timestamp fetched_at "수집 시각"
         timestamp created_at
         timestamp updated_at
@@ -601,6 +622,8 @@ erDiagram
 | role | VARCHAR(20) | NOT NULL, DEFAULT 'GENERAL' | GENERAL / FARMER / ADMIN / GOV |
 | region | VARCHAR(50) | | 지역 (양평군 등) — 하위호환용 유지 |
 | region_code | VARCHAR(10) | | 시군구 코드 (regions.code 참조, 예: "4183") — 신규 |
+| address | VARCHAR(255) | | 상세 주소 |
+| bio | TEXT | | 자기소개 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | ACTIVE / SUSPENDED |
 | created_at | TIMESTAMP | NOT NULL | 가입일 |
 | updated_at | TIMESTAMP | | 수정일 |
@@ -623,8 +646,13 @@ erDiagram
 | longitude | DECIMAL(10,7) | | 경도 (카카오 address.x) |
 | area_size | DECIMAL(10,2) | NOT NULL | 면적 (㎡) |
 | soil_type | VARCHAR(50) | | 토양 유형 |
+| soil_ph | DOUBLE PRECISION | | 토양 산도 (pH) |
+| soil_organic_matter | DOUBLE PRECISION | | 토양 유기물 함량 |
 | business_number | VARCHAR(12) | | 사업자 등록번호 |
+| land_cert_image_url | VARCHAR(500) | | 토지증명서 이미지 URL |
 | land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 |
+| certification_status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
+| reject_reason | VARCHAR(500) | | 반려 사유 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
@@ -649,16 +677,12 @@ erDiagram
 |------|------|------|------|
 | id | BIGINT | PK, AUTO | 작물 고유 ID |
 | category_id | BIGINT | FK -> crop_categories(id), NOT NULL | 작물 카테고리 |
-| code | VARCHAR(30) | UNIQUE, NOT NULL | 작물 코드 (ex: RICE_001) |
 | name | VARCHAR(50) | NOT NULL | 작물명 |
-| growth_days | INT | | 재배 기간 (일) |
-| yield_per_sqm | DECIMAL(10,2) | | ㎡당 수확량 (kg) |
-| avg_cost_per_sqm | DECIMAL(10,2) | | ㎡당 평균 비용 (원) |
-| climate_conditions | JSONB | | 작물별 적정 재배 환경 조건 (AI 추천용) |
-| is_active | BOOLEAN | DEFAULT true | 활성 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **V15 적용**: `code`, `growth_days`, `yield_per_sqm`, `avg_cost_per_sqm`, `climate_conditions`, `is_active` 컬럼이 삭제되었습니다. crops 테이블은 조회 전용 마스터 데이터로 전환되었습니다.
 
 ### 2.5 cultivation_registrations (재배 등록)
 
@@ -863,21 +887,39 @@ erDiagram
 | created_at | TIMESTAMP | NOT NULL | 작성일 |
 | updated_at | TIMESTAMP | | 수정일 |
 
-### 2.15 policy_data (정책 API 데이터 저장소)
+### 2.15 policy_data (정책 데이터 저장소)
 
-외부 정책 API에서 수집한 데이터를 JSON 원본 그대로 저장하는 테이블입니다. 정책 API 응답 스키마가 사전에 확정되지 않으므로 정규화하지 않고 JSONB로 저장하며, AI Agent의 Tool이 데이터를 조회하여 활용합니다.
+외부 정책 API/크롤링에서 수집한 데이터를 저장하는 테이블입니다. 목록 조회 성능과 화면 표시를 위해 주요 필드를 정규화 컬럼으로 추출하고, 원본 JSON은 `raw_data`에 보관합니다.
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
 | id | BIGINT | PK, AUTO | 내부 고유 ID |
-| external_id | VARCHAR(200) | UNIQUE, NOT NULL | 외부 API 제공 정책 고유번호 |
-| data | JSONB | NOT NULL | 정책 API 응답 원본 (항목 1건의 JSON) |
+| external_id | VARCHAR(200) | NOT NULL | 외부 API 제공 정책 고유번호 |
+| source | VARCHAR(30) | | 수집 소스 (GOV24 ✅운영 / SEED 테스트용 / MAFRA TODO) |
+| title | VARCHAR(500) | | 정책명 |
+| organization | VARCHAR(200) | | 지원기관명 |
+| region_code | VARCHAR(10) | | 지역코드 (regions.code 논리적 참조) |
+| category | VARCHAR(50) | | AI 분석 카테고리 (보조금/교육/임대/검정/세금/융자/기타) |
+| target | VARCHAR(200) | | 지원 대상 |
+| content | TEXT | | 지원 내용 상세 |
+| support_amount | VARCHAR(100) | | 지원 금액/규모 |
+| apply_start | DATE | | 신청 시작일 |
+| apply_end | DATE | | 신청 마감일 |
+| source_url | VARCHAR(1000) | | 원문 링크 (Gov24: https://www.gov.kr/portal/...) |
+| data | JSONB | | 하위호환용 레거시 컬럼 (기존 데이터 유지) |
+| raw_data | JSONB | | 정책 API 응답 원본 JSON |
+| normalized_data | JSONB | | AI Analyzer 정규화 결과 JSON |
+| confidence | DECIMAL(5,2) | | AI 분석 신뢰도 (0.00~1.00) |
 | fetched_at | TIMESTAMP | NOT NULL | 수집 시각 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-> **설계 근거**: 정책 API 응답 스키마가 사전에 확정되지 않으므로 정규화된 컬럼 대신 JSONB로 원본을 저장합니다. AI Agent Tool이 이 데이터를 조회하여 LLM에 전달하는 방식으로 활용됩니다. 다른 외부 API(통계, 기상 등)의 데이터 테이블은 추후 필요 시 별도로 추가합니다.
+> **UNIQUE 제약**: (external_id, source) 복합 유니크 — 동일 소스에서 같은 정책을 중복 저장하지 않습니다.
+> **JSONB 컬럼 역할 분리**: `data`는 하위호환용 레거시 유지, `raw_data`는 외부 API 원본 보관, `normalized_data`는 AI Analyzer가 정규화한 결과 저장
+> **설계 변경 이력**: 기존 `data` JSONB 단일 컬럼 → `raw_data`로 리네임 + 정규화 컬럼 추가 → `normalized_data` + `confidence` 추가 (AI 분석 결과) → Gov24 실 API 연동 완료 (2026-04-30)
+> **데이터 현황**: GOV24 실 데이터 26건 운영 중. SEED(Mock) 데이터는 `app.policy.mock-fetcher-enabled=true` 시에만 생성됨.
+
 
 ### 2.16 guide_messages (권고 메시지)
 

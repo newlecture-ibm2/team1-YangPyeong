@@ -129,6 +129,7 @@ export default function Header() {
             key={link.href}
             href={link.href}
             className={`${styles.link} ${pathname?.startsWith(link.href) ? styles['link--active'] : ''}`}
+            data-guide={`nav-${link.href.replace('/', '')}`}
           >
             {link.label}
           </Link>
@@ -142,6 +143,7 @@ export default function Header() {
           onClick={handleCartClick}
           aria-label="장바구니"
           type="button"
+          data-guide="cart-btn"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="9" cy="21" r="1" />
