@@ -8,7 +8,7 @@ from typing import AsyncIterator, Optional
 
 import google.generativeai as genai
 
-from app.config import settings
+from app.config import get_settings
 from app.llm.base import BaseLLM
 
 logger = logging.getLogger(__name__)
@@ -18,6 +18,7 @@ class GeminiLLM(BaseLLM):
     """Google Gemini API를 사용하는 LLM 구현체"""
 
     def __init__(self) -> None:
+        settings = get_settings()
         if not settings.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.")
 

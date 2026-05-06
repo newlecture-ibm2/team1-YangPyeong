@@ -26,7 +26,7 @@ public class UploadJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** 용도 구분 (PRODUCT / FARM_CERT / SEED_RECEIPT / POST 등) */
+    /** 용도 구분 (PRODUCT / FARM_CERT / CULTIVATION_RECEIPT / POST 등) */
     @Column(name = "entity_type", nullable = false, length = 30)
     private String entityType;
 
