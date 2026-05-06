@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Badge from '@/components/common/Badge/Badge';
+import { useToast } from '@/components/common/Toast';
 import { useMyFarms } from './useFarm';
 import { useHistory } from './useHistory';
 import { useCultivation } from './useCultivation';
@@ -32,6 +33,7 @@ const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'li
 };
 
 export default function FarmDashboardPage() {
+  const toast = useToast();
   const { farms, isLoading: isFarmsLoading } = useMyFarms();
   const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
   // 농장 목록 뷰 여부 상태
@@ -453,8 +455,6 @@ export default function FarmDashboardPage() {
 
               <Timeline
                 histories={histories}
-                onEdit={handleEditClick}
-                onDelete={removeHistory}
                 onEditCultivation={(id) => {
                   const cult = cultivations.find(c => c.id === id);
                   if (cult) {
