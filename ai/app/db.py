@@ -11,10 +11,10 @@ from app.config import get_settings
 def get_engine():
     """SQLAlchemy sync engine을 생성합니다."""
     settings = get_settings()
-    if not settings.database_url:
+    if not settings.DATABASE_URL:
         return None
     return create_engine(
-        settings.database_url,
+        settings.DATABASE_URL,
         pool_size=5,
         max_overflow=10,
         pool_pre_ping=True,
@@ -48,7 +48,7 @@ def get_db_session() -> Session | None:
 def check_db_connection() -> dict:
     """DB 연결 상태를 확인합니다."""
     settings = get_settings()
-    if not settings.database_url:
+    if not settings.DATABASE_URL:
         return {"status": "not_configured", "message": "DATABASE_URL 환경변수가 설정되지 않았습니다"}
     try:
         session = get_db_session()

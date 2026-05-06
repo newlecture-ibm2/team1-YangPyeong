@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from app.routers import health
 from app.routers import policy as policy_router
+from app.routers import chat as chat_router
 
 # 로깅 설정
 logging.basicConfig(
@@ -23,5 +24,4 @@ app = FastAPI(
 # ── 라우터 등록 ──
 app.include_router(health.router)
 app.include_router(policy_router.router)
-
-# TODO: STEP 10에서 chat/agent 라우터 등록
+app.include_router(chat_router.router)

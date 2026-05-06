@@ -30,7 +30,7 @@ async def health_detail() -> dict:
     db_status = check_db_connection()
 
     # LLM Provider 확인
-    llm_status: dict = {"provider": settings.llm_provider}
+    llm_status: dict = {"provider": settings.LLM_PROVIDER}
     try:
         from app.llm import get_llm
         llm = get_llm()
@@ -45,12 +45,12 @@ async def health_detail() -> dict:
     #        PROFILE=prod 분기로 상세 정보를 숨길 것.
     #        개발 환경에서만 set/missing 표시 허용.
     api_keys_status = {
-        "gemini_api_key": "set" if settings.gemini_api_key else "missing",
-        "groq_api_key": "set" if settings.groq_api_key else "missing",
-        "gov24_api_key": "set" if settings.gov24_api_key else "missing",
-        "nongsaro_api_key": "set" if settings.nongsaro_api_key else "missing",
-        "soil_api_key": "set" if settings.soil_api_key else "missing",
-        "kma_api_key": "set" if settings.kma_api_key else "missing",
+        "gemini_api_key": "set" if settings.GEMINI_API_KEY else "missing",
+        "groq_api_key": "set" if settings.GROQ_API_KEY else "missing",
+        "gov24_api_key": "set" if settings.GOV24_API_KEY else "missing",
+        "nongsaro_api_key": "set" if settings.NONGSARO_API_KEY else "missing",
+        "soil_api_key": "set" if settings.SOIL_API_KEY else "missing",
+        "kma_api_key": "set" if settings.KMA_API_KEY else "missing",
     }
 
     return {
@@ -59,5 +59,5 @@ async def health_detail() -> dict:
         "database": db_status,
         "llm": llm_status,
         "api_keys": api_keys_status,
-        "scheduler_enabled": settings.scheduler_enabled,
+        "scheduler_enabled": settings.SCHEDULER_ENABLED,
     }
