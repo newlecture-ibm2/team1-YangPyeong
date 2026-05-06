@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Badge from '@/components/common/Badge/Badge';
 import { useMyFarms } from './_hooks/useFarm';
 import { useHistory } from './_hooks/useHistory';
+import { useCultivation } from './_hooks/useCultivation';
 import Timeline from './_components/Timeline/Timeline';
 import HistoryModal from './_components/HistoryModal/HistoryModal';
+import CultivationEditModal from './_components/CultivationEditModal/CultivationEditModal';
 import styles from './page.module.css';
 
 // 임시 KPI 및 활동 데이터 (백엔드 연동 전까지 유지할 데이터 구조)
@@ -34,6 +36,30 @@ export default function FarmDashboardPage() {
   const [isListView, setIsListView] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'DASHBOARD' | 'HISTORY' | 'POLICY' | 'REPORT'>('DASHBOARD');
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isCultivationModalOpen, setIsCultivationModalOpen] = useState(false);
+  const [selectedCultivation, setSelectedCultivation] = useState<any>(null);
+  const [cropOptions, setCropOptions] = useState<{ id: number, name: string }[]>([]);
+  const [weather, setWeather] = useState<{ tmp: number, pty: number, sky: number } | null>(null);
+
+  // 기상 정보 조회
+  useEffect(() => {
+    fetch('/api/weather/current')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) setWeather(json.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // 작물 목록 조회
+  useEffect(() => {
+    fetch('/api/admin/crops')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) setCropOptions(json.data || []);
+      })
+      .catch(console.error);
+  }, []);
 
   // 농장 목록이 로드되었을 때, 2개 이상이면 목록 뷰를 기본으로 설정
   useEffect(() => {
@@ -55,8 +81,23 @@ export default function FarmDashboardPage() {
     isLoading: isHistoryLoading, 
     addHistory, 
     updateHistory, 
-    removeHistory 
+    removeHistory,
+    refresh: refreshHistories
   } = useHistory(farm?.id);
+
+  // 재배 정보 연동
+  const {
+    cultivations,
+    isLoading: isCultivationLoading,
+    modifyCultivation,
+    removeCultivation,
+    refresh: refreshCultivations
+  } = useCultivation(farm?.id);
+
+  // 통합 새로고침
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refreshHistories(), refreshCultivations()]);
+  }, [refreshHistories, refreshCultivations]);
 
   const isLoading = isFarmsLoading;
 
@@ -236,6 +277,21 @@ export default function FarmDashboardPage() {
         mode={editingHistoryId ? 'edit' : 'create'}
       />
 
+      <CultivationEditModal
+        isOpen={isCultivationModalOpen}
+        onClose={() => { setIsCultivationModalOpen(false); setSelectedCultivation(null); }}
+        onSave={async (cropId, area, yieldAmount, unit) => {
+          if (selectedCultivation) {
+            const success = await modifyCultivation(selectedCultivation.id, cropId, area, yieldAmount, unit);
+            if (success) refreshAll();
+            return success;
+          }
+          return false;
+        }}
+        cultivation={selectedCultivation}
+        cropOptions={cropOptions}
+      />
+
       {/* Main Tabs (Navigation) */}
       <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0', marginBottom: '32px', display: 'flex', gap: '32px' }}>
         <button 
@@ -344,8 +400,15 @@ export default function FarmDashboardPage() {
             <div style={{ textAlign: 'center', paddingRight: '32px', borderRight: '1px solid var(--color-border)' }}>
               <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '4px' }}>오늘의 양평 날씨</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '40px' }}>☀️</span>
-                <span style={{ fontSize: '32px', fontWeight: 700, color: 'var(--color-text)' }}>22° <span style={{ fontSize: '16px', color: 'var(--color-text-light)', fontWeight: 400 }}>/ 11°</span></span>
+                <span style={{ fontSize: '40px' }}>
+                  {weather ? (
+                    weather.pty > 0 ? (weather.pty === 3 ? '❄️' : '🌧️') : (weather.sky > 2 ? '☁️' : '☀️')
+                  ) : '☀️'}
+                </span>
+                <span style={{ fontSize: '32px', fontWeight: 700, color: 'var(--color-text)' }}>
+                  {weather ? `${Math.round(weather.tmp)}°` : '22°'} 
+                  <span style={{ fontSize: '16px', color: 'var(--color-text-light)', fontWeight: 400 }}> / {weather ? '실시간' : '11°'}</span>
+                </span>
               </div>
             </div>
             <div style={{ flex: 1 }}>
@@ -379,8 +442,22 @@ export default function FarmDashboardPage() {
 
               <Timeline 
                 histories={histories} 
-                onEdit={handleEditClick}
+                onEdit={handleEditClick} 
                 onDelete={removeHistory}
+                onEditCultivation={(id) => {
+                  const cult = cultivations.find(c => c.id === id);
+                  if (cult) {
+                    setSelectedCultivation(cult);
+                    setIsCultivationModalOpen(true);
+                  } else {
+                    toast.error('해당 재배 정보를 찾을 수 없습니다. (이미 삭제되었을 수 있습니다)');
+                    refreshAll();
+                  }
+                }}
+                onDeleteCultivation={async (id) => {
+                  const success = await removeCultivation(id);
+                  if (success) refreshAll();
+                }}
               />
             </div>
 

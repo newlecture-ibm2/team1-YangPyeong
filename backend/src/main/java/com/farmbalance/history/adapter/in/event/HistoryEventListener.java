@@ -1,8 +1,10 @@
 package com.farmbalance.history.adapter.in.event;
 
+import com.farmbalance.farm.domain.event.CultivationDeletedEvent;
 import com.farmbalance.farm.domain.event.CultivationRegisteredEvent;
 import com.farmbalance.farm.domain.event.FarmRegisteredEvent;
 import com.farmbalance.farm.domain.event.HarvestRecordedEvent;
+import com.farmbalance.history.adapter.out.persistence.repository.HistoryJpaRepository;
 import com.farmbalance.history.application.port.in.RecordHistoryCommand;
 import com.farmbalance.history.application.port.in.RecordHistoryUseCase;
 import com.farmbalance.history.domain.HistoryType;
@@ -22,6 +24,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class HistoryEventListener {
 
     private final RecordHistoryUseCase recordHistoryUseCase;
+    private final HistoryJpaRepository historyJpaRepository;
     private final JdbcTemplate jdbcTemplate;
 
     @Async("historyTaskExecutor")
@@ -73,6 +76,7 @@ public class HistoryEventListener {
 
             RecordHistoryCommand command = RecordHistoryCommand.builder()
                     .farmId(event.getFarmId())
+                    .cultivationRegistrationId(event.getId())
                     .recordDate(java.time.LocalDate.now())
                     .activityType(HistoryType.SYSTEM)
                     .activityContent(content)
@@ -122,6 +126,21 @@ public class HistoryEventListener {
 
         } catch (Exception e) {
             log.error("수확완료 이력 저장 실패 - 농장 ID: {}, 원인: {}", event.getFarmId(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 재배 등록 삭제 시 관련 히스토리도 삭제
+     */
+    @Async("historyTaskExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleCultivationDeletedEvent(CultivationDeletedEvent event) {
+        try {
+            historyJpaRepository.deleteByCultivationRegistrationId(event.getCultivationRegistrationId());
+            log.info("재배등록 삭제에 따른 이력 삭제 성공 - 등록 ID: {}", event.getCultivationRegistrationId());
+        } catch (Exception e) {
+            log.error("재배등록 이력 삭제 실패 - 등록 ID: {}, 원인: {}", event.getCultivationRegistrationId(), e.getMessage());
         }
     }
 }

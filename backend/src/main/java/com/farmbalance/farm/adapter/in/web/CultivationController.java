@@ -1,8 +1,11 @@
 package com.farmbalance.farm.adapter.in.web;
 
+import com.farmbalance.farm.application.port.in.DeleteCultivationUseCase;
 import com.farmbalance.farm.application.port.in.LoadFarmUseCase;
 import com.farmbalance.farm.application.port.in.RegisterCultivationCommand;
 import com.farmbalance.farm.application.port.in.RegisterCultivationUseCase;
+import com.farmbalance.farm.application.port.in.UpdateCultivationCommand;
+import com.farmbalance.farm.application.port.in.UpdateCultivationUseCase;
 import com.farmbalance.farm.domain.CultivationRegistration;
 import com.farmbalance.global.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -24,6 +27,8 @@ import org.springframework.web.bind.annotation.*;
 public class CultivationController {
 
     private final RegisterCultivationUseCase registerCultivationUseCase;
+    private final UpdateCultivationUseCase updateCultivationUseCase;
+    private final DeleteCultivationUseCase deleteCultivationUseCase;
     private final LoadFarmUseCase loadFarmUseCase;
 
     /**
@@ -63,12 +68,52 @@ public class CultivationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
     }
 
+    /**
+     * 재배 등록 수정
+     */
+    @PatchMapping("/{cultivationId}")
+    public ResponseEntity<ApiResponse<CultivationResponse>> updateCultivation(
+            @PathVariable Long farmId,
+            @PathVariable Long cultivationId,
+            @Valid @RequestBody CultivationRequest request) {
+
+        UpdateCultivationCommand command = UpdateCultivationCommand.builder()
+                .id(cultivationId)
+                .cropId(request.getCropId())
+                .cultivationArea(request.getCultivationArea())
+                .expectedYield(request.getExpectedYield())
+                .yieldUnit(request.getYieldUnit())
+                .build();
+
+        CultivationRegistration updated = updateCultivationUseCase.updateCultivation(command);
+
+        CultivationResponse response = new CultivationResponse(
+                updated.getId(), farmId, updated.getCropId(),
+                updated.getCultivationArea(),
+                updated.getFarmerEstimatedYield(), updated.getYieldUnit()
+        );
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    /**
+     * 재배 등록 삭제 (소프트 삭제)
+     */
+    @DeleteMapping("/{cultivationId}")
+    public ResponseEntity<ApiResponse<Void>> deleteCultivation(
+            @PathVariable Long farmId,
+            @PathVariable Long cultivationId) {
+
+        deleteCultivationUseCase.deleteCultivation(cultivationId);
+
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
     // ── Request / Response DTO (내부 클래스) ──
 
     @Getter
     @NoArgsConstructor
     static class CultivationRequest {
-        @NotNull(message = "작물 ID는 필수입니다.")
         private Long cropId;
         private Double cultivationArea;    // 재배 면적 (㎡)
         private Double expectedYield;     // 예상 수확량

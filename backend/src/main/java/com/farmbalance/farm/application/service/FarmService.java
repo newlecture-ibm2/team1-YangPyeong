@@ -82,14 +82,15 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                             .yieldUnit("kg")
                             .build())
                     .collect(java.util.stream.Collectors.toList());
-            saveCultivationPort.saveCultivationRegistrations(savedFarm.getId(), registrations);
-
+            List<CultivationRegistration> savedRegistrations = saveCultivationPort.saveCultivationRegistrations(savedFarm.getId(), registrations);
+            
             // 각 재배 등록별 히스토리 자동 생성 이벤트 발행
-            for (RegisterFarmCommand.CultivationDetail c : command.getCultivations()) {
+            for (CultivationRegistration reg : savedRegistrations) {
                 eventPublisher.publishEvent(new CultivationRegisteredEvent(
+                        reg.getId(),
                         savedFarm.getId(),
-                        c.getCropId(),
-                        c.getArea()
+                        reg.getCropId(),
+                        reg.getCultivationArea()
                 ));
             }
         }

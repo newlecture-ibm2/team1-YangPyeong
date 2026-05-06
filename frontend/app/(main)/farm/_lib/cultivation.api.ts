@@ -63,3 +63,40 @@ export async function registerCultivation(
 
   return result.data;
 }
+
+/**
+ * 재배 등록 수정
+ */
+export async function updateCultivation(
+  farmId: number,
+  cultivationId: number,
+  data: Partial<CultivationRegisterRequest>
+): Promise<void> {
+  const response = await fetch(`/api/farm/${farmId}/cultivations/${cultivationId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = await response.json();
+    throw new Error(result.error?.message || '재배 정보 수정에 실패했습니다.');
+  }
+}
+
+/**
+ * 재배 등록 삭제
+ */
+export async function deleteCultivation(
+  farmId: number,
+  cultivationId: number
+): Promise<void> {
+  const response = await fetch(`/api/farm/${farmId}/cultivations/${cultivationId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const result = await response.json();
+    throw new Error(result.error?.message || '재배 정보 삭제에 실패했습니다.');
+  }
+}

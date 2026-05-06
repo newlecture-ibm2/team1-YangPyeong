@@ -60,4 +60,13 @@ public class CultivationRegistrationJpaEntity extends BaseTimeEntity {
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();
     }
+
+    public void updateInfo(Long cropId, BigDecimal cultivationArea, BigDecimal farmerEstimatedYield, String yieldUnit) {
+        if (cropId != null) {
+            this.cropId = cropId;
+        }
+        this.cultivationArea = cultivationArea;
+        this.farmerEstimatedYield = farmerEstimatedYield;
+        this.yieldUnit = yieldUnit;
+    }
 }

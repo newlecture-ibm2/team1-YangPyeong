@@ -161,9 +161,9 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
     }
 
     @Override
-    public void saveCultivationRegistrations(Long farmId, List<CultivationRegistration> registrations) {
+    public List<CultivationRegistration> saveCultivationRegistrations(Long farmId, List<CultivationRegistration> registrations) {
         if (registrations == null || registrations.isEmpty()) {
-            return;
+            return List.of();
         }
 
         // 기존 재배 등록 소프트 삭제
@@ -181,7 +181,19 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                         .yieldUnit(reg.getYieldUnit() != null ? reg.getYieldUnit() : "kg")
                         .build())
                 .collect(Collectors.toList());
-        cultivationRepository.saveAll(entities);
+        
+        List<CultivationRegistrationJpaEntity> savedEntities = cultivationRepository.saveAll(entities);
+
+        return savedEntities.stream()
+                .map(saved -> CultivationRegistration.builder()
+                        .id(saved.getId())
+                        .farmId(saved.getFarmId())
+                        .cropId(saved.getCropId())
+                        .cultivationArea(saved.getCultivationArea() != null ? saved.getCultivationArea().doubleValue() : null)
+                        .farmerEstimatedYield(saved.getFarmerEstimatedYield() != null ? saved.getFarmerEstimatedYield().doubleValue() : null)
+                        .yieldUnit(saved.getYieldUnit())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -205,6 +217,31 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .yieldUnit(saved.getYieldUnit())
                 .build();
     }
+
+    @Override
+    public void updateCultivationRegistration(CultivationRegistration registration) {
+        CultivationRegistrationJpaEntity entity = cultivationRepository.findById(registration.getId())
+                .orElseThrow(() -> new IllegalArgumentException("재배 정보를 찾을 수 없습니다. ID: " + registration.getId()));
+
+        entity.updateInfo(
+                registration.getCropId(),
+                registration.getCultivationArea() != null ? BigDecimal.valueOf(registration.getCultivationArea()) : null,
+                registration.getFarmerEstimatedYield() != null ? BigDecimal.valueOf(registration.getFarmerEstimatedYield()) : null,
+                registration.getYieldUnit()
+        );
+        
+        cultivationRepository.save(entity);
+    }
+
+    @Override
+    public void deleteCultivationRegistration(Long id) {
+        CultivationRegistrationJpaEntity entity = cultivationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("재배 정보를 찾을 수 없습니다. ID: " + id));
+        
+        entity.softDelete();
+        cultivationRepository.save(entity);
+    }
+
     @Override
     public List<CultivationRegistration> loadCultivationsByFarmId(Long farmId) {
         String sql = """
