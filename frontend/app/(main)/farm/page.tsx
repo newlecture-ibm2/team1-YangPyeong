@@ -316,7 +316,7 @@ export default function FarmDashboardPage() {
         <Link href="/balance" style={{ textDecoration: 'none', color: 'var(--color-text-light)', fontWeight: 600, paddingBottom: '16px', fontSize: '16px' }}>
           수급 분석
         </Link>
-        <Link href="/recommend" style={{ textDecoration: 'none', color: 'var(--color-text-light)', fontWeight: 600, paddingBottom: '16px', fontSize: '16px' }}>
+        <Link href="/farm/recommend" style={{ textDecoration: 'none', color: 'var(--color-text-light)', fontWeight: 600, paddingBottom: '16px', fontSize: '16px' }}>
           AI 작물 추천
         </Link>
         <button
