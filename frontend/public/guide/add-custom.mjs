@@ -1,5 +1,5 @@
 /**
- * walking.json — 밀짚모자 + 셔츠 완벽 적용본 (찌찌 완벽 삭제)
+ * walking.json — 밀짚모자 + 셔츠 완벽 적용 + 동적 손 추적 삼지창 (중간 파지 + 손 뒤로 배치)
  */
 import { readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
@@ -12,11 +12,11 @@ const data = JSON.parse(readFileSync(inPath, 'utf8'));
 const comp = data.assets.find(a => a.id === 'comp_0');
 
 // ━━━━━━━━━━━━━━━━━━━━━━━
-// 1. 밀짚모자 (머리 위에 정확히 안착)
+// 1. 밀짚모자
 // ━━━━━━━━━━━━━━━━━━━━━━━
 const hatLayer = {
   ddd: 0, ind: 21, ty: 4, nm: "straw hat",
-  parent: 10, sr: 1, // parent: head
+  parent: 10, sr: 1,
   ks: {
     o: { a: 0, k: 100, ix: 11 },
     r: { a: 0, k: -35, ix: 10 },
@@ -66,22 +66,20 @@ const earIdx = comp.layers.findIndex(l => l.ind === 3);
 comp.layers.splice(earIdx, 0, hatLayer);
 
 // ━━━━━━━━━━━━━━━━━━━━━━━
-// 2. 남방 입히기 및 찌찌 완벽 삭제!
+// 2. 남방 입히기 및 찌찌 삭제
 // ━━━━━━━━━━━━━━━━━━━━━━━
 const skinColorRgb = [0.908167820351, 0.688684979607, 0.516118128159];
 const isSkinColor = (c) => Math.abs(c[0] - skinColorRgb[0]) < 0.05 && Math.abs(c[1] - skinColorRgb[1]) < 0.05;
-const shirtColor = [0.72, 0.28, 0.28, 1]; // 남방 색상
+const shirtColor = [0.72, 0.28, 0.28, 1];
 
-// 진짜 찌찌 레이어(ind: 1, ind: 2) 숨기기! (Chest에 parent된 레이어들)
 [1, 2].forEach(ind => {
   const nippleLayer = comp.layers.find(l => l.ind === ind);
   if (nippleLayer) nippleLayer.hd = true;
 });
 
-// 상체 색상 변경 & 배꼽 숨기기
 const bodyLayer = comp.layers.find(l => l.ind === 12);
 if (bodyLayer) {
-  if (bodyLayer.shapes[4]) bodyLayer.shapes[4].hd = true; // 배꼽/기타 디테일
+  if (bodyLayer.shapes[4]) bodyLayer.shapes[4].hd = true; 
   bodyLayer.shapes.forEach(sg => {
     if (sg.it) {
       sg.it.forEach(item => {
@@ -93,7 +91,6 @@ if (bodyLayer) {
   });
 }
 
-// 가슴 색상 변경 및 단추 추가
 const chestLayer = comp.layers.find(l => l.ind === 18);
 if (chestLayer) {
   chestLayer.shapes.forEach(sg => {
@@ -121,7 +118,7 @@ if (chestLayer) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━
-// 3. 소매(Sleeves) 만들기
+// 3. 소매 만들기
 // ━━━━━━━━━━━━━━━━━━━━━━━
 [11, 19].forEach(ind => {
   const armIdx = comp.layers.findIndex(l => l.ind === ind);
@@ -146,5 +143,89 @@ if (chestLayer) {
   comp.layers.splice(armIdx, 0, sleeveLayer);
 });
 
+// ━━━━━━━━━━━━━━━━━━━━━━━
+// 4. 화면 앞쪽(right hand, ind: 11) 손끝 추적 삼지창
+// ━━━━━━━━━━━━━━━━━━━━━━━
+const rHand = comp.layers.find(l => l.ind === 11);
+const rHandSg = rHand.shapes[0];
+const rHandPath = rHandSg.it.find(i => i.ty === 'sh').ks;
+const rHandTr = rHandSg.it.find(i => i.ty === 'tr').p.k; 
+
+const pKeyframes = rHandPath.k.map(kf => {
+  let v = kf.s && kf.s[0] && kf.s[0].v ? kf.s[0].v[1] : [0,0]; 
+  return {
+    t: kf.t,
+    s: [v[0] + rHandTr[0], v[1] + rHandTr[1], 0],
+    i: kf.i,
+    o: kf.o
+  };
+});
+
+const pitchforkLayer = {
+  ddd: 0, ind: 56, ty: 4, nm: "pitchfork", // 고유 인덱스 부여
+  parent: 11, sr: 1, 
+  ks: {
+    o: { a: 0, k: 100, ix: 11 },
+    r: { a: 0, k: 20, ix: 10 },
+    p: { a: 1, k: pKeyframes, ix: 2, l: 2 }, 
+    a: { a: 0, k: [0, 0, 0], ix: 1, l: 2 },
+    s: { a: 0, k: [100, 100, 100], ix: 6, l: 2 }
+  },
+  ao: 0,
+  shapes: [
+    { // 손잡이(막대) 중심점을 핸들 가운데로 이동 (p: [0,0]으로 변경)
+      ty: "gr",
+      it: [
+        { ty: "rc", d: 1, s: { a: 0, k: [8, 250], ix: 2 }, p: { a: 0, k: [0, 0], ix: 3 }, r: { a: 0, k: 0, ix: 4 }, nm: "Handle", hd: false },
+        { ty: "fl", c: { a: 0, k: [0.55, 0.35, 0.15, 1], ix: 4 }, o: { a: 0, k: 100, ix: 5 }, r: 1, bm: 0, nm: "Fill", hd: false },
+        { ty: "tr", p: { a:0, k:[0,0], ix:2}, a: {a:0, k:[0,0], ix:1}, s:{a:0,k:[100,100], ix:3}, r:{a:0,k:0, ix:6}, o:{a:0,k:100, ix:7}, sk:{a:0,k:0, ix:4}, sa:{a:0,k:0, ix:5}, nm: "Transform" }
+      ],
+      nm: "Stick", np: 2, cix: 2, bm: 0, ix: 1, mn: "ADBE Vector Group", hd: false
+    },
+    { // 쇠창 받침 (p: [0, -125] 로 상향 조정)
+      ty: "gr",
+      it: [
+        { ty: "rc", d: 1, s: { a: 0, k: [40, 8], ix: 2 }, p: { a: 0, k: [0, -125], ix: 3 }, r: { a: 0, k: 0, ix: 4 }, nm: "Base", hd: false },
+        { ty: "fl", c: { a: 0, k: [0.7, 0.7, 0.75, 1], ix: 4 }, o: { a: 0, k: 100, ix: 5 }, r: 1, bm: 0, nm: "Fill", hd: false },
+        { ty: "tr", p: { a:0, k:[0,0], ix:2}, a: {a:0, k:[0,0], ix:1}, s:{a:0,k:[100,100], ix:3}, r:{a:0,k:0, ix:6}, o:{a:0,k:100, ix:7}, sk:{a:0,k:0, ix:4}, sa:{a:0,k:0, ix:5}, nm: "Transform" }
+      ],
+      nm: "Base", np: 2, cix: 2, bm: 0, ix: 2, mn: "ADBE Vector Group", hd: false
+    },
+    { // 창 1 (p: [-17, -150] 로 상향 조정)
+      ty: "gr",
+      it: [
+        { ty: "rc", d: 1, s: { a: 0, k: [6, 50], ix: 2 }, p: { a: 0, k: [-17, -150], ix: 3 }, r: { a: 0, k: 0, ix: 4 }, nm: "P1", hd: false },
+        { ty: "fl", c: { a: 0, k: [0.7, 0.7, 0.75, 1], ix: 4 }, o: { a: 0, k: 100, ix: 5 }, r: 1, bm: 0, nm: "Fill", hd: false },
+        { ty: "tr", p: { a:0, k:[0,0], ix:2}, a: {a:0, k:[0,0], ix:1}, s:{a:0,k:[100,100], ix:3}, r:{a:0,k:0, ix:6}, o:{a:0,k:100, ix:7}, sk:{a:0,k:0, ix:4}, sa:{a:0,k:0, ix:5}, nm: "Transform" }
+      ],
+      nm: "P1", np: 2, cix: 2, bm: 0, ix: 3, mn: "ADBE Vector Group", hd: false
+    },
+    { // 창 2 (p: [0, -150] 로 상향 조정)
+      ty: "gr",
+      it: [
+        { ty: "rc", d: 1, s: { a: 0, k: [6, 50], ix: 2 }, p: { a: 0, k: [0, -150], ix: 3 }, r: { a: 0, k: 0, ix: 4 }, nm: "P2", hd: false },
+        { ty: "fl", c: { a: 0, k: [0.7, 0.7, 0.75, 1], ix: 4 }, o: { a: 0, k: 100, ix: 5 }, r: 1, bm: 0, nm: "Fill", hd: false },
+        { ty: "tr", p: { a:0, k:[0,0], ix:2}, a: {a:0, k:[0,0], ix:1}, s:{a:0,k:[100,100], ix:3}, r:{a:0,k:0, ix:6}, o:{a:0,k:100, ix:7}, sk:{a:0,k:0, ix:4}, sa:{a:0,k:0, ix:5}, nm: "Transform" }
+      ],
+      nm: "P2", np: 2, cix: 2, bm: 0, ix: 4, mn: "ADBE Vector Group", hd: false
+    },
+    { // 창 3 (p: [17, -150] 로 상향 조정)
+      ty: "gr",
+      it: [
+        { ty: "rc", d: 1, s: { a: 0, k: [6, 50], ix: 2 }, p: { a: 0, k: [17, -150], ix: 3 }, r: { a: 0, k: 0, ix: 4 }, nm: "P3", hd: false },
+        { ty: "fl", c: { a: 0, k: [0.7, 0.7, 0.75, 1], ix: 4 }, o: { a: 0, k: 100, ix: 5 }, r: 1, bm: 0, nm: "Fill", hd: false },
+        { ty: "tr", p: { a:0, k:[0,0], ix:2}, a: {a:0, k:[0,0], ix:1}, s:{a:0,k:[100,100], ix:3}, r:{a:0,k:0, ix:6}, o:{a:0,k:100, ix:7}, sk:{a:0,k:0, ix:4}, sa:{a:0,k:0, ix:5}, nm: "Transform" }
+      ],
+      nm: "P3", np: 2, cix: 2, bm: 0, ix: 5, mn: "ADBE Vector Group", hd: false
+    }
+  ],
+  ip: 0, op: 600, st: 0, ct: 1, bm: 0
+};
+
+// 삼지창을 손 '뒤'에 렌더링하기 위해, 배열에서 손(11번 레이어)의 바로 '다음' 인덱스에 삽입.
+// (Lottie 배열에서 인덱스가 높을수록 더 뒤에 그려짐)
+const frontHandIdx = comp.layers.findIndex(l => l.ind === 11);
+comp.layers.splice(frontHandIdx + 1, 0, pitchforkLayer);
+
 writeFileSync(outPath, JSON.stringify(data));
-console.log('✅ 모자 위치 상향 + 찌찌 레이어(ind:1, 2) 완전 삭제 + 셔츠 적용!');
+console.log('✅ 삼지창 파지 위치(중간) 상향 조정 및 손 뒤로 렌더링 순서 변경 완벽 적용 완료!');
