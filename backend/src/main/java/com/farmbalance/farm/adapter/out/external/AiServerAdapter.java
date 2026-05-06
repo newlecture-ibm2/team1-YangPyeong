@@ -1,7 +1,10 @@
-package com.farmbalance.policy.adapter.out.external;
+package com.farmbalance.farm.adapter.out.external;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.farmbalance.farm.application.port.out.PredictYieldPort;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -9,7 +12,7 @@ import org.springframework.web.client.RestClient;
 
 /**
  * AI 서버 연동 어댑터 (External Adapter)
- * 에이전트 규칙에 따라 policy 도메인에 위치함
+ * 현재는 재배 수확량 예측을 담당하므로 farm 도메인에 위치함
  */
 @Slf4j
 @Component
@@ -49,18 +52,25 @@ public class AiServerAdapter implements PredictYieldPort {
      * AI 서버 요청 DTO
      */
     @Getter
-    @RequiredArgsConstructor
+    @AllArgsConstructor
     private static class PredictYieldRequest {
-        private final Long crop_id;
+        @JsonProperty("crop_id")
+        private final Long cropId;
+        
         private final Double area;
-        private final String cultivation_type;
+        
+        @JsonProperty("cultivation_type")
+        private final String cultivationType;
     }
 
     /**
      * AI 서버 응답 DTO
      */
     @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
     private static class PredictYieldResponse {
-        private Double predicted_yield;
+        @JsonProperty("predicted_yield")
+        private Double predictedYield;
     }
 }

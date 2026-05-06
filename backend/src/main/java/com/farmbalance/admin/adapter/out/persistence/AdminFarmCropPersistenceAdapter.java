@@ -34,9 +34,9 @@ public class AdminFarmCropPersistenceAdapter implements AdminFarmCropPort {
     public List<AdminFarmCrop> findByFarmId(Long farmId) {
         String sql = """
             SELECT fc.id, fc.farm_id, fc.crop_id,
-                   fc.estimated_yield, fc.yield_unit,
+                   fc.farmer_estimated_yield as estimated_yield, fc.yield_unit,
                    fc.created_at, fc.updated_at, fc.deleted_at
-            FROM farm_crops fc
+            FROM cultivation_registrations fc
             WHERE fc.farm_id = ? AND fc.deleted_at IS NULL
             """;
         return jdbcTemplate.query(sql, rowMapper, farmId);
@@ -46,9 +46,9 @@ public class AdminFarmCropPersistenceAdapter implements AdminFarmCropPort {
     public List<AdminFarmCrop> findAll() {
         String sql = """
             SELECT fc.id, fc.farm_id, fc.crop_id,
-                   fc.estimated_yield, fc.yield_unit,
+                   fc.farmer_estimated_yield as estimated_yield, fc.yield_unit,
                    fc.created_at, fc.updated_at, fc.deleted_at
-            FROM farm_crops fc
+            FROM cultivation_registrations fc
             WHERE fc.deleted_at IS NULL
             ORDER BY fc.created_at DESC
             """;
