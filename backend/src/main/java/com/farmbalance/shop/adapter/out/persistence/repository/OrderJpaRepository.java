@@ -26,4 +26,13 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, Long> 
             ORDER BY o.createdAt DESC
             """)
     List<OrderJpaEntity> findBySellerIdOrderByCreatedAtDesc(@Param("sellerId") Long sellerId);
+
+    /** 접수(ACCEPTED) 후 일정 시간이 지난 주문 조회 (자동 배송완료 처리용) */
+    @Query("""
+            SELECT o FROM OrderJpaEntity o
+            WHERE o.status = :status AND o.updatedAt < :before AND o.deletedAt IS NULL
+            """)
+    List<OrderJpaEntity> findByStatusAndUpdatedAtBefore(
+            @Param("status") String status,
+            @Param("before") java.time.LocalDateTime before);
 }

@@ -38,6 +38,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
+    // Mail
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
     // Database (PostgreSQL + JPA)
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'org.postgresql:postgresql'
@@ -79,6 +82,20 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// ── 로컬 개발용 .env 파일 로드 (bootRun 시) ──
+tasks.named('bootRun') {
+    if (file("../.env").exists()) {
+        file("../.env").readLines().each { line ->
+            if (line.trim() && !line.startsWith("#")) {
+                def parts = line.split("=", 2)
+                if (parts.length == 2) {
+                    environment parts[0], parts[1].trim()
+                }
+            }
+        }
+    }
 }
 
 // Gradle Wrapper 버전 설정

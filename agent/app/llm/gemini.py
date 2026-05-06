@@ -1,0 +1,79 @@
+"""
+Gemini LLM Provider 구현체
+"""
+
+import logging
+from typing import AsyncIterator, Optional
+
+import google.generativeai as genai
+
+from app.config import settings
+from app.llm.base import BaseLLM
+
+logger = logging.getLogger(__name__)
+
+
+class GeminiLLM(BaseLLM):
+    """Google Gemini API를 사용하는 LLM 구현체"""
+
+    def __init__(self) -> None:
+        if not settings.GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.")
+
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        self._model_name = settings.GEMINI_MODEL
+        logger.info("GeminiLLM 초기화 완료 (모델: %s)", self._model_name)
+
+    def _get_model(
+        self, system_instruction: Optional[str] = None
+    ) -> genai.GenerativeModel:
+        return genai.GenerativeModel(
+            model_name=self._model_name,
+            system_instruction=system_instruction,
+        )
+
+    async def generate(
+        self,
+        prompt: str,
+        *,
+        system_instruction: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> str:
+        model = self._get_model(system_instruction)
+        generation_config = genai.types.GenerationConfig(
+            temperature=temperature,
+            max_output_tokens=max_tokens,
+        )
+        try:
+            response = await model.generate_content_async(
+                prompt, generation_config=generation_config,
+            )
+            return response.text
+        except Exception as e:
+            logger.error("Gemini generate 실패: %s", e)
+            raise
+
+    async def generate_stream(
+        self,
+        prompt: str,
+        *,
+        system_instruction: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> AsyncIterator[str]:
+        model = self._get_model(system_instruction)
+        generation_config = genai.types.GenerationConfig(
+            temperature=temperature,
+            max_output_tokens=max_tokens,
+        )
+        try:
+            response = await model.generate_content_async(
+                prompt, generation_config=generation_config, stream=True,
+            )
+            async for chunk in response:
+                if chunk.text:
+                    yield chunk.text
+        except Exception as e:
+            logger.error("Gemini generate_stream 실패: %s", e)
+            raise

@@ -34,8 +34,12 @@ public class HistoryController {
                 .map(h -> HistoryResponse.builder()
                         .id(h.getId())
                         .farmId(h.getFarmId())
-                        .historyType(h.getHistoryType())
-                        .content(h.getContent())
+                        .cultivationRegistrationId(h.getCultivationRegistrationId())
+                        .recordDate(h.getRecordDate())
+                        .activityType(h.getActivityType())
+                        .activityContent(h.getActivityContent())
+                        .avgTemp(h.getAvgTemp())
+                        .totalRain(h.getTotalRain())
                         .createdAt(h.getCreatedAt())
                         .build())
                 .collect(Collectors.toList());
@@ -53,8 +57,12 @@ public class HistoryController {
             
         RecordHistoryCommand command = RecordHistoryCommand.builder()
                 .farmId(farmId)
-                .historyType(request.getHistoryType())
-                .content(request.getContent())
+                .cultivationRegistrationId(request.getCultivationRegistrationId())
+                .recordDate(request.getRecordDate())
+                .activityType(request.getActivityType())
+                .activityContent(request.getActivityContent())
+                .avgTemp(request.getAvgTemp())
+                .totalRain(request.getTotalRain())
                 .build();
                 
         recordHistoryUseCase.recordHistory(command);
@@ -71,7 +79,7 @@ public class HistoryController {
             @PathVariable Long historyId,
             @Valid @RequestBody UpdateHistoryRequest request) {
             
-        updateHistoryUseCase.updateHistory(historyId, request.getContent(), request.getHistoryType());
+        updateHistoryUseCase.updateHistory(historyId, request.getActivityContent(), request.getActivityType());
         
         return ApiResponse.ok(null);
     }

@@ -5,11 +5,19 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import * as PortOne from '@portone/browser-sdk/v2';
 import type { CartItem } from '../_lib/shop.types';
 import { getProduct, getCart } from '../_lib/shop.api';
+import { apiFetch } from '@/lib/api-fetch';
 import {
   FREE_SHIPPING_THRESHOLD,
   DEFAULT_DELIVERY_FEE,
   DELIVERY_MEMO_OPTIONS,
 } from '@/lib/constants';
+
+/** 유저 프로필 응답 타입 (배송지 관련 필드만) */
+interface UserProfile {
+  name?: string;
+  phone?: string;
+  address?: string;
+}
 
 /** 배송 정보 폼 */
 interface ShippingForm {
@@ -114,6 +122,10 @@ interface UseCheckoutReturn {
   handleBlur: (field: keyof TouchedFields) => void;
   /** 다음 주소 검색 팝업 열기 */
   openDaumPostcode: () => void;
+  /** 기본 배송지로 저장 체크 여부 */
+  saveAsDefault: boolean;
+  /** 기본 배송지로 저장 토글 */
+  setSaveAsDefault: (checked: boolean) => void;
 }
 
 /** 결제 페이지 전용 훅 */
@@ -172,6 +184,42 @@ export function useCheckout(): UseCheckoutReturn {
     deliveryMemo: DELIVERY_MEMO_OPTIONS[0],
     customMemo: '',
   });
+
+  // ── 기본 배송지 저장 체크 ──
+  const [saveAsDefault, setSaveAsDefault] = useState(false);
+
+  // ── 유저 프로필에서 기본 배송지 로드 ──
+  useEffect(() => {
+    const loadDefaultAddress = async () => {
+      const result = await apiFetch<UserProfile>('/api/users/me');
+      if (result.success && result.data) {
+        const { name, phone, address } = result.data;
+
+        // 주소와 상세주소를 구분자(|||)로 분리
+        let mainAddr = '';
+        let detailAddr = '';
+        if (address) {
+          const parts = address.split('|||');
+          mainAddr = parts[0]?.trim() || '';
+          detailAddr = parts[1]?.trim() || '';
+        }
+
+        setShippingForm((prev) => ({
+          ...prev,
+          receiverName: name || prev.receiverName,
+          receiverPhone: phone ? formatPhoneNumber(phone) : prev.receiverPhone,
+          address: mainAddr || prev.address,
+          addressDetail: detailAddr || prev.addressDetail,
+        }));
+
+        // 저장된 주소가 있으면 체크박스 기본 ON
+        if (address) {
+          setSaveAsDefault(true);
+        }
+      }
+    };
+    loadDefaultAddress();
+  }, []);
 
   const updateShipping = (field: keyof ShippingForm, value: string) => {
     // 연락처 입력 시 자동 하이픈 포매팅
@@ -317,40 +365,47 @@ export function useCheckout(): UseCheckoutReturn {
         return;
       }
 
-      // 3. 서버에 결제 검증 요청 (BFF → 백엔드)
-      try {
-        const verifyRes = await fetch('/api/shop/payment/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            paymentId,
-            orderName,
-            totalAmount: finalTotal,
-            shipping: {
-              receiverName: shippingForm.receiverName,
-              receiverPhone: shippingForm.receiverPhone,
-              address: `${shippingForm.address} ${shippingForm.addressDetail}`,
-              deliveryMemo: shippingForm.deliveryMemo === '직접 입력'
-                ? shippingForm.customMemo
-                : shippingForm.deliveryMemo,
-            },
-            items: orderItems.map((item) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              unitPrice: item.product.price,
-            })),
-          }),
-        });
+      // 3. 백엔드에 주문 생성 요청 (BFF → Spring Boot)
+      const fullAddress = `${shippingForm.address} ${shippingForm.addressDetail}`.trim();
+      const deliveryMemo = shippingForm.deliveryMemo === '직접 입력'
+        ? shippingForm.customMemo
+        : shippingForm.deliveryMemo;
 
-        if (!verifyRes.ok) {
-          console.warn('[결제 검증] 백엔드 검증 실패 — 백엔드 미연동 상태일 수 있습니다.');
-        }
-      } catch (verifyErr) {
-        // 백엔드 미연동 상태에서도 결제 완료 페이지로 이동 가능
-        console.warn('[결제 검증] 백엔드 연결 실패:', verifyErr);
+      const orderRes = await apiFetch<{ id: number; orderNumber: string }>('/api/shop/order', {
+        method: 'POST',
+        body: {
+          receiverName: shippingForm.receiverName,
+          receiverPhone: shippingForm.receiverPhone.replace(/-/g, ''),
+          shippingAddress: fullAddress,
+          shippingMemo: deliveryMemo,
+          items: orderItems.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+        },
+      });
+
+      if (!orderRes.success) {
+        setPaymentError(orderRes.error?.message || '주문 생성에 실패했습니다.');
+        return;
       }
 
-      // 4. 결제 완료 → 완료 페이지로 이동 (주문 정보 전달)
+      // 4. 기본 배송지로 저장 (체크 시) — 주소와 상세주소를 구분자로 분리 저장
+      if (saveAsDefault) {
+        const combinedAddress = shippingForm.addressDetail
+          ? `${shippingForm.address}|||${shippingForm.addressDetail}`
+          : shippingForm.address;
+        await apiFetch('/api/users/me', {
+          method: 'PUT',
+          body: {
+            name: shippingForm.receiverName,
+            phone: shippingForm.receiverPhone.replace(/-/g, ''),
+            address: combinedAddress,
+          },
+        });
+      }
+
+      // 5. 결제 완료 → 완료 페이지로 이동 (주문 정보 전달)
       const completeParams = new URLSearchParams({
         paymentId,
         orderName,
@@ -366,7 +421,7 @@ export function useCheckout(): UseCheckoutReturn {
     } finally {
       setIsProcessing(false);
     }
-  }, [isFormValid, isProcessing, orderItems, orderName, finalTotal, paymentMethod, shippingForm, router]);
+  }, [isFormValid, isProcessing, orderItems, orderName, finalTotal, paymentMethod, shippingForm, saveAsDefault, router]);
 
   return {
     orderItems,
@@ -385,5 +440,7 @@ export function useCheckout(): UseCheckoutReturn {
     touched,
     handleBlur,
     openDaumPostcode,
+    saveAsDefault,
+    setSaveAsDefault,
   };
 }

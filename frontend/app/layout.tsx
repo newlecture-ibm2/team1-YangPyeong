@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { ReactNode } from 'react'
 import { ToastProvider } from '@/components/common/Toast'
+import SessionManager from './(auth)/_components/SessionManager'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="ko">
       <body>
         <ToastProvider>
+          <SessionManager />
           {children}
         </ToastProvider>
       </body>

@@ -27,6 +27,12 @@ export async function apiFetch<T = unknown>(
       credentials: 'include',
     });
 
+    // 401 Unauthorized 처리 (세션 만료 등)
+    if (response.status === 401 && typeof window !== 'undefined' && !path.includes('/api/auth/login')) {
+      document.cookie = 'fb-user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      window.location.href = '/login';
+    }
+
     return await response.json();
   } catch (error) {
     console.error(`[Client] apiFetch 실패: ${path}`, error);

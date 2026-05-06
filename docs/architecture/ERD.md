@@ -4,7 +4,7 @@
 > **DB**: PostgreSQL 16
 > **ORM**: Spring Data JPA (Hibernate)
 > **네이밍**: snake_case (DB) ↔ camelCase (Java Entity)
-> **테이블 수**: 26개 (기존 14 + 신규 12)
+> **테이블 수**: 32개
 
 ---
 
@@ -77,13 +77,7 @@ erDiagram
     crops {
         bigint id PK
         bigint category_id FK
-        varchar code UK "ex: RICE_001"
         varchar name
-        int growth_days
-        decimal yield_per_sqm "㎡당 수확량(kg)"
-        decimal avg_cost_per_sqm "㎡당 평균 비용(원)"
-        jsonb climate_conditions "작물별 적정 재배 환경 조건"
-        boolean is_active
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -91,18 +85,42 @@ erDiagram
 
     crop_categories ||--o{ crops : "분류"
 
-    seed_registrations {
+    cultivation_registrations {
         bigint id PK
         bigint farm_id FK
         bigint crop_id FK
-        varchar seed_type "SEED | SEEDLING | SAPLING"
-        int quantity
-        decimal estimated_yield "예상 총 수확량"
+        varchar cultivation_type "SEED | SEEDLING | SAPLING"
+        decimal cultivation_area "재배 면적(㎡)"
+        decimal farmer_estimated_yield "농가 입력 예상 생산량"
+        decimal ai_predicted_yield "AI 예측 수확량"
         varchar yield_unit "g | kg | ton"
         boolean verified
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
+    }
+
+    harvest_records {
+        bigint id PK
+        bigint cultivation_registration_id FK
+        date harvest_date
+        decimal yield_amount
+        varchar yield_unit
+        varchar grade "A | B | C"
+        boolean to_shop "상점 노출 여부"
+        timestamp created_at
+    }
+
+    cultivation_history {
+        bigint id PK
+        bigint farm_id FK
+        bigint cultivation_registration_id FK
+        date record_date
+        varchar activity_type "WATER | FERTILIZER | PESTICIDE | ETC"
+        text activity_content
+        decimal avg_temp "해당일 평균 기온"
+        decimal total_rain "해당일 강수량"
+        timestamp created_at
     }
 
 
@@ -140,6 +158,7 @@ erDiagram
         bigint id PK
         bigint seller_id FK
         bigint category_id FK
+        bigint harvest_record_id FK "논리적 참조 (농가 직거래 시)"
         varchar name
         decimal price
         int stock
@@ -304,10 +323,16 @@ erDiagram
     users ||--o{ notifications : "수신"
     users ||--o{ download_history : "다운로드이력"
 
-    farms ||--o{ seed_registrations : "종자등록"
+    farms ||--o{ cultivation_registrations : "재배등록"
+    farms ||--o{ cultivation_history : "이력관리"
 
-    crops ||--o{ seed_registrations : "작물참조"
+    crops ||--o{ cultivation_registrations : "작물참조"
     crops ||--o{ balance_data : "수급데이터"
+
+    cultivation_registrations ||--o{ harvest_records : "수확기록"
+    cultivation_registrations ||--o{ cultivation_history : "활동기록"
+
+    harvest_records ||--o{ products : "상품매핑"
 
     orders ||--|{ order_items : "주문항목"
     products ||--o{ order_items : "상품참조"
@@ -317,6 +342,87 @@ erDiagram
 
     users ||--o{ guide_messages : "발송"
     users ||--o{ rag_documents : "등록"
+
+    %% ===== 농사로 Open API 데이터 (신규 V9) =====
+
+    nongsaro_varieties {
+        bigint id PK
+        varchar cntnts_no UK "콘텐츠 번호"
+        text variety_name "품종명"
+        varchar crop_name "작물명"
+        varchar category_code "분류코드"
+        text characteristics "주요 특성"
+        text breeding_inst "육성기관"
+        varchar breeding_year "육성년도"
+        text image_url "이미지 URL"
+        text attachment_url "첨부파일 URL"
+        varchar file_name "파일명"
+        jsonb raw_data "API 원본 JSON"
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    nongsaro_farm_schedules {
+        bigint id PK
+        varchar cntnts_no "콘텐츠 번호"
+        varchar crop_code "품목코드"
+        varchar crop_name "품목명"
+        text farm_work_type "농작업 유형"
+        varchar info_type_code "정보구분코드"
+        text info_type_name "정보구분명"
+        text operation_name "작업명"
+        int start_month "시작월"
+        varchar start_period "시작시기"
+        int end_month "종료월"
+        varchar end_period "종료시기"
+        int duration_months "소요기간(월)"
+        text video_url "동영상 URL"
+        jsonb raw_data "API 원본 JSON"
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    nongsaro_disaster_prevention {
+        bigint id PK
+        varchar cntnts_no UK "콘텐츠 번호"
+        text title "제목"
+        varchar crop_name "작물명"
+        varchar disaster_type "재해유형"
+        text content "본문"
+        text image_url "첨부파일 URL"
+        jsonb raw_data "API 원본 JSON"
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    nongsaro_eco_farming {
+        bigint id PK
+        varchar cntnts_no UK "콘텐츠 번호"
+        text title "제목"
+        varchar region_name "지역명"
+        text link_url "링크 URL"
+        varchar file_name "파일명"
+        jsonb raw_data "API 원본 JSON"
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    nongsaro_advanced_tech {
+        bigint id PK
+        varchar cntnts_no UK "콘텐츠 번호"
+        text title "제목"
+        text content "본문"
+        text image_url "이미지 URL"
+        text video_url "동영상 URL"
+        jsonb raw_data "API 원본 JSON"
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
 
     %% ===== 외부 API 데이터 (신규) =====
 
@@ -445,6 +551,20 @@ erDiagram
         timestamp deleted_at
     }
 
+    api_sync_status {
+        bigint id PK
+        varchar api_name UK
+        varchar display_name
+        timestamp last_synced
+        varchar sync_status "PENDING | RUNNING | SUCCESS | FAILED"
+        int last_record_count
+        text error_message
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
     rag_categories ||--o{ rag_documents : "분류"
 ```
 
@@ -540,21 +660,51 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.5 seed_registrations (종자 등록)
+### 2.5 cultivation_registrations (재배 등록)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
-| id | BIGINT | PK, AUTO | 종자 등록 고유 ID |
+| id | BIGINT | PK, AUTO | 재배 등록 고유 ID |
 | farm_id | BIGINT | FK → farms(id), NOT NULL | 농장 |
 | crop_id | BIGINT | FK → crops(id), NOT NULL | 작물 |
-| seed_type | VARCHAR(20) | NOT NULL | SEED(씨앗) / SEEDLING(종자) / SAPLING(모종) |
-| quantity | INT | NOT NULL | 수량 |
-| estimated_yield | DECIMAL(12,2) | | 예상 총 수확량 |
+| cultivation_type | VARCHAR(20) | NOT NULL | SEED(씨앗) / SEEDLING(종자) / SAPLING(모종) |
+| cultivation_area | DECIMAL(10,2) | NOT NULL | 재배 면적 (㎡) |
+| farmer_estimated_yield | DECIMAL(12,2) | | 농가 입력 예상 생산량 |
+| ai_predicted_yield | DECIMAL(12,2) | | AI 예측 수확량 |
 | yield_unit | VARCHAR(10) | | 수확량 단위 (g / kg / ton) |
 | verified | BOOLEAN | DEFAULT false | 인증 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
+
+### 2.5.1 harvest_records (수확 이력)
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 수확 이력 고유 ID |
+| cultivation_registration_id | BIGINT | FK → cultivation_registrations(id) | 재배 등록 참조 |
+| harvest_date | DATE | NOT NULL | 수확일 |
+| yield_amount | DECIMAL(12,2) | NOT NULL | 실제 수확량 |
+| yield_unit | VARCHAR(10) | NOT NULL | 수확량 단위 |
+| grade | VARCHAR(10) | | 등급 (A / B / C) |
+| to_shop | BOOLEAN | DEFAULT false | 상점 노출 여부 |
+| created_at | TIMESTAMP | NOT NULL | 등록일 |
+
+### 2.5.2 cultivation_history (재배/기상 이력)
+
+농가 활동 기록과 당시 기상 데이터를 결합하여 타임라인 형태로 저장합니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 이력 고유 ID |
+| farm_id | BIGINT | FK → farms(id), NOT NULL | 농장 |
+| cultivation_registration_id | BIGINT | FK → cultivation_registrations(id) | 관련 재배 등록 |
+| record_date | DATE | NOT NULL | 기록일 |
+| activity_type | VARCHAR(20) | | WATER / FERTILIZER / PESTICIDE / ETC |
+| activity_content | TEXT | | 활동 내용 |
+| avg_temp | DECIMAL(5,1) | | 해당일 평균 기온 (기상 API 스냅샷) |
+| total_rain | DECIMAL(7,1) | | 해당일 강수량 (기상 API 스냅샷) |
+| created_at | TIMESTAMP | NOT NULL | 등록일 |
 
 ### 2.6 balance_data (수급 데이터)
 
@@ -596,6 +746,7 @@ erDiagram
 | id | BIGINT | PK, AUTO | 상품 고유 ID |
 | seller_id | BIGINT | FK → users(id), NOT NULL | 판매자 |
 | category_id | BIGINT | FK → product_categories(id) | 상품 카테고리 |
+| harvest_record_id | BIGINT | FK → harvest_records(id) | 수확 이력 참조 (선택) |
 | name | VARCHAR(200) | NOT NULL | 상품명 |
 | price | DECIMAL(10,2) | NOT NULL | 가격 (원) |
 | stock | INT | NOT NULL, DEFAULT 0 | 재고 |
@@ -613,7 +764,7 @@ erDiagram
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
 | id | BIGINT | PK, AUTO | 고유 ID |
-| entity_type | VARCHAR(30) | NOT NULL | 용도 구분 (PRODUCT / FARM_CERT / SEED_RECEIPT / POST 등) |
+| entity_type | VARCHAR(30) | NOT NULL | 용도 구분 (PRODUCT / FARM_CERT / CULTIVATION_RECEIPT / POST 등) |
 | entity_id | BIGINT | NOT NULL | 대상 엔티티의 PK |
 | file_type | VARCHAR(20) | NOT NULL | 파일 종류 (IMAGE / DOCUMENT) |
 | file_url | VARCHAR(500) | NOT NULL | 파일 URL |
@@ -623,7 +774,7 @@ erDiagram
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
 > **인덱스**: (entity_type, entity_id) 복합 인덱스 권장  
-> **entity_type 값**: `PRODUCT` (상품), `FARM_CERT` (토지증명서), `SEED_RECEIPT` (종자 영수증), `POST` (게시글)  
+> **entity_type 값**: `PRODUCT` (상품), `FARM_CERT` (토지증명서), `CULTIVATION_RECEIPT` (재배 영수증), `POST` (게시글)  
 > **file_type 값**: `IMAGE` (이미지 파일), `DOCUMENT` (문서 파일)
 
 ### 2.9 orders (주문)
@@ -864,7 +1015,119 @@ erDiagram
 
 > **UNIQUE 제약**: (sub_category_code)
 
-### 2.23 pest_occurrence_reports (병해충 발생정보 보고서 — 독립)
+### 2.23 nongsaro_varieties (농사로 품종 정보 — 독립)
+
+농사로 `varietyInfo` API에서 수집한 품종 마스터 데이터입니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| cntnts_no | VARCHAR(20) | UNIQUE, NOT NULL | 콘텐츠 번호 |
+| variety_name | TEXT | | 품종명 (cntntsSj) |
+| crop_name | VARCHAR(100) | | 작물명 (svcCodeNm) |
+| category_code | VARCHAR(20) | | 상위 분류코드 (upperSvcCode) |
+| characteristics | TEXT | | 주요 특성 (mainChartrInfo) |
+| breeding_inst | TEXT | | 육성기관 (unbrngInsttInfo) |
+| breeding_year | VARCHAR(10) | | 육성년도 (unbrngYear) |
+| image_url | TEXT | | 이미지 URL |
+| attachment_url | TEXT | | 첨부파일 URL |
+| file_name | VARCHAR(200) | | 원본 파일명 |
+| raw_data | JSONB | | API 원본 JSON |
+| created_at | TIMESTAMP | DEFAULT NOW() | 수집일 |
+| updated_at | TIMESTAMP | | 갱신일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **데이터 소스**: 농사로 `varietyInfo/varietyList` API (~2,604건)
+
+### 2.24 nongsaro_farm_schedules (농사로 농작업일정 — 독립)
+
+농사로 `farmWorkingPlanNew` API에서 품목그룹→일정→시기별 3단계로 수집한 농작업 일정 데이터입니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| cntnts_no | VARCHAR(20) | NOT NULL | 콘텐츠 번호 |
+| crop_code | VARCHAR(20) | | 품목코드 (kidofcomdtySeCode) |
+| crop_name | VARCHAR(50) | | 품목명 |
+| farm_work_type | TEXT | | 농작업 유형 |
+| info_type_code | VARCHAR(20) | | 정보구분코드 (infoSeCode) |
+| info_type_name | TEXT | | 정보구분명 |
+| operation_name | TEXT | | 작업명 (opertNm) |
+| start_month | INT | | 시작월 |
+| start_period | VARCHAR(10) | | 시작시기 (상/중/하) |
+| end_month | INT | | 종료월 |
+| end_period | VARCHAR(10) | | 종료시기 |
+| duration_months | INT | | 소요기간 (월) |
+| video_url | TEXT | | 동영상 URL |
+| raw_data | JSONB | | API 원본 JSON |
+| created_at | TIMESTAMP | DEFAULT NOW() | 수집일 |
+| updated_at | TIMESTAMP | | 갱신일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **UNIQUE 제약**: (cntnts_no, operation_name, start_month)  
+> **인덱스**: crop_code, start_month  
+> **데이터 소스**: 농사로 `farmWorkingPlanNew` API (품목그룹→일정→시기별 3단계 수집)
+
+### 2.25 nongsaro_disaster_prevention (농사로 재해예방정보 — 독립)
+
+농사로 `frcDsstrPrevnt` API에서 수집한 재해예방 관리기술 정보입니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| cntnts_no | VARCHAR(20) | UNIQUE, NOT NULL | 콘텐츠 번호 |
+| title | TEXT | | 제목 |
+| crop_name | VARCHAR(100) | | 작물명 (API 미제공 시 NULL) |
+| disaster_type | VARCHAR(100) | | 재해유형 (제목에서 파싱: 재해예방/고온해/저온해/홍수해 등) |
+| content | TEXT | | 본문 (PDF 형태라 NULL) |
+| image_url | TEXT | | 첨부파일 다운로드 URL |
+| raw_data | JSONB | | API 원본 JSON |
+| created_at | TIMESTAMP | DEFAULT NOW() | 수집일 |
+| updated_at | TIMESTAMP | | 갱신일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **데이터 소스**: 농사로 `frcDsstrPrevnt/frcDsstrPrevntLst` API (~320건)  
+> **disaster_type 값**: 재해예방, 고온해(폭염), 저온해(동해), 홍수해, 호우, 기타
+
+### 2.26 nongsaro_eco_farming (농사로 친환경 우수사례 — 독립)
+
+농사로 `evrfrndFarmng` API에서 수집한 친환경 농업 우수사례입니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| cntnts_no | VARCHAR(20) | UNIQUE, NOT NULL | 콘텐츠 번호 |
+| title | TEXT | | 제목 |
+| region_name | VARCHAR(50) | | 지역명 (areaNm) |
+| link_url | TEXT | | 링크 URL |
+| file_name | VARCHAR(200) | | 원본 파일명 |
+| raw_data | JSONB | | API 원본 JSON |
+| created_at | TIMESTAMP | DEFAULT NOW() | 수집일 |
+| updated_at | TIMESTAMP | | 갱신일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **데이터 소스**: 농사로 `evrfrndFarmng/evrfrndFarmngLst` API (~66건)
+
+### 2.27 nongsaro_advanced_tech (농사로 첨단농업기술 — 독립)
+
+농사로 `uptodeFarmngTchnlgyInfo` API에서 수집한 첨단농업기술 콘텐츠입니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| cntnts_no | VARCHAR(20) | UNIQUE, NOT NULL | 콘텐츠 번호 (classSubIdx) |
+| title | TEXT | | 제목 (classSubTitle) |
+| content | TEXT | | 본문 (classSubContents) |
+| image_url | TEXT | | 이미지 URL |
+| video_url | TEXT | | 동영상 URL (classSubMovieUrl) |
+| raw_data | JSONB | | API 원본 JSON |
+| created_at | TIMESTAMP | DEFAULT NOW() | 수집일 |
+| updated_at | TIMESTAMP | | 갱신일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **데이터 소스**: 농사로 `uptodeFarmngTchnlgyInfo/uptodeFarmngTchnlgyInfoLst` API (~171건)
+
+### 2.28 pest_occurrence_reports (병해충 발생정보 보고서 — 독립)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -882,7 +1145,7 @@ erDiagram
 > **UNIQUE 제약**: (cntnts_no)  
 > **데이터 소스**: 농사로 `dbyhsCccrrncInfo` API
 
-### 2.24 rag_categories (RAG 문서 카테고리)
+### 2.29 rag_categories (RAG 문서 카테고리)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -895,7 +1158,7 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.25 rag_documents (RAG 문서 관리)
+### 2.30 rag_documents (RAG 문서 관리)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -916,7 +1179,7 @@ erDiagram
 > **설계 의도**: AI 챗봇(Bedrock RAG)에 인제스트할 소스 문서를 관리하는 테이블.  
 > 관리자가 파일(PDF 등)을 업로드하거나 텍스트를 직접 입력하여 RAG 벡터 DB의 원본 데이터를 CRUD 할 수 있다.
 
-### 2.26 download_history (데이터 다운로드 이력)
+### 2.31 download_history (데이터 다운로드 이력)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -931,6 +1194,24 @@ erDiagram
 
 > **설계 의도**: 지자체/관리자가 데이터를 엑셀/CSV로 다운로드(내보내기) 한 이력을 추적/보관합니다. 파일 원본은 시스템 내에 저장하지 않습니다.
 
+### 2.32 api_sync_status (API별 동기화 상태 모니터링)
+
+외부 API 데이터 수집의 최신 상태, 성공 여부, 제어 상태를 관리합니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 상태 고유 ID |
+| api_name | VARCHAR(50) | NOT NULL, UNIQUE | API 식별자 (WEATHER 등, 코드 매칭용) |
+| display_name | VARCHAR(100) | NOT NULL | 관리자 UI 표시명 |
+| last_synced | TIMESTAMP | | 마지막 동기화 시각 |
+| sync_status | VARCHAR(20) | DEFAULT 'PENDING' | PENDING / RUNNING / SUCCESS / FAILED |
+| last_record_count | INT | | 마지막 수집 건수 |
+| error_message | TEXT | | 동기화 실패 시 에러 내용 |
+| is_active | BOOLEAN | DEFAULT true | 관리자 수집 On/Off 제어 |
+| created_at | TIMESTAMP | NOT NULL | 등록일 |
+| updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
+
 ---
 
 ## 3. 핵심 관계 요약
@@ -939,8 +1220,10 @@ erDiagram
 |------|:---------:|:---:|------|
 | regions → regions | 1:N (자기참조) | ✅ | 시도 → 시군구 → 읍면동 계층 |
 | regions → users | 1:N | — | region_code로 논리적 참조 (GOV 관할) |
-| users → farms | 1:N | ✅ | 유저 한 명이 여러 농장 소유 가능 |
-| farms → seed_registrations | 1:N | ✅ | 농장별 여러 종자 등록 |
+| farms → cultivation_registrations | 1:N | ✅ | 농장별 여러 재배 등록 |
+| farms → cultivation_history | 1:N | ✅ | 농장별 재배/기상 이력 적재 |
+| cultivation_registrations → harvest_records | 1:N | ✅ | 파종 건별 수확 기록 트래킹 |
+| harvest_records → products | 1:N | ✅ | 수확물 데이터를 커머스 상품에 매핑 |
 | crops → balance_data | 1:N | ✅ | 작물별 지역·시즌 수급 데이터 |
 | users → products | 1:N | ✅ | 판매자가 여러 상품 등록 |
 | users → orders | 1:N | ✅ | 구매자가 여러 주문 |
@@ -964,7 +1247,11 @@ erDiagram
 | soil_exam_data | pnu_code | farms.pnu_code | 흙토람 토양 화학성 (논리적 참조) |
 | weather_data | — | — | 완전 독립 (stn_id + obs_date로 조회) |
 | pest_occurrence_reports | — | — | 완전 독립 (cntnts_no로 조회) |
-
+| nongsaro_varieties | — | — | 농사로 품종 정보 (~2,604건) |
+| nongsaro_farm_schedules | — | — | 농사로 농작업일정 시기별 데이터 |
+| nongsaro_disaster_prevention | — | — | 농사로 재해예방정보 (~320건) |
+| nongsaro_eco_farming | — | — | 농사로 친환경 우수사례 (~66건) |
+| nongsaro_advanced_tech | — | — | 농사로 첨단농업기술 (~171건) |
 
 > **설계 근거**: 외부 API에서 배치 수집하는 AI용 데이터이므로, 내부 도메인 테이블과 FK로 결합하지 않고 독립적으로 관리합니다.
 
@@ -988,10 +1275,12 @@ CREATE INDEX idx_farms_user_id ON farms(user_id);
 CREATE INDEX idx_farms_status ON farms(status);
 CREATE INDEX idx_farms_bjd_code ON farms(bjd_code);
 CREATE INDEX idx_farms_pnu_code ON farms(pnu_code);
+CREATE INDEX idx_history_farm_id ON cultivation_history(farm_id);
+CREATE INDEX idx_harvest_cult_reg ON harvest_records(cultivation_registration_id);
 
--- 종자 등록
-CREATE INDEX idx_seed_reg_farm_id ON seed_registrations(farm_id);
-CREATE INDEX idx_seed_reg_crop_id ON seed_registrations(crop_id);
+-- 재배 등록
+CREATE INDEX idx_cultivation_reg_farm_id ON cultivation_registrations(farm_id);
+CREATE INDEX idx_cultivation_reg_crop_id ON cultivation_registrations(crop_id);
 
 -- 수급 데이터 (핵심 조회)
 CREATE UNIQUE INDEX idx_balance_data_unique ON balance_data(region_code, crop_id, year, season);
@@ -999,6 +1288,7 @@ CREATE INDEX idx_balance_data_status ON balance_data(balance_status);
 
 -- 상품
 CREATE INDEX idx_products_seller_id ON products(seller_id);
+CREATE INDEX idx_products_harvest_id ON products(harvest_record_id);
 CREATE INDEX idx_products_status ON products(status);
 
 -- 주문
@@ -1022,9 +1312,19 @@ CREATE UNIQUE INDEX idx_crop_guides_crop ON crop_guides(sub_category_code);
 CREATE UNIQUE INDEX idx_pest_reports_cntnts ON pest_occurrence_reports(cntnts_no);
 CREATE INDEX idx_pest_reports_year ON pest_occurrence_reports(report_year);
 
+-- 농사로 Open API 테이블
+CREATE INDEX idx_nongsaro_varieties_crop ON nongsaro_varieties(crop_name);
+CREATE INDEX idx_farm_schedules_crop ON nongsaro_farm_schedules(crop_code);
+CREATE INDEX idx_farm_schedules_month ON nongsaro_farm_schedules(start_month);
+CREATE INDEX idx_disaster_type ON nongsaro_disaster_prevention(disaster_type);
+
 -- RAG 문서
 CREATE INDEX idx_rag_docs_category ON rag_documents(category);
 CREATE INDEX idx_rag_docs_status ON rag_documents(status);
 CREATE INDEX idx_rag_docs_content_type ON rag_documents(content_type);
+
+-- API 관리 (admin 전용)
+CREATE INDEX idx_api_sync_status ON api_sync_status(sync_status);
+CREATE INDEX idx_api_sync_active ON api_sync_status(is_active);
 
 ```

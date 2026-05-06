@@ -19,7 +19,8 @@ public record OrderResponse(
         String shippingAddress,
         String shippingMemo,
         List<OrderItemDto> items,
-        String createdAt
+        String createdAt,
+        String updatedAt
 ) {
     public record OrderItemDto(
             Long id,
@@ -48,7 +49,8 @@ public record OrderResponse(
                 order.getItems() != null
                         ? order.getItems().stream().map(OrderItemDto::from).toList()
                         : List.of(),
-                order.getCreatedAt() != null ? order.getCreatedAt().toString() : null
+                order.getCreatedAt() != null ? order.getCreatedAt().toString() : null,
+                order.getUpdatedAt() != null ? order.getUpdatedAt().toString() : null
         );
     }
 }

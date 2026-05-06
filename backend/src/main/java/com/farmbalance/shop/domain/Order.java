@@ -19,13 +19,15 @@ public class Order {
     private String shippingMemo;
     private List<OrderItem> items;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public Order() {
     }
 
     public Order(Long id, Long buyerId, String orderNumber, int totalAmount, OrderStatus status,
                  String receiverName, String receiverPhone, String shippingAddress,
-                 String shippingMemo, List<OrderItem> items, LocalDateTime createdAt) {
+                 String shippingMemo, List<OrderItem> items, LocalDateTime createdAt,
+                 LocalDateTime updatedAt) {
         this.id = id;
         this.buyerId = buyerId;
         this.orderNumber = orderNumber;
@@ -37,6 +39,7 @@ public class Order {
         this.shippingMemo = shippingMemo;
         this.items = items;
         this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     // ── Getter ──
@@ -52,6 +55,7 @@ public class Order {
     public String getShippingMemo() { return shippingMemo; }
     public List<OrderItem> getItems() { return items; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 
     // ── 비즈니스 로직 ──
 

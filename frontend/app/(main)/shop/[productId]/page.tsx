@@ -203,19 +203,33 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               </tr>
               <tr>
                 <th>재고</th>
-                <td>{product.stock}개</td>
+                <td>
+                  {product.stock > 0 ? (
+                    <>{product.stock}개</>
+                  ) : (
+                    <span style={{ color: 'var(--color-danger)', fontWeight: 700 }}>품절</span>
+                  )}
+                </td>
               </tr>
             </tbody>
           </table>
 
           {/* 액션 버튼 (Intersection Observer 대상) */}
           <div ref={actionRef} className={styles.actionButtons}>
-            <Button variant="outline" onClick={() => handlePurchaseAction('cart', 'center')}>
-              🛒 장바구니
-            </Button>
-            <Button variant="primary" onClick={() => handlePurchaseAction('buy', 'center')}>
-              바로 구매
-            </Button>
+            {product.stock > 0 ? (
+              <>
+                <Button variant="outline" onClick={() => handlePurchaseAction('cart', 'center')}>
+                  🛒 장바구니
+                </Button>
+                <Button variant="primary" onClick={() => handlePurchaseAction('buy', 'center')}>
+                  바로 구매
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" disabled fullWidth>
+                품절된 상품입니다
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -271,7 +285,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       )}
 
       {/* ════════ 플로팅 구매 바 ════════ */}
-      {showFloatingBar && !purchaseAction && (
+      {showFloatingBar && !purchaseAction && product.stock > 0 && (
         <div className={styles.floatingBar}>
           <div className={styles.floatingInfo}>
             <span className={styles.floatingName}>{product.name}</span>

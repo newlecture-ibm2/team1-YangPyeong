@@ -13,4 +13,6 @@ public interface SecurityQuestionJpaRepository extends JpaRepository<SecurityQue
     Optional<SecurityQuestionJpaEntity> findByUserId(Long userId);
 
     boolean existsByUserId(Long userId);
+
+    void deleteByUserId(Long userId);
 }
