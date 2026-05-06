@@ -12,9 +12,10 @@ import java.util.Map;
 
 /**
  * 지자체 데이터 조회 Driven Adapter (JdbcTemplate 네이티브 쿼리)
- * 기존 ERD 테이블(farms, seed_registrations, balance_data, orders 등)을 직접 조회합니다.
+ * 기존 ERD 테이블(farms, cultivation_registrations, balance_data, orders 등)을 직접 조회합니다.
  *
  * [변경 이력]
+ * - farm_crops → cultivation_registrations 테이블 전환 (재배 등록 정식 테이블 사용)
  * - TOWN_CASE 하드코딩(12개 CASE WHEN) → regions 테이블 JOIN 기반으로 교체
  * - getGovUserInfo: regionCode, regionName 추가 조회
  * - queryBalance: 하드코딩 regionCode 매핑 → users.region_code 기반 조회
@@ -69,17 +70,17 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
             SELECT %s AS "읍면",
                    f.name AS "농가명",
                    c.name AS "작물명",
-                   COALESCE(f.area_size, 0) AS "재배면적㎡",
-                   COALESCE(sr.estimated_yield, 0) AS "예상생산량kg",
-                   TO_CHAR(sr.created_at, 'YYYY-MM-DD') AS "등록일"
-            FROM seed_registrations sr
-            JOIN farms f ON f.id = sr.farm_id
-            JOIN crops c ON c.id = sr.crop_id
-            WHERE sr.created_at BETWEEN ? AND ?
-              AND sr.deleted_at IS NULL AND f.deleted_at IS NULL
+                   COALESCE(cr.cultivation_area, 0) AS "재배면적㎡",
+                   COALESCE(cr.farmer_estimated_yield, 0) AS "예상생산량kg",
+                   TO_CHAR(cr.created_at, 'YYYY-MM-DD') AS "등록일"
+            FROM cultivation_registrations cr
+            JOIN farms f ON f.id = cr.farm_id
+            JOIN crops c ON c.id = cr.crop_id
+            WHERE cr.created_at BETWEEN ? AND ?
+              AND cr.deleted_at IS NULL AND f.deleted_at IS NULL
               %s
               %s
-            ORDER BY sr.created_at DESC
+            ORDER BY cr.created_at DESC
             """.formatted(TOWN_EXPR, townFilter, regionFilter);
         return jdbc.queryForList(sql, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
     }
@@ -147,18 +148,18 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
             SELECT f.name AS "농가명",
                    u.name AS "대표자",
                    %s AS "읍면",
-                   COALESCE(f.area_size, 0) AS "면적㎡",
+                   COALESCE(f.area, 0) AS "면적㎡",
                    COALESCE(STRING_AGG(DISTINCT c.name, ', '), '-') AS "주요작물",
-                   f.status AS "승인상태"
+                   f.certification_status AS "승인상태"
             FROM farms f
             JOIN users u ON u.id = f.user_id
-            LEFT JOIN seed_registrations sr ON sr.farm_id = f.id AND sr.deleted_at IS NULL
-            LEFT JOIN crops c ON c.id = sr.crop_id
+            LEFT JOIN cultivation_registrations cr ON cr.farm_id = f.id AND cr.deleted_at IS NULL
+            LEFT JOIN crops c ON c.id = cr.crop_id
             WHERE f.created_at BETWEEN ? AND ?
               AND f.deleted_at IS NULL
               %s
               %s
-            GROUP BY f.id, f.name, u.name, f.address, f.area_size, f.status
+            GROUP BY f.id, f.name, u.name, f.address, f.area, f.certification_status
             ORDER BY f.name
             """.formatted(TOWN_EXPR, townFilter, regionFilter);
         return jdbc.queryForList(sql, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());

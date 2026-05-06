@@ -2,13 +2,14 @@ import { useState } from 'react';
 import Badge from '@/components/common/Badge/Badge';
 import styles from './Timeline.module.css';
 
-export type HistoryType = 'USER' | 'WEATHER' | 'SYSTEM';
+export type HistoryType = 'USER' | 'WEATHER' | 'SYSTEM' | 'WATER' | 'FERTILIZER' | 'PESTICIDE' | 'ETC';
 
 export interface CultivationHistory {
   id: number;
   farmId: number;
-  historyType: HistoryType;
-  content: string;
+  cultivationRegistrationId?: number;
+  activityType: HistoryType;
+  activityContent: string;
   createdAt: string;
 }
 
@@ -16,13 +17,15 @@ interface TimelineProps {
   histories: CultivationHistory[];
   onEdit?: (historyId: number, content: string) => void;
   onDelete?: (historyId: number) => void;
+  onEditCultivation?: (cultivationId: number) => void;
+  onDeleteCultivation?: (cultivationId: number) => void;
 }
 
-export default function Timeline({ histories, onEdit, onDelete }: TimelineProps) {
+export default function Timeline({ histories, onEdit, onDelete, onEditCultivation, onDeleteCultivation }: TimelineProps) {
   const [filter, setFilter] = useState<HistoryType | 'ALL'>('ALL');
 
   const filteredHistories = histories.filter(
-    (h) => filter === 'ALL' || h.historyType === filter
+    (h) => filter === 'ALL' || h.activityType === filter
   );
 
   const getTheme = (type: HistoryType) => {
@@ -33,33 +36,42 @@ export default function Timeline({ histories, onEdit, onDelete }: TimelineProps)
         return { icon: '☁️', badgeName: '날씨/환경', variant: 'blue' as const, dotClass: styles.dotWeather };
       case 'SYSTEM':
         return { icon: '🤖', badgeName: '시스템 알림', variant: 'purple' as const, dotClass: styles.dotSystem };
+      case 'WATER':
+        return { icon: '💧', badgeName: '관수', variant: 'blue' as const, dotClass: styles.dotWeather };
+      case 'FERTILIZER':
+        return { icon: '🧪', badgeName: '비료', variant: 'lime' as const, dotClass: styles.dotUser };
+      case 'PESTICIDE':
+        return { icon: '🛡️', badgeName: '방제', variant: 'orange' as const, dotClass: styles.dotSystem };
+      default:
+        return { icon: '📝', badgeName: '기타', variant: 'green' as const, dotClass: styles.dotUser };
     }
   };
 
   return (
     <div className={styles.container}>
-      {/* 필터 버튼 그룹 */}
-      <div className={styles.filters}>
+      {/* 필터 그룹 */}
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '32px' }}>
+
         <button
-          className={`${styles.filterBtn} ${filter === 'ALL' ? styles.active : ''}`}
+          className={filter === 'ALL' ? styles.filterActive : styles.filterLink}
           onClick={() => setFilter('ALL')}
         >
           전체보기
         </button>
         <button
-          className={`${styles.filterBtn} ${filter === 'USER' ? styles.active : ''}`}
+          className={filter === 'USER' ? styles.filterActive : styles.filterLink}
           onClick={() => setFilter('USER')}
         >
           🌱 사용자 기록
         </button>
         <button
-          className={`${styles.filterBtn} ${filter === 'WEATHER' ? styles.active : ''}`}
+          className={filter === 'WEATHER' ? styles.filterActive : styles.filterLink}
           onClick={() => setFilter('WEATHER')}
         >
           ☁️ 날씨/환경
         </button>
         <button
-          className={`${styles.filterBtn} ${filter === 'SYSTEM' ? styles.active : ''}`}
+          className={filter === 'SYSTEM' ? styles.filterActive : styles.filterLink}
           onClick={() => setFilter('SYSTEM')}
         >
           🤖 시스템 알림
@@ -72,7 +84,7 @@ export default function Timeline({ histories, onEdit, onDelete }: TimelineProps)
           <p className={styles.empty}>해당 카테고리의 기록이 없습니다.</p>
         ) : (
           filteredHistories.map((history) => {
-            const theme = getTheme(history.historyType);
+            const theme = getTheme(history.activityType);
             const dateStr = new Date(history.createdAt).toLocaleString('ko-KR', {
               year: 'numeric',
               month: 'long',
@@ -96,19 +108,31 @@ export default function Timeline({ histories, onEdit, onDelete }: TimelineProps)
                       <Badge variant={theme.variant}>{theme.badgeName}</Badge>
                     </div>
                     
-                    {/* 사용자 기록일 경우에만 수정/삭제 버튼 표시 */}
-                    {history.historyType === 'USER' && (
+                    {/* 사용자 기록이거나 재배 등록 정보인 경우 수정/삭제 버튼 표시 */}
+                    {(history.activityType === 'USER' || history.cultivationRegistrationId) && (
                       <div className={styles.actions}>
                         <button 
                           className={styles.actionBtn} 
-                          onClick={() => onEdit?.(history.id, history.content)}
+                          onClick={() => {
+                            if (history.cultivationRegistrationId) {
+                              onEditCultivation?.(history.cultivationRegistrationId);
+                            } else {
+                              onEdit?.(history.id, history.activityContent);
+                            }
+                          }}
                           title="수정"
                         >
                           ✏️
                         </button>
                         <button 
                           className={`${styles.actionBtn} ${styles.delete}`} 
-                          onClick={() => onDelete?.(history.id)}
+                          onClick={() => {
+                            if (history.cultivationRegistrationId) {
+                              onDeleteCultivation?.(history.cultivationRegistrationId);
+                            } else {
+                              onDelete?.(history.id);
+                            }
+                          }}
                           title="삭제"
                         >
                           🗑️
@@ -116,7 +140,7 @@ export default function Timeline({ histories, onEdit, onDelete }: TimelineProps)
                       </div>
                     )}
                   </div>
-                  <p className={styles.content}>{history.content}</p>
+                  <p className={styles.content}>{history.activityContent}</p>
                 </div>
               </div>
             );

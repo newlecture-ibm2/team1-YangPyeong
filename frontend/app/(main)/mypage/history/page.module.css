@@ -1,0 +1,391 @@
+/* ════════════════════════════════════════════════════════
+   구매자 주문내역 — 스타일
+   ════════════════════════════════════════════════════════ */
+
+/* ── 요약 카드 ── */
+.summaryRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.summaryCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summaryCardHighlight {
+  background: var(--color-primary);
+}
+
+.summaryCardHighlight .summaryLabel {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.summaryCardHighlight .summaryValue {
+  color: var(--color-accent);
+}
+
+.summaryLabel {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.summaryValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+}
+
+/* ── 상태 필터 탭 ── */
+.filterTabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: var(--space-lg);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filterTab {
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.filterTab:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.filterTabActive {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* ── 주문 카드 리스트 ── */
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.orderCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.orderCard:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* ── 카드 헤더 ── */
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.orderMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.orderNumber {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.orderDate {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* ── 카드 바디 ── */
+.orderBody {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.orderProduct {
+  flex: 1;
+  min-width: 0;
+}
+
+.orderProductName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orderProductItems {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.orderAmount {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.orderDetailBtn {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.orderDetailBtn:hover {
+  background: var(--color-primary-pale);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* ── 빈 상태 ── */
+.emptyState {
+  text-align: center;
+  padding: 80px 20px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.emptyIcon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.emptyText {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.emptySubText {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+/* ── 상세 모달 ── */
+.detailModal {
+  padding: 8px 0;
+}
+
+.detailSection {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.detailSection:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.detailSectionTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 8px 16px;
+  font-size: 14px;
+}
+
+.detailGrid dt {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.detailGrid dd {
+  color: var(--color-text);
+}
+
+.detailPrice {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* ── 주문 항목 리스트 (모달 내) ── */
+.itemList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+}
+
+.itemName {
+  flex: 1;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.itemQty {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0 16px;
+}
+
+.itemSubtotal {
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.itemTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 12px 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--color-border);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.itemTotalLabel {
+  color: var(--color-text-secondary);
+}
+
+.itemTotalAmount {
+  color: var(--color-primary);
+}
+
+/* ── 로딩 ── */
+.loadingState {
+  text-align: center;
+  padding: 80px 20px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.spinner {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingText {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  .summaryRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summaryValue {
+    font-size: 22px;
+  }
+
+  .orderBody {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .orderAmount {
+    font-size: 15px;
+  }
+
+  .detailGrid {
+    grid-template-columns: 70px 1fr;
+    font-size: 13px;
+  }
+
+  .itemRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .itemQty {
+    margin: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .summaryRow {
+    grid-template-columns: 1fr;
+  }
+
+  .orderHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .orderMeta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}

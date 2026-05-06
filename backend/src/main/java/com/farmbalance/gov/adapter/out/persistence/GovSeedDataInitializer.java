@@ -41,15 +41,16 @@ public class GovSeedDataInitializer {
 
             if (seedUserCount >= 32) {
                 log.info("[Gov Seed] 시드 데이터가 완전히 존재합니다 ({}명/32명). 스킵합니다.", seedUserCount);
-                return;
+            } else {
+                if (seedUserCount > 0) {
+                    log.info("[Gov Seed] 불완전 시드 데이터 감지 ({}명/32명). 정리 후 재삽입합니다.", seedUserCount);
+                    cleanSeedData();
+                }
+                executeSeedSql();
             }
 
-            if (seedUserCount > 0) {
-                log.info("[Gov Seed] 불완전 시드 데이터 감지 ({}명/32명). 정리 후 재삽입합니다.", seedUserCount);
-                cleanSeedData();
-            }
-
-            executeSeedSql();
+            // 시드 존재 여부와 무관하게, 면적/생산량이 비어있으면 항상 백필
+            backfillCultivationData();
         } catch (Exception e) {
             log.error("[Gov Seed] ❌ 시드 데이터 초기화 실패", e);
         }
@@ -101,11 +102,11 @@ public class GovSeedDataInitializer {
                 "GS-%");
 
         safeDelete("balance_data",
-                "DELETE FROM balance_data WHERE crop_id IN (SELECT id FROM crops WHERE code LIKE ?)",
-                "GS_%");
+                "DELETE FROM balance_data WHERE crop_id IN (SELECT id FROM crops WHERE category_id IN (SELECT id FROM crop_categories WHERE name LIKE ?))",
+                "[GS]%");
 
-        safeDelete("seed_registrations",
-                "DELETE FROM seed_registrations WHERE farm_id IN " +
+        safeDelete("cultivation_registrations",
+                "DELETE FROM cultivation_registrations WHERE farm_id IN " +
                 "(SELECT id FROM farms WHERE user_id IN (SELECT id FROM users WHERE email LIKE ?))",
                 SEED_EMAIL);
 
@@ -122,8 +123,8 @@ public class GovSeedDataInitializer {
                 SEED_EMAIL);
 
         safeDelete("crops",
-                "DELETE FROM crops WHERE code LIKE ?",
-                "GS_%");
+                "DELETE FROM crops WHERE category_id IN (SELECT id FROM crop_categories WHERE name LIKE ?)",
+                "[GS]%");
 
         safeDelete("crop_categories",
                 "DELETE FROM crop_categories WHERE name LIKE ?",
@@ -143,6 +144,52 @@ public class GovSeedDataInitializer {
             }
         } catch (Exception e) {
             log.error("[Gov Seed] {} 삭제 실패: {}", table, e.getMessage());
+        }
+    }
+
+    /**
+     * cultivation_registrations의 면적/생산량이 NULL 또는 0인 레코드에
+     * 작물별 현실적인 데모 데이터를 채워넣습니다.
+     * - 매 서버 시작 시 체크하므로, DB를 밀어도 자동 복구됩니다.
+     */
+    private void backfillCultivationData() {
+        try {
+            int updated = jdbc.update("""
+                UPDATE cultivation_registrations cr
+                SET cultivation_area = sub.area,
+                    farmer_estimated_yield = sub.yield
+                FROM (
+                    SELECT cr2.id,
+                           CASE c.name
+                               WHEN '배추'   THEN 3300 + (RANDOM() * 1700)::INT
+                               WHEN '고추'   THEN 2000 + (RANDOM() * 1000)::INT
+                               WHEN '토마토' THEN 1500 + (RANDOM() * 1500)::INT
+                               WHEN '감자'   THEN 2500 + (RANDOM() * 2000)::INT
+                               WHEN '딸기'   THEN 1000 + (RANDOM() * 800)::INT
+                               WHEN '청경채' THEN 800  + (RANDOM() * 700)::INT
+                               ELSE 2000 + (RANDOM() * 1500)::INT
+                           END AS area,
+                           CASE c.name
+                               WHEN '배추'   THEN 5000 + (RANDOM() * 8000)::INT
+                               WHEN '고추'   THEN 300  + (RANDOM() * 500)::INT
+                               WHEN '토마토' THEN 8000 + (RANDOM() * 7000)::INT
+                               WHEN '감자'   THEN 4000 + (RANDOM() * 5000)::INT
+                               WHEN '딸기'   THEN 2000 + (RANDOM() * 3000)::INT
+                               WHEN '청경채' THEN 1500 + (RANDOM() * 2000)::INT
+                               ELSE 3000 + (RANDOM() * 4000)::INT
+                           END AS yield
+                    FROM cultivation_registrations cr2
+                    JOIN crops c ON c.id = cr2.crop_id
+                    WHERE (cr2.cultivation_area IS NULL OR cr2.cultivation_area = 0)
+                       OR (cr2.farmer_estimated_yield IS NULL OR cr2.farmer_estimated_yield = 0)
+                ) sub
+                WHERE cr.id = sub.id
+            """);
+            if (updated > 0) {
+                log.info("[Gov Seed] ✅ cultivation_registrations 면적/생산량 백필 완료 ({}건)", updated);
+            }
+        } catch (Exception e) {
+            log.warn("[Gov Seed] cultivation 백필 실패 (테이블 미존재 가능): {}", e.getMessage());
         }
     }
 

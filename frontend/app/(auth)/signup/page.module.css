@@ -207,7 +207,35 @@
 .fieldError {
   font-size: 12px;
   color: var(--color-danger);
-  margin-top: 4px;
+  margin-top: 2px;
+  padding-left: 2px;
+  animation: fadeIn 0.2s ease;
+}
+
+.fieldGroup {
+  margin-bottom: 16px;
+}
+
+/* fieldGroup 내부 Input의 하단 여백 제거 → 안내 메시지가 입력창 바로 아래 표시 */
+.fieldGroup > div {
+  margin-bottom: 0;
+}
+
+.fieldChecking {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+  padding-left: 2px;
+  animation: fadeIn 0.2s ease;
+}
+
+.fieldSuccess {
+  font-size: 12px;
+  color: var(--color-primary);
+  font-weight: 500;
+  margin-top: 2px;
+  padding-left: 2px;
+  animation: fadeIn 0.2s ease;
 }
 
 /* ── Password Strength ── */
@@ -279,6 +307,37 @@
   margin-bottom: 20px;
   text-align: center;
   line-height: 1.6;
+}
+
+/* ── 탈퇴 계정 재활성화 모달 ── */
+.reactivateModal {
+  padding: 8px 0;
+}
+
+.reactivateText {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+.reactivateHint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 24px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid var(--color-primary);
+}
+
+.reactivateBtnGroup {
+  display: flex;
+  gap: 12px;
+}
+
+.reactivateBtnGroup > * {
+  flex: 1;
 }
 
 /* ── Footer ── */

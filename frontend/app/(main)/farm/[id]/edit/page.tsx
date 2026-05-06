@@ -9,20 +9,39 @@ import Dropdown from '@/components/common/Dropdown/Dropdown';
 import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Modal from '@/components/common/Modal/Modal';
+import ModalDialog from '@/components/common/Modal/ModalDialog';
+import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import { useToast } from '@/components/common/Toast';
 import { uploadFile } from '@/lib/upload.api';
-import { useFarmDetail } from '../../_hooks/useFarm';
+import { useFarmDetail } from '../../useFarm';
 import { updateFarm } from '../../_lib/farm.api';
 import styles from '../../register/page.module.css';
 
-const CROP_OPTIONS = [
-  { value: '배추', label: '🥬 배추' },
-  { value: '고추', label: '🌶️ 고추' },
-  { value: '당근', label: '🥕 당근' },
-  { value: '양파', label: '🧅 양파' },
-  { value: '감자', label: '🥔 감자' },
-  { value: '토마토', label: '🍅 토마토' },
-];
+interface CropOption {
+  id: number;
+  name: string;
+  categoryId: number;
+}
+
+interface FarmFormData {
+  name: string;
+  registrationNumber: string;
+  zipCode: string;
+  baseAddress: string;
+  detailAddress: string;
+  area: string;
+  pyeong: string;
+  cropIds: number[];
+  operationStatus: string;
+  soilType: string;
+  ph: string;
+  organicMatter: string;
+  documentUrl: string;
+  bjdCode: string;
+  isMountain: boolean;
+  mainNo: string;
+  subNo: string;
+}
 
 export default function FarmEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -32,8 +51,18 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
 
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
-  const [formData, setFormData] = useState({
+  // 작물 마스터 목록 가져오기
+  const [cropOptions, setCropOptions] = useState<CropOption[]>([]);
+  useEffect(() => {
+    fetch('/api/admin/crops')
+      .then(res => res.json())
+      .then(json => { if (json.success) setCropOptions(json.data || []); })
+      .catch(() => {});
+  }, []);
+
+  const [formData, setFormData] = useState<FarmFormData>({
     name: '',
     registrationNumber: '',
     zipCode: '',
@@ -41,7 +70,7 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     detailAddress: '',
     area: '',
     pyeong: '',
-    cropTypes: [] as string[],
+    cropIds: [],
     operationStatus: 'active',
     soilType: '',
     ph: '',
@@ -77,7 +106,7 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
         detailAddress: '', 
         area: farm.area.toString(),
         pyeong: (farm.area / 3.3058).toFixed(1),
-        cropTypes: farm.cropTypes,
+        cropIds: farm.cropIds || [],
         operationStatus: 'active',
         documentUrl: farm.documentUrl || '',
         bjdCode: bjdCode,
@@ -91,8 +120,8 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     }
   }, [farm]);
 
-  const handleChange = (field: string, value: any) => {
-    if (field === 'registrationNumber') {
+  const handleChange = (field: keyof FarmFormData, value: string | boolean | number[]) => {
+    if (field === 'registrationNumber' && typeof value === 'string') {
       const onlyNumbers = value.replace(/[^0-9]/g, '').slice(0, 10);
       setFormData((prev) => ({ ...prev, [field]: onlyNumbers }));
       return;
@@ -140,10 +169,10 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     toast.success('주소가 변경되었습니다. 저장 시 PNU 정보가 갱신됩니다.');
   };
 
-  const removeCrop = (crop: string) => {
+  const removeCrop = (cropId: number) => {
     setFormData(prev => ({
       ...prev,
-      cropTypes: prev.cropTypes.filter(t => t !== crop)
+      cropIds: prev.cropIds.filter(id => id !== cropId)
     }));
   };
 
@@ -156,7 +185,7 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
         name: formData.name,
         address: formData.baseAddress,
         area: Number(formData.area),
-        cropTypes: formData.cropTypes,
+        cropIds: formData.cropIds,
         bjdCode: formData.bjdCode || undefined,
         isMountain: formData.isMountain,
         mainNo: formData.mainNo || undefined,
@@ -169,15 +198,17 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
       });
       toast.success('농장 정보가 수정되었습니다.');
       router.push('/farm');
-    } catch (err: any) {
-      toast.error(err.message || '수정에 실패했습니다.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '수정에 실패했습니다.';
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (confirm('정말로 이 농장을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+    const confirmed = await showConfirm('정말로 이 농장을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.');
+    if (confirmed) {
       const success = await removeFarm();
       if (success) router.push('/farm');
     }
@@ -250,19 +281,19 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
               </div>
               <div className={styles.inputGroup} style={{ gap: '8px' }}>
                 <Dropdown
-                  label="주요 작물"
-                  options={CROP_OPTIONS}
+                  label="재배 작물"
+                  options={cropOptions.map(c => ({ value: String(c.id), label: c.name }))}
                   multiple
                   required
-                  value={formData.cropTypes.join(',')}
-                  onChange={(val) => handleChange('cropTypes', val.split(',').filter(Boolean))}
+                  value={formData.cropIds.map(String).join(',')}
+                  onChange={(val) => handleChange('cropIds', val.split(',').filter(Boolean).map(Number))}
                 />
-                {formData.cropTypes.length > 0 && (
+                {formData.cropIds.length > 0 && (
                   <div className={styles.tagList}>
-                    {formData.cropTypes.map(crop => (
-                      <span key={crop} className={styles.tag}>
-                        {CROP_OPTIONS.find(o => o.value === crop)?.label || crop}
-                        <button type="button" className={styles.tagRemoveBtn} onClick={() => removeCrop(crop)}>×</button>
+                    {formData.cropIds.map(cropId => (
+                      <span key={cropId} className={styles.tag}>
+                        {cropOptions.find(c => c.id === cropId)?.name || cropId}
+                        <button type="button" className={styles.tagRemoveBtn} onClick={() => removeCrop(cropId)}>×</button>
                       </span>
                     ))}
                   </div>
@@ -334,6 +365,12 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
           <DaumPostcodeEmbed onComplete={handlePostcodeComplete} style={{ width: '100%', height: '460px' }} />
         </div>
       </Modal>
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   );
 }

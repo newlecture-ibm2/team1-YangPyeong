@@ -3,8 +3,12 @@ import { HistoryType } from '../_components/Timeline/Timeline';
 export interface CultivationHistory {
   id: number;
   farmId: number;
-  historyType: 'USER' | 'WEATHER' | 'SYSTEM';
-  content: string;
+  cultivationRegistrationId?: number;
+  recordDate: string;
+  activityType: 'USER' | 'WEATHER' | 'SYSTEM' | 'WATER' | 'FERTILIZER' | 'PESTICIDE' | 'ETC';
+  activityContent: string;
+  avgTemp?: number;
+  totalRain?: number;
   createdAt: string;
 }
 
@@ -16,11 +20,11 @@ export async function getFarmHistories(farmId: number): Promise<CultivationHisto
     method: 'GET',
     cache: 'no-store',
   });
-  
+
   if (!res.ok) {
     throw new Error('이력 조회에 실패했습니다.');
   }
-  
+
   const response = await res.json();
   return response.data || [];
 }
@@ -35,11 +39,12 @@ export async function recordFarmHistory(farmId: number, content: string): Promis
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      content,
-      historyType: 'USER',
+      activityContent: content,
+      activityType: 'USER',
+      recordDate: new Date().toISOString().split('T')[0],
     }),
   });
-  
+
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.message || '이력 기록에 실패했습니다.');
@@ -56,11 +61,11 @@ export async function updateFarmHistory(farmId: number, historyId: number, conte
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      content,
-      historyType: 'USER',
+      activityContent: content,
+      activityType: 'USER',
     }),
   });
-  
+
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.message || '이력 수정에 실패했습니다.');
@@ -74,10 +79,9 @@ export async function deleteFarmHistory(farmId: number, historyId: number): Prom
   const res = await fetch(`/api/farm/${farmId}/histories/${historyId}`, {
     method: 'DELETE',
   });
-  
+
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.message || '이력 삭제에 실패했습니다.');
   }
 }
-

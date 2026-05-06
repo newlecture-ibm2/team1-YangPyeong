@@ -8,6 +8,8 @@ import Button from '@/components/common/Button';
 import FilterBar from '@/components/common/FilterBar/FilterBar';
 import SearchInput from '@/components/common/SearchInput/SearchInput';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
+import ModalDialog from '@/components/common/Modal/ModalDialog';
+import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import Link from 'next/link';
 import styles from './stores.module.css';
 
@@ -38,6 +40,7 @@ export default function StoreMapPage() {
   // Kakao Map 객체를 ref로 관리 (useCallback 의존성 순환 방지)
   const mapRef = useRef<kakao.maps.Map | null>(null);
   const isFirstLoad = useRef(true);
+  const { dialog, showAlert, handleConfirm, handleClose } = useModalDialog();
 
   // 장소 검색 함수 — 명시적 호출 시에만 실행 (의존성 없음)
   const searchPlaces = useCallback(() => {
@@ -86,7 +89,7 @@ export default function StoreMapPage() {
   // 내 위치 찾기 (버튼 클릭 전용)
   const findMyLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      alert('위치 정보를 지원하지 않는 브라우저입니다.');
+      showAlert('위치 정보를 지원하지 않는 브라우저입니다.', '위치 정보 오류');
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -294,6 +297,12 @@ export default function StoreMapPage() {
           )}
         </div>
       </div>
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   );
 }

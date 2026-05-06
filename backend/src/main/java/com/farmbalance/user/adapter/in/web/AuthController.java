@@ -71,6 +71,20 @@ public class AuthController {
     }
 
     /**
+     * 보안질문 답변 검증 — 답변이 맞는지만 확인합니다 (비밀번호 변경 없음).
+     */
+    @PostMapping("/password-reset/verify-answer")
+    public ApiResponse<Boolean> verifyAnswer(@RequestBody java.util.Map<String, String> request) {
+        String email = request.get("email");
+        String securityAnswer = request.get("securityAnswer");
+        if (email == null || securityAnswer == null) {
+            return ApiResponse.ok(false);
+        }
+        boolean valid = passwordResetUseCase.verifyAnswer(email, securityAnswer);
+        return ApiResponse.ok(valid);
+    }
+
+    /**
      * 비밀번호 재설정 — 보안질문 답변 검증 후 비밀번호를 변경합니다.
      */
     @PutMapping("/password-reset")

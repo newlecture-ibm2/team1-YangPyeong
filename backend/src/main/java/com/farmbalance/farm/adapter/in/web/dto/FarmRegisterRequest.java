@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.util.List;
 
 @Getter
@@ -20,7 +21,19 @@ public class FarmRegisterRequest {
     @NotNull(message = "면적은 필수입니다.")
     private Double area;
 
-    private List<String> cropTypes;
+    // 작물 ID 목록 (하위호환 및 기존 로직 유지용)
+    private List<Long> cropIds;
+
+    // 작물 등록 정보 (cultivation_registrations 용 - 새 기능)
+    private List<CultivationRequest> cultivations;
+
+    @Getter
+    @Setter
+    public static class CultivationRequest {
+        private Long cropId;
+        private Double area;
+        private Double expectedYield;
+    }
     
     // PNU 생성용 필드
     @NotBlank(message = "주소 검색을 통해 지역 정보를 입력해주세요.")

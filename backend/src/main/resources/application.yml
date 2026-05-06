@@ -33,6 +33,7 @@ spring:
     enabled: true
     baseline-on-migrate: true # 기존에 테이블이 있는 DB라도 충돌 없이 베이스라인부터 시작하도록 허용
     baseline-version: 1
+    out-of-order: true # 순서가 뒤바뀐 마이그레이션도 실행 허용 (V10.4 등)
     locations: classpath:db/migration
 
   # ── Redis ──
@@ -40,6 +41,20 @@ spring:
     redis:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
+
+  # ── Mail (SMTP) ──
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    default-encoding: UTF-8
 
   # ── Servlet (파일 업로드) ──
   servlet:
@@ -57,19 +72,21 @@ jwt:
 external:
   kakao:
     rest-api-key: ${KAKAO_REST_API_KEY:}
-  kma:
-    api-key: ${KMA_API_KEY:}
+  weather:
+    base-url: "https://apis.data.go.kr/1360000/AsosDalyInfoService"
+
+    api-key: ${WEATHER_API_KEY:}
   soil:
     api-key: ${SOIL_API_KEY:}
   nongsaro:
-    api-key: ${NONGSARO_API_KEY:}
+    default-key: ${NONGSARO_API_KEY_DEFAULT:}
+    crop-ebook-key: ${NONGSARO_API_KEY_CROP_EBOOK:}
   kosis:
     api-key: ${KOSIS_API_KEY:}
 
 # ── AI Server ──
 ai:
   server-url: ${AI_SERVER_URL:http://ai-server:8000}
-  agent-url: ${AGENT_SERVER_URL:http://agent-server:8001}
 
 # ── Server ──
 server:

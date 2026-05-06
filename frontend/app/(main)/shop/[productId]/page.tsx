@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Badge, Card, Modal } from '@/components';
+import { Button, Badge, Card, Modal, Spinner } from '@/components';
 import { useToast } from '@/components';
 import { useProductDetail } from './useProductDetail';
 import { addToCart } from '../_lib/shop.api';
@@ -27,6 +27,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
   const {
     product,
+    loading,
     quantity,
     totalPrice,
     increaseQuantity,
@@ -105,6 +106,15 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     };
   }, [lightboxOpen, closeLightbox, prevImage, nextImage]);
 
+
+  /* ── 로딩 처리 ── */
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <Spinner message="상품 정보를 불러오는 중입니다..." fullHeight={true} />
+      </div>
+    );
+  }
 
   /* ── 상품이 없는 경우 ── */
   if (!product) {
@@ -203,19 +213,33 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               </tr>
               <tr>
                 <th>재고</th>
-                <td>{product.stock}개</td>
+                <td>
+                  {product.stock > 0 ? (
+                    <>{product.stock}개</>
+                  ) : (
+                    <span style={{ color: 'var(--color-danger)', fontWeight: 700 }}>품절</span>
+                  )}
+                </td>
               </tr>
             </tbody>
           </table>
 
           {/* 액션 버튼 (Intersection Observer 대상) */}
           <div ref={actionRef} className={styles.actionButtons}>
-            <Button variant="outline" onClick={() => handlePurchaseAction('cart', 'center')}>
-              🛒 장바구니
-            </Button>
-            <Button variant="primary" onClick={() => handlePurchaseAction('buy', 'center')}>
-              바로 구매
-            </Button>
+            {product.stock > 0 ? (
+              <>
+                <Button variant="outline" onClick={() => handlePurchaseAction('cart', 'center')}>
+                  🛒 장바구니
+                </Button>
+                <Button variant="primary" onClick={() => handlePurchaseAction('buy', 'center')}>
+                  바로 구매
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" disabled fullWidth>
+                품절된 상품입니다
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -271,7 +295,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       )}
 
       {/* ════════ 플로팅 구매 바 ════════ */}
-      {showFloatingBar && !purchaseAction && (
+      {showFloatingBar && !purchaseAction && product.stock > 0 && (
         <div className={styles.floatingBar}>
           <div className={styles.floatingInfo}>
             <span className={styles.floatingName}>{product.name}</span>

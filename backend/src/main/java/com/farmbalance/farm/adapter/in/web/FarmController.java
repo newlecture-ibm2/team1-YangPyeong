@@ -21,9 +21,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.farmbalance.farm.domain.CultivationRegistration;
+import com.farmbalance.farm.application.port.out.LoadFarmPort;
 
 @RestController
-@RequestMapping("/api/farms")
+@RequestMapping({"/api/farms", "/api/farm"})
 @RequiredArgsConstructor
 public class FarmController {
 
@@ -52,12 +54,24 @@ public class FarmController {
         }
 
         // DTO -> Command 매핑
+        // 재배 등록 상세 정보 변환
+        List<RegisterFarmCommand.CultivationDetail> cultivationDetails = null;
+        if (request.getCultivations() != null && !request.getCultivations().isEmpty()) {
+            cultivationDetails = request.getCultivations().stream()
+                    .map(c -> RegisterFarmCommand.CultivationDetail.builder()
+                            .cropId(c.getCropId())
+                            .area(c.getArea())
+                            .expectedYield(c.getExpectedYield())
+                            .build())
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
         RegisterFarmCommand command = RegisterFarmCommand.builder()
                 .userId(userId)
                 .name(request.getName())
                 .address(request.getAddress())
                 .area(request.getArea())
-                .cropTypes(request.getCropTypes())
+                .cropIds(request.getCropIds())
                 .bjdCode(request.getBjdCode())
                 .isMountain(request.isMountain())
                 .mainNo(request.getMainNo())
@@ -69,6 +83,7 @@ public class FarmController {
                 .soilType(request.getSoilType())
                 .ph(request.getPh())
                 .organicMatter(request.getOrganicMatter())
+                .cultivations(cultivationDetails)
                 .build();
 
         // UseCase 호출 (비즈니스 로직)
@@ -102,7 +117,7 @@ public class FarmController {
                         .name(farm.getName())
                         .address(farm.getAddress())
                         .area(farm.getArea())
-                        .cropTypes(farm.getCropTypes())
+                        .cropNames(farm.getCropNames())
                         .certificationStatus(farm.getCertificationStatus() != null ? farm.getCertificationStatus().name() : "PENDING")
                         .build())
                 .collect(Collectors.toList());
@@ -121,7 +136,8 @@ public class FarmController {
                 .name(farm.getName())
                 .address(farm.getAddress())
                 .area(farm.getArea())
-                .cropTypes(farm.getCropTypes())
+                .cropNames(farm.getCropNames())
+                .cropIds(farm.getCropIds())
                 .pnuCode(farm.getPnuCode())
                 .bjdCode(farm.getBjdCode())
                 .registrationNumber(farm.getRegistrationNumber())
@@ -134,6 +150,8 @@ public class FarmController {
         return ResponseEntity.ok(ApiResponse.ok(responseData));
     }
 
+
+
     @PatchMapping("/{farmId}")
     public ResponseEntity<ApiResponse<FarmDetailResponse>> updateFarm(
             @PathVariable Long farmId,
@@ -144,7 +162,7 @@ public class FarmController {
                 .name(request.getName())
                 .address(request.getAddress())
                 .area(request.getArea())
-                .cropTypes(request.getCropTypes())
+                .cropIds(request.getCropIds())
                 .bjdCode(request.getBjdCode())
                 .isMountain(request.isMountain())
                 .mainNo(request.getMainNo())
@@ -163,7 +181,8 @@ public class FarmController {
                 .name(updatedFarm.getName())
                 .address(updatedFarm.getAddress())
                 .area(updatedFarm.getArea())
-                .cropTypes(updatedFarm.getCropTypes())
+                .cropNames(updatedFarm.getCropNames())
+                .cropIds(updatedFarm.getCropIds())
                 .pnuCode(updatedFarm.getPnuCode())
                 .bjdCode(updatedFarm.getBjdCode())
                 .registrationNumber(updatedFarm.getRegistrationNumber())

@@ -6,6 +6,8 @@ import Button from '@/components/common/Button/Button'
 import Badge from '@/components/common/Badge/Badge'
 import SearchInput from '@/components/common/SearchInput/SearchInput'
 import FilterBar from '@/components/common/FilterBar/FilterBar'
+import ModalDialog from '@/components/common/Modal/ModalDialog'
+import { useModalDialog } from '@/components/common/Modal/useModalDialog'
 import { useToast } from '@/components/common/Toast'
 import styles from './UserManagement.module.css'
 import type { AdminUser, UserRole, ChangeableRole } from '../_lib/user.types'
@@ -25,6 +27,7 @@ export default function UserManagementPage() {
   const [totalCount, setTotalCount] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
   const toast = useToast()
   const toastRef = useRef(toast)
@@ -78,7 +81,8 @@ export default function UserManagementPage() {
   const handleStatusToggle = async (user: AdminUser) => {
     const isActive = user.status === 'ACTIVE'
     const action = isActive ? '정지' : '재활성화'
-    if (!window.confirm(`${user.name} 사용자를 ${action}하시겠습니까?`)) return
+    const confirmed = await showConfirm(`${user.name} 사용자를 ${action}하시겠습니까?`)
+    if (!confirmed) return
 
     try {
       const newStatus = isActive ? 'SUSPENDED' : 'ACTIVE'
@@ -104,7 +108,7 @@ export default function UserManagementPage() {
   // 필터 드롭다운 옵션
   const roleOptions = [
     { label: '역할: 전체', value: 'ALL' },
-    { label: '일반', value: 'GENERAL' },
+    { label: '일반', value: 'USER' },
     { label: '농부', value: 'FARMER' },
     { label: '지자체', value: 'GOV' },
   ]
@@ -117,7 +121,7 @@ export default function UserManagementPage() {
 
   // 역할 변경 드롭다운 옵션
   const changeableRoleOptions = [
-    { label: '일반', value: 'GENERAL' },
+    { label: '일반', value: 'USER' },
     { label: '농부', value: 'FARMER' },
   ]
 
@@ -267,6 +271,12 @@ export default function UserManagementPage() {
 
       {/* 페이지네이션 */}
       {renderPagination()}
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   )
 }

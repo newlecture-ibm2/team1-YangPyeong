@@ -33,6 +33,8 @@ interface DropdownProps {
   className?: string;
   /** 복수 선택 여부 */
   multiple?: boolean;
+  /** 인라인 스타일 */
+  style?: React.CSSProperties;
 }
 
 export default function Dropdown({
@@ -48,6 +50,7 @@ export default function Dropdown({
   fullWidth = false,
   className = '',
   multiple = false,
+  style,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -78,7 +81,7 @@ export default function Dropdown({
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
 
@@ -109,7 +112,7 @@ export default function Dropdown({
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={`${styles.group} ${fullWidth ? styles['group--full'] : ''}`}>
+    <div className={`${styles.group} ${fullWidth ? styles['group--full'] : ''}`} style={style}>
       {label && (
         <label className={styles.label}>
           {label}

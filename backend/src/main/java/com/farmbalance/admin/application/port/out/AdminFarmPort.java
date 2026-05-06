@@ -19,6 +19,11 @@ public interface AdminFarmPort {
 
     void updateStatus(Long id, String status);
 
+    /**
+     * 상태 변경 + 반려 사유 저장
+     */
+    void updateStatusWithReason(Long id, String status, String reason);
+
     void updateLandCertVerified(Long id, Boolean verified);
 
     /**

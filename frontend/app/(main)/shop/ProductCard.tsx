@@ -40,6 +40,11 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           ) : (
             <div className={styles.imagePlaceholder}>🖼️</div>
           )}
+          {product.stock <= 0 && (
+            <div className={styles.soldOutOverlay}>
+              <span className={styles.soldOutText}>품절</span>
+            </div>
+          )}
         </div>
 
         {/* 상품 정보 */}
@@ -50,7 +55,13 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           <h4 className={styles.name}>{product.name}</h4>
           <p className={styles.seller}>{product.sellerName}</p>
           <div className={styles.bottom}>
-            <strong className={styles.price}>₩{formattedPrice}</strong>
+            <strong className={styles.price}>
+              {product.stock <= 0 ? (
+                <span className={styles.soldOutPrice}>품절</span>
+              ) : (
+                <>₩{formattedPrice}</>
+              )}
+            </strong>
             {/* onMouseDown으로 Link 이벤트 차단, onClick으로 콜백 실행 */}
             <span onMouseDown={handleCartMouseDown} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
               <Button
@@ -58,6 +69,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
                 size="sm"
                 className={styles.cartBtn}
                 onClick={handleCartClick}
+                disabled={product.stock <= 0}
               >
                 🛒
               </Button>

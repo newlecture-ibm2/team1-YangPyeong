@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Dropdown, SearchInput, Modal, Button } from '@/components';
+import { Dropdown, SearchInput, Modal, Button, Spinner } from '@/components';
 import { useToast } from '@/components';
 import ProductCard from './ProductCard';
 import { useProducts } from './useProducts';
@@ -67,7 +67,7 @@ export default function ShopBrowsePage() {
       </div>
 
       {/* ════════ 카테고리 탭 ════════ */}
-      <div className={styles.tabs}>
+      <div className={styles.tabs} data-guide="shop-category">
         {categoryTabs.map((tab) => (
           <button
             key={tab.value}
@@ -80,7 +80,7 @@ export default function ShopBrowsePage() {
       </div>
 
       {/* ════════ 필터 바 ════════ */}
-      <div className={styles.filterBar}>
+      <div className={styles.filterBar} data-guide="shop-search">
         <div className={styles.filterSort}>
           <Dropdown
             options={sortOptions}
@@ -102,8 +102,12 @@ export default function ShopBrowsePage() {
       </div>
 
       {/* ════════ 상품 그리드 ════════ */}
-      <div className={styles.productGrid}>
-        {products.length > 0 ? (
+      <div className={styles.productGrid} data-guide="shop-products">
+        {loading ? (
+          <div style={{ gridColumn: '1 / -1', minHeight: '300px' }}>
+            <Spinner message="상품을 불러오는 중입니다..." fullHeight={false} />
+          </div>
+        ) : products.length > 0 ? (
           products.map((product) => (
             <ProductCard
               key={product.id}

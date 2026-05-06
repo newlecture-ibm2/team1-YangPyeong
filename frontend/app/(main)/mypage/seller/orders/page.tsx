@@ -4,22 +4,47 @@ import { useState, useRef, useEffect } from 'react';
 import Badge from '@/components/common/Badge/Badge';
 import Button from '@/components/common/Button/Button';
 import Modal from '@/components/common/Modal/Modal';
+import Spinner from '@/components/common/Spinner/Spinner';
 import { ORDER_STATUS_MAP, ORDER_FILTER_TABS } from '../../_lib/mypage.types';
 import type { OrderStatus } from '../../_lib/mypage.types';
 import useSellerOrders from './useSellerOrders';
 import styles from './page.module.css';
 
-/** 다음 상태 전환 버튼 라벨 */
+/** 다음 상태 전환 버튼 라벨 (판매자는 접수만 가능) */
 const NEXT_ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
   ORDERED: '접수 확인',
-  ACCEPTED: '배송 시작',
-  SHIPPED: '배송 완료',
 };
+
+/** 자동 배송완료 시간 (시간 단위, 백엔드와 동일) */
+const AUTO_COMPLETE_HOURS = 24;
+
+/** ACCEPTED 상태의 남은 시간 계산 */
+function getRemainingTime(acceptedAt?: string): string {
+  if (!acceptedAt) return '';
+  const accepted = new Date(acceptedAt);
+  const completeAt = new Date(accepted.getTime() + AUTO_COMPLETE_HOURS * 60 * 60 * 1000);
+  const now = new Date();
+  const diffMs = completeAt.getTime() - now.getTime();
+
+  if (diffMs <= 0) return '배송완료 예정';
+
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  return `약 ${hours}시간 ${mins}분 후 배송완료`;
+}
+
+/** 접수시각 포맷 */
+function formatAcceptedDate(acceptedAt?: string): string {
+  if (!acceptedAt) return '-';
+  const d = new Date(acceptedAt);
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
 
 /** S-36. 판매 주문 관리 페이지 */
 export default function SellerOrdersPage() {
   const {
     orders,
+    loading,
     kpi,
     statusFilter,
     setStatusFilter,
@@ -67,7 +92,7 @@ export default function SellerOrdersPage() {
           <span className={styles.kpiValue}>{kpi.preparing}</span>
         </div>
         <div className={styles.kpiCard}>
-          <span className={styles.kpiLabel}>배송중</span>
+          <span className={styles.kpiLabel}>처리완료</span>
           <span className={styles.kpiValue}>{kpi.shipping}</span>
         </div>
         <div className={`${styles.kpiCard} ${styles.kpiCardHighlight}`}>
@@ -90,7 +115,9 @@ export default function SellerOrdersPage() {
       </div>
 
       {/* 주문 테이블 */}
-      {orders.length === 0 ? (
+      {loading ? (
+        <Spinner message="판매 주문 목록을 불러오는 중입니다..." fullHeight={true} />
+      ) : orders.length === 0 ? (
         <div className={styles.emptyState}>
           <p className={styles.emptyIcon}>📋</p>
           <p className={styles.emptyText}>해당 상태의 주문이 없습니다.</p>
@@ -126,6 +153,11 @@ export default function SellerOrdersPage() {
                     <td className={styles.tdAmount}>{formatPrice(order.totalAmount)}</td>
                     <td>
                       <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                      {order.status === 'ACCEPTED' && (
+                        <span className={styles.deliveryHint}>
+                          🚚 {getRemainingTime(order.acceptedAt)}
+                        </span>
+                      )}
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <div className={styles.actionCell} ref={openMenuId === order.id ? menuRef : undefined}>
@@ -224,6 +256,24 @@ export default function SellerOrdersPage() {
                 )}
               </dl>
             </div>
+
+            {/* 배송 진행 상태 (접수된 주문만) */}
+            {(detailOrder.status === 'ACCEPTED' || detailOrder.status === 'COMPLETED') && (
+              <div className={styles.detailSection}>
+                <h4 className={styles.detailSectionTitle}>🚚 배송 진행</h4>
+                <dl className={styles.detailGrid}>
+                  <dt>접수 시각</dt>
+                  <dd>{formatAcceptedDate(detailOrder.acceptedAt)}</dd>
+                  <dt>예상 배송완료</dt>
+                  <dd>
+                    {detailOrder.status === 'COMPLETED'
+                      ? <Badge variant="green">배송 완료</Badge>
+                      : <Badge variant="orange">{getRemainingTime(detailOrder.acceptedAt)}</Badge>
+                    }
+                  </dd>
+                </dl>
+              </div>
+            )}
           </div>
         )}
       </Modal>

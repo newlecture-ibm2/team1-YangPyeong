@@ -7,8 +7,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "farms")
@@ -67,14 +65,11 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(name = "certification_status", nullable = false, length = 20)
     private com.farmbalance.farm.domain.CertificationStatus certificationStatus = com.farmbalance.farm.domain.CertificationStatus.PENDING;
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "farm_crops", joinColumns = @JoinColumn(name = "farm_id"))
-    @Column(name = "crop_name")
-    private List<String> cropTypes = new ArrayList<>();
+    // cropTypes는 farm_crops 테이블로 관리 (JPA @ElementCollection 제거)
 
     @Builder
     public FarmJpaEntity(UserJpaEntity user, String name, String address, Double area,
-                         List<String> cropTypes, String bjdCode, String pnuCode,
+                         String bjdCode, String pnuCode,
                          Double latitude, Double longitude, String registrationNumber,
                          String documentUrl, String soilType, Double ph, Double organicMatter,
                          com.farmbalance.farm.domain.CertificationStatus certificationStatus) {
@@ -82,7 +77,6 @@ public class FarmJpaEntity extends BaseTimeEntity {
         this.name = name;
         this.address = address;
         this.area = area;
-        this.cropTypes = cropTypes;
         this.bjdCode = bjdCode;
         this.pnuCode = pnuCode;
         this.latitude = latitude;
@@ -95,14 +89,13 @@ public class FarmJpaEntity extends BaseTimeEntity {
         this.certificationStatus = certificationStatus != null ? certificationStatus : com.farmbalance.farm.domain.CertificationStatus.PENDING;
     }
 
-    public void update(String name, String address, Double area, List<String> cropTypes,
+    public void update(String name, String address, Double area,
                        String bjdCode, String pnuCode, Double latitude, Double longitude,
                        String registrationNumber, String documentUrl,
                        String soilType, Double ph, Double organicMatter) {
         this.name = name;
         this.address = address;
         this.area = area;
-        this.cropTypes = cropTypes;
         this.bjdCode = bjdCode;
         this.pnuCode = pnuCode;
         this.latitude = latitude;

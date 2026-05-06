@@ -9,6 +9,7 @@ import com.farmbalance.history.domain.CultivationHistory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -26,15 +27,35 @@ public class HistoryPersistenceAdapter implements SaveHistoryPort, LoadHistoryPo
         if (history.getId() != null) {
             entity = repository.findById(history.getId())
                     .orElseThrow(() -> new IllegalArgumentException("히스토리를 찾을 수 없습니다."));
-            entity.update(history.getContent(), history.getHistoryType());
+            entity.update(history.getActivityContent(), history.getActivityType());
         } else {
             entity = HistoryJpaEntity.builder()
                     .farmId(history.getFarmId())
-                    .historyType(history.getHistoryType())
-                    .content(history.getContent())
+                    .cultivationRegistrationId(history.getCultivationRegistrationId())
+                    .recordDate(history.getRecordDate())
+                    .activityType(history.getActivityType())
+                    .activityContent(history.getActivityContent())
+                    .avgTemp(history.getAvgTemp() != null ? BigDecimal.valueOf(history.getAvgTemp()) : null)
+                    .totalRain(history.getTotalRain() != null ? BigDecimal.valueOf(history.getTotalRain()) : null)
                     .build();
         }
         repository.save(entity);
+    }
+
+    @Override
+    public void saveAllHistories(List<CultivationHistory> histories) {
+        List<HistoryJpaEntity> entities = histories.stream()
+                .map(history -> HistoryJpaEntity.builder()
+                        .farmId(history.getFarmId())
+                        .cultivationRegistrationId(history.getCultivationRegistrationId())
+                        .recordDate(history.getRecordDate())
+                        .activityType(history.getActivityType())
+                        .activityContent(history.getActivityContent())
+                        .avgTemp(history.getAvgTemp() != null ? BigDecimal.valueOf(history.getAvgTemp()) : null)
+                        .totalRain(history.getTotalRain() != null ? BigDecimal.valueOf(history.getTotalRain()) : null)
+                        .build())
+                .collect(Collectors.toList());
+        repository.saveAll(entities);
     }
 
     @Override
@@ -58,8 +79,12 @@ public class HistoryPersistenceAdapter implements SaveHistoryPort, LoadHistoryPo
         return CultivationHistory.builder()
                 .id(entity.getId())
                 .farmId(entity.getFarmId())
-                .historyType(entity.getHistoryType())
-                .content(entity.getContent())
+                .cultivationRegistrationId(entity.getCultivationRegistrationId())
+                .recordDate(entity.getRecordDate())
+                .activityType(entity.getActivityType())
+                .activityContent(entity.getActivityContent())
+                .avgTemp(entity.getAvgTemp() != null ? entity.getAvgTemp().doubleValue() : null)
+                .totalRain(entity.getTotalRain() != null ? entity.getTotalRain().doubleValue() : null)
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt() : LocalDateTime.now())
                 .build();
     }

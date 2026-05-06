@@ -8,6 +8,8 @@ import Card from '@/components/common/Card/Card'
 import Input from '@/components/common/Input/Input'
 import Dropdown from '@/components/common/Dropdown/Dropdown'
 import FilterBar from '@/components/common/FilterBar/FilterBar'
+import ModalDialog from '@/components/common/Modal/ModalDialog'
+import { useModalDialog } from '@/components/common/Modal/useModalDialog'
 import { useToast } from '@/components/common/Toast'
 import styles from './RagPage.module.css'
 import type {
@@ -40,6 +42,7 @@ export default function RagPage() {
   const toast = useToast()
   const toastRef = useRef(toast)
   toastRef.current = toast
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
   // 모달 상태
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -93,7 +96,8 @@ export default function RagPage() {
   }
 
   const handleDeleteCategory = async (id: number) => {
-    if (!window.confirm('이 카테고리를 삭제하시겠습니까?')) return
+    const confirmed = await showConfirm('이 카테고리를 삭제하시겠습니까?')
+    if (!confirmed) return
     try {
       await deleteCategory(id)
       toast.success('카테고리가 삭제되었습니다.')
@@ -104,25 +108,27 @@ export default function RagPage() {
   }
 
   // ── 문서 CRUD ──
-  const handleSaveDocument = async (data: CreateRagDocumentRequest | UpdateRagDocumentRequest) => {
+  const handleSaveDocument = async (data: CreateRagDocumentRequest | UpdateRagDocumentRequest, file?: File) => {
     try {
       if (editingDocument) {
         await updateDocument(editingDocument.id, data as UpdateRagDocumentRequest)
         toast.success('문서가 수정되었습니다.')
       } else {
-        await createDocument(data as CreateRagDocumentRequest)
+        await createDocument(data as CreateRagDocumentRequest, file)
         toast.success('문서가 등록되었습니다.')
       }
       setShowDocumentModal(false)
       setEditingDocument(null)
       await loadDocuments()
-    } catch (e: any) {
-      toast.error(e.message || '저장 중 오류가 발생했습니다.')
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '저장 중 오류가 발생했습니다.'
+      toast.error(msg)
     }
   }
 
   const handleDeleteDocument = async (id: number) => {
-    if (!window.confirm('이 문서를 삭제하시겠습니까?')) return
+    const confirmed = await showConfirm('이 문서를 삭제하시겠습니까?')
+    if (!confirmed) return
     try {
       await deleteDocument(id)
       toast.success('문서가 삭제되었습니다.')
@@ -344,6 +350,12 @@ export default function RagPage() {
           }}
         />
       )}
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   )
 }
@@ -400,7 +412,7 @@ function CategoryFormModal({ category, onSave, onClose }: CategoryFormProps) {
 interface DocumentFormProps {
   document: RagDocument | null
   categories: RagCategory[]
-  onSave: (data: CreateRagDocumentRequest | UpdateRagDocumentRequest) => Promise<void>
+  onSave: (data: CreateRagDocumentRequest | UpdateRagDocumentRequest, file?: File) => Promise<void>
   onClose: () => void
 }
 
@@ -409,24 +421,37 @@ function DocumentFormModal({ document: doc, categories, onSave, onClose }: Docum
   const [title, setTitle] = useState(doc?.title ?? '')
   const [contentType, setContentType] = useState<'FILE' | 'TEXT'>(doc?.contentType ?? 'TEXT')
   const [textContent, setTextContent] = useState(doc?.textContent ?? '')
-  const [fileUrl, setFileUrl] = useState(doc?.fileUrl ?? '')
-  const [fileName, setFileName] = useState(doc?.fileName ?? '')
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileType, setFileType] = useState(doc?.fileType ?? 'PDF')
   const toast = useToast()
+
+  // 파일 선택 핸들러
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+      // 확장자로 fileType 자동 판별
+      const ext = file.name.split('.').pop()?.toUpperCase() ?? 'PDF'
+      const validTypes: readonly string[] = ['PDF', 'TXT', 'MD', 'DOCX']
+      setFileType(validTypes.includes(ext) ? (ext as 'PDF' | 'TXT' | 'MD' | 'DOCX') : 'PDF')
+    }
+  }
 
   const handleSubmit = () => {
     if (!title.trim()) return toast.error('문서 제목을 입력하세요.')
     if (contentType === 'TEXT' && !textContent.trim()) return toast.error('텍스트 내용을 입력하세요.')
-    if (contentType === 'FILE' && !fileUrl.trim()) return toast.error('파일 URL을 입력하세요.')
+    if (contentType === 'FILE' && !selectedFile && !doc) return toast.error('파일을 선택하세요.')
     if (!categoryId) return toast.error('카테고리를 선택하세요.')
 
     const data: CreateRagDocumentRequest = {
       categoryId: Number(categoryId),
       title,
       contentType,
-      ...(contentType === 'TEXT' ? { textContent } : { fileUrl, fileName, fileType: fileType as any }),
+      ...(contentType === 'TEXT'
+        ? { textContent }
+        : { fileType: fileType as 'PDF' | 'TXT' | 'MD' | 'DOCX' }),
     }
-    onSave(data)
+    onSave(data, selectedFile ?? undefined)
   }
 
   return (
@@ -446,7 +471,7 @@ function DocumentFormModal({ document: doc, categories, onSave, onClose }: Docum
       <div className={styles.formGroup}>
         <Dropdown
           label="저장 유형 *"
-          options={[{ value: 'TEXT', label: '텍스트 직접 입력' }, { value: 'FILE', label: '파일 URL' }]}
+          options={[{ value: 'TEXT', label: '텍스트 직접 입력' }, { value: 'FILE', label: '파일 첨부' }]}
           value={contentType}
           onChange={(val) => setContentType(val as 'FILE' | 'TEXT')}
         />
@@ -459,10 +484,25 @@ function DocumentFormModal({ document: doc, categories, onSave, onClose }: Docum
       ) : (
         <>
           <div className={styles.formGroup}>
-            <Input label="파일 URL *" value={fileUrl} onChange={(e) => setFileUrl(e.target.value)} placeholder="https://..." />
-          </div>
-          <div className={styles.formGroup}>
-            <Input label="원본 파일명" value={fileName} onChange={(e) => setFileName(e.target.value)} placeholder="매뉴얼.pdf" />
+            <label className={styles.fileLabel}>
+              파일 선택 *
+              <input
+                type="file"
+                accept=".pdf,.txt,.md,.docx"
+                onChange={handleFileChange}
+                className={styles.fileInput}
+              />
+            </label>
+            {selectedFile && (
+              <div className={styles.fileInfo}>
+                📎 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+              </div>
+            )}
+            {!selectedFile && doc?.fileName && (
+              <div className={styles.fileInfo}>
+                📎 기존 파일: {doc.fileName}
+              </div>
+            )}
           </div>
           <div className={styles.formGroup}>
             <Dropdown

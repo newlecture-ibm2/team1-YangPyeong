@@ -25,6 +25,7 @@ services:
       - NEXT_PUBLIC_PORTONE_STORE_ID=${NEXT_PUBLIC_PORTONE_STORE_ID}
       - NEXT_PUBLIC_PORTONE_CHANNEL_KEY=${NEXT_PUBLIC_PORTONE_CHANNEL_KEY}
       - SKIP_AUTH=${SKIP_AUTH:-true}
+      - AI_SERVER_URL=http://ai-server:8000
       - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
@@ -52,12 +53,14 @@ services:
       - REDIS_HOST=redis
       - JWT_SECRET=${JWT_SECRET}
       - AI_SERVER_URL=http://ai-server:8000
-      - AGENT_SERVER_URL=http://agent-server:8001
       - KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}
       - KMA_API_KEY=${KMA_API_KEY}
       - SOIL_API_KEY=${SOIL_API_KEY}
-      - NONGSARO_API_KEY=${NONGSARO_API_KEY}
+      - NONGSARO_API_KEY_DEFAULT=${NONGSARO_API_KEY_DEFAULT}
+      - NONGSARO_API_KEY_CROP_EBOOK=${NONGSARO_API_KEY_CROP_EBOOK}
       - KOSIS_API_KEY=${KOSIS_API_KEY}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
     volumes:
       - uploads-data:/app/uploads
     depends_on:
@@ -78,8 +81,10 @@ services:
     build: ./ai
     restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASSWORD}@db:5432/farm_db
+      - DATABASE_URL=postgresql+psycopg://${DB_USERNAME}:${DB_PASSWORD}@db:5432/farm_db
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
       - CHROMA_PERSIST_DIR=/app/data/chroma
     volumes:
       - chroma-data:/app/data/chroma
@@ -89,25 +94,6 @@ services:
       watch:
         - action: sync
           path: ./ai
-          target: /app
-
-  # 4. Agent Server (FastAPI + Groq 챗봇)
-  agent-server:
-    container_name: farm-agent
-    image: farm-agent:latest
-    build: ./agent
-    restart: unless-stopped
-    environment:
-      - AI_URL=http://ai-server:8000
-      - GROQ_API_KEY=${GROQ_API_KEY}
-    volumes:
-      - agent-data:/app/data/agent
-    depends_on:
-      - ai-server
-    develop:
-      watch:
-        - action: sync
-          path: ./agent
           target: /app
 
   # 5. Database (PostgreSQL)
@@ -123,7 +109,6 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./scripts/init-schema.sql:/docker-entrypoint-initdb.d/01-init-schema.sql:ro
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${DB_USERNAME:-farm} -d farm_db" ]
       interval: 10s
@@ -149,5 +134,3 @@ volumes:
     name: farm-uploads-data
   chroma-data:
     name: farm-chroma-data
-  agent-data:
-    name: farm-agent-data
