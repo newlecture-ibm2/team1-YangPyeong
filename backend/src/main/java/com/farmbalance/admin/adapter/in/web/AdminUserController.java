@@ -1,9 +1,9 @@
 package com.farmbalance.admin.adapter.in.web;
 
+import com.farmbalance.admin.adapter.in.web.dto.AdminUserResponse;
 import com.farmbalance.admin.adapter.in.web.dto.ChangeUserRoleRequest;
 import com.farmbalance.admin.adapter.in.web.dto.ChangeUserStatusRequest;
 import com.farmbalance.admin.application.port.in.ManageUserUseCase;
-import com.farmbalance.admin.domain.AdminUser;
 import com.farmbalance.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +15,7 @@ import java.util.Map;
 /**
  * ADM-001 사용자 관리 Controller (Driving Adapter)
  * API URL: /api/admins/users
+ * 다른 도메인의 객체를 직접 import하지 않습니다.
  */
 @RestController
 @RequestMapping("/api/admins/users")
@@ -35,7 +36,7 @@ public class AdminUserController {
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "20") int size) {
 
-        List<AdminUser> users = manageUserUseCase.getUsers(keyword, role, status, page, size);
+        List<AdminUserResponse> users = manageUserUseCase.getUsers(keyword, role, status, page, size);
         long totalCount = manageUserUseCase.countUsers(keyword, role, status);
         int totalPages = (int) Math.ceil((double) totalCount / size);
 
@@ -56,7 +57,7 @@ public class AdminUserController {
      * GET /api/admins/users/{id}
      */
     @GetMapping("/{id}")
-    public ApiResponse<AdminUser> getUserById(@PathVariable Long id) {
+    public ApiResponse<AdminUserResponse> getUserById(@PathVariable Long id) {
         return ApiResponse.ok(manageUserUseCase.getUserById(id));
     }
 

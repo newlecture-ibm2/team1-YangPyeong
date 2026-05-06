@@ -2,7 +2,7 @@ package com.farmbalance.admin.application.service;
 
 import com.farmbalance.admin.application.port.in.ManageFarmApprovalUseCase;
 import com.farmbalance.admin.application.port.out.AdminFarmPort;
-import com.farmbalance.admin.application.port.out.AdminUserPort;
+import com.farmbalance.user.application.port.out.UserRepository;
 import com.farmbalance.admin.domain.AdminFarm;
 import com.farmbalance.admin.domain.FarmApprovalView;
 import com.farmbalance.global.error.BusinessException;
@@ -24,7 +24,7 @@ import java.util.List;
 public class FarmApprovalService implements ManageFarmApprovalUseCase {
 
     private final AdminFarmPort adminFarmPort;
-    private final AdminUserPort adminUserPort;
+    private final UserRepository userRepository;
 
     @Override
     public List<FarmApprovalView> getApprovalsByStatus(String status) {
@@ -46,7 +46,7 @@ public class FarmApprovalService implements ManageFarmApprovalUseCase {
         adminFarmPort.updateStatus(farmId, "APPROVED");
 
         // 2. 신청자 역할 → FARMER
-        adminUserPort.updateRole(farm.getUserId(), "FARMER");
+        userRepository.updateRole(farm.getUserId(), "FARMER");
     }
 
     @Override

@@ -118,4 +118,14 @@ public class UserJpaEntity {
                 .updatedAt(user.getUpdatedAt())
                 .build();
     }
+
+    /** 역할 변경 */
+    public void updateRole(Role role) {
+        this.role = role;
+    }
+
+    /** 상태 변경 */
+    public void updateStatus(UserStatus status) {
+        this.status = status;
+    }
 }

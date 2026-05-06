@@ -1,20 +1,20 @@
 package com.farmbalance.admin.adapter.in.web;
 
+import com.farmbalance.admin.adapter.in.web.dto.AdminPolicyDataResponse;
 import com.farmbalance.admin.adapter.in.web.dto.PolicyDataRequest;
 import com.farmbalance.admin.application.port.in.ManagePolicyDataUseCase;
-import com.farmbalance.admin.domain.AdminPolicyData;
 import com.farmbalance.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 /**
  * ADM-012 정책 데이터 관리 Controller (Driving Adapter)
  * API URL: /api/admins/policy
+ * 다른 도메인의 객체를 직접 import하지 않습니다.
  */
 @RestController
 @RequestMapping("/api/admins/policy")
@@ -28,7 +28,7 @@ public class AdminPolicyDataController {
      * GET /api/admins/policy
      */
     @GetMapping
-    public ApiResponse<List<AdminPolicyData>> getAllPolicies() {
+    public ApiResponse<List<AdminPolicyDataResponse>> getAllPolicies() {
         return ApiResponse.ok(managePolicyDataUseCase.getAllPolicies());
     }
 
@@ -37,7 +37,7 @@ public class AdminPolicyDataController {
      * GET /api/admins/policy/{id}
      */
     @GetMapping("/{id}")
-    public ApiResponse<AdminPolicyData> getPolicy(@PathVariable Long id) {
+    public ApiResponse<AdminPolicyDataResponse> getPolicy(@PathVariable Long id) {
         return ApiResponse.ok(managePolicyDataUseCase.getPolicy(id));
     }
 
@@ -47,13 +47,7 @@ public class AdminPolicyDataController {
      */
     @PostMapping
     public ApiResponse<Map<String, Long>> createPolicy(@Valid @RequestBody PolicyDataRequest request) {
-        AdminPolicyData policyData = AdminPolicyData.builder()
-                .externalId(request.getExternalId())
-                .data(request.getData())
-                .fetchedAt(LocalDateTime.now())
-                .build();
-
-        Long id = managePolicyDataUseCase.createPolicy(policyData);
+        Long id = managePolicyDataUseCase.createPolicy(request.getExternalId(), request.getData());
         return ApiResponse.ok(Map.of("id", id));
     }
 
@@ -64,14 +58,7 @@ public class AdminPolicyDataController {
     @PatchMapping("/{id}")
     public ApiResponse<Void> updatePolicy(@PathVariable Long id,
                                            @Valid @RequestBody PolicyDataRequest request) {
-        AdminPolicyData policyData = AdminPolicyData.builder()
-                .id(id)
-                .externalId(request.getExternalId())
-                .data(request.getData())
-                .fetchedAt(LocalDateTime.now())
-                .build();
-
-        managePolicyDataUseCase.updatePolicy(policyData);
+        managePolicyDataUseCase.updatePolicy(id, request.getExternalId(), request.getData());
         return ApiResponse.ok(null);
     }
 }
