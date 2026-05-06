@@ -1,5 +1,7 @@
 package com.farmbalance.shop.application.service;
 
+import com.farmbalance.global.email.EmailService;
+import com.farmbalance.global.email.OrderEmailTemplate;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.shop.application.port.in.OrderUseCase;
@@ -9,6 +11,10 @@ import com.farmbalance.shop.domain.Order;
 import com.farmbalance.shop.domain.OrderItem;
 import com.farmbalance.shop.domain.OrderStatus;
 import com.farmbalance.shop.domain.Product;
+import com.farmbalance.user.application.port.out.UserRepository;
+import com.farmbalance.user.domain.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,12 +31,19 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class OrderService implements OrderUseCase {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
 
-    public OrderService(OrderRepository orderRepository, ProductRepository productRepository) {
+    public OrderService(OrderRepository orderRepository, ProductRepository productRepository,
+                        UserRepository userRepository, EmailService emailService) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -68,7 +81,7 @@ public class OrderService implements OrderUseCase {
         Order order = new Order(
                 null, buyerId, orderNumber, totalAmount, OrderStatus.ORDERED,
                 receiverName, receiverPhone, shippingAddress, shippingMemo,
-                orderItems, LocalDateTime.now()
+                orderItems, LocalDateTime.now(), null
         );
 
         return orderRepository.save(order);
@@ -93,8 +106,14 @@ public class OrderService implements OrderUseCase {
         // 판매자 소유 주문인지 검증
         validateSellerOwnership(sellerId, orderId);
 
+        OrderStatus previousStatus = order.getStatus();
         order.advanceStatus();
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+
+        // 이메일 알림 발송 (비동기)
+        sendStatusEmail(saved, previousStatus);
+
+        return saved;
     }
 
     @Override
@@ -106,8 +125,22 @@ public class OrderService implements OrderUseCase {
         // 판매자 소유 주문인지 검증
         validateSellerOwnership(sellerId, orderId);
 
+        // 재고 복구 + 판매수량 감소
+        for (OrderItem item : order.getItems()) {
+            productRepository.findById(item.getProductId()).ifPresent(product -> {
+                product.increaseStock(item.getQuantity());
+                product.decreaseSalesCount(item.getQuantity());
+                productRepository.save(product);
+            });
+        }
+
         order.cancel();
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+
+        // 주문 거절 이메일 발송 (비동기)
+        sendCancelEmail(saved);
+
+        return saved;
     }
 
     /** 해당 주문이 판매자의 상품을 포함하는지 검증 */
@@ -125,5 +158,42 @@ public class OrderService implements OrderUseCase {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
         String suffix = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
         return "ORD-" + timestamp + "-" + suffix;
+    }
+
+    /** 주문 상태 변경 시 구매자에게 이메일 발송 */
+    private void sendStatusEmail(Order order, OrderStatus previousStatus) {
+        try {
+            User buyer = userRepository.findById(order.getBuyerId()).orElse(null);
+            if (buyer == null || buyer.getEmail() == null || buyer.getEmail().isBlank()) return;
+
+            String buyerName = buyer.getName() != null ? buyer.getName() : "고객";
+
+            // ORDERED → ACCEPTED (접수 확인)
+            if (previousStatus == OrderStatus.ORDERED && order.getStatus() == OrderStatus.ACCEPTED) {
+                String html = OrderEmailTemplate.orderAccepted(buyerName, order.getOrderNumber(), order.getTotalAmount());
+                emailService.send(buyer.getEmail(), "[FarmBalance] 주문이 접수되었습니다", html);
+            }
+            // ACCEPTED → SHIPPED (배송 시작)
+            else if (previousStatus == OrderStatus.ACCEPTED && order.getStatus() == OrderStatus.SHIPPED) {
+                String html = OrderEmailTemplate.orderShipped(buyerName, order.getOrderNumber());
+                emailService.send(buyer.getEmail(), "[FarmBalance] 배송이 시작되었습니다", html);
+            }
+        } catch (Exception e) {
+            log.warn("[주문 이메일] 발송 실패 (주문: {}): {}", order.getOrderNumber(), e.getMessage());
+        }
+    }
+
+    /** 주문 거절 시 구매자에게 이메일 발송 */
+    private void sendCancelEmail(Order order) {
+        try {
+            User buyer = userRepository.findById(order.getBuyerId()).orElse(null);
+            if (buyer == null || buyer.getEmail() == null || buyer.getEmail().isBlank()) return;
+
+            String buyerName = buyer.getName() != null ? buyer.getName() : "고객";
+            String html = OrderEmailTemplate.orderCancelled(buyerName, order.getOrderNumber(), order.getTotalAmount());
+            emailService.send(buyer.getEmail(), "[FarmBalance] 주문이 거절되었습니다", html);
+        } catch (Exception e) {
+            log.warn("[주문 거절 이메일] 발송 실패 (주문: {}): {}", order.getOrderNumber(), e.getMessage());
+        }
     }
 }
