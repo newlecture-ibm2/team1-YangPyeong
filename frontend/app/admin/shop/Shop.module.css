@@ -1,0 +1,62 @@
+/* ══════════════════════════════════════════════════════
+   Admin Shop Page
+   ══════════════════════════════════════════════════════ */
+
+.pageHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-xl); }
+.pageTitle { font-family: var(--font-serif); font-size: 32px; font-weight: 400; color: var(--color-text); margin-bottom: var(--space-xs); }
+.pageSub { font-size: 16px; color: var(--color-text-secondary); }
+
+.tableWrap {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  text-align: left;
+  padding: 14px 16px;
+  background: var(--color-bg);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background: rgba(45,106,79,0.02); }
+
+.productName { font-weight: 600; color: var(--color-text); }
+.priceCell { font-weight: 600; color: var(--color-primary); }
+
+/* ── 상태 드롭다운 ── */
+.statusSelect {
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+  color: var(--color-text);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.statusSelect:focus { border-color: var(--color-primary); }
+
+.loadingWrap { display: flex; justify-content: center; align-items: center; min-height: 200px; color: var(--color-text-secondary); font-size: 16px; }
+.emptyState { text-align: center; padding: var(--space-2xl); color: var(--color-text-secondary); }

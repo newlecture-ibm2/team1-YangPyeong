@@ -1,6 +1,5 @@
 """
 Gemini LLM Provider 구현체
-google-generativeai SDK를 사용합니다.
 """
 
 import logging
@@ -28,7 +27,6 @@ class GeminiLLM(BaseLLM):
     def _get_model(
         self, system_instruction: Optional[str] = None
     ) -> genai.GenerativeModel:
-        """GenerativeModel 인스턴스 생성"""
         return genai.GenerativeModel(
             model_name=self._model_name,
             system_instruction=system_instruction,
@@ -43,16 +41,13 @@ class GeminiLLM(BaseLLM):
         max_tokens: int = 2048,
     ) -> str:
         model = self._get_model(system_instruction)
-
         generation_config = genai.types.GenerationConfig(
             temperature=temperature,
             max_output_tokens=max_tokens,
         )
-
         try:
             response = await model.generate_content_async(
-                prompt,
-                generation_config=generation_config,
+                prompt, generation_config=generation_config,
             )
             return response.text
         except Exception as e:
@@ -68,17 +63,13 @@ class GeminiLLM(BaseLLM):
         max_tokens: int = 2048,
     ) -> AsyncIterator[str]:
         model = self._get_model(system_instruction)
-
         generation_config = genai.types.GenerationConfig(
             temperature=temperature,
             max_output_tokens=max_tokens,
         )
-
         try:
             response = await model.generate_content_async(
-                prompt,
-                generation_config=generation_config,
-                stream=True,
+                prompt, generation_config=generation_config, stream=True,
             )
             async for chunk in response:
                 if chunk.text:

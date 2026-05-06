@@ -153,7 +153,7 @@ export default function FarmDashboardPage() {
                 </div>
                 <div style={{ background: 'var(--color-bg)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
                   <div style={{ fontSize: '12px', color: 'var(--color-text-light)', marginBottom: '4px' }}>재배 작물</div>
-                  <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-primary)' }}>{f.cropTypes.length} 종</div>
+                  <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-primary)' }}>{f.cropNames.length} 종</div>
                 </div>
               </div>
             </div>
@@ -268,7 +268,7 @@ export default function FarmDashboardPage() {
             </div>
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
               <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>재배 작물</p>
-              <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>{farm?.cropTypes.length}종</p>
+              <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>{farm?.cropNames.length}종</p>
             </div>
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
               <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>이번 달 수익</p>
@@ -321,7 +321,7 @@ export default function FarmDashboardPage() {
               <dl style={{ fontSize: '14px', lineHeight: '2.2' }}>
                 <dt style={{ opacity: 0.5 }}>위치</dt><dd>{farm?.address}</dd>
                 <dt style={{ opacity: 0.5, marginTop: '12px' }}>면적</dt><dd>{farm?.area.toLocaleString()} ㎡</dd>
-                <dt style={{ opacity: 0.5, marginTop: '12px' }}>주요 작물</dt><dd>{farm?.cropTypes.join(', ')}</dd>
+                <dt style={{ opacity: 0.5, marginTop: '12px' }}>주요 작물</dt><dd>{farm?.cropNames.join(', ')}</dd>
                 <dt style={{ opacity: 0.5, marginTop: '12px' }}>등록 상태</dt>
                 <dd>
                   <Badge variant={farm?.certificationStatus === 'APPROVED' ? 'green' : 'orange'}>
@@ -351,7 +351,7 @@ export default function FarmDashboardPage() {
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 <span style={{ background: 'var(--color-accent)', color: '#1a1a1a', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 700 }}>AI SMART INSIGHT</span>
-                <span style={{ fontSize: '14px', color: 'var(--color-text)', fontWeight: 600 }}>"{farm?.cropTypes.length ? farm.cropTypes[0] : '작물'} 생육 최적기입니다"</span>
+                <span style={{ fontSize: '14px', color: 'var(--color-text)', fontWeight: 600 }}>"{farm?.cropNames.length ? farm.cropNames[0] : '작물'} 생육 최적기입니다"</span>
               </div>
               <p style={{ fontSize: '15px', color: 'var(--color-text)', lineHeight: 1.5 }}>
                 기온 상승과 최근 관수 기록을 분석할 때 작물의 생육이 매우 활발합니다. 
@@ -364,18 +364,15 @@ export default function FarmDashboardPage() {
             <div>
               {/* Sub Navigation (History 전용) */}
               <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '16px', marginBottom: '32px', display: 'flex', gap: '32px' }}>
-                <button 
-                  style={{ background: 'none', border: 'none', color: activeSubTab === 'POLICY' ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: activeSubTab === 'POLICY' ? 700 : 600, borderBottom: activeSubTab === 'POLICY' ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-17px', cursor: 'pointer', fontSize: '16px' }}
-                  onClick={() => setActiveSubTab('POLICY')}
-                >
-                  정책/혜택 안내
-                </button>
-                <button 
-                  style={{ background: 'none', border: 'none', color: activeSubTab === 'HISTORY' ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: activeSubTab === 'HISTORY' ? 700 : 600, borderBottom: activeSubTab === 'HISTORY' ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-17px', cursor: 'pointer', fontSize: '16px' }}
-                  onClick={() => setActiveSubTab('HISTORY')}
-                >
-                  재배 히스토리
-                </button>
+                {(['POLICY', 'HISTORY'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    style={{ background: 'none', border: 'none', color: (activeSubTab as string) === tab ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: (activeSubTab as string) === tab ? 700 : 600, borderBottom: (activeSubTab as string) === tab ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-17px', cursor: 'pointer', fontSize: '16px' }}
+                    onClick={() => setActiveSubTab(tab)}
+                  >
+                    {tab === 'POLICY' ? '정책/혜택 안내' : '재배 히스토리'}
+                  </button>
+                ))}
               </div>
 
 
@@ -394,7 +391,7 @@ export default function FarmDashboardPage() {
                 <dl className={styles.farmInfoList}>
                    <dt>위치</dt><dd>{farm?.address}</dd>
                    <dt>면적</dt><dd>{farm?.area.toLocaleString()} ㎡</dd>
-                   <dt>주요 작물</dt><dd>{farm?.cropTypes.join(', ')}</dd>
+                   <dt>주요 작물</dt><dd>{farm?.cropNames.join(', ')}</dd>
                    <dt>상태</dt>
                    <dd>
                      <Badge variant={farm?.certificationStatus === 'APPROVED' ? 'green' : 'orange'}>
