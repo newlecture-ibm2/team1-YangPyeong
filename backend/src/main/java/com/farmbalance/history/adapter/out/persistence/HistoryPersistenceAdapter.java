@@ -9,6 +9,7 @@ import com.farmbalance.history.domain.CultivationHistory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -34,8 +35,8 @@ public class HistoryPersistenceAdapter implements SaveHistoryPort, LoadHistoryPo
                     .recordDate(history.getRecordDate())
                     .activityType(history.getActivityType())
                     .activityContent(history.getActivityContent())
-                    .avgTemp(history.getAvgTemp())
-                    .totalRain(history.getTotalRain())
+                    .avgTemp(history.getAvgTemp() != null ? BigDecimal.valueOf(history.getAvgTemp()) : null)
+                    .totalRain(history.getTotalRain() != null ? BigDecimal.valueOf(history.getTotalRain()) : null)
                     .build();
         }
         repository.save(entity);
@@ -50,8 +51,8 @@ public class HistoryPersistenceAdapter implements SaveHistoryPort, LoadHistoryPo
                         .recordDate(history.getRecordDate())
                         .activityType(history.getActivityType())
                         .activityContent(history.getActivityContent())
-                        .avgTemp(history.getAvgTemp())
-                        .totalRain(history.getTotalRain())
+                        .avgTemp(history.getAvgTemp() != null ? BigDecimal.valueOf(history.getAvgTemp()) : null)
+                        .totalRain(history.getTotalRain() != null ? BigDecimal.valueOf(history.getTotalRain()) : null)
                         .build())
                 .collect(Collectors.toList());
         repository.saveAll(entities);
@@ -82,8 +83,8 @@ public class HistoryPersistenceAdapter implements SaveHistoryPort, LoadHistoryPo
                 .recordDate(entity.getRecordDate())
                 .activityType(entity.getActivityType())
                 .activityContent(entity.getActivityContent())
-                .avgTemp(entity.getAvgTemp())
-                .totalRain(entity.getTotalRain())
+                .avgTemp(entity.getAvgTemp() != null ? entity.getAvgTemp().doubleValue() : null)
+                .totalRain(entity.getTotalRain() != null ? entity.getTotalRain().doubleValue() : null)
                 .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt() : LocalDateTime.now())
                 .build();
     }
