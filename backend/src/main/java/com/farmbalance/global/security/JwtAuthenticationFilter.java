@@ -43,9 +43,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Long userId = jwtTokenProvider.getUserId(claims);
 
                 var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
-                var authentication = new UsernamePasswordAuthenticationToken(email, null, authorities);
-                // userId를 details에 저장 → SecurityUtil.getCurrentUserId()에서 사용
-                authentication.setDetails(userId);
+                // principal을 userId(Long)로 설정 → @AuthenticationPrincipal Long userId 지원
+                var authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
+                // email, userId 등 추가 정보는 details에 저장
+                authentication.setDetails(email);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception e) {
                 log.debug("JWT 인증 실패: {}", e.getMessage());

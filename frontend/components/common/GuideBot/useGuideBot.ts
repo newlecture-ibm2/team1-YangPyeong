@@ -43,6 +43,7 @@ export function useGuideBot() {
   const [bubbleAbove, setBubbleAbove] = useState(true);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const quickMsgRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAsked = useRef(false);
 
   // 페이지 변경 시 시나리오 갱신
@@ -184,6 +185,37 @@ export function useGuideBot() {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
   }, []);
 
+  /** 외부 이벤트에서 가이드봇이 잠시 말풍선을 보여줍니다 (예: AI 자동 채우기 완료) */
+  const showQuickMessage = useCallback((message: string, durationMs: number = 4000) => {
+    // 가이드 진행 중이면 무시
+    if (mode === 'guiding' || mode === 'asking') return;
+
+    // 기존 퀵 메시지 타이머 정리
+    if (quickMsgRef.current) clearTimeout(quickMsgRef.current);
+
+    setMode('minimized');
+    setBotState('idle');
+    setFacingRight(true);
+    setShowBubble(true);
+    setBubbleMessage(message);
+    setBubbleAbove(true);
+    setHighlightRect(null);
+    setCurrentStep(-1);
+
+    // 하단 중앙 위치
+    if (typeof window !== 'undefined') {
+      setPosition({
+        x: window.innerWidth / 2 - 60,
+        y: window.innerHeight - 180,
+      });
+    }
+
+    quickMsgRef.current = setTimeout(() => {
+      setShowBubble(false);
+      setMode('minimized');
+    }, durationMs);
+  }, [mode]);
+
   /** 축소 모드에서 재시작 */
   const restartGuide = useCallback(() => {
     askUser();
@@ -241,5 +273,6 @@ export function useGuideBot() {
     restartGuide,
     acceptGuide,
     declineGuide,
+    showQuickMessage,
   };
 }

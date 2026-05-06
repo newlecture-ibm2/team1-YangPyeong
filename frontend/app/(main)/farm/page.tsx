@@ -1,14 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Badge from '@/components/common/Badge/Badge';
-import { useMyFarms } from './_hooks/useFarm';
-import { useHistory } from './_hooks/useHistory';
+import { useToast } from '@/components/common/Toast';
+import { useMyFarms } from './useFarm';
+import { useHistory } from './useHistory';
+import { useCultivation } from './useCultivation';
 import Timeline from './_components/Timeline/Timeline';
 import HistoryModal from './_components/HistoryModal/HistoryModal';
+import CultivationEditModal from './_components/CultivationEditModal/CultivationEditModal';
+import ModalDialog from '@/components/common/Modal/ModalDialog';
+import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import styles from './page.module.css';
 
 // 임시 KPI 및 활동 데이터 (백엔드 연동 전까지 유지할 데이터 구조)
@@ -28,12 +33,38 @@ const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'li
 };
 
 export default function FarmDashboardPage() {
+  const toast = useToast();
   const { farms, isLoading: isFarmsLoading } = useMyFarms();
   const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
   // 농장 목록 뷰 여부 상태
   const [isListView, setIsListView] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'DASHBOARD' | 'HISTORY' | 'POLICY' | 'REPORT'>('DASHBOARD');
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isCultivationModalOpen, setIsCultivationModalOpen] = useState(false);
+  const [selectedCultivation, setSelectedCultivation] = useState<any>(null);
+  const [cropOptions, setCropOptions] = useState<{ id: number, name: string }[]>([]);
+  const [weather, setWeather] = useState<{ tmp: number, pty: number, sky: number } | null>(null);
+
+  // 기상 정보 조회
+  useEffect(() => {
+    fetch('/api/weather/current')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) setWeather(json.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // 작물 목록 조회
+  useEffect(() => {
+    fetch('/api/admin/crops')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) setCropOptions(json.data || []);
+      })
+      .catch(console.error);
+  }, []);
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
   // 농장 목록이 로드되었을 때, 2개 이상이면 목록 뷰를 기본으로 설정
   useEffect(() => {
@@ -41,22 +72,37 @@ export default function FarmDashboardPage() {
       setIsListView(true);
     }
   }, [farms]);
-  
+
   // 수정을 위한 상태
   const [editingHistoryId, setEditingHistoryId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState('');
 
   // 선택된 농장
   const farm = farms.length > 0 ? farms[selectedFarmIdx] : null;
-  
+
   // 히스토리 데이터 연동
-  const { 
-    histories, 
-    isLoading: isHistoryLoading, 
-    addHistory, 
-    updateHistory, 
-    removeHistory 
+  const {
+    histories,
+    isLoading: isHistoryLoading,
+    addHistory,
+    updateHistory,
+    removeHistory,
+    refresh: refreshHistories
   } = useHistory(farm?.id);
+
+  // 재배 정보 연동
+  const {
+    cultivations,
+    isLoading: isCultivationLoading,
+    modifyCultivation,
+    removeCultivation,
+    refresh: refreshCultivations
+  } = useCultivation(farm?.id);
+
+  // 통합 새로고침
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refreshHistories(), refreshCultivations()]);
+  }, [refreshHistories, refreshCultivations]);
 
   const isLoading = isFarmsLoading;
 
@@ -65,6 +111,14 @@ export default function FarmDashboardPage() {
     setEditingHistoryId(id);
     setEditingContent(content);
     setIsHistoryModalOpen(true);
+  };
+
+  // 삭제 버튼 클릭 핸들러
+  const handleDeleteHistory = async (id: number) => {
+    const confirmed = await showConfirm('정말 삭제하시겠습니까?');
+    if (confirmed) {
+      await removeHistory(id);
+    }
   };
 
 
@@ -105,8 +159,8 @@ export default function FarmDashboardPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px', marginTop: '32px' }}>
           <Link href="/farm/register" style={{ textDecoration: 'none' }}>
             <div style={{ border: '2px dashed var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'var(--color-text-light)', height: '100%', cursor: 'pointer', transition: 'all 0.2s' }}
-                 onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.background = 'rgba(16,185,129,0.02)'; }}
-                 onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-light)'; e.currentTarget.style.background = 'transparent'; }}>
+              onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.background = 'rgba(16,185,129,0.02)'; }}
+              onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-light)'; e.currentTarget.style.background = 'transparent'; }}>
               <div style={{ fontSize: '32px', marginBottom: '12px' }}>＋</div>
               <div style={{ fontWeight: 600, fontSize: '16px' }}>새로운 농장 등록하기</div>
               <p style={{ fontSize: '14px', marginTop: '8px', opacity: 0.8 }}>등록된 농장이 없습니다. 농장을 등록해 주세요.</p>
@@ -130,7 +184,7 @@ export default function FarmDashboardPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px', marginTop: '32px' }}>
           {farms.map((f, idx) => (
-            <div 
+            <div
               key={f.id}
               onClick={() => { setSelectedFarmIdx(idx); setIsListView(false); }}
               style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'all 0.2s', minHeight: '200px' }}
@@ -162,8 +216,8 @@ export default function FarmDashboardPage() {
           {/* 새로운 농장 등록 카드 */}
           <Link href="/farm/register" style={{ textDecoration: 'none' }}>
             <div style={{ border: '2px dashed var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'var(--color-text-light)', height: '100%', cursor: 'pointer', transition: 'all 0.2s', minHeight: '200px' }}
-                 onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.background = 'rgba(16,185,129,0.02)'; }}
-                 onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-light)'; e.currentTarget.style.background = 'transparent'; }}>
+              onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.background = 'rgba(16,185,129,0.02)'; }}
+              onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-light)'; e.currentTarget.style.background = 'transparent'; }}>
               <div style={{ fontSize: '32px', marginBottom: '12px' }}>＋</div>
               <div style={{ fontWeight: 600, fontSize: '16px' }}>새로운 농장 등록하기</div>
               <p style={{ fontSize: '14px', marginTop: '8px', opacity: 0.8 }}>또 다른 농장이 있으신가요?</p>
@@ -181,7 +235,7 @@ export default function FarmDashboardPage() {
       <div className={styles.header}>
         <div>
           <p className={styles.breadcrumb}>
-            <Link href="/" className={styles.breadcrumbLink}>홈</Link> / 
+            <Link href="/" className={styles.breadcrumbLink}>홈</Link> /
             {farms.length > 1 ? (
               <span style={{ cursor: 'pointer', color: 'var(--color-text-light)' }} onClick={() => setIsListView(true)}> 내 농장</span>
             ) : (
@@ -190,8 +244,8 @@ export default function FarmDashboardPage() {
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {farms.length > 1 && (
-              <button 
-                onClick={() => setIsListView(true)} 
+              <button
+                onClick={() => setIsListView(true)}
                 style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                 title="목록으로 돌아가기"
               >
@@ -201,15 +255,15 @@ export default function FarmDashboardPage() {
             <h1 className={styles.title}>{activeSubTab === 'DASHBOARD' ? '내 농장 관리' : farm?.name}</h1>
           </div>
           <p className={styles.subtitle}>
-            {activeSubTab === 'DASHBOARD' 
-              ? `${farm?.name}의 현황을 한눈에 확인하세요.` 
+            {activeSubTab === 'DASHBOARD'
+              ? `${farm?.name}의 현황을 한눈에 확인하세요.`
               : '농장 정보 및 재배 히스토리를 확인하고 기록하세요.'}
           </p>
         </div>
         <div className={styles.headerButtons}>
           {activeSubTab === 'DASHBOARD' ? (
             <>
-              <Link href="/farm/plan">
+              <Link href="/farm/cultivation-register">
                 <Button variant="outline">+ 재배 등록</Button>
               </Link>
               <Link href="/farm/harvest">
@@ -227,18 +281,33 @@ export default function FarmDashboardPage() {
         </div>
       </div>
 
-      <HistoryModal 
-        isOpen={isHistoryModalOpen} 
-        onClose={handleModalClose} 
+      <HistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={handleModalClose}
         onSave={handleSaveHistory}
         farmName={farm?.name || ''}
         initialContent={editingContent}
         mode={editingHistoryId ? 'edit' : 'create'}
       />
 
+      <CultivationEditModal
+        isOpen={isCultivationModalOpen}
+        onClose={() => { setIsCultivationModalOpen(false); setSelectedCultivation(null); }}
+        onSave={async (cropId, area, yieldAmount, unit) => {
+          if (selectedCultivation) {
+            const success = await modifyCultivation(selectedCultivation.id, cropId, area, yieldAmount, unit);
+            if (success) refreshAll();
+            return success;
+          }
+          return false;
+        }}
+        cultivation={selectedCultivation}
+        cropOptions={cropOptions}
+      />
+
       {/* Main Tabs (Navigation) */}
       <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0', marginBottom: '32px', display: 'flex', gap: '32px' }}>
-        <button 
+        <button
           style={{ background: 'none', border: 'none', color: activeSubTab === 'DASHBOARD' ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: activeSubTab === 'DASHBOARD' ? 700 : 600, borderBottom: activeSubTab === 'DASHBOARD' ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-1px', cursor: 'pointer', fontSize: '16px' }}
           onClick={() => setActiveSubTab('DASHBOARD')}
         >
@@ -250,7 +319,7 @@ export default function FarmDashboardPage() {
         <Link href="/recommend" style={{ textDecoration: 'none', color: 'var(--color-text-light)', fontWeight: 600, paddingBottom: '16px', fontSize: '16px' }}>
           AI 작물 추천
         </Link>
-        <button 
+        <button
           style={{ background: 'none', border: 'none', color: activeSubTab === 'HISTORY' ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: activeSubTab === 'HISTORY' ? 700 : 600, borderBottom: activeSubTab === 'HISTORY' ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-1px', cursor: 'pointer', fontSize: '16px' }}
           onClick={() => setActiveSubTab('HISTORY')}
         >
@@ -344,8 +413,15 @@ export default function FarmDashboardPage() {
             <div style={{ textAlign: 'center', paddingRight: '32px', borderRight: '1px solid var(--color-border)' }}>
               <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '4px' }}>오늘의 양평 날씨</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '40px' }}>☀️</span>
-                <span style={{ fontSize: '32px', fontWeight: 700, color: 'var(--color-text)' }}>22° <span style={{ fontSize: '16px', color: 'var(--color-text-light)', fontWeight: 400 }}>/ 11°</span></span>
+                <span style={{ fontSize: '40px' }}>
+                  {weather ? (
+                    weather.pty > 0 ? (weather.pty === 3 ? '❄️' : '🌧️') : (weather.sky > 2 ? '☁️' : '☀️')
+                  ) : '☀️'}
+                </span>
+                <span style={{ fontSize: '32px', fontWeight: 700, color: 'var(--color-text)' }}>
+                  {weather ? `${Math.round(weather.tmp)}°` : '22°'}
+                  <span style={{ fontSize: '16px', color: 'var(--color-text-light)', fontWeight: 400 }}> / {weather ? '실시간' : '11°'}</span>
+                </span>
               </div>
             </div>
             <div style={{ flex: 1 }}>
@@ -354,7 +430,7 @@ export default function FarmDashboardPage() {
                 <span style={{ fontSize: '14px', color: 'var(--color-text)', fontWeight: 600 }}>"{farm?.cropNames.length ? farm.cropNames[0] : '작물'} 생육 최적기입니다"</span>
               </div>
               <p style={{ fontSize: '15px', color: 'var(--color-text)', lineHeight: 1.5 }}>
-                기온 상승과 최근 관수 기록을 분석할 때 작물의 생육이 매우 활발합니다. 
+                기온 상승과 최근 관수 기록을 분석할 때 작물의 생육이 매우 활발합니다.
                 <strong>내일 오전 추가 시비</strong>를 권장하며, 기온이 높으니 <strong>병해충 방제</strong>에 유의하세요.
               </p>
             </div>
@@ -377,10 +453,24 @@ export default function FarmDashboardPage() {
 
 
 
-              <Timeline 
-                histories={histories} 
+              <Timeline
+                histories={histories}
+                onEditCultivation={(id) => {
+                  const cult = cultivations.find(c => c.id === id);
+                  if (cult) {
+                    setSelectedCultivation(cult);
+                    setIsCultivationModalOpen(true);
+                  } else {
+                    toast.error('해당 재배 정보를 찾을 수 없습니다. (이미 삭제되었을 수 있습니다)');
+                    refreshAll();
+                  }
+                }}
+                onDeleteCultivation={async (id) => {
+                  const success = await removeCultivation(id);
+                  if (success) refreshAll();
+                }}
                 onEdit={handleEditClick}
-                onDelete={removeHistory}
+                onDelete={handleDeleteHistory}
               />
             </div>
 
@@ -389,15 +479,15 @@ export default function FarmDashboardPage() {
               <Card variant="dark">
                 <h3 className={styles.farmInfoTitle} style={{ fontSize: '18px', marginBottom: '16px' }}>농장 정보</h3>
                 <dl className={styles.farmInfoList}>
-                   <dt>위치</dt><dd>{farm?.address}</dd>
-                   <dt>면적</dt><dd>{farm?.area.toLocaleString()} ㎡</dd>
-                   <dt>주요 작물</dt><dd>{farm?.cropNames.join(', ')}</dd>
-                   <dt>상태</dt>
-                   <dd>
-                     <Badge variant={farm?.certificationStatus === 'APPROVED' ? 'green' : 'orange'}>
-                       {farm?.certificationStatus === 'APPROVED' ? '인증됨' : '심사중'}
-                     </Badge>
-                   </dd>
+                  <dt>위치</dt><dd>{farm?.address}</dd>
+                  <dt>면적</dt><dd>{farm?.area.toLocaleString()} ㎡</dd>
+                  <dt>주요 작물</dt><dd>{farm?.cropNames.join(', ')}</dd>
+                  <dt>상태</dt>
+                  <dd>
+                    <Badge variant={farm?.certificationStatus === 'APPROVED' ? 'green' : 'orange'}>
+                      {farm?.certificationStatus === 'APPROVED' ? '인증됨' : '심사중'}
+                    </Badge>
+                  </dd>
                 </dl>
                 <Link href={`/farm/${farm?.id}/edit`} style={{ display: 'block', marginTop: '24px' }}>
                   <Button variant="primary" style={{ width: '100%', justifyContent: 'center' }}>정보 수정</Button>
@@ -407,6 +497,12 @@ export default function FarmDashboardPage() {
           </div>
         </>
       )}
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   );
 }

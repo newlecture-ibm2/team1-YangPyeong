@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Badge from '@/components/common/Badge/Badge';
 import Button from '@/components/common/Button/Button';
 import Modal from '@/components/common/Modal/Modal';
+import Spinner from '@/components/common/Spinner/Spinner';
 import { ORDER_STATUS_MAP, ORDER_FILTER_TABS } from '../../_lib/mypage.types';
 import type { OrderStatus } from '../../_lib/mypage.types';
 import useSellerOrders from './useSellerOrders';
@@ -43,6 +44,7 @@ function formatAcceptedDate(acceptedAt?: string): string {
 export default function SellerOrdersPage() {
   const {
     orders,
+    loading,
     kpi,
     statusFilter,
     setStatusFilter,
@@ -113,7 +115,9 @@ export default function SellerOrdersPage() {
       </div>
 
       {/* 주문 테이블 */}
-      {orders.length === 0 ? (
+      {loading ? (
+        <Spinner message="판매 주문 목록을 불러오는 중입니다..." fullHeight={true} />
+      ) : orders.length === 0 ? (
         <div className={styles.emptyState}>
           <p className={styles.emptyIcon}>📋</p>
           <p className={styles.emptyText}>해당 상태의 주문이 없습니다.</p>
