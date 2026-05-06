@@ -11,7 +11,7 @@ import Card from '@/components/common/Card/Card';
 import Modal from '@/components/common/Modal/Modal';
 import { useToast } from '@/components/common/Toast';
 import { uploadFile } from '@/lib/upload.api';
-import { useFarmDetail } from '../../_hooks/useFarm';
+import { useFarmDetail } from '../../useFarm';
 import { updateFarm } from '../../_lib/farm.api';
 import styles from '../../register/page.module.css';
 

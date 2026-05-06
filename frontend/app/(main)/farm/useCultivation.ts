@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getCultivations, updateCultivation, deleteCultivation, CultivationRegistration } from '../_lib/cultivation.api';
+import { getCultivations, updateCultivation, deleteCultivation, CultivationRegistration } from './_lib/cultivation.api';
 import { useToast } from '@/components/common/Toast';
 
 export function useCultivation(farmId?: number) {

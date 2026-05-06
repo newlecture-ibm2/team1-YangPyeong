@@ -6,7 +6,7 @@ import Card from '@/components/common/Card/Card';
 import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import { useSeedForm } from './useSeedForm';
-import { useMyFarms } from '../_hooks/useFarm';
+import { useMyFarms } from '../useFarm';
 import styles from './page.module.css';
 
 /**
