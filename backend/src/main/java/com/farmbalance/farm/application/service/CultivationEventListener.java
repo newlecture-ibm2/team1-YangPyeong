@@ -1,17 +1,12 @@
 package com.farmbalance.farm.application.service;
 
-import com.farmbalance.farm.application.port.out.LoadCultivationRegistrationPort;
 import com.farmbalance.farm.application.port.out.PredictYieldPort;
-import com.farmbalance.farm.application.port.out.SaveCultivationRegistrationPort;
-import com.farmbalance.farm.domain.CultivationRegistration;
 import com.farmbalance.farm.domain.event.CultivationRegisteredEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 재배 등록 관련 이벤트 리스너
@@ -22,35 +17,30 @@ import org.springframework.transaction.annotation.Transactional;
 public class CultivationEventListener {
 
     private final PredictYieldPort predictYieldPort;
-    private final LoadCultivationRegistrationPort loadPort;
-    private final SaveCultivationRegistrationPort savePort;
 
     /**
      * 재배 등록 시 비동기로 AI 수확량 예측 수행
+     * (현재 ai_predicted_yield 컬럼이 삭제되었으므로 DB 저장은 하지 않고 분석 로그만 남깁니다)
      */
     @Async
     @EventListener
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleCultivationRegistered(CultivationRegisteredEvent event) {
-        log.info("Handling CultivationRegisteredEvent for ID: {}", event.getCultivationId());
+        log.info("Handling CultivationRegisteredEvent for ID: {}", event.getId());
         
         try {
-            // 1. AI 서버 호출하여 예상 수확량 예측
+            // 1. AI 서버 호출하여 예상 수확량 예측 (분석용)
             Double predictedYield = predictYieldPort.predictYield(
                     event.getCropId(),
-                    event.getArea(),
-                    event.getType().name()
+                    event.getCultivationArea().doubleValue(),
+                    "OUTDOOR" // 기본값 전달 (컬럼 삭제로 인해 정보 부재)
             );
 
-            // 2. 결과 업데이트 (새로운 트랜잭션에서 수행)
-            loadPort.loadCultivation(event.getCultivationId()).ifPresent(cultivation -> {
-                cultivation.updateAiPredictedYield(predictedYield);
-                savePort.saveCultivation(cultivation);
-                log.info("Successfully updated AI predicted yield ({}) for cultivation ID: {}", predictedYield, cultivation.getId());
-            });
+            log.info("AI Analysis - Predicted yield for cultivation ID {}: {} kg", event.getId(), predictedYield);
+            
+            // TODO: 추후 분석 전용 테이블이나 수급 알림 엔진으로 데이터 연동이 필요한 경우 이곳에 추가 로직 구현
             
         } catch (Exception e) {
-            log.error("Failed to predict yield for cultivation ID: {}", event.getCultivationId(), e);
+            log.error("Failed to predict yield for cultivation ID: {}", event.getId(), e);
         }
     }
 }
