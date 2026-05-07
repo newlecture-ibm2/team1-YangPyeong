@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 /**
  * SMTP 기반 이메일 발송 구현체.
- * @Async로 비동기 처리하여 주문 API 응답 지연을 방지합니다.
  */
 @Service
 public class SmtpEmailService implements EmailService {
@@ -24,21 +23,42 @@ public class SmtpEmailService implements EmailService {
         this.mailSender = mailSender;
     }
 
+    /**
+     * 비동기 발송 — 주문 알림 등 실패해도 API 응답에 영향 없는 경우.
+     */
     @Override
     @Async
     public void send(String to, String subject, String content) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(content, true); // HTML 형식
-            helper.setFrom("noreply@farmbalance.com");
-
-            mailSender.send(message);
-            log.info("[이메일] 발송 성공 → {} (제목: {})", to, subject);
-        } catch (MessagingException e) {
-            log.error("[이메일] 발송 실패 → {} (제목: {}): {}", to, subject, e.getMessage());
+            doSend(to, subject, content);
+        } catch (Exception e) {
+            log.error("[이메일] 비동기 발송 실패 → {} (제목: {}): {}", to, subject, e.getMessage());
         }
+    }
+
+    /**
+     * 동기 발송 — 비밀번호 재설정 등 실패 시 예외를 호출자에게 전파.
+     */
+    @Override
+    public void sendSync(String to, String subject, String content) {
+        try {
+            doSend(to, subject, content);
+        } catch (MessagingException | org.springframework.mail.MailException e) {
+            log.error("[이메일] 동기 발송 실패 → {} (제목: {}): {}", to, subject, e.getMessage());
+            throw new RuntimeException("이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.", e);
+        }
+    }
+
+    /** 공통 발송 로직 */
+    private void doSend(String to, String subject, String content) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(content, true);
+        helper.setFrom("noreply@farmbalance.com");
+
+        mailSender.send(message);
+        log.info("[이메일] 발송 성공 → {} (제목: {})", to, subject);
     }
 }
