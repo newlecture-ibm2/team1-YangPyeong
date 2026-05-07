@@ -1,7 +1,7 @@
 package com.farmbalance.admin.adapter.in.web;
 
+import com.farmbalance.admin.adapter.in.web.dto.AdminShopProductResponse;
 import com.farmbalance.admin.application.port.in.ManageShopUseCase;
-import com.farmbalance.admin.domain.AdminProduct;
 import com.farmbalance.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +25,7 @@ public class AdminShopController {
      * GET /api/admin/shop
      */
     @GetMapping
-    public ApiResponse<List<AdminProduct>> getAllProducts() {
+    public ApiResponse<List<AdminShopProductResponse>> getAllProducts() {
         return ApiResponse.ok(manageShopUseCase.getAllProducts());
     }
 
