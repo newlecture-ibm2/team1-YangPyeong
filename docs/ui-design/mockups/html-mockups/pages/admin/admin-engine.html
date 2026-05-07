@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>밸런스 엔진 관리 — FarmBalance</title><link rel="stylesheet" href="../../css/style.css"></head>
+<body>
+<div class="admin-layout">
+<aside class="sidebar"><div class="sidebar-logo"><span>🌿</span> FarmBalance</div><nav>
+  <a href="admin-dashboard.html">📊 대시보드</a><a href="admin-users.html">👥 사용자 관리</a><a href="admin-approvals.html">✅ 농부 승인/반려</a><a href="admin-crops.html">🌾 작물 마스터</a><a href="admin-data.html">🔗 외부 데이터 연동</a><a href="admin-engine.html" class="active">⚖️ 밸런스 엔진</a><a href="admin-community.html">💬 커뮤니티 관리</a><a href="admin-shop.html">🛒 상점 관리</a>
+</nav></aside>
+<main class="admin-main"><div class="page">
+  <h1 class="page-title"><span class="icon">⚖️</span> 밸런스 엔진 관리</h1>
+  <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);">
+    <div class="kpi"><div class="kpi-label">엔진 상태</div><div class="kpi-value text-green">정상</div></div>
+    <div class="kpi"><div class="kpi-label">최종 산출</div><div class="kpi-value" style="font-size:16px;">2026-04-23 00:00</div></div>
+    <div class="kpi"><div class="kpi-label">경고 발생</div><div class="kpi-value text-red">3건</div></div>
+  </div>
+  <div class="card">
+    <h2 class="card-title">가중치 설정</h2>
+    <table class="tbl"><thead><tr><th>요소</th><th>현재 가중치</th><th>설명</th><th>수정</th></tr></thead>
+    <tbody>
+      <tr><td>공급 데이터</td><td>0.35</td><td>농가 등록 파종/수확 데이터</td><td><input class="form-input" style="width:80px;" value="0.35"></td></tr>
+      <tr><td>수요 데이터</td><td>0.25</td><td>KAMIS 도매 거래량 기반</td><td><input class="form-input" style="width:80px;" value="0.25"></td></tr>
+      <tr><td>가격 변동</td><td>0.20</td><td>최근 30일 가격 추이</td><td><input class="form-input" style="width:80px;" value="0.20"></td></tr>
+      <tr><td>기후 요인</td><td>0.10</td><td>기상청 날씨 데이터</td><td><input class="form-input" style="width:80px;" value="0.10"></td></tr>
+      <tr><td>계절 보정</td><td>0.10</td><td>월별 계절 보정 팩터</td><td><input class="form-input" style="width:80px;" value="0.10"></td></tr>
+    </tbody></table>
+    <div class="btn-row btn-row-right mt-16"><button class="btn btn-outline">재계산 실행</button><button class="btn btn-primary">설정 저장</button></div>
+  </div>
+</div></main>
+</div>
+</body></html>

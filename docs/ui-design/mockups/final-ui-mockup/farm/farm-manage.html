@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBalance — 농장 관리</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<nav class="nav">
+  <a href="../index.html" class="nav-logo"><img src="../logo.png" alt=""> Farm<span class="italic">Balance</span></a>
+  <div class="nav-links"><a href="../farm/farm-manage.html" class="active">내 농장</a><a href="../shop/shop-browse.html">상점</a><a href="../stores/store-map.html">가게</a><a href="../community/community-list.html">커뮤니티</a></div>
+  <div class="nav-right"><a class="btn-nav btn-nav-fill" href="#">홍길동 님</a></div>
+</nav>
+
+<div class="page">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:0;padding-bottom:16px;">
+    <div>
+      <p class="breadcrumb"><a href="#">홈</a> / 내 농장</p>
+      <h1 class="page-title">내 농장 <span class="italic">관리</span></h1>
+      <p class="page-sub">양평 해맑은 농장의 현황을 한눈에 확인하세요.</p>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <a class="btn btn-outline" href="../farm/cultivation-register.html">+ 재배 등록</a>
+      <a class="btn btn-primary" href="../farm/harvest-register.html">🌾 수확 등록</a>
+    </div>
+  </div>
+  
+  <div class="tabs mb-32" style="border-bottom:1px solid var(--color-border); padding-bottom:0;">
+    <a href="../farm/farm-manage.html" class="active">대시보드</a>
+    <a href="../balance/balance-list.html">수급 분석</a>
+    <a href="../recommend/recommend-list.html">AI 작물 추천</a>
+    <a href="../farm/farm-info.html">농장 정보</a>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi"><p class="kpi-label">재배 면적</p><p class="kpi-value">3,200㎡</p></div>
+    <div class="kpi"><p class="kpi-label">재배 작물</p><p class="kpi-value">4종</p></div>
+    <div class="kpi"><p class="kpi-label">이번 달 수익</p><p class="kpi-value">₩2.4M</p></div>
+    <div class="kpi"><p class="kpi-label">AI 점수</p><p class="kpi-value">87</p></div>
+  </div>
+
+  <!-- BENTO -->
+  <div class="bento">
+    <!-- Activity Table -->
+    <div class="col-8">
+      <div class="card" style="height:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h3>최근 활동</h3>
+          <a class="btn btn-ghost" href="#">전체보기 →</a>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>날짜</th><th>활동</th><th>작물</th><th>상태</th></tr></thead>
+          <tbody>
+            <tr><td>2026-04-25</td><td>파종 완료</td><td>배추</td><td><span class="badge badge-green">완료</span></td></tr>
+            <tr><td>2026-04-22</td><td>비료 시비</td><td>고추</td><td><span class="badge badge-green">완료</span></td></tr>
+            <tr><td>2026-04-20</td><td>수확 예정</td><td>감자</td><td><span class="badge badge-lime">예정</span></td></tr>
+            <tr><td>2026-04-18</td><td>병해충 점검</td><td>토마토</td><td><span class="badge badge-orange">점검중</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Side Info -->
+    <div class="col-4">
+      <div class="card card-dark" style="height:100%;">
+        <h3 style="color:var(--color-accent);margin-bottom:20px;">농장 정보</h3>
+        <dl style="color:rgba(255,255,255,.7);font-size:14px;line-height:2.2;">
+          <dt style="color:rgba(255,255,255,.4);">위치</dt><dd>경기도 양평군 양서면</dd>
+          <dt style="color:rgba(255,255,255,.4);margin-top:12px;">면적</dt><dd>3,200 ㎡</dd>
+          <dt style="color:rgba(255,255,255,.4);margin-top:12px;">토양</dt><dd>양토 (pH 6.5)</dd>
+          <dt style="color:rgba(255,255,255,.4);margin-top:12px;">등록일</dt><dd>2024-03-15</dd>
+        </dl>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:24px;">정보 수정</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-brand"><img src="../logo.png" alt=""> Farm<span class="italic">Balance</span></div>
+  <p class="footer-copy">© 2026 FarmBalance. 양평군 스마트 파밍 플랫폼</p>
+</footer>
+</body>
+</html>
+
+

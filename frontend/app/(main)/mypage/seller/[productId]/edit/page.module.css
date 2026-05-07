@@ -1,0 +1,267 @@
+/* ════════════════════════════════════════════════════════
+   S-35c. 상품 수정 — 스타일 (등록 페이지와 공유)
+   ════════════════════════════════════════════════════════ */
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.formCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-xl);
+}
+
+.section {
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.section:last-of-type {
+  border-bottom: none;
+  margin-bottom: var(--space-md);
+  padding-bottom: 0;
+}
+
+.sectionTitle {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.sectionHeader .sectionTitle {
+  margin-bottom: 0;
+}
+
+.aiAutofillButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+  min-height: 44px;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.aiAutofillButton:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.aiAutofillButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sectionDesc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+/* ── 이미지 업로드 ── */
+.imageGrid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.imageItem {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.imagePreview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imageRemoveBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 12px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+}
+
+.imageRemoveBtn:hover {
+  background: var(--color-danger);
+}
+
+.mainBadge {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.imageAddBtn {
+  width: 110px;
+  height: 110px;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.imageAddBtn:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-pale);
+}
+
+.imageAddIcon {
+  font-size: 24px;
+}
+
+.imageAddText {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* ── 폼 행 ── */
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.formGroup {
+  margin-bottom: var(--space-md);
+}
+
+.label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.required {
+  color: var(--color-danger);
+  margin-left: 2px;
+}
+
+/* ── AI 설명 생성 버튼 ── */
+.descHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.aiButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark, #1a5c3a));
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  min-height: 44px;
+}
+
+.aiButton:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.aiButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.aiSpinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── 글자수 카운터 ── */
+.charCount {
+  display: block;
+  text-align: right;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.charCountOver {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.submitRow {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 768px) {
+  .formCard {
+    padding: var(--space-md);
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+}
+

@@ -1,0 +1,73 @@
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 32px;
+}
+
+.stepGroup {
+  display: flex;
+  align-items: center;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stepCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  border: 2px solid var(--color-border);
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  transition: all var(--transition-base);
+}
+
+.stepActive .stepCircle {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.stepDone .stepCircle {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+  color: #fff;
+}
+
+.stepLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.stepActive .stepLabel {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.stepDone .stepLabel {
+  color: var(--color-primary-light);
+}
+
+.stepLine {
+  width: 32px;
+  height: 2px;
+  background: var(--color-border);
+  margin: 0 4px;
+  transition: background var(--transition-base);
+}
+
+.stepLineDone {
+  background: var(--color-primary-light);
+}

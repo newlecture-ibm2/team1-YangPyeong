@@ -1,0 +1,112 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBalance — AI 추천</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<nav class="nav">
+  <a href="../index.html" class="nav-logo"><img src="../logo.png" alt=""> Farm<span class="italic">Balance</span></a>
+  <div class="nav-links"><a href="../farm/farm-manage.html" class="active">내 농장</a><a href="../shop/shop-browse.html">상점</a><a href="../stores/store-map.html">가게</a><a href="../community/community-list.html">커뮤니티</a></div>
+  <div class="nav-right"><a class="btn-nav btn-nav-fill" href="#">홍길동 님</a></div>
+</nav>
+
+<div class="page">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:0;padding-bottom:16px;">
+    <div>
+      <p class="breadcrumb"><a href="#">홈</a> / 내 농장 / AI 추천</p>
+      <h1 class="page-title">AI 작물 <span class="italic">추천</span></h1>
+      <p class="page-sub">내 농장의 토양과 기후, 그리고 현재 수급 상황을 분석해 최적의 작물을 추천합니다.</p>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <span class="text-small" style="color:var(--color-primary);font-weight:600;">✨ 분석 대상 농장:</span>
+      <select class="form-input" style="width:auto;margin-bottom:0;"><option>양평 해맑은 농장</option><option>강하 들녘 농장</option></select>
+    </div>
+  </div>
+  
+  <div class="tabs mb-32" style="border-bottom:1px solid var(--color-border); padding-bottom:0;">
+    <a href="../farm/farm-manage.html">대시보드</a>
+    <a href="../balance/balance-list.html">수급 분석</a>
+    <a href="../recommend/recommend-list.html" class="active">AI 작물 추천</a>
+    <a href="../farm/farm-info.html">농장 정보</a>
+  </div>
+
+  <!-- TOP 3 RANKING -->
+  <div class="grid-3 mb-48">
+    <div class="card" style="text-align:center;border:2px solid var(--color-accent);">
+      <div style="font-size:48px;margin-bottom:12px;">🥇</div>
+      <h3 style="margin-bottom:4px;">유기농 배추</h3>
+      <p class="text-small mb-16">채소류 · 토양 적합도 92%</p>
+      <p style="font-family:var(--font-serif);font-size:48px;color:var(--color-primary);font-weight:700;margin-bottom:4px;">96</p>
+      <p class="text-label mb-16">AI 추천 점수</p>
+      <div style="text-align:left;">
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">토양 적합도 <strong>92%</strong></p>
+        <div class="gauge mb-8"><div class="gauge-fill green" style="width:92%"></div></div>
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">시세 전망 <strong>88%</strong></p>
+        <div class="gauge mb-8"><div class="gauge-fill green" style="width:88%"></div></div>
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">수급 안정성 <strong>95%</strong></p>
+        <div class="gauge"><div class="gauge-fill green" style="width:95%"></div></div>
+      </div>
+      <p style="margin-top:16px;font-size:14px;color:var(--color-primary);font-weight:600;">예상 수익: ₩4,200/kg</p>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <div style="font-size:48px;margin-bottom:12px;">🥈</div>
+      <h3 style="margin-bottom:4px;">청양고추</h3>
+      <p class="text-small mb-16">채소류 · 토양 적합도 88%</p>
+      <p style="font-family:var(--font-serif);font-size:48px;color:var(--color-primary);font-weight:700;margin-bottom:4px;">91</p>
+      <p class="text-label mb-16">AI 추천 점수</p>
+      <div style="text-align:left;">
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">토양 적합도 <strong>88%</strong></p>
+        <div class="gauge mb-8"><div class="gauge-fill green" style="width:88%"></div></div>
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">시세 전망 <strong>90%</strong></p>
+        <div class="gauge mb-8"><div class="gauge-fill green" style="width:90%"></div></div>
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">수급 안정성 <strong>85%</strong></p>
+        <div class="gauge"><div class="gauge-fill green" style="width:85%"></div></div>
+      </div>
+      <p style="margin-top:16px;font-size:14px;color:var(--color-primary);font-weight:600;">예상 수익: ₩5,100/kg</p>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <div style="font-size:48px;margin-bottom:12px;">🥉</div>
+      <h3 style="margin-bottom:4px;">방울토마토</h3>
+      <p class="text-small mb-16">과일류 · 토양 적합도 85%</p>
+      <p style="font-family:var(--font-serif);font-size:48px;color:var(--color-primary);font-weight:700;margin-bottom:4px;">87</p>
+      <p class="text-label mb-16">AI 추천 점수</p>
+      <div style="text-align:left;">
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">토양 적합도 <strong>85%</strong></p>
+        <div class="gauge mb-8"><div class="gauge-fill green" style="width:85%"></div></div>
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">시세 전망 <strong>82%</strong></p>
+        <div class="gauge mb-8"><div class="gauge-fill green" style="width:82%"></div></div>
+        <p class="text-small" style="display:flex;justify-content:space-between;margin-bottom:6px;">수급 안정성 <strong>90%</strong></p>
+        <div class="gauge"><div class="gauge-fill green" style="width:90%"></div></div>
+      </div>
+      <p style="margin-top:16px;font-size:14px;color:var(--color-primary);font-weight:600;">예상 수익: ₩6,800/kg</p>
+    </div>
+  </div>
+
+  <!-- FULL TABLE -->
+  <h3 class="mb-16">전체 추천 목록</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>순위</th><th>작물명</th><th>분류</th><th>AI 점수</th><th>예상 수익</th><th>수급 상태</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>유기농 배추</td><td><span class="pill pill--green">채소류</span></td><td>96</td><td>₩4,200/kg</td><td><span class="badge badge-green">안정</span></td><td><a class="btn btn-primary btn-sm" href="#">상세 →</a></td></tr>
+        <tr><td><strong>2</strong></td><td>청양고추</td><td><span class="pill pill--green">채소류</span></td><td>91</td><td>₩5,100/kg</td><td><span class="badge badge-green">안정</span></td><td><a class="btn btn-primary btn-sm" href="#">상세 →</a></td></tr>
+        <tr><td><strong>3</strong></td><td>방울토마토</td><td><span class="pill pill--green">과일류</span></td><td>87</td><td>₩6,800/kg</td><td><span class="badge badge-green">안정</span></td><td><a class="btn btn-primary btn-sm" href="#">상세 →</a></td></tr>
+        <tr><td><strong>4</strong></td><td>감자</td><td><span class="pill pill--outline">곡물</span></td><td>82</td><td>₩1,800/kg</td><td><span class="badge badge-red">부족</span></td><td><a class="btn btn-outline btn-sm" href="#">상세 →</a></td></tr>
+        <tr><td><strong>5</strong></td><td>당근</td><td><span class="pill pill--green">채소류</span></td><td>79</td><td>₩2,300/kg</td><td><span class="badge badge-green">안정</span></td><td><a class="btn btn-outline btn-sm" href="#">상세 →</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-brand"><img src="../logo.png" alt=""> Farm<span class="italic">Balance</span></div>
+  <p class="footer-copy">© 2026 FarmBalance. 양평군 스마트 파밍 플랫폼</p>
+</footer>
+</body>
+</html>
+
+

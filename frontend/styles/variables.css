@@ -1,0 +1,46 @@
+/* ════════════════════════════════════════════════════════
+   FarmBalance — Design Tokens (CSS Custom Properties)
+   Primary: #2D6A4F  |  Accent(CTA): #CCFF33
+   ════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Colors ── */
+  --color-bg: #F5F3EF;
+  --color-surface: #FFFFFF;
+  --color-text: #1B1C1E;
+  --color-text-secondary: #6B7280;
+  --color-primary: #2D6A4F;
+  --color-primary-light: #52B788;
+  --color-primary-pale: #EBFBEE;
+  --color-accent: #CCFF33;
+  --color-border: #E5E7EB;
+  --color-danger: #DC2626;
+  --color-warning: #F59E0B;
+
+  /* ── Typography ── */
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* ── Border Radius ── */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  /* ── Spacing ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.08);
+
+  /* ── Transition ── */
+  --transition-fast: 0.2s ease;
+  --transition-base: 0.3s ease;
+}

@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBalance — 밸런스 상세</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<nav class="nav">
+  <a href="../landing.html" class="nav-logo"><img src="../logo.png" alt="FarmBalance 로고"> FarmBalance</a>
+  <div class="nav-links"><a href="../farm/farm-manage.html" class="active">내 농장</a><a href="../shop/shop-browse.html">상점</a><a href="../stores/store-map.html">가게</a><a href="../community/community-list.html">커뮤니티</a></div>
+  <div class="nav-right"><a href="../auth/login.html" class="btn-nav btn-nav-outline">로그인</a><a href="../auth/signup.html" class="btn-nav btn-nav-fill">시작하기</a></div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../landing.html">홈</a> › <a href="../balance/balance-list.html">밸런스</a> › <strong>배추 상세</strong></div>
+    <h1 class="page-title">배추 — 밸런스 상세</h1>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">현재 공급량</div><div class="kpi-value">800톤</div></div>
+    <div class="kpi"><div class="kpi-label">예상 수요량</div><div class="kpi-value">1,500톤</div></div>
+    <div class="kpi"><div class="kpi-label">밸런스</div><div class="kpi-value red">-700톤</div></div>
+    <div class="kpi"><div class="kpi-label">수급 상태</div><div class="kpi-value"><span class="badge-red badge">부족</span></div></div>
+  </div>
+
+  <div class="grid-2 mb-32">
+    <div class="card"><h2 class="card-title">시계열 추이</h2><div class="placeholder" style="height:250px;">📈 월별 공급/수요 추이 라인 차트</div></div>
+    <div class="card"><h2 class="card-title">전년 대비 변화</h2><div class="placeholder" style="height:250px;">📊 전년 동기 대비 막대 차트</div></div>
+  </div>
+
+  <div class="card mb-32">
+    <h2 class="card-title">등록 농가 현황</h2>
+    <div class="table-wrap">
+      <table class="tbl">
+        <thead><tr><th>농가명</th><th>면적</th><th>예상 수확량</th><th>파종일</th><th>상태</th></tr></thead>
+        <tbody>
+          <tr><td>양평 해맑은 농장</td><td>700㎡</td><td>300kg</td><td>2026-03-15</td><td><span class="badge-green badge">생육중</span></td></tr>
+          <tr><td>용문 청정 농원</td><td>500㎡</td><td>200kg</td><td>2026-03-20</td><td><span class="badge-green badge">생육중</span></td></tr>
+          <tr><td>강하 들녘 농장</td><td>1,200㎡</td><td>500kg</td><td>2026-03-10</td><td><span class="badge-lime badge">수확예정</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card mb-32">
+    <h2 class="card-title">도매 가격 추이</h2>
+    <div class="placeholder" style="height:200px;">💰 KAMIS 도매가격 추이 라인 차트</div>
+  </div>
+
+  <div><button class="btn btn-outline" onclick="history.back()">← 목록으로</button></div>
+</div>
+
+<footer class="footer">
+  <div class="footer-brand"><img src="../logo.png" alt="">FarmBalance</div>
+  <div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div>
+</footer>
+</body>
+</html>
+

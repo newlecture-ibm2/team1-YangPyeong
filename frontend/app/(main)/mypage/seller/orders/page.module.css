@@ -1,0 +1,364 @@
+/* ════════════════════════════════════════════════════════
+   S-36. 판매 주문 관리 — 스타일
+   ════════════════════════════════════════════════════════ */
+
+/* ── KPI 카드 ── */
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.kpiCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kpiCardHighlight {
+  background: var(--color-primary);
+}
+
+.kpiCardHighlight .kpiLabel {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.kpiCardHighlight .kpiValue {
+  color: var(--color-accent);
+}
+
+.kpiLabel {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.kpiValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+}
+
+/* ── 상태 필터 탭 ── */
+.filterTabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: var(--space-lg);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filterTab {
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.filterTab:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.filterTabActive {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* ── 테이블 ── */
+.tableWrap {
+  overflow: visible;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table thead {
+  background: var(--color-bg);
+}
+
+.table th {
+  padding: 14px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.thLeft {
+  text-align: left !important;
+}
+
+.table td {
+  padding: 16px;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr {
+  transition: background var(--transition-fast);
+}
+
+.table tbody tr:hover {
+  background: var(--color-primary-pale);
+}
+
+.clickableRow {
+  cursor: pointer;
+}
+
+.tdLeft {
+  text-align: left !important;
+}
+
+.tdOrderNumber {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.tdAmount {
+  font-weight: 600;
+}
+
+/* ── 케밥 드롭다운 메뉴 ── */
+.actionCell {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.kebabBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kebabBtn:hover {
+  background: var(--color-primary-pale);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 20;
+  width: max-content;
+  margin-top: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  animation: fadeIn 0.12s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 14px;
+  text-align: left;
+  color: var(--color-text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  white-space: nowrap;
+}
+
+.menuItem span:first-child {
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 15px;
+}
+
+.menuItem:hover {
+  background: var(--color-bg);
+}
+
+.menuItem + .menuItem {
+  border-top: 1px solid var(--color-border);
+}
+
+.menuItemPrimary {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.menuItemDanger {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/* ── 빈 상태 ── */
+.emptyState {
+  text-align: center;
+  padding: 80px 20px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.emptyIcon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.emptyText {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+}
+
+/* ── 상세 모달 ── */
+.detailModal {
+  padding: 8px 0;
+}
+
+.detailSection {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.detailSection:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.detailSectionTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 8px 16px;
+  font-size: 14px;
+}
+
+.detailGrid dt {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.detailGrid dd {
+  color: var(--color-text);
+}
+
+.detailPrice {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* ── 거절 모달 ── */
+.cancelModal {
+  padding: 8px 0;
+}
+
+.cancelModal p {
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.cancelWarning {
+  font-size: 13px !important;
+  color: var(--color-danger);
+  margin-top: 8px;
+}
+
+.cancelActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  .kpiRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kpiValue {
+    font-size: 22px;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px 10px;
+    font-size: 13px;
+  }
+
+  .detailGrid {
+    grid-template-columns: 70px 1fr;
+    font-size: 13px;
+  }
+}
+
+/* ── 배송 예정 힌트 ── */
+.deliveryHint {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .kpiRow {
+    grid-template-columns: 1fr;
+  }
+}

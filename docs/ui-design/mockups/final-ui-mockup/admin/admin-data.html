@@ -1,0 +1,31 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FarmBalance — 관리자: 데이터 관리</title><link rel="stylesheet" href="../style.css"></head>
+<body>
+<nav class="nav" style="background:#111714;"><a href="../landing.html" class="nav-logo"><img src="../logo.png" alt="FarmBalance 로고"> FarmBalance <span class="badge badge-red" style="font-size:10px;margin-left:8px;">ADMIN</span></a><div class="nav-links"><a href="./admin-dashboard.html">대시보드</a><a href="./admin-users.html">회원</a><a href="./admin-approvals.html">승인</a><a href="./admin-crops.html">작물</a><a href="./admin-community.html">커뮤니티</a><a href="./admin-shop.html">상점</a><a href="./admin-stores.html">가게</a><a href="./admin-engine.html">엔진</a><a href="./admin-data.html" class="active">데이터</a></div><div class="nav-right"><a href="../auth/login.html" class="btn-nav btn-nav-outline">로그아웃</a></div></nav>
+<div class="page">
+  <div class="page-header"><h1 class="page-title">🗄️ 데이터 수집 관리</h1><p class="page-sub">외부 API(KOSIS, 기상청, KAMIS 등) 데이터 수집 상태를 관리합니다.</p></div>
+  <div class="grid-3 mb-32">
+    <div class="card"><div class="card-label">KOSIS 통계</div><h3>최종 수집: 2026-04-27 03:00</h3><div class="text-small" style="margin-top:4px;">상태: <span class="badge badge-green">정상</span></div><button class="btn btn-outline btn-sm" style="margin-top:12px;">수동 수집</button></div>
+    <div class="card"><div class="card-label">기상청 API</div><h3>최종 수집: 2026-04-27 06:00</h3><div class="text-small" style="margin-top:4px;">상태: <span class="badge badge-green">정상</span></div><button class="btn btn-outline btn-sm" style="margin-top:12px;">수동 수집</button></div>
+    <div class="card"><div class="card-label">KAMIS 가격</div><h3>최종 수집: 2026-04-26 18:00</h3><div class="text-small" style="margin-top:4px;">상태: <span class="badge badge-orange">지연</span></div><button class="btn btn-outline btn-sm" style="margin-top:12px;">수동 수집</button></div>
+  </div>
+  <div class="card">
+    <h2 class="card-title">수집 이력</h2>
+    <div class="table-wrap">
+      <table class="tbl">
+        <thead><tr><th>시간</th><th>소스</th><th>건수</th><th>상태</th><th>소요시간</th></tr></thead>
+        <tbody>
+          <tr><td>2026-04-27 06:00</td><td>기상청</td><td>15건</td><td><span class="badge badge-green">성공</span></td><td>2.3s</td></tr>
+          <tr><td>2026-04-27 03:00</td><td>KOSIS</td><td>42건</td><td><span class="badge badge-green">성공</span></td><td>5.1s</td></tr>
+          <tr><td>2026-04-26 18:00</td><td>KAMIS</td><td>0건</td><td><span class="badge badge-red">실패</span></td><td>30s (타임아웃)</td></tr>
+          <tr><td>2026-04-26 06:00</td><td>기상청</td><td>15건</td><td><span class="badge badge-green">성공</span></td><td>1.8s</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<footer class="footer"><div class="footer-brand"><img src="../logo.png" alt="">FarmBalance</div><div class="footer-copy">© 2026 FarmBalance. All rights reserved.</div></footer>
+</body></html>
+
+

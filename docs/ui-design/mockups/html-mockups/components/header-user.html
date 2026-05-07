@@ -1,0 +1,38 @@
+<!-- ============================================
+     GNB Header — 일반/농업인 (users)
+     포함 방법: 각 페이지에서 이 블록을 복사 사용
+     data-active 값으로 현재 메뉴 하이라이트
+     ============================================ -->
+<header class="gnb" id="gnb-user">
+  <div class="gnb-inner">
+    <a href="../../index.html" class="gnb-logo">
+      <span>🌿</span> FarmBalance
+    </a>
+    <nav class="gnb-nav">
+      <a href="../farm/farm-manage.html"      data-menu="홈">홈</a>
+      <a href="../farm/farm-manage.html"      data-menu="농장관리">농장관리</a>
+      <a href="../balance/balance-list.html"  data-menu="밸런스">밸런스</a>
+      <a href="../recommend/recommend-list.html" data-menu="추천">추천</a>
+      <a href="../policy/policy-list.html"    data-menu="정책">정책</a>
+      <a href="../community/community-list.html" data-menu="커뮤니티">커뮤니티</a>
+      <a href="../shop/product-browse.html"   data-menu="상점">상점</a>
+      <a href="../stores/store-map.html"      data-menu="가게">가게</a>
+    </nav>
+    <div class="gnb-right">
+      <div class="gnb-icon" title="알림">🔔</div>
+      <div class="gnb-icon" title="마이페이지">👤</div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // data-active 속성으로 현재 메뉴 하이라이트
+  (function(){
+    var active = document.querySelector('[data-active]');
+    if(!active) return;
+    var menuName = active.getAttribute('data-active');
+    document.querySelectorAll('.gnb-nav a').forEach(function(a){
+      if(a.getAttribute('data-menu') === menuName) a.classList.add('active');
+    });
+  })();
+</script>

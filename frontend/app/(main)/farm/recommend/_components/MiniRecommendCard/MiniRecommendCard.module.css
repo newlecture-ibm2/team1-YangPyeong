@@ -1,0 +1,28 @@
+/* MiniRecommendCard — 스타일 */
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.emoji { font-size: 28px; flex-shrink: 0; }
+
+.info { flex: 1; min-width: 0; }
+.name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.score { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.score strong { color: var(--color-primary); }
+
+.rank { font-family: var(--font-serif); font-size: 18px; font-weight: 700; color: var(--color-text-secondary); flex-shrink: 0; }

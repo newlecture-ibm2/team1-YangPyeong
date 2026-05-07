@@ -1,0 +1,150 @@
+.container {
+  padding: 1rem 0;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.filterLink {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: var(--color-text-light);
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.filterLink:hover {
+  color: var(--color-text);
+}
+
+.filterActive {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: var(--color-text);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+
+.timeline {
+  position: relative;
+  padding-left: 48px;
+  min-height: 100px;
+  margin-top: 32px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 21px; /* 44px / 2 - 1 */
+  width: 2px;
+  background: var(--color-border);
+}
+
+.empty {
+  color: var(--color-text-light);
+  font-size: 14px;
+  padding: 2rem 0;
+}
+
+.item {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.dot {
+  position: absolute;
+  left: -48px; /* padding-left 만큼 빼기 */
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid var(--color-border);
+  top: 0; /* 카드의 시작 부분에 맞춤 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px; /* 아이콘 크기 확대 */
+  z-index: 1; /* 선 위로 올라오도록 */
+}
+
+/* 테마별 테두리 색상 */
+.dotUser { border-color: #2D6A4F; }
+.dotWeather { border-color: #0077B6; }
+.dotSystem { border-color: #5A189A; }
+
+.card {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  gap: 1rem;
+}
+
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actionBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+  font-size: 14px;
+}
+
+.actionBtn:hover {
+  background: var(--color-bg-secondary);
+}
+
+.actionBtn.delete:hover {
+  background: #FFE5E5;
+}
+
+.date {
+  font-size: 13px;
+  color: var(--color-text-light);
+}
+
+.content {
+  font-size: 15px;
+  color: var(--color-text);
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+

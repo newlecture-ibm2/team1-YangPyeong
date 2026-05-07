@@ -1,0 +1,51 @@
+# ===== Backend (Spring Boot / Gradle) =====
+backend/.gradle/
+backend/build/
+backend/out/
+backend/bin/
+backend/logs/
+
+# ===== Frontend (Next.js / Node) =====
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env
+frontend/.env.local
+frontend/*.tsbuildinfo
+
+# ===== AI (Python / FastAPI) =====
+ai/.venv/
+ai/__pycache__/
+ai/app/__pycache__/
+ai/**/__pycache__/
+ai/.env
+ai/data/chroma/
+
+# ===== Agent (Python / FastAPI) =====
+agent/.venv/
+agent/__pycache__/
+agent/**/__pycache__/
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Env =====
+.env
+.env.local
+.env.*.local
+
+# ===== Security =====
+*.pem
+*.log
+
+# ===== Uploads (사용자 업로드 파일) =====
+uploads/

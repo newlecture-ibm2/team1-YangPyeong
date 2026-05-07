@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=1440"><title>수급 데이터 다운로드 — FarmBalance</title><link rel="stylesheet" href="../../css/style.css"></head>
+<body>
+<header class="gnb gnb-gov"><div class="gnb-inner">
+  <a href="../../index.html" class="gnb-logo"><span>🌿</span> FarmBalance</a>
+  <nav class="gnb-nav"><a href="gov-dashboard.html">대시보드</a><a href="gov-cultivation.html">통계분석</a><a href="gov-download.html" class="active">데이터</a></nav>
+  <div class="gnb-right"><div class="gnb-icon">🔔</div><div class="gnb-icon">👤</div></div>
+</div></header>
+<div class="breadcrumb"><a href="../../index.html">홈</a> <span>›</span> 지자체 <span>›</span> <strong>데이터 다운로드</strong></div>
+<div class="page">
+  <h1 class="page-title"><span class="icon">📥</span> 수급 데이터 다운로드</h1>
+  <div class="card">
+    <h2 class="card-title">다운로드 조건</h2>
+    <div class="grid-2">
+      <div class="form-group"><label class="form-label">기간</label><div class="flex gap-8"><input class="form-input" type="date"><span style="align-self:center;">~</span><input class="form-input" type="date"></div></div>
+      <div class="form-group"><label class="form-label">지역</label><select class="form-select"><option>양평군 전체</option></select></div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label class="form-label">작물</label><select class="form-select"><option>전체</option></select></div>
+      <div class="form-group"><label class="form-label">파일 형식</label><div class="flex gap-8"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="radio" name="fmt" checked> CSV</label><label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="radio" name="fmt"> XLSX</label></div></div>
+    </div>
+    <div class="form-group"><label class="form-label">데이터 항목</label><div class="flex gap-16" style="flex-wrap:wrap;"><label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" checked> 수급량</label><label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" checked> 가격</label><label style="display:flex;align-items:center;gap:4px;"><input type="checkbox"> 등록현황</label><label style="display:flex;align-items:center;gap:4px;"><input type="checkbox"> 의향데이터</label></div></div>
+    <div class="btn-row"><button class="btn btn-outline">미리보기</button><button class="btn btn-primary">📥 다운로드</button></div>
+  </div>
+  <div class="card" style="background:var(--olive-bg);border-color:var(--olive);">
+    <p style="font-size:13px;color:var(--olive-dark);">💡 최대 10,000건까지 다운로드 가능합니다.</p>
+  </div>
+</div>
+</body></html>
