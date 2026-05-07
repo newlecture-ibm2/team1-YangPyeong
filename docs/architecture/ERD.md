@@ -64,9 +64,9 @@ erDiagram
         varchar business_number "사업자 등록번호"
         varchar land_cert_image_url "토지증명서 이미지"
         boolean land_cert_verified
-        varchar certification_status "PENDING | APPROVED | REJECTED"
+        varchar certification_status "관리자 승인: PENDING | APPROVED | REJECTED"
         varchar reject_reason "반려 사유"
-        varchar status "PENDING | APPROVED | REJECTED"
+        varchar status "운영 상태: OPERATING | FALLOW | CLOSED"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -104,6 +104,7 @@ erDiagram
         decimal farmer_estimated_yield "농가 입력 예상 생산량"
         decimal ai_predicted_yield "AI 예측 수확량"
         varchar yield_unit "g | kg | ton"
+        varchar status "재배 상태: ACTIVE | COMPLETED"
         boolean verified
         timestamp created_at
         timestamp updated_at
@@ -657,9 +658,9 @@ erDiagram
 | business_number | VARCHAR(12) | | 사업자 등록번호 |
 | land_cert_image_url | VARCHAR(500) | | 토지증명서 이미지 URL |
 | land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 |
-| certification_status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
+| certification_status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | 관리자 승인: PENDING / APPROVED / REJECTED |
 | reject_reason | VARCHAR(500) | | 반려 사유 |
-| status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
+| status | VARCHAR(20) | NOT NULL, DEFAULT 'OPERATING' | 운영 상태: OPERATING / FALLOW / CLOSED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
@@ -702,6 +703,7 @@ erDiagram
 | farmer_estimated_yield | DECIMAL(12,2) | | 농가 입력 예상 생산량 |
 | ai_predicted_yield | DECIMAL(12,2) | | AI 예측 수확량 |
 | yield_unit | VARCHAR(10) | | 수확량 단위 (g / kg / ton) |
+| status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | 재배 상태: ACTIVE / COMPLETED |
 | verified | BOOLEAN | DEFAULT false | 인증 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
