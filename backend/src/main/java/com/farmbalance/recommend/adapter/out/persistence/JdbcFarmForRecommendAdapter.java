@@ -26,7 +26,7 @@ public class JdbcFarmForRecommendAdapter implements LoadFarmForRecommendPort {
     @Override
     public Optional<FarmBasicData> loadFarmBasic(Long farmId) {
         String sql = """
-            SELECT id, name, address, bjd_code, pnu_code,
+            SELECT id, name, address, area, bjd_code, pnu_code,
                    soil_type, soil_ph AS ph, soil_organic_matter AS organic_matter
             FROM farms
             WHERE id = ? AND deleted_at IS NULL
@@ -38,7 +38,7 @@ public class JdbcFarmForRecommendAdapter implements LoadFarmForRecommendPort {
                             rs.getLong("id"),
                             rs.getString("name"),
                             rs.getString("address"),
-                            null, // area 컬럼은 DB에서 삭제됨
+                            rs.getObject("area") != null ? rs.getDouble("area") : null,
                             rs.getString("bjd_code"),
                             rs.getString("pnu_code"),
                             rs.getString("soil_type"),
