@@ -41,7 +41,7 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(name = "longitude")
     private Double longitude;
 
-    @Column(name = "area", nullable = false)
+    @Column(name = "area")
     private Double area;
 
     @Column(name = "soil_type", length = 50)

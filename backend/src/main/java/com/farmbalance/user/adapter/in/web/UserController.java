@@ -54,7 +54,6 @@ import java.util.UUID;
         private String email;
         private String name;
         private String phone;
-        private String region;
         private String address;
         private String bio;
         private String role;
@@ -76,9 +75,6 @@ import java.util.UUID;
         @jakarta.validation.constraints.Size(max = 20)
         private String phone;
 
-        @jakarta.validation.constraints.Size(max = 50)
-        private String region;
-
         @jakarta.validation.constraints.Size(max = 255)
         private String address;
 
@@ -99,7 +95,6 @@ import java.util.UUID;
                 .email(user.getEmail())
                 .name(user.getName())
                 .phone(user.getPhone())
-                .region(user.getRegion())
                 .address(user.getAddress())
                 .bio(user.getBio())
                 .role(user.getRole() != null ? user.getRole().name() : "USER")
@@ -124,7 +119,6 @@ import java.util.UUID;
                 .email(email)
                 .name(request.getName())
                 .phone(request.getPhone())
-                .region(request.getRegion())
                 .address(request.getAddress())
                 .bio(request.getBio())
                 .build();
