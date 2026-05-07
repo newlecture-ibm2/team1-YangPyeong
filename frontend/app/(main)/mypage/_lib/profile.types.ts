@@ -24,7 +24,6 @@ export interface UserProfile {
   email: string;
   name: string;
   phone: string;
-  region: string;
   address: string | null;
   bio: string | null;
   role: UserRole;
@@ -37,7 +36,6 @@ export interface UserProfile {
 export interface ProfileUpdateRequest {
   name: string;
   phone: string;
-  region: string;
   address: string;
   bio: string;
 }

@@ -68,10 +68,6 @@ export default function ProfileInfoView({ profile, onEdit }: ProfileInfoViewProp
         <p>{profile.phone || '등록된 번호가 없습니다.'}</p>
       </div>
       <div className={styles.infoItem}>
-        <label>활동 지역</label>
-        <p>{profile.region || '전국'}</p>
-      </div>
-      <div className={styles.infoItem}>
         <label>주소</label>
         <p>{profile.address || '등록된 주소가 없습니다.'}</p>
       </div>

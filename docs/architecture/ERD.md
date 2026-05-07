@@ -33,7 +33,6 @@ erDiagram
         varchar name
         varchar phone
         varchar role "USER | FARMER | ADMIN | GOV"
-        varchar region "지역명 문자열 (하위호환)"
         varchar region_code "FK → regions.code (시군구 코드)"
         varchar address "상세 주소"
         text bio "자기소개"
@@ -623,9 +622,8 @@ erDiagram
 | password | VARCHAR(255) | NOT NULL | BCrypt 해싱 |
 | name | VARCHAR(50) | NOT NULL | 이름 |
 | phone | VARCHAR(20) | | 전화번호 |
-| role | VARCHAR(20) | NOT NULL, DEFAULT 'GENERAL' | GENERAL / FARMER / ADMIN / GOV |
-| region | VARCHAR(50) | | 지역 (양평군 등) — 하위호환용 유지 |
-| region_code | VARCHAR(10) | | 시군구 코드 (regions.code 참조, 예: "4183") — 신규 |
+| role | VARCHAR(20) | NOT NULL, DEFAULT 'USER' | USER / FARMER / ADMIN / GOV |
+| region_code | VARCHAR(10) | | 시군구 코드 (regions.code 참조, 예: "4183") |
 | address | VARCHAR(255) | | 상세 주소 |
 | bio | TEXT | | 자기소개 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | ACTIVE / SUSPENDED |
@@ -636,8 +634,8 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-> **region_code 추가 이유**: GOV 사용자의 관할 시군구를 `regions` 테이블과 연결하여 하위 읍면동 목록을 동적으로 조회하기 위함.  
-> 기존 `region` 문자열 컬럼은 하위호환을 위해 삭제하지 않고 유지합니다.
+> **region_code**: GOV 사용자의 관할 시군구를 `regions` 테이블과 연결하여 하위 읍면동 목록을 동적으로 조회하기 위함.  
+> ~~기존 `region` 문자열 컬럼~~은 V23 마이그레이션(`V23__drop_users_region_column.sql`)으로 삭제되었습니다.
 
 ### 2.2 farms (농장)
 
