@@ -39,7 +39,7 @@ public class RecommendResponse {
         return RecommendResponse.builder()
                 .farmInfo(farmInfo)
                 .recommendations(items)
-                .generatedAt(result.getGeneratedAt().toString())
+                .generatedAt(result.getGeneratedAt() != null ? result.getGeneratedAt().toString() : null)
                 .build();
     }
 
