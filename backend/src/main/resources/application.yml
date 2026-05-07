@@ -73,8 +73,8 @@ external:
   kakao:
     rest-api-key: ${KAKAO_REST_API_KEY:}
   weather:
-    base-url: "https://apis.data.go.kr/1360000/AsosDalyInfoService"
-
+    base-url: ${WEATHER_BASE_URL:}
+    fcst-url: ${WEATHER_FCST_URL:}
     api-key: ${WEATHER_API_KEY:}
   soil:
     api-key: ${SOIL_API_KEY:}

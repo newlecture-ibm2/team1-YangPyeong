@@ -19,6 +19,7 @@ public class CultivationRegistration {
     private final Double cultivationArea;
     private final Double farmerEstimatedYield;
     private final String yieldUnit;
+    private final CultivationStatus status; // 재배 상태 (ACTIVE, COMPLETED)
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 }

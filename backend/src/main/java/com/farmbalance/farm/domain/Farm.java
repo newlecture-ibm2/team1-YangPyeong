@@ -24,6 +24,7 @@ public class Farm {
     private Double ph;
     private Double organicMatter;
     private CertificationStatus certificationStatus; // 인증 상태
+    private FarmStatus status; // 운영 상태 (OPERATING, FALLOW, CLOSED)
 
     public void updateCertificationStatus(CertificationStatus status) {
         this.certificationStatus = status;
