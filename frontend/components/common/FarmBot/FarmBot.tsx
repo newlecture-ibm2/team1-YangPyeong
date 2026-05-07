@@ -1,17 +1,18 @@
 /* ════════════════════════════════════════════════════════
-   GuideBot — 메인 컴포넌트 (v7)
+   FarmBot — 메인 컴포넌트 (v7)
    - 유저 선택 후 가이드 시작
    - 축소 모드 캐릭터 왼쪽 바라봄
-   - GuideBotContext Provider 내장 (showQuickMessage 외부 호출 지원)
+   - FarmBotContext Provider 내장 (showQuickMessage 외부 호출 지원)
    ════════════════════════════════════════════════════════ */
 
 'use client';
 
 import { ReactNode, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useGuideBot } from './useGuideBot';
-import { GuideBotContext } from './GuideBotContext';
-import styles from './GuideBot.module.css';
+import { useFarmBot } from './useFarmBot';
+import { FarmBotContext } from './FarmBotContext';
+import Image from 'next/image';
+import styles from './FarmBot.module.css';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
@@ -37,19 +38,14 @@ function useDuckLottieData() {
   return data;
 }
 
-interface GuideBotProps {
+interface FarmBotProps {
   children?: ReactNode;
 }
 
-export default function GuideBot({ children }: GuideBotProps) {
+export default function FarmBot({ children }: FarmBotProps) {
   const lottieData = useLottieData();
   const duckData = useDuckLottieData();
 
-  // 로그인 체크 (fb-user 쿠키 기반)
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  useEffect(() => {
-    setIsLoggedIn(document.cookie.includes('fb-user'));
-  }, []);
 
   // ── 최적화 1: 화면을 안 보고 있으면 Lottie 일시정지 ──
   // - visibilitychange: 같은 브라우저 내 탭 전환/최소화 감지
@@ -102,28 +98,50 @@ export default function GuideBot({ children }: GuideBotProps) {
     acceptGuide,
     declineGuide,
     showQuickMessage,
-  } = useGuideBot();
+    hideBot,
+    showBot,
+    isMounted,
+  } = useFarmBot();
 
-  // 미로그인 또는 시나리오 없으면 Provider만 제공
-  if (!isLoggedIn) {
+  // 클라이언트 마운트 전에는 자식 요소만 렌더링 (Hydration 에러 방지)
+  if (!isMounted) {
     return (
-      <GuideBotContext.Provider value={{ showQuickMessage }}>
+      <FarmBotContext.Provider value={{ showQuickMessage }}>
         {children}
-      </GuideBotContext.Provider>
+      </FarmBotContext.Provider>
     );
   }
+
+  // 시나리오 없으면 Provider만 제공
   if (!hasScenario && mode === 'minimized') {
     return (
-      <GuideBotContext.Provider value={{ showQuickMessage }}>
+      <FarmBotContext.Provider value={{ showQuickMessage }}>
         {children}
-      </GuideBotContext.Provider>
+      </FarmBotContext.Provider>
+    );
+  }
+
+  // ── 숨김 모드: 하단 구석에 복원 아이콘 ──
+  if (mode === 'hidden') {
+    return (
+      <FarmBotContext.Provider value={{ showQuickMessage }}>
+        {children}
+        <button
+          className={styles.restoreBtn}
+          onClick={showBot}
+          title="가이드봇 다시 보기"
+          aria-label="가이드봇 다시 보기"
+        >
+          <Image src="/icon.png" alt="가이드봇" width={48} height={48} className={styles.restoreIcon} />
+        </button>
+      </FarmBotContext.Provider>
     );
   }
 
   // ── 축소 모드: Footer에서 걸어다님 ──
   if (mode === 'minimized') {
     return (
-      <GuideBotContext.Provider value={{ showQuickMessage }}>
+      <FarmBotContext.Provider value={{ showQuickMessage }}>
         {children}
         <div className={`${styles.footerWalkWrap} ${prefersReducedMotion ? styles.reducedMotion : ''}`}>
           <button
@@ -132,43 +150,69 @@ export default function GuideBot({ children }: GuideBotProps) {
             title="가이드 시작"
             aria-label="가이드 도우미 열기"
           >
-            {lottieData && (
-              <Lottie
-                animationData={lottieData}
-                loop={shouldAnimate}
-                autoplay={shouldAnimate}
-                className={styles.footerWalkLottie}
-              />
-            )}
-            {duckData && (
-              <div className={styles.footerWalkDuckWrap}>
-                <Lottie
-                  animationData={duckData}
-                  loop={shouldAnimate}
-                  autoplay={shouldAnimate}
-                  className={styles.footerWalkDuckLottie}
-                />
+            <div className={styles.footerWalkCharacterWrap}>
+              <div className={styles.footerWalkCharacterScale}>
+                {lottieData && (
+                  <Lottie
+                    animationData={lottieData}
+                    loop={shouldAnimate}
+                    autoplay={shouldAnimate}
+                    className={styles.footerWalkLottie}
+                  />
+                )}
+                {duckData && (
+                  <div className={styles.footerWalkDuckWrap}>
+                    <Lottie
+                      animationData={duckData}
+                      loop={shouldAnimate}
+                      autoplay={shouldAnimate}
+                      className={styles.footerWalkDuckLottie}
+                    />
+                  </div>
+                )}
               </div>
-            )}
+            </div>
             {!showBubble && (
-              <span className={styles.footerWalkTooltip}>클릭하면 가이드 시작! 👋</span>
+              <span className={styles.footerWalkTooltip}>
+                <span className={styles.tooltipTitle}>안녕하세요! 👋</span>
+                <span className={styles.tooltipBtns}>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    className={styles.tooltipGuideBtn}
+                    onClick={(e) => { e.stopPropagation(); restartGuide(); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); restartGuide(); } }}
+                  >
+                    🌱 가이드 시작
+                  </span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    className={styles.tooltipHideBtn}
+                    onClick={(e) => { e.stopPropagation(); hideBot(); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); hideBot(); } }}
+                  >
+                    숨기기
+                  </span>
+                </span>
+              </span>
             )}
           </button>
-          {/* 퀵 메시지 말풍선 (외부 이벤트 트리거) */}
+          {/* 퀘 메시지 말풍선 (외부 이벤트 트리거) */}
           {showBubble && (
             <div className={styles.quickBubble}>
               <p className={styles.bubbleText}>{bubbleMessage}</p>
             </div>
           )}
         </div>
-      </GuideBotContext.Provider>
+      </FarmBotContext.Provider>
     );
   }
 
   // ── 질문 모드: "가이드 해드릴까요?" ──
   if (mode === 'asking') {
     return (
-      <GuideBotContext.Provider value={{ showQuickMessage }}>
+      <FarmBotContext.Provider value={{ showQuickMessage }}>
         {children}
         <div
           className={styles.botContainer}
@@ -203,7 +247,7 @@ export default function GuideBot({ children }: GuideBotProps) {
             </div>
           )}
         </div>
-      </GuideBotContext.Provider>
+      </FarmBotContext.Provider>
     );
   }
 
@@ -211,7 +255,7 @@ export default function GuideBot({ children }: GuideBotProps) {
   const bubbleClass = bubbleAbove ? styles.bubbleAbove : styles.bubbleBelow;
 
   return (
-    <GuideBotContext.Provider value={{ showQuickMessage }}>
+    <FarmBotContext.Provider value={{ showQuickMessage }}>
       {children}
       {highlightRect && (
         <div className={styles.overlay}>
@@ -267,6 +311,6 @@ export default function GuideBot({ children }: GuideBotProps) {
           </div>
         )}
       </div>
-    </GuideBotContext.Provider>
+    </FarmBotContext.Provider>
   );
 }

@@ -1,9 +1,9 @@
 /* ════════════════════════════════════════════════════════
-   GuideBot 시나리오 데이터
+   FarmBot 시나리오 데이터
    페이지별 가이드 스텝을 정의합니다.
    ════════════════════════════════════════════════════════ */
 
-export interface GuideStep {
+export interface FarmBotStep {
   /** 타겟 요소의 CSS 선택자 */
   target: string;
   /** 말풍선 텍스트 */
@@ -12,14 +12,14 @@ export interface GuideStep {
   position: 'top' | 'bottom' | 'left' | 'right';
 }
 
-export interface GuideScenario {
+export interface FarmBotScenario {
   /** 적용 페이지 경로 (startsWith 매칭) */
   path: string;
   /** 가이드 스텝 목록 */
-  steps: GuideStep[];
+  steps: FarmBotStep[];
 }
 
-const scenarios: GuideScenario[] = [
+const scenarios: FarmBotScenario[] = [
   {
     path: '/',
     steps: [
@@ -59,7 +59,7 @@ const scenarios: GuideScenario[] = [
 ];
 
 /** 현재 경로에 맞는 시나리오를 반환합니다 */
-export function getScenarioForPath(pathname: string): GuideScenario | null {
+export function getScenarioForPath(pathname: string): FarmBotScenario | null {
   // 정확히 '/'인 경우 먼저 체크
   if (pathname === '/') {
     return scenarios.find((s) => s.path === '/') || null;
