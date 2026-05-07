@@ -1,0 +1,41 @@
+/* SoilPanel — 스타일 */
+
+.panel {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  text-align: center;
+  border: 1px solid var(--color-border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.icon   { font-size: 28px; margin-bottom: 8px; }
+.label  { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-secondary); margin-bottom: 4px; }
+.value  { font-family: var(--font-serif); font-size: 28px; font-weight: 700; color: var(--color-primary); }
+.unit   { font-family: var(--font-sans); font-size: 14px; color: var(--color-text-secondary); font-weight: 400; }
+
+.delay1 { animation: fadeInUp 0.5s ease-out 0.1s both; }
+.delay2 { animation: fadeInUp 0.5s ease-out 0.2s both; }
+.delay3 { animation: fadeInUp 0.5s ease-out 0.3s both; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .panel { grid-template-columns: 1fr 1fr; }
+}
