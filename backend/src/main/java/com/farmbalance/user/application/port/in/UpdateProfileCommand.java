@@ -12,7 +12,6 @@ public class UpdateProfileCommand {
     private final String email;
     private final String name;
     private final String phone;
-    private final String region;
     private final String address;
     private final String bio;
 }
