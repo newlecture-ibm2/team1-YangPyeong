@@ -16,7 +16,9 @@ async function handler(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path } = await params;
-  const backendPath = `/api/${path.join('/')}`;
+  // path 배열에서 'proxy' 세그먼트를 제거하여 백엔드 전달 경로 정규화
+  const filteredPath = path.filter(p => p !== 'proxy');
+  const backendPath = `/api/${filteredPath.join('/')}`;
   return proxyToBackend(request, backendPath);
 }
 

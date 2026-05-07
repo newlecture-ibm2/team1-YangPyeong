@@ -1,0 +1,208 @@
+.container {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
+.header {
+  padding: 120px 80px 60px;
+  background: linear-gradient(to bottom, #fcfbf7, var(--color-bg));
+  text-align: center;
+}
+
+.headerTitle {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-primary);
+  margin-bottom: 20px;
+}
+
+.headerTitle h1 {
+  font-family: var(--font-serif);
+  font-size: 48px;
+  font-weight: 400;
+  color: var(--color-text);
+  margin-bottom: 24px;
+  line-height: 1.2;
+}
+
+.headerTitle h1 em {
+  font-style: italic;
+  color: var(--color-primary);
+}
+
+.headerTitle p {
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  line-height: 1.8;
+}
+
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px 100px;
+}
+
+/* Category Tabs */
+.categoryTabs {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 40px;
+  border-bottom: 1px solid var(--color-surface-dark);
+}
+
+.tab {
+  padding: 16px 4px;
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.tab:hover {
+  color: var(--color-primary);
+}
+
+.activeTab {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--color-primary);
+  border-radius: 2px 2px 0 0;
+}
+
+/* Filter Section */
+.filterSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 20px;
+}
+
+.searchBar {
+  display: flex;
+  flex: 1;
+  max-width: 500px;
+  background: #fff;
+  border: 1.5px solid var(--color-surface-dark);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.searchBar:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.12);
+  transform: translateY(-1px);
+}
+
+.searchTypeSelect {
+  padding: 0 12px 0 16px;
+  background-color: transparent;
+  border: none;
+  border-right: 1px solid var(--color-surface-dark);
+  font-size: 14px;
+  color: var(--color-text);
+  outline: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.searchTypeSelect:hover {
+  background-color: var(--color-surface);
+}
+
+.searchInput {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  background: transparent;
+}
+
+.searchButton {
+  padding: 0 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: color 0.2s;
+}
+
+.searchButton:hover {
+  color: var(--color-primary);
+}
+
+.sortSelect {
+  padding: 10px 16px;
+  border: 1.5px solid var(--color-surface-dark);
+  border-radius: 10px;
+  background-color: #fff;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sortSelect:hover {
+  border-color: var(--color-primary);
+}
+
+/* Post Card List Styling */
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-surface-dark);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  border-top: 1px solid var(--color-surface-dark);
+}
+
+.empty {
+  text-align: center;
+  padding: 100px 0;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-surface-dark);
+}
+
+.empty p {
+  color: var(--color-text-secondary);
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header { padding: 80px 24px 40px; }
+  .headerTitle h1 { font-size: 32px; }
+  .content { padding: 0 20px 60px; }
+  .grid { grid-template-columns: 1fr; }
+}

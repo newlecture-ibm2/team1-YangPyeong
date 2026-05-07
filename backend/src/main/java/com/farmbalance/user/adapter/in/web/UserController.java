@@ -50,6 +50,7 @@ import java.util.UUID;
     @lombok.Getter
     @lombok.Builder
     public static class ProfileResponse {
+        private Long id;
         private String email;
         private String name;
         private String phone;
@@ -90,6 +91,7 @@ import java.util.UUID;
         User user = getProfileUseCase.getProfile(email);
 
         ProfileResponse response = ProfileResponse.builder()
+                .id(user.getId())
                 .email(user.getEmail())
                 .name(user.getName())
                 .phone(user.getPhone())
