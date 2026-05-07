@@ -269,7 +269,22 @@
   padding: 0;
   pointer-events: auto;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
-  animation: footer-walk 25s linear infinite;
+  animation: footer-walk-pos 25s linear infinite;
+}
+
+.footerWalkCharacterWrap {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: footer-walk-flip 25s linear infinite;
+}
+
+.footerWalkCharacterScale {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .footerWalkLottie {
@@ -293,16 +308,31 @@
   height: 100%;
 }
 
-@keyframes footer-walk {
-  0% { left: -80px; transform: scaleX(1); }
-  45% { left: calc(100% - 80px); transform: scaleX(1); }
-  50% { left: calc(100% - 80px); transform: scaleX(-1); }
-  95% { left: -80px; transform: scaleX(-1); }
-  100% { left: -80px; transform: scaleX(1); }
+@keyframes footer-walk-pos {
+  0% { left: -80px; }
+  45% { left: calc(100% - 80px); }
+  50% { left: calc(100% - 80px); }
+  95% { left: -80px; }
+  100% { left: -80px; }
+}
+
+@keyframes footer-walk-flip {
+  0% { transform: scaleX(1); }
+  45% { transform: scaleX(1); }
+  50% { transform: scaleX(-1); }
+  95% { transform: scaleX(-1); }
+  100% { transform: scaleX(1); }
 }
 
 .footerWalkBtn:hover {
   animation-play-state: paused;
+}
+
+.footerWalkBtn:hover .footerWalkCharacterWrap {
+  animation-play-state: paused;
+}
+
+.footerWalkBtn:hover .footerWalkCharacterScale {
   transform: scale(1.15);
 }
 
@@ -310,31 +340,45 @@
 .footerWalkPaused {
   animation-play-state: paused !important;
   left: calc(50% - 40px) !important;
-  transform: scaleX(1) scale(1.1) !important;
-  transition: left 0.5s ease, transform 0.3s ease;
+  transition: left 0.5s ease;
+}
+
+.footerWalkPaused .footerWalkCharacterWrap {
+  animation-play-state: paused !important;
+}
+
+.footerWalkPaused .footerWalkCharacterScale {
+  transform: scale(1.1) !important;
 }
 
 /* prefers-reduced-motion 사용자 — 걷기 애니메이션 비활성화, 캐릭터 고정 */
 .reducedMotion .footerWalkBtn {
   animation: none !important;
   left: 20px !important;
+  transform: none !important;
+}
+
+.reducedMotion .footerWalkCharacterWrap {
+  animation: none !important;
   transform: scaleX(1) !important;
 }
 
 /* 탭 비활성/다른 앱 전환 시 — 현재 위치에서 정지 */
-.footerWalkFrozen {
+.footerWalkFrozen,
+.footerWalkFrozen .footerWalkCharacterWrap {
   animation-play-state: paused !important;
 }
 
 /* 말풍선 — 캐릭터 따라다님, 글자 반전 보정 */
 .footerWalkTooltip {
   position: absolute;
-  bottom: 100%;
+  bottom: calc(100% + 12px);
   left: 50%;
+  transform: translateX(-50%);
   background: white;
-  border-radius: 12px;
-  padding: 8px 14px;
-  font-size: 13px;
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-size: 14px;
   font-weight: 600;
   color: #333;
   white-space: nowrap;
@@ -342,15 +386,6 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
-  animation: tooltip-flip 25s linear infinite;
-}
-
-@keyframes tooltip-flip {
-  0% { transform: translateX(-50%) scaleX(1); }
-  45% { transform: translateX(-50%) scaleX(1); }
-  50% { transform: translateX(-50%) scaleX(-1); }
-  95% { transform: translateX(-50%) scaleX(-1); }
-  100% { transform: translateX(-50%) scaleX(1); }
 }
 
 .footerWalkTooltip::after {
@@ -367,6 +402,52 @@
 
 .footerWalkBtn:hover .footerWalkTooltip {
   opacity: 1;
+  pointer-events: auto;
+}
+
+.tooltipTitle {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.tooltipBtns {
+  display: flex;
+  gap: 8px;
+}
+
+.tooltipGuideBtn {
+  background: var(--color-primary, #10b981);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.tooltipGuideBtn:hover {
+  filter: brightness(1.1);
+}
+
+.tooltipHideBtn {
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tooltipHideBtn:hover {
+  background: #e2e8f0;
+  color: #334155;
 }
 
 /* ── 퀵 메시지 말풍선 (AI 알림 등 외부 이벤트) ── */
@@ -494,4 +575,49 @@
     font-size: 11px;
     padding: 6px 10px;
   }
+
+  .restoreBtn {
+    width: 38px;
+    height: 38px;
+    bottom: 12px;
+    right: 12px;
+  }
+}
+
+/* ── 가이드봇 복원 버튼 (숨김 모드에서 표시) ── */
+.restoreBtn {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10000;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--color-primary, #2d6a4f);
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: restore-bounce 2s ease-in-out infinite;
+  padding: 0;
+  overflow: hidden;
+}
+
+.restoreIcon {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.restoreBtn:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+@keyframes restore-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }

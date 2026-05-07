@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import GuideBot from '@/components/common/GuideBot/GuideBot';
+import FarmBot from '@/components/common/FarmBot/FarmBot';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -11,11 +11,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
   return (
     <>
       <Header />
-      <GuideBot>
-        <main>{children}</main>
-      </GuideBot>
+      <FarmBot>
+        <main>
+          {children}
+        </main>
+      </FarmBot>
       <Footer />
     </>
   );
 }
-
