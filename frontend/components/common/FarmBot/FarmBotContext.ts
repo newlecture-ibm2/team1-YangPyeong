@@ -1,22 +1,22 @@
 /* ════════════════════════════════════════════════════════
-   GuideBot Context — 외부 컴포넌트에서 가이드봇 메시지를 트리거
-   사용법: const { showQuickMessage } = useGuideBotContext();
+   FarmBot Context — 외부 컴포넌트에서 팜봇 메시지를 트리거
+   사용법: const { showQuickMessage } = useFarmBotContext();
    ════════════════════════════════════════════════════════ */
 
 'use client';
 
 import { createContext, useContext } from 'react';
 
-interface GuideBotContextValue {
-  /** 가이드봇이 잠시 말풍선을 보여줍니다 (자동 사라짐) */
+interface FarmBotContextValue {
+  /** 팜봇이 잠시 말풍선을 보여줍니다 (자동 사라짐) */
   showQuickMessage: (message: string, durationMs?: number) => void;
 }
 
-export const GuideBotContext = createContext<GuideBotContextValue>({
+export const FarmBotContext = createContext<FarmBotContextValue>({
   showQuickMessage: () => {},
 });
 
-/** 외부 컴포넌트에서 가이드봇 메시지를 트리거할 때 사용 */
-export function useGuideBotContext() {
-  return useContext(GuideBotContext);
+/** 외부 컴포넌트에서 팜봇 메시지를 트리거할 때 사용 */
+export function useFarmBotContext() {
+  return useContext(FarmBotContext);
 }

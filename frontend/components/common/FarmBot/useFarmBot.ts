@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════
-   GuideBot Hook — 가이드 상태 관리 (v3)
+   FarmBot Hook — 가이드 상태 관리 (v3)
    - 자동 시작 X → 유저 선택 후 시작
    - 축소 모드 캐릭터 왼쪽 바라봄
    - 페이지별 가이드 재시작 가능
@@ -9,25 +9,27 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { getScenarioForPath } from './guideScenarios';
-import type { GuideStep } from './guideScenarios';
+import { getScenarioForPath } from './farmBotScenarios';
+import type { FarmBotStep } from './farmBotScenarios';
 
 export type BotState = 'idle' | 'walking' | 'pointing' | 'waving';
 
-/** 가이드 진행 모드 */
-export type GuideMode = 'minimized' | 'asking' | 'guiding';
+/** 가이드 진행 모드 (향후 'chat' 추가 예정) */
+export type GuideMode = 'minimized' | 'asking' | 'guiding' | 'hidden';
 
 interface Position {
   x: number;
   y: number;
 }
 
-const STORAGE_KEY = 'guidebot-seen';
+const STORAGE_KEY = 'farmbot-seen';
+const HIDDEN_KEY = 'farmbot-hidden';
 const CHARACTER_SIZE = 120;
 
-export function useGuideBot() {
+export function useFarmBot() {
   const pathname = usePathname();
 
+  const [isMounted, setIsMounted] = useState(false);
   const [mode, setMode] = useState<GuideMode>('minimized');
   const [currentStep, setCurrentStep] = useState(-1);
   const [botState, setBotState] = useState<BotState>('idle');
@@ -38,7 +40,7 @@ export function useGuideBot() {
   const [facingRight, setFacingRight] = useState(false); // 기본 왼쪽 바라봄
   const [showBubble, setShowBubble] = useState(false);
   const [bubbleMessage, setBubbleMessage] = useState('');
-  const [steps, setSteps] = useState<GuideStep[]>([]);
+  const [steps, setSteps] = useState<FarmBotStep[]>([]);
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
   const [bubbleAbove, setBubbleAbove] = useState(true);
 
@@ -65,7 +67,7 @@ export function useGuideBot() {
   }, [pathname]);
 
   /** 타겟 요소로 캐릭터를 이동시킵니다 */
-  const moveToElement = useCallback((step: GuideStep, onArrive: () => void) => {
+  const moveToElement = useCallback((step: FarmBotStep, onArrive: () => void) => {
     const el = document.querySelector(step.target);
     // 타겟 못 찾거나, 화면에 보이지 않으면 스킵 (모바일에서 숨겨진 요소 등)
     if (!el || (el as HTMLElement).offsetParent === null) {
@@ -185,6 +187,22 @@ export function useGuideBot() {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
   }, []);
 
+  /** 가이드봇 숨기기 (localStorage 영구 저장) */
+  const hideBot = useCallback(() => {
+    setMode('hidden');
+    setShowBubble(false);
+    setHighlightRect(null);
+    setBotState('idle');
+    localStorage.setItem(HIDDEN_KEY, 'true');
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  }, []);
+
+  /** 가이드봇 다시 보기 */
+  const showBot = useCallback(() => {
+    setMode('minimized');
+    localStorage.removeItem(HIDDEN_KEY);
+  }, []);
+
   /** 외부 이벤트에서 가이드봇이 잠시 말풍선을 보여줍니다 (예: AI 자동 채우기 완료) */
   const showQuickMessage = useCallback((message: string, durationMs: number = 4000) => {
     // 가이드 진행 중이면 무시
@@ -248,14 +266,19 @@ export function useGuideBot() {
     };
   }, [mode]);
 
-  // 클린업
+  // 클린업 및 초기 마운트 설정
   useEffect(() => {
+    setIsMounted(true);
+    if (localStorage.getItem(HIDDEN_KEY) === 'true') {
+      setMode('hidden');
+    }
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
   return {
+    isMounted,
     mode,
     currentStep,
     totalSteps: steps.length,
@@ -274,5 +297,7 @@ export function useGuideBot() {
     acceptGuide,
     declineGuide,
     showQuickMessage,
+    hideBot,
+    showBot,
   };
 }

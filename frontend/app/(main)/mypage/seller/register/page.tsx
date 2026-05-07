@@ -9,7 +9,7 @@ import ModalDialog from '@/components/common/Modal/ModalDialog';
 import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import { uploadFile } from '@/lib/upload.api';
 import { registerProduct, getCategories } from '@/app/(main)/shop/_lib/shop.api';
-import { useGuideBotContext } from '@/components/common/GuideBot/GuideBotContext';
+import { useFarmBotContext } from '@/components/common/FarmBot/FarmBotContext';
 import styles from './page.module.css';
 
 /** S-35b. 상품 등록 페이지 */
@@ -29,7 +29,7 @@ export default function SellerRegisterPage() {
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isAiAutofilling, setIsAiAutofilling] = useState(false);
   const [isPriceRecommended, setIsPriceRecommended] = useState(false);
-  const { showQuickMessage } = useGuideBotContext();
+  const { showQuickMessage } = useFarmBotContext();
   const { dialog, showAlert, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
   // DB에서 카테고리 목록 로드
