@@ -41,6 +41,9 @@ erDiagram
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
+        varchar provider "LOCAL | GOOGLE | KAKAO"
+        varchar provider_id
+        varchar profile_image_url
     }
 
     regions ||--o{ users : "관할지역"
@@ -232,8 +235,8 @@ erDiagram
     %% ===== 커뮤니티 도메인 =====
     post_categories {
         bigint id PK
-        varchar name UK "자유게시판 | 정보공유 | Q&A 등"
-        varchar description
+        varchar name UK "카테고리명 (50)"
+        varchar description "설명 (200)"
         int display_order
         boolean is_active
         timestamp created_at
@@ -245,13 +248,13 @@ erDiagram
         bigint id PK
         bigint author_id FK
         bigint category_id FK
-        varchar title
+        varchar title "제목 (100)"
         text content
         int view_count
         boolean is_notice
-        timestamp deleted_at
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
     }
 
     post_categories ||--o{ posts : "분류"
@@ -261,10 +264,10 @@ erDiagram
         bigint post_id FK
         bigint author_id FK
         text content
-        boolean accepted "답변 채택 여부"
-        timestamp deleted_at
+        boolean accepted "채택 여부"
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
     }
 
     %% ===== 정책 도메인 =====
@@ -625,6 +628,9 @@ erDiagram
 | address | VARCHAR(255) | | 상세 주소 |
 | bio | TEXT | | 자기소개 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | ACTIVE / SUSPENDED |
+| provider | VARCHAR(20) | NOT NULL, DEFAULT 'LOCAL' | LOCAL / KAKAO / GOOGLE |
+| provider_id | VARCHAR(100) | | 소셜 로그인 고유 ID |
+| profile_image_url | VARCHAR(200) | | 프로필 이미지 URL |
 | created_at | TIMESTAMP | NOT NULL | 가입일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
@@ -866,13 +872,13 @@ erDiagram
 | id | BIGINT | PK, AUTO | 게시글 고유 ID |
 | author_id | BIGINT | FK → users(id), NOT NULL | 작성자 |
 | category_id | BIGINT | FK → post_categories(id), NOT NULL | 게시판 카테고리 |
-| title | VARCHAR(200) | NOT NULL | 제목 |
+| title | VARCHAR(100) | NOT NULL | 제목 |
 | content | TEXT | NOT NULL | 본문 |
 | view_count | INT | DEFAULT 0 | 조회수 |
 | is_notice | BOOLEAN | DEFAULT false | 공지 여부 |
-| deleted_at | TIMESTAMP | | 삭제 시각 (null이면 미삭제) |
 | created_at | TIMESTAMP | NOT NULL | 작성일 |
 | updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.14 comments (댓글)
 
@@ -883,9 +889,9 @@ erDiagram
 | author_id | BIGINT | FK → users(id), NOT NULL | 작성자 |
 | content | TEXT | NOT NULL | 댓글 내용 |
 | accepted | BOOLEAN | DEFAULT false | 답변 채택 여부 (Q&A) |
-| deleted_at | TIMESTAMP | | 삭제 시각 (null이면 미삭제) |
 | created_at | TIMESTAMP | NOT NULL | 작성일 |
 | updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.15 policy_data (정책 데이터 저장소)
 
@@ -1339,7 +1345,12 @@ CREATE INDEX idx_orders_status ON orders(status);
 
 -- 게시글
 CREATE INDEX idx_posts_author_id ON posts(author_id);
-CREATE INDEX idx_posts_category ON posts(category);
+CREATE INDEX idx_posts_category_id ON posts(category_id);
+CREATE INDEX idx_posts_is_notice ON posts(is_notice);
+
+-- 댓글
+CREATE INDEX idx_comments_post_id ON comments(post_id);
+CREATE INDEX idx_comments_accepted ON comments(accepted);
 
 -- 알림 (빈번한 조회)
 CREATE INDEX idx_notifications_user_id_read ON notifications(user_id, is_read);
