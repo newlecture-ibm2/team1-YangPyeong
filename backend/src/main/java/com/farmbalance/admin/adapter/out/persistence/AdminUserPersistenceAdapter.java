@@ -26,7 +26,6 @@ public class AdminUserPersistenceAdapter implements AdminUserPort {
             .name(rs.getString("name"))
             .phone(rs.getString("phone"))
             .role(rs.getString("role"))
-            .region(rs.getString("region"))
             .status(rs.getString("status"))
             .createdAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null)
             .updatedAt(rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null)

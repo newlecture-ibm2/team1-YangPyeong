@@ -18,7 +18,6 @@ public class AdminUser {
     private String name;
     private String phone;
     private String role;
-    private String region;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
