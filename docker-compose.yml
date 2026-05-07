@@ -14,7 +14,7 @@ services:
         - NEXT_PUBLIC_PORTONE_CHANNEL_KEY=${NEXT_PUBLIC_PORTONE_CHANNEL_KEY}
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3131:3000"
     environment:
       - NEXT_PUBLIC_API_URL=/api
       - INTERNAL_BACKEND_URL=http://backend:8080
