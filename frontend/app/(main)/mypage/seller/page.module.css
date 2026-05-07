@@ -2,7 +2,6 @@
    S-35a. 판매 상품 관리 — 스타일
    ════════════════════════════════════════════════════════ */
 
-/* ── 상단 바 ── */
 .topBar {
   display: flex;
   justify-content: space-between;
@@ -10,6 +9,74 @@
   margin-bottom: var(--space-lg);
   flex-wrap: wrap;
   gap: var(--space-md);
+}
+
+/* ── AI 인사이트 카드 ── */
+.insightCard {
+  background: linear-gradient(135deg, var(--color-primary-pale), #ffffff);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: var(--space-lg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.insightHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.insightTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.insightIcon {
+  font-size: 20px;
+}
+
+.refreshBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.refreshBtn:hover:not(:disabled) {
+  color: var(--color-primary);
+  background: rgba(0,0,0,0.03);
+}
+
+.refreshBtn:disabled {
+  color: var(--color-border);
+  cursor: not-allowed;
+}
+
+.insightContent {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text);
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.insightContent strong {
+  font-weight: 700;
+  color: var(--color-primary);
 }
 
 .statsRow {

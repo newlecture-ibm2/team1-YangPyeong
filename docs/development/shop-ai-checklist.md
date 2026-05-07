@@ -134,27 +134,27 @@
 
 ### 3-1. AI 서버 상품 어시스트 엔드포인트
 
-- [ ] `ai/app/models/product_assist.py` — 요청/응답 모델
-- [ ] `ai/app/services/product_assist_service.py` — 상품 설명 생성 서비스
-  - [ ] 프롬프트: 상품명 + 카테고리 → 양평군 특화 매력적 설명 생성
-  - [ ] 출력 길이 제한 (500자 이내)
-- [ ] `ai/app/routers/product_assist.py` — `POST /product-assist/description`
+- [x] `ai/app/models/product_assist.py` — 요청/응답 모델
+- [x] `ai/app/services/product_assist_service.py` — 상품 설명 생성 서비스
+  - [x] 프롬프트: 상품명 + 카테고리 → 양평군 특화 매력적 설명 생성
+  - [x] 출력 길이 제한 (500자 이내)
+- [x] `ai/app/routers/product_assist.py` — `POST /product-assist/description`
 
 ### 3-2. Frontend 연동
 
-- [ ] `app/api/ai/product-assist/route.ts` — BFF Route Handler
-- [ ] `app/(main)/mypage/seller/register/page.tsx` 수정
-  - [ ] "✨ AI 설명 생성" 버튼 추가 (설명 textarea 상단)
-  - [ ] 버튼 클릭 → API 호출 → 생성된 설명을 textarea에 자동 채움
-  - [ ] 로딩 상태 표시 (스피너 + "AI가 설명을 작성하고 있어요...")
-  - [ ] 기존 설명이 있을 경우 "덮어쓰기 확인" 모달
-- [ ] `app/(main)/mypage/seller/[productId]/edit/page.tsx`에도 동일 적용
+- [x] `app/api/ai/product-assist/route.ts` — BFF Route Handler
+- [x] `app/(main)/mypage/seller/register/page.tsx` 수정
+  - [x] "✨ AI 설명 생성" 버튼 추가 (설명 textarea 상단)
+  - [x] 버튼 클릭 → API 호출 → 생성된 설명을 textarea에 자동 채움
+  - [x] 로딩 상태 표시 (스피너 + "AI가 설명을 작성하고 있어요...")
+  - [x] 기존 설명이 있을 경우 "덮어쓰기 확인" 모달
+- [x] `app/(main)/mypage/seller/[productId]/edit/page.tsx`에도 동일 적용
 
 ### 3-3. 테스트
 
-- [ ] 상품명+카테고리 입력 → AI 설명 생성 확인
-- [ ] 생성된 설명 수정 가능 확인
-- [ ] AI 서버 오류 시 에러 메시지 표시 확인
+- [x] 상품명+카테고리 입력 → AI 설명 생성 확인
+- [x] 생성된 설명 수정 가능 확인
+- [x] AI 서버 오류 시 에러 메시지 표시 확인
 
 ---
 
@@ -197,31 +197,58 @@
 
 ### 6-1. 인사이트 생성
 
-- [ ] 판매자 주문 데이터 집계 (인기 상품, 주문 추세, 재고 예측)
-- [ ] AI가 집계 데이터를 자연어 인사이트로 변환
-- [ ] `POST /product-assist/insight` 엔드포인트
+- [x] 판매자 주문 데이터 집계 (인기 상품, 주문 추세, 재고 예측)
+- [x] AI가 집계 데이터를 자연어 인사이트로 변환
+- [x] `POST /product-assist/insight` 엔드포인트
 
 ### 6-2. Frontend 연동
 
-- [ ] 판매자 대시보드 상단에 "🤖 AI 인사이트" 카드 추가
-- [ ] 매일 1회 갱신 (또는 대시보드 진입 시)
+- [x] 판매자 대시보드 상단에 "🤖 AI 인사이트" 카드 추가
+- [x] 매일 1회 갱신 (또는 대시보드 진입 시)
 
 ---
 
-## Phase 7: Farm(재배 이력) 데이터 연동 AI 고도화 (2차 작업 예정)
+## Phase 7: Farm(재배 이력) 데이터 연동 AI 고도화
 
-> 참고: 이 작업은 다른 팀원의 Farm 도메인(재배 이력) 푸시가 완료된 후 진행될 2차 기획입니다.
+> ✅ 완료 — Farm 도메인 재배 이력 API가 구현된 상태에서 AI 자동 채우기에 연동 완료
+> 📄 상세 구현 문서: [phase7-farm-ai-integration.md](./phase7-farm-ai-integration.md)
 
 ### 7-1. 재배 이력 데이터 연동
 
-- [ ] AI 서버에서 사용자의 Farm DB(재배 이력) 데이터 조회 로직 추가
-- [ ] 상품명 입력 시, 단순 추론이 아닌 **실제 재배 이력(품종, 농법, 재배 기간 등)**을 기반으로 데이터 추출
-- [ ] 원산지, 친환경/유기농 여부 등 구체적이고 신뢰도 높은 추가 정보 자동 매핑
+- [x] AI 서버 모델에 `FarmContext` / `HarvestSummary` 스키마 추가 (`models/product_assist.py`)
+- [x] `AutofillRequest`에 `farm_context` Optional 필드 추가 (하위 호환)
+- [x] AI 서비스 프롬프트에 재배 이력 팩트 블록 삽입 (`services/product_assist_service.py`)
+- [x] 원산지, 토양, 수확량/등급 정보를 AI가 설명에 반영하도록 프롬프트 규칙 추가
+- [x] BFF autofill Route Handler에서 `farmContext` → `farm_context` 케이스 변환 전달
 
 ### 7-2. Frontend 고도화
 
-- [ ] AI 자동 채우기 실행 시, "🌱 내 농장의 재배 이력을 바탕으로 작성되었습니다" 안내 추가
-- [ ] 상세 폼에 원산지, 인증 내역 등 신규 필드가 추가될 경우 해당 값 자동 할당
+- [x] AI 자동 채우기 실행 시 내 농장 목록/재배 이력 자동 조회 → farmContext 구성
+- [x] 상품명과 재배 작물명 매칭 로직 (첫 단어 기반 부분 매칭)
+- [x] 재배 이력 기반 시 "🌱 내 농장의 재배 이력을 바탕으로 작성되었습니다" 가이드봇 메시지 분기
+- [ ] 상세 폼에 원산지, 인증 내역 등 신규 필드가 추가될 경우 해당 값 자동 할당 (향후)
+
+---
+
+## Phase 8: AI 자연어 상품 검색 (Semantic Search)
+
+> 예상 기간: 1.5일 | 비용: ₩0
+
+### 8-1. AI 서버 검색 쿼리 분석 엔드포인트
+
+- [ ] `ai/app/models/product_assist.py` — 검색 분석 요청/응답 모델 추가 (`SearchQueryRequest`, `SearchQueryResponse`)
+- [ ] `ai/app/services/product_assist_service.py` — 자연어 분석 서비스 추가 (`analyze_search_query`)
+  - [ ] 자연어 질문(예: "비오는 날 해먹을 거")에서 실질적인 DB 검색 키워드("애호박", "부추") 추출
+- [ ] `ai/app/routers/product_assist.py` — `POST /product-assist/search-query` 라우터 추가
+
+### 8-2. Frontend 연동 및 검색 흐름 개선
+
+- [ ] `app/api/ai/product-assist/search/route.ts` — BFF Route Handler
+- [ ] `app/(main)/shop/useProductSearch.ts` (또는 페이지 컴포넌트) 검색 로직 수정
+  - [ ] 일반 키워드 검색 시 기존 로직 유지
+  - [ ] "✨ AI로 찾기" 기능 실행 시 AI 서버로 자연어 전송 → 반환된 키워드로 백엔드 검색 API 호출
+- [ ] 로딩 UI ("AI가 알맞은 상품을 찾고 있어요...") 적용
+- [ ] 검색 결과 상단에 "💡 AI가 다음 키워드를 기반으로 상품을 찾았어요: [애호박], [부추]" 안내 표시
 
 ---
 
