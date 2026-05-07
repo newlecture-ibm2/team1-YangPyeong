@@ -69,6 +69,7 @@ export async function proxyToBackend(
   const url = new URL(request.url);
   const queryString = url.search; // ?key=value&...
   const backendUrl = `${BACKEND_URL}${backendPath}${queryString}`;
+  console.log(`[BFF Proxy] Requesting to: ${backendUrl}`);
 
   try {
     const backendResponse = await fetch(backendUrl, {
