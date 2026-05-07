@@ -85,11 +85,22 @@ public class AuthController {
     }
 
     /**
-     * 비밀번호 재설정 — 보안질문 답변 검증 후 비밀번호를 변경합니다.
+     * 비밀번호 재설정 — 보안질문 답변 검증 후 임시 비밀번호를 생성하여 이메일로 발송합니다.
      */
-    @PutMapping("/password-reset")
-    public ApiResponse<Void> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
-        passwordResetUseCase.resetPassword(request);
+    @PostMapping("/password-reset")
+    public ApiResponse<Void> resetPassword(@RequestBody java.util.Map<String, String> request) {
+        String email = request.get("email");
+        String securityAnswer = request.get("securityAnswer");
+        if (email == null || email.isBlank()) {
+            throw new BusinessException(
+                    com.farmbalance.global.error.ErrorCode.VALIDATION_ERROR, "이메일을 입력해주세요.");
+        }
+        if (securityAnswer == null || securityAnswer.isBlank()) {
+            throw new BusinessException(
+                    com.farmbalance.global.error.ErrorCode.VALIDATION_ERROR, "보안질문 답변을 입력해주세요.");
+        }
+        passwordResetUseCase.sendTemporaryPassword(email, securityAnswer);
         return ApiResponse.ok(null);
     }
 }
+

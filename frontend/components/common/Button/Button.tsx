@@ -4,7 +4,9 @@ import Link from 'next/link';
 import styles from './Button.module.css';
 
 interface ButtonProps {
+  id?: string;
   children: React.ReactNode;
+
   variant?: 'primary' | 'outline' | 'ghost' | 'dark' | 'kakao' | 'google';
   size?: 'sm' | 'md' | 'lg';
   href?: string;
@@ -14,11 +16,12 @@ interface ButtonProps {
   disabled?: boolean;
   className?: string;
   style?: React.CSSProperties;
-  id?: string;
 }
 
 export default function Button({
+  id,
   children,
+
   variant = 'primary',
   size = 'md',
   href,
@@ -28,7 +31,6 @@ export default function Button({
   disabled = false,
   className = '',
   style,
-  id,
 }: ButtonProps) {
   const classNames = [
     styles.btn,
@@ -48,14 +50,15 @@ export default function Button({
 
   return (
     <button
+      id={id}
       type={type}
       className={classNames}
       onClick={onClick}
       disabled={disabled}
       style={style}
-      id={id}
     >
       {children}
     </button>
   );
 }
+

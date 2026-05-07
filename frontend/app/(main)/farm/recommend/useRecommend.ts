@@ -4,7 +4,7 @@
    ════════════════════════════════════════════════════════ */
 
 import { useState, useEffect } from 'react';
-import { useMyFarms } from '../_hooks/useFarm';
+import { useMyFarms } from '../useFarm';
 import { getMockRecommendResponse } from './_lib/recommend.mock';
 import type { CropRecommendResponse } from './_lib/recommend.types';
 

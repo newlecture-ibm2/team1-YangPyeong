@@ -1,5 +1,6 @@
 package com.farmbalance.farm.adapter.out.persistence.entity;
 
+import com.farmbalance.farm.domain.CultivationStatus;
 import com.farmbalance.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -45,16 +46,22 @@ public class CultivationRegistrationJpaEntity extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    /** 재배 상태 (ACTIVE: 재배중, COMPLETED: 수확완료) */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private CultivationStatus status = CultivationStatus.ACTIVE;
+
     @Builder
     public CultivationRegistrationJpaEntity(Long id, Long farmId, Long cropId,
                                             Double cultivationArea, Double farmerEstimatedYield,
-                                            String yieldUnit) {
+                                            String yieldUnit, CultivationStatus status) {
         this.id = id;
         this.farmId = farmId;
         this.cropId = cropId;
         this.cultivationArea = cultivationArea;
         this.farmerEstimatedYield = farmerEstimatedYield;
         this.yieldUnit = yieldUnit;
+        this.status = status != null ? status : CultivationStatus.ACTIVE;
     }
 
     public void softDelete() {

@@ -27,6 +27,7 @@ public class Farm {
     private Boolean landCertVerified; // 토지증명서 확인 여부
     private String rejectReason; // 반려 사유
     private java.time.LocalDateTime createdAt; // 생성일시
+    private FarmStatus status; // 운영 상태 (OPERATING, FALLOW, CLOSED)
 
     public void updateCertificationStatus(CertificationStatus status) {
         this.certificationStatus = status;

@@ -145,6 +145,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .landCertVerified(entity.getLandCertVerified())
                 .rejectReason(entity.getRejectReason())
                 .createdAt(entity.getCreatedAt())
+                .status(entity.getStatus())
                 .build();
     }
 
@@ -319,5 +320,23 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
             entity.updateLandCertVerified(verified);
             farmJpaRepository.save(entity);
         });
+    }
+
+    // ── 면적 검증 관련 메서드 ──
+
+    @Override
+    public Optional<Farm> loadFarmByIdWithLock(Long farmId) {
+        return farmJpaRepository.findByIdWithLock(farmId)
+                .map(this::mapToDomain);
+    }
+
+    @Override
+    public Double sumActiveAreaByFarmId(Long farmId) {
+        return cultivationRepository.sumActiveAreaByFarmId(farmId);
+    }
+
+    @Override
+    public Double sumActiveAreaByFarmIdExcluding(Long farmId, Long excludeId) {
+        return cultivationRepository.sumActiveAreaByFarmIdExcluding(farmId, excludeId);
     }
 }
