@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/constants'
 
-/** GET /api/admin/rag/categories → 백엔드 프록시 */
+/** GET /api/admin/rag/categories ??백엔???�록??*/
 export async function GET() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admins/rag/categories`)
+    const res = await fetch(`${BACKEND_URL}/api/admin/rag/categories`)
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
-    console.error('[BFF] GET /admin/rag/categories 실패:', error)
+    console.error('[BFF] GET /admin/rag/categories ?�패:', error)
     return NextResponse.json(
-      { success: false, data: null, error: { code: 'E-BFF-RAG-001', message: '백엔드 연결 실패' } },
+      { success: false, data: null, error: { code: 'E-BFF-RAG-001', message: '백엔???�결 ?�패' } },
       { status: 502 }
     )
   }
 }
 
-/** POST /api/admin/rag/categories → 백엔드 프록시 */
+/** POST /api/admin/rag/categories ??백엔???�록??*/
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admins/rag/categories`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/rag/categories`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -28,9 +28,9 @@ export async function POST(request: NextRequest) {
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
-    console.error('[BFF] POST /admin/rag/categories 실패:', error)
+    console.error('[BFF] POST /admin/rag/categories ?�패:', error)
     return NextResponse.json(
-      { success: false, data: null, error: { code: 'E-BFF-RAG-002', message: '백엔드 연결 실패' } },
+      { success: false, data: null, error: { code: 'E-BFF-RAG-002', message: '백엔???�결 ?�패' } },
       { status: 502 }
     )
   }

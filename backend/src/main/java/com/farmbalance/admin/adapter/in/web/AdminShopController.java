@@ -11,10 +11,10 @@ import java.util.Map;
 
 /**
  * ADM-009 상점 관리 Controller (Driving Adapter)
- * API URL: /api/admins/shop
+ * API URL: /api/admin/shop
  */
 @RestController
-@RequestMapping("/api/admins/shop")
+@RequestMapping("/api/admin/shop")
 @RequiredArgsConstructor
 public class AdminShopController {
 
@@ -22,7 +22,7 @@ public class AdminShopController {
 
     /**
      * 전체 상품 목록 조회 (관리자용)
-     * GET /api/admins/shop
+     * GET /api/admin/shop
      */
     @GetMapping
     public ApiResponse<List<AdminProduct>> getAllProducts() {
@@ -31,7 +31,7 @@ public class AdminShopController {
 
     /**
      * 상품 상태 변경 (승인/비활성화/반려)
-     * PATCH /api/admins/shop/{productId}
+     * PATCH /api/admin/shop/{productId}
      * Body: { "status": "ACTIVE" }
      */
     @PatchMapping("/{productId}")

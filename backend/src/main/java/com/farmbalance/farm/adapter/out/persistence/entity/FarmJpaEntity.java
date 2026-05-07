@@ -65,6 +65,9 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(name = "certification_status", nullable = false, length = 20)
     private com.farmbalance.farm.domain.CertificationStatus certificationStatus = com.farmbalance.farm.domain.CertificationStatus.PENDING;
 
+    @Column(name = "reject_reason", length = 500)
+    private String rejectReason;
+
     // cropTypes는 farm_crops 테이블로 관리 (JPA @ElementCollection 제거)
 
     @Builder
@@ -105,5 +108,21 @@ public class FarmJpaEntity extends BaseTimeEntity {
         this.soilType = soilType;
         this.ph = ph;
         this.organicMatter = organicMatter;
+    }
+
+    /** 인증 상태 변경 */
+    public void updateCertificationStatus(com.farmbalance.farm.domain.CertificationStatus status) {
+        this.certificationStatus = status;
+    }
+
+    /** 인증 상태 변경 + 반려 사유 저장 */
+    public void updateCertificationStatusWithReason(com.farmbalance.farm.domain.CertificationStatus status, String reason) {
+        this.certificationStatus = status;
+        this.rejectReason = reason;
+    }
+
+    /** 토지증명서 확인 여부 변경 */
+    public void updateLandCertVerified(Boolean verified) {
+        this.landCertVerified = verified;
     }
 }

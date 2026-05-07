@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/constants'
 
-/** GET /api/admin/shop → 전체 상품 목록 프록시 */
+/** GET /api/admin/shop ???�체 ?�품 목록 ?�록??*/
 export async function GET() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admins/shop`)
+    const res = await fetch(`${BACKEND_URL}/api/admin/shop`)
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
-    console.error('[BFF] GET /admin/shop 실패:', error)
+    console.error('[BFF] GET /admin/shop ?�패:', error)
     return NextResponse.json(
-      { success: false, data: null, error: { code: 'E-BFF-SHOP-001', message: '백엔드 연결 실패' } },
+      { success: false, data: null, error: { code: 'E-BFF-SHOP-001', message: '백엔???�결 ?�패' } },
       { status: 502 }
     )
   }

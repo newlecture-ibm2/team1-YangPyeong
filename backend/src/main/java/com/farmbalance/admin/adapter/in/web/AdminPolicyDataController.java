@@ -13,11 +13,11 @@ import java.util.Map;
 
 /**
  * ADM-012 정책 데이터 관리 Controller (Driving Adapter)
- * API URL: /api/admins/policy
+ * API URL: /api/admin/policy
  * 다른 도메인의 객체를 직접 import하지 않습니다.
  */
 @RestController
-@RequestMapping("/api/admins/policy")
+@RequestMapping("/api/admin/policy")
 @RequiredArgsConstructor
 public class AdminPolicyDataController {
 
@@ -25,7 +25,7 @@ public class AdminPolicyDataController {
 
     /**
      * 전체 정책 데이터 목록 조회
-     * GET /api/admins/policy
+     * GET /api/admin/policy
      */
     @GetMapping
     public ApiResponse<List<AdminPolicyDataResponse>> getAllPolicies() {
@@ -34,7 +34,7 @@ public class AdminPolicyDataController {
 
     /**
      * 정책 데이터 상세 조회
-     * GET /api/admins/policy/{id}
+     * GET /api/admin/policy/{id}
      */
     @GetMapping("/{id}")
     public ApiResponse<AdminPolicyDataResponse> getPolicy(@PathVariable Long id) {
@@ -43,7 +43,7 @@ public class AdminPolicyDataController {
 
     /**
      * 정책 데이터 등록
-     * POST /api/admins/policy
+     * POST /api/admin/policy
      */
     @PostMapping
     public ApiResponse<Map<String, Long>> createPolicy(@Valid @RequestBody PolicyDataRequest request) {
@@ -53,7 +53,7 @@ public class AdminPolicyDataController {
 
     /**
      * 정책 데이터 수정
-     * PATCH /api/admins/policy/{id}
+     * PATCH /api/admin/policy/{id}
      */
     @PatchMapping("/{id}")
     public ApiResponse<Void> updatePolicy(@PathVariable Long id,

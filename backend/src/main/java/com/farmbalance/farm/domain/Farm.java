@@ -24,6 +24,9 @@ public class Farm {
     private Double ph;
     private Double organicMatter;
     private CertificationStatus certificationStatus; // 인증 상태
+    private Boolean landCertVerified; // 토지증명서 확인 여부
+    private String rejectReason; // 반려 사유
+    private java.time.LocalDateTime createdAt; // 생성일시
 
     public void updateCertificationStatus(CertificationStatus status) {
         this.certificationStatus = status;

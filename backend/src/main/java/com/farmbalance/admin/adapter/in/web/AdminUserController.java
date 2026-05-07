@@ -14,11 +14,11 @@ import java.util.Map;
 
 /**
  * ADM-001 사용자 관리 Controller (Driving Adapter)
- * API URL: /api/admins/users
+ * API URL: /api/admin/users
  * 다른 도메인의 객체를 직접 import하지 않습니다.
  */
 @RestController
-@RequestMapping("/api/admins/users")
+@RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
 public class AdminUserController {
 
@@ -26,7 +26,7 @@ public class AdminUserController {
 
     /**
      * 사용자 목록 조회 (검색 + 필터 + 페이징)
-     * GET /api/admins/users?keyword=&role=&status=&page=0&size=20
+     * GET /api/admin/users?keyword=&role=&status=&page=0&size=20
      */
     @GetMapping
     public ApiResponse<Map<String, Object>> getUsers(
@@ -54,7 +54,7 @@ public class AdminUserController {
 
     /**
      * 사용자 상세 조회
-     * GET /api/admins/users/{id}
+     * GET /api/admin/users/{id}
      */
     @GetMapping("/{id}")
     public ApiResponse<AdminUserResponse> getUserById(@PathVariable Long id) {
@@ -63,7 +63,7 @@ public class AdminUserController {
 
     /**
      * 역할 변경 (USER ↔ FARMER)
-     * PATCH /api/admins/users/{id}/role
+     * PATCH /api/admin/users/{id}/role
      */
     @PatchMapping("/{id}/role")
     public ApiResponse<Void> changeRole(@PathVariable Long id,
@@ -74,7 +74,7 @@ public class AdminUserController {
 
     /**
      * 상태 변경 (ACTIVE ↔ SUSPENDED)
-     * PATCH /api/admins/users/{id}/status
+     * PATCH /api/admin/users/{id}/status
      */
     @PatchMapping("/{id}/status")
     public ApiResponse<Void> changeStatus(@PathVariable Long id,

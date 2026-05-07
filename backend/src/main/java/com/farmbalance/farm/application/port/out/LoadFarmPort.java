@@ -11,4 +11,5 @@ public interface LoadFarmPort {
     List<Farm> loadAllFarms();
     List<CultivationRegistration> loadCultivationsByFarmId(Long farmId);
     Optional<CultivationRegistration> loadCultivationById(Long id);
+    List<Farm> loadFarmsByStatus(String status);
 }

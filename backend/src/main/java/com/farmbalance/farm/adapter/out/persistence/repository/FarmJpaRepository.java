@@ -18,4 +18,8 @@ public interface FarmJpaRepository extends JpaRepository<FarmJpaEntity, Long> {
 
     // PNU 코드로 조회
     java.util.Optional<FarmJpaEntity> findByPnuCode(String pnuCode);
+
+    // 인증 상태별 농장 목록 조회 (Admin 승인 관리용)
+    List<FarmJpaEntity> findByCertificationStatusOrderByCreatedAtDesc(
+            com.farmbalance.farm.domain.CertificationStatus certificationStatus);
 }

@@ -142,6 +142,9 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .ph(entity.getPh())
                 .organicMatter(entity.getOrganicMatter())
                 .certificationStatus(entity.getCertificationStatus() != null ? entity.getCertificationStatus() : com.farmbalance.farm.domain.CertificationStatus.PENDING)
+                .landCertVerified(entity.getLandCertVerified())
+                .rejectReason(entity.getRejectReason())
+                .createdAt(entity.getCreatedAt())
                 .build();
     }
 
@@ -281,5 +284,40 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .build(), id);
                 
         return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
+    }
+
+    @Override
+    public List<Farm> loadFarmsByStatus(String status) {
+        com.farmbalance.farm.domain.CertificationStatus certStatus =
+                com.farmbalance.farm.domain.CertificationStatus.valueOf(status);
+        return farmJpaRepository.findByCertificationStatusOrderByCreatedAtDesc(certStatus).stream()
+                .map(this::mapToDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void updateCertificationStatus(Long id, String status) {
+        farmJpaRepository.findById(id).ifPresent(entity -> {
+            entity.updateCertificationStatus(
+                    com.farmbalance.farm.domain.CertificationStatus.valueOf(status));
+            farmJpaRepository.save(entity);
+        });
+    }
+
+    @Override
+    public void updateCertificationStatusWithReason(Long id, String status, String reason) {
+        farmJpaRepository.findById(id).ifPresent(entity -> {
+            entity.updateCertificationStatusWithReason(
+                    com.farmbalance.farm.domain.CertificationStatus.valueOf(status), reason);
+            farmJpaRepository.save(entity);
+        });
+    }
+
+    @Override
+    public void updateLandCertVerified(Long id, Boolean verified) {
+        farmJpaRepository.findById(id).ifPresent(entity -> {
+            entity.updateLandCertVerified(verified);
+            farmJpaRepository.save(entity);
+        });
     }
 }
