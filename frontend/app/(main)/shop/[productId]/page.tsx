@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button, Badge, Card, Modal, Spinner } from '@/components';
 import { useToast } from '@/components';
+import { DEFAULT_PRODUCT_IMAGE } from '@/lib/constants';
 import { useProductDetail } from './useProductDetail';
 import { addToCart } from '../_lib/shop.api';
 import styles from './page.module.css';
@@ -134,7 +135,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     );
   }
 
-  const currentImage = product.imageUrls[selectedImageIndex] || product.imageUrls[0];
+  const currentImage = product.imageUrls[selectedImageIndex] || product.imageUrls[0] || DEFAULT_PRODUCT_IMAGE;
 
   return (
     <div className={styles.page}>
@@ -324,7 +325,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         <div className={styles.purchaseProductRow}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={product.imageUrls[0]}
+            src={product.imageUrls[0] || DEFAULT_PRODUCT_IMAGE}
             alt={product.name}
             className={styles.purchaseProductImg}
           />
@@ -425,7 +426,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           <div className={styles.cartSuccessProduct}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={product.imageUrls[0]}
+              src={product.imageUrls[0] || DEFAULT_PRODUCT_IMAGE}
               alt={product.name}
               className={styles.cartSuccessImg}
             />
