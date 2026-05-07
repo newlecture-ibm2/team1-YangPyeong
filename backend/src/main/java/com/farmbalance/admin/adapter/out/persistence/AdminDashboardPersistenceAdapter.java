@@ -24,7 +24,7 @@ public class AdminDashboardPersistenceAdapter implements AdminDashboardPort {
                 (SELECT COUNT(*) FROM users WHERE role = 'FARMER' AND deleted_at IS NULL) AS total_farmers,
                 (SELECT COUNT(*) FROM farms WHERE certification_status = 'PENDING' AND deleted_at IS NULL) AS pending_approvals,
                 (SELECT COUNT(*) FROM farms WHERE deleted_at IS NULL) AS total_farms,
-                (SELECT COUNT(*) FROM crops WHERE is_active = true) AS total_crops,
+                (SELECT COUNT(*) FROM crops WHERE deleted_at IS NULL) AS total_crops,
                 (SELECT COUNT(*) FROM posts WHERE deleted_at IS NULL) AS total_posts,
                 (SELECT COUNT(*) FROM products WHERE deleted_at IS NULL) AS total_products,
                 (SELECT COUNT(*) FROM orders WHERE deleted_at IS NULL) AS total_orders,
