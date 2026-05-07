@@ -16,8 +16,7 @@ public class RegisterFarmCommand {
     private boolean isMountain;
     private String mainNo;
     private String subNo;
-    private String registrationNumber;
-    private String documentUrl;
+    private List<com.farmbalance.farm.domain.FarmDocument> documents;
     private Double latitude;
     private Double longitude;
     private String soilType;

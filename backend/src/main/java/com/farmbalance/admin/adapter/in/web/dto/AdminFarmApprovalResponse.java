@@ -18,9 +18,7 @@ public class AdminFarmApprovalResponse {
     private String farmName;
     private String address;
     private Double areaSize;
-    private String businessNumber;
-    private String landCertImageUrl;
-    private Boolean landCertVerified;
+    private java.util.List<com.farmbalance.farm.adapter.in.web.dto.FarmDocumentDto> documents;
     private String status;
     private String createdAt;
 
@@ -39,9 +37,8 @@ public class AdminFarmApprovalResponse {
                 .farmName(farm.getName())
                 .address(farm.getAddress())
                 .areaSize(farm.getArea())
-                .businessNumber(farm.getRegistrationNumber())
-                .landCertImageUrl(farm.getDocumentUrl())
-                .landCertVerified(farm.getLandCertVerified())
+                .documents(farm.getDocuments() != null ?
+                        farm.getDocuments().stream().map(com.farmbalance.farm.adapter.in.web.dto.FarmDocumentDto::from).collect(java.util.stream.Collectors.toList()) : null)
                 .status(farm.getCertificationStatus() != null
                         ? farm.getCertificationStatus().name() : "PENDING")
                 .createdAt(farm.getCreatedAt() != null

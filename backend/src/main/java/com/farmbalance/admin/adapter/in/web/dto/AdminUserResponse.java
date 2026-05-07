@@ -20,7 +20,6 @@ public class AdminUserResponse {
     private final String name;
     private final String phone;
     private final String role;
-    private final String region;
     private final String status;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
@@ -36,7 +35,6 @@ public class AdminUserResponse {
                 .name(domain.getName())
                 .phone(domain.getPhone())
                 .role(domain.getRole() != null ? domain.getRole().name() : null)
-                .region(domain.getRegion())
                 .status(domain.getStatus() != null ? domain.getStatus().name() : null)
                 .createdAt(domain.getCreatedAt())
                 .updatedAt(domain.getUpdatedAt())

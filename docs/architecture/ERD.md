@@ -60,11 +60,8 @@ erDiagram
         varchar soil_type
         double soil_ph "토양 산도"
         double soil_organic_matter "토양 유기물"
-        varchar registration_number "농업경영체 등록번호 (V1)"
-        varchar document_url "증빙 서류 URL (V1)"
-        varchar business_number "사업자 등록번호 (V8)"
-        varchar land_cert_image_url "토지증명서 이미지 (V7)"
-        boolean land_cert_verified
+        jsonb documents "제출 서류 목록 [{type, url, name}] (V26 통합)"
+        jsonb document_data "서류 추출 데이터 (V26 추가)"
         varchar certification_status "관리자 승인: PENDING | APPROVED | REJECTED"
         varchar reject_reason "반려 사유 (V16)"
         varchar status "운영 상태: OPERATING | FALLOW | CLOSED (V22)"
@@ -671,11 +668,8 @@ erDiagram
 | soil_type | VARCHAR(50) | | 토양 유형 |
 | soil_ph | DOUBLE PRECISION | | 토양 산도 (pH) |
 | soil_organic_matter | DOUBLE PRECISION | | 토양 유기물 함량 |
-| registration_number | VARCHAR(12) | | 농업경영체 등록번호 (V1 초기 생성) |
-| document_url | VARCHAR(500) | | 증빙 서류 이미지/PDF URL (V1 초기 생성) |
-| business_number | VARCHAR(12) | | 사업자 등록번호 (V8 추가) |
-| land_cert_image_url | VARCHAR(500) | | 토지증명서 이미지 URL (V7 추가) |
-| land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 |
+| documents | JSONB | DEFAULT '[]' | 제출 서류 목록 [{type, url, name}] (V26 통합) |
+| document_data | JSONB | | 추후 OCR/AI 추출 데이터 저장 (V26 추가) |
 | certification_status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | 관리자 승인: PENDING / APPROVED / REJECTED |
 | reject_reason | VARCHAR(500) | | 반려 사유 (V16 추가) |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'OPERATING' | 운영 상태: OPERATING / FALLOW / CLOSED (V22 추가) |
@@ -683,7 +677,7 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-> **레거시 컬럼 안내**: V1에서 `registration_number`, `document_url`이 생성되었고, V7~V8에서 유사 용도의 `land_cert_image_url`, `business_number`가 추가되었습니다. 두 쌍 모두 DB에 존재합니다.
+> **레거시 컬럼 안내**: V1에서 생성된 `registration_number`, `document_url` 및 V7~V8에서 추가된 `land_cert_image_url`, `business_number`, `land_cert_verified`는 **V26 마이그레이션에서 모두 삭제**되고 `documents`, `document_data` JSONB 컬럼으로 통합되었습니다.
 
 ### 2.3 crop_categories (작물 카테고리)
 
