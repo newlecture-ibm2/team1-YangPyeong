@@ -8,6 +8,8 @@ import Card from '@/components/common/Card/Card'
 import Input from '@/components/common/Input/Input'
 import Dropdown from '@/components/common/Dropdown/Dropdown'
 import FilterBar from '@/components/common/FilterBar/FilterBar'
+import ModalDialog from '@/components/common/Modal/ModalDialog'
+import { useModalDialog } from '@/components/common/Modal/useModalDialog'
 import { useToast } from '@/components/common/Toast'
 import styles from './RagPage.module.css'
 import type {
@@ -40,6 +42,7 @@ export default function RagPage() {
   const toast = useToast()
   const toastRef = useRef(toast)
   toastRef.current = toast
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
   // 모달 상태
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -93,7 +96,8 @@ export default function RagPage() {
   }
 
   const handleDeleteCategory = async (id: number) => {
-    if (!window.confirm('이 카테고리를 삭제하시겠습니까?')) return
+    const confirmed = await showConfirm('이 카테고리를 삭제하시겠습니까?')
+    if (!confirmed) return
     try {
       await deleteCategory(id)
       toast.success('카테고리가 삭제되었습니다.')
@@ -123,7 +127,8 @@ export default function RagPage() {
   }
 
   const handleDeleteDocument = async (id: number) => {
-    if (!window.confirm('이 문서를 삭제하시겠습니까?')) return
+    const confirmed = await showConfirm('이 문서를 삭제하시겠습니까?')
+    if (!confirmed) return
     try {
       await deleteDocument(id)
       toast.success('문서가 삭제되었습니다.')
@@ -345,6 +350,12 @@ export default function RagPage() {
           }}
         />
       )}
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   )
 }

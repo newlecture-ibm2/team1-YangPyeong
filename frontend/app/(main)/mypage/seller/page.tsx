@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/common/Button/Button';
 import Badge from '@/components/common/Badge/Badge';
 import Modal from '@/components/common/Modal/Modal';
+import Spinner from '@/components/common/Spinner/Spinner';
 import { PRODUCT_STATUS_MAP } from '../_lib/mypage.types';
 import useSellerProducts from './useSellerProducts';
 import styles from './page.module.css';
@@ -18,6 +19,7 @@ export default function SellerProductsPage() {
     handleDelete,
     confirmDelete,
     cancelDelete,
+    loading,
   } = useSellerProducts();
 
   /** 가격 포맷 */
@@ -54,7 +56,9 @@ export default function SellerProductsPage() {
       </div>
 
       {/* 상품 테이블 */}
-      {products.length === 0 ? (
+      {loading ? (
+        <Spinner message="판매 상품 목록을 불러오는 중입니다..." fullHeight={true} />
+      ) : products.length === 0 ? (
         <div className={styles.emptyState}>
           <p className={styles.emptyIcon}>🏷️</p>
           <p className={styles.emptyText}>등록된 상품이 없습니다.</p>

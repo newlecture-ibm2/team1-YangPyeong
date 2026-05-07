@@ -27,7 +27,8 @@ jobs:
           WEATHER_BASE_URL=${{ secrets.WEATHER_BASE_URL }}
           WEATHER_API_KEY=${{ secrets.WEATHER_API_KEY }}
           SOIL_API_KEY=${{ secrets.SOIL_API_KEY }}
-          NONGSARO_API_KEY=${{ secrets.NONGSARO_API_KEY }}
+          NONGSARO_API_KEY_DEFAULT=${{ secrets.NONGSARO_API_KEY_DEFAULT }}
+          NONGSARO_API_KEY_CROP_EBOOK=${{ secrets.NONGSARO_API_KEY_CROP_EBOOK }}
           KOSIS_API_KEY=${{ secrets.KOSIS_API_KEY }}
           KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}

@@ -48,9 +48,8 @@ export function useSeedForm() {
     try {
       await registerCultivation(Number(formData.farmId), {
         cropId: Number(formData.cropId),
-        cultivationType: formData.cultivationType,
         cultivationArea: Number(formData.cultivationArea),
-        farmerEstimatedYield: formData.farmerEstimatedYield ? Number(formData.farmerEstimatedYield) : undefined,
+        expectedYield: formData.farmerEstimatedYield ? Number(formData.farmerEstimatedYield) : 0,
         yieldUnit: formData.yieldUnit,
       });
       
