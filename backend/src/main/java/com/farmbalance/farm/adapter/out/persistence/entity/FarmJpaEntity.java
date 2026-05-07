@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "farms")
 @Getter
@@ -112,5 +114,13 @@ public class FarmJpaEntity extends BaseTimeEntity {
         this.soilType = soilType;
         this.ph = ph;
         this.organicMatter = organicMatter;
+    }
+
+    /** 소프트 삭제 */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
     }
 }
