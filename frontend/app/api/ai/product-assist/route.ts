@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /** AI 서버 URL (Docker 내부 통신 또는 로컬 개발) */
 const AI_SERVER_URL =
-  process.env.AI_SERVER_URL || 'http://ai-server:8000';
+  process.env.AI_SERVER_URL || 'http://127.0.0.1:8000';
 
 interface AiDescriptionRequest {
   productName: string;
