@@ -36,7 +36,7 @@ public class UserService implements UpdateProfileUseCase, CheckNicknameUseCase, 
             }
         }
 
-        user.updateProfile(command.getName(), command.getPhone(), command.getRegion(), command.getAddress(), command.getBio());
+        user.updateProfile(command.getName(), command.getPhone(), command.getAddress(), command.getBio());
         userRepository.save(user);
     }
 
