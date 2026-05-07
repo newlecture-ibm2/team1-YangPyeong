@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Dropdown, SearchInput, Modal, Button } from '@/components';
+import { Dropdown, SearchInput, Modal, Button, Spinner } from '@/components';
 import { useToast } from '@/components';
 import ProductCard from './ProductCard';
 import { useProducts } from './useProducts';
@@ -103,7 +103,11 @@ export default function ShopBrowsePage() {
 
       {/* ════════ 상품 그리드 ════════ */}
       <div className={styles.productGrid} data-guide="shop-products">
-        {products.length > 0 ? (
+        {loading ? (
+          <div style={{ gridColumn: '1 / -1', minHeight: '300px' }}>
+            <Spinner message="상품을 불러오는 중입니다..." fullHeight={false} />
+          </div>
+        ) : products.length > 0 ? (
           products.map((product) => (
             <ProductCard
               key={product.id}

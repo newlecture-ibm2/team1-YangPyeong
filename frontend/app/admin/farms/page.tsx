@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Button from '@/components/common/Button/Button'
 import Badge from '@/components/common/Badge/Badge'
 import Modal from '@/components/common/Modal/Modal'
+import ModalDialog from '@/components/common/Modal/ModalDialog'
+import { useModalDialog } from '@/components/common/Modal/useModalDialog'
 import { useToast } from '@/components/common/Toast'
 import styles from './Farms.module.css'
 import type { FarmApprovalView, ApprovalStatus } from '../_lib/farmApproval.types'
@@ -21,6 +23,7 @@ export default function FarmsPage() {
   const [rejectTarget, setRejectTarget] = useState<FarmApprovalView | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
   const toast = useToast()
   const toastRef = useRef(toast)
@@ -46,7 +49,8 @@ export default function FarmsPage() {
 
   // 승인 처리
   const handleApprove = async (item: FarmApprovalView) => {
-    if (!window.confirm(`"${item.farmName}" 농장을 승인하시겠습니까?\n${item.userName}님의 역할이 농부로 변경됩니다.`)) return
+    const confirmed = await showConfirm(`"${item.farmName}" 농장을 승인하시겠습니까?\n${item.userName}님의 역할이 농부로 변경됩니다.`)
+    if (!confirmed) return
     try {
       await approveFarm(item.farmId)
       toast.success(`${item.farmName} 농장이 승인되었습니다.`)
@@ -242,6 +246,12 @@ export default function FarmsPage() {
           </div>
         </Modal>
       )}
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   )
 }

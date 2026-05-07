@@ -35,21 +35,8 @@ export default function GovNav() {
       </div>
 
       <div className={styles.right} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-        {/* 개발용 테스트 스위처 */}
-        <select 
-          onChange={(e) => {
-            localStorage.setItem('X-USER-ID', e.target.value);
-            window.location.reload();
-          }}
-          value={typeof window !== 'undefined' ? localStorage.getItem('X-USER-ID') || '9040' : '9040'}
-          style={{ padding: '4px', borderRadius: '4px', border: '1px solid #ccc' }}
-        >
-          <option value="9040">양평군(9040)</option>
-          <option value="9041">가평군(9041)</option>
-        </select>
-
         <span className={styles.btnFill}>
-          {loading ? "로딩 중..." : (user?.regionName ? `${user.regionName} 담당자` : "지역미지정 담당자")}
+          {loading ? "로딩 중..." : (user?.regionName ? `${user.regionName} 담당자` : "양평군 담당자")}
         </span>
       </div>
     </nav>

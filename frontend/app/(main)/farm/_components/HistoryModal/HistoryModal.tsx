@@ -15,7 +15,6 @@ interface HistoryModalProps {
 }
 
 const ACTIVITIES = [
-  '🌱 파종/정식',
   '💧 물주기/관수',
   '🔋 비료 살포',
   '🌿 제초 작업',
