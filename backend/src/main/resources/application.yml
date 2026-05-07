@@ -35,6 +35,7 @@ spring:
     baseline-version: 1
     out-of-order: true # 순서가 뒤바뀐 마이그레이션도 실행 허용 (V10.4 등)
     locations: classpath:db/migration
+    ignore-migration-patterns: "*:missing" # DB에 적용됐으나 로컬 파일이 없는 마이그레이션 무시
 
   # ── Redis ──
   data:
@@ -73,8 +74,8 @@ external:
   kakao:
     rest-api-key: ${KAKAO_REST_API_KEY:}
   weather:
-    base-url: "https://apis.data.go.kr/1360000/AsosDalyInfoService"
-
+    base-url: ${WEATHER_BASE_URL:}
+    fcst-url: ${WEATHER_FCST_URL:}
     api-key: ${WEATHER_API_KEY:}
   soil:
     api-key: ${SOIL_API_KEY:}

@@ -18,7 +18,7 @@ public class User {
     private String name;
     private String phone;
     private Role role;
-    private String region;
+
     private UserStatus status;
     private AuthProvider provider;
     private String providerId;
@@ -53,12 +53,11 @@ public class User {
     }
 
     /** 프로필 정보를 업데이트합니다. */
-    public void updateProfile(String name, String phone, String region, String address, String bio) {
+    public void updateProfile(String name, String phone, String address, String bio) {
         if (name != null && !name.isBlank()) {
             this.name = name;
         }
         this.phone = phone;
-        this.region = region;
         this.address = address;
         this.bio = bio;
         this.updatedAt = LocalDateTime.now();

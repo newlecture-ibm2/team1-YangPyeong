@@ -39,7 +39,6 @@ export function useProfile() {
             email: fetched.email,
             name: fetched.name || '사용자',
             phone: fetched.phone || '',
-            region: fetched.region || '',
             address: fetched.address || '',
             bio: fetched.bio || '',
             role: (fetched.role as UserProfile['role']) || 'USER',
@@ -51,7 +50,6 @@ export function useProfile() {
           setFormData({
             name: profileData.name,
             phone: profileData.phone,
-            region: profileData.region,
             address: profileData.address || '',
             bio: profileData.bio || '',
           });
@@ -70,7 +68,6 @@ export function useProfile() {
             email: cookieUser.email,
             name: cookieUser.name || '사용자',
             phone: cookieUser.phone || '',
-            region: cookieUser.region || '',
             address: cookieUser.address || '',
             bio: cookieUser.bio || '',
             role: (cookieUser.role as UserProfile['role']) || 'USER',
@@ -82,7 +79,6 @@ export function useProfile() {
           setFormData({
             name: initialProfile.name,
             phone: initialProfile.phone,
-            region: initialProfile.region,
             address: initialProfile.address || '',
             bio: initialProfile.bio || '',
           });
@@ -107,7 +103,6 @@ export function useProfile() {
       setFormData({
         name: profile.name,
         phone: profile.phone,
-        region: profile.region,
         address: profile.address || '',
         bio: profile.bio || '',
       });
@@ -121,7 +116,6 @@ export function useProfile() {
       setFormData({
         name: profile.name,
         phone: profile.phone,
-        region: profile.region,
         address: profile.address || '',
         bio: profile.bio || '',
       });

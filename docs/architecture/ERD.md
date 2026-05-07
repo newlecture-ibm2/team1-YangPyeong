@@ -33,7 +33,6 @@ erDiagram
         varchar name
         varchar phone
         varchar role "USER | FARMER | ADMIN | GOV"
-        varchar region "지역명 문자열 (하위호환)"
         varchar region_code "FK → regions.code (시군구 코드)"
         varchar address "상세 주소"
         text bio "자기소개"
@@ -41,6 +40,9 @@ erDiagram
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
+        varchar provider "LOCAL | GOOGLE | KAKAO"
+        varchar provider_id
+        varchar profile_image_url
     }
 
     regions ||--o{ users : "관할지역"
@@ -61,9 +63,9 @@ erDiagram
         varchar business_number "사업자 등록번호"
         varchar land_cert_image_url "토지증명서 이미지"
         boolean land_cert_verified
-        varchar certification_status "PENDING | APPROVED | REJECTED"
+        varchar certification_status "관리자 승인: PENDING | APPROVED | REJECTED"
         varchar reject_reason "반려 사유"
-        varchar status "PENDING | APPROVED | REJECTED"
+        varchar status "운영 상태: OPERATING | FALLOW | CLOSED"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -101,6 +103,7 @@ erDiagram
         decimal farmer_estimated_yield "농가 입력 예상 생산량"
         decimal ai_predicted_yield "AI 예측 수확량"
         varchar yield_unit "g | kg | ton"
+        varchar status "재배 상태: ACTIVE | COMPLETED"
         boolean verified
         timestamp created_at
         timestamp updated_at
@@ -232,8 +235,8 @@ erDiagram
     %% ===== 커뮤니티 도메인 =====
     post_categories {
         bigint id PK
-        varchar name UK "자유게시판 | 정보공유 | Q&A 등"
-        varchar description
+        varchar name UK "카테고리명 (50)"
+        varchar description "설명 (200)"
         int display_order
         boolean is_active
         timestamp created_at
@@ -245,13 +248,13 @@ erDiagram
         bigint id PK
         bigint author_id FK
         bigint category_id FK
-        varchar title
+        varchar title "제목 (100)"
         text content
         int view_count
         boolean is_notice
-        timestamp deleted_at
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
     }
 
     post_categories ||--o{ posts : "분류"
@@ -261,10 +264,10 @@ erDiagram
         bigint post_id FK
         bigint author_id FK
         text content
-        boolean accepted "답변 채택 여부"
-        timestamp deleted_at
+        boolean accepted "채택 여부"
         timestamp created_at
         timestamp updated_at
+        timestamp deleted_at
     }
 
     %% ===== 정책 도메인 =====
@@ -619,18 +622,20 @@ erDiagram
 | password | VARCHAR(255) | NOT NULL | BCrypt 해싱 |
 | name | VARCHAR(50) | NOT NULL | 이름 |
 | phone | VARCHAR(20) | | 전화번호 |
-| role | VARCHAR(20) | NOT NULL, DEFAULT 'GENERAL' | GENERAL / FARMER / ADMIN / GOV |
-| region | VARCHAR(50) | | 지역 (양평군 등) — 하위호환용 유지 |
-| region_code | VARCHAR(10) | | 시군구 코드 (regions.code 참조, 예: "4183") — 신규 |
+| role | VARCHAR(20) | NOT NULL, DEFAULT 'USER' | USER / FARMER / ADMIN / GOV |
+| region_code | VARCHAR(10) | | 시군구 코드 (regions.code 참조, 예: "4183") |
 | address | VARCHAR(255) | | 상세 주소 |
 | bio | TEXT | | 자기소개 |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | ACTIVE / SUSPENDED |
+| provider | VARCHAR(20) | NOT NULL, DEFAULT 'LOCAL' | LOCAL / KAKAO / GOOGLE |
+| provider_id | VARCHAR(100) | | 소셜 로그인 고유 ID |
+| profile_image_url | VARCHAR(200) | | 프로필 이미지 URL |
 | created_at | TIMESTAMP | NOT NULL | 가입일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-> **region_code 추가 이유**: GOV 사용자의 관할 시군구를 `regions` 테이블과 연결하여 하위 읍면동 목록을 동적으로 조회하기 위함.  
-> 기존 `region` 문자열 컬럼은 하위호환을 위해 삭제하지 않고 유지합니다.
+> **region_code**: GOV 사용자의 관할 시군구를 `regions` 테이블과 연결하여 하위 읍면동 목록을 동적으로 조회하기 위함.  
+> ~~기존 `region` 문자열 컬럼~~은 V23 마이그레이션(`V23__drop_users_region_column.sql`)으로 삭제되었습니다.
 
 ### 2.2 farms (농장)
 
@@ -651,9 +656,9 @@ erDiagram
 | business_number | VARCHAR(12) | | 사업자 등록번호 |
 | land_cert_image_url | VARCHAR(500) | | 토지증명서 이미지 URL |
 | land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 |
-| certification_status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
+| certification_status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | 관리자 승인: PENDING / APPROVED / REJECTED |
 | reject_reason | VARCHAR(500) | | 반려 사유 |
-| status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING / APPROVED / REJECTED |
+| status | VARCHAR(20) | NOT NULL, DEFAULT 'OPERATING' | 운영 상태: OPERATING / FALLOW / CLOSED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
@@ -696,6 +701,7 @@ erDiagram
 | farmer_estimated_yield | DECIMAL(12,2) | | 농가 입력 예상 생산량 |
 | ai_predicted_yield | DECIMAL(12,2) | | AI 예측 수확량 |
 | yield_unit | VARCHAR(10) | | 수확량 단위 (g / kg / ton) |
+| status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | 재배 상태: ACTIVE / COMPLETED |
 | verified | BOOLEAN | DEFAULT false | 인증 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
@@ -866,13 +872,13 @@ erDiagram
 | id | BIGINT | PK, AUTO | 게시글 고유 ID |
 | author_id | BIGINT | FK → users(id), NOT NULL | 작성자 |
 | category_id | BIGINT | FK → post_categories(id), NOT NULL | 게시판 카테고리 |
-| title | VARCHAR(200) | NOT NULL | 제목 |
+| title | VARCHAR(100) | NOT NULL | 제목 |
 | content | TEXT | NOT NULL | 본문 |
 | view_count | INT | DEFAULT 0 | 조회수 |
 | is_notice | BOOLEAN | DEFAULT false | 공지 여부 |
-| deleted_at | TIMESTAMP | | 삭제 시각 (null이면 미삭제) |
 | created_at | TIMESTAMP | NOT NULL | 작성일 |
 | updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.14 comments (댓글)
 
@@ -883,9 +889,9 @@ erDiagram
 | author_id | BIGINT | FK → users(id), NOT NULL | 작성자 |
 | content | TEXT | NOT NULL | 댓글 내용 |
 | accepted | BOOLEAN | DEFAULT false | 답변 채택 여부 (Q&A) |
-| deleted_at | TIMESTAMP | | 삭제 시각 (null이면 미삭제) |
 | created_at | TIMESTAMP | NOT NULL | 작성일 |
 | updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.15 policy_data (정책 데이터 저장소)
 
@@ -1339,7 +1345,12 @@ CREATE INDEX idx_orders_status ON orders(status);
 
 -- 게시글
 CREATE INDEX idx_posts_author_id ON posts(author_id);
-CREATE INDEX idx_posts_category ON posts(category);
+CREATE INDEX idx_posts_category_id ON posts(category_id);
+CREATE INDEX idx_posts_is_notice ON posts(is_notice);
+
+-- 댓글
+CREATE INDEX idx_comments_post_id ON comments(post_id);
+CREATE INDEX idx_comments_accepted ON comments(accepted);
 
 -- 알림 (빈번한 조회)
 CREATE INDEX idx_notifications_user_id_read ON notifications(user_id, is_read);

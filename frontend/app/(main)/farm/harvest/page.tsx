@@ -135,7 +135,7 @@ export default function HarvestRegisterPage() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <Card style={{ marginBottom: '24px' }}>
+        <Card className={styles.cardSection}>
           {farms.length > 1 && (
             <div style={{ marginBottom: '20px' }}>
               <Dropdown

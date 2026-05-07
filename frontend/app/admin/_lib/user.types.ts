@@ -6,7 +6,6 @@ export interface AdminUser {
   name: string
   phone: string | null
   role: UserRole
-  region: string | null
   status: UserStatus
   createdAt: string
   updatedAt: string | null

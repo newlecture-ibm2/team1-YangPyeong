@@ -9,7 +9,7 @@ import ModalDialog from '@/components/common/Modal/ModalDialog';
 import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import { getProduct, updateProduct, getCategories } from '@/app/(main)/shop/_lib/shop.api';
 import { uploadFile } from '@/lib/upload.api';
-import { useGuideBotContext } from '@/components/common/GuideBot/GuideBotContext';
+import { useFarmBotContext } from '@/components/common/FarmBot/FarmBotContext';
 import styles from './page.module.css';
 
 interface EditPageProps {
@@ -35,7 +35,7 @@ export default function SellerEditPage({ params }: EditPageProps) {
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isAiAutofilling, setIsAiAutofilling] = useState(false);
   const [isPriceRecommended, setIsPriceRecommended] = useState(false);
-  const { showQuickMessage } = useGuideBotContext();
+  const { showQuickMessage } = useFarmBotContext();
   const { dialog, showAlert, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
   // ── 이미지 상태 ──

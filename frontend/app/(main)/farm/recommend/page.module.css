@@ -1,0 +1,33 @@
+/* ════════════════════════════════════════════════════════
+   AI 추천 리스트 — 콘텐츠 레이아웃
+   (헤더/탭은 상위 farm 페이지에서 제공)
+   ════════════════════════════════════════════════════════ */
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+/* ── TOP3 랭킹 그리드 ── */
+.rankingGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 1024px) {
+  .rankingGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .rankingGrid { grid-template-columns: 1fr; }
+}

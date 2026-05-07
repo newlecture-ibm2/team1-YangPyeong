@@ -16,21 +16,10 @@ const DaumPostcodeEmbed = dynamic(() => import('react-daum-postcode'), { ssr: fa
 interface FormErrors {
   name?: string;
   phone?: string;
-  region?: string;
   address?: string;
 }
 
-/** 활동 지역 유효성 검사 (빈 값 허용, 입력 시 최소 2자) */
-function validateRegion(value: string): string | undefined {
-  if (!value.trim()) return undefined;
-  if (value.trim().length < 2) {
-    return '활동 지역은 최소 2자 이상 입력해주세요.';
-  }
-  if (value.trim().length > 50) {
-    return '활동 지역은 50자 이내로 입력해주세요.';
-  }
-  return undefined;
-}
+
 
 interface ProfileEditFormProps {
   formData: ProfileUpdateRequest;
@@ -92,9 +81,6 @@ export default function ProfileEditForm({
         case 'phone':
           newErrors.phone = validatePhone(formData.phone);
           break;
-        case 'region':
-          newErrors.region = validateRegion(formData.region);
-          break;
       }
       return newErrors;
     });
@@ -135,7 +121,6 @@ export default function ProfileEditForm({
   const handleSave = useCallback(async () => {
     const nameErr = formData.name.trim().length < 2 ? '이름은 2자 이상 입력해주세요.' : undefined;
     const phoneErr = validatePhone(formData.phone);
-    const regionErr = validateRegion(formData.region);
 
     // 닉네임 중복 검사 (아직 체크하지 않은 경우)
     let nicknameErr: string | undefined;
@@ -147,13 +132,12 @@ export default function ProfileEditForm({
     const newErrors: FormErrors = {
       name: nameErr || nicknameErr,
       phone: phoneErr,
-      region: regionErr,
     };
 
     setErrors(newErrors);
-    setTouched({ name: true, phone: true, region: true, address: true });
+    setTouched({ name: true, phone: true, address: true });
 
-    if (newErrors.name || phoneErr || regionErr) return;
+    if (newErrors.name || phoneErr) return;
 
     // 기본주소 + 상세주소 합쳐서 overrides로 직접 전달
     const fullAddress = detailAddress.trim()
@@ -163,7 +147,7 @@ export default function ProfileEditForm({
     await onSave({ address: fullAddress });
   }, [formData, onSave, onCheckNickname, baseAddress, detailAddress]);
 
-  const hasErrors = !!(errors.name || errors.phone || errors.region);
+  const hasErrors = !!(errors.name || errors.phone);
 
   return (
     <div className={styles.editForm}>
@@ -204,25 +188,6 @@ export default function ProfileEditForm({
           )}
         </div>
 
-        {/* 활동 지역 */}
-        <div className={styles.fieldWrapper}>
-          <Input
-            label="활동 지역"
-            name="region"
-            value={formData.region}
-            onChange={(e) => {
-              onChange(e);
-              if (touched.region) {
-                setErrors(prev => ({ ...prev, region: validateRegion(e.target.value) }));
-              }
-            }}
-            onBlur={() => handleBlur('region')}
-            placeholder="예: 양평군 강상면"
-          />
-          {touched.region && errors.region && (
-            <span className={styles.fieldError}>{errors.region}</span>
-          )}
-        </div>
 
         {/* 주소 (다음 우편번호 검색) */}
         <div className={`${styles.fieldWrapper} ${styles.addressField}`}>

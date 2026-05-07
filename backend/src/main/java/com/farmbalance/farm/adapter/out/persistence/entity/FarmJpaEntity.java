@@ -1,5 +1,6 @@
 package com.farmbalance.farm.adapter.out.persistence.entity;
 
+import com.farmbalance.farm.domain.FarmStatus;
 import com.farmbalance.global.entity.BaseTimeEntity;
 import com.farmbalance.user.adapter.out.persistence.entity.UserJpaEntity;
 import jakarta.persistence.*;
@@ -40,7 +41,7 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(name = "longitude")
     private Double longitude;
 
-    @Column(name = "area", nullable = false)
+    @Column(name = "area")
     private Double area;
 
     @Column(name = "soil_type", length = 50)
@@ -65,6 +66,10 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(name = "certification_status", nullable = false, length = 20)
     private com.farmbalance.farm.domain.CertificationStatus certificationStatus = com.farmbalance.farm.domain.CertificationStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private FarmStatus status = FarmStatus.OPERATING;
+
     // cropTypes는 farm_crops 테이블로 관리 (JPA @ElementCollection 제거)
 
     @Builder
@@ -72,7 +77,8 @@ public class FarmJpaEntity extends BaseTimeEntity {
                          String bjdCode, String pnuCode,
                          Double latitude, Double longitude, String registrationNumber,
                          String documentUrl, String soilType, Double ph, Double organicMatter,
-                         com.farmbalance.farm.domain.CertificationStatus certificationStatus) {
+                         com.farmbalance.farm.domain.CertificationStatus certificationStatus,
+                         FarmStatus status) {
         this.user = user;
         this.name = name;
         this.address = address;
@@ -87,6 +93,7 @@ public class FarmJpaEntity extends BaseTimeEntity {
         this.ph = ph;
         this.organicMatter = organicMatter;
         this.certificationStatus = certificationStatus != null ? certificationStatus : com.farmbalance.farm.domain.CertificationStatus.PENDING;
+        this.status = status != null ? status : FarmStatus.OPERATING;
     }
 
     public void update(String name, String address, Double area,
