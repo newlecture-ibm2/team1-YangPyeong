@@ -7,6 +7,7 @@ import Modal from '@/components/common/Modal/Modal';
 import Spinner from '@/components/common/Spinner/Spinner';
 import { PRODUCT_STATUS_MAP } from '../_lib/mypage.types';
 import useSellerProducts from './useSellerProducts';
+import useSellerInsight from './useSellerInsight';
 import styles from './page.module.css';
 
 /** S-35a. 판매 상품 관리 페이지 */
@@ -19,8 +20,10 @@ export default function SellerProductsPage() {
     handleDelete,
     confirmDelete,
     cancelDelete,
-    loading,
+    loading: productsLoading,
   } = useSellerProducts();
+
+  const { insight, loading: insightLoading, refreshInsight } = useSellerInsight(products);
 
   /** 가격 포맷 */
   const formatPrice = (price: number) =>
@@ -55,8 +58,42 @@ export default function SellerProductsPage() {
         </Button>
       </div>
 
+      {/* AI 인사이트 카드 */}
+      {!productsLoading && products.length > 0 && (
+        <div className={styles.insightCard}>
+          <div className={styles.insightHeader}>
+            <h3 className={styles.insightTitle}>
+              <span className={styles.insightIcon}>🤖</span>
+              오늘의 AI 판매 인사이트
+            </h3>
+            <button 
+              className={styles.refreshBtn} 
+              onClick={refreshInsight}
+              disabled={insightLoading}
+              title="인사이트 새로고침"
+            >
+              {insightLoading ? '분석 중...' : '↻ 새로고침'}
+            </button>
+          </div>
+          {insightLoading && !insight ? (
+            <p className={styles.insightContent} style={{ color: 'var(--color-text-secondary)' }}>
+              판매자님의 데이터를 분석하고 있습니다...
+            </p>
+          ) : insight ? (
+            <p className={styles.insightContent}>
+              {insight.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+                if (part.startsWith('**') && part.endsWith('**')) {
+                  return <strong key={i}>{part.slice(2, -2)}</strong>;
+                }
+                return <span key={i}>{part}</span>;
+              })}
+            </p>
+          ) : null}
+        </div>
+      )}
+
       {/* 상품 테이블 */}
-      {loading ? (
+      {productsLoading ? (
         <Spinner message="판매 상품 목록을 불러오는 중입니다..." fullHeight={true} />
       ) : products.length === 0 ? (
         <div className={styles.emptyState}>

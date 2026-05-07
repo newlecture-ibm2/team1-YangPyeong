@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /** AI 서버 URL (Docker 내부 통신 또는 로컬 개발) */
 const AI_SERVER_URL =
-  process.env.AI_SERVER_URL || 'http://ai-server:8000';
+  process.env.AI_SERVER_URL || 'http://127.0.0.1:8000';
 
 interface AutofillApiResponse {
   status: string;
@@ -34,12 +34,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // camelCase → snake_case 변환하여 AI 서버에 전달
+    // farmContext가 없으면(null) AI 서버는 기존 추론 모드로 동작
+    const aiPayload: Record<string, unknown> = {
+      product_name: body.productName.trim(),
+    };
+
+    if (body.farmContext) {
+      aiPayload.farm_context = {
+        farm_name: body.farmContext.farmName,
+        address: body.farmContext.address || '',
+        soil_type: body.farmContext.soilType || null,
+        organic_matter: body.farmContext.organicMatter || null,
+        crop_name: body.farmContext.cropName,
+        cultivation_area: body.farmContext.cultivationArea || null,
+        harvest_records: (body.farmContext.harvestRecords || []).map(
+          (h: { harvestDate: string; yieldAmount: number; yieldUnit: string; grade?: string }) => ({
+            harvest_date: h.harvestDate,
+            yield_amount: h.yieldAmount,
+            yield_unit: h.yieldUnit,
+            grade: h.grade || null,
+          }),
+        ),
+      };
+    }
+
     const aiResponse = await fetch(`${AI_SERVER_URL}/api/product-assist/autofill`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        product_name: body.productName.trim(),
-      }),
+      body: JSON.stringify(aiPayload),
       signal: AbortSignal.timeout(60000), // 60초 타임아웃 (전체 필드 생성은 시간 더 필요)
     });
 

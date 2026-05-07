@@ -203,10 +203,61 @@ export default function SellerRegisterPage() {
 
     setIsAiAutofilling(true);
     try {
+      // Phase 7: 내 농장 재배 이력 조회 → farmContext 구성
+      let farmContext: Record<string, unknown> | null = null;
+      let usedFarmData = false;
+
+      try {
+        // 1) 내 농장 목록 조회
+        const farmsRes = await fetch('/api/farm');
+        const farmsData = await farmsRes.json();
+
+        if (farmsData.success && farmsData.data?.length > 0) {
+          const farmSummary = farmsData.data[0]; // 첫 번째 농장 사용
+
+          // 2) 농장 상세 정보 조회 (토양 정보 포함)
+          const detailRes = await fetch(`/api/farm/${farmSummary.id}`);
+          const detailData = await detailRes.json();
+
+          // 3) 재배 등록 목록 조회
+          const cultivationsRes = await fetch(`/api/farm/${farmSummary.id}/cultivations`);
+          const cultivationsData = await cultivationsRes.json();
+
+          if (cultivationsData.success && cultivationsData.data?.length > 0) {
+            // 상품명과 가장 관련 있는 재배 이력 찾기
+            const productKeyword = form.name.trim().split(' ')[0]; // 첫 단어로 매칭
+            const matched = cultivationsData.data.find(
+              (c: { cropName: string }) =>
+                form.name.includes(c.cropName) || c.cropName.includes(productKeyword),
+            );
+
+            if (matched) {
+              const farmDetail = detailData.success ? detailData.data : {};
+              farmContext = {
+                farmName: farmSummary.name,
+                address: farmDetail.address || '',
+                soilType: farmDetail.soilType || null,
+                organicMatter: farmDetail.organicMatter || null,
+                cropName: matched.cropName,
+                cultivationArea: matched.cultivationArea || null,
+                harvestRecords: [], // 수확 이력은 추후 확장
+              };
+              usedFarmData = true;
+            }
+          }
+        }
+      } catch {
+        // 농장 조회 실패 시 무시하고 기존 추론 모드로 진행
+      }
+
+      // AI 자동 채우기 호출 (farmContext 포함)
       const res = await fetch('/api/ai/product-assist/autofill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productName: form.name.trim() }),
+        body: JSON.stringify({
+          productName: form.name.trim(),
+          farmContext,
+        }),
       });
       const data = await res.json();
 
@@ -245,9 +296,11 @@ export default function SellerRegisterPage() {
 
       setIsPriceRecommended(true);
 
-      // 가이드봇 안내 메시지
+      // 가이드봇 안내 메시지 — 재배 이력 사용 여부에 따라 분기
       showQuickMessage(
-        'AI가 상품 정보를 채워넣었어요! 🌱\n가격이나 재고는 원하시는 대로\n수정하실 수 있습니다 😊',
+        usedFarmData
+          ? '🌱 내 농장의 재배 이력을 바탕으로\nAI가 상품 정보를 채워넣었어요!\n가격이나 재고는 수정 가능합니다 😊'
+          : 'AI가 상품 정보를 채워넣었어요! 🌱\n가격이나 재고는 원하시는 대로\n수정하실 수 있습니다 😊',
         5000,
       );
     } catch (err) {
@@ -256,7 +309,7 @@ export default function SellerRegisterPage() {
     } finally {
       setIsAiAutofilling(false);
     }
-  }, [form.name, form.price, form.stock, form.categoryName, form.description, showQuickMessage]);
+  }, [form.name, form.price, form.stock, form.categoryName, form.description, showQuickMessage, categoryOptions]);
 
 
 
