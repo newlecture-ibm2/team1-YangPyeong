@@ -8,7 +8,7 @@ import Dropdown from '@/components/common/Dropdown/Dropdown';
 import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import { useToast } from '@/components/common/Toast';
-import { useMyFarms } from '../_hooks/useFarm';
+import { useMyFarms } from '../useFarm';
 import { registerCultivation } from '../_lib/cultivation.api';
 import styles from './page.module.css';
 
@@ -200,7 +200,7 @@ export default function CultivationRegisterPage() {
       <form onSubmit={handleSubmit}>
         {/* 농장 선택 */}
         {farms.length > 1 && (
-          <Card style={{ marginBottom: '24px' }}>
+          <Card className={styles.cardSection}>
             <Dropdown
               label="농장 선택"
               options={farms.map(f => ({ value: String(f.id), label: `${f.name} (${f.address})` }))}
@@ -212,7 +212,7 @@ export default function CultivationRegisterPage() {
         )}
 
         {/* 작물 추가 영역 */}
-        <Card style={{ marginBottom: '24px' }}>
+        <Card className={styles.cardSection}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <span style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>
               등록 대기 중인 작물 <strong style={{ color: 'var(--color-primary)' }}>{cultivations.length}</strong>건
@@ -248,7 +248,7 @@ export default function CultivationRegisterPage() {
             : '0';
 
           return (
-            <Card key={cult.cropId} style={{ marginBottom: '20px' }}>
+            <Card key={cult.cropId} className={styles.cardSection}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ background: 'var(--color-primary-pale, rgba(16,185,129,0.1))', color: 'var(--color-primary)', fontSize: '12px', fontWeight: 700, padding: '3px 10px', borderRadius: '999px' }}>{idx + 1}</span>

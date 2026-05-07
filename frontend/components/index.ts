@@ -10,3 +10,4 @@ export { useToast } from './common/Toast';
 export { default as Header } from './layout/Header';
 export { default as Footer } from './layout/Footer';
 export { default as Sidebar } from './layout/Sidebar';
+export { default as Spinner } from './common/Spinner/Spinner';

@@ -1,6 +1,7 @@
 package com.farmbalance.user.adapter.in.web;
 
 import com.farmbalance.global.response.ApiResponse;
+import com.farmbalance.global.security.SecurityUtil;
 import com.farmbalance.user.application.port.in.CheckNicknameUseCase;
 import com.farmbalance.user.application.port.in.GetProfileUseCase;
 import com.farmbalance.user.application.port.in.UpdateProfileCommand;
@@ -22,7 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.security.Principal;
+
 import java.util.Map;
 import java.util.UUID;
 
@@ -88,12 +89,8 @@ import java.util.UUID;
      * 내 프로필 조회
      */
     @GetMapping("/me")
-    public ApiResponse<ProfileResponse> getMyProfile(Principal principal) {
-        if (principal == null) {
-            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.ACCESS_DENIED);
-        }
-
-        String email = principal.getName();
+    public ApiResponse<ProfileResponse> getMyProfile() {
+        String email = SecurityUtil.getCurrentEmail();
         User user = getProfileUseCase.getProfile(email);
 
         ProfileResponse response = ProfileResponse.builder()
@@ -117,14 +114,9 @@ import java.util.UUID;
      */
     @PutMapping("/me")
     public ApiResponse<Void> updateProfile(
-            @jakarta.validation.Valid @RequestBody ProfileUpdateRequest request,
-            Principal principal) {
-        
-        if (principal == null) {
-            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.ACCESS_DENIED);
-        }
+            @jakarta.validation.Valid @RequestBody ProfileUpdateRequest request) {
 
-        String email = principal.getName();
+        String email = SecurityUtil.getCurrentEmail();
         
         UpdateProfileCommand command = UpdateProfileCommand.builder()
                 .email(email)
@@ -144,12 +136,7 @@ import java.util.UUID;
      */
     @PostMapping("/me/profile-image")
     public ApiResponse<Map<String, String>> uploadProfileImage(
-            @RequestParam("file") MultipartFile file,
-            Principal principal) {
-
-        if (principal == null) {
-            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.ACCESS_DENIED);
-        }
+            @RequestParam("file") MultipartFile file) {
 
         // 파일 유효성 검사
         if (file.isEmpty()) {
@@ -180,7 +167,7 @@ import java.util.UUID;
 
             // DB에 이미지 URL 저장
             String imageUrl = "/api/users/profile-image/" + storedFilename;
-            String email = principal.getName();
+            String email = SecurityUtil.getCurrentEmail();
             User user = getProfileUseCase.getProfile(email);
             user.updateProfileImageUrl(imageUrl);
             // UserService를 통해 저장
@@ -276,14 +263,9 @@ import java.util.UUID;
      */
     @PutMapping("/me/password")
     public ApiResponse<Void> changePassword(
-            @jakarta.validation.Valid @RequestBody ChangePasswordRequest request,
-            Principal principal) {
+            @jakarta.validation.Valid @RequestBody ChangePasswordRequest request) {
 
-        if (principal == null) {
-            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.ACCESS_DENIED);
-        }
-
-        String email = principal.getName();
+        String email = SecurityUtil.getCurrentEmail();
         User user = getProfileUseCase.getProfile(email);
 
         // 현재 비밀번호 검증
@@ -316,14 +298,9 @@ import java.util.UUID;
      */
     @DeleteMapping("/me")
     public ApiResponse<Void> deleteAccount(
-            @RequestBody DeleteAccountRequest request,
-            Principal principal) {
+            @RequestBody DeleteAccountRequest request) {
 
-        if (principal == null) {
-            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.ACCESS_DENIED);
-        }
-
-        String email = principal.getName();
+        String email = SecurityUtil.getCurrentEmail();
         User user = getProfileUseCase.getProfile(email);
 
         // LOCAL 유저인 경우 비밀번호 검증 필수

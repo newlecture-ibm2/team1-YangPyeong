@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getFarmHistories, recordFarmHistory, updateFarmHistory, deleteFarmHistory, CultivationHistory } from '../_lib/history.api';
+import { getFarmHistories, recordFarmHistory, updateFarmHistory, deleteFarmHistory, CultivationHistory } from './_lib/history.api';
 import { useToast } from '@/components/common/Toast';
 
 export function useHistory(farmId?: number) {
@@ -49,7 +49,6 @@ export function useHistory(farmId?: number) {
 
   const removeHistory = async (historyId: number): Promise<boolean> => {
     if (!farmId) return false;
-    if (!confirm('정말 삭제하시겠습니까?')) return false;
     
     try {
       await deleteFarmHistory(farmId, historyId);

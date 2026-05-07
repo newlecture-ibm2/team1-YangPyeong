@@ -1,18 +1,19 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
 import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import { useSeedForm } from './useSeedForm';
-import { useMyFarms } from '../_hooks/useFarm';
+import { useMyFarms } from '../useFarm';
 import styles from './page.module.css';
 
 /**
  * 종자 및 파종 계획 등록 페이지 (FRM-002, FRM-003 통합)
  */
-export default function SeedRegistrationPage() {
+function SeedFormContent() {
   const { formData, isLoading, handleChange, handleSubmit } = useSeedForm();
   const { farms } = useMyFarms();
 
@@ -142,5 +143,13 @@ export default function SeedRegistrationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SeedRegistrationPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>데이터를 불러오는 중...</div>}>
+      <SeedFormContent />
+    </Suspense>
   );
 }

@@ -24,9 +24,10 @@ const scenarios: GuideScenario[] = [
     path: '/',
     steps: [
       { target: '[data-guide="nav-farm"]', message: '내 농장을 등록하고 관리할 수 있어요! 🌱', position: 'bottom' },
-      { target: '[data-guide="nav-balance"]', message: '작물 수급 현황을 한눈에 확인해보세요 📊', position: 'bottom' },
-      { target: '[data-guide="nav-recommend"]', message: 'AI가 최적의 작물을 추천해드려요 🤖', position: 'bottom' },
-      { target: '[data-guide="nav-shop"]', message: '양평 농산물을 직거래로 구매할 수 있어요! 🛒', position: 'bottom' },
+      { target: '[data-guide="nav-shop"]', message: '양평 농산물을 직거래로 사고팔 수 있어요! 🛒', position: 'bottom' },
+      { target: '[data-guide="nav-community"]', message: '농업인들과 소통하는 수다방이에요 🗣️', position: 'bottom' },
+      { target: '[data-guide="nav-stores"]', message: '우리 동네 농기계, 자재 가게를 찾아보세요 🏡', position: 'bottom' },
+      { target: '[data-guide="nav-policy"]', message: '양평군 농업 지원 정책을 한눈에 확인하세요 📜', position: 'bottom' },
     ],
   },
   {
@@ -54,12 +55,7 @@ const scenarios: GuideScenario[] = [
       { target: '[data-guide="seller-orders"]', message: '들어온 주문을 관리할 수 있어요 📋', position: 'bottom' },
     ],
   },
-  {
-    path: '/balance',
-    steps: [
-      { target: '[data-guide="nav-balance"]', message: '양평군 작물 수급 현황을 분석하는 페이지예요 📈', position: 'bottom' },
-    ],
-  },
+  // 기존 /balance 시나리오는 해당 메뉴가 없으므로 삭제하거나 나중에 추가
 ];
 
 /** 현재 경로에 맞는 시나리오를 반환합니다 */
