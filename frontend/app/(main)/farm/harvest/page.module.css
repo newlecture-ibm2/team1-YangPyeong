@@ -41,6 +41,10 @@
   line-height: 1.6;
 }
 
+.cardSection {
+  margin-bottom: 24px;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 24px 16px;

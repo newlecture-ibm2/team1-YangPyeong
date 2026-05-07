@@ -34,7 +34,8 @@ public class AsosWeatherApiAdapter implements WeatherRecordPort {
     @Value("${external.weather.base-url:}")
     private String asosBaseUrl;
 
-    private static final String FCST_BASE_URL = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst";
+    @Value("${external.weather.fcst-url:}")
+    private String fcstBaseUrl;
 
     public AsosWeatherApiAdapter(RestTemplateBuilder restTemplateBuilder, ObjectMapper objectMapper) {
         this.restTemplate = restTemplateBuilder
@@ -139,7 +140,11 @@ public class AsosWeatherApiAdapter implements WeatherRecordPort {
         }
 
         try {
-            URI uri = UriComponentsBuilder.fromHttpUrl(FCST_BASE_URL)
+            if (fcstBaseUrl == null || fcstBaseUrl.trim().isEmpty()) {
+                throw new ExternalApiException("기상청 단기예보 API 주소(WEATHER_FCST_URL)가 설정되지 않았습니다.");
+            }
+
+            URI uri = UriComponentsBuilder.fromHttpUrl(fcstBaseUrl + "/getVilageFcst")
                     .queryParam("serviceKey", serviceKey)
                     .queryParam("pageNo", 1)
                     .queryParam("numOfRows", 1000)
