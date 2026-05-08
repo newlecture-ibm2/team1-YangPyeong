@@ -47,7 +47,10 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
 
     @Override
     @Transactional
-    public RecommendResult recommend(Long farmId) {
+    public RecommendResult recommend(Long userId, Long farmId) {
+        // 0. 농장 소유자 검증
+        validateFarmOwnership(userId, farmId);
+
         // 1. 농장 정보 조회 (JDBC 직접 조회)
         FarmBasicData farm = loadFarmForRecommendPort.loadFarmBasic(farmId)
                 .orElseThrow(() -> new IllegalArgumentException("농장을 찾을 수 없습니다: " + farmId));
@@ -89,7 +92,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
             int score = calculator.calculate(soilPercent, pricePercent, supplyPercent, difficulty);
 
             // 3-6. 카테고리 매핑
-            CropCategory category = mapCategory(candidate.getCategory());
+            CropCategory category = CropCategory.fromLabel(candidate.getCategory());
 
             // 3-7. 추천 객체 생성
             CropRecommendation rec = CropRecommendation.builder()
@@ -146,30 +149,26 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
     }
     
     @Override
-    public List<RecommendResult> getHistory(Long farmId) {
+    public List<RecommendResult> getHistory(Long userId, Long farmId) {
+        validateFarmOwnership(userId, farmId);
         return loadRecommendHistoryPort.loadByFarmId(farmId);
     }
 
     @Override
-    public RecommendResult getLatestHistory(Long farmId) {
+    public RecommendResult getLatestHistory(Long userId, Long farmId) {
+        validateFarmOwnership(userId, farmId);
         return loadRecommendHistoryPort.loadLatestByFarmId(farmId)
                 .orElseThrow(() -> new IllegalArgumentException("추천 이력이 없습니다: " + farmId));
     }
 
-    /** 카테고리 문자열 → enum 매핑 */
-    private CropCategory mapCategory(String label) {
-        if (label == null) return CropCategory.VEGETABLE;
-        for (CropCategory cat : CropCategory.values()) {
-            if (cat.getLabel().equals(label)) return cat;
+    /** 농장 소유자 검증 */
+    private void validateFarmOwnership(Long userId, Long farmId) {
+        if (userId == null) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("인증 정보가 없습니다.");
         }
-        // 부분 매칭
-        String lower = label.toLowerCase();
-        if (lower.contains("채소") || lower.contains("엽근")) return CropCategory.VEGETABLE;
-        if (lower.contains("과일") || lower.contains("과수")) return CropCategory.FRUIT;
-        if (lower.contains("곡") || lower.contains("미곡") || lower.contains("맥류")) return CropCategory.GRAIN;
-        if (lower.contains("특용") || lower.contains("약용")) return CropCategory.SPECIAL;
-        if (lower.contains("화훼") || lower.contains("꽃")) return CropCategory.FLOWER;
-        return CropCategory.VEGETABLE;
+        if (!loadFarmForRecommendPort.isOwnedBy(farmId, userId)) {
+            throw new org.springframework.security.access.AccessDeniedException("해당 농장에 대한 접근 권한이 없습니다: farmId=" + farmId);
+        }
     }
 
     /** 순위를 부여한 새 객체 생성 (toBuilder로 immutable 유지) */

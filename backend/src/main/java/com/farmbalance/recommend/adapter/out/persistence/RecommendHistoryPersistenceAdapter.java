@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -50,6 +51,7 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
                     .optimalTemp(rec.getOptimalTemp())
                     .sowingPeriod(rec.getSowingPeriod())
                     .harvestPeriod(rec.getHarvestPeriod())
+                    .pests(rec.getPests() != null ? String.join(",", rec.getPests()) : null)
                     .build();
             entity.addItem(item);
         }
@@ -59,7 +61,7 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
 
     @Override
     public List<RecommendResult> loadByFarmId(Long farmId) {
-        return historyRepository.findByFarmIdOrderByGeneratedAtDesc(farmId).stream()
+        return historyRepository.findTop20ByFarmIdOrderByGeneratedAtDesc(farmId).stream()
                 .map(this::mapToDomain)
                 .collect(Collectors.toList());
     }
@@ -76,7 +78,7 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
                         .rank(item.getRank())
                         .cropId(item.getCropId())
                         .cropName(item.getCropName())
-                        .category(mapCategory(item.getCategory()))
+                        .category(CropCategory.fromLabel(item.getCategory()))
                         .score(item.getScore())
                         .soilFitness(safeParseEnum(SoilFitness.class, item.getSoilFitness()))
                         .soilFitnessPercent(item.getSoilFitnessPercent())
@@ -91,7 +93,7 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
                         .optimalTemp(item.getOptimalTemp())
                         .sowingPeriod(item.getSowingPeriod())
                         .harvestPeriod(item.getHarvestPeriod())
-                        .pests(new ArrayList<>()) // History doesn't save pests currently
+                        .pests(parsePests(item.getPests()))
                         .build())
                 .collect(Collectors.toList());
 
@@ -108,12 +110,13 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
                 .build();
     }
 
-    private CropCategory mapCategory(String label) {
-        if (label == null) return CropCategory.VEGETABLE;
-        for (CropCategory cat : CropCategory.values()) {
-            if (cat.getLabel().equals(label)) return cat;
-        }
-        return CropCategory.VEGETABLE;
+    /** 쉼표 구분 문자열 → List<String> 변환 */
+    private List<String> parsePests(String pests) {
+        if (pests == null || pests.isBlank()) return new ArrayList<>();
+        return Arrays.stream(pests.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /** enum 문자열 → enum 안전 변환 (불일치 시 null 반환) */

@@ -51,6 +51,16 @@ public class JdbcFarmForRecommendAdapter implements LoadFarmForRecommendPort {
         }
     }
 
+    @Override
+    public boolean isOwnedBy(Long farmId, Long userId) {
+        String sql = """
+            SELECT COUNT(*) FROM farms
+            WHERE id = ? AND user_id = ? AND deleted_at IS NULL
+            """;
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, farmId, userId);
+        return count != null && count > 0;
+    }
+
     /** 내부 데이터 클래스 */
     private record FarmBasicDataImpl(
             Long id, String name, String address, Double area,

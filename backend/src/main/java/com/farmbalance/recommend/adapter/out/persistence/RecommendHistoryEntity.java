@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ public class RecommendHistoryEntity {
     private String soilType;
     private LocalDateTime generatedAt;
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "history", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecommendHistoryItemEntity> items = new ArrayList<>();
 

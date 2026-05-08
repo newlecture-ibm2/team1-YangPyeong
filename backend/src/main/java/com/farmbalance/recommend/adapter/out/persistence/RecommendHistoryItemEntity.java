@@ -42,13 +42,14 @@ public class RecommendHistoryItemEntity {
     private String optimalTemp;
     private String sowingPeriod;
     private String harvestPeriod;
+    private String pests;
 
     @Builder
     public RecommendHistoryItemEntity(Long cropId, String cropName, String category, Integer rank, Integer score,
                                       String soilFitness, Integer soilFitnessPercent, Integer priceForecastPercent,
                                       Integer supplyStabilityPercent, String supplyStatus, Integer expectedRevenuePerKg,
                                       Integer expectedYield, String aiReason, Integer difficulty, Integer growthDays,
-                                      String optimalTemp, String sowingPeriod, String harvestPeriod) {
+                                      String optimalTemp, String sowingPeriod, String harvestPeriod, String pests) {
         this.cropId = cropId;
         this.cropName = cropName;
         this.category = category;
@@ -67,6 +68,7 @@ public class RecommendHistoryItemEntity {
         this.optimalTemp = optimalTemp;
         this.sowingPeriod = sowingPeriod;
         this.harvestPeriod = harvestPeriod;
+        this.pests = pests;
     }
 
     public void setHistory(RecommendHistoryEntity history) {

@@ -35,21 +35,16 @@ public class RecommendController {
             @AuthenticationPrincipal Long userId,
             @PathVariable Long farmId) {
 
-        // TODO: 운영 전 제거 — 개발 환경에서 인증 없이 테스트하기 위한 임시 코드
-        if (userId == null) {
-            userId = 9001L;
-        }
-
         log.info("AI 작물 추천 요청: userId={}, farmId={}", userId, farmId);
 
-        RecommendResult result = recommendCropUseCase.recommend(farmId);
+        RecommendResult result = recommendCropUseCase.recommend(userId, farmId);
         RecommendResponse response = RecommendResponse.from(result);
 
         return ApiResponse.ok(response);
     }
 
     /**
-     * 특정 농장의 전체 추천 이력 조회
+     * 특정 농장의 추천 이력 조회 (최근 20건)
      *
      * GET /api/recommend/{farmId}/history
      */
@@ -58,9 +53,9 @@ public class RecommendController {
             @AuthenticationPrincipal Long userId,
             @PathVariable Long farmId) {
             
-        log.info("AI 작물 추천 이력 전체 조회: userId={}, farmId={}", userId, farmId);
+        log.info("AI 작물 추천 이력 조회: userId={}, farmId={}", userId, farmId);
         
-        List<RecommendResult> history = getRecommendHistoryUseCase.getHistory(farmId);
+        List<RecommendResult> history = getRecommendHistoryUseCase.getHistory(userId, farmId);
         List<RecommendResponse> response = history.stream()
                 .map(RecommendResponse::from)
                 .collect(Collectors.toList());
@@ -80,7 +75,7 @@ public class RecommendController {
             
         log.info("AI 작물 추천 이력 단건 조회: userId={}, farmId={}", userId, farmId);
         
-        RecommendResult result = getRecommendHistoryUseCase.getLatestHistory(farmId);
+        RecommendResult result = getRecommendHistoryUseCase.getLatestHistory(userId, farmId);
         RecommendResponse response = RecommendResponse.from(result);
         
         return ApiResponse.ok(response);

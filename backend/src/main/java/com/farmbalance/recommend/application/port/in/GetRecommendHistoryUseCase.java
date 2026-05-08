@@ -4,6 +4,6 @@ import com.farmbalance.recommend.domain.RecommendResult;
 import java.util.List;
 
 public interface GetRecommendHistoryUseCase {
-    List<RecommendResult> getHistory(Long farmId);
-    RecommendResult getLatestHistory(Long farmId);
+    List<RecommendResult> getHistory(Long userId, Long farmId);
+    RecommendResult getLatestHistory(Long userId, Long farmId);
 }
