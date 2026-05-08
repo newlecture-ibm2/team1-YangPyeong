@@ -75,6 +75,8 @@ public enum ErrorCode {
     POST_NOT_FOUND("E-COMMUNITY-001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     COMMENT_NOT_FOUND("E-COMMUNITY-002", "댓글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     POST_NOT_AUTHOR("E-COMMUNITY-003", "게시글 작성자만 수정/삭제할 수 있습니다.", HttpStatus.FORBIDDEN),
+    REPORT_DUPLICATE("E-COMMUNITY-004", "이미 신고한 게시글/댓글입니다.", HttpStatus.CONFLICT),
+    REPORT_OWN_CONTENT("E-COMMUNITY-005", "자신의 게시글/댓글은 신고할 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     // ── 가게 ──
     STORE_NOT_FOUND("E-STORE-001", "가게 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

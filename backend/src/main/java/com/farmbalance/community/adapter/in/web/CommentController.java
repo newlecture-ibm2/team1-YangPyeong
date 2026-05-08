@@ -2,10 +2,8 @@ package com.farmbalance.community.adapter.in.web;
 
 import com.farmbalance.community.adapter.in.web.dto.CommentRequest;
 import com.farmbalance.community.adapter.in.web.dto.CommentResponse;
-import com.farmbalance.community.application.port.in.AcceptCommentUseCase;
-import com.farmbalance.community.application.port.in.CreateCommentUseCase;
-import com.farmbalance.community.application.port.in.DeleteCommentUseCase;
-import com.farmbalance.community.application.port.in.LoadCommentUseCase;
+import com.farmbalance.community.application.port.in.*;
+import com.farmbalance.community.adapter.in.web.dto.ReportRequest;
 import com.farmbalance.global.response.ApiResponse;
 import com.farmbalance.user.domain.Role;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +28,27 @@ public class CommentController {
     private final LoadCommentUseCase loadCommentUseCase;
     private final DeleteCommentUseCase deleteCommentUseCase;
     private final AcceptCommentUseCase acceptCommentUseCase;
+    private final UpdateCommentUseCase updateCommentUseCase;
+    private final ReportCommentUseCase reportCommentUseCase;
     private final UserJpaRepository userJpaRepository;
+
+    @Operation(summary = "댓글 수정")
+    @PutMapping("/comments/{commentId}")
+    public ApiResponse<CommentResponse> updateComment(
+            @PathVariable Long commentId,
+            @RequestBody CommentRequest request,
+            Authentication authentication) {
+        
+        Long userId = SecurityUtil.getCurrentUserId();
+        com.farmbalance.community.domain.model.Comment domainComment = 
+                updateCommentUseCase.updateComment(commentId, userId, request.getContent());
+        
+        CommentResponse response = CommentResponse.fromDomain(
+                domainComment,
+                resolveNickname(domainComment.getAuthorId())
+        );
+        return ApiResponse.ok(response);
+    }
 
     private String resolveNickname(Long authorId) {
         return userJpaRepository.findById(authorId)
@@ -87,6 +105,16 @@ public class CommentController {
     @PutMapping("/comments/{commentId}/accept")
     public ApiResponse<Void> acceptComment(@PathVariable Long commentId, Authentication authentication) {
         acceptCommentUseCase.acceptComment(commentId, getUserId(authentication));
+        return ApiResponse.ok(null);
+    }
+
+    @Operation(summary = "댓글 신고")
+    @PostMapping("/comments/{commentId}/report")
+    public ApiResponse<Void> reportComment(
+            @PathVariable Long commentId,
+            @RequestBody ReportRequest request,
+            Authentication authentication) {
+        reportCommentUseCase.reportComment(commentId, getUserId(authentication), request.getReason());
         return ApiResponse.ok(null);
     }
 }
