@@ -31,13 +31,13 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
 
     @Override
     public Farm saveFarm(Farm farm) {
-        // 1. PNU 중복 검증 (수정 시에는 본인 제외)
+        // 1. PNU 중복 검증 (수정 시에는 본인 제외, 삭제되지 않은 데이터 중에서)
         if (farm.getId() == null) {
-            if (farmJpaRepository.existsByPnuCode(farm.getPnuCode())) {
+            if (farmJpaRepository.existsByPnuCodeAndDeletedAtIsNull(farm.getPnuCode())) {
                 throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
             }
         } else {
-            farmJpaRepository.findByPnuCode(farm.getPnuCode())
+            farmJpaRepository.findByPnuCodeAndDeletedAtIsNull(farm.getPnuCode())
                     .ifPresent(existing -> {
                         if (!existing.getId().equals(farm.getId())) {
                             throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
@@ -69,7 +69,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                     .build();
         } else {
             // 정보 수정: 기존 Entity 조회 및 필드 업데이트
-            entity = farmJpaRepository.findById(farm.getId())
+            entity = farmJpaRepository.findByIdAndDeletedAtIsNull(farm.getId())
                     .orElseThrow(() -> new IllegalArgumentException("농장을 찾을 수 없습니다: " + farm.getId()));
             
             entity.update(
@@ -96,14 +96,14 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
 
     @Override
     public List<Farm> loadFarmsByUserId(Long userId) {
-        return farmJpaRepository.findAllByUserId(userId).stream()
+        return farmJpaRepository.findAllByUserIdAndDeletedAtIsNull(userId).stream()
                 .map(this::mapToDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public Optional<Farm> loadFarmById(Long farmId) {
-        return farmJpaRepository.findById(farmId)
+        return farmJpaRepository.findByIdAndDeletedAtIsNull(farmId)
                 .map(this::mapToDomain);
     }
 
@@ -150,14 +150,25 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
 
     @Override
     public List<Farm> loadAllFarms() {
-        return farmJpaRepository.findAll().stream()
+        return farmJpaRepository.findAll().stream() // 전체 관리자용은 일단 그대로 둠 (필요 시 수정 가능)
                 .map(this::mapToDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public void deleteFarm(Long farmId) {
-        farmJpaRepository.deleteById(farmId);
+        // 1. 해당 농장의 모든 재배 등록 정보 연쇄 Soft Delete
+        List<CultivationRegistrationJpaEntity> cultivations = cultivationRepository.findByFarmIdAndDeletedAtIsNull(farmId);
+        if (!cultivations.isEmpty()) {
+            cultivations.forEach(CultivationRegistrationJpaEntity::softDelete);
+            cultivationRepository.saveAll(cultivations);
+        }
+
+        // 2. 농장도 Soft Delete (물리 삭제 시 FK 제약 위반 발생하므로)
+        FarmJpaEntity farm = farmJpaRepository.findById(farmId)
+                .orElseThrow(() -> new IllegalArgumentException("농장을 찾을 수 없습니다: " + farmId));
+        farm.softDelete();
+        farmJpaRepository.save(farm);
     }
 
     @Override
