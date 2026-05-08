@@ -52,6 +52,12 @@ public class Farm {
         this.soilType = soilType;
         this.ph = ph;
         this.organicMatter = organicMatter;
+        
+        // 반려된 상태에서 수정하면 다시 심사 대기 상태로 변경
+        if (this.certificationStatus == CertificationStatus.REJECTED) {
+            this.certificationStatus = CertificationStatus.PENDING;
+            this.rejectReason = null;
+        }
     }
 
     /**

@@ -10,6 +10,7 @@ const MYPAGE_TABS = [
   { href: '/mypage/history', label: '주문내역', icon: '📦' },
   { href: '/mypage/seller', label: '판매 상품', icon: '🏷️' },
   { href: '/mypage/seller/orders', label: '판매 주문', icon: '📋' },
+  { href: '/mypage/farm-applications', label: '농장 등록 현황', icon: '📋' },
 ];
 
 interface MypageLayoutProps {

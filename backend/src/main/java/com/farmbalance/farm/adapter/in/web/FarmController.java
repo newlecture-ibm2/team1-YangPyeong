@@ -119,6 +119,7 @@ public class FarmController {
                         .area(farm.getArea())
                         .cropNames(farm.getCropNames())
                         .certificationStatus(farm.getCertificationStatus() != null ? farm.getCertificationStatus().name() : "PENDING")
+                        .rejectReason(farm.getRejectReason())
                         .build())
                 .collect(Collectors.toList());
 

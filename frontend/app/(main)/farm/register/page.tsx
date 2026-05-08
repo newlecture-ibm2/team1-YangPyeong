@@ -273,7 +273,7 @@ export default function FarmRegisterPage() {
       }
 
       toast.success('농장이 등록되었습니다. 관리자 승인 후 농업인 권한이 부여됩니다.');
-      router.push('/farm');
+      router.push('/mypage/farm-applications');
     } catch {
       toast.error('서버와 통신에 실패했습니다. 잠시 후 다시 시도해주세요.');
     }

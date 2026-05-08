@@ -22,6 +22,7 @@ export interface Farm {
   ph?: number;
   organicMatter?: number;
   certificationStatus: CertificationStatus;
+  rejectReason?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -34,6 +35,7 @@ export interface FarmListItem {
   area: number;
   cropNames: string[];
   certificationStatus: CertificationStatus;
+  rejectReason?: string;
 }
 
 /** 농장 상세 정보 응답 */
