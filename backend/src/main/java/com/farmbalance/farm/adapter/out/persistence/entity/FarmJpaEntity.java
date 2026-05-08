@@ -41,7 +41,7 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(name = "longitude")
     private Double longitude;
 
-    @Column(name = "area", nullable = false)
+    @Column(name = "area")
     private Double area;
 
     @Column(name = "soil_type", length = 50)
@@ -53,18 +53,20 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(name = "soil_organic_matter")
     private Double organicMatter;
 
-    @Column(name = "business_number", length = 12)
-    private String registrationNumber;
+    @Column(name = "documents", columnDefinition = "jsonb")
+    @Convert(converter = com.farmbalance.farm.adapter.out.persistence.converter.FarmDocumentsConverter.class)
+    private java.util.List<com.farmbalance.farm.domain.FarmDocument> documents = new java.util.ArrayList<>();
 
-    @Column(name = "land_cert_image_url", length = 500)
-    private String documentUrl;
-
-    @Column(name = "land_cert_verified")
-    private Boolean landCertVerified = false;
+    @Column(name = "document_data", columnDefinition = "jsonb")
+    @Convert(converter = com.farmbalance.farm.adapter.out.persistence.converter.FarmDocumentDataConverter.class)
+    private com.farmbalance.farm.domain.FarmDocumentData documentData;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "certification_status", nullable = false, length = 20)
     private com.farmbalance.farm.domain.CertificationStatus certificationStatus = com.farmbalance.farm.domain.CertificationStatus.PENDING;
+
+    @Column(name = "reject_reason", length = 500)
+    private String rejectReason;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
@@ -75,8 +77,10 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Builder
     public FarmJpaEntity(UserJpaEntity user, String name, String address, Double area,
                          String bjdCode, String pnuCode,
-                         Double latitude, Double longitude, String registrationNumber,
-                         String documentUrl, String soilType, Double ph, Double organicMatter,
+                         Double latitude, Double longitude, 
+                         java.util.List<com.farmbalance.farm.domain.FarmDocument> documents,
+                         com.farmbalance.farm.domain.FarmDocumentData documentData,
+                         String soilType, Double ph, Double organicMatter,
                          com.farmbalance.farm.domain.CertificationStatus certificationStatus,
                          FarmStatus status) {
         this.user = user;
@@ -87,8 +91,8 @@ public class FarmJpaEntity extends BaseTimeEntity {
         this.pnuCode = pnuCode;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.registrationNumber = registrationNumber;
-        this.documentUrl = documentUrl;
+        this.documents = documents != null ? documents : new java.util.ArrayList<>();
+        this.documentData = documentData;
         this.soilType = soilType;
         this.ph = ph;
         this.organicMatter = organicMatter;
@@ -98,7 +102,8 @@ public class FarmJpaEntity extends BaseTimeEntity {
 
     public void update(String name, String address, Double area,
                        String bjdCode, String pnuCode, Double latitude, Double longitude,
-                       String registrationNumber, String documentUrl,
+                       java.util.List<com.farmbalance.farm.domain.FarmDocument> documents,
+                       com.farmbalance.farm.domain.FarmDocumentData documentData,
                        String soilType, Double ph, Double organicMatter) {
         this.name = name;
         this.address = address;
@@ -107,10 +112,21 @@ public class FarmJpaEntity extends BaseTimeEntity {
         this.pnuCode = pnuCode;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.registrationNumber = registrationNumber;
-        this.documentUrl = documentUrl;
+        this.documents = documents != null ? documents : new java.util.ArrayList<>();
+        this.documentData = documentData;
         this.soilType = soilType;
         this.ph = ph;
         this.organicMatter = organicMatter;
+    }
+
+    /** 인증 상태 변경 */
+    public void updateCertificationStatus(com.farmbalance.farm.domain.CertificationStatus status) {
+        this.certificationStatus = status;
+    }
+
+    /** 인증 상태 변경 + 반려 사유 저장 */
+    public void updateCertificationStatusWithReason(com.farmbalance.farm.domain.CertificationStatus status, String reason) {
+        this.certificationStatus = status;
+        this.rejectReason = reason;
     }
 }

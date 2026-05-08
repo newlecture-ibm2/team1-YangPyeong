@@ -19,10 +19,10 @@ import java.util.UUID;
 
 /**
  * RAG 문서 관리 Controller (Driving Adapter)
- * API URL: /api/admins/rag/documents
+ * API URL: /api/admin/rag/documents
  */
 @RestController
-@RequestMapping("/api/admins/rag/documents")
+@RequestMapping("/api/admin/rag/documents")
 @RequiredArgsConstructor
 public class AdminRagDocumentController {
 

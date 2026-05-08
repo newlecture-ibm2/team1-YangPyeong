@@ -1,0 +1,149 @@
+/* ══════════════════════════════════════════════════════
+   Admin Orders Page
+   ══════════════════════════════════════════════════════ */
+
+.pageContainer {
+  padding: var(--space-xl) 0;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: var(--space-xl);
+  padding-bottom: var(--space-md);
+  border-bottom: 2px solid rgba(45, 106, 79, 0.1);
+}
+
+.pageTitle {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-xs);
+  letter-spacing: -0.02em;
+}
+
+.pageTitle em {
+  font-style: normal;
+  color: var(--color-primary);
+}
+
+.pageSub {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
+.controls {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.tableWrap {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  transition: box-shadow 0.3s ease;
+}
+
+.tableWrap:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 15px;
+}
+
+.table th {
+  text-align: left;
+  padding: 16px 20px;
+  background: rgba(45, 106, 79, 0.03);
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+  color: var(--color-text);
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.table tbody tr:last-child td { 
+  border-bottom: none; 
+}
+
+.table tbody tr:hover td { 
+  background: rgba(45, 106, 79, 0.02); 
+}
+
+.orderNumber { 
+  font-weight: 600; 
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.priceCell { 
+  font-weight: 700; 
+  color: var(--color-primary); 
+}
+
+.emptyState { 
+  text-align: center; 
+  padding: 60px 20px; 
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.emptyIcon {
+  font-size: 40px;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+.emptyText {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.emptySub {
+  font-size: 14px;
+}
+
+.itemsSummary {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}

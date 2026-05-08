@@ -4,7 +4,7 @@
 > **DB**: PostgreSQL 16
 > **ORM**: Spring Data JPA (Hibernate)
 > **네이밍**: snake_case (DB) ↔ camelCase (Java Entity)
-> **테이블 수**: 32개
+> **테이블 수**: 34개
 
 ---
 
@@ -54,18 +54,17 @@ erDiagram
         varchar address
         varchar bjd_code "법정동코드 10자리"
         varchar pnu_code "필지코드 19자리"
-        decimal latitude
-        decimal longitude
-        decimal area_size "㎡"
+        double latitude
+        double longitude
+        double area "㎡"
         varchar soil_type
         double soil_ph "토양 산도"
         double soil_organic_matter "토양 유기물"
-        varchar business_number "사업자 등록번호"
-        varchar land_cert_image_url "토지증명서 이미지"
-        boolean land_cert_verified
+        jsonb documents "제출 서류 목록 [{type, url, name}] (V26 통합)"
+        jsonb document_data "서류 추출 데이터 (V26 추가)"
         varchar certification_status "관리자 승인: PENDING | APPROVED | REJECTED"
-        varchar reject_reason "반려 사유"
-        varchar status "운영 상태: OPERATING | FALLOW | CLOSED"
+        varchar reject_reason "반려 사유 (V16)"
+        varchar status "운영 상태: OPERATING | FALLOW | CLOSED (V22)"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -98,13 +97,10 @@ erDiagram
         bigint id PK
         bigint farm_id FK
         bigint crop_id FK
-        varchar cultivation_type "SEED | SEEDLING | SAPLING"
-        decimal cultivation_area "재배 면적(㎡)"
-        decimal farmer_estimated_yield "농가 입력 예상 생산량"
-        decimal ai_predicted_yield "AI 예측 수확량"
+        double cultivation_area "재배 면적(㎡)"
+        double farmer_estimated_yield "농가 입력 예상 생산량"
         varchar yield_unit "g | kg | ton"
         varchar status "재배 상태: ACTIVE | COMPLETED"
-        boolean verified
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -205,6 +201,8 @@ erDiagram
         varchar receiver_phone "연락처"
         varchar shipping_address
         varchar shipping_memo "배송 메모"
+        varchar tracking_number "송장번호"
+        timestamp shipped_at "발송 시각"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -347,6 +345,22 @@ erDiagram
         timestamp created_at
     }
 
+    %% ===== 챗봇 도메인 (V2) =====
+    chat_rooms {
+        bigint id PK
+        bigint user_id FK
+        varchar title
+        timestamp created_at
+    }
+
+    chat_messages {
+        bigint id PK
+        bigint chat_room_id FK
+        varchar sender_role "USER | AI | SYSTEM"
+        text content
+        timestamp created_at
+    }
+
     %% ===== 관계 정의 =====
     users ||--o{ farms : "소유"
     users ||--o{ products : "판매"
@@ -377,6 +391,49 @@ erDiagram
 
     users ||--o{ guide_messages : "발송"
     users ||--o{ rag_documents : "등록"
+    users ||--o{ chat_rooms : "챗봇방"
+
+    chat_rooms ||--|{ chat_messages : "메시지"
+
+    %% ===== AI 추천 도메인 (V27) =====
+    recommend_history {
+        bigint id PK
+        bigint farm_id FK
+        varchar farm_name
+        varchar farm_address
+        double farm_area
+        double soil_ph
+        double organic_matter
+        varchar soil_type
+        timestamp generated_at
+    }
+
+    recommend_history_item {
+        bigint id PK
+        bigint history_id FK
+        bigint crop_id
+        varchar crop_name
+        varchar category
+        int rank
+        int score
+        varchar soil_fitness
+        int soil_fitness_percent
+        int price_forecast_percent
+        int supply_stability_percent
+        varchar supply_status
+        int expected_revenue_per_kg
+        int expected_yield
+        text ai_reason
+        int difficulty
+        int growth_days
+        varchar optimal_temp
+        varchar sowing_period
+        varchar harvest_period
+        text pests "쉼표 구분 병해충 (V28)"
+    }
+
+    farms ||--o{ recommend_history : "AI추천이력"
+    recommend_history ||--|{ recommend_history_item : "추천항목"
 
     %% ===== 농사로 Open API 데이터 (신규 V9) =====
 
@@ -658,21 +715,22 @@ erDiagram
 | address | VARCHAR(255) | NOT NULL | 농장 주소 |
 | bjd_code | VARCHAR(10) | | 법정동코드 (카카오 address.b_code) |
 | pnu_code | VARCHAR(19) | | 필지코드 (bjd_code + 본번부번 조합) |
-| latitude | DECIMAL(10,7) | | 위도 (카카오 address.y) |
-| longitude | DECIMAL(10,7) | | 경도 (카카오 address.x) |
-| area_size | DECIMAL(10,2) | NOT NULL | 면적 (㎡) |
+| latitude | DOUBLE PRECISION | | 위도 (카카오 address.y) |
+| longitude | DOUBLE PRECISION | | 경도 (카카오 address.x) |
+| area | DOUBLE PRECISION | NOT NULL | 면적 (㎡) |
 | soil_type | VARCHAR(50) | | 토양 유형 |
 | soil_ph | DOUBLE PRECISION | | 토양 산도 (pH) |
 | soil_organic_matter | DOUBLE PRECISION | | 토양 유기물 함량 |
-| business_number | VARCHAR(12) | | 사업자 등록번호 |
-| land_cert_image_url | VARCHAR(500) | | 토지증명서 이미지 URL |
-| land_cert_verified | BOOLEAN | DEFAULT false | 관리자 토지증명서 검증 완료 여부 |
+| documents | JSONB | DEFAULT '[]' | 제출 서류 목록 [{type, url, name}] (V26 통합) |
+| document_data | JSONB | | 추후 OCR/AI 추출 데이터 저장 (V26 추가) |
 | certification_status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | 관리자 승인: PENDING / APPROVED / REJECTED |
-| reject_reason | VARCHAR(500) | | 반려 사유 |
-| status | VARCHAR(20) | NOT NULL, DEFAULT 'OPERATING' | 운영 상태: OPERATING / FALLOW / CLOSED |
+| reject_reason | VARCHAR(500) | | 반려 사유 (V16 추가) |
+| status | VARCHAR(20) | NOT NULL, DEFAULT 'OPERATING' | 운영 상태: OPERATING / FALLOW / CLOSED (V22 추가) |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **레거시 컬럼 안내**: V1에서 생성된 `registration_number`, `document_url` 및 V7~V8에서 추가된 `land_cert_image_url`, `business_number`, `land_cert_verified`는 **V26 마이그레이션에서 모두 삭제**되고 `documents`, `document_data` JSONB 컬럼으로 통합되었습니다.
 
 ### 2.3 crop_categories (작물 카테고리)
 
@@ -707,16 +765,17 @@ erDiagram
 | id | BIGINT | PK, AUTO | 재배 등록 고유 ID |
 | farm_id | BIGINT | FK → farms(id), NOT NULL | 농장 |
 | crop_id | BIGINT | FK → crops(id), NOT NULL | 작물 |
-| cultivation_type | VARCHAR(20) | NOT NULL | SEED(씨앗) / SEEDLING(종자) / SAPLING(모종) |
-| cultivation_area | DECIMAL(10,2) | NOT NULL | 재배 면적 (㎡) |
-| farmer_estimated_yield | DECIMAL(12,2) | | 농가 입력 예상 생산량 |
-| ai_predicted_yield | DECIMAL(12,2) | | AI 예측 수확량 |
+| cultivation_area | DOUBLE PRECISION | NOT NULL | 재배 면적 (㎡) |
+| farmer_estimated_yield | DOUBLE PRECISION | | 농가 입력 예상 생산량 |
 | yield_unit | VARCHAR(10) | | 수확량 단위 (g / kg / ton) |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | 재배 상태: ACTIVE / COMPLETED |
-| verified | BOOLEAN | DEFAULT false | 인증 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
+
+> **V14 적용**: `seed_registrations` → `cultivation_registrations`로 테이블명 변경됨.
+> **V19 적용**: `cultivation_type`, `ai_predicted_yield`, `verified` 컬럼 삭제됨.
+> **V20 적용**: `cultivation_area`, `farmer_estimated_yield` 타입이 DECIMAL → DOUBLE PRECISION으로 변경됨.
 
 ### 2.5.1 harvest_records (수확 이력)
 
@@ -831,6 +890,8 @@ erDiagram
 | receiver_phone | VARCHAR(20) | | 받는 분 연락처 |
 | shipping_address | VARCHAR(255) | | 배송 주소 |
 | shipping_memo | VARCHAR(200) | | 배송 메모 |
+| tracking_number | VARCHAR(30) | | 송장번호 (발송 시 자동 생성) |
+| shipped_at | TIMESTAMP | | 발송 시각 (배송중 전환 시점) |
 | created_at | TIMESTAMP | NOT NULL | 주문일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
@@ -969,7 +1030,70 @@ erDiagram
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
-### 2.18 weather_data (기상청 ASOS 일별 관측 — 독립)
+### 2.18 chat_rooms (챗봇 대화방) — V2 추가
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 대화방 고유 ID |
+| user_id | BIGINT | FK → users(id), NOT NULL | 유저 |
+| title | VARCHAR(100) | NOT NULL | 대화방 제목 |
+| created_at | TIMESTAMP | NOT NULL | 생성일 |
+
+### 2.19 chat_messages (챗봇 메시지) — V2 추가
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 메시지 고유 ID |
+| chat_room_id | BIGINT | FK → chat_rooms(id) ON DELETE CASCADE, NOT NULL | 대화방 |
+| sender_role | VARCHAR(20) | NOT NULL | USER / AI / SYSTEM |
+| content | TEXT | NOT NULL | 메시지 내용 |
+| created_at | TIMESTAMP | NOT NULL | 생성일 |
+
+### 2.X recommend_history (AI 작물 추천 이력) — V27
+
+AI 작물 추천 엔진이 분석한 농장별 추천 이력의 메타 데이터를 저장합니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| farm_id | BIGINT | FK → farms(id), NOT NULL | 대상 농장 |
+| farm_name | VARCHAR(255) | | 추천 시점의 농장명 스냅샷 |
+| farm_address | VARCHAR(255) | | 추천 시점의 농장 주소 스냅샷 |
+| farm_area | DOUBLE PRECISION | | 농장 면적 |
+| soil_ph | DOUBLE PRECISION | | 토양 산도 |
+| organic_matter | DOUBLE PRECISION | | 토양 유기물 |
+| soil_type | VARCHAR(100) | | 토양 유형 |
+| generated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 추천 생성일시 |
+
+### 2.X recommend_history_item (추천된 작물 항목) — V27
+
+`recommend_history` 1건에 대한 개별 작물의 점수 및 상세 데이터를 저장합니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| history_id | BIGINT | FK → recommend_history(id) ON DELETE CASCADE | 추천 이력 참조 |
+| crop_id | BIGINT | | 작물 ID |
+| crop_name | VARCHAR(100) | | 작물명 |
+| category | VARCHAR(50) | | 카테고리 |
+| rank | INT | | 추천 순위 |
+| score | INT | | 가중치 종합 점수 |
+| soil_fitness | VARCHAR(50) | | 토양 적합도 등급 |
+| soil_fitness_percent | INT | | 토양 적합도 점수 |
+| price_forecast_percent | INT | | 시세 전망 점수 |
+| supply_stability_percent | INT | | 수급 안정성 점수 |
+| supply_status | VARCHAR(50) | | 수급 상태 |
+| expected_revenue_per_kg | INT | | 예상 수익(kg당) |
+| expected_yield | INT | | 예상 수확량 |
+| ai_reason | TEXT | | AI 분석 의견 |
+| difficulty | INT | | 재배 난이도 |
+| growth_days | INT | | 생육 일수 |
+| optimal_temp | VARCHAR(100) | | 생육 적온 |
+| sowing_period | VARCHAR(100) | | 파종 시기 |
+| harvest_period | VARCHAR(100) | | 수확 시기 |
+| pests | TEXT | | 병해충 정보 (쉼표 구분) (V28 추가) |
+
+### 2.20 weather_data (기상청 ASOS 일별 관측 — 독립)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
@@ -1408,5 +1532,8 @@ CREATE INDEX idx_rag_docs_content_type ON rag_documents(content_type);
 -- API 관리 (admin 전용)
 CREATE INDEX idx_api_sync_status ON api_sync_status(sync_status);
 CREATE INDEX idx_api_sync_active ON api_sync_status(is_active);
+
+-- AI 추천 이력
+CREATE INDEX idx_recommend_history_farm_generated ON recommend_history(farm_id, generated_at DESC);
 
 ```

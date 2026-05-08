@@ -2,6 +2,7 @@ import Badge from '@/components/common/Badge/Badge';
 import Modal from '@/components/common/Modal/Modal';
 import { ORDER_STATUS_MAP, type BuyerOrder } from '../../_lib/mypage.types';
 import { formatPrice, formatDate } from '../_lib/history.utils';
+import TrackingTimeline from './TrackingTimeline';
 import styles from '../page.module.css';
 
 interface OrderDetailModalProps {
@@ -71,7 +72,14 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
                   <dd>{order.shippingMemo}</dd>
                 </>
               )}
+              <dt>송장번호</dt>
+              <dd>{order.trackingNumber ? order.trackingNumber : '발송 대기 중'}</dd>
             </dl>
+
+            {/* 배송 타임라인 (송장번호가 있을 때만) */}
+            {order.trackingNumber && (
+              <TrackingTimeline trackingNumber={order.trackingNumber} />
+            )}
           </div>
         </div>
       )}

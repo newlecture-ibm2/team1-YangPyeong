@@ -1,6 +1,6 @@
 package com.farmbalance.admin.application.port.in;
 
-import com.farmbalance.admin.domain.AdminPolicyData;
+import com.farmbalance.admin.adapter.in.web.dto.AdminPolicyDataResponse;
 
 import java.util.List;
 
@@ -13,21 +13,21 @@ public interface ManagePolicyDataUseCase {
     /**
      * 전체 정책 데이터 목록 조회
      */
-    List<AdminPolicyData> getAllPolicies();
+    List<AdminPolicyDataResponse> getAllPolicies();
 
     /**
      * 정책 데이터 상세 조회
      */
-    AdminPolicyData getPolicy(Long id);
+    AdminPolicyDataResponse getPolicy(Long id);
 
     /**
      * 정책 데이터 등록
      * @return 생성된 정책 ID
      */
-    Long createPolicy(AdminPolicyData policyData);
+    Long createPolicy(String externalId, String data);
 
     /**
      * 정책 데이터 수정
      */
-    void updatePolicy(AdminPolicyData policyData);
+    void updatePolicy(Long id, String externalId, String data);
 }

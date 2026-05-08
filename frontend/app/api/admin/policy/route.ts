@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/constants'
 
-/** GET /api/admin/policy → 전체 정책 목록 프록시 */
+/** GET /api/admin/policy 전체 정책 목록 프록시*/
 export async function GET() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admins/policy`)
+    const res = await fetch(`${BACKEND_URL}/api/admin/policy`)
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
@@ -16,11 +16,11 @@ export async function GET() {
   }
 }
 
-/** POST /api/admin/policy → 정책 등록 프록시 */
+/** POST /api/admin/policy 정책 등록 프록시*/
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admins/policy`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/policy`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

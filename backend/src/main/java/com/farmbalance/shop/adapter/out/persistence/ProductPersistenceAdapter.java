@@ -151,4 +151,19 @@ public class ProductPersistenceAdapter implements ProductRepository {
             default -> Sort.by(Sort.Direction.DESC, "createdAt");
         };
     }
+
+    @Override
+    public List<Product> findAllProducts() {
+        return productJpaRepository.findByDeletedAtIsNullOrderByCreatedAtDesc().stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void updateStatus(Long id, String status) {
+        productJpaRepository.findById(id).ifPresent(entity -> {
+            entity.updateStatus(status);
+            productJpaRepository.save(entity);
+        });
+    }
 }

@@ -1,6 +1,7 @@
 package com.farmbalance.shop.adapter.out.persistence.repository;
 
 import com.farmbalance.shop.adapter.out.persistence.entity.OrderJpaEntity;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +15,8 @@ import java.util.Optional;
 public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, Long> {
 
     Optional<OrderJpaEntity> findByIdAndDeletedAtIsNull(Long id);
+
+    List<OrderJpaEntity> findAllByDeletedAtIsNullOrderByCreatedAtDesc();
 
     List<OrderJpaEntity> findByBuyerIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long buyerId);
 
@@ -35,4 +38,8 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, Long> 
     List<OrderJpaEntity> findByStatusAndUpdatedAtBefore(
             @Param("status") String status,
             @Param("before") java.time.LocalDateTime before);
+
+    /** 송장번호로 주문 조회 */
+    @EntityGraph(attributePaths = "items")
+    Optional<OrderJpaEntity> findByTrackingNumberAndDeletedAtIsNull(String trackingNumber);
 }

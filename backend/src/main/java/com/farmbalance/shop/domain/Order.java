@@ -17,6 +17,8 @@ public class Order {
     private String receiverPhone;
     private String shippingAddress;
     private String shippingMemo;
+    private String trackingNumber;
+    private LocalDateTime shippedAt;
     private List<OrderItem> items;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -26,8 +28,8 @@ public class Order {
 
     public Order(Long id, Long buyerId, String orderNumber, int totalAmount, OrderStatus status,
                  String receiverName, String receiverPhone, String shippingAddress,
-                 String shippingMemo, List<OrderItem> items, LocalDateTime createdAt,
-                 LocalDateTime updatedAt) {
+                 String shippingMemo, String trackingNumber, LocalDateTime shippedAt,
+                 List<OrderItem> items, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.buyerId = buyerId;
         this.orderNumber = orderNumber;
@@ -37,6 +39,8 @@ public class Order {
         this.receiverPhone = receiverPhone;
         this.shippingAddress = shippingAddress;
         this.shippingMemo = shippingMemo;
+        this.trackingNumber = trackingNumber;
+        this.shippedAt = shippedAt;
         this.items = items;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -53,18 +57,46 @@ public class Order {
     public String getReceiverPhone() { return receiverPhone; }
     public String getShippingAddress() { return shippingAddress; }
     public String getShippingMemo() { return shippingMemo; }
+    public String getTrackingNumber() { return trackingNumber; }
+    public LocalDateTime getShippedAt() { return shippedAt; }
     public List<OrderItem> getItems() { return items; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
     // ── 비즈니스 로직 ──
 
-    /** 주문 상태 전진 (ORDERED → ACCEPTED → SHIPPED → COMPLETED) */
+    /** 주문 상태 전진 (ORDERED → ACCEPTED) — 판매자 접수 */
+    public void accept() {
+        if (this.status != OrderStatus.ORDERED) {
+            throw new IllegalStateException("접수 가능한 상태가 아닙니다: " + this.status);
+        }
+        this.status = OrderStatus.ACCEPTED;
+    }
+
+    /** 발송 처리 (ACCEPTED → SHIPPED) — 판매자 발송 완료 */
+    public void ship(String trackingNumber) {
+        if (this.status != OrderStatus.ACCEPTED) {
+            throw new IllegalStateException("발송 가능한 상태가 아닙니다: " + this.status);
+        }
+        this.status = OrderStatus.SHIPPED;
+        this.trackingNumber = trackingNumber;
+        this.shippedAt = LocalDateTime.now();
+    }
+
+    /** 배송 완료 (SHIPPED → COMPLETED) — 시스템 자동 처리 */
+    public void complete() {
+        if (this.status != OrderStatus.SHIPPED) {
+            throw new IllegalStateException("완료 가능한 상태가 아닙니다: " + this.status);
+        }
+        this.status = OrderStatus.COMPLETED;
+    }
+
+    /** 주문 상태 전진 (기존 호환용 — advanceOrderStatus API에서 사용) */
     public void advanceStatus() {
         switch (this.status) {
-            case ORDERED -> this.status = OrderStatus.ACCEPTED;
-            case ACCEPTED -> this.status = OrderStatus.SHIPPED;
-            case SHIPPED -> this.status = OrderStatus.COMPLETED;
+            case ORDERED -> accept();
+            case ACCEPTED -> throw new IllegalStateException("발송 처리는 ship()을 사용하세요.");
+            case SHIPPED -> complete();
             default -> throw new IllegalStateException("현재 상태에서 전진할 수 없습니다: " + this.status);
         }
     }
@@ -75,5 +107,10 @@ public class Order {
             throw new IllegalStateException("배송 시작 후에는 취소할 수 없습니다.");
         }
         this.status = OrderStatus.CANCELLED;
+    }
+
+    /** 관리자 등 강제 상태 변경 */
+    public void changeStatus(OrderStatus newStatus) {
+        this.status = newStatus;
     }
 }

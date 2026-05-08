@@ -108,6 +108,18 @@ public class ProductController {
         return ApiResponse.ok(null);
     }
 
+    /** 판매자 상품 상태 변경 */
+    @PatchMapping("/seller/{id}/status")
+    public ApiResponse<ProductResponse> changeProductStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        Long sellerId = SecurityUtil.getCurrentUserId();
+        String newStatus = request.get("status");
+        if (newStatus == null || newStatus.isBlank()) {
+            return ApiResponse.fail("E-GLOBAL-400", "상태값이 필요합니다.");
+        }
+        Product product = manageProductUseCase.changeProductStatus(sellerId, id, newStatus);
+        return ApiResponse.ok(ProductResponse.from(product));
+    }
+
     /** 판매자의 내 상품 목록 */
     @GetMapping("/seller")
     public ApiResponse<List<ProductResponse>> getSellerProducts() {

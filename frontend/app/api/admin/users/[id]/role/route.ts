@@ -10,7 +10,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admins/users/${id}/role`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/users/${id}/role`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

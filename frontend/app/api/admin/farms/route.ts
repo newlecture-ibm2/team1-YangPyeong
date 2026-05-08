@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/constants'
 
-/** GET /api/admin/farms?status=PENDING → 백엔드 프록시 */
+/** GET /api/admin/farms?status=PENDING 백엔드 프록시 */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') || 'PENDING'
-    const res = await fetch(`${BACKEND_URL}/api/admins/approvals?status=${status}`)
+    const res = await fetch(`${BACKEND_URL}/api/admin/farms?status=${status}`)
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
