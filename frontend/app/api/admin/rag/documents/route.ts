@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/constants'
 
-/** GET /api/admin/rag/documents ??백엔???�록??*/
+/** GET /api/admin/rag/documents ??諛깆뿏???꾨줉??*/
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -11,20 +11,20 @@ export async function GET(request: NextRequest) {
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
-    console.error('[BFF] GET /admin/rag/documents ?�패:', error)
+    console.error('[BFF] GET /admin/rag/documents ?ㅽ뙣:', error)
     return NextResponse.json(
-      { success: false, data: null, error: { code: 'E-BFF-RAG-005', message: '백엔???�결 ?�패' } },
+      { success: false, data: null, error: { code: 'E-BFF-RAG-005', message: '諛깆뿏???곌껐 ?ㅽ뙣' } },
       { status: 502 }
     )
   }
 }
 
-/** POST /api/admin/rag/documents ??백엔???�록??(JSON ?�는 multipart/form-data) */
+/** POST /api/admin/rag/documents ??諛깆뿏???꾨줉??(JSON ?먮뒗 multipart/form-data) */
 export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get('content-type') || ''
 
-    // ?�일 ?�로??(multipart/form-data)
+    // ?뚯씪 ?낅줈??(multipart/form-data)
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData()
       const res = await fetch(`${BACKEND_URL}/api/admin/rag/documents/upload`, {
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(data, { status: res.status })
     }
 
-    // ?�스??문서 (JSON)
+    // ?띿뒪??臾몄꽌 (JSON)
     const body = await request.json()
     const res = await fetch(`${BACKEND_URL}/api/admin/rag/documents`, {
       method: 'POST',
@@ -45,9 +45,9 @@ export async function POST(request: NextRequest) {
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
-    console.error('[BFF] POST /admin/rag/documents ?�패:', error)
+    console.error('[BFF] POST /admin/rag/documents ?ㅽ뙣:', error)
     return NextResponse.json(
-      { success: false, data: null, error: { code: 'E-BFF-RAG-006', message: '백엔???�결 ?�패' } },
+      { success: false, data: null, error: { code: 'E-BFF-RAG-006', message: '諛깆뿏???곌껐 ?ㅽ뙣' } },
       { status: 502 }
     )
   }

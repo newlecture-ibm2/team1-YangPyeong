@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/constants'
 
-/** GET /api/admin/crops ??백엔???�록??*/
+/** GET /api/admin/crops ??諛깆뿏???꾨줉??*/
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -10,15 +10,15 @@ export async function GET(request: NextRequest) {
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
-    console.error('[BFF] GET /admin/crops ?�패:', error)
+    console.error('[BFF] GET /admin/crops ?ㅽ뙣:', error)
     return NextResponse.json(
-      { success: false, data: null, error: { code: 'E-BFF-CROP-001', message: '백엔???�결 ?�패' } },
+      { success: false, data: null, error: { code: 'E-BFF-CROP-001', message: '諛깆뿏???곌껐 ?ㅽ뙣' } },
       { status: 502 }
     )
   }
 }
 
-/** POST /api/admin/crops ???�물 ?�록 */
+/** POST /api/admin/crops ???묐Ъ ?깅줉 */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
-    console.error('[BFF] POST /admin/crops ?�패:', error)
+    console.error('[BFF] POST /admin/crops ?ㅽ뙣:', error)
     return NextResponse.json(
-      { success: false, data: null, error: { code: 'E-BFF-CROP-002', message: '백엔???�결 ?�패' } },
+      { success: false, data: null, error: { code: 'E-BFF-CROP-002', message: '諛깆뿏???곌껐 ?ㅽ뙣' } },
       { status: 502 }
     )
   }
