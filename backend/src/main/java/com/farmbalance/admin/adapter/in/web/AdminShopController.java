@@ -22,11 +22,31 @@ public class AdminShopController {
 
     /**
      * 전체 상품 목록 조회 (관리자용)
-     * GET /api/admin/shop
+     * GET /api/admin/shop?keyword=&category=ALL&status=ALL&sort=createdAt&page=0&size=20
      */
     @GetMapping
-    public ApiResponse<List<AdminShopProductResponse>> getAllProducts() {
-        return ApiResponse.ok(manageShopUseCase.getAllProducts());
+    public ApiResponse<Map<String, Object>> getProducts(
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "ALL") String category,
+            @RequestParam(required = false, defaultValue = "ALL") String status,
+            @RequestParam(required = false, defaultValue = "createdAt") String sort,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "20") int size) {
+
+        List<AdminShopProductResponse> products = manageShopUseCase.getProducts(keyword, category, status, sort, page, size);
+        long totalCount = manageShopUseCase.countProducts(keyword, category, status);
+        int totalPages = (int) Math.ceil((double) totalCount / size);
+
+        Map<String, Object> result = Map.of(
+                "products", products,
+                "meta", Map.of(
+                        "page", page,
+                        "size", size,
+                        "totalCount", totalCount,
+                        "totalPages", totalPages
+                )
+        );
+        return ApiResponse.ok(result);
     }
 
     /**
@@ -39,6 +59,16 @@ public class AdminShopController {
                                                   @RequestBody Map<String, String> body) {
         String status = body.get("status");
         manageShopUseCase.updateProductStatus(productId, status);
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 상품 삭제 (Soft Delete)
+     * DELETE /api/admin/shop/{productId}
+     */
+    @DeleteMapping("/{productId}")
+    public ApiResponse<Void> deleteProduct(@PathVariable Long productId) {
+        manageShopUseCase.deleteProduct(productId);
         return ApiResponse.ok(null);
     }
 }
