@@ -88,6 +88,8 @@ external:
 # ── AI Server ──
 ai:
   server-url: ${AI_SERVER_URL:http://ai-server:8000}
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
 
 # ── Server ──
 server:

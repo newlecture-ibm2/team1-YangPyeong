@@ -1034,7 +1034,7 @@ erDiagram
 | content | TEXT | NOT NULL | 메시지 내용 |
 | created_at | TIMESTAMP | NOT NULL | 생성일 |
 
-### 2.X recommend_history (AI 작물 추천 이력) — V27
+### 2.20 recommend_history (AI 작물 추천 이력) — V27
 
 AI 작물 추천 엔진이 분석한 농장별 추천 이력의 메타 데이터를 저장합니다.
 
@@ -1050,7 +1050,7 @@ AI 작물 추천 엔진이 분석한 농장별 추천 이력의 메타 데이터
 | soil_type | VARCHAR(100) | | 토양 유형 |
 | generated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 추천 생성일시 |
 
-### 2.X recommend_history_item (추천된 작물 항목) — V27
+### 2.21 recommend_history_item (추천된 작물 항목) — V27
 
 `recommend_history` 1건에 대한 개별 작물의 점수 및 상세 데이터를 저장합니다.
 
@@ -1077,6 +1077,9 @@ AI 작물 추천 엔진이 분석한 농장별 추천 이력의 메타 데이터
 | sowing_period | VARCHAR(100) | | 파종 시기 |
 | harvest_period | VARCHAR(100) | | 수확 시기 |
 | pests | TEXT | | 병해충 정보 (쉼표 구분) (V28 추가) |
+
+> **soil_fitness (토양 적합도 등급) 기준**: 90% 이상(`HIGH_SUIT`), 75% 이상(`SUIT`), 55% 이상(`POSSIBLE`), 35% 이상(`LOW_SUIT`), 그 외(`NONE`)
+> **supply_status (수급 상태) 및 안정성 점수**: `BALANCED`(안정, 95점), `SHORT_CAUTION`(부족주의, 75점), `EXCESS_CAUTION`(과잉주의, 65점), `SHORT_WARN`(부족, 50점), `EXCESS_WARN`(과잉, 40점)
 
 ### 2.20 weather_data (기상청 ASOS 일별 관측 — 독립)
 
