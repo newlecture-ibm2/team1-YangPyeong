@@ -33,7 +33,7 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
 
     @Override
     public String generateReason(String farmDetails, String cropName, String cropCategory) {
-        String url = aiServerUrl + "/api/v1/recommend/reason";
+        String url = aiServerUrl + "/api/recommend/reason";
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -58,7 +58,7 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
 
     @Override
     public String diagnoseImage(MultipartFile image) {
-        String url = aiServerUrl + "/api/v1/recommend/diagnose";
+        String url = aiServerUrl + "/api/recommend/diagnose";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);

@@ -4,7 +4,7 @@ from fastapi import APIRouter, File, UploadFile, HTTPException
 from app.models.recommend import ReasonRequest, ReasonResponse, DiagnoseResponse
 from app.services import recommend_service
 
-router = APIRouter(prefix="/api/v1/recommend", tags=["Recommend"])
+router = APIRouter(prefix="/api/recommend", tags=["Recommend"])
 logger = logging.getLogger(__name__)
 
 @router.post("/reason", response_model=ReasonResponse)
