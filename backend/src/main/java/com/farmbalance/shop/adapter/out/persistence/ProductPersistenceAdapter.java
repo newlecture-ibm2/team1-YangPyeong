@@ -160,6 +160,21 @@ public class ProductPersistenceAdapter implements ProductRepository {
     }
 
     @Override
+    public List<Product> findAdminProducts(String keyword, String category, String status, String sort, int page, int size) {
+        Sort jpaSort = resolveSort(sort);
+        Pageable pageable = PageRequest.of(page, size, jpaSort);
+        return productJpaRepository.findAdminProducts(keyword, category, status, pageable)
+                .stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public long countAdminProducts(String keyword, String category, String status) {
+        return productJpaRepository.countAdminProducts(keyword, category, status);
+    }
+
+    @Override
     public void updateStatus(Long id, String status) {
         productJpaRepository.findById(id).ifPresent(entity -> {
             entity.updateStatus(status);

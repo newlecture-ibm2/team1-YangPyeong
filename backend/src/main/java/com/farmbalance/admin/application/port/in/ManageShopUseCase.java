@@ -11,9 +11,14 @@ import java.util.List;
 public interface ManageShopUseCase {
 
     /**
-     * 전체 상품 목록 조회 (관리자용)
+     * 상품 목록 조회 (검색 + 필터 + 정렬 + 페이징)
      */
-    List<AdminShopProductResponse> getAllProducts();
+    List<AdminShopProductResponse> getProducts(String keyword, String category, String status, String sort, int page, int size);
+
+    /**
+     * 상품 목록 총 개수 (검색 + 필터)
+     */
+    long countProducts(String keyword, String category, String status);
 
     /**
      * 상품 상태 변경 (ACTIVE / INACTIVE / REJECTED 등)

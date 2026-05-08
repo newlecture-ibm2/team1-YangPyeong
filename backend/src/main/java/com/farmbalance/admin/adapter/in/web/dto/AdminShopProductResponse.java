@@ -16,7 +16,9 @@ public class AdminShopProductResponse {
 
     private Long id;
     private Long sellerId;
+    private String sellerName;
     private Long categoryId;
+    private String categoryName;
     private String name;
     private int price;
     private int stock;
@@ -28,11 +30,13 @@ public class AdminShopProductResponse {
     /**
      * Shop Product 도메인 → Admin Response DTO 변환
      */
-    public static AdminShopProductResponse from(Product product) {
+    public static AdminShopProductResponse from(Product product, String sellerName) {
         return AdminShopProductResponse.builder()
                 .id(product.getId())
                 .sellerId(product.getSellerId())
+                .sellerName(sellerName)
                 .categoryId(product.getCategoryId())
+                .categoryName(product.getCategoryName())
                 .name(product.getName())
                 .price(product.getPrice())
                 .stock(product.getStock())

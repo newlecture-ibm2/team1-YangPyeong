@@ -31,6 +31,12 @@ public interface ProductRepository {
     /** 전체 상품 목록 조회 — 관리자용 (삭제되지 않은 전체, 필터 없음) */
     List<Product> findAllProducts();
 
+    /** 관리자용 상품 목록 조회 (필터, 정렬, 페이징) */
+    List<Product> findAdminProducts(String keyword, String category, String status, String sort, int page, int size);
+
+    /** 관리자용 상품 총 개수 (필터 적용) */
+    long countAdminProducts(String keyword, String category, String status);
+
     /** 상품 상태 변경 — 관리자용 (ACTIVE / INACTIVE / REJECTED 등) */
     void updateStatus(Long id, String status);
 }
