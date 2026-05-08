@@ -8,7 +8,7 @@ export async function DELETE(
 ) {
   try {
     const { postId } = await params
-    const res = await fetch(`${BACKEND_URL}/api/admins/community/${postId}`, { method: 'DELETE' })
+    const res = await fetch(`${BACKEND_URL}/api/admin/community/${postId}`, { method: 'DELETE' })
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {

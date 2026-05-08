@@ -31,9 +31,7 @@ public class FarmUpdateRequest {
     
     private String subNo;
     
-    private String registrationNumber;
-    
-    private String documentUrl;
+    private List<FarmDocumentDto> documents;
 
     private String soilType;
     private Double ph;

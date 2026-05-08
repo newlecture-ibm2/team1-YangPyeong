@@ -60,8 +60,8 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                     .pnuCode(farm.getPnuCode())
                     .latitude(farm.getLatitude())
                     .longitude(farm.getLongitude())
-                    .registrationNumber(farm.getRegistrationNumber())
-                    .documentUrl(farm.getDocumentUrl())
+                    .documents(farm.getDocuments())
+                    .documentData(farm.getDocumentData())
                     .soilType(farm.getSoilType())
                     .ph(farm.getPh())
                     .organicMatter(farm.getOrganicMatter())
@@ -80,8 +80,8 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                     farm.getPnuCode(),
                     farm.getLatitude(),
                     farm.getLongitude(),
-                    farm.getRegistrationNumber(),
-                    farm.getDocumentUrl(),
+                    farm.getDocuments(),
+                    farm.getDocumentData(),
                     farm.getSoilType(),
                     farm.getPh(),
                     farm.getOrganicMatter()
@@ -136,12 +136,14 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .pnuCode(entity.getPnuCode())
                 .latitude(entity.getLatitude())
                 .longitude(entity.getLongitude())
-                .registrationNumber(entity.getRegistrationNumber())
-                .documentUrl(entity.getDocumentUrl())
+                .documents(entity.getDocuments())
+                .documentData(entity.getDocumentData())
                 .soilType(entity.getSoilType())
                 .ph(entity.getPh())
                 .organicMatter(entity.getOrganicMatter())
                 .certificationStatus(entity.getCertificationStatus() != null ? entity.getCertificationStatus() : com.farmbalance.farm.domain.CertificationStatus.PENDING)
+                .rejectReason(entity.getRejectReason())
+                .createdAt(entity.getCreatedAt())
                 .status(entity.getStatus())
                 .build();
     }
@@ -294,6 +296,35 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 
         return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
     }
+
+    @Override
+    public List<Farm> loadFarmsByStatus(String status) {
+        com.farmbalance.farm.domain.CertificationStatus certStatus =
+                com.farmbalance.farm.domain.CertificationStatus.valueOf(status);
+        return farmJpaRepository.findByCertificationStatusOrderByCreatedAtDesc(certStatus).stream()
+                .map(this::mapToDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void updateCertificationStatus(Long id, String status) {
+        farmJpaRepository.findById(id).ifPresent(entity -> {
+            entity.updateCertificationStatus(
+                    com.farmbalance.farm.domain.CertificationStatus.valueOf(status));
+            farmJpaRepository.save(entity);
+        });
+    }
+
+    @Override
+    public void updateCertificationStatusWithReason(Long id, String status, String reason) {
+        farmJpaRepository.findById(id).ifPresent(entity -> {
+            entity.updateCertificationStatusWithReason(
+                    com.farmbalance.farm.domain.CertificationStatus.valueOf(status), reason);
+            farmJpaRepository.save(entity);
+        });
+    }
+
+
 
     // ── 면적 검증 관련 메서드 ──
 

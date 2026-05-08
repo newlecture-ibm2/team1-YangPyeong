@@ -8,10 +8,10 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * ADM-011 관리자 대시보드 Controller (Driving Adapter)
- * API URL: /api/admins/dashboard
+ * API URL: /api/admin/dashboard
  */
 @RestController
-@RequestMapping("/api/admins/dashboard")
+@RequestMapping("/api/admin/dashboard")
 @RequiredArgsConstructor
 public class AdminDashboardController {
 
@@ -19,7 +19,7 @@ public class AdminDashboardController {
 
     /**
      * 관리자 대시보드 KPI 조회
-     * GET /api/admins/dashboard
+     * GET /api/admin/dashboard
      */
     @GetMapping
     public ApiResponse<AdminDashboard> getDashboard() {

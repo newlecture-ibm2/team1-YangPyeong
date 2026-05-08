@@ -8,7 +8,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const res = await fetch(`${BACKEND_URL}/api/admins/api-sync/${id}/trigger`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/api-sync/${id}/trigger`, {
       method: 'POST',
     })
     const data = await res.json()

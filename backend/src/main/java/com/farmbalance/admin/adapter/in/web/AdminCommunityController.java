@@ -11,10 +11,10 @@ import java.util.Map;
 
 /**
  * ADM-008 커뮤니티 관리 Controller (Driving Adapter)
- * API URL: /api/admins/community
+ * API URL: /api/admin/community
  */
 @RestController
-@RequestMapping("/api/admins/community")
+@RequestMapping("/api/admin/community")
 @RequiredArgsConstructor
 public class AdminCommunityController {
 
@@ -22,7 +22,7 @@ public class AdminCommunityController {
 
     /**
      * 전체 게시글 목록 조회 (관리자용)
-     * GET /api/admins/community
+     * GET /api/admin/community
      */
     @GetMapping
     public ApiResponse<List<AdminPost>> getAllPosts() {
@@ -31,7 +31,7 @@ public class AdminCommunityController {
 
     /**
      * 게시글 삭제 (soft delete)
-     * DELETE /api/admins/community/{postId}
+     * DELETE /api/admin/community/{postId}
      */
     @DeleteMapping("/{postId}")
     public ApiResponse<Void> deletePost(@PathVariable Long postId) {
@@ -41,7 +41,7 @@ public class AdminCommunityController {
 
     /**
      * 게시글 공지 설정/해제
-     * PATCH /api/admins/community/{postId}/notice
+     * PATCH /api/admin/community/{postId}/notice
      * Body: { "isNotice": true }
      */
     @PatchMapping("/{postId}/notice")

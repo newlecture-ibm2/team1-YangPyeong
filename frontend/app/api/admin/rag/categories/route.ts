@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/constants'
 
-/** GET /api/admin/rag/categories → 백엔드 프록시 */
+/** GET /api/admin/rag/categories 백엔드 프록시 */
 export async function GET() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admins/rag/categories`)
+    const res = await fetch(`${BACKEND_URL}/api/admin/rag/categories`)
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
@@ -16,11 +16,11 @@ export async function GET() {
   }
 }
 
-/** POST /api/admin/rag/categories → 백엔드 프록시 */
+/** POST /api/admin/rag/categories 백엔드 프록시 */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admins/rag/categories`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/rag/categories`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

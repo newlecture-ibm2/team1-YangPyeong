@@ -11,10 +11,10 @@ import java.util.Map;
 
 /**
  * ADM-004 API 동기화 상태 관리 Controller (Driving Adapter)
- * API URL: /api/admins/api-sync
+ * API URL: /api/admin/api-sync
  */
 @RestController
-@RequestMapping("/api/admins/api-sync")
+@RequestMapping("/api/admin/api-sync")
 @RequiredArgsConstructor
 public class AdminApiSyncController {
 

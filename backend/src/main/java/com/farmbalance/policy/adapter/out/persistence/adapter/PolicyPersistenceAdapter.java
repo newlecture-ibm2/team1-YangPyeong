@@ -60,6 +60,19 @@ public class PolicyPersistenceAdapter implements PolicyQueryPort, PolicySavePort
                 .map(this::toDomain);
     }
 
+    @Override
+    public List<PolicyData> findAll() {
+        return repository.findAll().stream()
+                .filter(entity -> entity.getDeletedAt() == null)
+                .sorted((a, b) -> {
+                    if (b.getCreatedAt() == null) return -1;
+                    if (a.getCreatedAt() == null) return 1;
+                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                })
+                .map(this::toDomain)
+                .toList();
+    }
+
     // ── PolicySavePort ──
 
     @Override
