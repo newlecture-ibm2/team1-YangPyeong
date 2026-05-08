@@ -60,8 +60,7 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                 .pnuCode(pnuCode)
                 .latitude(command.getLatitude())
                 .longitude(command.getLongitude())
-                .registrationNumber(command.getRegistrationNumber())
-                .documentUrl(command.getDocumentUrl())
+                .documents(command.getDocuments())
                 .soilType(command.getSoilType())
                 .ph(command.getPh())
                 .organicMatter(command.getOrganicMatter())
@@ -155,8 +154,8 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                 newPnuCode,
                 newLat,
                 newLng,
-                command.getRegistrationNumber(),
-                command.getDocumentUrl(),
+                command.getDocuments(),
+                null, // documentData는 OCR 파싱 후 서버에서 채움
                 command.getSoilType(),
                 command.getPh(),
                 command.getOrganicMatter()

@@ -26,4 +26,9 @@ public interface PolicyQueryPort {
      * ID로 정책 단건을 조회합니다.
      */
     Optional<PolicyData> findById(Long id);
+
+    /**
+     * 삭제되지 않은 전체 정책 목록을 조회합니다 (최신순).
+     */
+    List<PolicyData> findAll();
 }

@@ -15,11 +15,11 @@ import java.util.List;
 
 /**
  * ADM-003 작물 마스터 관리 Controller (Driving Adapter)
- * API URL: /api/admins/crops
+ * API URL: /api/admin/crops
  * 작물 CRUD + 카테고리 CRUD
  */
 @RestController
-@RequestMapping("/api/admins/crops")
+@RequestMapping("/api/admin/crops")
 @RequiredArgsConstructor
 public class AdminCropController {
 

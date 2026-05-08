@@ -76,8 +76,8 @@ public class FarmController {
                 .isMountain(request.isMountain())
                 .mainNo(request.getMainNo())
                 .subNo(request.getSubNo())
-                .registrationNumber(request.getRegistrationNumber())
-                .documentUrl(request.getDocumentUrl())
+                .documents(request.getDocuments() != null ? 
+                        request.getDocuments().stream().map(com.farmbalance.farm.adapter.in.web.dto.FarmDocumentDto::toDomain).collect(java.util.stream.Collectors.toList()) : null)
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
                 .soilType(request.getSoilType())
@@ -140,8 +140,8 @@ public class FarmController {
                 .cropIds(farm.getCropIds())
                 .pnuCode(farm.getPnuCode())
                 .bjdCode(farm.getBjdCode())
-                .registrationNumber(farm.getRegistrationNumber())
-                .documentUrl(farm.getDocumentUrl())
+                .documents(farm.getDocuments() != null ?
+                        farm.getDocuments().stream().map(com.farmbalance.farm.adapter.in.web.dto.FarmDocumentDto::from).collect(java.util.stream.Collectors.toList()) : null)
                 .soilType(farm.getSoilType())
                 .ph(farm.getPh())
                 .organicMatter(farm.getOrganicMatter())
@@ -167,8 +167,8 @@ public class FarmController {
                 .isMountain(request.isMountain())
                 .mainNo(request.getMainNo())
                 .subNo(request.getSubNo())
-                .registrationNumber(request.getRegistrationNumber())
-                .documentUrl(request.getDocumentUrl())
+                .documents(request.getDocuments() != null ? 
+                        request.getDocuments().stream().map(com.farmbalance.farm.adapter.in.web.dto.FarmDocumentDto::toDomain).collect(java.util.stream.Collectors.toList()) : null)
                 .soilType(request.getSoilType())
                 .ph(request.getPh())
                 .organicMatter(request.getOrganicMatter())
@@ -185,8 +185,8 @@ public class FarmController {
                 .cropIds(updatedFarm.getCropIds())
                 .pnuCode(updatedFarm.getPnuCode())
                 .bjdCode(updatedFarm.getBjdCode())
-                .registrationNumber(updatedFarm.getRegistrationNumber())
-                .documentUrl(updatedFarm.getDocumentUrl())
+                .documents(updatedFarm.getDocuments() != null ?
+                        updatedFarm.getDocuments().stream().map(com.farmbalance.farm.adapter.in.web.dto.FarmDocumentDto::from).collect(java.util.stream.Collectors.toList()) : null)
                 .soilType(updatedFarm.getSoilType())
                 .ph(updatedFarm.getPh())
                 .organicMatter(updatedFarm.getOrganicMatter())

@@ -11,7 +11,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const { farmId } = await params
     const body = await request.json()
 
-    const res = await fetch(`${BACKEND_URL}/api/admins/approvals/${farmId}/reject`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/farms/${farmId}/reject`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
