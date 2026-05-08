@@ -382,6 +382,46 @@ erDiagram
 
     chat_rooms ||--|{ chat_messages : "메시지"
 
+    %% ===== AI 추천 도메인 (V27) =====
+    recommend_history {
+        bigint id PK
+        bigint farm_id FK
+        varchar farm_name
+        varchar farm_address
+        double farm_area
+        double soil_ph
+        double organic_matter
+        varchar soil_type
+        timestamp generated_at
+    }
+
+    recommend_history_item {
+        bigint id PK
+        bigint history_id FK
+        bigint crop_id
+        varchar crop_name
+        varchar category
+        int rank
+        int score
+        varchar soil_fitness
+        int soil_fitness_percent
+        int price_forecast_percent
+        int supply_stability_percent
+        varchar supply_status
+        int expected_revenue_per_kg
+        int expected_yield
+        text ai_reason
+        int difficulty
+        int growth_days
+        varchar optimal_temp
+        varchar sowing_period
+        varchar harvest_period
+        text pests "쉼표 구분 병해충 (V28)"
+    }
+
+    farms ||--o{ recommend_history : "AI추천이력"
+    recommend_history ||--|{ recommend_history_item : "추천항목"
+
     %% ===== 농사로 Open API 데이터 (신규 V9) =====
 
     nongsaro_varieties {
@@ -994,6 +1034,50 @@ erDiagram
 | content | TEXT | NOT NULL | 메시지 내용 |
 | created_at | TIMESTAMP | NOT NULL | 생성일 |
 
+### 2.X recommend_history (AI 작물 추천 이력) — V27
+
+AI 작물 추천 엔진이 분석한 농장별 추천 이력의 메타 데이터를 저장합니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| farm_id | BIGINT | FK → farms(id), NOT NULL | 대상 농장 |
+| farm_name | VARCHAR(255) | | 추천 시점의 농장명 스냅샷 |
+| farm_address | VARCHAR(255) | | 추천 시점의 농장 주소 스냅샷 |
+| farm_area | DOUBLE PRECISION | | 농장 면적 |
+| soil_ph | DOUBLE PRECISION | | 토양 산도 |
+| organic_matter | DOUBLE PRECISION | | 토양 유기물 |
+| soil_type | VARCHAR(100) | | 토양 유형 |
+| generated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 추천 생성일시 |
+
+### 2.X recommend_history_item (추천된 작물 항목) — V27
+
+`recommend_history` 1건에 대한 개별 작물의 점수 및 상세 데이터를 저장합니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| history_id | BIGINT | FK → recommend_history(id) ON DELETE CASCADE | 추천 이력 참조 |
+| crop_id | BIGINT | | 작물 ID |
+| crop_name | VARCHAR(100) | | 작물명 |
+| category | VARCHAR(50) | | 카테고리 |
+| rank | INT | | 추천 순위 |
+| score | INT | | 가중치 종합 점수 |
+| soil_fitness | VARCHAR(50) | | 토양 적합도 등급 |
+| soil_fitness_percent | INT | | 토양 적합도 점수 |
+| price_forecast_percent | INT | | 시세 전망 점수 |
+| supply_stability_percent | INT | | 수급 안정성 점수 |
+| supply_status | VARCHAR(50) | | 수급 상태 |
+| expected_revenue_per_kg | INT | | 예상 수익(kg당) |
+| expected_yield | INT | | 예상 수확량 |
+| ai_reason | TEXT | | AI 분석 의견 |
+| difficulty | INT | | 재배 난이도 |
+| growth_days | INT | | 생육 일수 |
+| optimal_temp | VARCHAR(100) | | 생육 적온 |
+| sowing_period | VARCHAR(100) | | 파종 시기 |
+| harvest_period | VARCHAR(100) | | 수확 시기 |
+| pests | TEXT | | 병해충 정보 (쉼표 구분) (V28 추가) |
+
 ### 2.20 weather_data (기상청 ASOS 일별 관측 — 독립)
 
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -1415,5 +1499,8 @@ CREATE INDEX idx_rag_docs_content_type ON rag_documents(content_type);
 -- API 관리 (admin 전용)
 CREATE INDEX idx_api_sync_status ON api_sync_status(sync_status);
 CREATE INDEX idx_api_sync_active ON api_sync_status(is_active);
+
+-- AI 추천 이력
+CREATE INDEX idx_recommend_history_farm_generated ON recommend_history(farm_id, generated_at DESC);
 
 ```
