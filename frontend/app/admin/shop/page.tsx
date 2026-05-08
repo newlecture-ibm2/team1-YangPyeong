@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Badge, Dropdown, SearchInput, Spinner, FilterBar } from '@/components'
 import { useToast } from '@/components'
 import styles from './Shop.module.css'
-import type { AdminProduct, ProductStatus } from '../_lib/shop.types'
-import { fetchProducts, updateProductStatus } from '../_lib/shop.api'
+import type { AdminProduct } from '../_lib/shop.types'
+import { fetchProducts, updateProductStatus, deleteAdminProduct } from '../_lib/shop.api'
 
 function formatPrice(price: number): string {
   return price.toLocaleString() + '원'
@@ -28,14 +28,6 @@ function getStatusBadge(status: string): { variant: 'green' | 'red' | 'orange' |
   }
 }
 
-const STATUS_OPTIONS = [
-  { value: 'PENDING', label: '⏳ 승인대기' },
-  { value: 'ACTIVE', label: '✅ 판매중' },
-  { value: 'INACTIVE', label: '⏸️ 숨김 (비활성)' },
-  { value: 'REJECTED', label: '❌ 반려' },
-  { value: 'SOLDOUT', label: '🛑 품절' },
-]
-
 const CATEGORY_OPTIONS = [
   { value: 'ALL', label: '전체 카테고리' },
   { value: '곡물류', label: '곡물류' },
@@ -45,11 +37,6 @@ const CATEGORY_OPTIONS = [
   { value: '가공품', label: '가공품' },
 ]
 
-const FILTER_STATUS_OPTIONS = [
-  { value: 'ALL', label: '전체 상태' },
-  ...STATUS_OPTIONS
-]
-
 const SORT_OPTIONS = [
   { value: 'createdAt', label: '최신순' },
   { value: 'priceHigh', label: '가격 높은순' },
@@ -57,17 +44,21 @@ const SORT_OPTIONS = [
   { value: 'bestSelling', label: '판매량순' },
 ]
 
+type TabType = 'INVENTORY' | 'REVIEW'
+
 export default function ShopPage() {
   const [products, setProducts] = useState<AdminProduct[]>([])
   const [loading, setLoading] = useState(true)
   
   // 페이징 및 필터 상태
+  const [activeTab, setActiveTab] = useState<TabType>('INVENTORY')
   const [page, setPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
+  const [pendingCount, setPendingCount] = useState(0)
+  
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('ALL')
-  const [statusFilter, setStatusFilter] = useState('ALL')
   const [sort, setSort] = useState('createdAt')
 
   const toast = useToast()
@@ -75,16 +66,27 @@ export default function ShopPage() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await fetchProducts(keyword, category, statusFilter, sort, page, 20)
-      setProducts(data.products)
-      setTotalPages(data.meta.totalPages)
-      setTotalCount(data.meta.totalCount)
+      // INVENTORY 탭: 'ACTIVE,SOLDOUT,INACTIVE' (상점 상품 관리)
+      // REVIEW 탭: 'PENDING,REJECTED' (신규 신청 심사)
+      let statusQuery = 'ACTIVE,SOLDOUT,INACTIVE'
+      if (activeTab === 'REVIEW') statusQuery = 'PENDING,REJECTED'
+      
+      const [mainData, pendingData] = await Promise.all([
+        fetchProducts(keyword, category, statusQuery, sort, page, 20),
+        fetchProducts('', 'ALL', 'PENDING', 'createdAt', 0, 1) // 승인대기 카운트용
+      ])
+      
+      setProducts(mainData.products)
+      setTotalPages(mainData.meta.totalPages)
+      setTotalCount(mainData.meta.totalCount)
+      setPendingCount(pendingData.meta.totalCount)
+
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '상품 조회 실패')
     } finally {
       setLoading(false)
     }
-  }, [keyword, category, statusFilter, sort, page, toast])
+  }, [activeTab, keyword, category, sort, page, toast])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -93,9 +95,8 @@ export default function ShopPage() {
     setPage(0)
   }
 
-  const handleFilterChange = (type: 'category' | 'status', value: string) => {
-    if (type === 'category') setCategory(value)
-    if (type === 'status') setStatusFilter(value)
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab)
     setPage(0)
   }
 
@@ -107,6 +108,61 @@ export default function ShopPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '상태 변경 실패')
     }
+  }
+
+  const handleDelete = async (productId: number) => {
+    if (!confirm('이 상품을 시스템에서 영구적으로 삭제하시겠습니까? (연관 데이터 보호를 위해 실제로는 숨김 처리됩니다)')) return
+    try {
+      await deleteAdminProduct(productId)
+      toast.success('상품이 안전하게 삭제되었습니다.')
+      loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '상품 삭제 실패')
+    }
+  }
+
+  const renderActionButtons = (product: AdminProduct) => {
+    // [REVIEW] 탭 소속 (신규 신청 심사)
+    if (product.status === 'PENDING') {
+      return (
+        <div className={styles.actionButtons}>
+          <button className={`${styles.actionBtn} ${styles.btnApprove}`} onClick={() => handleStatusChange(product.id, 'ACTIVE')}>✅ 승인</button>
+          <button className={`${styles.actionBtn} ${styles.btnReject}`} onClick={() => handleStatusChange(product.id, 'REJECTED')}>❌ 반려</button>
+        </div>
+      )
+    }
+    if (product.status === 'REJECTED') {
+      return (
+        <div className={styles.actionButtons}>
+          <button className={`${styles.actionBtn} ${styles.btnRestore}`} onClick={() => handleStatusChange(product.id, 'PENDING')}>⏳ 재검토</button>
+          <button className={`${styles.actionBtn} ${styles.btnDelete}`} onClick={() => handleDelete(product.id)}>🗑️ 영구 삭제</button>
+        </div>
+      )
+    }
+
+    // [INVENTORY] 탭 소속 (상점 상품 관리)
+    if (product.status === 'ACTIVE' || product.status === 'SOLDOUT') {
+      return (
+        <div className={styles.actionButtons}>
+          {product.status === 'ACTIVE' ? (
+            <button className={`${styles.actionBtn} ${styles.btnSoldout}`} onClick={() => handleStatusChange(product.id, 'SOLDOUT')}>🛑 품절처리</button>
+          ) : (
+            <button className={`${styles.actionBtn} ${styles.btnApprove}`} onClick={() => handleStatusChange(product.id, 'ACTIVE')}>✅ 재판매</button>
+          )}
+          <button className={`${styles.actionBtn} ${styles.btnHide}`} onClick={() => handleStatusChange(product.id, 'INACTIVE')}>⏸️ 숨김</button>
+        </div>
+      )
+    }
+    if (product.status === 'INACTIVE') {
+      return (
+        <div className={styles.actionButtons}>
+          <button className={`${styles.actionBtn} ${styles.btnRestore}`} onClick={() => handleStatusChange(product.id, 'ACTIVE')}>✅ 판매 복구</button>
+          <button className={`${styles.actionBtn} ${styles.btnDelete}`} onClick={() => handleDelete(product.id)}>🗑️ 영구 삭제</button>
+        </div>
+      )
+    }
+    
+    return null
   }
 
   return (
@@ -125,21 +181,30 @@ export default function ShopPage() {
         </div>
       </div>
 
+      <div className={styles.tabs}>
+        <button 
+          className={`${styles.tabItem} ${activeTab === 'INVENTORY' ? styles.tabActive : ''}`}
+          onClick={() => handleTabChange('INVENTORY')}
+        >
+          상점 상품 관리
+        </button>
+        <button 
+          className={`${styles.tabItem} ${activeTab === 'REVIEW' ? styles.tabActive : ''}`}
+          onClick={() => handleTabChange('REVIEW')}
+        >
+          신규 신청 심사
+          {pendingCount > 0 && <span className={styles.badge}>{pendingCount}</span>}
+        </button>
+      </div>
+
       <FilterBar
         dropdowns={[
           <Dropdown
             key="category"
             options={CATEGORY_OPTIONS}
             value={category}
-            onChange={(val) => handleFilterChange('category', val)}
+            onChange={(val) => { setCategory(val); setPage(0); }}
             placeholder="카테고리"
-          />,
-          <Dropdown
-            key="status"
-            options={FILTER_STATUS_OPTIONS}
-            value={statusFilter}
-            onChange={(val) => handleFilterChange('status', val)}
-            placeholder="상태"
           />
         ]}
         search={
@@ -169,7 +234,7 @@ export default function ShopPage() {
                 <th>재고현황</th>
                 <th>현재 상태</th>
                 <th>등록일자</th>
-                <th style={{ width: '160px' }}>상태 변경</th>
+                <th style={{ width: '160px' }}>액션</th>
               </tr>
             </thead>
             <tbody>
@@ -182,7 +247,6 @@ export default function ShopPage() {
               ) : (
                 products.map(product => {
                   const badge = getStatusBadge(product.status)
-                  const options = STATUS_OPTIONS.filter(o => o.value !== product.status)
                   
                   return (
                     <tr key={product.id}>
@@ -197,17 +261,7 @@ export default function ShopPage() {
                       <td>{product.stock}개</td>
                       <td><Badge variant={badge.variant as any}>{badge.label}</Badge></td>
                       <td>{formatDate(product.createdAt)}</td>
-                      <td>
-                        <div className={styles.actions}>
-                          <Dropdown
-                            placeholder="상태 변경"
-                            options={options}
-                            value=""
-                            onChange={(value) => handleStatusChange(product.id, value)}
-                            size="sm"
-                          />
-                        </div>
-                      </td>
+                      <td>{renderActionButtons(product)}</td>
                     </tr>
                   )
                 })

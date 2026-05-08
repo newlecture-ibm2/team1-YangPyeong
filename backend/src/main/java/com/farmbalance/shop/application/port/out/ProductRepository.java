@@ -32,10 +32,10 @@ public interface ProductRepository {
     List<Product> findAllProducts();
 
     /** 관리자용 상품 목록 조회 (필터, 정렬, 페이징) */
-    List<Product> findAdminProducts(String keyword, String category, String status, String sort, int page, int size);
+    List<Product> findAdminProducts(String keyword, String category, List<String> statuses, String sort, int page, int size);
 
     /** 관리자용 상품 총 개수 (필터 적용) */
-    long countAdminProducts(String keyword, String category, String status);
+    long countAdminProducts(String keyword, String category, List<String> statuses);
 
     /** 상품 상태 변경 — 관리자용 (ACTIVE / INACTIVE / REJECTED 등) */
     void updateStatus(Long id, String status);

@@ -29,7 +29,8 @@ public class ShopManagementService implements ManageShopUseCase {
 
     @Override
     public List<AdminShopProductResponse> getProducts(String keyword, String category, String status, String sort, int page, int size) {
-        return productRepository.findAdminProducts(keyword, category, status, sort, page, size).stream()
+        List<String> statuses = status != null && !status.isEmpty() ? List.of(status.split(",")) : List.of("ALL");
+        return productRepository.findAdminProducts(keyword, category, statuses, sort, page, size).stream()
                 .map(product -> {
                     String sellerName = userRepository.findById(product.getSellerId())
                             .map(User::getName)
@@ -41,7 +42,8 @@ public class ShopManagementService implements ManageShopUseCase {
 
     @Override
     public long countProducts(String keyword, String category, String status) {
-        return productRepository.countAdminProducts(keyword, category, status);
+        List<String> statuses = status != null && !status.isEmpty() ? List.of(status.split(",")) : List.of("ALL");
+        return productRepository.countAdminProducts(keyword, category, statuses);
     }
 
     @Override
@@ -51,5 +53,11 @@ public class ShopManagementService implements ManageShopUseCase {
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
 
         productRepository.updateStatus(productId, status);
+    }
+
+    @Override
+    @Transactional
+    public void deleteProduct(Long productId) {
+        productRepository.softDelete(productId);
     }
 }

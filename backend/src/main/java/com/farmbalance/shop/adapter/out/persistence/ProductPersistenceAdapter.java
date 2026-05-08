@@ -160,18 +160,24 @@ public class ProductPersistenceAdapter implements ProductRepository {
     }
 
     @Override
-    public List<Product> findAdminProducts(String keyword, String category, String status, String sort, int page, int size) {
+    public List<Product> findAdminProducts(String keyword, String category, List<String> statuses, String sort, int page, int size) {
         Sort jpaSort = resolveSort(sort);
         Pageable pageable = PageRequest.of(page, size, jpaSort);
-        return productJpaRepository.findAdminProducts(keyword, category, status, pageable)
+        boolean isAllStatus = statuses == null || statuses.isEmpty() || statuses.contains("ALL");
+        // JPA IN 절에서 빈 리스트 오류 방지를 위한 더미
+        List<String> safeStatuses = (statuses == null || statuses.isEmpty()) ? List.of("DUMMY") : statuses;
+        
+        return productJpaRepository.findAdminProducts(keyword, category, safeStatuses, isAllStatus, pageable)
                 .stream()
                 .map(this::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public long countAdminProducts(String keyword, String category, String status) {
-        return productJpaRepository.countAdminProducts(keyword, category, status);
+    public long countAdminProducts(String keyword, String category, List<String> statuses) {
+        boolean isAllStatus = statuses == null || statuses.isEmpty() || statuses.contains("ALL");
+        List<String> safeStatuses = (statuses == null || statuses.isEmpty()) ? List.of("DUMMY") : statuses;
+        return productJpaRepository.countAdminProducts(keyword, category, safeStatuses, isAllStatus);
     }
 
     @Override

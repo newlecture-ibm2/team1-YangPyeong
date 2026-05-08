@@ -61,4 +61,14 @@ public class AdminShopController {
         manageShopUseCase.updateProductStatus(productId, status);
         return ApiResponse.ok(null);
     }
+
+    /**
+     * 상품 삭제 (Soft Delete)
+     * DELETE /api/admin/shop/{productId}
+     */
+    @DeleteMapping("/{productId}")
+    public ApiResponse<Void> deleteProduct(@PathVariable Long productId) {
+        manageShopUseCase.deleteProduct(productId);
+        return ApiResponse.ok(null);
+    }
 }
