@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useMyFarms } from '../useFarm';
-import { getMockRecommendResponse } from './_lib/recommend.mock';
+import { requestCropRecommendation } from './_lib/recommend.api';
 import type { CropRecommendResponse } from './_lib/recommend.types';
 
 export default function useRecommend() {
@@ -28,10 +28,7 @@ export default function useRecommend() {
     setIsAnalyzing(true);
 
     try {
-      // TODO: 실제 API 연동 시 여기를 교체
-      // const data = await requestCropRecommendation(farm.id);
-      await new Promise((r) => setTimeout(r, 2000));
-      const data = getMockRecommendResponse(farm.id, farm.name);
+      const data = await requestCropRecommendation(farm.id);
 
       setResult(data);
       setHasAnalyzed(true);
