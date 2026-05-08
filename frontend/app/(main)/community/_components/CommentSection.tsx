@@ -138,7 +138,7 @@ export default function CommentSection({
               <div className={styles.commentHeaderRight}>
                 <span className={styles.date}>{formatDate(comment.createdAt)}</span>
                 <div className={styles.actions}>
-                  {comment.authorId === currentUserId && !comment.accepted && (
+                  {comment.authorId === currentUserId && !comment.accepted ? (
                     <>
                       <button 
                         className={styles.actionBtn} 

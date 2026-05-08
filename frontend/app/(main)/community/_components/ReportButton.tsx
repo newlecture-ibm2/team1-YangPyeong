@@ -8,9 +8,10 @@ interface ReportButtonProps {
   targetId: number;
   targetType: 'POST' | 'COMMENT';
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export default function ReportButton({ targetId, targetType, className }: ReportButtonProps) {
+export default function ReportButton({ targetId, targetType, className, style }: ReportButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleReport = async (reason: string) => {
@@ -26,6 +27,7 @@ export default function ReportButton({ targetId, targetType, className }: Report
     <>
       <button 
         className={className} 
+        style={style}
         onClick={() => setIsModalOpen(true)}
         title="신고하기"
       >
