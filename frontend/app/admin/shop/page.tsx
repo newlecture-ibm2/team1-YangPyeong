@@ -44,6 +44,20 @@ const SORT_OPTIONS = [
   { value: 'bestSelling', label: '판매량순' },
 ]
 
+const SUB_TABS = {
+  INVENTORY: [
+    { value: 'ALL', label: '전체' },
+    { value: 'ACTIVE', label: '✅ 판매중' },
+    { value: 'SOLDOUT', label: '🛑 품절' },
+    { value: 'INACTIVE', label: '⏸️ 숨김' }
+  ],
+  REVIEW: [
+    { value: 'ALL', label: '전체' },
+    { value: 'PENDING', label: '⏳ 승인 대기중' },
+    { value: 'REJECTED', label: '❌ 반려됨' }
+  ]
+}
+
 type TabType = 'INVENTORY' | 'REVIEW'
 
 export default function ShopPage() {
@@ -52,6 +66,7 @@ export default function ShopPage() {
   
   // 페이징 및 필터 상태
   const [activeTab, setActiveTab] = useState<TabType>('INVENTORY')
+  const [statusFilter, setStatusFilter] = useState('ALL')
   const [page, setPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
@@ -66,10 +81,14 @@ export default function ShopPage() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      // INVENTORY 탭: 'ACTIVE,SOLDOUT,INACTIVE' (상점 상품 관리)
-      // REVIEW 탭: 'PENDING,REJECTED' (신규 신청 심사)
-      let statusQuery = 'ACTIVE,SOLDOUT,INACTIVE'
-      if (activeTab === 'REVIEW') statusQuery = 'PENDING,REJECTED'
+      // 선택된 서브 탭이 'ALL'이면 해당 탭에 속한 모든 구체적 상태값들을 쉼표로 이어붙임
+      let statusQuery = statusFilter
+      if (statusFilter === 'ALL') {
+        statusQuery = SUB_TABS[activeTab]
+          .filter(t => t.value !== 'ALL')
+          .map(t => t.value)
+          .join(',')
+      }
       
       const [mainData, pendingData] = await Promise.all([
         fetchProducts(keyword, category, statusQuery, sort, page, 20),
@@ -86,7 +105,7 @@ export default function ShopPage() {
     } finally {
       setLoading(false)
     }
-  }, [activeTab, keyword, category, sort, page, toast])
+  }, [activeTab, statusFilter, keyword, category, sort, page, toast])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -97,6 +116,12 @@ export default function ShopPage() {
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab)
+    setStatusFilter('ALL') // 탭 변경 시 서브 필터 초기화
+    setPage(0)
+  }
+
+  const handleStatusFilterChange = (filter: string) => {
+    setStatusFilter(filter)
     setPage(0)
   }
 
@@ -195,6 +220,18 @@ export default function ShopPage() {
           신규 신청 심사
           {pendingCount > 0 && <span className={styles.badge}>{pendingCount}</span>}
         </button>
+      </div>
+
+      <div className={styles.subTabs}>
+        {SUB_TABS[activeTab].map(tab => (
+          <button
+            key={tab.value}
+            className={`${styles.subTab} ${statusFilter === tab.value ? styles.subTabActive : ''}`}
+            onClick={() => handleStatusFilterChange(tab.value)}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <FilterBar
