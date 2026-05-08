@@ -99,3 +99,76 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-left: 1rem;
+}
+
+.actionBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #666;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.actionBtn:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+.acceptBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #10b981;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.acceptBtn:hover {
+  text-decoration: underline;
+}
+
+/* 수정 폼 스타일 */
+.editForm {
+  margin-top: 0.75rem;
+}
+
+.editTextarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  margin-bottom: 0.5rem;
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.editActions button {
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background: white;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.editActions .saveBtn {
+  background: #2d5a27;
+  color: white;
+  border-color: #2d5a27;
+}
+
