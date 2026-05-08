@@ -1,143 +1,147 @@
-/* ══════════════════════════════════════════════════════
-   Admin Shop Page
-   ══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   관리자 상점 관리 페이지 스타일
+   Design tokens: globals.css 참조
+   Mockup: final-ui-mockup/admin/admin-shop.html
+   ══════════════════════════════════════════════ */
 
-.pageContainer {
-  padding: var(--space-xl) 0;
-  animation: fadeIn 0.4s ease-out;
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--space-2xl) var(--space-2xl) 80px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.pageHeader {
+.header {
+  margin-bottom: 40px;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: var(--space-xl);
-  padding-bottom: var(--space-md);
-  border-bottom: 2px solid rgba(45, 106, 79, 0.1);
 }
 
-.pageTitle {
+.title {
   font-family: var(--font-serif);
-  font-size: 36px;
-  font-weight: 700;
+  font-size: 40px;
   color: var(--color-text);
-  margin-bottom: var(--space-xs);
-  letter-spacing: -0.02em;
-}
-
-.pageTitle em {
-  font-style: normal;
-  color: var(--color-primary);
-}
-
-.pageSub {
-  font-size: 16px;
-  color: var(--color-text-secondary);
+  line-height: 1.15;
   font-weight: 400;
 }
 
-.controls {
-  display: flex;
-  gap: var(--space-md);
-  align-items: center;
+.totalCount {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  margin-top: var(--space-sm);
+  display: block;
 }
 
-.tableWrap {
+/* ── 테이블 ── */
+.tableWrapper {
   background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  overflow-x: auto;
-  border: 1px solid var(--color-border);
-  transition: box-shadow 0.3s ease;
-}
-
-.tableWrap:hover {
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: var(--space-xl);
 }
 
 .table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 15px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table thead {
+  background: #FAFAF8;
 }
 
 .table th {
-  text-align: left;
-  padding: 16px 20px;
-  background: rgba(45, 106, 79, 0.03);
+  padding: 14px var(--space-md);
+  text-align: center;
   font-weight: 600;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   color: var(--color-text-secondary);
-  border-bottom: 2px solid var(--color-border);
-  white-space: nowrap;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .table td {
-  padding: 18px 20px;
+  padding: var(--space-md);
   border-bottom: 1px solid var(--color-border);
+  text-align: center;
   vertical-align: middle;
-  color: var(--color-text);
-  transition: background-color 0.2s ease;
 }
 
-.table tbody tr {
-  transition: all 0.2s ease;
+.table tbody tr:last-child td {
+  border-bottom: none;
 }
 
-.table tbody tr:last-child td { 
-  border-bottom: none; 
+/* ── 액션 영역 ── */
+.actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  justify-content: center;
 }
 
-.table tbody tr:hover td { 
-  background: rgba(45, 106, 79, 0.02); 
+/* ── 페이지네이션 ── */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-xl);
 }
 
-.productName { 
-  font-weight: 600; 
-  color: var(--color-text);
+.pageBtn {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.priceCell { 
-  font-weight: 700; 
-  color: var(--color-primary); 
-}
-
-.emptyState { 
-  text-align: center; 
-  padding: 60px 20px; 
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  border: 1px dashed var(--color-border);
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
   color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageBtnActive {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+/* ── 로딩 / 비어있음 ── */
+.loading {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 12px;
+  min-height: 300px;
+  font-size: 16px;
+  color: var(--color-text-secondary);
 }
 
-.emptyIcon {
-  font-size: 40px;
-  margin-bottom: 8px;
-  opacity: 0.5;
+.emptyRow {
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: var(--space-2xl) var(--space-md) !important;
 }
 
-.emptyText {
-  font-size: 18px;
+/* 특수 스타일 */
+.productName {
+  font-weight: 600;
+  text-align: left;
+}
+.priceCell {
   font-weight: 600;
   color: var(--color-text);
-}
-
-.emptySub {
-  font-size: 14px;
 }

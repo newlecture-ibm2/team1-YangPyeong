@@ -76,33 +76,25 @@ export default function ShopPage() {
   }
 
   return (
-    <div className={styles.pageContainer}>
-      <div className={styles.pageHeader}>
+    <div className={styles.container}>
+      <div className={styles.header}>
         <div>
-          <h1 className={styles.pageTitle}>상점 <em>관리</em></h1>
-          <p className={styles.pageSub}>농가의 상품 승인, 반려 및 판매 상태를 관리합니다. (총 {products.length}건)</p>
+          <h1 className={styles.title}>상점 관리</h1>
+          <span className={styles.totalCount}>총 {products.length}건</span>
         </div>
-        <div className={styles.controls}>
+        <div className={styles.actions}>
           <SearchInput 
             placeholder="상품명 검색..." 
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onSearch={() => {}}
-            size="md"
           />
         </div>
       </div>
 
-      {filteredProducts.length === 0 ? (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>🛍️</div>
-          <p className={styles.emptyText}>조회된 상품이 없습니다.</p>
-          <p className={styles.emptySub}>검색어를 변경하거나 등록된 상품이 있는지 확인해주세요.</p>
-        </div>
-      ) : (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
+      <div className={styles.tableWrapper}>
+        <table className={styles.table}>
+          <thead>
               <tr>
                 <th>No</th>
                 <th>상품명</th>
@@ -114,37 +106,46 @@ export default function ShopPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.map(product => {
-                const badge = getStatusBadge(product.status)
-                const options = STATUS_OPTIONS.filter(o => o.value !== product.status)
-                
-                return (
-                  <tr key={product.id}>
-                    <td>#{product.id}</td>
-                    <td className={styles.productName}>
-                      {product.status === 'PENDING' && <span title="신규 요청">🆕</span>}
-                      {product.name}
-                    </td>
-                    <td className={styles.priceCell}>{formatPrice(product.price)}</td>
-                    <td>{product.stock}개</td>
-                    <td><Badge variant={badge.variant}>{badge.label}</Badge></td>
-                    <td>{formatDate(product.createdAt)}</td>
-                    <td>
-                      <Dropdown
-                        placeholder="상태 변경"
-                        options={options}
-                        value=""
-                        onChange={(value) => handleStatusChange(product.id, value)}
-                        size="sm"
-                      />
-                    </td>
-                  </tr>
-                )
-              })}
+              {filteredProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className={styles.emptyRow}>
+                    조회된 상품이 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                filteredProducts.map(product => {
+                  const badge = getStatusBadge(product.status)
+                  const options = STATUS_OPTIONS.filter(o => o.value !== product.status)
+                  
+                  return (
+                    <tr key={product.id}>
+                      <td>#{product.id}</td>
+                      <td className={styles.productName}>
+                        {product.status === 'PENDING' && <span title="신규 요청">🆕</span>}
+                        {product.name}
+                      </td>
+                      <td className={styles.priceCell}>{formatPrice(product.price)}</td>
+                      <td>{product.stock}개</td>
+                      <td><Badge variant={badge.variant}>{badge.label}</Badge></td>
+                      <td>{formatDate(product.createdAt)}</td>
+                      <td>
+                        <div className={styles.actions}>
+                          <Dropdown
+                            placeholder="상태 변경"
+                            options={options}
+                            value=""
+                            onChange={(value) => handleStatusChange(product.id, value)}
+                            size="sm"
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
             </tbody>
           </table>
         </div>
-      )}
     </div>
   )
 }

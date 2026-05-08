@@ -81,33 +81,25 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className={styles.pageContainer}>
-      <div className={styles.pageHeader}>
+    <div className={styles.container}>
+      <div className={styles.header}>
         <div>
-          <h1 className={styles.pageTitle}>주문 <em>관리</em></h1>
-          <p className={styles.pageSub}>상점에서 발생한 전체 주문 내역과 배송 상태를 관리합니다. (총 {orders.length}건)</p>
+          <h1 className={styles.title}>주문 관리</h1>
+          <span className={styles.totalCount}>총 {orders.length}건</span>
         </div>
-        <div className={styles.controls}>
+        <div className={styles.actions}>
           <SearchInput 
             placeholder="주문번호, 수령인 검색..." 
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onSearch={() => {}}
-            size="md"
           />
         </div>
       </div>
 
-      {filteredOrders.length === 0 ? (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>📦</div>
-          <p className={styles.emptyText}>조회된 주문이 없습니다.</p>
-          <p className={styles.emptySub}>검색어를 변경하거나 등록된 주문이 있는지 확인해주세요.</p>
-        </div>
-      ) : (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
+      <div className={styles.tableWrapper}>
+        <table className={styles.table}>
+          <thead>
               <tr>
                 <th>주문일시</th>
                 <th>주문번호</th>
@@ -119,47 +111,56 @@ export default function AdminOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map(order => {
-                const badge = getStatusBadge(order.status)
-                const options = STATUS_OPTIONS.filter(o => o.value !== order.status)
-                const mainItemName = order.items.length > 0 ? order.items[0].productName : '상품 없음'
-                const itemsSummary = order.items.length > 1 ? `${mainItemName} 외 ${order.items.length - 1}건` : mainItemName
+              {filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className={styles.emptyRow}>
+                    조회된 주문이 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                filteredOrders.map(order => {
+                  const badge = getStatusBadge(order.status)
+                  const options = STATUS_OPTIONS.filter(o => o.value !== order.status)
+                  const mainItemName = order.items.length > 0 ? order.items[0].productName : '상품 없음'
+                  const itemsSummary = order.items.length > 1 ? `${mainItemName} 외 ${order.items.length - 1}건` : mainItemName
 
-                return (
-                  <tr key={order.id}>
-                    <td>{formatDate(order.createdAt)}</td>
-                    <td className={styles.orderNumber}>
-                      {order.status === 'ORDERED' && <span title="신규 주문">🆕</span>}
-                      {order.orderNumber}
-                    </td>
-                    <td>
-                      <div>{itemsSummary}</div>
-                      {order.items.length === 1 && (
-                        <div className={styles.itemsSummary}>({order.items[0].quantity}개)</div>
-                      )}
-                    </td>
-                    <td className={styles.priceCell}>{formatPrice(order.totalAmount)}</td>
-                    <td>
-                      <div>{order.receiverName}</div>
-                      <div className={styles.itemsSummary}>{order.receiverPhone}</div>
-                    </td>
-                    <td><Badge variant={badge.variant}>{badge.label}</Badge></td>
-                    <td>
-                      <Dropdown
-                        placeholder="상태 변경"
-                        options={options}
-                        value=""
-                        onChange={(value) => handleStatusChange(order.id, value)}
-                        size="sm"
-                      />
-                    </td>
-                  </tr>
-                )
-              })}
+                  return (
+                    <tr key={order.id}>
+                      <td>{formatDate(order.createdAt)}</td>
+                      <td className={styles.orderNumber}>
+                        {order.status === 'ORDERED' && <span title="신규 주문">🆕</span>}
+                        {order.orderNumber}
+                      </td>
+                      <td>
+                        <div>{itemsSummary}</div>
+                        {order.items.length === 1 && (
+                          <div className={styles.itemsSummary}>({order.items[0].quantity}개)</div>
+                        )}
+                      </td>
+                      <td className={styles.priceCell}>{formatPrice(order.totalAmount)}</td>
+                      <td>
+                        <div>{order.receiverName}</div>
+                        <div className={styles.itemsSummary}>{order.receiverPhone}</div>
+                      </td>
+                      <td><Badge variant={badge.variant}>{badge.label}</Badge></td>
+                      <td>
+                        <div className={styles.actions}>
+                          <Dropdown
+                            placeholder="상태 변경"
+                            options={options}
+                            value=""
+                            onChange={(value) => handleStatusChange(order.id, value)}
+                            size="sm"
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
             </tbody>
           </table>
         </div>
-      )}
     </div>
   )
 }
