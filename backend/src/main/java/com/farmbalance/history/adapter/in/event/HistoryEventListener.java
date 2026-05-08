@@ -67,10 +67,13 @@ public class HistoryEventListener {
                 log.warn("작물명 조회 실패 - cropId: {}", event.getCropId());
             }
 
-            // 면적 정보 포맷
-            String areaInfo = event.getCultivationArea() != null
-                    ? String.format(" (%.0f㎡)", event.getCultivationArea())
-                    : "";
+            // 면적 정보 포맷 (㎡와 평 병기)
+            String areaInfo = "";
+            if (event.getCultivationArea() != null) {
+                double sqm = event.getCultivationArea().doubleValue();
+                double pyeong = sqm / 3.3058;
+                areaInfo = String.format(" (%.0f㎡ / %.0f평)", sqm, pyeong);
+            }
 
             String content = String.format("🌱 재배등록: %s%s", cropName, areaInfo);
 

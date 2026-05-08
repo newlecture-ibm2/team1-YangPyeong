@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@NoArgsConstructor
+@NoArgsConstructor(access = lombok.AccessLevel.PUBLIC)
 @AllArgsConstructor
 public class FarmDocument {
     private String type; // LAND_CERT, BIZ_REG, FARM_REG, OTHER
