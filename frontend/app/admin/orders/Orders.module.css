@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════
-   Admin Shop Page
+   Admin Orders Page
    ══════════════════════════════════════════════════════ */
 
 .pageContainer {
@@ -100,7 +100,7 @@
   background: rgba(45, 106, 79, 0.02); 
 }
 
-.productName { 
+.orderNumber { 
   font-weight: 600; 
   color: var(--color-text);
   display: flex;
@@ -140,4 +140,10 @@
 
 .emptySub {
   font-size: 14px;
+}
+
+.itemsSummary {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
 }
