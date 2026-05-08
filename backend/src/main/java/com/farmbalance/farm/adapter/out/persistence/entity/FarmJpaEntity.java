@@ -4,6 +4,8 @@ import com.farmbalance.farm.domain.FarmStatus;
 import com.farmbalance.global.entity.BaseTimeEntity;
 import com.farmbalance.user.adapter.out.persistence.entity.UserJpaEntity;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -55,10 +57,12 @@ public class FarmJpaEntity extends BaseTimeEntity {
     @Column(name = "soil_organic_matter")
     private Double organicMatter;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "documents", columnDefinition = "jsonb")
     @Convert(converter = com.farmbalance.farm.adapter.out.persistence.converter.FarmDocumentsConverter.class)
     private java.util.List<com.farmbalance.farm.domain.FarmDocument> documents = new java.util.ArrayList<>();
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "document_data", columnDefinition = "jsonb")
     @Convert(converter = com.farmbalance.farm.adapter.out.persistence.converter.FarmDocumentDataConverter.class)
     private com.farmbalance.farm.domain.FarmDocumentData documentData;

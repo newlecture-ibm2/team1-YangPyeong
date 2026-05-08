@@ -203,7 +203,12 @@ export default function FarmDashboardPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: 'auto', borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
                 <div style={{ background: 'var(--color-bg)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
                   <div style={{ fontSize: '12px', color: 'var(--color-text-light)', marginBottom: '4px' }}>재배 면적</div>
-                  <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-primary)' }}>{f.area.toLocaleString()} ㎡</div>
+                  <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                    {f.area.toLocaleString()} ㎡
+                    <span style={{ fontSize: '13px', fontWeight: 400, marginLeft: '4px', opacity: 0.8 }}>
+                      ({Math.round(f.area / 3.3058)}평)
+                    </span>
+                  </div>
                 </div>
                 <div style={{ background: 'var(--color-bg)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
                   <div style={{ fontSize: '12px', color: 'var(--color-text-light)', marginBottom: '4px' }}>재배 작물</div>
@@ -333,7 +338,12 @@ export default function FarmDashboardPage() {
           <div className={styles.kpiRow} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
               <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>재배 면적</p>
-              <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>{farm?.area.toLocaleString()}㎡</p>
+              <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>
+                {farm?.area.toLocaleString()}㎡
+                <span style={{ fontSize: '14px', fontWeight: 400, marginLeft: '6px', color: 'var(--color-text-light)' }}>
+                  ({Math.round((farm?.area || 0) / 3.3058)}평)
+                </span>
+              </p>
             </div>
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
               <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>재배 작물</p>
@@ -389,7 +399,7 @@ export default function FarmDashboardPage() {
               <h3 style={{ color: 'var(--color-accent)', marginBottom: '20px', fontSize: '18px' }}>농장 정보</h3>
               <dl style={{ fontSize: '14px', lineHeight: '2.2' }}>
                 <dt style={{ opacity: 0.5 }}>위치</dt><dd>{farm?.address}</dd>
-                <dt style={{ opacity: 0.5, marginTop: '12px' }}>면적</dt><dd>{farm?.area.toLocaleString()} ㎡</dd>
+                <dt style={{ opacity: 0.5, marginTop: '12px' }}>면적</dt><dd>{farm?.area.toLocaleString()} ㎡ ({Math.round((farm?.area || 0) / 3.3058)}평)</dd>
                 <dt style={{ opacity: 0.5, marginTop: '12px' }}>주요 작물</dt><dd>{farm?.cropNames.join(', ')}</dd>
                 <dt style={{ opacity: 0.5, marginTop: '12px' }}>등록 상태</dt>
                 <dd>
@@ -480,7 +490,7 @@ export default function FarmDashboardPage() {
                 <h3 className={styles.farmInfoTitle} style={{ fontSize: '18px', marginBottom: '16px' }}>농장 정보</h3>
                 <dl className={styles.farmInfoList}>
                   <dt>위치</dt><dd>{farm?.address}</dd>
-                  <dt>면적</dt><dd>{farm?.area.toLocaleString()} ㎡</dd>
+                  <dt>면적</dt><dd>{farm?.area.toLocaleString()} ㎡ ({Math.round((farm?.area || 0) / 3.3058)}평)</dd>
                   <dt>주요 작물</dt><dd>{farm?.cropNames.join(', ')}</dd>
                   <dt>상태</dt>
                   <dd>
