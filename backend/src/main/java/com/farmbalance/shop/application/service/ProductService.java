@@ -57,7 +57,7 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
         Product product = new Product(
                 null, sellerId, null, null, categoryName,
                 name, price, stock, description, 0,
-                ProductStatus.ACTIVE, imageUrls, LocalDateTime.now()
+                ProductStatus.PENDING, imageUrls, LocalDateTime.now()
         );
 
         Product saved = productRepository.save(product);
@@ -83,6 +83,9 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
         }
 
         product.update(name, price, stock, description, null, categoryName);
+
+        // 상품 내용 수정 시 재검수를 위해 PENDING 상태로 전환
+        product.changeStatus(ProductStatus.PENDING);
 
         // 이미지 교체: 기존 삭제 후 재등록
         uploadRepository.deleteByEntity("PRODUCT", productId);
