@@ -1,0 +1,12 @@
+c:\project\yangpyeongproject\team1-YangPyeong\frontend\app\api\admin\api-sync\route.ts:4:/** GET /api/admin/api-sync ???꾩껜 紐⑸줉 議고쉶 ?꾨줉??*/
+c:\project\yangpyeongproject\team1-YangPyeong\frontend\app\api\admin\community\route.ts:13:      { success: false, data: null, error: { code: 'E-BFF-COMM-001', message: '백엔???�결 실패' } },
+c:\project\yangpyeongproject\team1-YangPyeong\frontend\app\api\admin\community\route.ts:19:/** DELETE /api/admin/community ??게시글 삭제�� ?�록??*/
+c:\project\yangpyeongproject\team1-YangPyeong\frontend\app\api\admin\community\route.ts:31:      { success: false, data: null, error: { code: 'E-BFF-COMM-002', message: '게시글 삭제�� 실패' } },
+c:\project\yangpyeongproject\team1-YangPyeong\frontend\app\api\admin\crops\route.ts:21:/** POST /api/admin/crops ???묐Ъ ?깅줉 */
+c:\project\yangpyeongproject\team1-YangPyeong\frontend\app\api\admin\dashboard\route.ts:4:/** GET /api/admin/dashboard ???�?�보??KPI ?�록??*/
+c:\project\yangpyeongproject\team1-YangPyeong\frontend\app\api\admin\dashboard\route.ts:13:      { success: false, data: null, error: { code: 'E-BFF-DASH-001', message: '백엔???�결 실패' } },
+c:\project\yangpyeongproject\team1-YangPyeong\frontend\app\api\admin\farms\route.ts:4:/** GET /api/admin/farms?status=PENDING 백엔드 프록시 */
+c:\project\yangpyeongproject\team1-YangPyeong\frontend\app\api\admin\policy\route.ts:4:/** GET /api/admin/policy ???꾩껜 ?뺤콉 紐⑸줉 ?꾨줉??*/
+c:\project\yangpyeongproject\team1-YangPyeong\frontend\app\api\admin\policy\route.ts:19:/** POST /api/admin/policy ??정책 등록 프록시*/
+c:\project\yangpyeongproject\team1-YangPyeong\frontend\app\api\admin\rag\documents\route.ts:22:/** POST /api/admin/rag/documents 백엔드 프록시(JSON ?먮뒗 multipart/form-data) */
+c:\project\yangpyeongproject\team1-YangPyeong\frontend\app\api\admin\shop\route.ts:4:/** GET /api/admin/shop ??전체 상품 목록 프록시*/
