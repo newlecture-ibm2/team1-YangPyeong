@@ -95,6 +95,27 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
 
     @Override
     @Transactional
+    public Product changeProductStatus(Long sellerId, Long productId, String newStatus) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        if (!product.getSellerId().equals(sellerId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        try {
+            ProductStatus status = ProductStatus.valueOf(newStatus.toUpperCase());
+            // Product 도메인 엔티티의 상태 변경 로직 (Setter가 없으므로 update 메서드 혹은 별도 메서드 사용)
+            // 여기서는 Product 에 별도로 changeStatus() 메서드를 만들어야 함
+            product.changeStatus(status);
+            return productRepository.save(product);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+        }
+    }
+
+    @Override
+    @Transactional
     public void deleteProduct(Long sellerId, Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));

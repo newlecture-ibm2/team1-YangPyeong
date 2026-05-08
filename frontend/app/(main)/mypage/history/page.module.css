@@ -389,3 +389,89 @@
     gap: 4px;
   }
 }
+
+/* ── 배송 추적 타임라인 ── */
+.trackingTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--color-border);
+}
+
+.trackingTimeline {
+  position: relative;
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.trackingTimeline::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 5px;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.trackingStep {
+  position: relative;
+  opacity: 0.6;
+  transition: all var(--transition-fast);
+}
+
+.trackingStepCurrent {
+  opacity: 1;
+}
+
+.trackingDot {
+  position: absolute;
+  left: -24px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-border);
+  border: 2px solid var(--color-surface);
+  z-index: 1;
+}
+
+.trackingStepCurrent .trackingDot {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-pale);
+}
+
+.trackingContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trackingTime {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.trackingLoc {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.trackingDesc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.noTracking {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: 20px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+}
