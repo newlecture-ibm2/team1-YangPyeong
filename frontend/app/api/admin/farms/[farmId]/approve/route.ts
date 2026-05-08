@@ -9,7 +9,7 @@ interface RouteParams {
 export async function PATCH(_request: NextRequest, { params }: RouteParams) {
   try {
     const { farmId } = await params
-    const res = await fetch(`${BACKEND_URL}/api/admins/approvals/${farmId}/approve`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/farms/${farmId}/approve`, {
       method: 'PATCH',
     })
     const data = await res.json()

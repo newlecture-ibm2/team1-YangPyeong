@@ -15,8 +15,7 @@ public class FarmDetailResponse {
     private List<Long> cropIds;
     private String pnuCode;
     private String bjdCode;
-    private String registrationNumber;
-    private String documentUrl;
+    private List<FarmDocumentDto> documents;
     private String soilType;
     private Double ph;
     private Double organicMatter;

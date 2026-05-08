@@ -142,6 +142,15 @@ export default function CultivationRegisterPage() {
       }
     }
 
+    const selectedFarm = farms.find(f => String(f.id) === selectedFarmId);
+    if (selectedFarm) {
+      const totalCultivationArea = cultivations.reduce((sum, c) => sum + (Number(c.area) || 0), 0);
+      if (totalCultivationArea > selectedFarm.area) {
+        toast.error(`입력한 작물 면적 합계(${totalCultivationArea}㎡)가 농장 전체 면적(${selectedFarm.area}㎡)을 초과할 수 없습니다.`);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       for (const c of cultivations) {

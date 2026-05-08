@@ -3,10 +3,12 @@
 import { useRouter } from 'next/navigation';
 import Button from '@/components/common/Button/Button';
 import Badge from '@/components/common/Badge/Badge';
+import Dropdown from '@/components/common/Dropdown/Dropdown';
 import Modal from '@/components/common/Modal/Modal';
 import Spinner from '@/components/common/Spinner/Spinner';
 import { PRODUCT_STATUS_MAP } from '../_lib/mypage.types';
 import useSellerProducts from './useSellerProducts';
+import useSellerInsight from './useSellerInsight';
 import styles from './page.module.css';
 
 /** S-35a. 판매 상품 관리 페이지 */
@@ -14,13 +16,19 @@ export default function SellerProductsPage() {
   const router = useRouter();
   const {
     products,
+    allProducts,
     stats,
+    filterTab,
+    setFilterTab,
     deleteTarget,
     handleDelete,
     confirmDelete,
     cancelDelete,
-    loading,
+    handleStatusChange,
+    loading: productsLoading,
   } = useSellerProducts();
+
+  const { insight, loading: insightLoading, refreshInsight } = useSellerInsight(allProducts);
 
   /** 가격 포맷 */
   const formatPrice = (price: number) =>
@@ -31,21 +39,47 @@ export default function SellerProductsPage() {
       {/* 상단 요약 + 등록 버튼 */}
       <div className={styles.topBar}>
         <div className={styles.statsRow}>
-          <span className={styles.statItem}>
+          <button 
+            className={`${styles.statItem} ${filterTab === 'ALL' ? styles.statActiveTab : ''}`}
+            onClick={() => setFilterTab('ALL')}
+          >
             전체 <strong>{stats.total}</strong>
-          </span>
+          </button>
           <span className={styles.statDivider}>|</span>
-          <span className={styles.statItem}>
+          <button 
+            className={`${styles.statItem} ${filterTab === 'PENDING' ? styles.statActiveTab : ''}`}
+            onClick={() => setFilterTab('PENDING')}
+          >
+            검수중 <strong className={styles.statPending}>{stats.pending}</strong>
+          </button>
+          <span className={styles.statDivider}>|</span>
+          <button 
+            className={`${styles.statItem} ${filterTab === 'ACTIVE' ? styles.statActiveTab : ''}`}
+            onClick={() => setFilterTab('ACTIVE')}
+          >
             판매중 <strong className={styles.statActive}>{stats.active}</strong>
-          </span>
+          </button>
           <span className={styles.statDivider}>|</span>
-          <span className={styles.statItem}>
+          <button 
+            className={`${styles.statItem} ${filterTab === 'SOLDOUT' ? styles.statActiveTab : ''}`}
+            onClick={() => setFilterTab('SOLDOUT')}
+          >
             품절 <strong className={styles.statSoldout}>{stats.soldout}</strong>
-          </span>
+          </button>
           <span className={styles.statDivider}>|</span>
-          <span className={styles.statItem}>
+          <button 
+            className={`${styles.statItem} ${filterTab === 'INACTIVE' ? styles.statActiveTab : ''}`}
+            onClick={() => setFilterTab('INACTIVE')}
+          >
             숨김 <strong>{stats.inactive}</strong>
-          </span>
+          </button>
+          <span className={styles.statDivider}>|</span>
+          <button 
+            className={`${styles.statItem} ${filterTab === 'REJECTED' ? styles.statActiveTab : ''}`}
+            onClick={() => setFilterTab('REJECTED')}
+          >
+            반려 <strong className={styles.statRejected}>{stats.rejected}</strong>
+          </button>
         </div>
         <Button
           variant="primary"
@@ -55,8 +89,42 @@ export default function SellerProductsPage() {
         </Button>
       </div>
 
+      {/* AI 인사이트 카드 */}
+      {!productsLoading && products.length > 0 && (
+        <div className={styles.insightCard}>
+          <div className={styles.insightHeader}>
+            <h3 className={styles.insightTitle}>
+              <span className={styles.insightIcon}>🤖</span>
+              오늘의 AI 판매 인사이트
+            </h3>
+            <button 
+              className={styles.refreshBtn} 
+              onClick={refreshInsight}
+              disabled={insightLoading}
+              title="인사이트 새로고침"
+            >
+              {insightLoading ? '분석 중...' : '↻ 새로고침'}
+            </button>
+          </div>
+          {insightLoading && !insight ? (
+            <p className={styles.insightContent} style={{ color: 'var(--color-text-secondary)' }}>
+              판매자님의 데이터를 분석하고 있습니다...
+            </p>
+          ) : insight ? (
+            <p className={styles.insightContent}>
+              {insight.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+                if (part.startsWith('**') && part.endsWith('**')) {
+                  return <strong key={i}>{part.slice(2, -2)}</strong>;
+                }
+                return <span key={i}>{part}</span>;
+              })}
+            </p>
+          ) : null}
+        </div>
+      )}
+
       {/* 상품 테이블 */}
-      {loading ? (
+      {productsLoading ? (
         <Spinner message="판매 상품 목록을 불러오는 중입니다..." fullHeight={true} />
       ) : products.length === 0 ? (
         <div className={styles.emptyState}>
@@ -98,8 +166,24 @@ export default function SellerProductsPage() {
                       </span>
                     </td>
                     <td>{product.salesCount}개</td>
-                    <td>
-                      <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                    <td style={{ width: '100px' }}>
+                      {(product.status === 'PENDING' || product.status === 'REJECTED') ? (
+                        <Badge variant={statusInfo.variant as any}>
+                          {statusInfo.label}
+                        </Badge>
+                      ) : (
+                        <Dropdown
+                          size="sm"
+                          value={product.status}
+                          onChange={(val) => handleStatusChange(product.id, val as any)}
+                          options={[
+                            { value: 'ACTIVE', label: '판매중' },
+                            { value: 'SOLDOUT', label: '품절' },
+                            { value: 'INACTIVE', label: '숨김' }
+                          ]}
+                          style={{ width: '95px', minWidth: '95px' }}
+                        />
+                      )}
                     </td>
                     <td>
                       <div className={styles.actionBtns}>
@@ -107,6 +191,7 @@ export default function SellerProductsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => router.push(`/mypage/seller/${product.id}/edit`)}
+                          disabled={product.status === 'PENDING'}
                         >
                           수정
                         </Button>

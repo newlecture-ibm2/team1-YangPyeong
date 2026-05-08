@@ -77,7 +77,6 @@ com.farmbalance.{도메인}/
 |--------|--------|----------|
 | user | `com.farmbalance.user` | 인증/인가 |
 | farm | `com.farmbalance.farm` | 농장 라이프사이클 전체 |
-| crop | `com.farmbalance.crop` | 작물 마스터 데이터 |
 | balance | `com.farmbalance.balance` | 수급 계산 엔진 |
 | shop | `com.farmbalance.shop` | 상점 |
 | community | `com.farmbalance.community` | 게시판 |

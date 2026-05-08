@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button, Badge, Card, Modal, Spinner } from '@/components';
 import { useToast } from '@/components';
+import { DEFAULT_PRODUCT_IMAGE } from '@/lib/constants';
 import { useProductDetail } from './useProductDetail';
 import { addToCart } from '../_lib/shop.api';
 import styles from './page.module.css';
@@ -134,7 +135,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     );
   }
 
-  const currentImage = product.imageUrls[selectedImageIndex] || product.imageUrls[0];
+  const currentImage = product.imageUrls[selectedImageIndex] || product.imageUrls[0] || DEFAULT_PRODUCT_IMAGE;
 
   return (
     <div className={styles.page}>
@@ -214,10 +215,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               <tr>
                 <th>재고</th>
                 <td>
-                  {product.stock > 0 ? (
-                    <>{product.stock}개</>
-                  ) : (
+                  {(product.status === 'SOLDOUT' || product.stock <= 0) ? (
                     <span style={{ color: 'var(--color-danger)', fontWeight: 700 }}>품절</span>
+                  ) : (
+                    <>{product.stock}개</>
                   )}
                 </td>
               </tr>
@@ -226,7 +227,11 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
           {/* 액션 버튼 (Intersection Observer 대상) */}
           <div ref={actionRef} className={styles.actionButtons}>
-            {product.stock > 0 ? (
+            {(product.status === 'SOLDOUT' || product.stock <= 0) ? (
+              <Button variant="outline" disabled fullWidth>
+                품절된 상품입니다
+              </Button>
+            ) : (
               <>
                 <Button variant="outline" onClick={() => handlePurchaseAction('cart', 'center')}>
                   🛒 장바구니
@@ -235,10 +240,6 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   바로 구매
                 </Button>
               </>
-            ) : (
-              <Button variant="outline" disabled fullWidth>
-                품절된 상품입니다
-              </Button>
             )}
           </div>
         </div>
@@ -295,7 +296,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       )}
 
       {/* ════════ 플로팅 구매 바 ════════ */}
-      {showFloatingBar && !purchaseAction && product.stock > 0 && (
+      {showFloatingBar && !purchaseAction && (product.status !== 'SOLDOUT' && product.stock > 0) && (
         <div className={styles.floatingBar}>
           <div className={styles.floatingInfo}>
             <span className={styles.floatingName}>{product.name}</span>
@@ -324,7 +325,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         <div className={styles.purchaseProductRow}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={product.imageUrls[0]}
+            src={product.imageUrls[0] || DEFAULT_PRODUCT_IMAGE}
             alt={product.name}
             className={styles.purchaseProductImg}
           />
@@ -425,7 +426,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           <div className={styles.cartSuccessProduct}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={product.imageUrls[0]}
+              src={product.imageUrls[0] || DEFAULT_PRODUCT_IMAGE}
               alt={product.name}
               className={styles.cartSuccessImg}
             />

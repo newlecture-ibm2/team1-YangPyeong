@@ -59,6 +59,9 @@ export const FREE_SHIPPING_THRESHOLD = 30000;
 /** 기본 배송비 (원) */
 export const DEFAULT_DELIVERY_FEE = 3000;
 
+/** 상품 이미지 미등록 시 디폴트 이미지 */
+export const DEFAULT_PRODUCT_IMAGE = '/images/default-product.png';
+
 /** 배송 메모 옵션 */
 export const DELIVERY_MEMO_OPTIONS = [
   '부재 시 문 앞에 놓아주세요',

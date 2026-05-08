@@ -47,6 +47,7 @@ public enum ErrorCode {
     FARM_ALREADY_EXISTS("E-FARM-002", "이미 등록된 농장이 있습니다.", HttpStatus.CONFLICT),
     FARM_APPROVAL_PENDING("E-FARM-003", "승인 대기 중인 농장 등록 신청이 있습니다.", HttpStatus.CONFLICT),
     FARM_AREA_EXCEEDED("E-FARM-004", "재배 면적이 농장 전체 면적을 초과합니다. 가용 면적을 확인해주세요.", HttpStatus.BAD_REQUEST),
+    FARM_NOT_OPERATING("E-FARM-008", "현재 농장이 운영 상태가 아닙니다. 재배 등록이 불가능합니다.", HttpStatus.BAD_REQUEST),
     FARM_PNU_DUPLICATE("E-FARM-005", "이미 등록된 지번(PNU)입니다.", HttpStatus.CONFLICT),
     FARM_INVALID_ADDRESS("E-FARM-006", "주소를 좌표로 변환할 수 없습니다. 올바른 주소를 입력해주세요.", HttpStatus.BAD_REQUEST),
     FARM_EXTERNAL_API_FAILED("E-FARM-007", "외부 API 호출에 실패했습니다. 잠시 후 다시 시도해주세요.", HttpStatus.SERVICE_UNAVAILABLE),
@@ -74,6 +75,8 @@ public enum ErrorCode {
     POST_NOT_FOUND("E-COMMUNITY-001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     COMMENT_NOT_FOUND("E-COMMUNITY-002", "댓글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     POST_NOT_AUTHOR("E-COMMUNITY-003", "게시글 작성자만 수정/삭제할 수 있습니다.", HttpStatus.FORBIDDEN),
+    REPORT_DUPLICATE("E-COMMUNITY-004", "이미 신고한 게시글/댓글입니다.", HttpStatus.CONFLICT),
+    REPORT_OWN_CONTENT("E-COMMUNITY-005", "자신의 게시글/댓글은 신고할 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     // ── 가게 ──
     STORE_NOT_FOUND("E-STORE-001", "가게 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

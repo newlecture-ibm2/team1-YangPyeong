@@ -86,7 +86,6 @@ backend/
     │   │       └── UserStatus.java
     │   │
     │   ├── farm/        ← 동일 구조 (adapter / application / domain)
-    │   ├── crop/
     │   ├── balance/
     │   ├── shop/
     │   ├── community/
@@ -106,7 +105,6 @@ backend/
 |--------|--------|-------------|----------|
 | **user** | `com.farmbalance.user` | User, Role | 인증/인가 |
 | **farm** | `com.farmbalance.farm` | Farm, SeedRegistration, CropPlan, Harvest | 농장 라이프사이클 전체 |
-| **crop** | `com.farmbalance.crop` | Crop | 작물 마스터 데이터 |
 | **balance** | `com.farmbalance.balance` | BalanceData, BalanceStatus | 수급 계산 엔진 |
 | **shop** | `com.farmbalance.shop` | Product, Order | 상점 |
 | **community** | `com.farmbalance.community` | Post, Comment | 게시판 |

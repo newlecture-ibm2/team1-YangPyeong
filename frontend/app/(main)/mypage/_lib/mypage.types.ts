@@ -47,6 +47,8 @@ export interface SellerOrder {
   orderedAt: string;
   /** 접수(상태변경) 시각 — 배송 예정 시간 계산용 */
   acceptedAt?: string;
+  trackingNumber?: string;
+  shippedAt?: string;
 }
 
 /** 판매자 주문 KPI */
@@ -71,6 +73,8 @@ export interface BuyerOrder {
   receiverPhone: string;
   shippingAddress: string;
   shippingMemo?: string;
+  trackingNumber?: string;
+  shippedAt?: string;
   orderedAt: string;
 }
 
@@ -89,13 +93,15 @@ export const BUYER_ORDER_FILTER_TABS = ORDER_FILTER_TABS;
 // ── 상품 관련 ──
 
 /** 상품 상태 */
-export type ProductStatus = 'ACTIVE' | 'INACTIVE' | 'SOLDOUT';
+export type ProductStatus = 'PENDING' | 'ACTIVE' | 'INACTIVE' | 'SOLDOUT' | 'REJECTED';
 
 /** 상품 상태 → 라벨/배지 매핑 */
-export const PRODUCT_STATUS_MAP: Record<ProductStatus, { label: string; variant: 'green' | 'orange' | 'red' | 'gray' }> = {
+export const PRODUCT_STATUS_MAP: Record<ProductStatus, { label: string; variant: 'green' | 'orange' | 'red' | 'gray' | 'blue' | 'yellow' }> = {
+  PENDING:  { label: '검수중', variant: 'yellow' },
   ACTIVE:   { label: '판매중', variant: 'green' },
-  SOLDOUT:  { label: '품절',   variant: 'red' },
+  SOLDOUT:  { label: '품절',   variant: 'orange' },
   INACTIVE: { label: '숨김',   variant: 'gray' },
+  REJECTED: { label: '반려됨', variant: 'red' },
 };
 
 /** 상품 카테고리 목록 */

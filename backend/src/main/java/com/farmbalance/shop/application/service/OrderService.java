@@ -81,7 +81,7 @@ public class OrderService implements OrderUseCase {
         Order order = new Order(
                 null, buyerId, orderNumber, totalAmount, OrderStatus.ORDERED,
                 receiverName, receiverPhone, shippingAddress, shippingMemo,
-                orderItems, LocalDateTime.now(), null
+                null, null, orderItems, LocalDateTime.now(), null
         );
 
         return orderRepository.save(order);
@@ -111,6 +111,28 @@ public class OrderService implements OrderUseCase {
         Order saved = orderRepository.save(order);
 
         // 이메일 알림 발송 (비동기)
+        sendStatusEmail(saved, previousStatus);
+
+        return saved;
+    }
+
+    @Override
+    @Transactional
+    public Order shipOrder(Long sellerId, Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+        // 판매자 소유 주문인지 검증
+        validateSellerOwnership(sellerId, orderId);
+
+        // 더미 송장번호 생성 (FARM-XXXXXXXX)
+        String trackingNumber = "FARM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        OrderStatus previousStatus = order.getStatus();
+        order.ship(trackingNumber);
+        Order saved = orderRepository.save(order);
+
+        // 배송 시작 이메일 알림
         sendStatusEmail(saved, previousStatus);
 
         return saved;

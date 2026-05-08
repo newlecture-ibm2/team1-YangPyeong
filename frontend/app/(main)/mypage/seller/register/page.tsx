@@ -7,6 +7,7 @@ import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import ModalDialog from '@/components/common/Modal/ModalDialog';
 import { useModalDialog } from '@/components/common/Modal/useModalDialog';
+import { useToast } from '@/components/common/Toast/ToastContext';
 import { uploadFile } from '@/lib/upload.api';
 import { registerProduct, getCategories } from '@/app/(main)/shop/_lib/shop.api';
 import { useFarmBotContext } from '@/components/common/FarmBot/FarmBotContext';
@@ -29,8 +30,11 @@ export default function SellerRegisterPage() {
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isAiAutofilling, setIsAiAutofilling] = useState(false);
   const [isPriceRecommended, setIsPriceRecommended] = useState(false);
+  /** 유효성 경고를 사용자가 한번 건드린 필드에만 표시하기 위한 touched 상태 */
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const { showQuickMessage } = useFarmBotContext();
   const { dialog, showAlert, showConfirm, handleConfirm, handleClose } = useModalDialog();
+  const { success: showSuccess } = useToast();
 
   // DB에서 카테고리 목록 로드
   const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([]);
@@ -98,7 +102,7 @@ export default function SellerRegisterPage() {
 
   /** 폼 유효성 검사 */
   const isValid =
-    form.name.trim().length >= 2 &&
+    form.name.trim().length >= 1 &&
     form.name.length <= MAX_NAME &&
     Number(form.price) > 0 &&
     form.stock !== '' &&
@@ -106,6 +110,35 @@ export default function SellerRegisterPage() {
     form.categoryName !== '' &&
     form.description.trim().length >= 10 &&
     form.description.length <= MAX_DESC;
+
+  /** 필드별 유효성 메시지 */
+  const getFieldError = (field: string): string | null => {
+    if (!touched[field]) return null;
+    switch (field) {
+      case 'name':
+        if (form.name.trim().length < 1) return '상품명을 입력해주세요.';
+        return null;
+      case 'price':
+        if (form.price === '' || Number(form.price) <= 0) return '가격은 1원 이상 입력해주세요.';
+        return null;
+      case 'stock':
+        if (form.stock === '') return '재고 수량을 입력해주세요.';
+        return null;
+      case 'categoryName':
+        if (form.categoryName === '') return '카테고리를 선택해주세요.';
+        return null;
+      case 'description':
+        if (form.description.trim().length < 10) return '상품 설명을 최소 10자 이상 작성해주세요.';
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  /** 필드 blur 시 touched 상태 업데이트 */
+  const handleBlur = useCallback((field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  }, []);
 
   /** 상품 등록 */
   const handleSubmit = useCallback(async () => {
@@ -134,13 +167,15 @@ export default function SellerRegisterPage() {
         throw new Error(result.error?.message || '상품 등록에 실패했습니다.');
       }
 
+      // 검수 요청 완료 토스트 알림 (TODO: 추후 알림 시스템 연동 시 관리자에게 알림 발송 추가)
+      showSuccess('상품 등록이 완료되었습니다. 관리자 검수 후 장터에 노출됩니다.');
       router.push('/mypage/seller');
     } catch (err) {
       const message = err instanceof Error ? err.message : '상품 등록에 실패했습니다.';
       showAlert(message, '등록 오류');
       setIsSubmitting(false);
     }
-  }, [isValid, isSubmitting, form, images, router]);
+  }, [isValid, isSubmitting, form, images, router, showSuccess]);
 
   /** AI 상품 설명 자동 생성 */
   const handleAiDescription = useCallback(async () => {
@@ -203,10 +238,61 @@ export default function SellerRegisterPage() {
 
     setIsAiAutofilling(true);
     try {
+      // Phase 7: 내 농장 재배 이력 조회 → farmContext 구성
+      let farmContext: Record<string, unknown> | null = null;
+      let usedFarmData = false;
+
+      try {
+        // 1) 내 농장 목록 조회
+        const farmsRes = await fetch('/api/farm');
+        const farmsData = await farmsRes.json();
+
+        if (farmsData.success && farmsData.data?.length > 0) {
+          const farmSummary = farmsData.data[0]; // 첫 번째 농장 사용
+
+          // 2) 농장 상세 정보 조회 (토양 정보 포함)
+          const detailRes = await fetch(`/api/farm/${farmSummary.id}`);
+          const detailData = await detailRes.json();
+
+          // 3) 재배 등록 목록 조회
+          const cultivationsRes = await fetch(`/api/farm/${farmSummary.id}/cultivations`);
+          const cultivationsData = await cultivationsRes.json();
+
+          if (cultivationsData.success && cultivationsData.data?.length > 0) {
+            // 상품명과 가장 관련 있는 재배 이력 찾기
+            const productKeyword = form.name.trim().split(' ')[0]; // 첫 단어로 매칭
+            const matched = cultivationsData.data.find(
+              (c: { cropName: string }) =>
+                form.name.includes(c.cropName) || c.cropName.includes(productKeyword),
+            );
+
+            if (matched) {
+              const farmDetail = detailData.success ? detailData.data : {};
+              farmContext = {
+                farmName: farmSummary.name,
+                address: farmDetail.address || '',
+                soilType: farmDetail.soilType || null,
+                organicMatter: farmDetail.organicMatter || null,
+                cropName: matched.cropName,
+                cultivationArea: matched.cultivationArea || null,
+                harvestRecords: [], // 수확 이력은 추후 확장
+              };
+              usedFarmData = true;
+            }
+          }
+        }
+      } catch {
+        // 농장 조회 실패 시 무시하고 기존 추론 모드로 진행
+      }
+
+      // AI 자동 채우기 호출 (farmContext 포함)
       const res = await fetch('/api/ai/product-assist/autofill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productName: form.name.trim() }),
+        body: JSON.stringify({
+          productName: form.name.trim(),
+          farmContext,
+        }),
       });
       const data = await res.json();
 
@@ -245,9 +331,11 @@ export default function SellerRegisterPage() {
 
       setIsPriceRecommended(true);
 
-      // 가이드봇 안내 메시지
+      // 가이드봇 안내 메시지 — 재배 이력 사용 여부에 따라 분기
       showQuickMessage(
-        'AI가 상품 정보를 채워넣었어요! 🌱\n가격이나 재고는 원하시는 대로\n수정하실 수 있습니다 😊',
+        usedFarmData
+          ? '🌱 내 농장의 재배 이력을 바탕으로\nAI가 상품 정보를 채워넣었어요!\n가격이나 재고는 수정 가능합니다 😊'
+          : 'AI가 상품 정보를 채워넣었어요! 🌱\n가격이나 재고는 원하시는 대로\n수정하실 수 있습니다 😊',
         5000,
       );
     } catch (err) {
@@ -256,7 +344,7 @@ export default function SellerRegisterPage() {
     } finally {
       setIsAiAutofilling(false);
     }
-  }, [form.name, form.price, form.stock, form.categoryName, form.description, showQuickMessage]);
+  }, [form.name, form.price, form.stock, form.categoryName, form.description, showQuickMessage, categoryOptions]);
 
 
 
@@ -328,8 +416,14 @@ export default function SellerRegisterPage() {
               onChange={(e) => {
                 if (e.target.value.length <= MAX_NAME) updateField('name', e.target.value);
               }}
+              onBlur={() => handleBlur('name')}
               required
             />
+            {getFieldError('name') && (
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-danger)', marginTop: '-8px', marginBottom: '8px', marginLeft: '4px' }}>
+                ⚠️ {getFieldError('name')}
+              </div>
+            )}
             <span className={styles.charCount}>
               {form.name.length}/{MAX_NAME}
             </span>
@@ -345,8 +439,14 @@ export default function SellerRegisterPage() {
                   handleNumberInput('price', e.target.value);
                   setIsPriceRecommended(false);
                 }}
+                onBlur={() => handleBlur('price')}
                 required
               />
+              {getFieldError('price') && (
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-danger)', marginTop: '-8px', marginBottom: '8px', marginLeft: '4px' }}>
+                  ⚠️ {getFieldError('price')}
+                </div>
+              )}
               {isPriceRecommended && (
                 <div style={{ fontSize: '0.875rem', color: 'var(--color-primary)', marginTop: '-12px', marginBottom: '20px', marginLeft: '4px' }}>
                   💡 AI 추천 시세가 적용되었습니다. (수정 가능)
@@ -359,8 +459,14 @@ export default function SellerRegisterPage() {
                 placeholder="예: 50"
                 value={form.stock}
                 onChange={(e) => handleNumberInput('stock', e.target.value)}
+                onBlur={() => handleBlur('stock')}
                 required
               />
+              {getFieldError('stock') && (
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-danger)', marginTop: '-8px', marginBottom: '8px', marginLeft: '4px' }}>
+                  ⚠️ {getFieldError('stock')}
+                </div>
+              )}
               {form.stock === '0' && (
                 <div style={{ fontSize: '0.875rem', color: 'var(--color-orange)', marginTop: '-12px', marginBottom: '20px', marginLeft: '4px' }}>
                   ⚠️ 재고 0개: 품절 상태로 등록됩니다.
@@ -376,10 +482,15 @@ export default function SellerRegisterPage() {
             <Dropdown
               options={categoryOptions}
               value={form.categoryName}
-              onChange={(val) => updateField('categoryName', val)}
+              onChange={(val) => { updateField('categoryName', val); setTouched((prev) => ({ ...prev, categoryName: true })); }}
               placeholder="카테고리를 선택하세요"
               fullWidth
             />
+            {getFieldError('categoryName') && (
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-danger)', marginTop: '4px', marginLeft: '4px' }}>
+                ⚠️ {getFieldError('categoryName')}
+              </div>
+            )}
           </div>
 
           <div>
@@ -411,8 +522,14 @@ export default function SellerRegisterPage() {
               onChange={(e) => {
                 if (e.target.value.length <= MAX_DESC) updateField('description', e.target.value);
               }}
+              onBlur={() => handleBlur('description')}
               required
             />
+            {getFieldError('description') && (
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-danger)', marginTop: '-8px', marginBottom: '8px', marginLeft: '4px' }}>
+                ⚠️ {getFieldError('description')}
+              </div>
+            )}
             <span className={`${styles.charCount} ${form.description.length >= MAX_DESC ? styles.charCountOver : ''}`}>
               {form.description.length}/{MAX_DESC}
             </span>

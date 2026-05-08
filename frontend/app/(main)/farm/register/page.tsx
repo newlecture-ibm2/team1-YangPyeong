@@ -221,6 +221,14 @@ export default function FarmRegisterPage() {
       return;
     }
 
+    const totalFarmArea = Number(String(formData.area).replace(/,/g, ''));
+    const totalCultivationArea = formData.cultivations.reduce((sum, c) => sum + (Number(c.area) || 0), 0);
+    
+    if (totalCultivationArea > totalFarmArea) {
+      toast.error(`작물 재배 면적의 합계(${totalCultivationArea}㎡)가 농장 전체 면적(${totalFarmArea}㎡)을 초과할 수 없습니다.`);
+      return;
+    }
+
     // 백엔드 API로 전송 (좌표는 프론트엔드 카카오 Maps JS SDK에서 변환)
     const payload = {
       name: formData.name,

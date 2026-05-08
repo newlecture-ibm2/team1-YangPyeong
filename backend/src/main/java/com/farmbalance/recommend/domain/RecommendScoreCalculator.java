@@ -78,8 +78,7 @@ public class RecommendScoreCalculator {
     public int calculateSoilFitness(Double farmPh, Double farmOrganicMatter, String farmSoilType,
                                     double cropOptimalPhMin, double cropOptimalPhMax,
                                     double cropOptimalOm, String... cropPreferredSoilTypes) {
-
-        int phScore = 60; // 데이터 없을 시 중립값
+        int phScore = 40; // 데이터 없을 시 패널티 부여 (기본값 하향)
         if (farmPh != null) {
             if (farmPh >= cropOptimalPhMin && farmPh <= cropOptimalPhMax) {
                 phScore = 100;
@@ -91,8 +90,7 @@ public class RecommendScoreCalculator {
                 phScore = Math.max(0, 100 - (int)(deviation * 20));
             }
         }
-
-        int omScore = 60; // 데이터 없을 시 중립값
+        int omScore = 40; // 데이터 없을 시 패널티 부여 (기본값 하향)
         if (farmOrganicMatter != null && cropOptimalOm > 0) {
             double ratio = farmOrganicMatter / cropOptimalOm;
             if (ratio >= 0.8 && ratio <= 1.3) {
@@ -101,9 +99,8 @@ public class RecommendScoreCalculator {
                 omScore = Math.max(0, 100 - (int)(Math.abs(ratio - 1.0) * 80));
             }
         }
-
-        int soilTypeScore = 50; // 기본값
-        if (farmSoilType != null && cropPreferredSoilTypes.length > 0) {
+        int soilTypeScore = 40; // 데이터 없을 시 패널티 부여 (기본값 하향)
+        if (farmSoilType != null && cropPreferredSoilTypes != null && cropPreferredSoilTypes.length > 0) {
             for (String preferred : cropPreferredSoilTypes) {
                 if (farmSoilType.contains(preferred) || preferred.contains(farmSoilType)) {
                     soilTypeScore = 100;
@@ -120,6 +117,9 @@ public class RecommendScoreCalculator {
      * 수급 상태로부터 수급 안정성 퍼센트 산출
      */
     public int calculateSupplyStability(SupplyStatus status) {
+        if (status == null) {
+            return 50; // 상태 정보가 없을 경우 기본 중립값
+        }
         switch (status) {
             case BALANCED:       return 95;
             case SHORT_CAUTION:  return 75;

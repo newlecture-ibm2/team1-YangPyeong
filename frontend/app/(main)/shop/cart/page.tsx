@@ -6,6 +6,7 @@ import { useToast } from '@/components';
 import {
   FREE_SHIPPING_THRESHOLD,
   DEFAULT_DELIVERY_FEE,
+  DEFAULT_PRODUCT_IMAGE,
 } from '@/lib/constants';
 import { useCart } from './useCart';
 import styles from './page.module.css';
@@ -150,7 +151,7 @@ export default function CartPage() {
                   {/* 상품 이미지 */}
                   <Link href={`/shop/${item.productId}`}>
                     <img
-                      src={item.product.imageUrls[0]}
+                      src={item.product.imageUrls[0] || DEFAULT_PRODUCT_IMAGE}
                       alt={item.product.name}
                       className={styles.itemImage}
                     />

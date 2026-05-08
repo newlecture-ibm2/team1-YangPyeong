@@ -27,4 +27,10 @@ public interface ProductRepository {
 
     /** 상품 삭제 (soft delete) */
     void softDelete(Long id);
+
+    /** 전체 상품 목록 조회 — 관리자용 (삭제되지 않은 전체, 필터 없음) */
+    List<Product> findAllProducts();
+
+    /** 상품 상태 변경 — 관리자용 (ACTIVE / INACTIVE / REJECTED 등) */
+    void updateStatus(Long id, String status);
 }

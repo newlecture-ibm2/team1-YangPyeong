@@ -9,7 +9,7 @@ export async function PATCH(
   try {
     const { id } = await params
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admins/policy/${id}`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/policy/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

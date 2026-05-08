@@ -57,7 +57,7 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
         Product product = new Product(
                 null, sellerId, null, null, categoryName,
                 name, price, stock, description, 0,
-                ProductStatus.ACTIVE, imageUrls, LocalDateTime.now()
+                ProductStatus.PENDING, imageUrls, LocalDateTime.now()
         );
 
         Product saved = productRepository.save(product);
@@ -84,6 +84,9 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
 
         product.update(name, price, stock, description, null, categoryName);
 
+        // 상품 내용 수정 시 재검수를 위해 PENDING 상태로 전환
+        product.changeStatus(ProductStatus.PENDING);
+
         // 이미지 교체: 기존 삭제 후 재등록
         uploadRepository.deleteByEntity("PRODUCT", productId);
         if (imageUrls != null && !imageUrls.isEmpty()) {
@@ -91,6 +94,27 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
         }
 
         return productRepository.save(product);
+    }
+
+    @Override
+    @Transactional
+    public Product changeProductStatus(Long sellerId, Long productId, String newStatus) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        if (!product.getSellerId().equals(sellerId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        try {
+            ProductStatus status = ProductStatus.valueOf(newStatus.toUpperCase());
+            // Product 도메인 엔티티의 상태 변경 로직 (Setter가 없으므로 update 메서드 혹은 별도 메서드 사용)
+            // 여기서는 Product 에 별도로 changeStatus() 메서드를 만들어야 함
+            product.changeStatus(status);
+            return productRepository.save(product);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+        }
     }
 
     @Override

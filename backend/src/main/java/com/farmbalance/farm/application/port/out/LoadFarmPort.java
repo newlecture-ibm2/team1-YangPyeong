@@ -11,6 +11,7 @@ public interface LoadFarmPort {
     List<Farm> loadAllFarms();
     List<CultivationRegistration> loadCultivationsByFarmId(Long farmId);
     Optional<CultivationRegistration> loadCultivationById(Long id);
+    List<Farm> loadFarmsByStatus(String status);
 
     /**
      * 비관적 락을 적용한 농장 조회 (면적 검증 시 동시성 제어용)

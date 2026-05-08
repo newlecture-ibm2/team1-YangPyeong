@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Badge, Button } from '@/components';
+import { DEFAULT_PRODUCT_IMAGE } from '@/lib/constants';
 import type { Product } from './_lib/shop.types';
 import styles from './ProductCard.module.css';
 
@@ -30,17 +31,13 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
       <div className={styles.card}>
         {/* 상품 이미지 */}
         <div className={styles.imageWrapper}>
-          {product.imageUrls[0] ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={product.imageUrls[0]}
-              alt={product.name}
-              className={styles.image}
-            />
-          ) : (
-            <div className={styles.imagePlaceholder}>🖼️</div>
-          )}
-          {product.stock <= 0 && (
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={product.imageUrls[0] || DEFAULT_PRODUCT_IMAGE}
+            alt={product.name}
+            className={styles.image}
+          />
+          {(product.status === 'SOLDOUT' || product.stock <= 0) && (
             <div className={styles.soldOutOverlay}>
               <span className={styles.soldOutText}>품절</span>
             </div>
@@ -56,7 +53,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           <p className={styles.seller}>{product.sellerName}</p>
           <div className={styles.bottom}>
             <strong className={styles.price}>
-              {product.stock <= 0 ? (
+              {(product.status === 'SOLDOUT' || product.stock <= 0) ? (
                 <span className={styles.soldOutPrice}>품절</span>
               ) : (
                 <>₩{formattedPrice}</>
@@ -69,7 +66,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
                 size="sm"
                 className={styles.cartBtn}
                 onClick={handleCartClick}
-                disabled={product.stock <= 0}
+                disabled={product.status === 'SOLDOUT' || product.stock <= 0}
               >
                 🛒
               </Button>

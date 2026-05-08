@@ -20,18 +20,22 @@ export default function SessionManager() {
 
   const handleLogout = useCallback(async () => {
     try {
+      // 1. 서버 세션 종료 시도 (실패해도 무시하고 진행)
       await apiFetch('/api/auth/logout', { method: 'POST' });
-      // 쿠키 삭제 (클라이언트 사이드에서도 시도)
+    } catch (error) {
+      console.error('Auto logout API failed', error);
+    } finally {
+      // 2. 클라이언트 쿠키 강제 삭제
       document.cookie = 'fb-user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      
+      // 3. 인증 상태 변경 이벤트 발생 (Header 등 UI 갱신용)
+      window.dispatchEvent(new Event('auth-changed'));
       
       showAlert('30분 동안 활동이 없어 자동 로그아웃 되었습니다.', '자동 로그아웃');
       router.push('/login');
       router.refresh();
-    } catch (error) {
-      console.error('Auto logout failed', error);
-      window.location.href = '/login';
     }
-  }, [router]);
+  }, [router, showAlert]);
 
   const resetTimer = useCallback(() => {
     if (timeoutRef.current) {

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/constants'
 
-/** GET /api/admin/rag/documents → 백엔드 프록시 */
+/** GET /api/admin/rag/documents 백엔드 프록시 */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const categoryId = searchParams.get('categoryId')
     const query = categoryId ? `?categoryId=${categoryId}` : ''
-    const res = await fetch(`${BACKEND_URL}/api/admins/rag/documents${query}`)
+    const res = await fetch(`${BACKEND_URL}/api/admin/rag/documents${query}`)
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
@@ -19,15 +19,15 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** POST /api/admin/rag/documents → 백엔드 프록시 (JSON 또는 multipart/form-data) */
+/** POST /api/admin/rag/documents 백엔드 프록시(JSON 또는 multipart/form-data) */
 export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get('content-type') || ''
 
-    // 파일 업로드 (multipart/form-data)
+    // 파일 업로드(multipart/form-data)
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData()
-      const res = await fetch(`${BACKEND_URL}/api/admins/rag/documents/upload`, {
+      const res = await fetch(`${BACKEND_URL}/api/admin/rag/documents/upload`, {
         method: 'POST',
         body: formData,
       })
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     // 텍스트 문서 (JSON)
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admins/rag/documents`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/rag/documents`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
