@@ -33,7 +33,19 @@ export function useMyFarms() {
     fetchFarms();
   }, [fetchFarms]);
 
-  return { farms, isLoading, refetch: fetchFarms };
+  const removeFarm = async (id: number) => {
+    try {
+      await deleteFarm(id);
+      toast.success('농장이 삭제되었습니다.');
+      await fetchFarms();
+      return true;
+    } catch (err: any) {
+      toast.error(err.message || '농장 삭제에 실패했습니다.');
+      return false;
+    }
+  };
+
+  return { farms, isLoading, refetch: fetchFarms, removeFarm };
 }
 
 /**

@@ -128,20 +128,10 @@ public class CultivationService implements RegisterCultivationUseCase, UpdateCul
             currentUsedArea = loadFarmPort.sumActiveAreaByFarmId(farmId);
         }
 
-        // 3. BigDecimal로 변환하여 정밀 계산
-        BigDecimal totalArea = BigDecimal.valueOf(farm.getArea());
-        BigDecimal usedArea = BigDecimal.valueOf(currentUsedArea);
-        BigDecimal newArea = BigDecimal.valueOf(requestedArea);
-        BigDecimal totalAfterAdd = usedArea.add(newArea);
-
-        // 4. 초과 여부 검증
-        if (totalAfterAdd.compareTo(totalArea) > 0) {
-            BigDecimal availableArea = totalArea.subtract(usedArea);
-            throw new BusinessException(
-                    ErrorCode.FARM_AREA_EXCEEDED,
-                    String.format("가용 면적이 부족합니다. (남은 면적: %.2f㎡, 요청 면적: %.2f㎡)",
-                            availableArea.doubleValue(), requestedArea)
-            );
-        }
+        // 3. 도메인 엔티티에 검증 위임 (운영 상태 및 면적 통합 검증)
+        farm.validateCultivationArea(
+                BigDecimal.valueOf(requestedArea),
+                BigDecimal.valueOf(currentUsedArea != null ? currentUsedArea : 0.0)
+        );
     }
 }
