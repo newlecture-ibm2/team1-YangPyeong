@@ -12,10 +12,10 @@ import java.util.List;
 
 /**
  * RAG 카테고리 관리 Controller (Driving Adapter)
- * API URL: /api/admins/rag/categories
+ * API URL: /api/admin/rag/categories
  */
 @RestController
-@RequestMapping("/api/admins/rag/categories")
+@RequestMapping("/api/admin/rag/categories")
 @RequiredArgsConstructor
 public class AdminRagCategoryController {
 

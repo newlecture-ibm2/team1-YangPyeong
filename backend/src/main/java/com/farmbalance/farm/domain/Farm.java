@@ -18,12 +18,14 @@ public class Farm {
     private String pnuCode;
     private Double latitude;   // 위도
     private Double longitude;  // 경도
-    private String registrationNumber; // 농업경영체 등록번호
-    private String documentUrl; // 증빙 서류 이미지 경로
+    private List<FarmDocument> documents; // 제출 서류 목록
+    private FarmDocumentData documentData; // 서류에서 추출한 데이터
     private String soilType;
     private Double ph;
     private Double organicMatter;
     private CertificationStatus certificationStatus; // 인증 상태
+    private String rejectReason; // 반려 사유
+    private java.time.LocalDateTime createdAt; // 생성일시
     private FarmStatus status; // 운영 상태 (OPERATING, FALLOW, CLOSED)
 
     public void updateCertificationStatus(CertificationStatus status) {
@@ -32,7 +34,7 @@ public class Farm {
 
     public void updateInfo(String name, String address, Double area, List<Long> cropIds,
                            String bjdCode, String pnuCode, Double latitude, Double longitude, 
-                           String registrationNumber, String documentUrl,
+                           List<FarmDocument> documents, FarmDocumentData documentData,
                            String soilType, Double ph, Double organicMatter) {
         this.name = name;
         this.address = address;
@@ -42,8 +44,8 @@ public class Farm {
         this.pnuCode = pnuCode;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.registrationNumber = registrationNumber;
-        this.documentUrl = documentUrl;
+        this.documents = documents;
+        this.documentData = documentData;
         this.soilType = soilType;
         this.ph = ph;
         this.organicMatter = organicMatter;

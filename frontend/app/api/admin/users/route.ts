@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/constants'
 
-/** GET /api/admin/users → 백엔드 프록시 */
+/** GET /api/admin/users 백엔드 프록시 */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const res = await fetch(`${BACKEND_URL}/api/admins/users?${searchParams.toString()}`)
+    const res = await fetch(`${BACKEND_URL}/api/admin/users?${searchParams.toString()}`)
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {

@@ -16,8 +16,7 @@ public class UpdateFarmCommand {
     private boolean isMountain;
     private String mainNo;
     private String subNo;
-    private String registrationNumber;
-    private String documentUrl;
+    private List<com.farmbalance.farm.domain.FarmDocument> documents;
     private String soilType;
     private Double ph;
     private Double organicMatter;

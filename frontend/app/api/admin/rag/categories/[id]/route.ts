@@ -10,7 +10,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admins/rag/categories/${id}`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/rag/categories/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -30,7 +30,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-    const res = await fetch(`${BACKEND_URL}/api/admins/rag/categories/${id}`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/rag/categories/${id}`, {
       method: 'DELETE',
     })
     const data = await res.json()

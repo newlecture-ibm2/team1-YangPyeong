@@ -48,4 +48,7 @@ public interface ProductJpaRepository extends JpaRepository<ProductJpaEntity, Lo
             AND (:keyword IS NULL OR :keyword = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
             """)
     long countActiveProducts(@Param("category") String category, @Param("keyword") String keyword);
+
+    /** 전체 상품 목록 (관리자용 — 삭제되지 않은 전체 상품) */
+    List<ProductJpaEntity> findByDeletedAtIsNullOrderByCreatedAtDesc();
 }

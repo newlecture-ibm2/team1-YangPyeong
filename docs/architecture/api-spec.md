@@ -102,19 +102,19 @@
 | GOV-005 | `POST` | `/api/govs/notice` | 🏛️ | 농가 대상 권고 발송 |
 | GOV-006 | `GET` | `/api/gov/download` | 🏛️ | 지자체 데이터 다운로드 (엑셀/CSV) |
 | GOV-006 | `GET` | `/api/gov/download/history` | 🏛️ | 데이터 다운로드 이력 최근 조회 |
-| ADM-011 | `GET` | `/api/admins/dashboard` | ⚙️ | 관리자 전체 통계 |
-| ADM-001 | `GET` | `/api/admins/user` | ⚙️ | 전체 사용자 관리 |
-| ADM-001 | `PATCH` | `/api/admins/user/{id}` | ⚙️ | 사용자 역할/상태 변경 |
-| ADM-002 | `PATCH` | `/api/admins/approval` | ⚙️ | 농부 승인 처리 |
-| ADM-003 | `GET` | `/api/admins/crop` | ⚙️ | 작물 마스터 조회 |
-| ADM-003 | `POST` | `/api/admins/crop` | ⚙️ | 작물 마스터 등록 |
-| ADM-003 | `PATCH` | `/api/admins/crop/{id}` | ⚙️ | 작물 정보 수정 |
+| ADM-011 | `GET` | `/api/admin/dashboard` | ⚙️ | 관리자 전체 통계 |
+| ADM-001 | `GET` | `/api/admin/user` | ⚙️ | 전체 사용자 관리 |
+| ADM-001 | `PATCH` | `/api/admin/user/{id}` | ⚙️ | 사용자 역할/상태 변경 |
+| ADM-002 | `PATCH` | `/api/admin/approval` | ⚙️ | 농부 승인 처리 |
+| ADM-003 | `GET` | `/api/admin/crop` | ⚙️ | 작물 마스터 조회 |
+| ADM-003 | `POST` | `/api/admin/crop` | ⚙️ | 작물 마스터 등록 |
+| ADM-003 | `PATCH` | `/api/admin/crop/{id}` | ⚙️ | 작물 정보 수정 |
 | ADM-012 | `POST` | `/api/admin/policies/sync` | ⚙️ | 정책 동기화 (Gov24 API + AI 분석) — POL-003 참조 |
-| ADM-010 | `GET/POST` | `/api/admins/store` | ⚙️ | 가게 데이터 조회/등록 |
-| ADM-005 | `PATCH` | `/api/admins/engine` | ⚙️ | 수급 엔진 설정 변경 |
-| ADM-009 | `PATCH` | `/api/admins/shop` | ⚙️ | 상점 상품 승인/관리 |
-| ADM-004 | `PATCH` | `/api/admins/data` | ⚙️ | 외부 API 동기화 설정 |
-| ADM-006 | `GET` | `/api/admins/health` | ⚙️ | 시스템 헬스 모니터링 |
+| ADM-010 | `GET/POST` | `/api/admin/store` | ⚙️ | 가게 데이터 조회/등록 |
+| ADM-005 | `PATCH` | `/api/admin/engine` | ⚙️ | 수급 엔진 설정 변경 |
+| ADM-009 | `PATCH` | `/api/admin/shop` | ⚙️ | 상점 상품 승인/관리 |
+| ADM-004 | `PATCH` | `/api/admin/data` | ⚙️ | 외부 API 동기화 설정 |
+| ADM-006 | `GET` | `/api/admin/health` | ⚙️ | 시스템 헬스 모니터링 |
 
 ---
 

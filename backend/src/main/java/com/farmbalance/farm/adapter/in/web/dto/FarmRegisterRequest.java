@@ -50,9 +50,7 @@ public class FarmRegisterRequest {
     @Pattern(regexp = "^[0-9]{1,4}$", message = "지번(뒷자리)은 1~4자리 숫자여야 합니다.")
     private String subNo;       // 지번(부번)
     
-    private String registrationNumber; // 농업경영체 등록번호
-    
-    private String documentUrl; // 증빙 서류 경로
+    private List<FarmDocumentDto> documents; // 제출 서류 목록
 
     private String soilType;
     private Double ph;
