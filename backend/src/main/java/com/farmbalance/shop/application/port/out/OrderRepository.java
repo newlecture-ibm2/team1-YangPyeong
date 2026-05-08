@@ -21,4 +21,7 @@ public interface OrderRepository {
 
     /** 판매자가 받은 주문 목록 */
     List<Order> findBySellerId(Long sellerId);
+
+    /** 송장번호로 주문 조회 */
+    Optional<Order> findByTrackingNumber(String trackingNumber);
 }

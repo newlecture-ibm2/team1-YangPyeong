@@ -49,3 +49,4 @@ Thumbs.db
 
 # ===== Uploads (사용자 업로드 파일) =====
 /uploads/
+/backend/uploads/

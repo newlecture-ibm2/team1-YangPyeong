@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Button from '@/components/common/Button/Button';
 import Badge from '@/components/common/Badge/Badge';
+import Dropdown from '@/components/common/Dropdown/Dropdown';
 import Modal from '@/components/common/Modal/Modal';
 import Spinner from '@/components/common/Spinner/Spinner';
 import { PRODUCT_STATUS_MAP } from '../_lib/mypage.types';
@@ -15,15 +16,19 @@ export default function SellerProductsPage() {
   const router = useRouter();
   const {
     products,
+    allProducts,
     stats,
+    filterTab,
+    setFilterTab,
     deleteTarget,
     handleDelete,
     confirmDelete,
     cancelDelete,
+    handleStatusChange,
     loading: productsLoading,
   } = useSellerProducts();
 
-  const { insight, loading: insightLoading, refreshInsight } = useSellerInsight(products);
+  const { insight, loading: insightLoading, refreshInsight } = useSellerInsight(allProducts);
 
   /** 가격 포맷 */
   const formatPrice = (price: number) =>
@@ -34,21 +39,33 @@ export default function SellerProductsPage() {
       {/* 상단 요약 + 등록 버튼 */}
       <div className={styles.topBar}>
         <div className={styles.statsRow}>
-          <span className={styles.statItem}>
+          <button 
+            className={`${styles.statItem} ${filterTab === 'ALL' ? styles.statActiveTab : ''}`}
+            onClick={() => setFilterTab('ALL')}
+          >
             전체 <strong>{stats.total}</strong>
-          </span>
+          </button>
           <span className={styles.statDivider}>|</span>
-          <span className={styles.statItem}>
+          <button 
+            className={`${styles.statItem} ${filterTab === 'ACTIVE' ? styles.statActiveTab : ''}`}
+            onClick={() => setFilterTab('ACTIVE')}
+          >
             판매중 <strong className={styles.statActive}>{stats.active}</strong>
-          </span>
+          </button>
           <span className={styles.statDivider}>|</span>
-          <span className={styles.statItem}>
+          <button 
+            className={`${styles.statItem} ${filterTab === 'SOLDOUT' ? styles.statActiveTab : ''}`}
+            onClick={() => setFilterTab('SOLDOUT')}
+          >
             품절 <strong className={styles.statSoldout}>{stats.soldout}</strong>
-          </span>
+          </button>
           <span className={styles.statDivider}>|</span>
-          <span className={styles.statItem}>
+          <button 
+            className={`${styles.statItem} ${filterTab === 'INACTIVE' ? styles.statActiveTab : ''}`}
+            onClick={() => setFilterTab('INACTIVE')}
+          >
             숨김 <strong>{stats.inactive}</strong>
-          </span>
+          </button>
         </div>
         <Button
           variant="primary"
@@ -135,8 +152,18 @@ export default function SellerProductsPage() {
                       </span>
                     </td>
                     <td>{product.salesCount}개</td>
-                    <td>
-                      <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                    <td style={{ width: '100px' }}>
+                      <Dropdown
+                        size="sm"
+                        value={product.status}
+                        onChange={(val) => handleStatusChange(product.id, val as any)}
+                        options={[
+                          { value: 'ACTIVE', label: '판매중' },
+                          { value: 'SOLDOUT', label: '품절' },
+                          { value: 'INACTIVE', label: '숨김' }
+                        ]}
+                        style={{ width: '95px', minWidth: '95px' }}
+                      />
                     </td>
                     <td>
                       <div className={styles.actionBtns}>

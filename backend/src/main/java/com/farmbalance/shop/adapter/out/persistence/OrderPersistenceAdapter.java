@@ -36,7 +36,13 @@ public class OrderPersistenceAdapter implements OrderRepository {
         if (order.getId() != null) {
             // 수정 (상태 변경)
             entity = orderJpaRepository.findById(order.getId()).orElseThrow();
-            entity.updateStatus(order.getStatus().name());
+
+            // 발송 처리인 경우 (trackingNumber가 새로 설정되었으면)
+            if (order.getTrackingNumber() != null && entity.getTrackingNumber() == null) {
+                entity.ship(order.getTrackingNumber());
+            } else {
+                entity.updateStatus(order.getStatus().name());
+            }
         } else {
             // 신규 생성
             entity = OrderJpaEntity.builder()
@@ -88,6 +94,12 @@ public class OrderPersistenceAdapter implements OrderRepository {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Optional<Order> findByTrackingNumber(String trackingNumber) {
+        return orderJpaRepository.findByTrackingNumberAndDeletedAtIsNull(trackingNumber)
+                .map(this::toDomain);
+    }
+
     // ── 변환 ──
 
     private Order toDomain(OrderJpaEntity entity) {
@@ -100,6 +112,7 @@ public class OrderPersistenceAdapter implements OrderRepository {
                 entity.getTotalAmount(), OrderStatus.valueOf(entity.getStatus()),
                 entity.getReceiverName(), entity.getReceiverPhone(),
                 entity.getShippingAddress(), entity.getShippingMemo(),
+                entity.getTrackingNumber(), entity.getShippedAt(),
                 items, entity.getCreatedAt(), entity.getUpdatedAt()
         );
     }

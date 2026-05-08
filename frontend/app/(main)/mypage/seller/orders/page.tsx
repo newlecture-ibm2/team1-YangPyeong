@@ -10,9 +10,10 @@ import type { OrderStatus } from '../../_lib/mypage.types';
 import useSellerOrders from './useSellerOrders';
 import styles from './page.module.css';
 
-/** 다음 상태 전환 버튼 라벨 (판매자는 접수만 가능) */
+/** 다음 상태 전환 버튼 라벨 */
 const NEXT_ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
   ORDERED: '접수 확인',
+  ACCEPTED: '발송 완료',
 };
 
 /** 자동 배송완료 시간 (시간 단위, 백엔드와 동일) */

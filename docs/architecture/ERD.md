@@ -201,6 +201,8 @@ erDiagram
         varchar receiver_phone "연락처"
         varchar shipping_address
         varchar shipping_memo "배송 메모"
+        varchar tracking_number "송장번호"
+        timestamp shipped_at "발송 시각"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -837,6 +839,8 @@ erDiagram
 | receiver_phone | VARCHAR(20) | | 받는 분 연락처 |
 | shipping_address | VARCHAR(255) | | 배송 주소 |
 | shipping_memo | VARCHAR(200) | | 배송 메모 |
+| tracking_number | VARCHAR(30) | | 송장번호 (발송 시 자동 생성) |
+| shipped_at | TIMESTAMP | | 발송 시각 (배송중 전환 시점) |
 | created_at | TIMESTAMP | NOT NULL | 주문일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
