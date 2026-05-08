@@ -10,6 +10,8 @@ import com.farmbalance.community.application.port.out.PostPort;
 import com.farmbalance.community.domain.model.Post;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
+import com.farmbalance.global.report.domain.Report;
+import com.farmbalance.global.report.port.ReportPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,6 +30,7 @@ public class PostService implements CreatePostUseCase, LoadPostUseCase, UpdatePo
 
     private final PostPort postPort;
     private final LoadPostCategoryPort loadPostCategoryPort;
+    private final ReportPort reportPort;
 
     @Override
     public Post createPost(Long authorId, Long categoryId, String title, String content, boolean isNotice) {
@@ -95,8 +98,31 @@ public class PostService implements CreatePostUseCase, LoadPostUseCase, UpdatePo
 
     @Override
     public void reportPost(Long postId, Long userId, String reason) {
+        // 1. 게시글 존재 확인
+        Post post = postPort.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+
+        // 2. 자기 게시글 신고 차단
+        if (post.getAuthorId().equals(userId)) {
+            throw new BusinessException(ErrorCode.REPORT_OWN_CONTENT);
+        }
+
+        // 3. 중복 신고 차단
+        if (reportPort.existsByTargetAndReporter("POST", postId, userId)) {
+            throw new BusinessException(ErrorCode.REPORT_DUPLICATE);
+        }
+
+        // 4. 저장
+        Report report = Report.builder()
+                .targetType("POST")
+                .targetId(postId)
+                .reporterId(userId)
+                .reason(reason)
+                .status("PENDING")
+                .build();
+        reportPort.save(report);
+
         log.info("게시글 신고 접수 - postId: {}, userId: {}, reason: {}", postId, userId, reason);
-        // 실제 신고 저장 로직이 필요하다면 여기에 추가 (현재는 로그만 남김)
     }
 }
 

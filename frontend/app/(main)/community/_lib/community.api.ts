@@ -108,6 +108,16 @@ export async function createComment(postId: number, content: string) {
 }
 
 /**
+ * 댓글 수정
+ */
+export async function updateComment(commentId: number, content: string) {
+  return localApiFetch<Comment>(`/api/proxy/community/comments/${commentId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ content })
+  });
+}
+
+/**
  * 댓글 삭제
  */
 export async function deleteComment(commentId: number) {
@@ -135,8 +145,21 @@ export async function getCategories() {
 /**
  * 게시글 신고
  */
+/**
+ * 게시글 신고
+ */
 export async function reportPost(postId: number, reason: string) {
   return localApiFetch<void>(`/api/proxy/community/posts/${postId}/report`, {
+    method: 'POST',
+    body: JSON.stringify({ reason })
+  });
+}
+
+/**
+ * 댓글 신고
+ */
+export async function reportComment(commentId: number, reason: string) {
+  return localApiFetch<void>(`/api/proxy/community/comments/${commentId}/report`, {
     method: 'POST',
     body: JSON.stringify({ reason })
   });
