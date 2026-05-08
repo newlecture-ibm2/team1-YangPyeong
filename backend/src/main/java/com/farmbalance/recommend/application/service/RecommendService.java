@@ -6,6 +6,9 @@ import com.farmbalance.recommend.application.port.out.LoadCropCandidatePort;
 import com.farmbalance.recommend.application.port.out.LoadFarmForRecommendPort;
 import com.farmbalance.recommend.application.port.out.LoadFarmForRecommendPort.FarmBasicData;
 import com.farmbalance.recommend.application.port.out.LoadSupplyStatusPort;
+import com.farmbalance.recommend.application.port.out.LoadRecommendHistoryPort;
+import com.farmbalance.recommend.application.port.out.SaveRecommendHistoryPort;
+import com.farmbalance.recommend.application.port.in.GetRecommendHistoryUseCase;
 import com.farmbalance.recommend.domain.*;
 
 import lombok.RequiredArgsConstructor;
@@ -31,16 +34,19 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class RecommendService implements RecommendCropUseCase {
+public class RecommendService implements RecommendCropUseCase, GetRecommendHistoryUseCase {
 
     private final LoadFarmForRecommendPort loadFarmForRecommendPort;
     private final LoadCropCandidatePort loadCropCandidatePort;
     private final LoadSupplyStatusPort loadSupplyStatusPort;
+    private final SaveRecommendHistoryPort saveRecommendHistoryPort;
+    private final LoadRecommendHistoryPort loadRecommendHistoryPort;
 
     /** 점수 산출 엔진 (도메인 순수 객체, DI 불필요) */
     private final RecommendScoreCalculator calculator = new RecommendScoreCalculator();
 
     @Override
+    @Transactional
     public RecommendResult recommend(Long farmId) {
         // 1. 농장 정보 조회 (JDBC 직접 조회)
         FarmBasicData farm = loadFarmForRecommendPort.loadFarmBasic(farmId)
@@ -121,7 +127,7 @@ public class RecommendService implements RecommendCropUseCase {
                 recommendations.isEmpty() ? 0 : recommendations.get(0).getScore());
 
         // 5. 결과 조합
-        return RecommendResult.builder()
+        RecommendResult result = RecommendResult.builder()
                 .farmId(farm.getId())
                 .farmName(farm.getName())
                 .farmAddress(farm.getAddress())
@@ -132,6 +138,22 @@ public class RecommendService implements RecommendCropUseCase {
                 .recommendations(recommendations)
                 .generatedAt(LocalDateTime.now())
                 .build();
+                
+        // 6. 추천 결과 이력 저장
+        saveRecommendHistoryPort.save(result);
+        
+        return result;
+    }
+    
+    @Override
+    public List<RecommendResult> getHistory(Long farmId) {
+        return loadRecommendHistoryPort.loadByFarmId(farmId);
+    }
+
+    @Override
+    public RecommendResult getLatestHistory(Long farmId) {
+        return loadRecommendHistoryPort.loadLatestByFarmId(farmId)
+                .orElseThrow(() -> new IllegalArgumentException("추천 이력이 없습니다: " + farmId));
     }
 
     /** 카테고리 문자열 → enum 매핑 */
