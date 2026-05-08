@@ -30,5 +30,9 @@ CREATE TABLE recommend_history_item (
     growth_days INT,
     optimal_temp VARCHAR(100),
     sowing_period VARCHAR(100),
-    harvest_period VARCHAR(100)
+    harvest_period VARCHAR(100),
+    pests TEXT
 );
+
+CREATE INDEX idx_recommend_history_farm_generated
+    ON recommend_history(farm_id, generated_at DESC);
