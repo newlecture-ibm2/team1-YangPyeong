@@ -12,7 +12,7 @@ export interface ProductCategory {
 }
 
 /** 상품 상태 */
-export type ProductStatus = 'PENDING' | 'ACTIVE' | 'INACTIVE' | 'REJECTED';
+export type ProductStatus = 'PENDING' | 'ACTIVE' | 'INACTIVE' | 'REJECTED' | 'SOLDOUT';
 
 /** 상품 */
 export interface Product {
@@ -81,6 +81,8 @@ export interface Order {
   receiverPhone: string;
   shippingAddress: string;
   shippingMemo: string;
+  trackingNumber?: string;
+  shippedAt?: string;
   items: OrderItem[];
   createdAt: string;
   updatedAt: string;

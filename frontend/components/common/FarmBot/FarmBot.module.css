@@ -388,6 +388,16 @@
   transition: opacity 0.25s ease;
 }
 
+/* 말풍선과 캐릭터 사이 빈 공간을 투명 영역으로 연결 (hover 끊김 방지) */
+.footerWalkTooltip::before {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: -10px;
+  right: -10px;
+  height: 28px;
+}
+
 .footerWalkTooltip::after {
   content: '';
   position: absolute;

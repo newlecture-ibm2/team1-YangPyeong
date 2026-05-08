@@ -106,7 +106,7 @@ function CompleteContent() {
 
         {/* 버튼 영역 */}
         <div className={styles.actions}>
-          <Link href="/mypage/orders" className={styles.primaryBtn}>
+          <Link href="/mypage/history" className={styles.primaryBtn}>
             📋 주문내역 보기
           </Link>
           <Link href="/shop" className={styles.secondaryBtn}>
