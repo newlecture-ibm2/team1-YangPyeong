@@ -1,9 +1,9 @@
 package com.farmbalance.recommend.adapter.out.external;
 
 import com.farmbalance.recommend.application.port.out.RecommendAiPort;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -20,10 +20,13 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class AiServerRecommendAdapter implements RecommendAiPort {
 
     private final RestTemplate restTemplate;
+
+    public AiServerRecommendAdapter(RestTemplateBuilder builder) {
+        this.restTemplate = builder.build();
+    }
 
     @Value("${ai.server-url:http://localhost:8000}")
     private String aiServerUrl;
@@ -69,7 +72,15 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
                     return image.getOriginalFilename() != null ? image.getOriginalFilename() : "image.jpg";
                 }
             };
-            body.add("image", resource);
+            HttpHeaders imageHeaders = new HttpHeaders();
+            String mimeType = image.getContentType();
+            if (mimeType == null || mimeType.isEmpty()) {
+                mimeType = "image/jpeg";
+            }
+            imageHeaders.setContentType(MediaType.parseMediaType(mimeType));
+
+            HttpEntity<ByteArrayResource> imagePartEntity = new HttpEntity<>(resource, imageHeaders);
+            body.add("image", imagePartEntity);
         } catch (Exception e) {
             log.error("이미지 읽기 실패", e);
             throw new RuntimeException("이미지 진단 요청 준비 중 오류가 발생했습니다.");
