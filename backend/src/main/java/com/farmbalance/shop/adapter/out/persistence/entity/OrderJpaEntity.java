@@ -48,6 +48,12 @@ public class OrderJpaEntity extends BaseTimeEntity {
     @Column(name = "shipping_memo", length = 200)
     private String shippingMemo;
 
+    @Column(name = "tracking_number", length = 30)
+    private String trackingNumber;
+
+    @Column(name = "shipped_at")
+    private LocalDateTime shippedAt;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
@@ -70,6 +76,13 @@ public class OrderJpaEntity extends BaseTimeEntity {
 
     public void updateStatus(String status) {
         this.status = status;
+    }
+
+    /** 발송 처리: 상태를 SHIPPED로 변경하고 송장번호/발송시각 기록 */
+    public void ship(String trackingNumber) {
+        this.status = "SHIPPED";
+        this.trackingNumber = trackingNumber;
+        this.shippedAt = LocalDateTime.now();
     }
 
     public void addItem(OrderItemJpaEntity item) {

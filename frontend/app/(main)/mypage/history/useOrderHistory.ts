@@ -37,6 +37,8 @@ export default function useOrderHistory() {
           receiverPhone: o.receiverPhone,
           shippingAddress: o.shippingAddress,
           shippingMemo: o.shippingMemo,
+          trackingNumber: o.trackingNumber,
+          shippedAt: o.shippedAt,
           orderedAt: o.createdAt,
         }));
         setOrders(mapped);

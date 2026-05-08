@@ -37,7 +37,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
             alt={product.name}
             className={styles.image}
           />
-          {product.stock <= 0 && (
+          {(product.status === 'SOLDOUT' || product.stock <= 0) && (
             <div className={styles.soldOutOverlay}>
               <span className={styles.soldOutText}>품절</span>
             </div>
@@ -53,7 +53,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           <p className={styles.seller}>{product.sellerName}</p>
           <div className={styles.bottom}>
             <strong className={styles.price}>
-              {product.stock <= 0 ? (
+              {(product.status === 'SOLDOUT' || product.stock <= 0) ? (
                 <span className={styles.soldOutPrice}>품절</span>
               ) : (
                 <>₩{formattedPrice}</>
@@ -66,7 +66,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
                 size="sm"
                 className={styles.cartBtn}
                 onClick={handleCartClick}
-                disabled={product.stock <= 0}
+                disabled={product.status === 'SOLDOUT' || product.stock <= 0}
               >
                 🛒
               </Button>
