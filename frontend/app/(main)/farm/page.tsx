@@ -34,7 +34,7 @@ const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'li
 
 export default function FarmDashboardPage() {
   const toast = useToast();
-  const { farms, isLoading: isFarmsLoading } = useMyFarms();
+  const { farms, isLoading: isFarmsLoading, removeFarm: deleteSelectedFarm } = useMyFarms();
   const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
   // 농장 목록 뷰 여부 상태
   const [isListView, setIsListView] = useState(false);
@@ -52,7 +52,7 @@ export default function FarmDashboardPage() {
       .then(json => {
         if (json.success) setWeather(json.data);
       })
-      .catch(console.error);
+      .catch();
   }, []);
 
   // 작물 목록 조회
@@ -62,7 +62,7 @@ export default function FarmDashboardPage() {
       .then(json => {
         if (json.success) setCropOptions(json.data || []);
       })
-      .catch(console.error);
+      .catch();
   }, []);
   const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
@@ -113,15 +113,28 @@ export default function FarmDashboardPage() {
     setIsHistoryModalOpen(true);
   };
 
-  // 삭제 버튼 클릭 핸들러
+  // 농장 삭제 버튼 클릭 핸들러
+  const handleDeleteFarm = async (id: number, name: string) => {
+    try {
+      const confirmed = await showConfirm(`'${name}' 농장을 정말 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.`);
+      if (confirmed) {
+        await deleteSelectedFarm(id);
+      }
+    } catch (err) {
+      // 폴백으로 기본 confirm 사용
+      if (window.confirm(`'${name}' 농장을 정말 삭제하시겠습니까?`)) {
+        await deleteSelectedFarm(id);
+      }
+    }
+  };
+
+  // 이력 삭제 버튼 클릭 핸들러
   const handleDeleteHistory = async (id: number) => {
     const confirmed = await showConfirm('정말 삭제하시겠습니까?');
     if (confirmed) {
       await removeHistory(id);
     }
   };
-
-
   // 모달 닫기 핸들러
   const handleModalClose = () => {
     setIsHistoryModalOpen(false);
@@ -185,21 +198,59 @@ export default function FarmDashboardPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px', marginTop: '32px' }}>
           {farms.map((f, idx) => (
             <div
-              key={f.id}
-              onClick={() => { setSelectedFarmIdx(idx); setIsListView(false); }}
-              style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'all 0.2s', minHeight: '200px' }}
-              onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(16,185,129,0.1)'; }}
-              onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                <div>
-                  <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text)', marginBottom: '4px' }}>{f.name}</div>
-                  <div style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>{f.address}</div>
+                key={f.id}
+                onClick={() => { setSelectedFarmIdx(idx); setIsListView(false); }}
+                style={{ position: 'relative', background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'all 0.2s', minHeight: '200px' }}
+                onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(16,185,129,0.1)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+              >
+                {/* 삭제 버튼 (우측 상단 절대 배치) */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteFarm(f.id, f.name);
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: '#f1f5f9',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#64748b',
+                    fontSize: '14px',
+                    transition: 'all 0.2s',
+                    zIndex: 10
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = '#fee2e2';
+                    e.currentTarget.style.color = '#ef4444';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = '#f1f5f9';
+                    e.currentTarget.style.color = '#64748b';
+                  }}
+                  title="농장 삭제"
+                >
+                  ✕
+                </button>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                  <div style={{ paddingRight: '20px' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text)', marginBottom: '4px' }}>{f.name}</div>
+                    <div style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>{f.address}</div>
+                  </div>
+                  <Badge variant={f.certificationStatus === 'APPROVED' ? 'green' : 'orange'}>
+                    {f.certificationStatus === 'APPROVED' ? '승인됨' : '심사중'}
+                  </Badge>
                 </div>
-                <Badge variant={f.certificationStatus === 'APPROVED' ? 'green' : 'orange'}>
-                  {f.certificationStatus === 'APPROVED' ? '승인됨' : '심사중'}
-                </Badge>
-              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: 'auto', borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
                 <div style={{ background: 'var(--color-bg)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
                   <div style={{ fontSize: '12px', color: 'var(--color-text-light)', marginBottom: '4px' }}>재배 면적</div>
@@ -229,6 +280,12 @@ export default function FarmDashboardPage() {
             </div>
           </Link>
         </div>
+
+        <ModalDialog
+          {...dialog}
+          onConfirm={handleConfirm}
+          onClose={handleClose}
+        />
       </div>
     );
   }
@@ -408,9 +465,18 @@ export default function FarmDashboardPage() {
                   </Badge>
                 </dd>
               </dl>
-              <Link href={`/farm/${farm?.id}/edit`} style={{ display: 'block', marginTop: '24px' }}>
-                <Button variant="primary" style={{ width: '100%', justifyContent: 'center' }}>정보 수정</Button>
-              </Link>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <Link href={`/farm/${farm?.id}/edit`} style={{ flex: 2, textDecoration: 'none' }}>
+                  <Button variant="primary" style={{ width: '100%', justifyContent: 'center' }}>정보 수정</Button>
+                </Link>
+                <Button 
+                  variant="outline" 
+                  style={{ flex: 1, borderColor: '#ef4444', color: '#ef4444' }}
+                  onClick={() => farm && handleDeleteFarm(farm.id, farm.name)}
+                >
+                  삭제
+                </Button>
+              </div>
             </Card>
           </div>
         </>
@@ -499,9 +565,18 @@ export default function FarmDashboardPage() {
                     </Badge>
                   </dd>
                 </dl>
-                <Link href={`/farm/${farm?.id}/edit`} style={{ display: 'block', marginTop: '24px' }}>
-                  <Button variant="primary" style={{ width: '100%', justifyContent: 'center' }}>정보 수정</Button>
-                </Link>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                  <Link href={`/farm/${farm?.id}/edit`} style={{ flex: 2, textDecoration: 'none' }}>
+                    <Button variant="primary" style={{ width: '100%', justifyContent: 'center' }}>정보 수정</Button>
+                  </Link>
+                  <Button 
+                    variant="outline" 
+                    style={{ flex: 1, borderColor: '#ef4444', color: '#ef4444' }}
+                    onClick={() => farm && handleDeleteFarm(farm.id, farm.name)}
+                  >
+                    삭제
+                  </Button>
+                </div>
               </Card>
             </div>
           </div>
