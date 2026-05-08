@@ -106,7 +106,7 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
         detailAddress: '', 
         area: farm.area.toString(),
         pyeong: (farm.area / 3.3058).toFixed(1),
-        cropIds: farm.cropIds || [],
+        cropIds: Array.from(new Set(farm.cropIds || [])),
         operationStatus: 'active',
         documentUrl: farm.documentUrl || '',
         bjdCode: bjdCode,
@@ -286,7 +286,10 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
                   multiple
                   required
                   value={formData.cropIds.map(String).join(',')}
-                  onChange={(val) => handleChange('cropIds', val.split(',').filter(Boolean).map(Number))}
+                  onChange={(val) => {
+                    const uniqueIds = Array.from(new Set(val.split(',').filter(Boolean).map(Number)));
+                    handleChange('cropIds', uniqueIds);
+                  }}
                 />
                 {formData.cropIds.length > 0 && (
                   <div className={styles.tagList}>
