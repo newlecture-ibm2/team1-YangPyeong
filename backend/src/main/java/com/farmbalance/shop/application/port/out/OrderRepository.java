@@ -13,6 +13,9 @@ public interface OrderRepository {
     /** 주문 저장 */
     Order save(Order order);
 
+    /** 모든 주문 조회 (관리자용) */
+    List<Order> findAll();
+
     /** 주문 조회 */
     Optional<Order> findById(Long id);
 

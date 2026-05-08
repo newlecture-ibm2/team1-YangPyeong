@@ -16,6 +16,8 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, Long> 
 
     Optional<OrderJpaEntity> findByIdAndDeletedAtIsNull(Long id);
 
+    List<OrderJpaEntity> findAllByDeletedAtIsNullOrderByCreatedAtDesc();
+
     List<OrderJpaEntity> findByBuyerIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long buyerId);
 
     /** 판매자가 받은 주문: order_items에 해당 판매자의 상품이 포함된 주문 */
