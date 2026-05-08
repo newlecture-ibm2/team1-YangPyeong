@@ -11,7 +11,7 @@ export async function fetchOrders(): Promise<AdminOrder[]> {
 }
 
 export async function updateOrderStatus(orderId: number, status: OrderStatus): Promise<void> {
-  const res = await fetch(/api/admin/orders/, {
+  const res = await fetch(`/api/admin/orders/${orderId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status })
