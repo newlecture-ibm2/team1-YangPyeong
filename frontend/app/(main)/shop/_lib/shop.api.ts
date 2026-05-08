@@ -84,6 +84,13 @@ export async function getMyOrders() {
   return apiFetch<Order[]>('/api/shop/order');
 }
 
+/** 배송 조회 (더미 택배사) */
+export async function trackOrder(trackingNumber: string) {
+  return apiFetch<{ time: string; location: string; description: string; current: boolean }[]>(
+    `/api/shop/courier/track?trackingNumber=${trackingNumber}`
+  );
+}
+
 /* ── 판매자 ── */
 
 /** 판매자 상품 목록 */
@@ -123,10 +130,20 @@ export async function updateProduct(id: number, data: {
 
 /** 판매자 상품 삭제 */
 export async function deleteProduct(id: number) {
-  return apiFetch<null>(`/api/shop/seller/${id}`, {
+  return apiFetch<void>(`/api/shop/seller/${id}`, {
     method: 'DELETE',
   });
 }
+
+/** 판매자 상품 상태 단건 변경 (판매중/품절/숨김) */
+export async function changeProductStatus(id: number, status: string) {
+  return apiFetch<Product>(`/api/shop/seller/${id}/status`, {
+    method: 'PATCH',
+    body: { status },
+  });
+}
+
+/* ── 주문 ── */
 
 /** 판매자 주문 목록 */
 export async function getSellerOrders() {
@@ -134,7 +151,7 @@ export async function getSellerOrders() {
 }
 
 /** 판매자 주문 상태 변경 */
-export async function updateOrderStatus(orderId: number, action: 'advance' | 'cancel') {
+export async function updateOrderStatus(orderId: number, action: 'advance' | 'cancel' | 'ship') {
   return apiFetch<Order>(`/api/shop/seller/order/${orderId}`, {
     method: 'PATCH',
     body: { action },

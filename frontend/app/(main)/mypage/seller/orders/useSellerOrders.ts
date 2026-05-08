@@ -4,9 +4,10 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { SellerOrder, SellerOrderKpi, OrderStatus } from '../../_lib/mypage.types';
 import { getSellerOrders, updateOrderStatus } from '@/app/(main)/shop/_lib/shop.api';
 
-/** 주문 상태 전환 규칙 (판매자는 접수만 가능) */
+/** 주문 상태 전환 규칙 */
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   ORDERED: 'ACCEPTED',
+  ACCEPTED: 'SHIPPED',
 };
 
 /** useSellerOrders — 판매 주문 관리 훅 */
@@ -67,6 +68,10 @@ export default function useSellerOrders() {
 
   /** 주문 상태 다음 단계로 변경 */
   const advanceStatus = useCallback(async (orderId: number) => {
+    // 현재 상태 확인
+    const currentOrder = orders.find((o) => o.id === orderId);
+    const action = currentOrder?.status === 'ACCEPTED' ? 'ship' : 'advance';
+
     // 즉시 UI 반영
     setOrders((prev) =>
       prev.map((o) => {
@@ -76,8 +81,8 @@ export default function useSellerOrders() {
       })
     );
     // 백엔드 동기화
-    await updateOrderStatus(orderId, 'advance');
-  }, []);
+    await updateOrderStatus(orderId, action);
+  }, [orders]);
 
   /** 주문 거절(취소) */
   const handleCancelRequest = useCallback((order: SellerOrder) => {

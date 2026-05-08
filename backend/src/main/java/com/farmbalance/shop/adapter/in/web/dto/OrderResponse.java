@@ -18,6 +18,8 @@ public record OrderResponse(
         String receiverPhone,
         String shippingAddress,
         String shippingMemo,
+        String trackingNumber,
+        String shippedAt,
         List<OrderItemDto> items,
         String createdAt,
         String updatedAt
@@ -46,6 +48,8 @@ public record OrderResponse(
                 order.getTotalAmount(), order.getStatus().name(),
                 order.getReceiverName(), order.getReceiverPhone(),
                 order.getShippingAddress(), order.getShippingMemo(),
+                order.getTrackingNumber(),
+                order.getShippedAt() != null ? order.getShippedAt().toString() : null,
                 order.getItems() != null
                         ? order.getItems().stream().map(OrderItemDto::from).toList()
                         : List.of(),
