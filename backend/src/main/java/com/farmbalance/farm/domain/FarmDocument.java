@@ -1,10 +1,14 @@
 package com.farmbalance.farm.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FarmDocument {
     private String type; // LAND_CERT, BIZ_REG, FARM_REG, OTHER
     private String url;

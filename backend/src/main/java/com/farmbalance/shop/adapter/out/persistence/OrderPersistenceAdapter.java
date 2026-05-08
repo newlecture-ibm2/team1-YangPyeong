@@ -73,6 +73,14 @@ public class OrderPersistenceAdapter implements OrderRepository {
     }
 
     @Override
+    public List<Order> findAll() {
+        return orderJpaRepository.findAllByDeletedAtIsNullOrderByCreatedAtDesc()
+                .stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<Order> findByBuyerId(Long buyerId) {
         return orderJpaRepository.findByBuyerIdAndDeletedAtIsNullOrderByCreatedAtDesc(buyerId)
                 .stream()

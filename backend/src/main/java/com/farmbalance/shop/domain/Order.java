@@ -76,4 +76,9 @@ public class Order {
         }
         this.status = OrderStatus.CANCELLED;
     }
+
+    /** 관리자 등 강제 상태 변경 */
+    public void changeStatus(OrderStatus newStatus) {
+        this.status = newStatus;
+    }
 }
