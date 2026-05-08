@@ -9,8 +9,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 /**
  * Web 설정 — CORS + 업로드 파일 정적 서빙
  *
- * <p>업로드된 파일을 {@code /uploads/**} URL로 접근할 수 있도록
- * 정적 리소스 핸들러를 등록합니다.</p>
+ * <p>
+ * 업로드된 파일을 {@code /uploads/**} URL로 접근할 수 있도록
+ * 정적 리소스 핸들러를 등록합니다.
+ * </p>
  *
  * <pre>
  * 예: /uploads/abc-123.jpg → {file.upload.dir}/abc-123.jpg
@@ -28,8 +30,7 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                         "http://localhost:3000",
                         "http://localhost:3001",
-                        "https://farmbalance.kr"
-                )
+                        "https://farmbalance.kr")
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .exposedHeaders("Authorization")

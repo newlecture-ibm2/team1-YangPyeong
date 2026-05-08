@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import styles from './CommentSection.module.css';
 import Button from '@/components/common/Button';
-import { createComment, acceptComment } from '../_lib/community.api';
+import { createComment, acceptComment, updateComment, deleteComment } from '../_lib/community.api';
 import { apiFetch } from '@/lib/api-fetch';
 import { formatDate } from '../_lib/formatUtils';
+import ReportButton from './ReportButton';
 
 interface Comment {
   id: number;
@@ -33,6 +34,8 @@ export default function CommentSection({
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingContent, setEditingContent] = useState('');
 
   useEffect(() => {
     // 현재 사용자 ID 가져오기
@@ -70,6 +73,37 @@ export default function CommentSection({
     }
   };
 
+  const handleUpdate = async (commentId: number) => {
+    if (!editingContent.trim()) return;
+    try {
+      const res = await updateComment(commentId, editingContent);
+      if (res.success && res.data) {
+        setComments(comments.map(c => c.id === commentId ? res.data! : c));
+        setEditingId(null);
+      } else {
+        alert(res.error?.message || '댓글 수정에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('에러가 발생했습니다.');
+    }
+  };
+
+  const handleDelete = async (commentId: number) => {
+    if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
+    try {
+      const res = await deleteComment(commentId);
+      if (res.success) {
+        setComments(comments.filter(c => c.id !== commentId));
+      } else {
+        alert(res.error?.message || '댓글 삭제에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('에러가 발생했습니다.');
+    }
+  };
+
   const handleAccept = async (commentId: number) => {
     if (!window.confirm('이 답변을 채택하시겠습니까? 채택 후에는 변경할 수 없습니다.')) return;
 
@@ -103,18 +137,58 @@ export default function CommentSection({
               </div>
               <div className={styles.commentHeaderRight}>
                 <span className={styles.date}>{formatDate(comment.createdAt)}</span>
-                {isQA && isPostAuthor && !hasAccepted && !comment.accepted && comment.authorId !== currentUserId && (
-                  <button 
-                    className={styles.acceptBtn} 
-                    onClick={() => handleAccept(comment.id)}
-                    style={{ marginLeft: '1rem', color: '#10b981', fontWeight: 'bold', border: 'none', background: 'none', cursor: 'pointer' }}
-                  >
-                    채택하기
-                  </button>
-                )}
+                <div className={styles.actions}>
+                  {comment.authorId === currentUserId && !comment.accepted && (
+                    <>
+                      <button 
+                        className={styles.actionBtn} 
+                        onClick={() => {
+                          setEditingId(comment.id);
+                          setEditingContent(comment.content);
+                        }}
+                      >
+                        수정
+                      </button>
+                      <button 
+                        className={styles.actionBtn} 
+                        onClick={() => handleDelete(comment.id)}
+                      >
+                        삭제
+                      </button>
+                    </>
+                  ) : (
+                    <ReportButton 
+                      targetId={comment.id} 
+                      targetType="COMMENT" 
+                      className={styles.actionBtn}
+                    />
+                  )}
+                  {isQA && isPostAuthor && !hasAccepted && !comment.accepted && comment.authorId !== currentUserId && (
+                    <button 
+                      className={styles.acceptBtn} 
+                      onClick={() => handleAccept(comment.id)}
+                    >
+                      채택하기
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-            <p className={styles.content}>{comment.content}</p>
+            {editingId === comment.id ? (
+              <div className={styles.editForm}>
+                <textarea 
+                  className={styles.editTextarea}
+                  value={editingContent}
+                  onChange={(e) => setEditingContent(e.target.value)}
+                />
+                <div className={styles.editActions}>
+                  <button onClick={() => setEditingId(null)}>취소</button>
+                  <button onClick={() => handleUpdate(comment.id)} className={styles.saveBtn}>저장</button>
+                </div>
+              </div>
+            ) : (
+              <p className={styles.content}>{comment.content}</p>
+            )}
           </div>
         ))}
         {comments.length === 0 && (
