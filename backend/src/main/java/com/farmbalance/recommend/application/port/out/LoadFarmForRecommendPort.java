@@ -16,6 +16,11 @@ public interface LoadFarmForRecommendPort {
     Optional<FarmBasicData> loadFarmBasic(Long farmId);
 
     /**
+     * 해당 농장이 특정 사용자의 소유인지 확인합니다.
+     */
+    boolean isOwnedBy(Long farmId, Long userId);
+
+    /**
      * 추천용 경량 농장 데이터
      */
     interface FarmBasicData {
