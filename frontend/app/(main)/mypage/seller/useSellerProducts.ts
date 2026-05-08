@@ -24,7 +24,9 @@ export default function useSellerProducts() {
           price: p.price,
           stock: p.stock,
           salesCount: p.salesCount,
-          status: p.stock === 0 ? 'SOLDOUT' : p.status as ProductStatus,
+          status: (p.status === 'PENDING' || p.status === 'REJECTED')
+            ? p.status as ProductStatus
+            : (p.stock === 0 ? 'SOLDOUT' : p.status as ProductStatus),
           imageUrls: p.imageUrls,
           categoryName: p.categoryName,
           description: p.description,
@@ -88,15 +90,17 @@ export default function useSellerProducts() {
   }, [products, success, showError]);
 
   /** 필터 탭 상태 */
-  const [filterTab, setFilterTab] = useState<'ALL' | 'ACTIVE' | 'SOLDOUT' | 'INACTIVE'>('ALL');
+  const [filterTab, setFilterTab] = useState<'ALL' | 'PENDING' | 'ACTIVE' | 'SOLDOUT' | 'INACTIVE' | 'REJECTED'>('ALL');
 
   /** 상태별 개수 통계 */
   const stats = useMemo(() => {
     return {
       total: products.length,
+      pending: products.filter((p) => p.status === 'PENDING').length,
       active: products.filter((p) => p.status === 'ACTIVE').length,
       soldout: products.filter((p) => p.status === 'SOLDOUT').length,
       inactive: products.filter((p) => p.status === 'INACTIVE').length,
+      rejected: products.filter((p) => p.status === 'REJECTED').length,
     };
   }, [products]);
 
