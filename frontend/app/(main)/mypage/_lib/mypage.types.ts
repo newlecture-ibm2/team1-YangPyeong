@@ -47,6 +47,8 @@ export interface SellerOrder {
   orderedAt: string;
   /** 접수(상태변경) 시각 — 배송 예정 시간 계산용 */
   acceptedAt?: string;
+  trackingNumber?: string;
+  shippedAt?: string;
 }
 
 /** 판매자 주문 KPI */
@@ -71,6 +73,8 @@ export interface BuyerOrder {
   receiverPhone: string;
   shippingAddress: string;
   shippingMemo?: string;
+  trackingNumber?: string;
+  shippedAt?: string;
   orderedAt: string;
 }
 
