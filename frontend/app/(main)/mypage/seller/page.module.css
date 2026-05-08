@@ -120,7 +120,15 @@
   color: var(--color-primary) !important;
 }
 
+.statPending {
+  color: var(--color-warning, #e6a817) !important;
+}
+
 .statSoldout {
+  color: var(--color-danger) !important;
+}
+
+.statRejected {
   color: var(--color-danger) !important;
 }
 

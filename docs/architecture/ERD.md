@@ -233,8 +233,8 @@ erDiagram
     %% ===== 커뮤니티 도메인 =====
     post_categories {
         bigint id PK
-        varchar name UK "카테고리명 (50)"
-        varchar description "설명 (200)"
+        varchar name UK "자유게시판 | 정보공유 | Q&A 등"
+        varchar description
         int display_order
         boolean is_active
         timestamp created_at
@@ -246,13 +246,13 @@ erDiagram
         bigint id PK
         bigint author_id FK
         bigint category_id FK
-        varchar title "제목 (100)"
+        varchar title
         text content
         int view_count
         boolean is_notice
+        timestamp deleted_at
         timestamp created_at
         timestamp updated_at
-        timestamp deleted_at
     }
 
     post_categories ||--o{ posts : "분류"
@@ -262,10 +262,20 @@ erDiagram
         bigint post_id FK
         bigint author_id FK
         text content
-        boolean accepted "채택 여부"
+        boolean accepted "답변 채택 여부"
+        timestamp deleted_at
         timestamp created_at
         timestamp updated_at
-        timestamp deleted_at
+    }
+    
+    reports {
+        bigint id PK
+        bigint reporter_id FK "신고자"
+        varchar target_type "POST | COMMENT | SHOP | USER"
+        bigint target_id "대상 엔티티 PK"
+        text reason "신고 사유"
+        varchar status "PENDING | REVIEWING | COMPLETED"
+        timestamp created_at
     }
 
     %% ===== 정책 도메인 =====
@@ -360,6 +370,7 @@ erDiagram
     users ||--o{ comments : "작성"
     users ||--o{ notifications : "수신"
     users ||--o{ download_history : "다운로드이력"
+    users ||--o{ reports : "신고"
 
     farms ||--o{ cultivation_registrations : "재배등록"
     farms ||--o{ cultivation_history : "이력관리"
@@ -933,13 +944,13 @@ erDiagram
 | id | BIGINT | PK, AUTO | 게시글 고유 ID |
 | author_id | BIGINT | FK → users(id), NOT NULL | 작성자 |
 | category_id | BIGINT | FK → post_categories(id), NOT NULL | 게시판 카테고리 |
-| title | VARCHAR(100) | NOT NULL | 제목 |
+| title | VARCHAR(200) | NOT NULL | 제목 |
 | content | TEXT | NOT NULL | 본문 |
 | view_count | INT | DEFAULT 0 | 조회수 |
 | is_notice | BOOLEAN | DEFAULT false | 공지 여부 |
+| deleted_at | TIMESTAMP | | 삭제 시각 (null이면 미삭제) |
 | created_at | TIMESTAMP | NOT NULL | 작성일 |
 | updated_at | TIMESTAMP | | 수정일 |
-| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.14 comments (댓글)
 
@@ -950,9 +961,9 @@ erDiagram
 | author_id | BIGINT | FK → users(id), NOT NULL | 작성자 |
 | content | TEXT | NOT NULL | 댓글 내용 |
 | accepted | BOOLEAN | DEFAULT false | 답변 채택 여부 (Q&A) |
+| deleted_at | TIMESTAMP | | 삭제 시각 (null이면 미삭제) |
 | created_at | TIMESTAMP | NOT NULL | 작성일 |
 | updated_at | TIMESTAMP | | 수정일 |
-| deleted_at | TIMESTAMP | | 삭제 시각 |
 
 ### 2.15 policy_data (정책 데이터 저장소)
 
@@ -1384,6 +1395,22 @@ AI 작물 추천 엔진이 분석한 농장별 추천 이력의 메타 데이터
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
+### 2.33 reports (신고 시스템)
+
+커뮤니티(게시글, 댓글), 상점, 유저 등 시스템 내 부적절한 콘텐츠나 행위를 신고한 이력을 관리합니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 신고 고유 ID |
+| reporter_id | BIGINT | FK → users(id), NOT NULL | 신고자 |
+| target_type | VARCHAR(20) | NOT NULL | 대상 유형 (POST / COMMENT / SHOP / USER) |
+| target_id | BIGINT | NOT NULL | 대상 엔티티의 PK |
+| reason | TEXT | NOT NULL | 신고 사유 |
+| status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | 처리 상태 (PENDING / REVIEWING / COMPLETED) |
+| created_at | TIMESTAMP | NOT NULL | 신고 일시 |
+
+> **설계 의도**: 다양한 도메인의 신고를 하나의 테이블에서 통합 관리하여 관리자 페이지에서 효율적으로 처리할 수 있도록 설계하였습니다.
+
 ---
 
 ## 3. 핵심 관계 요약
@@ -1408,6 +1435,8 @@ AI 작물 추천 엔진이 분석한 농장별 추천 이력의 메타 데이터
 | product_categories → products | 1:N | ✅ | 상품 카테고리별 여러 상품 |
 | post_categories → posts | 1:N | ✅ | 게시판 카테고리별 여러 게시글 |
 | rag_categories → rag_documents | 1:N | ✅ | RAG 카테고리별 여러 문서 |
+| users → reports | 1:N | ✅ | 유저가 여러 건의 신고 접수 |
+| posts/comments/etc → reports | 1:N | — | target_type/target_id로 논리적 참조 |
 
 ### 3.1 외부 AI 데이터 테이블 (독립 — FK 없음)
 
@@ -1469,12 +1498,7 @@ CREATE INDEX idx_orders_status ON orders(status);
 
 -- 게시글
 CREATE INDEX idx_posts_author_id ON posts(author_id);
-CREATE INDEX idx_posts_category_id ON posts(category_id);
-CREATE INDEX idx_posts_is_notice ON posts(is_notice);
-
--- 댓글
-CREATE INDEX idx_comments_post_id ON comments(post_id);
-CREATE INDEX idx_comments_accepted ON comments(accepted);
+CREATE INDEX idx_posts_category ON posts(category);
 
 -- 알림 (빈번한 조회)
 CREATE INDEX idx_notifications_user_id_read ON notifications(user_id, is_read);
@@ -1494,6 +1518,11 @@ CREATE INDEX idx_nongsaro_varieties_crop ON nongsaro_varieties(crop_name);
 CREATE INDEX idx_farm_schedules_crop ON nongsaro_farm_schedules(crop_code);
 CREATE INDEX idx_farm_schedules_month ON nongsaro_farm_schedules(start_month);
 CREATE INDEX idx_disaster_type ON nongsaro_disaster_prevention(disaster_type);
+
+-- 신고 시스템
+CREATE INDEX idx_reports_reporter ON reports(reporter_id);
+CREATE INDEX idx_reports_target ON reports(target_type, target_id);
+CREATE INDEX idx_reports_status ON reports(status);
 
 -- RAG 문서
 CREATE INDEX idx_rag_docs_category ON rag_documents(category);

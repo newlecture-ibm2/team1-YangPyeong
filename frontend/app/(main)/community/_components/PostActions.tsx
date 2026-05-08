@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/common/Button';
 import { deletePost } from '../_lib/community.api';
 import { apiFetch } from '@/lib/api-fetch';
+import ReportButton from './ReportButton';
 
 interface PostActionsProps {
   postId: number;
@@ -14,6 +15,7 @@ interface PostActionsProps {
 /**
  * 게시글 수정/삭제 버튼 컴포넌트
  * 작성자 본인에게만 노출되며 삭제 확인 및 API 호출을 처리합니다.
+ * 작성자가 아닌 경우 신고 버튼이 노출됩니다.
  */
 export default function PostActions({ postId, authorId }: PostActionsProps) {
   const router = useRouter();
@@ -33,26 +35,6 @@ export default function PostActions({ postId, authorId }: PostActionsProps) {
 
   // 작성자 본인 여부 확인 (타입 차이 고려하여 == 사용)
   const isAuthor = currentUserId != null && currentUserId == authorId;
-
-  // 디버깅용 로그 (브라우저 콘솔에서 확인 가능)
-  useEffect(() => {
-    if (currentUserId !== null) {
-      console.log('[PostActions Debug] 현재 로그인 유저:', currentUserId, typeof currentUserId);
-      console.log('[PostActions Debug] 게시글 작성자:', authorId, typeof authorId);
-      console.log('[PostActions Debug] 일치 여부:', isAuthor);
-    } else {
-      console.log('[PostActions Debug] 유저 정보를 불러오는 중이거나 실패했습니다.');
-    }
-  }, [currentUserId, authorId, isAuthor]);
-
-  /** 
-   * ⚠️ 임시 허용 모드 (Phase 3 테스트용)
-   * 다른 조원의 유저 정보 API(/api/users/me)가 404 에러 등으로 작동하지 않아도 
-   * 게시글 수정/삭제 기능을 테스트할 수 있도록 버튼을 무조건 노출합니다.
-   * 나중에 API가 복구되면 아래 주석을 해제하면 됩니다.
-   */
-  const forceShowForTest = true; 
-  if (!isAuthor && !forceShowForTest) return null;
 
   const handleDelete = async () => {
     if (!window.confirm('정말로 이 게시글을 삭제하시겠습니까?')) return;
@@ -80,24 +62,41 @@ export default function PostActions({ postId, authorId }: PostActionsProps) {
   };
 
   return (
-    <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={handleEdit}
-        disabled={isDeleting}
-      >
-        수정
-      </Button>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={handleDelete}
-        disabled={isDeleting}
-        style={{ color: '#ef4444', borderColor: '#ef4444' }}
-      >
-        {isDeleting ? '삭제 중...' : '삭제'}
-      </Button>
+    <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', alignItems: 'center' }}>
+      {isAuthor ? (
+        <>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleEdit}
+            disabled={isDeleting}
+          >
+            수정
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleDelete}
+            disabled={isDeleting}
+            style={{ color: '#ef4444', borderColor: '#ef4444' }}
+          >
+            {isDeleting ? '삭제 중...' : '삭제'}
+          </Button>
+        </>
+      ) : (
+        <ReportButton 
+          targetId={postId} 
+          targetType="POST" 
+          style={{ 
+            padding: '4px 12px', 
+            fontSize: '0.8125rem',
+            color: '#666',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: '#fff'
+          }}
+        />
+      )}
     </div>
   );
 }
