@@ -53,12 +53,11 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
     @Override
     @Transactional
     public Product registerProduct(Long sellerId, String name, int price, int stock,
-                                   String description, String categoryName, List<String> imageUrls) {
+            String description, String categoryName, List<String> imageUrls) {
         Product product = new Product(
                 null, sellerId, null, null, categoryName,
                 name, price, stock, description, 0,
-                ProductStatus.PENDING, imageUrls, LocalDateTime.now()
-        );
+                ProductStatus.PENDING, imageUrls, LocalDateTime.now());
 
         Product saved = productRepository.save(product);
 
@@ -73,7 +72,7 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
     @Override
     @Transactional
     public Product updateProduct(Long sellerId, Long productId, String name, int price, int stock,
-                                 String description, String categoryName, List<String> imageUrls) {
+            String description, String categoryName, List<String> imageUrls) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
 
