@@ -10,6 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class SupplyService implements CalculateSupplyRatioUseCase {
@@ -20,11 +24,10 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
     @Override
     @Transactional(readOnly = true)
     public SupplyRatioResult calculateSupplyRatio(String cropName, Integer year) {
-        // 1. KOSIS 기준 생산량 조회 (양평군 코드: YP)
+        // ... (기존 로직 유지)
         CropProductionStats stats = loadCropStatsPort.loadCropStats(cropName, year, "YP")
                 .orElse(null);
 
-        // 1-1. 지정된 연도에 통계가 없으면 최신 연도로 Fallback
         if (stats == null) {
             stats = loadCropStatsPort.loadLatestCropStats(cropName, "YP")
                     .orElse(null);
@@ -35,24 +38,35 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
         }
 
         Integer baseYear = stats.getYear();
-
-        // KOSIS 통계는 톤 단위일 가능성이 높음. (DB에는 '톤'으로 저장됨)
         double standardYieldKg = stats.getTotalProduction();
         if ("톤".equals(stats.getUnitNm())) {
-            standardYieldKg *= 1000; // 톤 -> kg 변환
+            standardYieldKg *= 1000;
         }
 
-        // 2. 현재 농가들의 신청량(예상 수확량) 합계 조회 (kg 단위)
         Double currentSupplyKg = loadFarmSupplyPort.sumEstimatedYieldByCropName(cropName);
 
         if (currentSupplyKg == null || currentSupplyKg <= 0) {
             return new SupplyRatioResult(0.0, BalanceStatus.UNKNOWN, baseYear);
         }
 
-        // 3. 수급 비율 계산 (%) 및 위기 단계 판별
         double ratio = (currentSupplyKg / standardYieldKg) * 100.0;
         BalanceStatus status = BalanceStatus.calculateFromRatio(ratio);
         
         return new SupplyRatioResult(ratio, status, baseYear);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, SupplyRatioResult> calculateAllSupplyRatios(Integer year) {
+        List<String> cropNames = loadCropStatsPort.loadAllCropNames();
+        Map<String, SupplyRatioResult> results = new HashMap<>();
+
+        for (String cropName : cropNames) {
+            SupplyRatioResult result = calculateSupplyRatio(cropName, year);
+            if (result.getStatus() != BalanceStatus.UNKNOWN) {
+                results.put(cropName, result);
+            }
+        }
+        return results;
     }
 }

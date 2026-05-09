@@ -1,0 +1,155 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.pageHeader {
+  margin-bottom: 32px;
+}
+
+.breadcrumb {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.pageTitle {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.kpiCard {
+  padding: 24px;
+  text-align: center;
+}
+
+.kpiLabel {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.kpiValue {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.chartCard {
+  padding: 32px;
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.gaugeContainer {
+  position: relative;
+  width: 260px;
+  height: 130px;
+  margin: 0 auto 20px;
+  overflow: hidden;
+}
+
+.gaugeBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 270deg,
+    #3b82f6 0deg,
+    #3b82f6 36deg,
+    #10b981 36deg,
+    #10b981 108deg,
+    #f59e0b 108deg,
+    #f59e0b 144deg,
+    #ef4444 144deg,
+    #ef4444 180deg,
+    transparent 180deg
+  );
+}
+
+.gaugeInner {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  width: calc(100% - 30px);
+  height: calc(200% - 30px);
+  border-radius: 50%;
+  background: white;
+}
+
+.gaugeNeedle {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 3px;
+  height: 110px;
+  background: #1f2937;
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(0deg);
+  border-radius: 3px 3px 0 0;
+  transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.gaugeStatus {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 16px;
+}
+
+.insightBox {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+.insightText {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--color-text);
+}
+
+.placeholder {
+  height: 250px;
+  background: #f9fafb;
+  border: 1px dashed var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+}
+
+.actions {
+  margin-top: 40px;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 100px 20px;
+  color: var(--color-text-secondary);
+}

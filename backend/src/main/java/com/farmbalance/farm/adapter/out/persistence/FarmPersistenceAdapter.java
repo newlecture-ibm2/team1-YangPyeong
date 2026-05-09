@@ -257,7 +257,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
     public List<CultivationRegistration> loadCultivationsByFarmId(Long farmId) {
         String sql = """
             SELECT cr.id, cr.farm_id, cr.crop_id, c.name as crop_name, 
-                   cr.cultivation_area, cr.farmer_estimated_yield, cr.yield_unit
+                   cr.cultivation_area, cr.farmer_estimated_yield, cr.yield_unit, cr.status
             FROM cultivation_registrations cr
             JOIN crops c ON cr.crop_id = c.id
             WHERE cr.farm_id = ? AND cr.deleted_at IS NULL
@@ -271,6 +271,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .cultivationArea(rs.getObject("cultivation_area") != null ? rs.getDouble("cultivation_area") : null)
                 .farmerEstimatedYield(rs.getObject("farmer_estimated_yield") != null ? rs.getDouble("farmer_estimated_yield") : null)
                 .yieldUnit(rs.getString("yield_unit"))
+                .status(com.farmbalance.farm.domain.CultivationStatus.valueOf(rs.getString("status")))
                 .build(), farmId);
     }
 
@@ -278,7 +279,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
     public Optional<CultivationRegistration> loadCultivationById(Long id) {
         String sql = """
             SELECT cr.id, cr.farm_id, cr.crop_id, c.name as crop_name, 
-                   cr.cultivation_area, cr.farmer_estimated_yield, cr.yield_unit
+                   cr.cultivation_area, cr.farmer_estimated_yield, cr.yield_unit, cr.status
             FROM cultivation_registrations cr
             JOIN crops c ON cr.crop_id = c.id
             WHERE cr.id = ? AND cr.deleted_at IS NULL
@@ -292,6 +293,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .cultivationArea(rs.getObject("cultivation_area") != null ? rs.getDouble("cultivation_area") : null)
                 .farmerEstimatedYield(rs.getObject("farmer_estimated_yield") != null ? rs.getDouble("farmer_estimated_yield") : null)
                 .yieldUnit(rs.getString("yield_unit"))
+                .status(com.farmbalance.farm.domain.CultivationStatus.valueOf(rs.getString("status")))
                 .build(), id);
                 
         return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));

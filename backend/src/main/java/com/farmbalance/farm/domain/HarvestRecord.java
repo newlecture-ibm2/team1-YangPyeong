@@ -21,4 +21,27 @@ public class HarvestRecord {
     private String grade;             // A | B | C
     private Boolean toShop;           // 상점 등록 여부
     private LocalDateTime createdAt;
+
+    public static HarvestRecord create(Long cultivationId, Double yieldAmount, LocalDate harvestDate, 
+                                       String yieldUnit, String grade, Boolean toShop, Double predictedYield) {
+        
+        if (yieldAmount == null || yieldAmount <= 0) {
+            throw new com.farmbalance.global.error.BusinessException(
+                com.farmbalance.global.error.ErrorCode.INVALID_HARVEST_YIELD);
+        }
+
+        if (predictedYield != null && yieldAmount > (predictedYield * 3)) {
+            throw new com.farmbalance.global.error.BusinessException(
+                com.farmbalance.global.error.ErrorCode.INVALID_HARVEST_YIELD);
+        }
+
+        return HarvestRecord.builder()
+                .cultivationRegistrationId(cultivationId)
+                .harvestDate(harvestDate)
+                .yieldAmount(yieldAmount)
+                .yieldUnit(yieldUnit != null ? yieldUnit : "kg")
+                .grade(grade)
+                .toShop(toShop != null ? toShop : false)
+                .build();
+    }
 }

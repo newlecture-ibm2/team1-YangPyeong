@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Badge from '@/components/common/Badge/Badge';
@@ -32,13 +33,16 @@ const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'li
   checking: { label: '점검중', variant: 'orange' },
 };
 
-export default function FarmDashboardPage() {
+function FarmDashboardContent() {
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab') === 'history' ? 'HISTORY' : 'DASHBOARD';
+
   const toast = useToast();
   const { farms, isLoading: isFarmsLoading, removeFarm: deleteSelectedFarm } = useMyFarms();
   const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
   // 농장 목록 뷰 여부 상태
   const [isListView, setIsListView] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState<'DASHBOARD' | 'HISTORY' | 'POLICY' | 'REPORT'>('DASHBOARD');
+  const [activeSubTab, setActiveSubTab] = useState<'DASHBOARD' | 'HISTORY' | 'POLICY' | 'REPORT'>(initialTab);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isCultivationModalOpen, setIsCultivationModalOpen] = useState(false);
   const [selectedCultivation, setSelectedCultivation] = useState<any>(null);
@@ -355,16 +359,15 @@ export default function FarmDashboardPage() {
       <CultivationEditModal
         isOpen={isCultivationModalOpen}
         onClose={() => { setIsCultivationModalOpen(false); setSelectedCultivation(null); }}
-        onSave={async (cropId, area, yieldAmount, unit) => {
+        onSave={async (area, yieldAmount, unit) => {
           if (selectedCultivation) {
-            const success = await modifyCultivation(selectedCultivation.id, cropId, area, yieldAmount, unit);
+            const success = await modifyCultivation(selectedCultivation.id, area, yieldAmount, unit);
             if (success) refreshAll();
             return success;
           }
           return false;
         }}
         cultivation={selectedCultivation}
-        cropOptions={cropOptions}
       />
 
       {/* Main Tabs (Navigation) */}
@@ -394,12 +397,15 @@ export default function FarmDashboardPage() {
           {/* KPI 카드 Row (Dashboard 전용) */}
           <div className={styles.kpiRow} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
-              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>재배 면적</p>
+              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>농장 전체 면적</p>
               <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>
                 {farm?.area.toLocaleString()}㎡
-                <span style={{ fontSize: '14px', fontWeight: 400, marginLeft: '6px', color: 'var(--color-text-light)' }}>
-                  ({Math.round((farm?.area || 0) / 3.3058)}평)
-                </span>
+              </p>
+            </div>
+            <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>재배 중인 면적</p>
+              <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                {cultivations.reduce((acc, curr) => acc + (curr.cultivationArea || 0), 0).toLocaleString()}㎡
               </p>
             </div>
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
@@ -407,12 +413,79 @@ export default function FarmDashboardPage() {
               <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>{farm?.cropNames.length}종</p>
             </div>
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
-              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>이번 달 수익</p>
-              <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>₩0M</p>
+              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>이번 달 예상 수익</p>
+              <p style={{ fontSize: '24px', fontWeight: 700, color: '#f59e0b' }}>₩0</p>
             </div>
-            <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
-              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>AI 점수</p>
-              <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>-</p>
+          </div>
+
+          {/* 면적 사용 현황 게이지 차트 (작물별 분할) */}
+          <div style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', marginBottom: '32px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 700 }}>작물별 면적 점유 현황</h3>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-light)' }}>
+                전체 {farm?.area.toLocaleString()}㎡ 중 {cultivations.reduce((acc, curr) => acc + (curr.cultivationArea || 0), 0).toLocaleString()}㎡ 사용 중
+              </span>
+            </div>
+            
+            {/* 멀티 세그먼트 게이지 바 */}
+            <div style={{ width: '100%', height: '16px', background: '#f1f5f9', borderRadius: '10px', overflow: 'hidden', display: 'flex' }}>
+              {(() => {
+                const totalArea = farm?.area || 1;
+                const colors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+                
+                // 작물별 면적 합산
+                const cropStats = cultivations.reduce((acc, curr) => {
+                  acc[curr.cropName] = (acc[curr.cropName] || 0) + (curr.cultivationArea || 0);
+                  return acc;
+                }, {} as Record<string, number>);
+
+                return Object.entries(cropStats).map(([name, area], idx) => (
+                  <div 
+                    key={name}
+                    style={{ 
+                      width: `${(area / totalArea) * 100}%`, 
+                      height: '100%', 
+                      background: colors[idx % colors.length],
+                      transition: 'width 0.5s ease-out'
+                    }} 
+                    title={`${name}: ${area.toLocaleString()}㎡`}
+                  />
+                ));
+              })()}
+            </div>
+
+            {/* 범례 (Legend) */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '16px' }}>
+              {(() => {
+                const colors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+                const cropStats = cultivations.reduce((acc, curr) => {
+                  acc[curr.cropName] = (acc[curr.cropName] || 0) + (curr.cultivationArea || 0);
+                  return acc;
+                }, {} as Record<string, number>);
+
+                const legendItems = Object.entries(cropStats).map(([name, area], idx) => (
+                  <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: colors[idx % colors.length] }} />
+                    <span style={{ fontSize: '13px', color: 'var(--color-text)', fontWeight: 500 }}>{name}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--color-text-light)' }}>{area.toLocaleString()}㎡</span>
+                  </div>
+                ));
+
+                // 잔여 면적 표시
+                const usedArea = cultivations.reduce((acc, curr) => acc + (curr.cultivationArea || 0), 0);
+                const remainingArea = Math.max(0, (farm?.area || 0) - usedArea);
+                
+                if (remainingArea > 0) {
+                  legendItems.push(
+                    <div key="remaining" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: '#f1f5f9', border: '1px solid var(--color-border)' }} />
+                      <span style={{ fontSize: '13px', color: 'var(--color-text-light)' }}>가용 면적(잔여): {remainingArea.toLocaleString()}㎡</span>
+                    </div>
+                  );
+                }
+
+                return legendItems;
+              })()}
             </div>
           </div>
 
@@ -589,6 +662,14 @@ export default function FarmDashboardPage() {
         onClose={handleClose}
       />
     </div>
+  );
+}
+
+export default function FarmDashboardPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>로딩 중...</div>}>
+      <FarmDashboardContent />
+    </Suspense>
   );
 }
 

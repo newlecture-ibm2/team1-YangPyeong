@@ -1,6 +1,7 @@
 package com.farmbalance.balance.application.port.out;
 
 import com.farmbalance.balance.domain.CropProductionStats;
+import java.util.List;
 import java.util.Optional;
 
 public interface LoadCropStatsPort {
@@ -10,4 +11,6 @@ public interface LoadCropStatsPort {
     // 가장 최신 연도의 데이터 조회 (Fallback용)
     Optional<CropProductionStats> loadLatestCropStats(String itmNm, String regionCode);
     Optional<CropProductionStats> loadLatestCropStats(String itmNm);
+
+    List<String> loadAllCropNames();
 }

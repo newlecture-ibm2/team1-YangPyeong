@@ -43,6 +43,11 @@ public class BalancePersistenceAdapter implements LoadCropStatsPort, LoadFarmSup
     }
 
     @Override
+    public java.util.List<String> loadAllCropNames() {
+        return repository.findDistinctItmNm();
+    }
+
+    @Override
     public Double sumEstimatedYieldByCropName(String cropName) {
         String sql = "SELECT COALESCE(SUM(cr.farmer_estimated_yield), 0.0) " +
                      "FROM cultivation_registrations cr " +

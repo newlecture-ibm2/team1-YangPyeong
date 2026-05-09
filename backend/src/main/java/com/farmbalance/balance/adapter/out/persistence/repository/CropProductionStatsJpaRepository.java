@@ -11,4 +11,7 @@ public interface CropProductionStatsJpaRepository extends JpaRepository<CropProd
     // 가장 최신 연도의 데이터 조회 (Fallback용)
     Optional<CropProductionStatsJpaEntity> findFirstByItmNmAndRegionCodeAndDeletedAtIsNullOrderByYearDesc(String itmNm, String regionCode);
     Optional<CropProductionStatsJpaEntity> findFirstByItmNmAndDeletedAtIsNullOrderByYearDesc(String itmNm);
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT c.itmNm FROM CropProductionStatsJpaEntity c WHERE c.deletedAt IS NULL")
+    java.util.List<String> findDistinctItmNm();
 }

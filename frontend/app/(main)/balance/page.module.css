@@ -1,0 +1,185 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.pageHeader {
+  margin-bottom: 32px;
+}
+
+.breadcrumb {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.pageTitle {
+  font-family: var(--font-serif);
+  font-size: 40px;
+  color: var(--color-text);
+  margin-bottom: 8px;
+  font-weight: 400;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.pageSub {
+  color: var(--color-text-secondary);
+  font-size: 16px;
+}
+
+.tabs {
+  display: flex;
+  gap: 32px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 32px;
+  padding-bottom: 0;
+}
+
+.tabs a {
+  padding: 12px 0;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  position: relative;
+}
+
+.tabs a:hover {
+  color: var(--color-primary);
+}
+
+.activeTab {
+  color: var(--color-primary) !important;
+}
+
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--color-primary);
+}
+
+.topSummary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.summaryCard {
+  padding: 24px;
+}
+
+.cardLabel {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.summaryInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.ratioValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.gaugeBar {
+  width: 100%;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gaugeFill {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+.gaugeFill.balanced { background-color: var(--color-primary); }
+.gaugeFill.short_caution { background-color: #10b981; }
+.gaugeFill.balanced { background-color: #10b981; }
+.gaugeFill.short_warn { background-color: #3b82f6; }
+.gaugeFill.excess_caution { background-color: var(--color-warning); }
+.gaugeFill.excess_warn { background-color: var(--color-danger); }
+
+.filterSection {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.selectInput {
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: white;
+  min-width: 160px;
+}
+
+.tableWrap {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  background: #f9fafb;
+  padding: 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table td {
+  padding: 16px;
+  font-size: 15px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.detailLink {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.detailLink:hover {
+  text-decoration: underline;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 100px 20px;
+}
+
+.error {
+  color: var(--color-danger);
+}
