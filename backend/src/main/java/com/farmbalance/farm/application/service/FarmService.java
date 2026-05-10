@@ -72,6 +72,16 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
 
         // 4. 재배 등록 상세 저장 (cultivations 데이터가 있는 경우)
         if (command.getCultivations() != null && !command.getCultivations().isEmpty()) {
+            // 면적 총합 검증 (입력된 작물 면적 합산이 농장 전체 면적을 초과하는지 확인)
+            double totalCultivationArea = command.getCultivations().stream()
+                    .mapToDouble(c -> c.getArea() != null ? c.getArea() : 0.0)
+                    .sum();
+            
+            savedFarm.validateCultivationArea(
+                    java.math.BigDecimal.valueOf(totalCultivationArea), 
+                    java.math.BigDecimal.ZERO
+            );
+
             List<CultivationRegistration> registrations = command.getCultivations().stream()
                     .map(c -> CultivationRegistration.builder()
                             .farmId(savedFarm.getId())

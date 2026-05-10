@@ -47,6 +47,13 @@ export default function SellerProductsPage() {
           </button>
           <span className={styles.statDivider}>|</span>
           <button 
+            className={`${styles.statItem} ${filterTab === 'PENDING' ? styles.statActiveTab : ''}`}
+            onClick={() => setFilterTab('PENDING')}
+          >
+            검수중 <strong className={styles.statPending}>{stats.pending}</strong>
+          </button>
+          <span className={styles.statDivider}>|</span>
+          <button 
             className={`${styles.statItem} ${filterTab === 'ACTIVE' ? styles.statActiveTab : ''}`}
             onClick={() => setFilterTab('ACTIVE')}
           >
@@ -65,6 +72,13 @@ export default function SellerProductsPage() {
             onClick={() => setFilterTab('INACTIVE')}
           >
             숨김 <strong>{stats.inactive}</strong>
+          </button>
+          <span className={styles.statDivider}>|</span>
+          <button 
+            className={`${styles.statItem} ${filterTab === 'REJECTED' ? styles.statActiveTab : ''}`}
+            onClick={() => setFilterTab('REJECTED')}
+          >
+            반려 <strong className={styles.statRejected}>{stats.rejected}</strong>
           </button>
         </div>
         <Button
@@ -153,17 +167,23 @@ export default function SellerProductsPage() {
                     </td>
                     <td>{product.salesCount}개</td>
                     <td style={{ width: '100px' }}>
-                      <Dropdown
-                        size="sm"
-                        value={product.status}
-                        onChange={(val) => handleStatusChange(product.id, val as any)}
-                        options={[
-                          { value: 'ACTIVE', label: '판매중' },
-                          { value: 'SOLDOUT', label: '품절' },
-                          { value: 'INACTIVE', label: '숨김' }
-                        ]}
-                        style={{ width: '95px', minWidth: '95px' }}
-                      />
+                      {(product.status === 'PENDING' || product.status === 'REJECTED') ? (
+                        <Badge variant={statusInfo.variant as any}>
+                          {statusInfo.label}
+                        </Badge>
+                      ) : (
+                        <Dropdown
+                          size="sm"
+                          value={product.status}
+                          onChange={(val) => handleStatusChange(product.id, val as any)}
+                          options={[
+                            { value: 'ACTIVE', label: '판매중' },
+                            { value: 'SOLDOUT', label: '품절' },
+                            { value: 'INACTIVE', label: '숨김' }
+                          ]}
+                          style={{ width: '95px', minWidth: '95px' }}
+                        />
+                      )}
                     </td>
                     <td>
                       <div className={styles.actionBtns}>
@@ -171,6 +191,7 @@ export default function SellerProductsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => router.push(`/mypage/seller/${product.id}/edit`)}
+                          disabled={product.status === 'PENDING'}
                         >
                           수정
                         </Button>

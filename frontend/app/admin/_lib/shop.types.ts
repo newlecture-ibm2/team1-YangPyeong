@@ -8,7 +8,9 @@ export interface ApiResponse<T> {
 export interface AdminProduct {
   id: number
   sellerId: number
+  sellerName: string
   categoryId: number
+  categoryName: string | null
   name: string
   price: number
   stock: number
@@ -21,4 +23,14 @@ export interface AdminProduct {
 }
 
 /** 상품 상태 타입 */
-export type ProductStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'REJECTED'
+export type ProductStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'REJECTED' | 'SOLDOUT'
+
+export interface AdminProductListResponse {
+  products: AdminProduct[]
+  meta: {
+    page: number
+    size: number
+    totalCount: number
+    totalPages: number
+  }
+}

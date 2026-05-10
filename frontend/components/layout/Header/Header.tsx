@@ -43,19 +43,21 @@ export default function Header() {
 
   // 쿠키에서 사용자 정보 읽기 + API에서 프로필 이미지 조회
   useEffect(() => {
-    const cookieUser = getUserFromCookie();
-    setUser(cookieUser);
+    const handleAuthChange = () => {
+      const cookieUser = getUserFromCookie();
+      setUser(cookieUser);
+    };
 
-    // 프로필 이미지가 쿠키에 없으면 API에서 조회
-    if (cookieUser && !cookieUser.profileImageUrl) {
-      apiFetch<{ profileImageUrl?: string }>('/api/users/me')
-        .then((res) => {
-          if (res.success && res.data?.profileImageUrl) {
-            setUser((prev) => prev ? { ...prev, profileImageUrl: res.data!.profileImageUrl } : prev);
-          }
-        })
-        .catch(() => { /* ignore */ });
-    }
+    handleAuthChange();
+
+    // 인증 상태 변경 이벤트 구독
+    window.addEventListener('auth-changed', handleAuthChange);
+    window.addEventListener('cart-updated', handleAuthChange); // 장바구니 갱신 시 유저 정보도 재확인 (로그인 유도 등)
+
+    return () => {
+      window.removeEventListener('auth-changed', handleAuthChange);
+      window.removeEventListener('cart-updated', handleAuthChange);
+    };
   }, [pathname]);
 
   // 장바구니 수량 조회 (로그인 상태 + 페이지 이동 시 + cart-updated 이벤트)
@@ -94,11 +96,18 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
-    await apiFetch('/api/auth/logout', { method: 'POST' });
-    setUser(null);
-    setDropdownOpen(false);
-    router.push('/');
-    router.refresh();
+    try {
+      await apiFetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // ignore
+    } finally {
+      document.cookie = 'fb-user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      setUser(null);
+      setDropdownOpen(false);
+      window.dispatchEvent(new Event('auth-changed'));
+      router.push('/');
+      router.refresh();
+    }
   };
 
 
