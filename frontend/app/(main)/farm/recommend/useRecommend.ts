@@ -32,6 +32,13 @@ export default function useRecommend() {
 
       setResult(data);
       setHasAnalyzed(true);
+
+      // 상세 페이지에서 접근할 수 있도록 sessionStorage에 저장
+      try {
+        sessionStorage.setItem('recommend_result', JSON.stringify(data));
+      } catch {
+        // sessionStorage 접근 불가 시 무시
+      }
     } catch (err) {
       console.error('AI 분석 실패:', err);
       // TODO: 에러 상태를 UI에 표시
