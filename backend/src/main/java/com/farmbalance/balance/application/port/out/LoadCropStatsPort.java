@@ -13,4 +13,5 @@ public interface LoadCropStatsPort {
     Optional<CropProductionStats> loadLatestCropStats(String itmNm);
 
     List<String> loadAllCropNames();
+    List<CropProductionStats> loadHistoricalStats(String itmNm, String regionCode);
 }

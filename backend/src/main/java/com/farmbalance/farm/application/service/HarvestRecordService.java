@@ -65,7 +65,9 @@ public class HarvestRecordService implements RecordHarvestUseCase, LoadHarvestUs
         // 4. 이벤트 발행
         eventPublisher.publishEvent(new HarvestRecordedEvent(
                 registration.getFarmId(),
+                registration.getId(), // 추가된 필드
                 registration.getCropId(),
+                registration.getCropName(),
                 command.getYieldAmount(),
                 command.getYieldUnit() != null ? command.getYieldUnit() : "kg"
         ));

@@ -69,4 +69,12 @@ public class BalancePersistenceAdapter implements LoadCropStatsPort, LoadFarmSup
                 .unitNm(entity.getUnitNm())
                 .build();
     }
+
+    @Override
+    public java.util.List<CropProductionStats> loadHistoricalStats(String itmNm, String regionCode) {
+        return repository.findAllByItmNmAndRegionCodeAndDeletedAtIsNullOrderByYearAsc(itmNm, regionCode)
+                .stream()
+                .map(this::mapToDomain)
+                .collect(java.util.stream.Collectors.toList());
+    }
 }

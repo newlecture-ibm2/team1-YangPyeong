@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Badge from '@/components/common/Badge/Badge';
 import Card from '@/components/common/Card/Card';
 import Button from '@/components/common/Button/Button';
-import { fetchBalanceAnalysis, BalanceAnalysisResponse } from '../_lib/balance.api';
+import { fetchBalanceAnalysis, BalanceAnalysisResponse, fetchSupplyTrend, SupplyTrendResult } from '../_lib/balance.api';
 import styles from './page.module.css';
 
 interface PageProps {
@@ -17,6 +17,7 @@ export default function BalanceDetailPage({ params }: PageProps) {
   const { cropName } = use(params);
   const router = useRouter();
   const [data, setData] = useState<BalanceAnalysisResponse | null>(null);
+  const [trendData, setTrendData] = useState<SupplyTrendResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,8 +25,12 @@ export default function BalanceDetailPage({ params }: PageProps) {
     const loadData = async () => {
       try {
         const decodedName = decodeURIComponent(cropName);
-        const result = await fetchBalanceAnalysis(decodedName);
+        const [result, trend] = await Promise.all([
+          fetchBalanceAnalysis(decodedName),
+          fetchSupplyTrend(decodedName)
+        ]);
         setData(result);
+        setTrendData(trend);
       } catch (err: any) {
         setError(err.message || '데이터를 불러오는 중 오류가 발생했습니다.');
       } finally {
@@ -113,15 +118,51 @@ export default function BalanceDetailPage({ params }: PageProps) {
         </Card>
       </div>
 
-      {/* PLACEHOLDERS FOR FUTURE CHARTS */}
+      {/* REAL TREND CHART */}
       <div className={styles.grid2}>
         <Card className={styles.card}>
-          <h2 className={styles.cardTitle}>시계열 추이 (준비중)</h2>
-          <div className={styles.placeholder}>📈 월별 공급/수요 추이 라인 차트</div>
+          <h2 className={styles.cardTitle}>연도별 수급 추이</h2>
+          <div className={styles.trendChartContainer}>
+             {trendData.map((item, index) => {
+               const maxVal = Math.max(...trendData.map(t => Math.max(t.supply, t.demand)));
+               const supplyHeight = (item.supply / maxVal) * 100;
+               const demandHeight = (item.demand / maxVal) * 100;
+               
+               return (
+                 <div key={item.year} className={styles.trendCol}>
+                   <div className={styles.barGroup}>
+                     <div 
+                       className={styles.barSupply} 
+                       style={{ height: `${supplyHeight}%` }}
+                       title={`공급: ${item.supply.toLocaleString()}kg`}
+                     ></div>
+                     <div 
+                       className={styles.barDemand} 
+                       style={{ height: `${demandHeight}%` }}
+                       title={`수요: ${item.demand.toLocaleString()}kg`}
+                     ></div>
+                   </div>
+                   <p className={styles.yearLabel}>{item.year}</p>
+                 </div>
+               );
+             })}
+          </div>
+          <div className={styles.legend}>
+            <span className={styles.legendItem}><span className={styles.dotSupply}></span> 공급(통계/실시간)</span>
+            <span className={styles.legendItem}><span className={styles.dotDemand}></span> 수요(기준치)</span>
+          </div>
         </Card>
         <Card className={styles.card}>
-          <h2 className={styles.cardTitle}>전년 대비 변화 (준비중)</h2>
-          <div className={styles.placeholder}>📊 전년 동기 대비 막대 차트</div>
+          <h2 className={styles.cardTitle}>전년 대비 변화</h2>
+          <div className={styles.placeholder}>
+             {trendData.length > 1 ? (
+               <p className={styles.yoyText}>
+                 전년({trendData[trendData.length-2].year}년) 대비 
+                 <strong> {((trendData[trendData.length-1].supply / trendData[trendData.length-2].supply - 1) * 100).toFixed(1)}% </strong>
+                 공급량이 변동되었습니다.
+               </p>
+             ) : '데이터가 부족합니다.'}
+          </div>
         </Card>
       </div>
 

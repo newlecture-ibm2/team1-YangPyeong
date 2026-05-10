@@ -24,6 +24,7 @@ import java.util.Map;
  */
 @EnableCaching
 @Configuration
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis")
 public class RedisConfig {
 
     /**

@@ -111,7 +111,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
      * cultivation_registrations + crops JOIN으로 작물명 목록 조회
      */
     private List<String> loadCropNames(Long farmId) {
-        String sql = "SELECT c.name FROM cultivation_registrations cr JOIN crops c ON c.id = cr.crop_id WHERE cr.farm_id = ? AND cr.deleted_at IS NULL ORDER BY c.name";
+        String sql = "SELECT c.name FROM cultivation_registrations cr JOIN crops c ON c.id = cr.crop_id WHERE cr.farm_id = ? AND cr.status = 'ACTIVE' AND cr.deleted_at IS NULL ORDER BY c.name";
         return jdbcTemplate.queryForList(sql, String.class, farmId);
     }
 
@@ -119,7 +119,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
      * cultivation_registrations에서 crop_id 목록 조회
      */
     private List<Long> loadCropIds(Long farmId) {
-        String sql = "SELECT crop_id FROM cultivation_registrations WHERE farm_id = ? AND deleted_at IS NULL";
+        String sql = "SELECT crop_id FROM cultivation_registrations WHERE farm_id = ? AND status = 'ACTIVE' AND deleted_at IS NULL";
         return jdbcTemplate.queryForList(sql, Long.class, farmId);
     }
 
@@ -260,7 +260,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                    cr.cultivation_area, cr.farmer_estimated_yield, cr.yield_unit, cr.status
             FROM cultivation_registrations cr
             JOIN crops c ON cr.crop_id = c.id
-            WHERE cr.farm_id = ? AND cr.deleted_at IS NULL
+            WHERE cr.farm_id = ? AND cr.status = 'ACTIVE' AND cr.deleted_at IS NULL
             """;
         
         return jdbcTemplate.query(sql, (rs, rowNum) -> CultivationRegistration.builder()

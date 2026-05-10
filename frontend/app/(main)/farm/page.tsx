@@ -15,6 +15,7 @@ import HistoryModal from './_components/HistoryModal/HistoryModal';
 import CultivationEditModal from './_components/CultivationEditModal/CultivationEditModal';
 import ModalDialog from '@/components/common/Modal/ModalDialog';
 import { useModalDialog } from '@/components/common/Modal/useModalDialog';
+import UnifiedActionButton from './_components/UnifiedActionButton/UnifiedActionButton';
 import styles from './page.module.css';
 
 // 임시 KPI 및 활동 데이터 (백엔드 연동 전까지 유지할 데이터 구조)
@@ -327,22 +328,11 @@ function FarmDashboardContent() {
           </p>
         </div>
         <div className={styles.headerButtons}>
-          {activeSubTab === 'DASHBOARD' ? (
-            <>
-              <Link href="/farm/cultivation-register">
-                <Button variant="outline">+ 재배 등록</Button>
-              </Link>
-              <Link href="/farm/harvest">
-                <Button variant="primary" style={{ background: '#ccff33', color: '#1a1a1a', border: 'none', fontWeight: 700 }}>🌾 수확 등록</Button>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={() => setIsHistoryModalOpen(true)}>이력 기록하기</Button>
-              <Link href="/farm/register">
-                <Button variant="primary" style={{ background: '#ccff33', color: '#1a1a1a', border: 'none', fontWeight: 700 }}>+ 새 농장 등록</Button>
-              </Link>
-            </>
+          <UnifiedActionButton onAddHistory={() => setIsHistoryModalOpen(true)} />
+          {activeSubTab === 'HISTORY' && (
+            <Link href="/farm/register">
+              <Button variant="outline" style={{ borderRadius: '50px' }}>+ 새 농장 등록</Button>
+            </Link>
           )}
         </div>
       </div>

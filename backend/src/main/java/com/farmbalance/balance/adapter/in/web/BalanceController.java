@@ -44,4 +44,12 @@ public class BalanceController {
 
         return ApiResponse.ok(response);
     }
+
+    @Operation(summary = "특정 작물의 연도별 수급 추이 조회", description = "과거 통계와 현재 등록 데이터를 비교하여 연도별 수급 추이를 반환합니다.")
+    @GetMapping("/{cropName}/trend")
+    public ApiResponse<List<com.farmbalance.balance.domain.SupplyTrendResult>> getSupplyTrend(
+            @Parameter(description = "분석할 작물 이름", example = "감자") @PathVariable String cropName) {
+        
+        return ApiResponse.ok(calculateSupplyRatioUseCase.getSupplyTrend(cropName));
+    }
 }

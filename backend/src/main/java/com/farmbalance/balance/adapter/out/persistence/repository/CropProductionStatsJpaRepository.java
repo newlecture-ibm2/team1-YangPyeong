@@ -14,4 +14,6 @@ public interface CropProductionStatsJpaRepository extends JpaRepository<CropProd
 
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT c.itmNm FROM CropProductionStatsJpaEntity c WHERE c.deletedAt IS NULL")
     java.util.List<String> findDistinctItmNm();
+
+    java.util.List<CropProductionStatsJpaEntity> findAllByItmNmAndRegionCodeAndDeletedAtIsNullOrderByYearAsc(String itmNm, String regionCode);
 }

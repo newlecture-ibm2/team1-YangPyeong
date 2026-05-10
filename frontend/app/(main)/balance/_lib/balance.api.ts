@@ -30,3 +30,23 @@ export async function fetchAllBalances(year?: number): Promise<BalanceAnalysisRe
 
   return result.data;
 }
+
+export interface SupplyTrendResult {
+  year: number;
+  supply: number;
+  demand: number;
+  ratio: number;
+  status: string;
+}
+
+export async function fetchSupplyTrend(cropName: string): Promise<SupplyTrendResult[]> {
+  const url = `/api/balance/${encodeURIComponent(cropName)}/trend`;
+  const response = await fetch(url);
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error?.message || '수급 추이 데이터를 불러오는데 실패했습니다.');
+  }
+
+  return result.data;
+}
