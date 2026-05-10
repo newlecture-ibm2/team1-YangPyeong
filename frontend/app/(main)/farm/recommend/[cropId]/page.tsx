@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { MOCK_RECOMMENDATIONS } from '../_lib/recommend.mock';
-import { SUPPLY_STATUS_MAP, SOIL_FITNESS_MAP } from '../_lib/recommend.types';
+import { requestLatestRecommendation } from '../_lib/recommend.api';
+import { CropRecommendation, SUPPLY_STATUS_MAP, SOIL_FITNESS_MAP } from '../_lib/recommend.types';
 import { getCropEmoji, getCropCalendar, generatePriceData } from '../_lib/recommend.constants';
 import PriceChart from '../_components/PriceChart/PriceChart';
 import CropCalendar from '../_components/CropCalendar/CropCalendar';
@@ -18,7 +18,38 @@ import styles from './detail.module.css';
 export default function RecommendDetailPage() {
   const params = useParams();
   const cropId = Number(params.cropId);
-  const rec = MOCK_RECOMMENDATIONS.find((r) => r.cropId === cropId);
+  const [rec, setRec] = useState<CropRecommendation | null>(null);
+  const [otherRecs, setOtherRecs] = useState<CropRecommendation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 1. 최근 추천 이력에서 해당 작물 정보 가져오기
+  useEffect(() => {
+    async function loadDetail() {
+      try {
+        setIsLoading(true);
+        // [참고] farmId가 필요한데, 여기서는 최신 이력을 조회하므로 0을 보내거나 서버가 알아서 판단하게 함
+        // 실제로는 유저의 농장 목록 중 첫 번째 농장의 이력을 가져오도록 백엔드 연결 필요
+        const data = await requestLatestRecommendation(); 
+        const found = data.recommendations.find(r => r.cropId === cropId);
+        if (found) {
+          setRec(found);
+          setOtherRecs(data.recommendations.filter(r => r.cropId !== cropId).slice(0, 4));
+        }
+      } catch (err) {
+        console.error('상세 정보 로드 실패:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadDetail();
+  }, [cropId]);
+
+  const priceData = useMemo(() => rec ? generatePriceData(rec.expectedRevenuePerKg) : [], [rec]);
+  const calendar = useMemo(() => rec ? getCropCalendar(rec.cropName) : [], [rec]);
+
+  if (isLoading) {
+    return <div className={styles.container}><p style={{textAlign: 'center', padding: '100px'}}>분석 데이터를 불러오는 중...</p></div>;
+  }
 
   if (!rec) {
     return (
@@ -26,18 +57,15 @@ export default function RecommendDetailPage() {
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>🔍</div>
           <h2>추천 정보를 찾을 수 없습니다</h2>
-          <p>요청하신 작물의 추천 분석 데이터가 존재하지 않습니다.</p>
+          <p>요청하신 작물의 추천 분석 데이터가 존재하지 않거나 분석 이력이 없습니다.</p>
           <Link href="/farm/recommend" className={styles.backBtn}>← 추천 목록으로 돌아가기</Link>
         </div>
       </div>
     );
   }
 
-  const supplyInfo = SUPPLY_STATUS_MAP[rec.supplyStatus];
-  const fitnessLabel = SOIL_FITNESS_MAP[rec.soilFitness];
-  const otherRecs = useMemo(() => MOCK_RECOMMENDATIONS.filter((r) => r.cropId !== cropId).slice(0, 4), [cropId]);
-  const priceData = useMemo(() => generatePriceData(rec.expectedRevenuePerKg), [rec.expectedRevenuePerKg]);
-  const calendar = useMemo(() => getCropCalendar(rec.cropName), [rec.cropName]);
+  const supplyInfo = SUPPLY_STATUS_MAP[rec.supplyStatus] || { label: '정보 없음', variant: 'gray' };
+  const fitnessLabel = SOIL_FITNESS_MAP[rec.soilFitness] || '정보 없음';
 
   return (
     <div className={styles.container}>
@@ -78,10 +106,14 @@ export default function RecommendDetailPage() {
 
       <OtherCrops recommendations={otherRecs} />
 
-      {/* ── 하단 버튼 ── */}
       <div className={`${styles.actionButtons} ${styles.fadeIn}`} style={{ animationDelay: '0.6s' }}>
         <Link href="/farm/recommend" className={styles.backBtn}>← 목록으로</Link>
-        <Link href="/farm/plan" className={styles.planBtn}>이 작물로 재배 등록 →</Link>
+        <Link 
+          href={`/farm/cultivation-register?cropId=${rec.cropId}&cropName=${rec.cropName}`} 
+          className={styles.planBtn}
+        >
+          이 작물로 재배 등록 →
+        </Link>
       </div>
     </div>
   );

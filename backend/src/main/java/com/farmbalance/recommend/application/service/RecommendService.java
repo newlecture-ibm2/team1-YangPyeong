@@ -8,7 +8,9 @@ import com.farmbalance.recommend.application.port.out.LoadFarmForRecommendPort.F
 import com.farmbalance.recommend.application.port.out.LoadSupplyStatusPort;
 import com.farmbalance.recommend.application.port.out.LoadRecommendHistoryPort;
 import com.farmbalance.recommend.application.port.out.SaveRecommendHistoryPort;
+import com.farmbalance.recommend.application.port.out.RecommendAiPort;
 import com.farmbalance.recommend.application.port.in.GetRecommendHistoryUseCase;
+import com.farmbalance.recommend.application.port.in.DiagnoseCropImageUseCase;
 import com.farmbalance.recommend.domain.*;
 
 import lombok.RequiredArgsConstructor;
@@ -34,13 +36,14 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class RecommendService implements RecommendCropUseCase, GetRecommendHistoryUseCase {
+public class RecommendService implements RecommendCropUseCase, GetRecommendHistoryUseCase, DiagnoseCropImageUseCase {
 
     private final LoadFarmForRecommendPort loadFarmForRecommendPort;
     private final LoadCropCandidatePort loadCropCandidatePort;
     private final LoadSupplyStatusPort loadSupplyStatusPort;
     private final SaveRecommendHistoryPort saveRecommendHistoryPort;
     private final LoadRecommendHistoryPort loadRecommendHistoryPort;
+    private final RecommendAiPort recommendAiPort;
 
     /** 점수 산출 엔진 (도메인 순수 객체, DI 불필요) */
     private final RecommendScoreCalculator calculator = new RecommendScoreCalculator();
@@ -58,6 +61,12 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
         // 2. 후보 작물 조회 (지역 기반)
         String regionCode = farm.getBjdCode() != null ? farm.getBjdCode() : "";
         List<CropCandidateData> candidates = loadCropCandidatePort.loadCandidates(regionCode);
+
+        // [방어 로직] 해당 지역 데이터가 없으면 전국 단위로 폴백하여 추천 리스트가 비지 않게 함
+        if (candidates.isEmpty()) {
+            log.warn("지역 기반(region={}) 후보 작물 없음 -> 전국 단위로 폴백 조회", regionCode);
+            candidates = loadCropCandidatePort.loadCandidates("");
+        }
 
         log.info("추천 시작: farmId={}, farmName={}, regionCode={}, 후보작물={}건",
                 farmId, farm.getName(), regionCode, candidates.size());
@@ -124,12 +133,28 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
             recommendations.set(i, withRank(recommendations.get(i), i + 1));
         }
 
+        // 5. 상위 5개 항목에 대해 실시간 AI 분석 사유 생성 (파이썬 서버 호출)
+        String farmDetails = String.format("위치: %s, 면적: %.1f평, 토양pH: %.1f, 유기물: %.1f, 토성: %s",
+                farm.getAddress(), farm.getArea(), farm.getPh(), farm.getOrganicMatter(), farm.getSoilType());
+
+        for (int i = 0; i < Math.min(recommendations.size(), 5); i++) {
+            CropRecommendation rec = recommendations.get(i);
+            try {
+                // 파이썬 AI 서버(Gemini/LLM)로부터 추천 사유 한 줄 가져오기
+                String aiReason = recommendAiPort.generateReason(farmDetails, rec.getCropName(), rec.getCategory().getLabel());
+                recommendations.set(i, rec.toBuilder().aiReason(aiReason).build());
+            } catch (Exception e) {
+                log.warn("AI 사유 생성 실패 (crop={}): {}", rec.getCropName(), e.getMessage());
+                recommendations.set(i, rec.toBuilder().aiReason("현재 데이터 기반 최적의 작물로 분석되었습니다.").build());
+            }
+        }
+
         log.info("추천 완료: {}건 산출, 1위={} ({}점)",
                 recommendations.size(),
                 recommendations.isEmpty() ? "-" : recommendations.get(0).getCropName(),
                 recommendations.isEmpty() ? 0 : recommendations.get(0).getScore());
 
-        // 5. 결과 조합
+        // 6. 결과 조합
         RecommendResult result = RecommendResult.builder()
                 .farmId(farm.getId())
                 .farmName(farm.getName())
@@ -142,7 +167,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
                 .generatedAt(LocalDateTime.now())
                 .build();
                 
-        // 6. 추천 결과 이력 저장
+        // 7. 추천 결과 이력 저장
         saveRecommendHistoryPort.save(result);
         
         return result;
@@ -159,6 +184,15 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
         validateFarmOwnership(userId, farmId);
         return loadRecommendHistoryPort.loadLatestByFarmId(farmId)
                 .orElseThrow(() -> new IllegalArgumentException("추천 이력이 없습니다: " + farmId));
+    }
+
+    @Override
+    public String diagnose(Long userId, org.springframework.web.multipart.MultipartFile image) {
+        if (userId == null) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("인증 정보가 없습니다.");
+        }
+        log.info("이미지 진단 요청 위임: userId={}", userId);
+        return recommendAiPort.diagnoseImage(image);
     }
 
     /** 농장 소유자 검증 */

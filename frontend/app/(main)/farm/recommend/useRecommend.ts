@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useMyFarms } from '../useFarm';
-import { getMockRecommendResponse } from './_lib/recommend.mock';
+import { requestCropRecommendation } from './_lib/recommend.api';
 import type { CropRecommendResponse } from './_lib/recommend.types';
 
 export default function useRecommend() {
@@ -24,20 +24,18 @@ export default function useRecommend() {
   }, [selectedFarmIdx]);
 
   const handleAnalyze = async () => {
-    if (!farm) return;
+    if (!farm || !farm.id) return;
     setIsAnalyzing(true);
 
     try {
-      // TODO: 실제 API 연동 시 여기를 교체
-      // const data = await requestCropRecommendation(farm.id);
-      await new Promise((r) => setTimeout(r, 2000));
-      const data = getMockRecommendResponse(farm.id, farm.name);
+      // 진짜 백엔드 API 호출! (ID를 확실히 숫자로 변환하여 전달)
+      const data = await requestCropRecommendation(Number(farm.id));
 
       setResult(data);
       setHasAnalyzed(true);
     } catch (err) {
       console.error('AI 분석 실패:', err);
-      // TODO: 에러 상태를 UI에 표시
+      alert('AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setIsAnalyzing(false);
     }
