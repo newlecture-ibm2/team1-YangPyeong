@@ -35,6 +35,7 @@ ai/app/
 │   ├── policy_agent.py        # 🏛️ 정책/지원금 전문 에이전트
 │   ├── shop_agent.py          # 🛒 상점/유통 전문 에이전트
 │   ├── community_agent.py     # 🗣️ 농업 지식/커뮤니티 전문 에이전트
+│   ├── admin_agent.py         # 🛡️ 관리자 업무 보조 전문 에이전트
 │   └── orchestrator.py        # 🌟 에이전트 간 소통 및 라우팅을 총괄하는 매니저
 └── routers/
     └── agent.py               # 오케스트레이터와 연결된 SSE 스트리밍 엔드포인트
@@ -54,6 +55,7 @@ ai/app/
 - **Balance Agent**: 거시적 통계 담당. "양평군 감자 수급 비율이 어떻게 돼?"라는 요청에 응답.
 - **Policy Agent**: 보조금 및 정책 RAG 담당.
 - **Shop / Community Agent**: 각각 유통 가격, 농업 지식(Q&A) RAG 담당.
+- **Admin Agent**: 시스템 관리자 전용 비서. **수동 통계 집계 자동화(리포트 생성), 정책 데이터 RAG 인제스처 보조, 이상 징후 탐지** 담당.
 - **LLM 전략**: 깊은 문서 이해와 데이터 분석이 필요한 하위 에이전트들은 컨텍스트 윈도우가 큰 **Gemini 1.5 Pro/Flash**를 사용하여 정확도를 극대화합니다.
 
 ---
