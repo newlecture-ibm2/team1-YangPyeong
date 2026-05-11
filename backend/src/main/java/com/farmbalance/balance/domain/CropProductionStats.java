@@ -3,6 +3,8 @@ package com.farmbalance.balance.domain;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Builder
 public class CropProductionStats {
@@ -11,8 +13,8 @@ public class CropProductionStats {
     private String regionCode;
     private String regionName;
     private Integer year;
-    private Double cultivatedArea;
-    private Double yieldPer10a;
-    private Double totalProduction;
+    private BigDecimal cultivatedArea;
+    private BigDecimal yieldPer10a;
+    private BigDecimal totalProduction;
     private String unitNm;
 }
