@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/balance")
+@RequestMapping("/api/balance")
 @RequiredArgsConstructor
 @Tag(name = "수급 분석 API", description = "작물별 수급비율을 분석합니다.")
 public class BalanceController {
