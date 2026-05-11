@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './Dropdown.module.css';
 
 interface DropdownOption {
@@ -54,8 +55,38 @@ export default function Dropdown({
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const [mounted, setMounted] = useState(false);
 
-  // 현재 선택된 라벨 찾기
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const updateMenuPosition = useCallback(() => {
+    if (dropdownRef.current && isOpen) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      setMenuStyle({
+        position: 'fixed',
+        top: `${rect.bottom + 4}px`,
+        left: `${rect.left}px`,
+        width: `${rect.width}px`,
+        zIndex: 9999,
+      });
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      updateMenuPosition();
+      window.addEventListener('resize', updateMenuPosition);
+      window.addEventListener('scroll', updateMenuPosition, true); // true for capturing scroll on all scrollable parents
+    }
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isOpen, updateMenuPosition]);
   const currentValues = value ? value.split(',').filter(Boolean) : [];
   let displayLabel = placeholder || '선택하세요';
   
@@ -72,7 +103,11 @@ export default function Dropdown({
   // 외부 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedOutsideWrapper = dropdownRef.current && !dropdownRef.current.contains(target);
+      const clickedOutsideMenu = menuRef.current && !menuRef.current.contains(target);
+
+      if (clickedOutsideWrapper && clickedOutsideMenu) {
         setIsOpen(false);
       }
     };
@@ -144,8 +179,8 @@ export default function Dropdown({
           </span>
         </div>
 
-        {isOpen && (
-          <ul className={styles.dropdownMenu}>
+        {isOpen && mounted && createPortal(
+          <ul className={styles.dropdownMenu} style={{ ...menuStyle }} ref={menuRef}>
             {options.map((opt) => {
               const isSelected = multiple ? currentValues.includes(opt.value) : value === opt.value;
               return (
@@ -168,7 +203,8 @@ export default function Dropdown({
                 </li>
               );
             })}
-          </ul>
+          </ul>,
+          document.body
         )}
       </div>
     </div>
