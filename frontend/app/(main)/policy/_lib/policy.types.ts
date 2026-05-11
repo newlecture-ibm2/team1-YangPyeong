@@ -68,3 +68,32 @@ export const POLICY_REGION_OPTIONS = [
   { value: '4183', label: '양평군' },
   { value: '41', label: '경기도' },
 ];
+
+/** 농업인 프로필 요약 (추천용) */
+export interface FarmerProfileSummary {
+  name: string;
+  regionName: string | null;
+  farmCount: number;
+  totalArea: number;
+  crops: string[];
+}
+
+/** 추천된 정책 항목 */
+export interface RecommendedPolicy {
+  policyId: number;
+  title: string;
+  category: string;
+  supportAmount: string | null;
+  organization: string | null;
+  applyEnd: string | null;
+  sourceUrl: string | null;
+  matchScore: number;
+  matchReasons: string[];
+  summary: string;
+}
+
+/** 맞춤 정책 추천 API 응답 */
+export interface PolicyRecommendResponse {
+  farmerProfile: FarmerProfileSummary;
+  recommendedPolicies: RecommendedPolicy[];
+}

@@ -7,6 +7,7 @@ import com.farmbalance.policy.adapter.in.web.dto.PolicyListResponse;
 
 import com.farmbalance.policy.application.port.in.SearchPolicyUseCase;
 import com.farmbalance.policy.application.port.in.SyncPolicyUseCase;
+import com.farmbalance.policy.application.port.in.RecommendPolicyUseCase;
 import com.farmbalance.policy.application.port.out.RegionNameResolvePort;
 import com.farmbalance.policy.domain.model.PolicyData;
 import com.farmbalance.policy.domain.model.PolicySearchCondition;
@@ -30,6 +31,7 @@ public class PolicyController {
 
     private final SearchPolicyUseCase searchPolicyUseCase;
     private final SyncPolicyUseCase syncPolicyUseCase;
+    private final RecommendPolicyUseCase recommendPolicyUseCase;
     private final RegionNameResolvePort regionNameResolvePort;
 
     private static final BigDecimal LOW_CONFIDENCE_THRESHOLD = new BigDecimal("0.6");
@@ -59,6 +61,20 @@ public class PolicyController {
                 .toList();
 
         return ApiResponse.ok(PageResponse.of(responseList, page, size, totalCount));
+    }
+
+    /**
+     * 맞춤 정책 추천 API (농업인 전용)
+     * GET /api/policies/recommend/me
+     */
+    @GetMapping("/api/policies/recommend/me")
+    public ApiResponse<com.farmbalance.policy.adapter.in.web.dto.PolicyRecommendResponse> recommendForMe(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal Long userId) {
+        if (userId == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
+        com.farmbalance.policy.adapter.in.web.dto.PolicyRecommendResponse response = recommendPolicyUseCase.recommendForUser(userId);
+        return ApiResponse.ok(response);
     }
 
     /**

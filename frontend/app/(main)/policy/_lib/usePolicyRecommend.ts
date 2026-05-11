@@ -1,0 +1,52 @@
+import { useState, useEffect } from 'react';
+import type { PolicyRecommendResponse } from './policy.types';
+
+export function usePolicyRecommend() {
+  const [data, setData] = useState<PolicyRecommendResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [statusCode, setStatusCode] = useState<number>(200);
+
+  useEffect(() => {
+    async function fetchRecommend() {
+      try {
+        setIsLoading(true);
+        const res = await fetch('/api/proxy/policies/recommend/me', {
+          credentials: 'include',
+          cache: 'no-store'
+        });
+        
+        setStatusCode(res.status);
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error('로그인이 필요합니다.');
+          }
+          if (res.status === 403) {
+            throw new Error('접근 권한이 없습니다.');
+          }
+          throw new Error('추천 데이터를 불러오는데 실패했습니다.');
+        }
+
+        const json = await res.json();
+        if (json.success) {
+          if (!json.data || !json.data.farmerProfile) {
+            setStatusCode(403);
+            throw new Error('농업인 계정에서 이용할 수 있는 기능입니다.');
+          }
+          setData(json.data);
+        } else {
+          throw new Error(json.error?.message || '데이터 구조 오류');
+        }
+      } catch (err: any) {
+        setError(err.message || '알 수 없는 오류가 발생했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchRecommend();
+  }, []);
+
+  return { data, isLoading, error, statusCode };
+}

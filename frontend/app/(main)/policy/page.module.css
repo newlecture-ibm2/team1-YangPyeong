@@ -44,6 +44,92 @@
   margin-bottom: var(--space-xl);
 }
 
+/* ── 맞춤 정책 추천 배너 ── */
+.recommendBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg) var(--space-xl);
+  margin-bottom: var(--space-xl);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.recommendBanner:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.bannerContent {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+.bannerIcon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.bannerText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bannerTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin: 0;
+}
+
+.bannerDesc {
+  font-size: 14px;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.bannerSubText {
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+.bannerButton {
+  flex-shrink: 0;
+  background-color: var(--color-primary);
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.bannerButton:hover {
+  background-color: var(--color-primary-dark);
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .recommendBanner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-md);
+  }
+  
+  .bannerButton {
+    width: 100%;
+    text-align: center;
+  }
+}
+
 /* ── 결과 요약 ── */
 .resultSummary {
   display: flex;
