@@ -27,12 +27,15 @@ public class RevenuePredictionController {
 
     private final RestClient aiRestClient;
     private final RecommendPricePort recommendPricePort;
+    private final ObjectMapper objectMapper;
 
     public RevenuePredictionController(
             @Qualifier("aiRestClient") RestClient aiRestClient,
-            RecommendPricePort recommendPricePort) {
+            RecommendPricePort recommendPricePort,
+            ObjectMapper objectMapper) {
         this.aiRestClient = aiRestClient;
         this.recommendPricePort = recommendPricePort;
+        this.objectMapper = objectMapper;
     }
 
     @PostMapping("/predict")
@@ -69,9 +72,8 @@ public class RevenuePredictionController {
             String rawBody = responseEntity.getBody();
             log.info("AI 서버 응답 수신 성공");
 
-            ObjectMapper mapper = new ObjectMapper();
             @SuppressWarnings("unchecked")
-            Map<String, Object> aiResponse = mapper.readValue(rawBody, Map.class);
+            Map<String, Object> aiResponse = objectMapper.readValue(rawBody, Map.class);
 
             return ResponseEntity.ok(ApiResponse.ok(aiResponse));
 
