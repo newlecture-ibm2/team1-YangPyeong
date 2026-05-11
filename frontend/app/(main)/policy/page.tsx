@@ -146,6 +146,33 @@ export default function PolicyListPage() {
   );
 }
 
+// ── 정책 뱃지 정보 생성 함수 ──
+function getPolicyBadges(policy: PolicyItem): { regionBadge: string; categoryBadge: string } {
+  let regionBadge = '전국';
+
+  // 1. 지역명이 있으면 우선 표시 (예: "양평군", "경기도")
+  if (policy.regionName && policy.regionName.trim() !== '') {
+    regionBadge = policy.regionName;
+  } else {
+    // 2. 지역 코드가 전국을 의미하면 표시
+    const rc = policy.regionCode?.toUpperCase();
+    if (rc === 'ALL' || rc === 'NATIONAL' || rc === '0000') {
+      regionBadge = '전국';
+    } else {
+      // 3. 대상이나 요약 내용에 '전국' 키워드가 있는지 확인
+      const text = `${policy.target ?? ''} ${policy.contentSummary ?? ''}`;
+      if (text.includes('전국')) {
+        regionBadge = '전국';
+      }
+    }
+  }
+
+  // 카테고리 뱃지는 실제 값을 그대로 사용 (없으면 '기타')
+  const categoryBadge = policy.category?.trim() || '기타';
+
+  return { regionBadge, categoryBadge };
+}
+
 // ── 정책 카드 컴포넌트 ──
 
 function PolicyCard({ policy }: { policy: PolicyItem }) {
@@ -169,6 +196,8 @@ function PolicyCard({ policy }: { policy: PolicyItem }) {
     }
   };
 
+  const { regionBadge, categoryBadge } = getPolicyBadges(policy);
+
   return (
     <div
       className={`${styles.policyCard} ${hasSourceUrl ? '' : styles.policyCardNoLink}`}
@@ -189,9 +218,8 @@ function PolicyCard({ policy }: { policy: PolicyItem }) {
     >
       <div className={styles.cardHeader}>
         <div>
-          {policy.category && (
-            <span className={styles.categoryTag}>{policy.category}</span>
-          )}
+          <span className={styles.categoryTag}>{regionBadge}</span>
+          <span className={styles.categoryTag}>{categoryBadge}</span>
           <span className={styles.cardTitle}>{policy.title}</span>
         </div>
         {policy.supportAmount && (
@@ -202,10 +230,12 @@ function PolicyCard({ policy }: { policy: PolicyItem }) {
       </div>
 
       <div className={styles.cardMeta}>
-        <span className={styles.metaItem}>
-          <span className={styles.metaLabel}>지원기관:</span>{' '}
-          {policy.organization || '-'}
-        </span>
+        {policy.organization && policy.organization.trim() !== '-' && (
+          <span className={styles.metaItem}>
+            <span className={styles.metaLabel}>지원기관:</span>{' '}
+            {policy.organization}
+          </span>
+        )}
         {policy.regionName && (
           <span className={styles.metaItem}>
             <span className={styles.metaLabel}>지역:</span>{' '}

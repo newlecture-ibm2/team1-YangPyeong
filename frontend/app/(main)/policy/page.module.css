@@ -102,6 +102,10 @@
 
 .supportBadge {
   flex-shrink: 0;
+  max-width: 35%; /* 제목 영역 확보를 위해 최대 너비 제한 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cardMeta {

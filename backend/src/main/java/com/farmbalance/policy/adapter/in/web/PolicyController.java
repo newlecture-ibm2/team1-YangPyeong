@@ -88,6 +88,21 @@ public class PolicyController {
         return ApiResponse.ok(result);
     }
 
+    /**
+     * 기존 정책 데이터 재정규화 API (관리자용)
+     * POST /api/admin/policies/reprocess
+     *
+     * title=null인 기존 데이터의 content를 파싱하여
+     * title/organization/target/category/region_code를 보정합니다.
+     *
+     * TODO: 운영 배포 전 제거 또는 ADMIN 권한 제한 필요.
+     */
+    @PostMapping("/api/admin/policies/reprocess")
+    public ApiResponse<SyncPolicyUseCase.ReprocessResult> reprocessPolicies() {
+        SyncPolicyUseCase.ReprocessResult result = syncPolicyUseCase.reprocessExisting();
+        return ApiResponse.ok(result);
+    }
+
     // ── Domain → Response DTO 변환 ──
 
     private PolicyListResponse toListResponse(PolicyData domain) {
