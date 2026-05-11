@@ -29,7 +29,7 @@ export default function RankingCard({ rec, index }: RankingCardProps) {
         <GaugeBar label="수급 안정성" value={rec.supplyStabilityPercent} />
       </div>
       <p className={styles.revenue}>
-        예상 수익: ₩{rec.expectedRevenuePerKg.toLocaleString()}/kg
+        예상 수익: ₩{rec.expectedRevenuePerKg.toLocaleString('ko-KR')}/kg
       </p>
     </div>
   );

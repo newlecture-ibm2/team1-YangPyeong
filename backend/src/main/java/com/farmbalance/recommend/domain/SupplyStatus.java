@@ -5,20 +5,20 @@ package com.farmbalance.recommend.domain;
  */
 public enum SupplyStatus {
 
-    EXCESS_WARN("과잉",       "red"),
-    EXCESS_CAUTION("과잉주의", "orange"),
-    BALANCED("안정",          "green"),
-    SHORT_CAUTION("부족주의",  "orange"),
-    SHORT_WARN("부족",        "red");
+    EXCESS_WARN("과잉", 40),
+    EXCESS_CAUTION("과잉주의", 65),
+    BALANCED("안정", 95),
+    SHORT_CAUTION("부족주의", 75),
+    SHORT_WARN("부족", 50);
 
     private final String label;
-    private final String variant;
+    private final int stabilityScore;
 
-    SupplyStatus(String label, String variant) {
+    SupplyStatus(String label, int stabilityScore) {
         this.label = label;
-        this.variant = variant;
+        this.stabilityScore = stabilityScore;
     }
 
-    public String getLabel()   { return label; }
-    public String getVariant() { return variant; }
+    public String getLabel() { return label; }
+    public int getStabilityScore() { return stabilityScore; }
 }

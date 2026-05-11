@@ -16,12 +16,14 @@ import java.util.List;
 /**
  * 작물 후보 실 데이터 어댑터
  *
- * crops + crop_categories + soil_fitness_data + crop_production_stats 테이블을
+ * crops + crop_categories + soil_fitness_data + crop_production_stats
+ * + crop_cultivation_env + nongsaro_farm_schedules 테이블을
  * JOIN하여 추천 엔진에 필요한 후보 작물 데이터를 조회합니다.
  *
- * [참고] V15 마이그레이션에서 crops 테이블의 growth_days, yield_per_sqm,
- * avg_cost_per_sqm, climate_conditions 컬럼이 삭제되었으므로,
- * 해당 정보는 crop_production_stats 및 soil_fitness_data에서 보완합니다.
+ * [고도화 내역]
+ * - crop_cultivation_env 테이블 JOIN → 작물별 최적 pH, 온도, 난이도, 토양 타입을 DB에서 조회
+ * - nongsaro_farm_schedules 테이블 서브쿼리 → 파종·수확 시기를 실제 데이터로 조회
+ * - estimateDifficulty, estimateOptimalTemp 등의 하드코딩 함수를 DB 값 우선 사용으로 변경
  *
  * @Primary 로 MockCropCandidateAdapter 보다 우선 적용됩니다.
  */
@@ -52,7 +54,21 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
                 COALESCE(sf.low_suit_area, 0)  AS low_suit,
                 -- crop_production_stats: 최근 연도 생산 통계
                 cps.yield_per_10a,
-                cps.total_production
+                cps.total_production,
+                -- crop_cultivation_env: 작물별 재배 환경 정보
+                env.optimal_ph_min,
+                env.optimal_ph_max,
+                env.optimal_temp      AS env_optimal_temp,
+                env.organic_matter    AS env_organic_matter,
+                env.soil_types        AS env_soil_types,
+                env.difficulty        AS env_difficulty,
+                env.sowing_info       AS env_sowing_info,
+                env.harvest_info      AS env_harvest_info,
+                env.growth_days       AS env_growth_days,
+                -- nongsaro_farm_schedules: 파종 시기 (동적 조회)
+                sowing_sch.sowing_period,
+                -- nongsaro_farm_schedules: 수확 시기 (동적 조회)
+                harvest_sch.harvest_period
             FROM crops c
             JOIN crop_categories cc ON c.category_id = cc.id
             LEFT JOIN soil_fitness_data sf
@@ -66,6 +82,39 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
                 WHERE deleted_at IS NULL
                 ORDER BY itm_nm, year DESC
             ) cps ON cps.itm_nm = c.name
+            LEFT JOIN crop_cultivation_env env
+                ON env.crop_name = c.name
+                AND env.deleted_at IS NULL
+            LEFT JOIN (
+                SELECT
+                    farm_work_type,
+                    MIN(start_month) || '월' ||
+                    CASE WHEN MIN(start_month) <> MAX(end_month)
+                         THEN ' ~ ' || MAX(end_month) || '월'
+                         ELSE ''
+                    END AS sowing_period
+                FROM nongsaro_farm_schedules
+                WHERE deleted_at IS NULL
+                  AND info_type_code = '410001'
+                  AND (operation_name LIKE '%파종%' OR operation_name LIKE '%정식%'
+                       OR operation_name LIKE '%이식%' OR operation_name LIKE '%모내기%')
+                GROUP BY farm_work_type
+            ) sowing_sch ON sowing_sch.farm_work_type = c.name
+            LEFT JOIN (
+                SELECT
+                    farm_work_type,
+                    MIN(start_month) || '월' ||
+                    CASE WHEN MIN(start_month) <> MAX(end_month)
+                         THEN ' ~ ' || MAX(end_month) || '월'
+                         ELSE ''
+                    END AS harvest_period
+                FROM nongsaro_farm_schedules
+                WHERE deleted_at IS NULL
+                  AND info_type_code = '410001'
+                  AND (operation_name LIKE '%수확%' OR operation_name LIKE '%수확기%'
+                       OR operation_name LIKE '%성숙기%')
+                GROUP BY farm_work_type
+            ) harvest_sch ON harvest_sch.farm_work_type = c.name
             WHERE c.deleted_at IS NULL
             ORDER BY c.name
             """;
@@ -112,19 +161,64 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
         // 예상 수확량: 10a당 수확량 기반
         Integer expectedYield = yieldPer10a != null ? yieldPer10a.intValue() : null;
 
-        // 난이도: 카테고리 기반 추정
-        int difficulty = estimateDifficulty(category);
+        // ── crop_cultivation_env 에서 작물별 실제 데이터 조회 ──
+
+        // pH 범위: DB 값 우선, 없으면 카테고리 기반 기본값
+        Double dbPhMin = rs.getObject("optimal_ph_min") != null ? rs.getDouble("optimal_ph_min") : null;
+        Double dbPhMax = rs.getObject("optimal_ph_max") != null ? rs.getDouble("optimal_ph_max") : null;
+        double phMin = dbPhMin != null ? dbPhMin : fallbackPhMin(category);
+        double phMax = dbPhMax != null ? dbPhMax : fallbackPhMax(category);
+
+        // 유기물: DB 값 우선, 없으면 기본값
+        Double dbOrganic = rs.getObject("env_organic_matter") != null ? rs.getDouble("env_organic_matter") : null;
+        double organicMatter = dbOrganic != null ? dbOrganic : 25.0;
+
+        // 선호 토양 타입: DB 값 우선, 없으면 기본값
+        String dbSoilTypes = rs.getString("env_soil_types");
+        String[] soilTypes = dbSoilTypes != null && !dbSoilTypes.isEmpty()
+                ? dbSoilTypes.split(",")
+                : new String[]{"양토", "사양토"};
+
+        // 난이도: DB 값 우선, 없으면 카테고리 기반 추정
+        Integer dbDifficulty = rs.getObject("env_difficulty") != null ? rs.getInt("env_difficulty") : null;
+        int difficulty = dbDifficulty != null ? dbDifficulty : fallbackDifficulty(category);
+
+        // 최적 온도: DB 값 우선, 없으면 카테고리 기반 추정
+        String dbOptimalTemp = rs.getString("env_optimal_temp");
+        String optimalTemp = dbOptimalTemp != null && !dbOptimalTemp.isEmpty()
+                ? dbOptimalTemp : fallbackOptimalTemp(category);
+
+        // 파종 시기: nongsaro 스케줄 > env 테이블 > 카테고리 기반 기본값
+        String schSowing = rs.getString("sowing_period");
+        String envSowing = rs.getString("env_sowing_info");
+        String sowingPeriod = schSowing != null && !schSowing.isEmpty()
+                ? schSowing
+                : envSowing != null && !envSowing.isEmpty()
+                        ? envSowing
+                        : fallbackSowingPeriod(category);
+
+        // 수확 시기: nongsaro 스케줄 > env 테이블 > 카테고리 기반 기본값
+        String schHarvest = rs.getString("harvest_period");
+        String envHarvest = rs.getString("env_harvest_info");
+        String harvestPeriod = schHarvest != null && !schHarvest.isEmpty()
+                ? schHarvest
+                : envHarvest != null && !envHarvest.isEmpty()
+                        ? envHarvest
+                        : fallbackHarvestPeriod(category);
+
+        // 재배 기간: DB 값 우선
+        Integer dbGrowthDays = rs.getObject("env_growth_days") != null ? rs.getInt("env_growth_days") : null;
 
         return new DefaultCropCandidateData(
                 cropId, cropName, category,
-                5.5, 7.0,   // 범용 pH 범위
-                25.0,        // 범용 유기물 기준
-                new String[]{"양토", "사양토"},
+                phMin, phMax,
+                organicMatter,
+                soilTypes,
                 priceForecast, revenuePerKg, expectedYield,
-                null,        // growthDays (V15에서 삭제됨)
-                estimateOptimalTemp(category),
-                estimateSowingPeriod(category),
-                estimateHarvestPeriod(category),
+                dbGrowthDays,
+                optimalTemp,
+                sowingPeriod,
+                harvestPeriod,
                 difficulty,
                 new String[]{}
         );
@@ -141,7 +235,31 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
         return Math.min(100, Math.max(0, baseScore));
     }
 
-    private int estimateDifficulty(String category) {
+    // ── Fallback 함수들: DB에 데이터가 없을 때만 사용되는 카테고리 기반 기본값 ──
+
+    private double fallbackPhMin(String category) {
+        if (category == null) return 5.5;
+        return switch (category) {
+            case "과일", "과수" -> 5.5;
+            case "채소", "엽경채류", "근채류" -> 6.0;
+            case "곡류", "미곡" -> 5.5;
+            case "특용작물", "약용작물" -> 5.5;
+            default -> 5.5;
+        };
+    }
+
+    private double fallbackPhMax(String category) {
+        if (category == null) return 7.0;
+        return switch (category) {
+            case "과일", "과수" -> 6.5;
+            case "채소", "엽경채류", "근채류" -> 7.0;
+            case "곡류", "미곡" -> 6.5;
+            case "특용작물", "약용작물" -> 6.5;
+            default -> 7.0;
+        };
+    }
+
+    private int fallbackDifficulty(String category) {
         if (category == null) return 3;
         return switch (category) {
             case "곡류", "미곡" -> 2;
@@ -152,7 +270,7 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
         };
     }
 
-    private String estimateOptimalTemp(String category) {
+    private String fallbackOptimalTemp(String category) {
         if (category == null) return "15~25°C";
         return switch (category) {
             case "과일", "과수" -> "18~28°C";
@@ -163,7 +281,7 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
         };
     }
 
-    private String estimateSowingPeriod(String category) {
+    private String fallbackSowingPeriod(String category) {
         if (category == null) return "3월 ~ 5월";
         return switch (category) {
             case "과일", "과수" -> "2월 ~ 4월";
@@ -173,7 +291,7 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
         };
     }
 
-    private String estimateHarvestPeriod(String category) {
+    private String fallbackHarvestPeriod(String category) {
         if (category == null) return "파종 후 60~120일";
         return switch (category) {
             case "과일", "과수" -> "7월 ~ 11월";

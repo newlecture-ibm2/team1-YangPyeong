@@ -40,7 +40,7 @@ public class CropRecommendation {
     /** 예상 수확량 (kg) */
     private Integer expectedYield;
 
-    /** AI 분석 의견 (Gemini 연동 시 채워짐) */
+    /** AI 분석 의견 */
     private String aiReason;
 
     /** 재배 상세 정보 */
