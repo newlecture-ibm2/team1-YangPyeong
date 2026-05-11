@@ -149,3 +149,10 @@ resilience4j:
     instances:
       oauthCircuitBreaker:
         base-config: default
+
+# ── KAMIS API (농산물 시세 조회) ──
+kamis:
+  api:
+    url: ${KAMIS_API_URL:http://www.kamis.or.kr/service/price/xml.do}
+    cert-key: ${KAMIS_CERT_KEY:8291e7b2-28a1-469c-93ac-fba3ef05f174}
+    cert-id: ${KAMIS_CERT_ID:7941}

@@ -9,6 +9,7 @@ import { useToast } from '@/components/common/Toast';
 import { useMyFarms } from './useFarm';
 import { useHistory } from './useHistory';
 import { useCultivation } from './useCultivation';
+import { getLatestRecommendHistory } from './recommend/_lib/recommend.api';
 import Timeline from './_components/Timeline/Timeline';
 import HistoryModal from './_components/HistoryModal/HistoryModal';
 import CultivationEditModal from './_components/CultivationEditModal/CultivationEditModal';
@@ -44,6 +45,8 @@ export default function FarmDashboardPage() {
   const [selectedCultivation, setSelectedCultivation] = useState<any>(null);
   const [cropOptions, setCropOptions] = useState<{ id: number, name: string }[]>([]);
   const [weather, setWeather] = useState<{ tmp: number, pty: number, sky: number } | null>(null);
+  const [latestAiScore, setLatestAiScore] = useState<number | null>(null);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<number>(0);
 
   // 기상 정보 조회
   useEffect(() => {
@@ -103,6 +106,54 @@ export default function FarmDashboardPage() {
   const refreshAll = useCallback(async () => {
     await Promise.all([refreshHistories(), refreshCultivations()]);
   }, [refreshHistories, refreshCultivations]);
+
+  // AI 추천 최근 이력 및 예상 수익 계산
+  useEffect(() => {
+    if (farm?.id) {
+      getLatestRecommendHistory(farm.id)
+        .then(res => {
+          let aiScore = null;
+          let recommendations = [];
+          
+          if (res && res.recommendations && res.recommendations.length > 0) {
+            aiScore = res.recommendations[0].score;
+            recommendations = res.recommendations;
+          }
+          setLatestAiScore(aiScore);
+          
+          // 사용자가 등록한 재배 작물의 예상 수익 합산
+          // 계산식: 등록된 작물의 예상 수확량(kg) * 해당 작물의 예상 수익(원/kg)
+          let estimatedTotal = 0;
+          if (cultivations && cultivations.length > 0) {
+            cultivations.forEach(c => {
+              // AI 추천 목록에서 해당 작물의 단가를 찾음 (없으면 기본값 3000원)
+              const rec = recommendations.find((r: any) => r.cropId === c.cropId);
+              const pricePerKg = rec?.expectedRevenuePerKg || 3000;
+              const yieldAmount = c.farmerEstimatedYield || 0;
+              estimatedTotal += yieldAmount * pricePerKg;
+            });
+          }
+          setMonthlyRevenue(estimatedTotal);
+        })
+        .catch(err => {
+          console.error('최근 AI 추천 이력을 불러오지 못했습니다:', err);
+          setLatestAiScore(null);
+          
+          // 추천 이력을 못 불러왔더라도, 재배 작물이 있다면 기본 단가(3000원)로 계산
+          let estimatedTotal = 0;
+          if (cultivations && cultivations.length > 0) {
+            cultivations.forEach(c => {
+              const yieldAmount = c.farmerEstimatedYield || 0;
+              estimatedTotal += yieldAmount * 3000;
+            });
+          }
+          setMonthlyRevenue(estimatedTotal);
+        });
+    } else {
+      setLatestAiScore(null);
+      setMonthlyRevenue(0);
+    }
+  }, [farm?.id, cultivations]);
 
   const isLoading = isFarmsLoading;
 
@@ -407,12 +458,14 @@ export default function FarmDashboardPage() {
               <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>{farm?.cropNames.length}종</p>
             </div>
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
-              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>이번 달 수익</p>
-              <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>₩0M</p>
+              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>이번 달 예상 수익</p>
+              <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>₩{Math.round(monthlyRevenue).toLocaleString()}</p>
             </div>
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
               <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>AI 점수</p>
-              <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>-</p>
+              <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>
+                {latestAiScore !== null ? `${latestAiScore}점` : '-'}
+              </p>
             </div>
           </div>
 

@@ -9,6 +9,7 @@ import com.farmbalance.recommend.application.port.out.LoadSupplyStatusPort;
 import com.farmbalance.recommend.application.port.out.LoadRecommendHistoryPort;
 import com.farmbalance.recommend.application.port.out.SaveRecommendHistoryPort;
 import com.farmbalance.recommend.application.port.out.RecommendAiPort;
+import com.farmbalance.recommend.application.port.out.RecommendPricePort;
 import com.farmbalance.recommend.application.port.in.GetRecommendHistoryUseCase;
 import com.farmbalance.recommend.application.port.in.DiagnoseCropImageUseCase;
 import com.farmbalance.recommend.domain.*;
@@ -45,6 +46,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
     private final SaveRecommendHistoryPort saveRecommendHistoryPort;
     private final LoadRecommendHistoryPort loadRecommendHistoryPort;
     private final com.farmbalance.recommend.application.port.out.RecommendAiPort recommendAiPort;
+    private final RecommendPricePort recommendPricePort;
 
     /** 점수 산출 엔진 (도메인 순수 객체, DI 불필요) */
     private final RecommendScoreCalculator calculator = new RecommendScoreCalculator();
@@ -92,8 +94,11 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
                     .loadSupplyStatus(candidate.getCropId(), regionCode);
             int supplyPercent = supplyStatus != null ? supplyStatus.getStabilityScore() : 50;
 
-            // 3-3. 시세 전망
+            // 3-3. 시세 전망 및 예상 수익금액 (KAMIS 연동)
             int pricePercent = candidate.getPriceForecastPercent();
+            
+            Integer kamisPrice = recommendPricePort.getRecentPricePerKg(candidate.getCropName());
+            Integer expectedRevenue = kamisPrice != null ? kamisPrice : candidate.getExpectedRevenuePerKg();
 
             // 3-4. 난이도
             int difficulty = candidate.getDifficulty() != null ? candidate.getDifficulty() : 3;
@@ -115,7 +120,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
                     .priceForecastPercent(pricePercent)
                     .supplyStabilityPercent(supplyPercent)
                     .supplyStatus(supplyStatus)
-                    .expectedRevenuePerKg(candidate.getExpectedRevenuePerKg())
+                    .expectedRevenuePerKg(expectedRevenue)
                     .expectedYield(candidate.getExpectedYield())
                     .growthDays(candidate.getGrowthDays())
                     .optimalTemp(candidate.getOptimalTemp())
