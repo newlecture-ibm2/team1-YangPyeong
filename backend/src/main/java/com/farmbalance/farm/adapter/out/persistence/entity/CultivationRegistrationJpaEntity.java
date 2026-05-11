@@ -76,4 +76,10 @@ public class CultivationRegistrationJpaEntity extends BaseTimeEntity {
         this.farmerEstimatedYield = farmerEstimatedYield;
         this.yieldUnit = yieldUnit;
     }
+
+    public void updateStatus(CultivationStatus status) {
+        if (status != null) {
+            this.status = status;
+        }
+    }
 }

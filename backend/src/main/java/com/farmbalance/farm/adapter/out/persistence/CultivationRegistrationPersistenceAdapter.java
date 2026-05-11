@@ -12,9 +12,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.farmbalance.farm.application.port.out.UpdateCultivationStatePort;
+import com.farmbalance.farm.domain.CultivationStatus;
+
 @Component
 @RequiredArgsConstructor
-public class CultivationRegistrationPersistenceAdapter implements SaveCultivationRegistrationPort, LoadCultivationRegistrationPort {
+public class CultivationRegistrationPersistenceAdapter implements SaveCultivationRegistrationPort, LoadCultivationRegistrationPort, UpdateCultivationStatePort {
 
     private final CultivationRegistrationRepository repository;
 
@@ -44,6 +47,11 @@ public class CultivationRegistrationPersistenceAdapter implements SaveCultivatio
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public void updateStatus(Long cultivationRegistrationId, CultivationStatus status) {
+        repository.updateStatus(cultivationRegistrationId, status);
+    }
+
     private CultivationRegistration mapToDomain(CultivationRegistrationJpaEntity entity) {
         return CultivationRegistration.builder()
                 .id(entity.getId())
@@ -52,6 +60,7 @@ public class CultivationRegistrationPersistenceAdapter implements SaveCultivatio
                 .cultivationArea(entity.getCultivationArea())
                 .farmerEstimatedYield(entity.getFarmerEstimatedYield())
                 .yieldUnit(entity.getYieldUnit())
+                .status(entity.getStatus())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
