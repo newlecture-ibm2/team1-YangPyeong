@@ -92,6 +92,49 @@ public class HistoryEventListener {
             log.error("재배등록 이력 저장 실패 - 농장 ID: {}, 원인: {}", event.getFarmId(), e.getMessage(), e);
         }
     }
+    
+    /**
+     * 재배 계획 수정 완료 시 자동으로 히스토리에 기록
+     */
+    @Async("historyTaskExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleCultivationUpdatedEvent(com.farmbalance.farm.domain.event.CultivationUpdatedEvent event) {
+        try {
+            // crop 이름 조회
+            String cropName = "알 수 없는 작물";
+            try {
+                cropName = jdbcTemplate.queryForObject(
+                        "SELECT name FROM crops WHERE id = ?", String.class, event.getCropId());
+            } catch (Exception e) {
+                log.warn("작물명 조회 실패 - cropId: {}", event.getCropId());
+            }
+
+            // 수정 정보 포맷
+            String areaInfo = "";
+            if (event.getArea() != null) {
+                double sqm = event.getArea();
+                double pyeong = sqm / 3.3058;
+                areaInfo = String.format(" (%.0f㎡ / %.0f평)", sqm, pyeong);
+            }
+
+            String content = String.format("✏️ 계획수정: %s%s", cropName, areaInfo);
+
+            RecordHistoryCommand command = RecordHistoryCommand.builder()
+                    .farmId(event.getFarmId())
+                    .cultivationRegistrationId(event.getId())
+                    .recordDate(java.time.LocalDate.now())
+                    .activityType(HistoryType.SYSTEM)
+                    .activityContent(content)
+                    .build();
+
+            recordHistoryUseCase.recordHistory(command);
+            log.info("재배수정 이력 저장 성공 - 농장 ID: {}, 작물: {}", event.getFarmId(), cropName);
+
+        } catch (Exception e) {
+            log.error("재배수정 이력 저장 실패 - 농장 ID: {}, 원인: {}", event.getFarmId(), e.getMessage(), e);
+        }
+    }
 
     /**
      * 수확 등록 완료 시 자동으로 히스토리에 기록
@@ -119,6 +162,7 @@ public class HistoryEventListener {
 
             RecordHistoryCommand command = RecordHistoryCommand.builder()
                     .farmId(event.getFarmId())
+                    .cultivationRegistrationId(event.getCultivationRegistrationId()) // 정확한 ID 매핑
                     .recordDate(java.time.LocalDate.now())
                     .activityType(HistoryType.USER)
                     .activityContent(content)

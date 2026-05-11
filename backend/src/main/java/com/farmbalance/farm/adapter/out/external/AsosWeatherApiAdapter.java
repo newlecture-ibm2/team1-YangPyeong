@@ -6,7 +6,6 @@ import com.farmbalance.farm.domain.WeatherData;
 import com.farmbalance.global.error.exception.ExternalApiException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -24,7 +23,6 @@ import java.time.format.DateTimeFormatter;
 @Component
 public class AsosWeatherApiAdapter implements WeatherRecordPort {
 
-
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
@@ -39,8 +37,8 @@ public class AsosWeatherApiAdapter implements WeatherRecordPort {
 
     public AsosWeatherApiAdapter(RestTemplateBuilder restTemplateBuilder, ObjectMapper objectMapper) {
         this.restTemplate = restTemplateBuilder
-                .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofSeconds(15))
+                .connectTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(15))
                 .build();
         this.objectMapper = objectMapper;
     }
@@ -66,7 +64,7 @@ public class AsosWeatherApiAdapter implements WeatherRecordPort {
                     .toUri();
 
             log.info("[WeatherAPI] ASOS 데이터 요청: stnId={}, date={}", stnId, formattedDate);
-            
+
             if (serviceKey == null || serviceKey.trim().isEmpty()) {
                 throw new ExternalApiException("기상청 API 키(WEATHER_API_KEY)가 설정되지 않았습니다.");
             }
@@ -76,18 +74,20 @@ public class AsosWeatherApiAdapter implements WeatherRecordPort {
             log.debug("[WeatherAPI] 요청 URI (masked): {}", maskedUri);
 
             String response = restTemplate.getForObject(uri, String.class);
-            
+
             if (response == null) {
                 throw new ExternalApiException("기상청 API로부터 응답이 없습니다.");
             }
 
             JsonNode root = objectMapper.readTree(response);
-            
+
             // 공공데이터포털 에러 응답 체크 (XML 응답 또는 결과 코드 확인)
-            if (response.trim().startsWith("<") || !"00".equals(root.path("response").path("header").path("resultCode").asText())) {
+            if (response.trim().startsWith("<")
+                    || !"00".equals(root.path("response").path("header").path("resultCode").asText())) {
                 log.error("기상청 API 오류 응답: {}", response);
                 String msg = root.path("response").path("header").path("resultMsg").asText("Unknown Error");
-                throw new ExternalApiException("기상청 API 호출 중 오류가 발생했습니다. (Code: " + root.path("response").path("header").path("resultCode").asText() + ", Message: " + msg + ")");
+                throw new ExternalApiException("기상청 API 호출 중 오류가 발생했습니다. (Code: "
+                        + root.path("response").path("header").path("resultCode").asText() + ", Message: " + msg + ")");
             }
 
             JsonNode itemNode = root.path("response").path("body").path("items").path("item").get(0);
@@ -119,13 +119,13 @@ public class AsosWeatherApiAdapter implements WeatherRecordPort {
         // ... (기존 단기예보 로직 유지하되 필요 시 업데이트)
         // 여기서는 사용자가 요청한 ASOS 로직에 집중하여 기존 코드를 적절히 유지합니다.
         LocalDateTime now = LocalDateTime.now();
-        String[] baseTimes = {"0200", "0500", "0800", "1100", "1400", "1700", "2000", "2300"};
+        String[] baseTimes = { "0200", "0500", "0800", "1100", "1400", "1700", "2000", "2300" };
         String baseDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String baseTime = "0500";
 
         int currentHour = now.getHour();
         int currentMinute = now.getMinute();
-        
+
         for (int i = baseTimes.length - 1; i >= 0; i--) {
             int bt = Integer.parseInt(baseTimes[i]);
             int bh = bt / 100;
@@ -158,26 +158,48 @@ public class AsosWeatherApiAdapter implements WeatherRecordPort {
 
             String response = restTemplate.getForObject(uri, String.class);
             JsonNode root = objectMapper.readTree(response);
-            
+
             JsonNode items = root.path("response").path("body").path("items").path("item");
             if (items.isMissingNode() || !items.isArray()) {
                 throw new ExternalApiException("단기예보 데이터를 찾을 수 없습니다.");
             }
 
-            var builder = ShortTermForecast.builder();
+            // 날짜+시간(yyyyMMddHH00)을 Key로 사용하여 카테고리별 데이터 그룹화
+            java.util.TreeMap<String, java.util.Map<String, String>> groupedByTime = new java.util.TreeMap<>();
+            
             for (JsonNode item : items) {
+                String fcstDate = item.path("fcstDate").asText();
+                String fcstTime = item.path("fcstTime").asText();
                 String category = item.path("category").asText();
                 String fcstValue = item.path("fcstValue").asText();
                 
-                switch (category) {
-                    case "TMP" -> builder.tmp(Double.parseDouble(fcstValue));
-                    case "REH" -> builder.reh(Double.parseDouble(fcstValue));
-                    case "PCP" -> builder.pcp(fcstValue);
-                    case "PTY" -> builder.pty(Integer.parseInt(fcstValue));
-                    case "SKY" -> builder.sky(Integer.parseInt(fcstValue));
-                    case "WSD" -> builder.wsd(Double.parseDouble(fcstValue));
-                }
+                String dateTimeKey = fcstDate + fcstTime;
+                groupedByTime.computeIfAbsent(dateTimeKey, k -> new java.util.HashMap<>())
+                        .put(category, fcstValue);
             }
+
+            // 현재 시간과 가장 가까운 이전(혹은 같은) 시간대 탐색
+            String currentDateTimeKey = now.format(DateTimeFormatter.ofPattern("yyyyMMddHH")) + "00";
+            java.util.Map.Entry<String, java.util.Map<String, String>> targetEntry = groupedByTime.floorEntry(currentDateTimeKey);
+            
+            // 만약 현재 시간 이전 데이터가 없다면 가장 빠른 시간대 선택 (Fallback)
+            if (targetEntry == null) {
+                targetEntry = groupedByTime.firstEntry();
+            }
+            
+            if (targetEntry == null || targetEntry.getValue().isEmpty()) {
+                throw new ExternalApiException("유효한 시간대의 예보 데이터를 찾을 수 없습니다.");
+            }
+
+            java.util.Map<String, String> targetData = targetEntry.getValue();
+            var builder = ShortTermForecast.builder();
+            
+            if (targetData.containsKey("TMP")) builder.tmp(Double.parseDouble(targetData.get("TMP")));
+            if (targetData.containsKey("REH")) builder.reh(Double.parseDouble(targetData.get("REH")));
+            if (targetData.containsKey("PCP")) builder.pcp(targetData.get("PCP"));
+            if (targetData.containsKey("PTY")) builder.pty(Integer.parseInt(targetData.get("PTY")));
+            if (targetData.containsKey("SKY")) builder.sky(Integer.parseInt(targetData.get("SKY")));
+            if (targetData.containsKey("WSD")) builder.wsd(Double.parseDouble(targetData.get("WSD")));
 
             return builder.build();
 
@@ -187,5 +209,3 @@ public class AsosWeatherApiAdapter implements WeatherRecordPort {
         }
     }
 }
-
-

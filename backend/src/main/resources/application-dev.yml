@@ -6,6 +6,12 @@ spring:
   # 체크섬 불일치 에러를 방지. 새 마이그레이션 적용은 정상 동작함.
   flyway:
     validate-on-migrate: false
+
+  # ── Cache (로컬에서는 Redis 대신 메모리 캐시 사용) ──
+  cache:
+    type: simple
+
+  # ── DataSource ──
   datasource:
     url: jdbc:postgresql://localhost:5151/farm_db
     username: farm
@@ -22,4 +28,3 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-

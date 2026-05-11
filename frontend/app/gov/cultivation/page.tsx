@@ -39,12 +39,15 @@ export default function CultivationPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <p className={styles.breadcrumb}>홈 › 지자체 › <strong>재배 현황</strong></p>
-        <h1 className={styles.pageTitle}>🌾 재배 현황</h1>
+      <div className={styles.headerWrapper}>
+        <div className={styles.pageHeader}>
+          <p className={styles.breadcrumb}>지자체 / 재배 현황</p>
+          <h1 className={styles.pageTitle}>🌾 재배 현황</h1>
+        </div>
+        <div>
+          <GovTabs />
+        </div>
       </div>
-
-      <GovTabs />
 
       {/* <div className={styles.tabs}>
         {TABS.map(t => (

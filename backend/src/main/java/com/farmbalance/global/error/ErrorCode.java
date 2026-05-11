@@ -56,6 +56,8 @@ public enum ErrorCode {
     SEED_NOT_FOUND("E-SEED-001", "종자 등록 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     CROP_PLAN_NOT_FOUND("E-PLAN-001", "파종 계획을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     HARVEST_NOT_FOUND("E-HARVEST-001", "수확 실적을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    ALREADY_HARVESTED("E-HARVEST-002", "이미 수확이 완료된 재배 건입니다.", HttpStatus.CONFLICT),
+    INVALID_HARVEST_YIELD("E-HARVEST-003", "수확량이 올바르지 않거나 예상치를 과도하게 초과했습니다.", HttpStatus.BAD_REQUEST),
 
     // ── 작물 ──
     CROP_NOT_FOUND("E-CROP-001", "작물을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

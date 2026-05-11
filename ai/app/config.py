@@ -15,7 +15,7 @@ class Settings(BaseSettings):
 
     # ── Gemini ──
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-1.5-flash"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
 
     # ── Groq ──
     GROQ_API_KEY: Optional[str] = None
@@ -47,6 +47,7 @@ class Settings(BaseSettings):
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "case_sensitive": True,
+        "extra": "ignore",
     }
 
 

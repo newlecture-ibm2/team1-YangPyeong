@@ -5,27 +5,34 @@
 
 /* ── Page ── */
 .page {
-  max-width: 1280px;
+  max-width: 1440px; /* Increase width */
   margin: 0 auto;
-  padding: 48px 48px 80px;
+  padding: 32px 48px 80px;
+}
+
+.headerWrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
 }
 
 .pageHeader {
-  margin-bottom: 40px;
+  margin-bottom: 0;
 }
 
 .breadcrumb {
   font-size: 13px;
   color: var(--color-text-secondary);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .pageTitle {
   font-family: var(--font-serif);
-  font-size: 40px;
+  font-size: 36px;
   color: var(--color-text);
   line-height: 1.15;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   font-weight: 400;
 }
 
@@ -36,12 +43,11 @@
   line-height: 1.7;
 }
 
-/* ── Tabs ── */
 .tabs {
   display: flex;
   gap: 8px;
-  margin-bottom: 32px;
   flex-wrap: wrap;
+  margin-bottom: 0;
 }
 
 .tab {
@@ -71,14 +77,14 @@
 .kpiRow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 32px;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .kpi {
   background: var(--color-surface);
   border-radius: var(--radius-md);
-  padding: 28px;
+  padding: 20px;
   text-align: center;
 }
 
@@ -90,7 +96,7 @@
 
 .kpiValue {
   font-family: var(--font-serif);
-  font-size: 36px;
+  font-size: 28px;
   color: var(--color-primary);
   font-weight: 700;
 }
@@ -103,7 +109,7 @@
 .card {
   background: var(--color-surface);
   border-radius: var(--radius-md);
-  padding: 32px;
+  padding: 24px;
   margin-bottom: 24px;
   transition: box-shadow 0.3s ease;
 }
@@ -114,9 +120,33 @@
 
 .cardTitle {
   font-family: var(--font-sans);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   margin-bottom: 16px;
+}
+
+/* ── Main Layout (Dashboard + AI) ── */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.dashboardContent {
+  min-width: 0;
+}
+
+.aiPanelWrapper {
+  position: sticky;
+  top: 24px;
+}
+
+.chartsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 24px;
 }
 
 /* ── Bento Grid ── */
