@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     BACKEND_INTERNAL_URL: str = "http://localhost:8080"
     AI_INTERNAL_SECRET_KEY: str = "farm-balance-ai-secret-key"
 
+    # ── 스케줄러 ──
+    SCHEDULER_ENABLED: bool = False
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
