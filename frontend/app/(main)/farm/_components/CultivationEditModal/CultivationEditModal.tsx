@@ -8,13 +8,11 @@ import { CultivationRegistration } from '../../_lib/cultivation.api';
 interface CultivationEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (cropId: number, area: number, yieldAmount: number, unit: string) => Promise<boolean>;
+  onSave: (area: number, yieldAmount: number, unit: string) => Promise<boolean>;
   cultivation: CultivationRegistration | null;
-  cropOptions: { id: number, name: string }[];
 }
 
-export default function CultivationEditModal({ isOpen, onClose, onSave, cultivation, cropOptions }: CultivationEditModalProps) {
-  const [cropId, setCropId] = useState<number>(0);
+export default function CultivationEditModal({ isOpen, onClose, onSave, cultivation }: CultivationEditModalProps) {
   const [area, setArea] = useState('');
   const [pyeong, setPyeong] = useState('');
   const [yieldAmount, setYieldAmount] = useState('');
@@ -23,7 +21,6 @@ export default function CultivationEditModal({ isOpen, onClose, onSave, cultivat
 
   useEffect(() => {
     if (cultivation) {
-      setCropId(cultivation.cropId);
       setArea(String(cultivation.cultivationArea || ''));
       setPyeong(cultivation.cultivationArea ? (cultivation.cultivationArea / 3.3058).toFixed(1) : '');
       setYieldAmount(String(cultivation.farmerEstimatedYield || ''));
@@ -31,8 +28,8 @@ export default function CultivationEditModal({ isOpen, onClose, onSave, cultivat
     }
   }, [cultivation]);
 
-  // 선택된 작물명 찾기
-  const selectedCropName = cropOptions.find(c => c.id === cropId)?.name || cultivation?.cropName || '';
+  // 표시할 작물명
+  const selectedCropName = cultivation?.cropName || '';
 
   // 작물별 평균 생산량 가이드 로직
   const getAverageYieldPerSqm = (cropName: string) => {
@@ -69,7 +66,7 @@ export default function CultivationEditModal({ isOpen, onClose, onSave, cultivat
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const success = await onSave(cropId, Number(area), Number(yieldAmount), unit);
+    const success = await onSave(Number(area), Number(yieldAmount), unit);
     setIsSubmitting(false);
     if (success) onClose();
   };
@@ -81,11 +78,16 @@ export default function CultivationEditModal({ isOpen, onClose, onSave, cultivat
           <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '6px', display: 'block' }}>
             재배 작물
           </label>
-          <Dropdown
-            options={cropOptions.map(c => ({ value: String(c.id), label: c.name }))}
-            value={String(cropId)}
-            onChange={(val) => setCropId(Number(val))}
-          />
+          <div style={{ 
+            padding: '12px', 
+            background: 'var(--color-bg)', 
+            borderRadius: 'var(--radius-md)', 
+            fontSize: '15px', 
+            fontWeight: 500,
+            color: 'var(--color-text)'
+          }}>
+            {selectedCropName}
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
