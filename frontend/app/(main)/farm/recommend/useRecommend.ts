@@ -28,11 +28,17 @@ export default function useRecommend() {
     setIsAnalyzing(true);
 
     try {
-      // 진짜 백엔드 API 호출! (ID를 확실히 숫자로 변환하여 전달)
-      const data = await requestCropRecommendation(Number(farm.id));
+      const data = await requestCropRecommendation(farm.id);
 
       setResult(data);
       setHasAnalyzed(true);
+
+      // 상세 페이지에서 접근할 수 있도록 sessionStorage에 저장
+      try {
+        sessionStorage.setItem('recommend_result', JSON.stringify(data));
+      } catch {
+        // sessionStorage 접근 불가 시 무시
+      }
     } catch (err) {
       console.error('AI 분석 실패:', err);
       alert('AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');

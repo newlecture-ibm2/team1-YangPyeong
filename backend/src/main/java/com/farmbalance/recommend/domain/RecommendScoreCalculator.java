@@ -113,31 +113,5 @@ public class RecommendScoreCalculator {
         return (int) Math.round(phScore * 0.4 + omScore * 0.3 + soilTypeScore * 0.3);
     }
 
-    /**
-     * 수급 상태로부터 수급 안정성 퍼센트 산출
-     */
-    public int calculateSupplyStability(SupplyStatus status) {
-        if (status == null) {
-            return 50; // 상태 정보가 없을 경우 기본 중립값
-        }
-        switch (status) {
-            case BALANCED:       return 95;
-            case SHORT_CAUTION:  return 75;
-            case EXCESS_CAUTION: return 65;
-            case SHORT_WARN:     return 50;
-            case EXCESS_WARN:    return 40;
-            default:             return 50;
-        }
-    }
 
-    /**
-     * 토양 적합도 퍼센트 → SoilFitness 등급 변환
-     */
-    public SoilFitness toSoilFitnessGrade(int percent) {
-        if (percent >= 90) return SoilFitness.HIGH_SUIT;
-        if (percent >= 75) return SoilFitness.SUIT;
-        if (percent >= 55) return SoilFitness.POSSIBLE;
-        if (percent >= 35) return SoilFitness.LOW_SUIT;
-        return SoilFitness.NONE;
-    }
 }

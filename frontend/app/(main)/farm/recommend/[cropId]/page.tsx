@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { requestLatestRecommendation } from '../_lib/recommend.api';
-import { CropRecommendation, SUPPLY_STATUS_MAP, SOIL_FITNESS_MAP } from '../_lib/recommend.types';
+import { SUPPLY_STATUS_MAP, SOIL_FITNESS_MAP } from '../_lib/recommend.types';
+import type { CropRecommendation, CropRecommendResponse } from '../_lib/recommend.types';
 import { getCropEmoji, getCropCalendar, generatePriceData } from '../_lib/recommend.constants';
 import PriceChart from '../_components/PriceChart/PriceChart';
 import CropCalendar from '../_components/CropCalendar/CropCalendar';
@@ -15,40 +15,55 @@ import CropGuide from './_components/CropGuide';
 import OtherCrops from './_components/OtherCrops';
 import styles from './detail.module.css';
 
+/**
+ * 세션 스토리지에서 마지막 추천 결과를 복원합니다.
+ * 목록 페이지에서 분석 후 상세 페이지로 이동할 때,
+ * 실제 API 응답 데이터를 그대로 전달받기 위해 사용합니다.
+ */
+function useRecommendResult() {
+  const [result, setResult] = useState<CropRecommendResponse | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('recommend_result');
+      if (stored) {
+        setResult(JSON.parse(stored));
+      }
+    } catch {
+      // sessionStorage 접근 불가 시 무시
+    }
+  }, []);
+
+  return result;
+}
+
 export default function RecommendDetailPage() {
   const params = useParams();
   const cropId = Number(params.cropId);
-  const [rec, setRec] = useState<CropRecommendation | null>(null);
-  const [otherRecs, setOtherRecs] = useState<CropRecommendation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const result = useRecommendResult();
 
-  // 1. 최근 추천 이력에서 해당 작물 정보 가져오기
-  useEffect(() => {
-    async function loadDetail() {
-      try {
-        setIsLoading(true);
-        // [참고] farmId가 필요한데, 여기서는 최신 이력을 조회하므로 0을 보내거나 서버가 알아서 판단하게 함
-        // 실제로는 유저의 농장 목록 중 첫 번째 농장의 이력을 가져오도록 백엔드 연결 필요
-        const data = await requestLatestRecommendation(); 
-        const found = data.recommendations.find(r => r.cropId === cropId);
-        if (found) {
-          setRec(found);
-          setOtherRecs(data.recommendations.filter(r => r.cropId !== cropId).slice(0, 4));
-        }
-      } catch (err) {
-        console.error('상세 정보 로드 실패:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadDetail();
-  }, [cropId]);
+  const rec = useMemo(() => {
+    if (!result) return null;
+    return result.recommendations.find((r) => r.cropId === cropId) || null;
+  }, [result, cropId]);
 
-  const priceData = useMemo(() => rec ? generatePriceData(rec.expectedRevenuePerKg) : [], [rec]);
-  const calendar = useMemo(() => rec ? getCropCalendar(rec.cropName) : [], [rec]);
+  const otherRecs = useMemo(() => {
+    if (!result) return [];
+    return result.recommendations.filter((r) => r.cropId !== cropId).slice(0, 4);
+  }, [result, cropId]);
 
-  if (isLoading) {
-    return <div className={styles.container}><p style={{textAlign: 'center', padding: '100px'}}>분석 데이터를 불러오는 중...</p></div>;
+  // 로딩 중 (sessionStorage에서 복원 대기)
+  if (!result) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIcon}>⏳</div>
+          <h2>추천 데이터를 불러오는 중...</h2>
+          <p>잠시만 기다려 주세요. 데이터를 복원하고 있습니다.</p>
+          <Link href="/farm/recommend" className={styles.backBtn}>← 추천 목록으로 돌아가기</Link>
+        </div>
+      </div>
+    );
   }
 
   if (!rec) {
@@ -64,8 +79,10 @@ export default function RecommendDetailPage() {
     );
   }
 
-  const supplyInfo = SUPPLY_STATUS_MAP[rec.supplyStatus] || { label: '정보 없음', variant: 'gray' };
-  const fitnessLabel = SOIL_FITNESS_MAP[rec.soilFitness] || '정보 없음';
+  const supplyInfo = SUPPLY_STATUS_MAP[rec.supplyStatus];
+  const fitnessLabel = SOIL_FITNESS_MAP[rec.soilFitness];
+  const priceData = generatePriceData(rec.expectedRevenuePerKg);
+  const calendar = getCropCalendar(rec.cropName);
 
   return (
     <div className={styles.container}>
@@ -83,7 +100,7 @@ export default function RecommendDetailPage() {
         { icon: '🏆', label: '추천 순위', value: `${rec.rank}위` },
         { icon: '🌱', label: '토양 적합도', value: fitnessLabel },
         { icon: '📊', label: '수급 상태', value: supplyInfo.label, color: supplyInfo.variant === 'green' ? '#2E7D32' : supplyInfo.variant === 'orange' ? '#E65100' : 'var(--color-danger)' },
-        { icon: '💰', label: '예상 수익', value: `₩${rec.expectedRevenuePerKg.toLocaleString()}/kg` },
+        { icon: '💰', label: '예상 수익', value: `₩${rec.expectedRevenuePerKg.toLocaleString('ko-KR')}/kg` },
       ]} />
 
       <ScoreAnalysis rec={rec} fitnessLabel={fitnessLabel} supplyLabel={supplyInfo.label} />

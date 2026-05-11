@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
     private final LoadSupplyStatusPort loadSupplyStatusPort;
     private final SaveRecommendHistoryPort saveRecommendHistoryPort;
     private final LoadRecommendHistoryPort loadRecommendHistoryPort;
-    private final RecommendAiPort recommendAiPort;
+    private final com.farmbalance.recommend.application.port.out.RecommendAiPort recommendAiPort;
 
     /** 점수 산출 엔진 (도메인 순수 객체, DI 불필요) */
     private final RecommendScoreCalculator calculator = new RecommendScoreCalculator();
@@ -89,7 +90,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
             // 3-2. 수급 상태 → 수급 안정성 퍼센트
             SupplyStatus supplyStatus = loadSupplyStatusPort
                     .loadSupplyStatus(candidate.getCropId(), regionCode);
-            int supplyPercent = calculator.calculateSupplyStability(supplyStatus);
+            int supplyPercent = supplyStatus != null ? supplyStatus.getStabilityScore() : 50;
 
             // 3-3. 시세 전망
             int pricePercent = candidate.getPriceForecastPercent();
@@ -109,7 +110,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
                     .cropName(candidate.getCropName())
                     .category(category)
                     .score(score)
-                    .soilFitness(calculator.toSoilFitnessGrade(soilPercent))
+                    .soilFitness(SoilFitness.fromPercent(soilPercent))
                     .soilFitnessPercent(soilPercent)
                     .priceForecastPercent(pricePercent)
                     .supplyStabilityPercent(supplyPercent)
@@ -127,10 +128,22 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
             recommendations.add(rec);
         }
 
-        // 4. 점수 기준 내림차순 정렬 + 순위 부여
+        // 4. 점수 기준 내림차순 정렬 + 순위 부여 및 AI 사유 생성 (Top 3)
         recommendations.sort(Comparator.comparingInt(CropRecommendation::getScore).reversed());
         for (int i = 0; i < recommendations.size(); i++) {
-            recommendations.set(i, withRank(recommendations.get(i), i + 1));
+            CropRecommendation rec = recommendations.get(i);
+            String aiReason = null;
+            if (i < 3) {
+                String farmDetails = String.format("면적 %.1f㎡, 산도 %.1f, 유기물 %.1fg/kg, 토양 '%s'", 
+                        farm.getArea(), farm.getPh(), farm.getOrganicMatter(), farm.getSoilType());
+                try {
+                    aiReason = recommendAiPort.generateReason(farmDetails, rec.getCropName(), rec.getCategory().getLabel());
+                } catch (Exception e) {
+                    log.error("AI 사유 생성 실패: {}", e.getMessage());
+                    aiReason = "AI 분석을 일시적으로 사용할 수 없습니다.";
+                }
+            }
+            recommendations.set(i, rec.toBuilder().rank(i + 1).aiReason(aiReason).build());
         }
 
         // 5. 상위 5개 항목에 대해 실시간 AI 분석 사유 생성 (파이썬 서버 호출)
@@ -187,11 +200,10 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
     }
 
     @Override
-    public String diagnose(Long userId, org.springframework.web.multipart.MultipartFile image) {
+    public String diagnose(Long userId, MultipartFile image) {
         if (userId == null) {
             throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("인증 정보가 없습니다.");
         }
-        log.info("이미지 진단 요청 위임: userId={}", userId);
         return recommendAiPort.diagnoseImage(image);
     }
 

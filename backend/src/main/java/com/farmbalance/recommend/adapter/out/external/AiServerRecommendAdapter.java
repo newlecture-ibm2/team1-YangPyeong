@@ -46,7 +46,6 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
         HttpEntity<Map<String, String>> entity = new HttpEntity<>(requestBody, headers);
 
         try {
-            @SuppressWarnings("unchecked")
             Map<String, String> response = restTemplate.postForObject(url, entity, Map.class);
             if (response != null && response.containsKey("ai_reason")) {
                 return response.get("ai_reason");
@@ -54,7 +53,7 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
         } catch (Exception e) {
             log.error("AI 서버 통신 중 오류 발생 (사유 생성)", e);
         }
-        return "현재 데이터 기반 최적의 작물로 분석되었습니다.";
+        return "AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
     }
 
     @Override
@@ -66,6 +65,7 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         try {
+            // MultipartFile을 RestTemplate으로 전송하기 위한 ByteArrayResource 래퍼
             ByteArrayResource resource = new ByteArrayResource(image.getBytes()) {
                 @Override
                 public String getFilename() {
@@ -89,7 +89,6 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
         HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, headers);
 
         try {
-            @SuppressWarnings("unchecked")
             Map<String, String> response = restTemplate.postForObject(url, entity, Map.class);
             if (response != null && response.containsKey("diagnosis")) {
                 return response.get("diagnosis");
