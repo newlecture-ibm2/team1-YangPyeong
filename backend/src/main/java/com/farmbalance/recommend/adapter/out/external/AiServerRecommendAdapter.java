@@ -28,7 +28,7 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
         this.restTemplate = builder.build();
     }
 
-    @Value("${ai.server-url:http://localhost:8000}")
+    @Value("${ai.server-url:http://ai-server:8000}")
     private String aiServerUrl;
 
     @Override

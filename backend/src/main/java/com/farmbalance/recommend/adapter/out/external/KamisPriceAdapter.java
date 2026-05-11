@@ -26,7 +26,10 @@ public class KamisPriceAdapter implements RecommendPricePort {
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     public KamisPriceAdapter(RestTemplateBuilder builder, CropPriceCacheRepository cacheRepository, com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
-        this.restTemplate = builder.build();
+        this.restTemplate = builder
+                .setConnectTimeout(java.time.Duration.ofSeconds(3))
+                .setReadTimeout(java.time.Duration.ofSeconds(5))
+                .build();
         this.cacheRepository = cacheRepository;
         this.objectMapper = objectMapper;
     }

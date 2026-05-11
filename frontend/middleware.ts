@@ -27,9 +27,12 @@ export function middleware(request: NextRequest) {
   // ── 2. 세션 쿠키 존재 여부 확인 ──
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
   const isAuthenticated = !!sessionCookie?.value;
+  const userCookie = request.cookies.get('fb-user');
+  const hasUserDetail = !!userCookie?.value;
 
   // ── 3. 이미 로그인한 사용자가 /login, /signup 접근 시 → 홈으로 리다이렉트 ──
-  if (isAuthenticated && AUTH_REDIRECT_PATHS.includes(pathname)) {
+  // 세션 쿠키와 유저 상세 쿠키가 모두 있어야 완전히 로그인된 것으로 간주하고 리다이렉트합니다.
+  if (isAuthenticated && hasUserDetail && AUTH_REDIRECT_PATHS.includes(pathname)) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
