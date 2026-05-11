@@ -41,18 +41,39 @@ export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 쿠키에서 사용자 정보 읽기 + API에서 프로필 이미지 조회
+  // 쿠키에서 사용자 정보 읽기 + API에서 최신 프로필 정보(이미지 등) 조회
   useEffect(() => {
-    const handleAuthChange = () => {
+    const handleAuthChange = async () => {
       const cookieUser = getUserFromCookie();
       setUser(cookieUser);
+
+      // 쿠키에 유저 정보가 있으면, 백엔드에서 최신 프로필(이미지 등)을 가져와 동기화
+      if (cookieUser) {
+        try {
+          const res = await apiFetch<{ profileImageUrl?: string | null }>('/api/users/me');
+          if (res.success && res.data) {
+            const fetchedImageUrl = res.data.profileImageUrl || null;
+            // 이미지가 다르거나 새로 들어온 경우 상태 및 쿠키 업데이트
+            if (cookieUser.profileImageUrl !== fetchedImageUrl) {
+              const updatedUser = { ...cookieUser, profileImageUrl: fetchedImageUrl };
+              setUser(updatedUser);
+              
+              const expiration = new Date();
+              expiration.setDate(expiration.getDate() + 7);
+              document.cookie = `fb-user=${encodeURIComponent(JSON.stringify(updatedUser))}; path=/; expires=${expiration.toUTCString()}`;
+            }
+          }
+        } catch {
+          // 조회 실패 시 무시
+        }
+      }
     };
 
     handleAuthChange();
 
     // 인증 상태 변경 이벤트 구독
     window.addEventListener('auth-changed', handleAuthChange);
-    window.addEventListener('cart-updated', handleAuthChange); // 장바구니 갱신 시 유저 정보도 재확인 (로그인 유도 등)
+    window.addEventListener('cart-updated', handleAuthChange); // 장바구니 갱신 시 유저 정보도 재확인
 
     return () => {
       window.removeEventListener('auth-changed', handleAuthChange);

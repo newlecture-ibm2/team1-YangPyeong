@@ -148,8 +148,11 @@ export function useProfile() {
             email: updatedProfile.email,
             role: updatedProfile.role,
             name: updatedProfile.name,
+            profileImageUrl: updatedProfile.profileImageUrl, // 프로필 이미지 포함
           };
           document.cookie = `fb-user=${encodeURIComponent(JSON.stringify(cookieData))}; path=/; expires=${expiration.toUTCString()}`;
+          // 헤더 등 타 컴포넌트에 즉각 반영하기 위해 이벤트 발생
+          window.dispatchEvent(new Event('auth-changed'));
         }
 
         setIsEditing(false);
@@ -196,6 +199,17 @@ export function useProfile() {
       if (result.success && result.data?.profileImageUrl) {
         const imageUrl = result.data.profileImageUrl;
         setProfile((prev) => prev ? { ...prev, profileImageUrl: imageUrl } : prev);
+        
+        // 브라우저 쿠키 업데이트 및 헤더 갱신 이벤트 발생
+        const cookieUser = getUserFromCookie() as any;
+        if (cookieUser) {
+          const expiration = new Date();
+          expiration.setDate(expiration.getDate() + 7);
+          const updatedCookieUser = { ...cookieUser, profileImageUrl: imageUrl };
+          document.cookie = `fb-user=${encodeURIComponent(JSON.stringify(updatedCookieUser))}; path=/; expires=${expiration.toUTCString()}`;
+          window.dispatchEvent(new Event('auth-changed'));
+        }
+        
         return true;
       }
 
