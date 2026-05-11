@@ -16,10 +16,21 @@ public class AsyncConfig {
     @Bean(name = "historyTaskExecutor")
     public Executor historyTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2); // 기본 스레드 수
-        executor.setMaxPoolSize(5);  // 최대 스레드 수
-        executor.setQueueCapacity(50); // 대기 큐 크기
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(5);
+        executor.setQueueCapacity(50);
         executor.setThreadNamePrefix("HistoryAsync-");
+        executor.initialize();
+        return executor;
+    }
+
+    @Bean(name = "eventTaskExecutor")
+    public Executor eventTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(50);
+        executor.setThreadNamePrefix("EventAsync-");
         executor.initialize();
         return executor;
     }

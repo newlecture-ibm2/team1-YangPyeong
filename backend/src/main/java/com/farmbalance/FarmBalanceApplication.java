@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
 @EnableScheduling
+@org.springframework.cache.annotation.EnableCaching
 public class FarmBalanceApplication {
     public static void main(String[] args) {
         SpringApplication.run(FarmBalanceApplication.class, args);

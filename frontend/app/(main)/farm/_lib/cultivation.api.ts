@@ -65,12 +65,12 @@ export async function registerCultivation(
 }
 
 /**
- * 재배 등록 수정
+ * 재배 등록 수정 (FRM-011)
  */
 export async function updateCultivation(
   farmId: number,
   cultivationId: number,
-  data: Partial<CultivationRegisterRequest>
+  data: { area?: number; yield?: number; unit?: string }
 ): Promise<void> {
   const response = await fetch(`/api/farm/${farmId}/cultivations/${cultivationId}`, {
     method: 'PATCH',
