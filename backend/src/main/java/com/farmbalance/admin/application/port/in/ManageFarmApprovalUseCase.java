@@ -1,6 +1,6 @@
 package com.farmbalance.admin.application.port.in;
 
-import com.farmbalance.admin.adapter.in.web.dto.AdminFarmApprovalResponse;
+import com.farmbalance.admin.application.port.in.dto.AdminFarmApprovalDto;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ public interface ManageFarmApprovalUseCase {
      * 상태별 농장 신청 목록 조회
      * @param status PENDING | APPROVED | REJECTED
      */
-    List<AdminFarmApprovalResponse> getApprovalsByStatus(String status);
+    List<AdminFarmApprovalDto> getApprovalsByStatus(String status);
 
     /**
      * 농장 승인 (farm.status → APPROVED, user.role → FARMER)

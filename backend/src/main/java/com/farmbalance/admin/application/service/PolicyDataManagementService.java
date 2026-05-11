@@ -1,6 +1,6 @@
 package com.farmbalance.admin.application.service;
 
-import com.farmbalance.admin.adapter.in.web.dto.AdminPolicyDataResponse;
+import com.farmbalance.admin.application.port.in.dto.AdminPolicyDataDto;
 import com.farmbalance.admin.application.port.in.ManagePolicyDataUseCase;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
@@ -28,17 +28,17 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
     private final PolicySavePort policySavePort;
 
     @Override
-    public List<AdminPolicyDataResponse> getAllPolicies() {
+    public List<AdminPolicyDataDto> getAllPolicies() {
         return policyQueryPort.findAll().stream()
-                .map(AdminPolicyDataResponse::from)
+                .map(AdminPolicyDataDto::from)
                 .toList();
     }
 
     @Override
-    public AdminPolicyDataResponse getPolicy(Long id) {
+    public AdminPolicyDataDto getPolicy(Long id) {
         PolicyData domain = policyQueryPort.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POLICY_NOT_FOUND));
-        return AdminPolicyDataResponse.from(domain);
+        return AdminPolicyDataDto.from(domain);
     }
 
     @Override

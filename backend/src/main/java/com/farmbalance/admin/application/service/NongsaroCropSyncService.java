@@ -1,7 +1,7 @@
 package com.farmbalance.admin.application.service;
 
-import com.farmbalance.admin.adapter.out.external.nongsaro.dto.WorkScheduleGrpDto;
-import com.farmbalance.admin.adapter.out.external.nongsaro.dto.WorkScheduleLstDto;
+import com.farmbalance.admin.application.port.out.dto.AdminNongsaroCropGroupDto;
+import com.farmbalance.admin.application.port.out.dto.AdminNongsaroCropDto;
 import com.farmbalance.admin.application.port.out.AdminCropCategoryPort;
 import com.farmbalance.admin.application.port.out.AdminCropPort;
 import com.farmbalance.admin.application.port.out.AdminNongsaroApiPort;
@@ -29,11 +29,11 @@ public class NongsaroCropSyncService {
         log.info("Starting Nongsaro farmWorkingPlan synchronization with mode: {}", syncMode);
         boolean isForce = "FORCE".equalsIgnoreCase(syncMode);
         
-        List<WorkScheduleGrpDto> groupList = nongsaroApiPort.getWorkScheduleGroupList();
+        List<AdminNongsaroCropGroupDto> groupList = nongsaroApiPort.getWorkScheduleGroupList();
         
-        for (WorkScheduleGrpDto group : groupList) {
-            String categoryName = cleanName(group.getCodeNm());
-            String groupExternalId = group.getKidofcomdtySeCode();
+        for (AdminNongsaroCropGroupDto group : groupList) {
+            String categoryName = cleanName(group.getCategoryName());
+            String groupExternalId = group.getExternalId();
             if (categoryName == null || categoryName.isEmpty() || groupExternalId == null) continue;
             
             // 1. 카테고리 저장/업데이트
@@ -44,7 +44,7 @@ public class NongsaroCropSyncService {
                 AdminCropCategory newCategory = AdminCropCategory.builder()
                         .name(categoryName)
                         .description("농사로 농작업일정에서 동기화된 카테고리")
-                        .displayOrder(group.getSort() != null ? group.getSort() : 999)
+                        .displayOrder(group.getSortOrder() != null ? group.getSortOrder() : 999)
                         .isActive(true)
                         .externalId(groupExternalId)
                         .dataSource("NONGSARO")
@@ -60,11 +60,11 @@ public class NongsaroCropSyncService {
             }
 
             // 2. 해당 그룹의 작물 리스트 조회
-            List<WorkScheduleLstDto> cropList = nongsaroApiPort.getWorkScheduleList(groupExternalId);
-            for (WorkScheduleLstDto cropDto : cropList) {
+            List<AdminNongsaroCropDto> cropList = nongsaroApiPort.getWorkScheduleList(groupExternalId);
+            for (AdminNongsaroCropDto cropDto : cropList) {
                 // 괄호 내용 등 부가 정보를 제거하여 깔끔한 작물명 유지
-                String cropName = cleanName(cropDto.getSj());
-                String cropExternalId = cropDto.getCntntsNo();
+                String cropName = cleanName(cropDto.getCropName());
+                String cropExternalId = cropDto.getExternalId();
                 if (cropName == null || cropName.isEmpty() || cropExternalId == null) {
                     continue;
                 }

@@ -1,6 +1,6 @@
 package com.farmbalance.admin.application.service;
 
-import com.farmbalance.admin.adapter.in.web.dto.AdminOrderResponse;
+import com.farmbalance.admin.application.port.in.dto.AdminOrderDto;
 import com.farmbalance.admin.application.port.in.ManageOrderUseCase;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
@@ -22,9 +22,9 @@ public class OrderManagementService implements ManageOrderUseCase {
     private final OrderRepository orderRepository;
 
     @Override
-    public List<AdminOrderResponse> getAllOrders() {
+    public List<AdminOrderDto> getAllOrders() {
         return orderRepository.findAll().stream()
-                .map(AdminOrderResponse::from)
+                .map(AdminOrderDto::from)
                 .collect(Collectors.toList());
     }
 

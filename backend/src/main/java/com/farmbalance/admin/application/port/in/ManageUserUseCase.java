@@ -1,6 +1,6 @@
 package com.farmbalance.admin.application.port.in;
 
-import com.farmbalance.admin.adapter.in.web.dto.AdminUserResponse;
+import com.farmbalance.admin.application.port.in.dto.AdminUserDto;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ public interface ManageUserUseCase {
     /**
      * 사용자 목록 조회 (검색 + 필터 + 페이징)
      */
-    List<AdminUserResponse> getUsers(String keyword, String role, String status, int page, int size);
+    List<AdminUserDto> getUsers(String keyword, String role, String status, int page, int size);
 
     /**
      * 전체 건수 조회 (페이징 메타데이터용)
@@ -23,7 +23,7 @@ public interface ManageUserUseCase {
     /**
      * 사용자 상세 조회
      */
-    AdminUserResponse getUserById(Long id);
+    AdminUserDto getUserById(Long id);
 
     /**
      * 역할 변경 (USER ↔ FARMER)

@@ -1,6 +1,6 @@
 package com.farmbalance.admin.application.service;
 
-import com.farmbalance.admin.adapter.in.web.dto.AdminUserResponse;
+import com.farmbalance.admin.application.port.in.dto.AdminUserDto;
 import com.farmbalance.admin.application.port.in.ManageUserUseCase;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * ADM-001 사용자 관리 Service
  * 헥사고날 아키텍처: user 도메인의 Output Port를 통해 데이터에 접근합니다.
- * Domain → Response DTO 변환은 Service에서 담당합니다.
+ * Domain → DTO 변환은 Service에서 담당합니다.
  */
 @Service
 @RequiredArgsConstructor
@@ -32,10 +32,10 @@ public class AdminUserService implements ManageUserUseCase {
     private static final Set<String> ALLOWED_STATUSES = Set.of("ACTIVE", "SUSPENDED");
 
     @Override
-    public List<AdminUserResponse> getUsers(String keyword, String role, String status, int page, int size) {
+    public List<AdminUserDto> getUsers(String keyword, String role, String status, int page, int size) {
         int offset = page * size;
         return userRepository.findByFilter(keyword, role, status, offset, size).stream()
-                .map(AdminUserResponse::from)
+                .map(AdminUserDto::from)
                 .toList();
     }
 
@@ -45,10 +45,10 @@ public class AdminUserService implements ManageUserUseCase {
     }
 
     @Override
-    public AdminUserResponse getUserById(Long id) {
+    public AdminUserDto getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        return AdminUserResponse.from(user);
+        return AdminUserDto.from(user);
     }
 
     @Override

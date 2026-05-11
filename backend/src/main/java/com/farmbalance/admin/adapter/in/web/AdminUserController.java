@@ -3,6 +3,7 @@ package com.farmbalance.admin.adapter.in.web;
 import com.farmbalance.admin.adapter.in.web.dto.AdminUserResponse;
 import com.farmbalance.admin.adapter.in.web.dto.ChangeUserRoleRequest;
 import com.farmbalance.admin.adapter.in.web.dto.ChangeUserStatusRequest;
+import com.farmbalance.admin.application.port.in.dto.AdminUserDto;
 import com.farmbalance.admin.application.port.in.ManageUserUseCase;
 import com.farmbalance.global.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * ADM-001 사용자 관리 Controller (Driving Adapter)
@@ -36,7 +38,11 @@ public class AdminUserController {
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "20") int size) {
 
-        List<AdminUserResponse> users = manageUserUseCase.getUsers(keyword, role, status, page, size);
+        List<AdminUserDto> dtos = manageUserUseCase.getUsers(keyword, role, status, page, size);
+        List<AdminUserResponse> users = dtos.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+                
         long totalCount = manageUserUseCase.countUsers(keyword, role, status);
         int totalPages = (int) Math.ceil((double) totalCount / size);
 
@@ -58,7 +64,22 @@ public class AdminUserController {
      */
     @GetMapping("/{id}")
     public ApiResponse<AdminUserResponse> getUserById(@PathVariable Long id) {
-        return ApiResponse.ok(manageUserUseCase.getUserById(id));
+        AdminUserDto dto = manageUserUseCase.getUserById(id);
+        return ApiResponse.ok(mapToResponse(dto));
+    }
+
+    private AdminUserResponse mapToResponse(AdminUserDto dto) {
+        return AdminUserResponse.builder()
+                .id(dto.getId())
+                .email(dto.getEmail())
+                .name(dto.getName())
+                .phone(dto.getPhone())
+                .role(dto.getRole())
+                .status(dto.getStatus())
+                .createdAt(dto.getCreatedAt())
+                .updatedAt(dto.getUpdatedAt())
+                .deletedAt(dto.getDeletedAt())
+                .build();
     }
 
     /**

@@ -1,11 +1,11 @@
 package com.farmbalance.admin.application.port.out;
 
-import com.farmbalance.admin.adapter.out.external.nongsaro.dto.WorkScheduleGrpDto;
-import com.farmbalance.admin.adapter.out.external.nongsaro.dto.WorkScheduleLstDto;
+import com.farmbalance.admin.application.port.out.dto.AdminNongsaroCropGroupDto;
+import com.farmbalance.admin.application.port.out.dto.AdminNongsaroCropDto;
 
 import java.util.List;
 
 public interface AdminNongsaroApiPort {
-    List<WorkScheduleGrpDto> getWorkScheduleGroupList();
-    List<WorkScheduleLstDto> getWorkScheduleList(String kidofcomdtySeCode);
+    List<AdminNongsaroCropGroupDto> getWorkScheduleGroupList();
+    List<AdminNongsaroCropDto> getWorkScheduleList(String groupExternalId);
 }

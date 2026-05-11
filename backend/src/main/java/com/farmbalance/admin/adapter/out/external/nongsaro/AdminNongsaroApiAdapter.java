@@ -4,6 +4,8 @@ import com.farmbalance.admin.adapter.out.external.nongsaro.dto.NongsaroApiRespon
 import com.farmbalance.admin.adapter.out.external.nongsaro.dto.WorkScheduleGrpDto;
 import com.farmbalance.admin.adapter.out.external.nongsaro.dto.WorkScheduleLstDto;
 import com.farmbalance.admin.application.port.out.AdminNongsaroApiPort;
+import com.farmbalance.admin.application.port.out.dto.AdminNongsaroCropDto;
+import com.farmbalance.admin.application.port.out.dto.AdminNongsaroCropGroupDto;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -31,21 +34,34 @@ public class AdminNongsaroApiAdapter implements AdminNongsaroApiPort {
     private static final String BASE_URL = "http://api.nongsaro.go.kr/service/farmWorkingPlan";
 
     @Override
-    public List<WorkScheduleGrpDto> getWorkScheduleGroupList() {
+    public List<AdminNongsaroCropGroupDto> getWorkScheduleGroupList() {
         String url = BASE_URL + "/workScheduleGrpList?apiKey=" + apiKey;
         ResponseEntity<NongsaroApiResponse<WorkScheduleGrpDto>> response = restTemplate.exchange(
                 url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {}
         );
-        return extractItems(response.getBody());
+        List<WorkScheduleGrpDto> dtoList = extractItems(response.getBody());
+        return dtoList.stream()
+                .map(dto -> AdminNongsaroCropGroupDto.builder()
+                        .categoryName(dto.getCodeNm())
+                        .externalId(dto.getKidofcomdtySeCode())
+                        .sortOrder(dto.getSort())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<WorkScheduleLstDto> getWorkScheduleList(String kidofcomdtySeCode) {
-        String url = BASE_URL + "/workScheduleLst?apiKey=" + apiKey + "&kidofcomdtySeCode=" + kidofcomdtySeCode;
+    public List<AdminNongsaroCropDto> getWorkScheduleList(String groupExternalId) {
+        String url = BASE_URL + "/workScheduleLst?apiKey=" + apiKey + "&kidofcomdtySeCode=" + groupExternalId;
         ResponseEntity<NongsaroApiResponse<WorkScheduleLstDto>> response = restTemplate.exchange(
                 url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {}
         );
-        return extractItems(response.getBody());
+        List<WorkScheduleLstDto> dtoList = extractItems(response.getBody());
+        return dtoList.stream()
+                .map(dto -> AdminNongsaroCropDto.builder()
+                        .cropName(dto.getSj())
+                        .externalId(dto.getCntntsNo())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     private <T> List<T> extractItems(NongsaroApiResponse<T> response) {

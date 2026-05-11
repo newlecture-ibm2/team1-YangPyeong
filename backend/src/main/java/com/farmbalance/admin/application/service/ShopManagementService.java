@@ -1,6 +1,6 @@
 package com.farmbalance.admin.application.service;
 
-import com.farmbalance.admin.adapter.in.web.dto.AdminShopProductResponse;
+import com.farmbalance.admin.application.port.in.dto.AdminShopProductDto;
 import com.farmbalance.admin.application.port.in.ManageShopUseCase;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
@@ -28,14 +28,14 @@ public class ShopManagementService implements ManageShopUseCase {
     private final UserRepository userRepository;
 
     @Override
-    public List<AdminShopProductResponse> getProducts(String keyword, String category, String status, String sort, int page, int size) {
+    public List<AdminShopProductDto> getProducts(String keyword, String category, String status, String sort, int page, int size) {
         List<String> statuses = status != null && !status.isEmpty() ? List.of(status.split(",")) : List.of("ALL");
         return productRepository.findAdminProducts(keyword, category, statuses, sort, page, size).stream()
                 .map(product -> {
                     String sellerName = userRepository.findById(product.getSellerId())
                             .map(User::getName)
                             .orElse("알 수 없음");
-                    return AdminShopProductResponse.from(product, sellerName);
+                    return AdminShopProductDto.from(product, sellerName);
                 })
                 .collect(Collectors.toList());
     }

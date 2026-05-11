@@ -1,6 +1,7 @@
 package com.farmbalance.admin.adapter.in.web;
 
 import com.farmbalance.admin.adapter.in.web.dto.AdminShopProductResponse;
+import com.farmbalance.admin.application.port.in.dto.AdminShopProductDto;
 import com.farmbalance.admin.application.port.in.ManageShopUseCase;
 import com.farmbalance.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * ADM-009 상점 관리 Controller (Driving Adapter)
@@ -33,7 +35,11 @@ public class AdminShopController {
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "20") int size) {
 
-        List<AdminShopProductResponse> products = manageShopUseCase.getProducts(keyword, category, status, sort, page, size);
+        List<AdminShopProductDto> dtos = manageShopUseCase.getProducts(keyword, category, status, sort, page, size);
+        List<AdminShopProductResponse> products = dtos.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+
         long totalCount = manageShopUseCase.countProducts(keyword, category, status);
         int totalPages = (int) Math.ceil((double) totalCount / size);
 
@@ -47,6 +53,23 @@ public class AdminShopController {
                 )
         );
         return ApiResponse.ok(result);
+    }
+
+    private AdminShopProductResponse mapToResponse(AdminShopProductDto dto) {
+        return AdminShopProductResponse.builder()
+                .id(dto.getId())
+                .sellerId(dto.getSellerId())
+                .sellerName(dto.getSellerName())
+                .categoryId(dto.getCategoryId())
+                .categoryName(dto.getCategoryName())
+                .name(dto.getName())
+                .price(dto.getPrice())
+                .stock(dto.getStock())
+                .description(dto.getDescription())
+                .imageUrl(dto.getImageUrl())
+                .status(dto.getStatus())
+                .createdAt(dto.getCreatedAt())
+                .build();
     }
 
     /**

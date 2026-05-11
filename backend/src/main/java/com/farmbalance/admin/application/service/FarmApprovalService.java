@@ -1,6 +1,6 @@
 package com.farmbalance.admin.application.service;
 
-import com.farmbalance.admin.adapter.in.web.dto.AdminFarmApprovalResponse;
+import com.farmbalance.admin.application.port.in.dto.AdminFarmApprovalDto;
 import com.farmbalance.admin.application.port.in.ManageFarmApprovalUseCase;
 import com.farmbalance.farm.application.port.out.LoadFarmPort;
 import com.farmbalance.farm.application.port.out.SaveFarmPort;
@@ -34,12 +34,12 @@ public class FarmApprovalService implements ManageFarmApprovalUseCase {
     private final UserRepository userRepository;
 
     @Override
-    public List<AdminFarmApprovalResponse> getApprovalsByStatus(String status) {
+    public List<AdminFarmApprovalDto> getApprovalsByStatus(String status) {
         List<Farm> farms = loadFarmPort.loadFarmsByStatus(status.toUpperCase());
         return farms.stream()
                 .map(farm -> {
                     User user = userRepository.findById(farm.getUserId()).orElse(null);
-                    return AdminFarmApprovalResponse.from(farm, user);
+                    return AdminFarmApprovalDto.from(farm, user);
                 })
                 .collect(Collectors.toList());
     }
