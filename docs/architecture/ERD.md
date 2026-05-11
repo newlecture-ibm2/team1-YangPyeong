@@ -115,6 +115,7 @@ erDiagram
         varchar grade "A | B | C"
         boolean to_shop "상점 노출 여부"
         timestamp created_at
+        timestamp deleted_at "수확 취소 시 기록 (V32)"
     }
 
     cultivation_history {
@@ -141,7 +142,7 @@ erDiagram
         decimal supply_forecast
         decimal demand_forecast
         decimal supply_ratio "공급/수요 비율(%)"
-        varchar balance_status "EXCESS_WARN | EXCESS_CAUTION | BALANCED | SHORT_CAUTION | SHORT_WARN"
+        varchar balance_status "EXCESS_WARN | EXCESS_CAUTION | BALANCED | SHORT_CAUTION | SHORT_WARN | UNKNOWN"
         timestamp calculated_at
         timestamp created_at
         timestamp updated_at
@@ -434,6 +435,25 @@ erDiagram
 
     farms ||--o{ recommend_history : "AI추천이력"
     recommend_history ||--|{ recommend_history_item : "추천항목"
+
+    crop_cultivation_env {
+        bigint id PK
+        varchar crop_name UK "작물명"
+        decimal optimal_ph_min "최적 pH 하한"
+        decimal optimal_ph_max "최적 pH 상한"
+        varchar optimal_temp "생육 적온"
+        decimal organic_matter "유기물 함량"
+        text soil_types "선호 토양"
+        int difficulty "난이도"
+        varchar sowing_info "파종 시기"
+        varchar harvest_info "수확 시기"
+        int growth_days "재배 기간(일)"
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+
+    crops ||--o| crop_cultivation_env : "재배환경매핑(논리적)"
 
     %% ===== 농사로 Open API 데이터 (신규 V9) =====
 
@@ -789,6 +809,7 @@ erDiagram
 | grade | VARCHAR(10) | | 등급 (A / B / C) |
 | to_shop | BOOLEAN | DEFAULT false | 상점 노출 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
+| deleted_at | TIMESTAMP | | 수확 취소(소프트 삭제) 시각 (V32 추가) |
 
 ### 2.5.2 cultivation_history (재배/기상 이력)
 
@@ -818,7 +839,7 @@ erDiagram
 | supply_forecast | DECIMAL(12,2) | | 공급 예측량 |
 | demand_forecast | DECIMAL(12,2) | | 수요 예측량 |
 | supply_ratio | DECIMAL(5,2) | | 수급 비율 (%) |
-| balance_status | VARCHAR(20) | | EXCESS_WARN / EXCESS_CAUTION / BALANCED / SHORT_CAUTION / SHORT_WARN |
+| balance_status | VARCHAR(20) | | EXCESS_WARN / EXCESS_CAUTION / BALANCED / SHORT_CAUTION / SHORT_WARN / UNKNOWN |
 | calculated_at | TIMESTAMP | | 최종 계산 시각 |
 | created_at | TIMESTAMP | NOT NULL | 생성일 |
 | updated_at | TIMESTAMP | | 수정일 |
@@ -1049,7 +1070,7 @@ erDiagram
 | content | TEXT | NOT NULL | 메시지 내용 |
 | created_at | TIMESTAMP | NOT NULL | 생성일 |
 
-### 2.X recommend_history (AI 작물 추천 이력) — V27
+### 2.20 recommend_history (AI 작물 추천 이력) — V27
 
 AI 작물 추천 엔진이 분석한 농장별 추천 이력의 메타 데이터를 저장합니다.
 
@@ -1065,7 +1086,7 @@ AI 작물 추천 엔진이 분석한 농장별 추천 이력의 메타 데이터
 | soil_type | VARCHAR(100) | | 토양 유형 |
 | generated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 추천 생성일시 |
 
-### 2.X recommend_history_item (추천된 작물 항목) — V27
+### 2.21 recommend_history_item (추천된 작물 항목) — V27
 
 `recommend_history` 1건에 대한 개별 작물의 점수 및 상세 데이터를 저장합니다.
 
@@ -1093,7 +1114,31 @@ AI 작물 추천 엔진이 분석한 농장별 추천 이력의 메타 데이터
 | harvest_period | VARCHAR(100) | | 수확 시기 |
 | pests | TEXT | | 병해충 정보 (쉼표 구분) (V28 추가) |
 
-### 2.20 weather_data (기상청 ASOS 일별 관측 — 독립)
+> **soil_fitness (토양 적합도 등급) 기준**: 90% 이상(`HIGH_SUIT`), 75% 이상(`SUIT`), 55% 이상(`POSSIBLE`), 35% 이상(`LOW_SUIT`), 그 외(`NONE`)
+> **supply_status (수급 상태) 및 안정성 점수**: `BALANCED`(안정, 95점), `SHORT_CAUTION`(부족주의, 75점), `EXCESS_CAUTION`(과잉주의, 65점), `SHORT_WARN`(부족, 50점), `EXCESS_WARN`(과잉, 40점)
+
+### 2.22 crop_cultivation_env (작물 재배 환경 마스터) — V31
+
+AI 추천 엔진에서 하드코딩된 pH, 온도, 난이도 등을 실제 DB 값으로 동적 조회하기 위한 작물별 기준 정보입니다.
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| crop_name | VARCHAR(50) | UNIQUE, NOT NULL | 작물명 (crops.name과 매칭) |
+| optimal_ph_min | DECIMAL(3,1) | | 최적 토양 산도 하한 |
+| optimal_ph_max | DECIMAL(3,1) | | 최적 토양 산도 상한 |
+| optimal_temp | VARCHAR(30) | | 최적 생육 온도 (예: "20~30°C") |
+| organic_matter | DECIMAL(5,1) | | 적정 유기물 함량 (g/kg) |
+| soil_types | TEXT | | 선호 토양 유형 (쉼표 구분) |
+| difficulty | INT | | 재배 난이도 (1~5) |
+| sowing_info | VARCHAR(50) | | 파종/정식 시기 |
+| harvest_info | VARCHAR(50) | | 수확 시기 |
+| growth_days | INT | | 재배 기간 (일) |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 등록일 |
+| updated_at | TIMESTAMP | | 수정일 |
+| deleted_at | TIMESTAMP | | 삭제 시각 |
+
+### 2.23 weather_data (기상청 ASOS 일별 관측 — 독립)
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|

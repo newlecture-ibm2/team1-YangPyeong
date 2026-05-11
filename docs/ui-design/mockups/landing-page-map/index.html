@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmBalance - Interactive Farm Map</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            /* 스크롤을 허용하여 맵을 거대하게 탐험할 수 있게 함 */
+            overflow: auto;
+            background-color: #5b92e5;
+            font-family: 'Pretendard', sans-serif;
+            /* 커스텀 스크롤바 */
+            scrollbar-width: thin;
+            scrollbar-color: #2D6A4F transparent;
+        }
+
+        /* 맵 전체를 감싸는 거대한 컨테이너 */
+        #map-container {
+            position: relative;
+            /* 화면의 제일 긴 부분(가로나 세로)에 맞춰서 아주 거대하게 렌더링 */
+            width: max(100vw, 100vh);
+            height: max(100vw, 100vh);
+            /* 모바일 등 너무 작아지는 것을 방지 */
+            min-width: 1200px;
+            min-height: 1200px;
+            margin: 0 auto; /* 가로 중앙 정렬 */
+            background-image: url('./village_map_v2.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* 건물의 클릭 및 호버 영역 */
+        .building {
+            position: absolute;
+            cursor: pointer;
+            border-radius: 40%; /* 둥근 아우라 형태 원복 */
+            border: 4px solid transparent;
+            background: transparent;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        /* 마우스 오버 시 연두색 테두리가 건물 크기만큼 둥글게 나타남 */
+        .building:hover {
+            border-color: #7FFF00;
+            background: rgba(124, 252, 0, 0.15);
+            box-shadow: 0 0 30px 10px rgba(124, 252, 0, 0.4);
+            transform: scale(1.05);
+        }
+
+        .building-label {
+            position: absolute;
+            top: -35px; /* 건물 위로 둥둥 떠있도록 배치 */
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ffffff; /* 하얀색 바탕 원복 */
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-weight: 900;
+            color: #2D6A4F; /* 메인 색상 텍스트 */
+            border: 3px solid #2D6A4F; /* 가독성을 위한 메인 색상 테두리 */
+            white-space: nowrap;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            pointer-events: none;
+            font-size: 18px; /* 글자 크기도 키움 */
+            z-index: 30;
+            /* 항상 보이도록 하고 둥둥 떠다니는 애니메이션 추가 */
+            animation: float 2s ease-in-out infinite;
+        }
+
+        .building:hover .building-label {
+            transform: translate(-50%, -10px) scale(1.1); /* 호버 시 강조 및 약간 떠오르는 효과 */
+            background: #2D6A4F; /* 호버 시 바탕색 반전 */
+            color: #ffffff;
+            border-color: #ffffff;
+        }
+
+        @keyframes float {
+            0% { margin-top: 0px; }
+            50% { margin-top: -10px; }
+            100% { margin-top: 0px; }
+        }
+
+        /* 각 건물별 핫스팟 위치 및 크기를 실제 건물 크기에 맞게 조정 */
+        #farm { top: 30%; left: 8%; width: 28%; height: 25%; }
+        #shop { bottom: 9%; right: 7%; width: 22%; height: 23%; } /* 장터만 위로 올려진 상태 유지 */
+        #community { top: 35%; right: 26%; width: 16%; height: 16%; }
+        #tour { top: 38%; right: 6%; width: 18%; height: 18%; } /* 풍차를 조금 더 밑으로, 그리고 왼쪽으로 이동 */
+        #policy { bottom: 25%; left: 45%; width: 18%; height: 18%; }
+        #mypage { top: 12%; right: 12%; width: 18%; height: 18%; }
+
+        /* 강아지 사이즈 및 래퍼 */
+        #dog-container {
+            position: absolute;
+            /* 강아지 사이즈 약간 더 키움 (60 -> 100px) */
+            width: 100px; 
+            height: 100px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: left 2s linear, top 2s linear;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .dog-inner {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.3s;
+        }
+
+        /* 텍스트 안내 오버레이 (화면 상단 고정) */
+        .title-overlay {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .title-overlay h1 {
+            margin: 0 0 5px 0; color: #2D6A4F; font-size: 26px;
+        }
+        
+        .title-overlay p {
+            margin: 0; color: #666; font-size: 15px; font-weight: bold;
+        }
+
+        /* 시작하기 버튼 (화면 하단 고정) */
+        .start-btn {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #FF9F1C, #FF7A00);
+            color: white;
+            padding: 18px 50px;
+            border-radius: 40px;
+            font-size: 24px;
+            font-weight: 800;
+            text-decoration: none;
+            box-shadow: 0 8px 25px rgba(255, 122, 0, 0.4);
+            border: 3px solid white;
+            cursor: pointer;
+            z-index: 200;
+            transition: all 0.2s;
+        }
+
+        .start-btn:hover {
+            transform: translateX(-50%) scale(1.05) translateY(-5px);
+            box-shadow: 0 12px 30px rgba(255, 122, 0, 0.6);
+        }
+
+        /* 강아지 발자국 스타일 */
+        .footprint {
+            position: absolute;
+            font-size: 16px;
+            color: rgba(30, 15, 0, 0.95); /* 아주 진한 까만 흙색으로 변경 */
+            pointer-events: none;
+            z-index: 15; /* 강아지(20)보다 아래, 배경보다 위 */
+            transition: opacity 4s ease-out; /* 4초에 걸쳐 아주 천천히 그라데이션처럼 사라짐 */
+            transform: translate(-50%, -50%);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="title-overlay">
+        <h1>FarmBalance Village</h1>
+        <p>거대한 맵을 마우스로 스크롤하며 둘러보세요!</p>
+    </div>
+
+    <!-- 스크롤 가능한 전체 맵 -->
+    <div id="map-container">
+        
+        <!-- 1. 내농장 핫스팟 -->
+        <div class="building" id="farm" onclick="moveDogAndNavigate(event, '/farm')">
+            <div class="building-label">내농장</div>
+        </div>
+
+        <!-- 2. 장터 핫스팟 -->
+        <div class="building" id="shop" onclick="moveDogAndNavigate(event, '/shop')">
+            <div class="building-label">장터</div>
+        </div>
+
+        <!-- 3. 수다방 핫스팟 -->
+        <div class="building" id="community" onclick="moveDogAndNavigate(event, '/community')">
+            <div class="building-label">수다방</div>
+        </div>
+
+        <!-- 4. 동네구경 핫스팟 -->
+        <div class="building" id="tour" onclick="moveDogAndNavigate(event, '/village')">
+            <div class="building-label">동네구경</div>
+        </div>
+
+        <!-- 5. 정책 핫스팟 -->
+        <div class="building" id="policy" onclick="moveDogAndNavigate(event, '/policy')">
+            <div class="building-label">정책</div>
+        </div>
+
+        <!-- 6. 로그인/마이페이지 핫스팟 -->
+        <div class="building" id="mypage" onclick="moveDogAndNavigate(event, '/mypage')">
+            <div class="building-label">마이페이지</div>
+        </div>
+
+        <!-- 강아지 -->
+        <div id="dog-container">
+            <div id="dog-lottie" class="dog-inner"></div>
+        </div>
+    </div>
+
+    <!-- 고정된 시작버튼 -->
+    <a href="/farm" class="start-btn">FarmBalance 시작하기 🚀</a>
+
+    <script>
+        const dogAnimation = lottie.loadAnimation({
+            container: document.getElementById('dog-lottie'),
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: './dog-walking.json'
+        });
+
+        const dogContainer = document.getElementById('dog-container');
+        const dogInner = document.getElementById('dog-lottie');
+        const mapContainer = document.getElementById('map-container');
+        
+        let isMoving = false;
+        let walkingTimeout;
+        let wanderingTimeout;
+        let footprintInterval;
+
+        // 발자국 찍기 로직
+        function startFootprints() {
+            clearInterval(footprintInterval);
+            let toggleFoot = false;
+            
+            footprintInterval = setInterval(() => {
+                if (!isMoving) return;
+                
+                // 현재 이동 중인 강아지의 실시간 좌표 추적
+                const comp = window.getComputedStyle(dogContainer);
+                const x = parseFloat(comp.left);
+                const y = parseFloat(comp.top);
+                
+                // 발자국 DOM 생성
+                const print = document.createElement('div');
+                print.className = 'footprint';
+                print.innerHTML = '🐾'; 
+                
+                // 강아지 중심보다 살짝 발밑에 위치하도록 오프셋 적용
+                // 좌/우 발자국 번갈아가며 찍기
+                const offset = toggleFoot ? 8 : -8;
+                toggleFoot = !toggleFoot;
+                
+                print.style.left = `${x + offset}px`;
+                print.style.top = `${y + 35}px`;
+                
+                // 방향에 맞게 기울기
+                let direction = dogInner.style.transform.includes('-1') ? -1 : 1;
+                print.style.transform = `translate(-50%, -50%) scaleX(${direction}) rotate(${(Math.random()-0.5)*20}deg)`;
+                
+                mapContainer.appendChild(print);
+                
+                // 찍히자마자 0을 주어 4초에 걸쳐 아주 천천히 트랜지션 되도록 함
+                setTimeout(() => {
+                    print.style.opacity = '0';
+                }, 100);
+                
+                // 완전히 투명해진 후 DOM에서 삭제
+                setTimeout(() => {
+                    if(print.parentNode) print.parentNode.removeChild(print);
+                }, 4500);
+                
+            }, 300); // 발자국 찍는 간격 조절 (속도에 맞춤)
+        }
+
+        function stopFootprints() {
+            clearInterval(footprintInterval);
+        }
+
+        // 특정 퍼센트 좌표로 직선 걷기
+        function walkToPercent(px, py, callback) {
+            isMoving = true;
+            startFootprints();
+            
+            let currentX = parseFloat(window.getComputedStyle(dogContainer).left) || (mapContainer.clientWidth / 2);
+            let currentY = parseFloat(window.getComputedStyle(dogContainer).top) || (mapContainer.clientHeight / 2);
+            
+            let targetX = mapContainer.clientWidth * (px / 100);
+            let targetY = mapContainer.clientHeight * (py / 100);
+            
+            // 이동 방향(좌/우)에 따른 강아지 이미지 반전
+            if (targetX < currentX) dogInner.style.transform = 'scaleX(-1)';
+            else if (targetX > currentX) dogInner.style.transform = 'scaleX(1)';
+            
+            let dist = Math.hypot(targetX - currentX, targetY - currentY);
+            
+            // 속도 유지
+            let duration = Math.max(0.9, dist / 160);  
+            
+            dogContainer.style.transition = `left ${duration}s linear, top ${duration}s linear`;
+            dogContainer.style.left = `${px}%`;
+            dogContainer.style.top = `${py}%`;
+            
+            walkingTimeout = setTimeout(() => {
+                isMoving = false;
+                stopFootprints();
+                if (callback) callback();
+            }, duration * 1000);
+        }
+
+        // 핫스팟 클릭 시 (대기 없이 즉각 이동)
+        window.moveDogAndNavigate = function(event, url) {
+            event.stopPropagation();
+            window.location.href = url; // 강아지가 걸어올 때까지 기다리지 않고 즉시 해당 페이지로 라우팅
+        };
+
+        // 자유롭게 화면을 랜덤으로 돌아다님
+        function startWandering() {
+            clearTimeout(wanderingTimeout);
+            wanderingTimeout = setTimeout(() => {
+                if (!isMoving) {
+                    // 화면 10% ~ 90% 사이의 랜덤한 좌표 생성
+                    let randPx = 10 + Math.random() * 80;
+                    let randPy = 10 + Math.random() * 80;
+                    walkToPercent(randPx, randPy, startWandering);
+                }
+            }, 800); // 잠시 머무는 시간 0.8초
+        }
+
+        // 지도의 빈 공간 클릭 시 작동 (직선으로 즉시 이동)
+        mapContainer.addEventListener('click', function(e) {
+            if (e.target.id === 'map-container') {
+                clearTimeout(wanderingTimeout);
+                clearTimeout(walkingTimeout);
+                stopFootprints();
+                
+                const rect = mapContainer.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
+                
+                // 현재 이동 중이던 픽셀 위치에서 강제 정지
+                let curX = parseFloat(window.getComputedStyle(dogContainer).left) || (mapContainer.clientWidth / 2);
+                let curY = parseFloat(window.getComputedStyle(dogContainer).top) || (mapContainer.clientHeight / 2);
+                let curPx = (curX / mapContainer.clientWidth) * 100;
+                let curPy = (curY / mapContainer.clientHeight) * 100;
+                
+                dogContainer.style.transition = 'none';
+                dogContainer.style.left = `${curPx}%`;
+                dogContainer.style.top = `${curPy}%`;
+                
+                // 브라우저 렌더링 강제 업데이트(reflow)하여 정지 위치 반영
+                void dogContainer.offsetWidth;
+                
+                // 클릭한 목표 좌표(퍼센트)
+                let targetPx = (clickX / mapContainer.clientWidth) * 100;
+                let targetPy = (clickY / mapContainer.clientHeight) * 100;
+                
+                // 해당 위치로 즉시 걷기 시작
+                walkToPercent(targetPx, targetPy, startWandering);
+            }
+        });
+
+        // 초기 시작 위치 세팅 (중앙)
+        dogContainer.style.transition = 'none';
+        dogContainer.style.left = '50%';
+        dogContainer.style.top = '50%';
+
+        // 창 크기 조절 시 무시 (퍼센트 기반이라 상대적으로 유지됨)
+        window.addEventListener('resize', () => {
+            // 조치 불필요
+        });
+
+        // 페이지 진입 직후 랜덤 걷기 시작
+        setTimeout(() => { startWandering(); }, 100);
+    </script>
+</body>
+</html>
