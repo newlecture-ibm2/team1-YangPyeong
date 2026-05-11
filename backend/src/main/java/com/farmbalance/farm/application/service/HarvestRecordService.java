@@ -12,8 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.context.ApplicationEventPublisher;
 import com.farmbalance.farm.application.port.out.LoadFarmPort;
+import com.farmbalance.farm.application.port.out.UpdateCultivationStatePort;
 import com.farmbalance.farm.domain.CultivationRegistration;
+import com.farmbalance.farm.domain.CultivationStatus;
 import com.farmbalance.farm.domain.event.HarvestRecordedEvent;
+import com.farmbalance.global.error.BusinessException;
+import com.farmbalance.global.error.ErrorCode;
 
 import java.util.List;
 
@@ -28,31 +32,45 @@ public class HarvestRecordService implements RecordHarvestUseCase, LoadHarvestUs
     private final SaveHarvestRecordPort saveHarvestRecordPort;
     private final LoadHarvestRecordPort loadHarvestRecordPort;
     private final LoadFarmPort loadFarmPort;
+    private final UpdateCultivationStatePort updateCultivationStatePort;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public HarvestRecord recordHarvest(RecordHarvestCommand command) {
-        HarvestRecord harvestRecord = HarvestRecord.builder()
-                .cultivationRegistrationId(command.getCultivationRegistrationId())
-                .harvestDate(command.getHarvestDate())
-                .yieldAmount(command.getYieldAmount())
-                .yieldUnit(command.getYieldUnit() != null ? command.getYieldUnit() : "kg")
-                .grade(command.getGrade())
-                .toShop(command.getToShop() != null ? command.getToShop() : false)
-                .build();
+        // 1. 재배 정보 조회 및 중복 검증
+        CultivationRegistration registration = loadFarmPort.loadCultivationById(command.getCultivationRegistrationId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        if (registration.isCompleted()) {
+            throw new BusinessException(ErrorCode.ALREADY_HARVESTED);
+        }
+
+        // 2. 수확 실적 생성 (도메인 검증 포함) 및 저장
+        HarvestRecord harvestRecord = HarvestRecord.create(
+                command.getCultivationRegistrationId(),
+                command.getYieldAmount(),
+                command.getHarvestDate(),
+                command.getYieldUnit(),
+                command.getGrade(),
+                command.getToShop(),
+                registration.getFarmerEstimatedYield()
+        );
 
         HarvestRecord saved = saveHarvestRecordPort.saveHarvestRecord(harvestRecord);
 
-        // 이벤트 발행
-        loadFarmPort.loadCultivationById(command.getCultivationRegistrationId())
-                .ifPresent(reg -> {
-                    eventPublisher.publishEvent(new HarvestRecordedEvent(
-                            reg.getFarmId(),
-                            reg.getCropId(),
-                            command.getYieldAmount(),
-                            command.getYieldUnit() != null ? command.getYieldUnit() : "kg"
-                    ));
-                });
+        // 3. 도메인 상태 변경 및 DB 업데이트
+        registration.completeHarvest();
+        updateCultivationStatePort.updateStatus(command.getCultivationRegistrationId(), registration.getStatus());
+
+        // 4. 이벤트 발행
+        eventPublisher.publishEvent(new HarvestRecordedEvent(
+                registration.getFarmId(),
+                registration.getId(), // 추가된 필드
+                registration.getCropId(),
+                registration.getCropName(),
+                command.getYieldAmount(),
+                command.getYieldUnit() != null ? command.getYieldUnit() : "kg"
+        ));
 
         return saved;
     }

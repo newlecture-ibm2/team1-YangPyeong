@@ -20,14 +20,13 @@ export function useCultivation(farmId?: number) {
     }
   }, [farmId]);
 
-  const modifyCultivation = async (cultivationId: number, cropId: number, area: number, yieldAmount: number, unit: string) => {
+  const modifyCultivation = async (cultivationId: number, area: number, yieldAmount: number, unit: string) => {
     if (!farmId) return false;
     try {
       await updateCultivation(farmId, cultivationId, {
-        cropId,
-        cultivationArea: area,
-        expectedYield: yieldAmount,
-        yieldUnit: unit
+        area: area,
+        yield: yieldAmount,
+        unit: unit
       });
       toast.success('재배 정보가 수정되었습니다.');
       await fetchCultivations();

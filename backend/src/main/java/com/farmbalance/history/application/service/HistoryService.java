@@ -21,6 +21,7 @@ public class HistoryService implements RecordHistoryUseCase, LoadHistoryUseCase,
     private final SaveHistoryPort saveHistoryPort;
     private final LoadHistoryPort loadHistoryPort;
     private final DeleteHistoryPort deleteHistoryPort;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Override
     public void recordHistory(RecordHistoryCommand command) {
@@ -66,6 +67,21 @@ public class HistoryService implements RecordHistoryUseCase, LoadHistoryUseCase,
 
     @Override
     public void deleteHistory(Long historyId) {
+        // 삭제 전 데이터 조회
+        loadHistoryPort.loadHistoryById(historyId).ifPresent(history -> {
+            // "🌾 수확완료"로 시작하는 이력인 경우 수확 취소 이벤트 발행
+            if (history.getActivityContent() != null && history.getActivityContent().startsWith("🌾 수확완료")) {
+                String cropName = history.getActivityContent()
+                        .replace("🌾 수확완료: ", "")
+                        .split("\\(")[0].trim(); // "배추 (10.00 kg)" -> "배추"
+                
+                eventPublisher.publishEvent(new com.farmbalance.farm.domain.event.HarvestCanceledEvent(
+                        history.getCultivationRegistrationId(),
+                        cropName
+                ));
+            }
+        });
+
         deleteHistoryPort.deleteHistory(historyId);
     }
 }

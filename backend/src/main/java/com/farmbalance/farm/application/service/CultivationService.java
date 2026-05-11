@@ -46,7 +46,20 @@ public class CultivationService implements RegisterCultivationUseCase, UpdateCul
         // 3. 저장
         CultivationRegistration saved = saveCultivationPort.addCultivationRegistration(registration);
 
-        // 4. 히스토리 자동 생성 이벤트 발행
+        // 3-1. 수급 밸런스 등 후속 처리를 위해 작물명 포함 데이터 로드
+        CultivationRegistration fullData = loadFarmPort.loadCultivationById(saved.getId())
+                .orElse(saved); // 로드 실패 시 최소 정보라도 유지
+
+        // 4. 공통 변경 이벤트 발행 (수급 밸런스, AI 정책, 예측 리포트 트리거용)
+        eventPublisher.publishEvent(new com.farmbalance.farm.domain.event.CultivationChangedEvent(
+                fullData.getId(),
+                fullData.getCropName(),
+                null, // 신규 등록이므로 oldCropName은 없음
+                "CREATED",
+                java.time.LocalDateTime.now()
+        ));
+
+        // 5. 기존 히스토리 자동 생성 이벤트 발행 (하위 호환성 유지)
         eventPublisher.publishEvent(new CultivationRegisteredEvent(
                 saved.getId(),
                 command.getFarmId(),
@@ -82,10 +95,20 @@ public class CultivationService implements RegisterCultivationUseCase, UpdateCul
 
     @Override
     public void deleteCultivation(Long id) {
-        // 이벤트를 위해 미리 정보 로드
+        // 이벤트를 위해 미리 정보 로드 (AFTER_COMMIT 시점에는 조회가 안 될 수 있으므로)
         loadFarmPort.loadCultivationById(id).ifPresent(cult -> {
             saveCultivationPort.deleteCultivationRegistration(id);
-            // 삭제 이벤트 발행
+
+            // 1. 공통 변경 이벤트 발행 (수급 밸런스 반영을 위해 cropName 포함)
+            eventPublisher.publishEvent(new com.farmbalance.farm.domain.event.CultivationChangedEvent(
+                    id,
+                    cult.getCropName(),
+                    cult.getCropName(), // 삭제 시에는 현재 작물이 곧 이전 작물
+                    "DELETED",
+                    java.time.LocalDateTime.now()
+            ));
+
+            // 2. 기존 삭제 이벤트 발행 (히스토리 자동 삭제용)
             eventPublisher.publishEvent(new CultivationDeletedEvent(id, cult.getFarmId()));
         });
     }

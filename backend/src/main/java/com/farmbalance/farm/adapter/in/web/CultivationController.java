@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class CultivationController {
 
     private final RegisterCultivationUseCase registerCultivationUseCase;
-    private final UpdateCultivationUseCase updateCultivationUseCase;
+    private final ModifyCultivationUseCase modifyCultivationUseCase;
     private final DeleteCultivationUseCase deleteCultivationUseCase;
     private final LoadCultivationUseCase loadCultivationUseCase;
 
@@ -60,24 +60,23 @@ public class CultivationController {
     }
 
     /**
-     * 재배 등록 수정
+     * 재배 등록 수정 (FRM-011)
      */
     @PatchMapping("/{cultivationId}")
-    public ResponseEntity<ApiResponse<CultivationResponse>> updateCultivation(
+    public ResponseEntity<ApiResponse<Void>> modifyCultivation(
             @PathVariable Long farmId,
             @PathVariable Long cultivationId,
-            @Valid @RequestBody CultivationRequest request) {
+            @Valid @RequestBody ModifyCultivationRequest request) {
 
-        UpdateCultivationCommand command = UpdateCultivationCommand.builder()
+        ModifyCultivationCommand command = ModifyCultivationCommand.builder()
                 .id(cultivationId)
-                .cropId(request.getCropId())
-                .cultivationArea(request.getCultivationArea())
-                .expectedYield(request.getExpectedYield())
-                .yieldUnit(request.getYieldUnit())
+                .area(request.getArea())
+                .yield(request.getYield())
+                .unit(request.getUnit())
                 .build();
 
-        CultivationRegistration updated = updateCultivationUseCase.updateCultivation(command);
-        return ResponseEntity.ok(ApiResponse.ok(CultivationResponse.from(updated)));
+        modifyCultivationUseCase.modify(command);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     /**
@@ -101,6 +100,14 @@ public class CultivationController {
         private Double cultivationArea;    // 재배 면적 (㎡)
         private Double expectedYield;      // 예상 수확량
         private String yieldUnit;          // g | kg | ton
+    }
+
+    @Getter
+    @NoArgsConstructor
+    static class ModifyCultivationRequest {
+        private Double area;
+        private Double yield;
+        private String unit;
     }
 
     @Getter

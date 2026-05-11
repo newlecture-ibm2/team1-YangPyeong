@@ -115,6 +115,7 @@ erDiagram
         varchar grade "A | B | C"
         boolean to_shop "상점 노출 여부"
         timestamp created_at
+        timestamp deleted_at "수확 취소 시 기록 (V32)"
     }
 
     cultivation_history {
@@ -141,7 +142,7 @@ erDiagram
         decimal supply_forecast
         decimal demand_forecast
         decimal supply_ratio "공급/수요 비율(%)"
-        varchar balance_status "EXCESS_WARN | EXCESS_CAUTION | BALANCED | SHORT_CAUTION | SHORT_WARN"
+        varchar balance_status "EXCESS_WARN | EXCESS_CAUTION | BALANCED | SHORT_CAUTION | SHORT_WARN | UNKNOWN"
         timestamp calculated_at
         timestamp created_at
         timestamp updated_at
@@ -808,6 +809,7 @@ erDiagram
 | grade | VARCHAR(10) | | 등급 (A / B / C) |
 | to_shop | BOOLEAN | DEFAULT false | 상점 노출 여부 |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
+| deleted_at | TIMESTAMP | | 수확 취소(소프트 삭제) 시각 (V32 추가) |
 
 ### 2.5.2 cultivation_history (재배/기상 이력)
 
@@ -837,7 +839,7 @@ erDiagram
 | supply_forecast | DECIMAL(12,2) | | 공급 예측량 |
 | demand_forecast | DECIMAL(12,2) | | 수요 예측량 |
 | supply_ratio | DECIMAL(5,2) | | 수급 비율 (%) |
-| balance_status | VARCHAR(20) | | EXCESS_WARN / EXCESS_CAUTION / BALANCED / SHORT_CAUTION / SHORT_WARN |
+| balance_status | VARCHAR(20) | | EXCESS_WARN / EXCESS_CAUTION / BALANCED / SHORT_CAUTION / SHORT_WARN / UNKNOWN |
 | calculated_at | TIMESTAMP | | 최종 계산 시각 |
 | created_at | TIMESTAMP | NOT NULL | 생성일 |
 | updated_at | TIMESTAMP | | 수정일 |
