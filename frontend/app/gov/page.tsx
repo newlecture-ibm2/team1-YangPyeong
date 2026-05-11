@@ -5,6 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import styles from './gov.module.css';
 import { useGovUser, getTestHeaders } from './useGovUser';
 import GovTabs from './_components/GovTabs';
+import GovAiPanel from './_components/GovAiPanel/GovAiPanel';
 import Modal from '@/components/common/Modal';
 
 interface DashboardData {
@@ -34,17 +35,32 @@ export default function GovDashboardPage() {
   const { summary, warningItems, monthlySupply, regionDistribution } = data;
   const region = user.regionName || '지자체';
 
+  const topWarningItems = [...warningItems]
+    .sort((a, b) => {
+      const levelScore = { '긴급': 3, '주의': 2, '관심': 1 };
+      const scoreA = levelScore[a.level as keyof typeof levelScore] || 0;
+      const scoreB = levelScore[b.level as keyof typeof levelScore] || 0;
+      return scoreB - scoreA;
+    })
+    .slice(0, 5);
+
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <p className={styles.breadcrumb}>지자체 / 대시보드</p>
-        <h1 className={styles.pageTitle}>{region} <em>대시보드</em></h1>
-        <p className={styles.pageSub}>{region} 전체 농업 현황과 수급 밸런스를 모니터링합니다.</p>
+      <div className={styles.headerWrapper}>
+        <div className={styles.pageHeader}>
+          <p className={styles.breadcrumb}>지자체 / 대시보드</p>
+          <h1 className={styles.pageTitle}>{region} <em>대시보드</em></h1>
+          <p className={styles.pageSub}>{region} 전체 농업 현황과 수급 밸런스를 모니터링합니다.</p>
+        </div>
+        <div>
+          <GovTabs />
+        </div>
       </div>
 
-      <GovTabs />
-
-      {/* KPI */}
+      <div className={styles.mainGrid}>
+        {/* 좌측/중앙 주요 데이터 영역 */}
+        <div className={styles.dashboardContent}>
+          {/* KPI */}
       <div className={styles.kpiRow}>
         <div className={styles.kpi}><p className={styles.kpiLabel}>등록 농가</p><p className={styles.kpiValue}>{summary.totalFarms.toLocaleString()}</p></div>
         <div className={styles.kpi}><p className={styles.kpiLabel}>관리 작물</p><p className={styles.kpiValue}>{summary.totalCrops}종</p></div>
@@ -53,36 +69,33 @@ export default function GovDashboardPage() {
       </div>
 
       {/* Charts */}
-      <div className={styles.bento}>
-        <div className={styles.col8}>
-          <div className={styles.card} style={{ height: '100%', marginBottom: 0 }}>
-            <h3 className={styles.cardTitle}>계절별 수급 추이</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={monthlySupply}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="label" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="supply" name="공급" stroke="#2D6A4F" strokeWidth={2} />
-                <Line type="monotone" dataKey="demand" name="수요" stroke="#DC2626" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+      <div className={styles.chartsColumn}>
+        <div className={styles.card}>
+          <h3 className={styles.cardTitle}>계절별 수급 추이</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={monthlySupply}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="label" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="supply" name="공급" stroke="#2D6A4F" strokeWidth={2} />
+              <Line type="monotone" dataKey="demand" name="수요" stroke="#DC2626" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
-        <div className={styles.col4}>
-          <div className={styles.card} style={{ height: '100%', marginBottom: 0 }}>
-            <h3 className={styles.cardTitle}>지역별 농가 분포</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={regionDistribution} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="region" type="category" width={60} />
-                <Tooltip />
-                <Bar dataKey="count" name="농가 수" fill="#52B788" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        
+        <div className={styles.card}>
+          <h3 className={styles.cardTitle}>지역별 농가 분포</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={regionDistribution} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" />
+              <YAxis dataKey="region" type="category" width={60} />
+              <Tooltip />
+              <Bar dataKey="count" name="농가 수" fill="#52B788" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
@@ -103,8 +116,8 @@ export default function GovDashboardPage() {
             </tr>
           </thead>
           <tbody>
-            {warningItems.length === 0 && <tr><td colSpan={5}>경고 품목이 없습니다.</td></tr>}
-            {warningItems.map((item, i) => (
+            {topWarningItems.length === 0 && <tr><td colSpan={5}>경고 품목이 없습니다.</td></tr>}
+            {topWarningItems.map((item, i) => (
               <tr key={i}>
                 <td className={styles.tdBold}>{item.cropName}</td>
                 <td className={styles.numberCell}>{Number(item.supplyRate).toFixed(2)}%</td>
@@ -116,8 +129,15 @@ export default function GovDashboardPage() {
           </tbody>
         </table>
       </div>
+    </div>
 
-      {/* Balance Board Modal */}
+    {/* 우측 AI 패널 영역 */}
+    <div className={styles.aiPanelWrapper}>
+      <GovAiPanel />
+    </div>
+  </div>
+
+  {/* Balance Board Modal */}
       <Modal
         isOpen={isBoardModalOpen}
         onClose={() => setIsBoardModalOpen(false)}
