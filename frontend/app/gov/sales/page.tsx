@@ -69,46 +69,58 @@ export default function SalesPage() {
         <div className={styles.kpi}><div className={styles.kpiLabel}>전월 대비</div><div className={styles.kpiValue} style={{ color: 'var(--color-primary)' }}>{summary.momRate}</div></div>
       </div>
 
-      <div className={styles.card}>
-        <h2 className={styles.cardTitle}>월별 거래액 추이</h2>
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={monthlySales}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip formatter={(value) => `₩${Number(value).toLocaleString()}`} />
-            <Line type="monotone" dataKey="amount" name="거래액" stroke="#2D6A4F" strokeWidth={2} dot={{ r: 4 }} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className={styles.card}>
-        <h2 className={styles.cardTitle}>인기 상품 TOP 5</h2>
-        <div className={styles.tableWrap} style={{ marginBottom: 0 }}>
-          <table className={styles.table} style={{ tableLayout: 'fixed' }}>
-            <thead>
-              <tr>
-                <th className={`${styles.statusCell} ${styles.col100}`}>순위</th>
-                <th className={styles.colAuto}>상품</th>
-                <th className={styles.col150}>판매자</th>
-                <th className={`${styles.numberCell} ${styles.col150}`}>판매량</th>
-                <th className={`${styles.numberCell} ${styles.col150}`}>매출액</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topProducts.length === 0 && <tr><td colSpan={5}>데이터가 없습니다.</td></tr>}
-              {topProducts.map(p => (
-                <tr key={p.rank}>
-                  <td className={styles.statusCell}>{p.rank}</td>
-                  <td className={styles.tdBold}>{p.productName}</td>
-                  <td>{p.seller}</td>
-                  <td className={styles.numberCell}>{p.salesVolume.toLocaleString()}개</td>
-                  <td className={styles.numberCell}>{Number(p.revenue).toLocaleString()}원</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className={styles.compareGrid}>
+        
+        {/* 좌측: 월별 거래액 추이 그래프 */}
+        <div className={`${styles.card} ${styles.chartCard}`}>
+          <div className={styles.cardHeaderRow}>
+            <h2 className={styles.cardTitle}>월별 거래액 추이</h2>
+          </div>
+          <div className={styles.chartContainer}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={monthlySales}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis width={80} />
+                <Tooltip formatter={(value) => `₩${Number(value).toLocaleString()}`} />
+                <Line type="monotone" dataKey="amount" name="거래액" stroke="#2D6A4F" strokeWidth={2} dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
+
+        {/* 우측 50%: 인기 상품 TOP 5 (높이를 좌측과 동일하게 고정) */}
+        <div className={`${styles.card} ${styles.chartCard}`}>
+          <div className={styles.cardHeaderRow}>
+            <h2 className={styles.cardTitle}>인기 상품 TOP 5</h2>
+          </div>
+          <div className={styles.compareTableWrap} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <table className={styles.table} style={{ height: '100%', marginBottom: 0 }}>
+              <thead>
+                <tr>
+                  <th className={`${styles.statusCell} ${styles.col60}`}>순위</th>
+                  <th className={styles.colAuto}>상품</th>
+                  <th className={styles.col80}>판매자</th>
+                  <th className={`${styles.numberCell} ${styles.col100}`}>판매량</th>
+                  <th className={`${styles.numberCell} ${styles.col120}`}>매출액</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topProducts.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', padding: '24px' }}>데이터가 없습니다.</td></tr>}
+                {topProducts.map(p => (
+                  <tr key={p.rank}>
+                    <td className={styles.statusCell}>{p.rank}</td>
+                    <td className={styles.tdBold}>{p.productName}</td>
+                    <td>{p.seller}</td>
+                    <td className={styles.numberCell}>{p.salesVolume.toLocaleString()}개</td>
+                    <td className={styles.numberCell}>{Number(p.revenue).toLocaleString()}원</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
   );

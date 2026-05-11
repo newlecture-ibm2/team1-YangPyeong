@@ -12,9 +12,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "메시지 길이가 1000자를 초과할 수 없습니다." }, { status: 400 });
     }
 
-    const aiApiUrl = process.env.AI_API_URL || "http://localhost:8000";
-    if (!process.env.AI_API_URL) {
-      console.warn("AI_API_URL is not defined in environment variables. Falling back to http://localhost:8000");
+    const aiApiUrl = process.env.AI_SERVER_URL || process.env.AI_API_URL || "http://localhost:8000";
+    if (!process.env.AI_SERVER_URL && !process.env.AI_API_URL) {
+      console.warn("AI_SERVER_URL is not defined in environment variables. Falling back to http://localhost:8000");
     }
     
     // 2. 서버에서 user_role 명시적 주입 (클라이언트 바디값 무시)

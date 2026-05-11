@@ -7,6 +7,7 @@ import com.farmbalance.policy.adapter.in.web.dto.PolicyListResponse;
 
 import com.farmbalance.policy.application.port.in.SearchPolicyUseCase;
 import com.farmbalance.policy.application.port.in.SyncPolicyUseCase;
+import com.farmbalance.policy.application.port.in.RecommendPolicyUseCase;
 import com.farmbalance.policy.application.port.out.RegionNameResolvePort;
 import com.farmbalance.policy.domain.model.PolicyData;
 import com.farmbalance.policy.domain.model.PolicySearchCondition;
@@ -30,6 +31,7 @@ public class PolicyController {
 
     private final SearchPolicyUseCase searchPolicyUseCase;
     private final SyncPolicyUseCase syncPolicyUseCase;
+    private final RecommendPolicyUseCase recommendPolicyUseCase;
     private final RegionNameResolvePort regionNameResolvePort;
 
     private static final BigDecimal LOW_CONFIDENCE_THRESHOLD = new BigDecimal("0.6");
@@ -62,6 +64,20 @@ public class PolicyController {
     }
 
     /**
+     * 맞춤 정책 추천 API (농업인 전용)
+     * GET /api/policies/recommend/me
+     */
+    @GetMapping("/api/policies/recommend/me")
+    public ApiResponse<com.farmbalance.policy.adapter.in.web.dto.PolicyRecommendResponse> recommendForMe(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal Long userId) {
+        if (userId == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
+        com.farmbalance.policy.adapter.in.web.dto.PolicyRecommendResponse response = recommendPolicyUseCase.recommendForUser(userId);
+        return ApiResponse.ok(response);
+    }
+
+    /**
      * 정책 상세 조회 API (인증 불필요)
      * GET /api/policies/{id}
      */
@@ -85,6 +101,21 @@ public class PolicyController {
     @PostMapping("/api/admin/policies/sync")
     public ApiResponse<SyncPolicyUseCase.SyncResult> syncPolicies() {
         SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies();
+        return ApiResponse.ok(result);
+    }
+
+    /**
+     * 기존 정책 데이터 재정규화 API (관리자용)
+     * POST /api/admin/policies/reprocess
+     *
+     * title=null인 기존 데이터의 content를 파싱하여
+     * title/organization/target/category/region_code를 보정합니다.
+     *
+     * TODO: 운영 배포 전 제거 또는 ADMIN 권한 제한 필요.
+     */
+    @PostMapping("/api/admin/policies/reprocess")
+    public ApiResponse<SyncPolicyUseCase.ReprocessResult> reprocessPolicies() {
+        SyncPolicyUseCase.ReprocessResult result = syncPolicyUseCase.reprocessExisting();
         return ApiResponse.ok(result);
     }
 

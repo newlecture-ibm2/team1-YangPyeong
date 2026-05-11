@@ -149,3 +149,8 @@ resilience4j:
     instances:
       oauthCircuitBreaker:
         base-config: default
+
+# ── Custom App Properties ──
+app:
+  policy:
+    scheduler-enabled: true

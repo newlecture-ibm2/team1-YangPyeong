@@ -51,7 +51,7 @@ export default function GovAiPanel() {
       // 프롬프트에 지역명을 추가해서 보냄
       const fullMessage = `${region} ${msg}`;
       const response = await askLocalGovAi(fullMessage);
-      
+
       const aiMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'ai',
@@ -59,7 +59,7 @@ export default function GovAiPanel() {
         timestamp: Date.now(),
         sources: response.graph_summary?.sources || [],
       };
-      
+
       setChatHistory((prev) => [...prev, aiMsg]);
     } catch (err: any) {
       const errorMsg: ChatMessage = {
@@ -84,7 +84,7 @@ export default function GovAiPanel() {
       <div className={styles.chatBox} ref={chatBoxRef}>
         {chatHistory.length === 0 && (
           <div style={{ textAlign: "center", color: "#6B7280", margin: "auto 0" }}>
-            AI에게 궁금한 점을 물어보세요.<br/>(예: 배추 위험도 알려줘)
+            AI에게 궁금한 점을 물어보세요.<br />(예: 배추 위험도 알려줘)
           </div>
         )}
         {chatHistory.map((msg) => (
@@ -127,18 +127,18 @@ export default function GovAiPanel() {
       </div>
 
       <div className={styles.inputArea}>
-        <input 
-          type="text" 
-          className={styles.input} 
+        <input
+          type="text"
+          className={styles.input}
           placeholder="분석을 원하는 내용을 입력하세요..."
-          value={question} 
+          value={question}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(question)}
-          disabled={isLoading || userLoading} 
+          disabled={isLoading || userLoading}
         />
-        <button 
-          className={styles.sendBtn} 
-          onClick={() => handleSendMessage(question)} 
+        <button
+          className={styles.sendBtn}
+          onClick={() => handleSendMessage(question)}
           disabled={isLoading || !question.trim() || userLoading}
         >
           전송
