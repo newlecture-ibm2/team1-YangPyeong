@@ -11,7 +11,7 @@ export async function GET(
   const searchParams = request.nextUrl.searchParams;
   const year = searchParams.get('year');
   
-  let backendUrl = `/api/v1/balance/${encodeURIComponent(cropName)}`;
+  let backendUrl = `/api/balance/${encodeURIComponent(cropName)}`;
   if (year) {
     backendUrl += `?year=${year}`;
   }

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -32,13 +33,13 @@ public class CropProductionStatsJpaEntity extends BaseTimeEntity {
     private Integer year;
 
     @Column(name = "cultivated_area")
-    private Double cultivatedArea;
+    private BigDecimal cultivatedArea;
 
     @Column(name = "yield_per_10a")
-    private Double yieldPer10a;
+    private BigDecimal yieldPer10a;
 
     @Column(name = "total_production")
-    private Double totalProduction;
+    private BigDecimal totalProduction;
 
     @Column(name = "unit_nm", length = 10)
     private String unitNm;
@@ -48,7 +49,7 @@ public class CropProductionStatsJpaEntity extends BaseTimeEntity {
 
     @Builder
     public CropProductionStatsJpaEntity(String itmNm, String regionCode, String regionName, Integer year,
-                                        Double cultivatedArea, Double yieldPer10a, Double totalProduction, String unitNm) {
+                                        BigDecimal cultivatedArea, BigDecimal yieldPer10a, BigDecimal totalProduction, String unitNm) {
         this.itmNm = itmNm;
         this.regionCode = regionCode;
         this.regionName = regionName;
