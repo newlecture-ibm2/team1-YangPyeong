@@ -51,7 +51,7 @@ export default function RecommendTable({ recommendations }: RecommendTableProps)
                 <td style={{ fontWeight: 500 }}>{rec.cropName}</td>
                 <td><CategoryPill category={rec.category} /></td>
                 <td style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{rec.score}</td>
-                <td>₩{rec.expectedRevenuePerKg.toLocaleString()}/kg</td>
+                <td>₩{rec.expectedRevenuePerKg.toLocaleString('ko-KR')}/kg</td>
                 <td><SupplyBadge status={rec.supplyStatus} /></td>
                 <td>
                   <Link
