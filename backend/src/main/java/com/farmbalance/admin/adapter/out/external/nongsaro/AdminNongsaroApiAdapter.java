@@ -28,7 +28,7 @@ public class AdminNongsaroApiAdapter implements AdminNongsaroApiPort {
 
     private final RestTemplate restTemplate;
 
-    @Value("${app.api.nongsaro.default-key}")
+    @Value("${external.nongsaro.default-key:}")
     private String apiKey;
 
     private static final String BASE_URL = "http://api.nongsaro.go.kr/service/farmWorkingPlan";
