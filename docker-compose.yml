@@ -61,6 +61,7 @@ services:
       - KOSIS_API_KEY=${KOSIS_API_KEY}
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - GOV24_API_KEY=${GOV24_API_KEY}
     volumes:
       - uploads-data:/app/uploads
     depends_on:
