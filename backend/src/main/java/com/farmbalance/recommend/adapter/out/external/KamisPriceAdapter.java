@@ -26,9 +26,11 @@ public class KamisPriceAdapter implements RecommendPricePort {
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     public KamisPriceAdapter(RestTemplateBuilder builder, CropPriceCacheRepository cacheRepository, com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+        org.springframework.http.client.SimpleClientHttpRequestFactory factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(3000);
+        factory.setReadTimeout(5000);
         this.restTemplate = builder
-                .setConnectTimeout(java.time.Duration.ofSeconds(3))
-                .setReadTimeout(java.time.Duration.ofSeconds(5))
+                .requestFactory(() -> factory)
                 .build();
         this.cacheRepository = cacheRepository;
         this.objectMapper = objectMapper;
