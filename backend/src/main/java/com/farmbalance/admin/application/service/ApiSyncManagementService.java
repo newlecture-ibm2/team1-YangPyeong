@@ -6,6 +6,7 @@ import com.farmbalance.admin.domain.ApiSyncStatus;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.global.event.ApiSyncEvent;
+import com.farmbalance.global.event.SyncTriggerEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -83,20 +84,22 @@ public class ApiSyncManagementService implements ManageApiSyncUseCase {
 
         log.info("[ApiSync] 수동 동기화 트리거: api={}, mode={}", status.getApiName(), syncMode);
 
-        try {
-            if ("NONGSARO_CROP".equals(status.getApiName())) {
+        if ("NONGSARO_CROP".equals(status.getApiName())) {
+            try {
                 nongsaroCropSyncService.syncCrops(syncMode);
+                // 성공 이벤트 발행
+                eventPublisher.publishEvent(new ApiSyncEvent(
+                        status.getApiName(), "SUCCESS", 0, null));
+            } catch (Exception e) {
+                log.error("[ApiSync] 동기화 실패: api={}", status.getApiName(), e);
+                // 실패 이벤트 발행
+                eventPublisher.publishEvent(new ApiSyncEvent(
+                        status.getApiName(), "FAILED", 0, e.getMessage()));
+                throw new BusinessException(ErrorCode.EXTERNAL_API_ERROR);
             }
-
-            // 성공 이벤트 발행
-            eventPublisher.publishEvent(new ApiSyncEvent(
-                    status.getApiName(), "SUCCESS", 0, null));
-        } catch (Exception e) {
-            log.error("[ApiSync] 동기화 실패: api={}", status.getApiName(), e);
-            // 실패 이벤트 발행
-            eventPublisher.publishEvent(new ApiSyncEvent(
-                    status.getApiName(), "FAILED", 0, e.getMessage()));
-            throw new BusinessException(ErrorCode.EXTERNAL_API_ERROR);
+        } else {
+            // 다른 도메인으로 수동 동기화 지시 이벤트 발행
+            eventPublisher.publishEvent(new SyncTriggerEvent(status.getApiName(), syncMode));
         }
     }
 }
