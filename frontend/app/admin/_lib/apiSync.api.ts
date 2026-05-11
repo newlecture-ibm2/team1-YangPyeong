@@ -22,8 +22,11 @@ export async function toggleApiSync(id: number, isActive: boolean): Promise<void
 }
 
 /** 수동 동기화 트리거 */
-export async function triggerApiSync(id: number): Promise<void> {
-  const res = await fetch(`${BASE}/${id}/trigger`, {
+export async function triggerApiSync(id: number, syncMode: 'MERGE' | 'FORCE' = 'MERGE'): Promise<void> {
+  const url = new URL(`${BASE}/${id}/trigger`, window.location.origin)
+  url.searchParams.append('syncMode', syncMode)
+
+  const res = await fetch(url.toString(), {
     method: 'POST',
   })
   const json: ApiResponse<null> = await res.json()

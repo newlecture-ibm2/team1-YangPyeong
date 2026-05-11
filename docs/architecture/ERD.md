@@ -77,6 +77,8 @@ erDiagram
         varchar description
         int display_order
         boolean is_active
+        varchar external_id "외부 연동 ID"
+        varchar data_source "MANUAL | NONGSARO"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -86,6 +88,8 @@ erDiagram
         bigint id PK
         bigint category_id FK
         varchar name
+        varchar external_id "외부 연동 ID"
+        varchar data_source "MANUAL | NONGSARO"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -761,6 +765,8 @@ erDiagram
 | description | VARCHAR(200) | | 설명 |
 | display_order | INT | DEFAULT 0 | 표시 순서 |
 | is_active | BOOLEAN | DEFAULT true | 활성 여부 |
+| external_id | VARCHAR(50) | | 농사로 API 고유 코드 등 외부 식별자 |
+| data_source | VARCHAR(20) | DEFAULT 'MANUAL' | 데이터 출처 (NONGSARO, MANUAL 등) |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
@@ -772,11 +778,14 @@ erDiagram
 | id | BIGINT | PK, AUTO | 작물 고유 ID |
 | category_id | BIGINT | FK -> crop_categories(id), NOT NULL | 작물 카테고리 |
 | name | VARCHAR(50) | NOT NULL | 작물명 |
+| external_id | VARCHAR(50) | | 농사로 API 고유 코드 등 외부 식별자 |
+| data_source | VARCHAR(20) | DEFAULT 'MANUAL' | 데이터 출처 (NONGSARO, MANUAL 등) |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
 > **V15 적용**: `code`, `growth_days`, `yield_per_sqm`, `avg_cost_per_sqm`, `climate_conditions`, `is_active` 컬럼이 삭제되었습니다. crops 테이블은 조회 전용 마스터 데이터로 전환되었습니다.
+> **V35 적용**: `external_id`, `data_source` 컬럼이 추가되어 외부 API 연동 시 수동 데이터와 분리 및 중복 방지가 가능해졌습니다.
 
 ### 2.5 cultivation_registrations (재배 등록)
 

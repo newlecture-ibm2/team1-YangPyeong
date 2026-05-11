@@ -25,6 +25,8 @@ public class AdminCropPersistenceAdapter implements AdminCropPort {
             .id(rs.getLong("id"))
             .categoryId(rs.getLong("category_id"))
             .name(rs.getString("name"))
+            .externalId(rs.getString("external_id"))
+            .dataSource(rs.getString("data_source"))
             .createdAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null)
             .updatedAt(rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null)
             .deletedAt(rs.getTimestamp("deleted_at") != null ? rs.getTimestamp("deleted_at").toLocalDateTime() : null)
@@ -76,15 +78,37 @@ public class AdminCropPersistenceAdapter implements AdminCropPort {
     }
 
     @Override
+    public Optional<AdminCrop> findByExternalId(String externalId) {
+        if (externalId == null || externalId.trim().isEmpty()) return Optional.empty();
+        String sql = "SELECT * FROM crops WHERE external_id = ? AND deleted_at IS NULL";
+        List<AdminCrop> result = jdbcTemplate.query(sql, rowMapper, externalId);
+        return result.stream().findFirst();
+    }
+
+    @Override
     public Long save(AdminCrop crop) {
-        String sql = "INSERT INTO crops (category_id, name, created_at) VALUES (?, ?, NOW()) RETURNING id";
-        return jdbcTemplate.queryForObject(sql, Long.class, crop.getCategoryId(), crop.getName());
+        String sql = "INSERT INTO crops (category_id, name, external_id, data_source, created_at) VALUES (?, ?, ?, ?, NOW()) RETURNING id";
+        return jdbcTemplate.queryForObject(sql, Long.class, 
+                crop.getCategoryId(), 
+                crop.getName(),
+                crop.getExternalId(),
+                crop.getDataSource() != null ? crop.getDataSource() : "MANUAL");
     }
 
     @Override
     public void update(AdminCrop crop) {
-        String sql = "UPDATE crops SET category_id = ?, name = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL";
-        jdbcTemplate.update(sql, crop.getCategoryId(), crop.getName(), crop.getId());
+        StringBuilder sql = new StringBuilder("UPDATE crops SET updated_at = NOW()");
+        List<Object> params = new ArrayList<>();
+
+        if (crop.getCategoryId() != null) { sql.append(", category_id = ?"); params.add(crop.getCategoryId()); }
+        if (crop.getName() != null) { sql.append(", name = ?"); params.add(crop.getName()); }
+        if (crop.getExternalId() != null) { sql.append(", external_id = ?"); params.add(crop.getExternalId()); }
+        if (crop.getDataSource() != null) { sql.append(", data_source = ?"); params.add(crop.getDataSource()); }
+
+        sql.append(" WHERE id = ? AND deleted_at IS NULL");
+        params.add(crop.getId());
+
+        jdbcTemplate.update(sql.toString(), params.toArray());
     }
 
     @Override

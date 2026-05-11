@@ -17,6 +17,7 @@ public interface AdminCropCategoryPort {
     boolean existsByName(String name);
 
     boolean existsByNameExcludeId(String name, Long excludeId);
+    Optional<AdminCropCategory> findByExternalId(String externalId);
 
     Long save(AdminCropCategory category);
 

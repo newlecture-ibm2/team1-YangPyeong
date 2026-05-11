@@ -11,11 +11,14 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class AdminCrop {
 
     private Long id;
     private Long categoryId;
     private String name;
+    private String externalId;
+    private String dataSource;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;

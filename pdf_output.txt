@@ -1,0 +1,178 @@
+농촌진흥청 농사로 매뉴얼 Open API – 
+품목별관리매뉴얼 농작업일정 서비스 ( )
+- 1 -이용 안내 OPEN API 
+개요1. 
+농촌진흥청 농사로 는 다양한 농업기술정보를 유용하게 활용할 수 있도록 공개한 OpenAPI
+개발자 인터페이스입니다.
+이용안내2. 
+농촌진흥청 농사로 를 이용하기 위해서는 로그인 한 후 별도의 신청이 필요합니 OpenAPI
+다 농사로의 . [ 이용안내 Open API ]페이지에서 서비스 신청 및 매뉴얼 및 샘플  Open API 
+파일을 다운로드 받을 수 있습니다. 
+제공 서비스3. API
+제공 방식 3.1 Open API 
+농사로 는 포맷을 사용한 방식과 동적 로딩을 이용한 Open API XML REST JavaScript AJAX 
+방식을 제공합니다.
+텍스트 인코딩3.2 
+농사로 는 모든 텍스트 데이터를 Open API U 로 제공합니다 TF-8 .- 2 -방식의 포맷 구조 목록 형식 3.3 REST XML ( )
+방식의 포맷 구조 단건 형식 3.3 REST XML ( )1Level 2Level 3Level 4Level 5Level 설명
+response root Tag
+header header Tag
+resultCode 결과 코드
+resultMsg 결과 메시지
+requestPar
+ameter검색조건 등의 요청 파라미터를 
+하위로 제공
+...
+body body Tag
+items
+item 서비스 항목을 하위로 제공 item 
+...
+numOfRows페이지 당 제공하는 건수 
+페이징 처리 시 제공 기본값 ( , : 10)
+pageNo페이지 번호
+페이징 처리 시 제공 기본값 ( , : 1)
+totalCount총 건수
+페이징 처리 시 제공( )
+1Level 2Level 3Level 4Level 설명
+response root Tag
+header header Tag
+resultCode 결과 코드
+resultMsg 결과 메시지
+requestPar
+ameter검색조건 등의 요청 파라미터를 하위로 제공
+...
+body body Tag
+item 서비스 항목은 하위로 제공 item 
+...- 3 -레퍼런스4. API 
+품목별관리매뉴얼 농작업일정 서비스4.1 ( ) 
+●서비스 명  : farmWorkingPlan
+●제공방식  : REST, AJAX
+●제공 오퍼레이션 
+오퍼레이션 설명4.2 
+품목 리스트 4.2.1 workScheduleGrpList( )
+●요청  URL : http://api.nongsaro.go.kr/service/farmWorkingPlan/ workScheduleGrpList
+●요청 변수 (Request Parameters)
+●응답 결과 (Response Element)요청변수 설명 필수 여부
+apiKey 발급받은 인증키 Open API ○
+응답변수 설명
+codeNm 코드 명
+kidofcomdtySeCode 작목 코드
+sort 순번오퍼레이션 설명 목록 페이징
+workScheduleGrpList 일정 리스트 ○
+workScheduleLst 일정별 리스트 정보 ○- 4 -품목별 일정리스트 정보 4.2.2 workScheduleLst( )
+●요청  URL : http://api.nongsaro.go.kr/service/farmWorkingPlan/ workScheduleLst
+●요청 변수 (Request Parameters)
+●응답 결과 (Response Element)
+ 요청변수 설명 필수 여부
+apiKey 발급받은 인증키 Open API ○
+kidofcomdtySeCode 일정 코드 ○
+응답변수 설명
+cntntsNo 품목 코드
+fileDownUrlInfo 파일 링크
+fileName 파일 이름
+fileSeCode 파일 일련 번호
+orginlFileNm 파일 원본 이름
+sj 제목- 5 -오퍼레이션간 연관 관계5. 
+농작업 일정의 경우5.1 
+일정항목 클릭1. 
+첨부파일 다운로드2. - 6 -결과코드 6. Open API 
+방식 샘플 소스 적용 7. Ajax 
+제공되는 샘플소스를 편집기로 열어보면 위와 같은 형태의 코딩이 되어 있습니다.
+제공되는 샘플소스를 서비스할 소스에 삽입하고 아래와 같이 변경하면 됩니다.
+변경할 부분 은 농사로에서 발급받은 인증키를 소스에 기입하면 됩니다 1 .
+변경할 부분 는 샘플소스와 같이 제공되는 각 언어별 콜백페이지를 서버에 업로드 후 2
+해당 을 기술하면 됩니다url .결과코드 설명
+00정상적으로 처리된 경우
+검색조건이 잘못되어 조회데이터가 없는 경우도 해당됩니다( )
+11 인증키를 입력하지 않았거나 발급받은 인증키를 사용하지 않은 경우
+12발급받은 인증키를 사용하였으나 농사로 관리자에 의해 일시 중지된 경우
+농사로 시스템 관리자에게 문의하기 바랍니다( )
+13 농사로에서 제공하는 서비스 및 오퍼레이션이 아닌 경우
+15방식의 경우 신청 시 입력한 서비스 도메인에서 호출하AJAX Open API 
+지 않은 경우
+91농사로 시스템의 오류가 발생한 경우Open API 
+계속 반복되면 농사로 시스템 관리자에게 문의하기 바랍니다( )
+<link href="http://api.nongsaro.go.kr/css/api.css"  rel="stylesheet"  type="text/css">
+<script type="text/javascript"  src="http://api.nongsaro.go.kr/js/framework.js"></ script>
+<script type="text/javascript"  src="http://api.nongsaro.go.kr/js/openapi_nongsaro.js"></ script>
+<script type="text/javascript">
+nongsaroOpenApiRequest.apiKey = 발급받은인증키" " 변경할 부분 ;// 1
+nongsaroOpenApiRequest.serviceName = "cropTechInfo" ;
+nongsaroOpenApiRequest.operationName = "mainCategoryList" ;
+nongsaroOpenApiRequest.htmlArea= "nongsaroApiLoadingArea" ;
+nongsaroOpenApiRequest.callback = "http://yourDomain/ajax_local_callback.jsp" 변경할 부분 ;// 2
+</script>
+</head>
+<body>
+<div id="nongsaroApiLoadingArea"></ div>
+<div id="nongsaroApiLoadingArea1"></ div>중분류카테고리 로딩 영역 <!-- HTML -->
+<div id="nongsaroApiLoadingArea3"></ div>대분류기술코드 로딩 영역 <!-- HTML -->
+<div id="nongsaroApiLoadingArea4"></ div>소분류기술코드 로딩 영역 <!-- HTML -->
+<div id="nongsaroApiLoadingArea5"></ div>작목기술목록 로딩 영역 <!-- HTML -->- 7 - 
+각 서비스 별로 샘플소스가 약간의 차이가 있으니 다른 서비스의 샘플소스를 사용하지 
+마십시오.
+기존 농촌진흥청 홈페이지 변환8. API 
+기존 농촌진흥청 홈페이지에서 서비스 하고 있던 중 아래의 서비스는 농사로에 Open API
+이전되어 서비스하고 있습니다.
+기 발급 인증키8.1 
+기존 농촌진흥청 홈페이지로 신청하여 발급받은 인증키는 농사로에서 그대로 사용할 수 
+있습니다.
+방식의 를 변경할 경우 8.2 REST Open API
+항의 레퍼런스를 참조하여 재 구축을 하여야 합니다4 API .순번 서비스명 기존 서비스 코드 변경된 서비스명
+1작목별 농업기술정보 105010000000 cropTechInfo
+2주간농사정보 105020000000 weekFarmInfo
+3품목별 
+관리매뉴얼 품종정보 ( )105050000000 farmWorkingPlan
+4농업기술 동영상 105060000000 agriTechVideo
+5농축산물소득정보 105070000000 farmPrdtIncome
+6품종정보 105080000000 varietyInfo
+7 인테러뱅RDA 105090000000 rdaInterrobang
+8병해충발생정보 105030000000 dbyhsCccrrncInfo- 8 -방식의 를 변경할 경우 8.3 AJAX Open API
+변경 전 소스는 아래와 같습니다.
+<script type="text/javascript"  src="http://www.rda.go.kr/js/framework.js"></ script>
+<script type="text/javascript"  src="http://www.rda.go.kr/js/rda.common.js"></ script>
+<script type="text/javascript"  src="skl_wkfarminfo.js"></ script>
+<script type="text/javascript"  src="http://www.rda.go.kr/tec/skl/skl_wkfarminfo.js"></ script> 
+<link rel="stylesheet"  type="text/css"  href="/site/common/css/api.css">
+<script type="text/javascript">  
+var oRequestParameter={};
+oRequestParameter.sys= "105010000000" ; 
+oRequestParameter.key= 발급받은인증키" " ;
+oRequestParameter.loginId= 농촌진흥청통합" ID" ;
+oRequestParameter.ajxCappPage = "/common/api/ajaxCall.jsp" ;
+oRequestParameter.reqMetaNo  = "";
+rda.sklinfo = {
+  initialize : function () {
+  var comSklinfoInit = $Fn(rda.ComSklWkfarm.initialize, rda.ComSklWkfarm).bind();
+  comSklinfoInit();
+  },
+  destroy : function () {
+  
+  }
+$Fn(rda.sklinfo.initialize, rda.sklinfo).attach(window, "load");
+$Fn(rda.sklinfo.destroy, rda.sklinfo).attach(window, "unload" );
+</script>- 9 -새롭게 개편된 농사로 방식의 소스는 아래와 같습니다 Open API Ajax .
+상단 표를 참고하시어 기존 소스의 코드에 해당하는 서비스명을 oRequestParameter.sys 
+에 기입하고 콜백페이지 역시 농사로에서 제공하는 콜백페이지로 변 nongsaroOpenApiRequest.serviceName , 
+경하시면 됩니다.
+기타사항9. 
+방식 사용 시 한글 깨짐 현상이 발생하는 경우 9.1 ajax 
+제공되는 콜백페이지의 문자셋 설정을 변경하여 적용하십시오.
+농사로 서버와 통신이 원활하지 않은 경우9.2 open API 
+서버 방화벽에서 농사로 오픈 서버와 포트 통신이 막혀있는지 확인하십시오 API 80 .<link href="http://api.nongsaro.go.kr/css/api.css"  rel="stylesheet"  type="text/css">
+<script type="text/javascript"  src="http://api.nongsaro.go.kr/js/framework.js"></ script>
+<script type="text/javascript"  src="http://api.nongsaro.go.kr/js/openapi_nongsaro.js"></ script>
+<script type="text/javascript">
+nongsaroOpenApiRequest.apiKey = 발급받은인증키" " ;
+nongsaroOpenApiRequest.serviceName = "cropTechInfo" ;
+nongsaroOpenApiRequest.operationName = "mainCategoryList" ;
+nongsaroOpenApiRequest.htmlArea= "nongsaroApiLoadingArea" ;
+nongsaroOpenApiRequest.callback = "http://yourDomain/ajax_local_callback.jsp" ;
+</script>
+</head>
+<body>
+<div id="nongsaroApiLoadingArea"></ div>메인카테고리 로딩 영역 <!-- HTML -->
+<div id="nongsaroApiLoadingArea1"></ div>중분류카테고리 로딩 영역 <!-- HTML -->
+<div id="nongsaroApiLoadingArea3"></ div>대분류기술코드 로딩 영역 <!-- HTML -->
+<div id="nongsaroApiLoadingArea4"></ div>소분류기술코드 로딩 영역 <!-- HTML -->
+<div id="nongsaroApiLoadingArea5"></ div>작목기술목록 로딩 영역 <!-- HTML -->

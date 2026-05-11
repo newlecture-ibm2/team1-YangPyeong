@@ -27,6 +27,7 @@ public class ApiSyncManagementService implements ManageApiSyncUseCase {
 
     private final AdminApiSyncPort adminApiSyncPort;
     private final ApplicationEventPublisher eventPublisher;
+    private final NongsaroCropSyncService nongsaroCropSyncService;
 
     @Override
     public List<ApiSyncStatus> getAllApiSyncStatuses() {
@@ -56,7 +57,7 @@ public class ApiSyncManagementService implements ManageApiSyncUseCase {
 
     @Override
     @Transactional
-    public void triggerSync(Long id) {
+    public void triggerSync(Long id, String syncMode) {
         ApiSyncStatus status = adminApiSyncPort.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.API_SYNC_NOT_FOUND));
 
@@ -80,10 +81,22 @@ public class ApiSyncManagementService implements ManageApiSyncUseCase {
                 .build();
         adminApiSyncPort.update(running);
 
-        log.info("[ApiSync] 수동 동기화 트리거: api={}", status.getApiName());
+        log.info("[ApiSync] 수동 동기화 트리거: api={}, mode={}", status.getApiName(), syncMode);
 
-        // 이벤트 발행 — 실제 API 호출 로직이 리스너로 구현되면 자동 연동됨
-        eventPublisher.publishEvent(new ApiSyncEvent(
-                status.getApiName(), "SUCCESS", 0,null));
+        try {
+            if ("NONGSARO_CROP".equals(status.getApiName())) {
+                nongsaroCropSyncService.syncCrops(syncMode);
+            }
+
+            // 성공 이벤트 발행
+            eventPublisher.publishEvent(new ApiSyncEvent(
+                    status.getApiName(), "SUCCESS", 0, null));
+        } catch (Exception e) {
+            log.error("[ApiSync] 동기화 실패: api={}", status.getApiName(), e);
+            // 실패 이벤트 발행
+            eventPublisher.publishEvent(new ApiSyncEvent(
+                    status.getApiName(), "FAILED", 0, e.getMessage()));
+            throw new BusinessException(ErrorCode.EXTERNAL_API_ERROR);
+        }
     }
 }

@@ -52,8 +52,9 @@ public class AdminApiSyncController {
 
     /** 수동 동기화 트리거 */
     @PostMapping("/{id}/trigger")
-    public ApiResponse<Void> triggerSync(@PathVariable Long id) {
-        manageApiSyncUseCase.triggerSync(id);
+    public ApiResponse<Void> triggerSync(@PathVariable Long id, 
+                                         @RequestParam(required = false, defaultValue = "MERGE") String syncMode) {
+        manageApiSyncUseCase.triggerSync(id, syncMode);
         return ApiResponse.ok(null);
     }
 }

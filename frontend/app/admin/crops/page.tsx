@@ -17,6 +17,7 @@ import {
   createCrop, updateCrop, deleteCrop,
   createCropCategory, updateCropCategory, deleteCropCategory,
 } from '../_lib/crop.api'
+import { fetchApiSyncStatuses, triggerApiSync } from '../_lib/apiSync.api'
 
 type TabType = 'crops' | 'categories'
 
@@ -64,7 +65,14 @@ export default function CropsPage() {
 
   /* ── 작물 모달 ── */
   const openCreateCropModal = () => { setEditingCrop(null); setShowCropModal(true) }
-  const openEditCropModal = (crop: AdminCrop) => { setEditingCrop(crop); setShowCropModal(true) }
+  const openEditCropModal = async (crop: AdminCrop) => { 
+    if (crop.dataSource === 'NONGSARO') {
+      const confirmed = await showConfirm(`"${crop.name}" 작물은 농사로 API 연동 데이터입니다. 정말 수정하시겠습니까?\n(추후 동기화 시 설정에 따라 덮어쓰기될 수 있습니다)`)
+      if (!confirmed) return
+    }
+    setEditingCrop(crop)
+    setShowCropModal(true) 
+  }
   const closeCropModal = () => { setShowCropModal(false); setEditingCrop(null) }
 
   /* ── 작물 폼 제출 ── */
@@ -86,7 +94,12 @@ export default function CropsPage() {
 
   /* ── 작물 삭제 ── */
   const handleDeleteCrop = async (crop: AdminCrop) => {
-    const confirmed = await showConfirm(`"${crop.name}" 작물을 삭제하시겠습니까?`)
+    const isNongsaro = crop.dataSource === 'NONGSARO'
+    const warningText = isNongsaro 
+      ? `"${crop.name}" 작물은 농사로 API 연동 데이터입니다. 정말 삭제하시겠습니까?\n(추후 동기화 시 설정에 따라 덮어쓰기될 수 있습니다)`
+      : `"${crop.name}" 작물을 삭제하시겠습니까?`
+      
+    const confirmed = await showConfirm(warningText)
     if (!confirmed) return
     try {
       await deleteCrop(crop.id)
@@ -99,7 +112,14 @@ export default function CropsPage() {
 
   /* ── 카테고리 모달 ── */
   const openCreateCategoryModal = () => { setEditingCategory(null); setShowCategoryModal(true) }
-  const openEditCategoryModal = (cat: AdminCropCategory) => { setEditingCategory(cat); setShowCategoryModal(true) }
+  const openEditCategoryModal = async (cat: AdminCropCategory) => { 
+    if (cat.dataSource === 'NONGSARO') {
+      const confirmed = await showConfirm(`"${cat.name}" 카테고리는 농사로 API 연동 데이터입니다. 정말 수정하시겠습니까?\n(추후 동기화 시 설정에 따라 덮어쓰기될 수 있습니다)`)
+      if (!confirmed) return
+    }
+    setEditingCategory(cat)
+    setShowCategoryModal(true) 
+  }
   const closeCategoryModal = () => { setShowCategoryModal(false); setEditingCategory(null) }
 
   /* ── 카테고리 폼 제출 ── */
@@ -121,7 +141,12 @@ export default function CropsPage() {
 
   /* ── 카테고리 삭제 ── */
   const handleDeleteCategory = async (cat: AdminCropCategory) => {
-    const confirmed = await showConfirm(`"${cat.name}" 카테고리를 삭제하시겠습니까?`)
+    const isNongsaro = cat.dataSource === 'NONGSARO'
+    const warningText = isNongsaro
+      ? `"${cat.name}" 카테고리는 농사로 API 연동 데이터입니다. 정말 삭제하시겠습니까?\n(추후 동기화 시 설정에 따라 덮어쓰기될 수 있습니다)`
+      : `"${cat.name}" 카테고리를 삭제하시겠습니까?`
+
+    const confirmed = await showConfirm(warningText)
     if (!confirmed) return
     try {
       await deleteCropCategory(cat.id)
@@ -132,17 +157,60 @@ export default function CropsPage() {
     }
   }
 
+  /* ── 농사로 API 수동 동기화 ── */
+  const [syncing, setSyncing] = useState(false)
+  const [showSyncModal, setShowSyncModal] = useState(false)
+
+  const handleSyncNongsaro = async (syncMode: 'MERGE' | 'FORCE') => {
+    setShowSyncModal(false)
+    setSyncing(true)
+    try {
+      // 1. API 상태 목록에서 NONGSARO_CROP의 ID 찾기
+      const statuses = await fetchApiSyncStatuses()
+      const nongsaroStatus = statuses.find(s => s.apiName === 'NONGSARO_CROP')
+      
+      if (!nongsaroStatus) {
+        throw new Error('데이터베이스에 NONGSARO_CROP 동기화 설정이 없습니다.')
+      }
+      
+      if (!nongsaroStatus.isActive) {
+        throw new Error('농사로 API 수집이 비활성화되어 있습니다. 관리자 데이터 탭에서 활성화해주세요.')
+      }
+
+      // 2. 동기화 트리거
+      await triggerApiSync(nongsaroStatus.id, syncMode)
+      showToast(`농사로 API 동기화가 성공적으로 실행되었습니다. (${syncMode} 모드)`, 'success')
+      
+      // 3. 완료 후 데이터 재로딩
+      loadData()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : '동기화 실패', 'error')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   return (
     <div className={styles.container}>
       {/* 헤더 */}
       <div className={styles.header}>
         <h1 className={styles.title}>작물 기준정보 관리</h1>
-        {activeTab === 'crops' && (
-          <Button variant="primary" onClick={openCreateCropModal}>＋ 작물 추가</Button>
-        )}
-        {activeTab === 'categories' && (
-          <Button variant="primary" onClick={openCreateCategoryModal}>＋ 카테고리 추가</Button>
-        )}
+        <div className={styles.headerActions}>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowSyncModal(true)} 
+            disabled={syncing}
+            style={{ marginRight: '10px' }}
+          >
+            {syncing ? '동기화 중...' : '🔄 농사로 API 동기화'}
+          </Button>
+          {activeTab === 'crops' && (
+            <Button variant="primary" onClick={openCreateCropModal}>＋ 작물 추가</Button>
+          )}
+          {activeTab === 'categories' && (
+            <Button variant="primary" onClick={openCreateCategoryModal}>＋ 카테고리 추가</Button>
+          )}
+        </div>
       </div>
       <p className={styles.subtitle}>작물 마스터 데이터와 카테고리를 관리합니다.</p>
 
@@ -206,7 +274,16 @@ export default function CropsPage() {
                 <tbody>
                   {crops.map((crop) => (
                     <tr key={crop.id}>
-                      <td><span className={styles.cropName}>{crop.name}</span></td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className={styles.cropName}>{crop.name}</span>
+                          {crop.dataSource === 'NONGSARO' ? (
+                            <Badge variant="blue">농사로 API</Badge>
+                          ) : (
+                            <Badge variant="gray">수동</Badge>
+                          )}
+                        </div>
+                      </td>
                       <td>{getCategoryName(crop.categoryId)}</td>
                       <td>{crop.createdAt ? new Date(crop.createdAt).toLocaleDateString() : '-'}</td>
                       <td>
@@ -251,7 +328,16 @@ export default function CropsPage() {
                   {categories.map((cat) => (
                     <tr key={cat.id}>
                       <td>{cat.id}</td>
-                      <td><span className={styles.cropName}>{cat.name}</span></td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className={styles.cropName}>{cat.name}</span>
+                          {cat.dataSource === 'NONGSARO' ? (
+                            <Badge variant="blue">농사로 API</Badge>
+                          ) : (
+                            <Badge variant="gray">수동</Badge>
+                          )}
+                        </div>
+                      </td>
                       <td>{cat.description ?? '-'}</td>
                       <td>{cat.displayOrder}</td>
                       <td>
@@ -298,6 +384,14 @@ export default function CropsPage() {
         onConfirm={handleConfirm}
         onClose={handleClose}
       />
+
+      {/* 동기화 옵션 모달 */}
+      {showSyncModal && (
+        <SyncOptionsModal
+          onSubmit={handleSyncNongsaro}
+          onClose={() => setShowSyncModal(false)}
+        />
+      )}
     </div>
   )
 }
@@ -430,6 +524,67 @@ function CategoryFormModal({ editingCategory, onSubmit, onClose }: CategoryFormM
         </div>
       </div>
       <ModalDialog {...dialog} onConfirm={handleConfirm} onClose={handleClose} />
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════ */
+/*  동기화 옵션 모달                                     */
+/* ═══════════════════════════════════════════════════ */
+interface SyncOptionsModalProps {
+  onSubmit: (syncMode: 'MERGE' | 'FORCE') => void
+  onClose: () => void
+}
+
+function SyncOptionsModal({ onSubmit, onClose }: SyncOptionsModalProps) {
+  const [syncMode, setSyncMode] = useState<'MERGE' | 'FORCE'>('MERGE')
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <h2 className={styles.modalTitle}>🔄 농사로 API 동기화 옵션</h2>
+        
+        <div className={styles.formGroup}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', marginBottom: '16px' }}>
+            <input 
+              type="radio" 
+              name="syncMode" 
+              value="MERGE" 
+              checked={syncMode === 'MERGE'} 
+              onChange={() => setSyncMode('MERGE')} 
+              style={{ marginTop: '4px' }}
+            />
+            <div>
+              <strong style={{ display: 'block', marginBottom: '4px' }}>새로운 데이터만 추가 (기본값)</strong>
+              <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--color-text-light)', lineHeight: '1.4' }}>
+                기존에 관리자가 수정한 이름이나 상태 변경 내역을 <strong>유지</strong>합니다.
+              </p>
+            </div>
+          </label>
+
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer' }}>
+            <input 
+              type="radio" 
+              name="syncMode" 
+              value="FORCE" 
+              checked={syncMode === 'FORCE'} 
+              onChange={() => setSyncMode('FORCE')} 
+              style={{ marginTop: '4px' }}
+            />
+            <div>
+              <strong style={{ display: 'block', marginBottom: '4px' }}>API 원본 데이터로 전체 덮어쓰기</strong>
+              <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--color-text-light)', lineHeight: '1.4' }}>
+                수동 변경사항을 무시하고 API가 제공하는 원본 데이터로 <strong>강제 덮어쓰기</strong>합니다. (수동 추가 작물은 제외)
+              </p>
+            </div>
+          </label>
+        </div>
+
+        <div className={styles.modalActions}>
+          <Button variant="outline" onClick={onClose}>취소</Button>
+          <Button variant="primary" onClick={() => onSubmit(syncMode)}>동기화 시작</Button>
+        </div>
+      </div>
     </div>
   )
 }
