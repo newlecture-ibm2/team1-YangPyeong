@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const year = searchParams.get('year');
   
-  let backendUrl = `/api/v1/balance`;
+  let backendUrl = `/api/balance`;
   if (year) {
     backendUrl += `?year=${year}`;
   }

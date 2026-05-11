@@ -7,7 +7,7 @@ export async function GET(
 ) {
   const { cropName } = await params;
   
-  const backendUrl = `/api/v1/balance/${encodeURIComponent(cropName)}/trend`;
+  const backendUrl = `/api/balance/${encodeURIComponent(cropName)}/trend`;
 
   return proxyToBackend(request, backendUrl);
 }

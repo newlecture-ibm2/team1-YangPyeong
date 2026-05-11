@@ -40,8 +40,9 @@ class Settings(BaseSettings):
     SOIL_API_KEY: Optional[str] = None
     KMA_API_KEY: Optional[str] = None
 
-    # ── 스케줄러 ──
-    SCHEDULER_ENABLED: bool = False
+    # ── 백엔드 연동 ──
+    BACKEND_INTERNAL_URL: str = "http://localhost:8080"
+    AI_INTERNAL_SECRET_KEY: str = "farm-balance-ai-secret-key"
 
     model_config = {
         "env_file": ".env",
