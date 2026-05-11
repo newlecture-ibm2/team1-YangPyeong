@@ -40,7 +40,7 @@ export default function PriceChart({ data, unit }: PriceChartProps) {
             return (
               <g key={ratio}>
                 <line x1={padding.left} y1={y} x2={padding.left + chartW} y2={y} stroke="var(--color-border)" strokeDasharray="4 2" />
-                <text x={padding.left - 8} y={y + 4} textAnchor="end" fontSize="11" fill="var(--color-text-secondary)">{val.toLocaleString()}</text>
+                <text x={padding.left - 8} y={y + 4} textAnchor="end" fontSize="11" fill="var(--color-text-secondary)">{val.toLocaleString('ko-KR')}</text>
               </g>
             );
           })}
@@ -52,7 +52,7 @@ export default function PriceChart({ data, unit }: PriceChartProps) {
           {points.map((p, i) => (
             <g key={i}>
               <circle cx={p.x} cy={p.y} r="4" fill="var(--color-surface)" stroke="var(--color-primary)" strokeWidth="2" />
-              <title>{PRICE_MONTHS[i]}: ₩{p.value.toLocaleString()}/{unit}</title>
+              <title>{PRICE_MONTHS[i]}: ₩{p.value.toLocaleString('ko-KR')}/{unit}</title>
             </g>
           ))}
           <defs>
@@ -67,15 +67,15 @@ export default function PriceChart({ data, unit }: PriceChartProps) {
       <div className={styles.stats}>
         <div className={styles.stat}>
           <span className={styles.statLabel}>최저가</span>
-          <span className={styles.statValue}>₩{Math.min(...data).toLocaleString()}</span>
+          <span className={styles.statValue}>₩{Math.min(...data).toLocaleString('ko-KR')}</span>
         </div>
         <div className={styles.stat}>
           <span className={styles.statLabel}>평균가</span>
-          <span className={styles.statValuePrimary}>₩{avg.toLocaleString()}</span>
+          <span className={styles.statValuePrimary}>₩{avg.toLocaleString('ko-KR')}</span>
         </div>
         <div className={styles.stat}>
           <span className={styles.statLabel}>최고가</span>
-          <span className={styles.statValue}>₩{Math.max(...data).toLocaleString()}</span>
+          <span className={styles.statValue}>₩{Math.max(...data).toLocaleString('ko-KR')}</span>
         </div>
       </div>
     </>

@@ -35,8 +35,8 @@ export default function CropGuide({ rec }: CropGuideProps) {
         </table>
         <table className={styles.infoTable}>
           <tbody>
-            <tr><th>예상 수확량</th><td>{rec.expectedYield ? `${rec.expectedYield.toLocaleString()} kg` : '—'}</td></tr>
-            <tr><th>예상 수익</th><td className={styles.revenueHighlight}>₩{rec.expectedRevenuePerKg.toLocaleString()}/kg</td></tr>
+            <tr><th>예상 수확량</th><td>{rec.expectedYield ? `${rec.expectedYield.toLocaleString('ko-KR')} kg` : '—'}</td></tr>
+            <tr><th>예상 수익</th><td className={styles.revenueHighlight}>₩{rec.expectedRevenuePerKg.toLocaleString('ko-KR')}/kg</td></tr>
             <tr>
               <th>주요 병해충</th>
               <td>{rec.pests?.map((p) => <span key={p} className={styles.pestTag}>{p}</span>) || '—'}</td>

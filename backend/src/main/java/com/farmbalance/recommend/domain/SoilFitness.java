@@ -21,4 +21,15 @@ public enum SoilFitness {
 
     public String getLabel()  { return label; }
     public int getBaseScore() { return baseScore; }
+
+    /**
+     * 토양 적합도 퍼센트 → SoilFitness 등급 변환
+     */
+    public static SoilFitness fromPercent(int percent) {
+        if (percent >= 90) return HIGH_SUIT;
+        if (percent >= 75) return SUIT;
+        if (percent >= 55) return POSSIBLE;
+        if (percent >= 35) return LOW_SUIT;
+        return NONE;
+    }
 }

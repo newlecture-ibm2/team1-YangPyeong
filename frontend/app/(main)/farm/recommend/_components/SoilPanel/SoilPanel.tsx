@@ -29,7 +29,7 @@ export default function SoilPanel({ farm, result }: SoilPanelProps) {
         <div className={styles.icon}>📐</div>
         <div className={styles.label}>재배 면적</div>
         <div className={styles.value}>
-          {(result?.farmInfo.area ?? farm.area).toLocaleString()}
+          {(result?.farmInfo.area ?? farm.area).toLocaleString('ko-KR')}
           <span className={styles.unit}> ㎡</span>
         </div>
       </div>
