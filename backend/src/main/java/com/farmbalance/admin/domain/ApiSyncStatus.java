@@ -17,6 +17,7 @@ public class ApiSyncStatus {
     private String apiName;
     private String displayName;
     private LocalDateTime lastSynced;
+    private LocalDateTime lastHealthChecked;
     private String syncStatus;       // PENDING, RUNNING, SUCCESS, FAILED
     private Integer lastRecordCount;
     private String errorMessage;

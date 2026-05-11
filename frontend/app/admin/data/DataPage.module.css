@@ -162,6 +162,7 @@
   border-top: 1px solid var(--color-border);
   display: flex;
   justify-content: flex-end;
+  gap: var(--space-sm);
 }
 
 .syncBtn {
@@ -192,6 +193,36 @@
 .syncBtn:disabled:hover {
   background: transparent;
   color: var(--color-primary);
+}
+
+.healthCheckBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.healthCheckBtn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.healthCheckBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.healthCheckBtn:disabled:hover {
+  background: transparent;
+  color: var(--color-text-secondary);
 }
 
 /* ── 로딩 / 빈 상태 ── */

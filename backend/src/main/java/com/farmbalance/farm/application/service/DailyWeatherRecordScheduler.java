@@ -1,17 +1,19 @@
 package com.farmbalance.farm.application.service;
 
-import com.farmbalance.admin.application.port.in.ManageApiSyncUseCase;
-import com.farmbalance.admin.domain.ApiSyncStatus;
+
 import com.farmbalance.farm.application.port.out.LoadFarmPort;
 import com.farmbalance.farm.application.port.out.WeatherRecordPort;
 import com.farmbalance.farm.domain.Farm;
 import com.farmbalance.farm.domain.WeatherData;
 import com.farmbalance.global.event.ApiSyncEvent;
+import com.farmbalance.global.event.HealthCheckTriggerEvent;
 import com.farmbalance.history.application.port.out.SaveHistoryPort;
 import com.farmbalance.history.domain.CultivationHistory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +30,7 @@ public class DailyWeatherRecordScheduler {
     private final WeatherRecordPort weatherRecordPort;
     private final LoadFarmPort loadFarmPort;
     private final SaveHistoryPort saveHistoryPort;
-    private final ManageApiSyncUseCase manageApiSyncUseCase;
+
     private final ApplicationEventPublisher eventPublisher;
 
     private static final int YANGPYEONG_STN_ID = 202; // 양평군 ASOS 지점번호
@@ -37,15 +39,7 @@ public class DailyWeatherRecordScheduler {
     @Scheduled(cron = "0 0 12 * * *")
     @Transactional
     public void recordDailyWeather() {
-        try {
-            ApiSyncStatus status = manageApiSyncUseCase.getApiSyncStatusByName("WEATHER_RECORD");
-            if (status != null && !status.getIsActive()) {
-                log.info("[Scheduler] WEATHER_RECORD API가 비활성화되어 있어 스케줄러를 종료합니다.");
-                return;
-            }
-        } catch (Exception e) {
-            log.warn("[Scheduler] API 상태 조회 실패. (기본 동작 수행)");
-        }
+
 
         LocalDate yesterday = LocalDate.now().minusDays(1);
         log.info("[Scheduler] 전날({}) 날씨 기록 배치를 시작합니다.", yesterday);
@@ -87,6 +81,23 @@ public class DailyWeatherRecordScheduler {
             log.error("[Scheduler] 기상청 동기화 실패: {}", e.getMessage(), e);
             eventPublisher.publishEvent(new ApiSyncEvent("WEATHER_RECORD", "FAILED", 0, e.getMessage()));
             throw e;
+        }
+    }
+
+    @Async
+    @EventListener
+    public void onHealthCheckTriggerEvent(HealthCheckTriggerEvent event) {
+        if (!"WEATHER_RECORD".equals(event.apiName())) {
+            return;
+        }
+        log.info("[Scheduler] 기상청 헬스체크 지시 수신");
+        try {
+            LocalDate yesterday = LocalDate.now().minusDays(1);
+            weatherRecordPort.fetchAsosDailyWeather(YANGPYEONG_STN_ID, yesterday);
+            eventPublisher.publishEvent(new ApiSyncEvent("WEATHER_RECORD", "SUCCESS", 0, null, true));
+        } catch (Exception e) {
+            log.error("[Scheduler] 기상청 헬스체크 실패: {}", e.getMessage());
+            eventPublisher.publishEvent(new ApiSyncEvent("WEATHER_RECORD", "FAILED", 0, e.getMessage(), true));
         }
     }
 }

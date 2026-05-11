@@ -57,4 +57,11 @@ public class AdminApiSyncController {
         manageApiSyncUseCase.triggerSync(id, syncMode);
         return ApiResponse.ok(null);
     }
+
+    /** 수동 헬스체크 트리거 */
+    @PostMapping("/{id}/health-check")
+    public ApiResponse<Void> triggerHealthCheck(@PathVariable Long id) {
+        manageApiSyncUseCase.triggerHealthCheck(id);
+        return ApiResponse.ok(null);
+    }
 }

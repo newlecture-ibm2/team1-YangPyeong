@@ -7,6 +7,7 @@ import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.global.event.ApiSyncEvent;
 import com.farmbalance.global.event.SyncTriggerEvent;
+import com.farmbalance.global.event.HealthCheckTriggerEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -66,12 +67,12 @@ public class ApiSyncManagementService implements ManageApiSyncUseCase {
             throw new BusinessException(ErrorCode.API_SYNC_NOT_FOUND);
         }
 
-        // 상태를 RUNNING으로 변경
         ApiSyncStatus running = ApiSyncStatus.builder()
                 .id(status.getId())
                 .apiName(status.getApiName())
                 .displayName(status.getDisplayName())
                 .lastSynced(status.getLastSynced())
+                .lastHealthChecked(status.getLastHealthChecked())
                 .syncStatus("RUNNING")
                 .lastRecordCount(status.getLastRecordCount())
                 .errorMessage(null)
@@ -100,6 +101,52 @@ public class ApiSyncManagementService implements ManageApiSyncUseCase {
         } else {
             // 다른 도메인으로 수동 동기화 지시 이벤트 발행
             eventPublisher.publishEvent(new SyncTriggerEvent(status.getApiName(), syncMode));
+        }
+    }
+
+    @Override
+    @Transactional
+    public void triggerHealthCheck(Long id) {
+        ApiSyncStatus status = adminApiSyncPort.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.API_SYNC_NOT_FOUND));
+
+        if (!status.getIsActive()) {
+            throw new BusinessException(ErrorCode.API_SYNC_NOT_FOUND);
+        }
+
+        // 상태를 RUNNING으로 변경
+        ApiSyncStatus running = ApiSyncStatus.builder()
+                .id(status.getId())
+                .apiName(status.getApiName())
+                .displayName(status.getDisplayName())
+                .lastSynced(status.getLastSynced())
+                .lastHealthChecked(status.getLastHealthChecked())
+                .syncStatus("RUNNING")
+                .lastRecordCount(status.getLastRecordCount())
+                .errorMessage(null)
+                .isActive(status.getIsActive())
+                .createdAt(status.getCreatedAt())
+                .updatedAt(LocalDateTime.now())
+                .deletedAt(status.getDeletedAt())
+                .build();
+        adminApiSyncPort.update(running);
+
+        log.info("[ApiSync] 수동 헬스체크 트리거: api={}", status.getApiName());
+
+        if ("NONGSARO_CROP".equals(status.getApiName())) {
+            try {
+                // 농사로는 health check를 위해 카테고리 하나만 조회
+                nongsaroCropSyncService.healthCheck();
+                eventPublisher.publishEvent(new ApiSyncEvent(
+                        status.getApiName(), "SUCCESS", 0, null, true));
+            } catch (Exception e) {
+                log.error("[ApiSync] 헬스체크 실패: api={}", status.getApiName(), e);
+                eventPublisher.publishEvent(new ApiSyncEvent(
+                        status.getApiName(), "FAILED", 0, e.getMessage(), true));
+            }
+        } else {
+            // 헬스체크 지시 이벤트 발행
+            eventPublisher.publishEvent(new HealthCheckTriggerEvent(status.getApiName()));
         }
     }
 }

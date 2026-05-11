@@ -100,4 +100,14 @@ public class NongsaroCropSyncService {
         // 정규식을 사용하여 괄호()와 그 안의 내용 제거 후 앞뒤 공백 제거
         return original.replaceAll("\\(.*?\\)", "").trim();
     }
+
+    public void healthCheck() {
+        log.info("Starting Nongsaro health check...");
+        // 카테고리 목록만 가볍게 조회하여 연결 확인
+        List<AdminNongsaroCropGroupDto> groupList = nongsaroApiPort.getWorkScheduleGroupList();
+        if (groupList == null || groupList.isEmpty()) {
+            throw new RuntimeException("Nongsaro API returned empty list.");
+        }
+        log.info("Nongsaro health check passed. Fetched {} groups.", groupList.size());
+    }
 }

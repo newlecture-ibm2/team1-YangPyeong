@@ -1,7 +1,5 @@
 package com.farmbalance.policy.adapter.in.scheduler;
 
-import com.farmbalance.admin.application.port.in.ManageApiSyncUseCase;
-import com.farmbalance.admin.domain.ApiSyncStatus;
 import com.farmbalance.global.event.ApiSyncEvent;
 import com.farmbalance.policy.application.port.in.SyncPolicyUseCase;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +22,6 @@ import org.springframework.stereotype.Component;
 public class PolicySyncScheduler {
 
     private final SyncPolicyUseCase syncPolicyUseCase;
-    private final ManageApiSyncUseCase manageApiSyncUseCase;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -32,15 +29,6 @@ public class PolicySyncScheduler {
      */
     @Scheduled(cron = "0 0 3 * * *")
     public void syncDaily() {
-        try {
-            ApiSyncStatus status = manageApiSyncUseCase.getApiSyncStatusByName("POLICY_DATA");
-            if (status != null && !status.getIsActive()) {
-                log.info("[PolicyScheduler] POLICY_DATA API가 비활성화되어 있어 스케줄러를 종료합니다.");
-                return;
-            }
-        } catch (Exception e) {
-            log.warn("[PolicyScheduler] API 상태 조회 실패. (기본 동작 수행)");
-        }
 
         log.info("[PolicyScheduler] 매일 정책 동기화 시작");
         try {
@@ -54,12 +42,8 @@ public class PolicySyncScheduler {
                         result.warnings().subList(0, Math.min(5, result.warnings().size())));
             }
 
-            eventPublisher.publishEvent(new ApiSyncEvent(
-                    "POLICY_DATA", "SUCCESS", result.fetched(), null));
         } catch (Exception e) {
             log.error("[PolicyScheduler] 동기화 실패: {}", e.getMessage(), e);
-            eventPublisher.publishEvent(new ApiSyncEvent(
-                    "POLICY_DATA", "FAILED", 0, e.getMessage()));
         }
     }
 }

@@ -32,3 +32,12 @@ export async function triggerApiSync(id: number, syncMode: 'MERGE' | 'FORCE' = '
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '동기화 트리거 실패')
 }
+
+/** 수동 헬스체크 트리거 */
+export async function triggerHealthCheck(id: number): Promise<void> {
+  const res = await fetch(`${BASE}/${id}/health-check`, {
+    method: 'POST',
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '헬스체크 트리거 실패')
+}

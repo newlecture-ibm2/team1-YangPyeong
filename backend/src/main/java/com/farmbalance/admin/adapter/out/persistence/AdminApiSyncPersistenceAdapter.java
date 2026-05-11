@@ -53,24 +53,21 @@ public class AdminApiSyncPersistenceAdapter implements AdminApiSyncPort {
 
     @Override
     public void update(ApiSyncStatus apiSyncStatus) {
-        ApiSyncStatusJpaEntity entity = ApiSyncStatusJpaEntity.fromDomain(apiSyncStatus);
-        apiSyncStatusJpaRepository.save(entity);
+        apiSyncStatusJpaRepository.findByApiName(apiSyncStatus.getApiName()).ifPresent(entity -> {
+            entity.updateAll(
+                    apiSyncStatus.getLastSynced(),
+                    apiSyncStatus.getLastHealthChecked(),
+                    apiSyncStatus.getSyncStatus(),
+                    apiSyncStatus.getLastRecordCount(),
+                    apiSyncStatus.getErrorMessage()
+            );
+        });
     }
 
     @Override
     public void updateActiveStatus(Long id, boolean isActive) {
         apiSyncStatusJpaRepository.findById(id).ifPresent(entity -> {
-            ApiSyncStatusJpaEntity updated = ApiSyncStatusJpaEntity.builder()
-                    .id(entity.getId())
-                    .apiName(entity.getApiName())
-                    .displayName(entity.getDisplayName())
-                    .lastSynced(entity.getLastSynced())
-                    .syncStatus(entity.getSyncStatus())
-                    .lastRecordCount(entity.getLastRecordCount())
-                    .errorMessage(entity.getErrorMessage())
-                    .isActive(isActive)
-                    .build();
-            apiSyncStatusJpaRepository.save(updated);
+            entity.updateActiveStatus(isActive);
         });
     }
 }

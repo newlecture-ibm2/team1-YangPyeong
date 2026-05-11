@@ -24,4 +24,7 @@ public interface ManageApiSyncUseCase {
 
     /** 수동 동기화 트리거 */
     void triggerSync(Long id, String syncMode);
+
+    /** 수동 헬스체크 트리거 */
+    void triggerHealthCheck(Long id);
 }
