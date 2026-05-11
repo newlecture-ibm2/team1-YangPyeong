@@ -28,7 +28,7 @@ export default function SellerProductsPage() {
     loading: productsLoading,
   } = useSellerProducts();
 
-  const { insight, loading: insightLoading, refreshInsight } = useSellerInsight(allProducts);
+  const { insight, loading: insightLoading, isStale, refreshInsight } = useSellerInsight(allProducts);
 
   /** 가격 포맷 */
   const formatPrice = (price: number) =>
@@ -98,7 +98,7 @@ export default function SellerProductsPage() {
               오늘의 AI 판매 인사이트
             </h3>
             <button 
-              className={styles.refreshBtn} 
+              className={`${styles.refreshBtn} ${isStale ? styles.refreshBtnPulse : ''}`} 
               onClick={refreshInsight}
               disabled={insightLoading}
               title="인사이트 새로고침"
@@ -111,14 +111,21 @@ export default function SellerProductsPage() {
               판매자님의 데이터를 분석하고 있습니다...
             </p>
           ) : insight ? (
-            <p className={styles.insightContent}>
-              {insight.split(/(\*\*.*?\*\*)/g).map((part, i) => {
-                if (part.startsWith('**') && part.endsWith('**')) {
-                  return <strong key={i}>{part.slice(2, -2)}</strong>;
-                }
-                return <span key={i}>{part}</span>;
-              })}
-            </p>
+            <div className={`${styles.insightContentWrap} ${isStale && !insightLoading ? styles.staleInsight : ''} ${insightLoading ? styles.loadingPulse : ''}`}>
+              {isStale && !insightLoading && (
+                <div className={styles.staleWarning}>
+                  ⚠️ 상품 정보가 변경되었습니다. 최신 인사이트를 보려면 우측 상단의 새로고침을 눌러주세요.
+                </div>
+              )}
+              <p className={styles.insightContent}>
+                {insight.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+                  if (part.startsWith('**') && part.endsWith('**')) {
+                    return <strong key={i}>{part.slice(2, -2)}</strong>;
+                  }
+                  return <span key={i}>{part}</span>;
+                })}
+              </p>
+            </div>
           ) : null}
         </div>
       )}
