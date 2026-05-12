@@ -40,3 +40,58 @@ textarea.input {
   color: #ef4444;
   margin-left: 4px;
 }
+
+.inputWrap {
+  position: relative;
+}
+
+.inputWithToggle {
+  padding-right: 48px;
+}
+
+/* 브라우저 기본 비밀번호 표시/클리어 UI — 커스텀 눈 아이콘과 겹치지 않게 숨김 */
+.inputWithToggle::-ms-reveal,
+.inputWithToggle::-ms-clear {
+  display: none;
+}
+
+.inputWithToggle::-webkit-credentials-auto-fill-button,
+.inputWithToggle::-webkit-contacts-auto-fill-button,
+.inputWithToggle::-webkit-strong-password-auto-fill-button {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+.inputWithToggle::-webkit-textfield-decoration-container {
+  display: none !important;
+}
+
+.toggleVisibility {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted, #6b7280);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  line-height: 0;
+}
+
+.toggleVisibility:hover:not(:disabled) {
+  color: var(--color-text);
+}
+
+.toggleVisibility:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
