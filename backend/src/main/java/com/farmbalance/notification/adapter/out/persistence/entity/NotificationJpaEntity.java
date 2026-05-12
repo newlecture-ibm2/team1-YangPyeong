@@ -80,4 +80,13 @@ public class NotificationJpaEntity extends BaseTimeEntity {
 
         return entity;
     }
+
+    /** 더티 체킹을 위한 상태 업데이트 */
+    public void updateFromDomain(Notification notification) {
+        this.title = notification.getTitle();
+        this.message = notification.getMessage();
+        this.link = notification.getLink();
+        this.isRead = notification.isRead();
+        this.deletedAt = notification.getDeletedAt();
+    }
 }

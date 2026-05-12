@@ -23,6 +23,12 @@ public class NotificationPersistenceAdapter implements NotificationPort {
 
     @Override
     public Notification save(Notification notification) {
+        if (notification.getId() != null) {
+            NotificationJpaEntity entity = notificationJpaRepository.findById(notification.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Not found: " + notification.getId()));
+            entity.updateFromDomain(notification);
+            return entity.toDomain();
+        }
         NotificationJpaEntity entity = NotificationJpaEntity.fromDomain(notification);
         return notificationJpaRepository.save(entity).toDomain();
     }
