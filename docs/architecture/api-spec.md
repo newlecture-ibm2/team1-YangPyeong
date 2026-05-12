@@ -99,7 +99,6 @@
 | GOV-003 | `GET` | `/api/govs/stat` | 🏛️ | 상세 재배 현황 통계 |
 | GOV-002 | `GET` | `/api/govs/comparison` | 🏛️ | 지역별 비교 분석 |
 | GOV-004 | `POST` | `/api/govs/report` | 🏛️ | 분석 보고서(PDF) 생성 요청 |
-| GOV-005 | `POST` | `/api/govs/notice` | 🏛️ | 농가 대상 권고 발송 |
 | GOV-006 | `GET` | `/api/gov/download` | 🏛️ | 지자체 데이터 다운로드 (엑셀/CSV) |
 | GOV-006 | `GET` | `/api/gov/download/history` | 🏛️ | 데이터 다운로드 이력 최근 조회 |
 | ADM-011 | `GET` | `/api/admin/dashboard` | ⚙️ | 관리자 전체 통계 |

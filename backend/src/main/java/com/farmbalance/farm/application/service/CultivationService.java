@@ -32,7 +32,7 @@ public class CultivationService implements RegisterCultivationUseCase, UpdateCul
     @Override
     public CultivationRegistration registerCultivation(RegisterCultivationCommand command) {
         // 1. 면적 검증 (비관적 락 적용)
-        validateAvailableArea(command.getFarmId(), null, command.getCultivationArea());
+        Farm farm = validateAvailableArea(command.getFarmId(), null, command.getCultivationArea());
 
         // 2. 도메인 객체 생성
         CultivationRegistration registration = CultivationRegistration.builder()
@@ -53,6 +53,7 @@ public class CultivationService implements RegisterCultivationUseCase, UpdateCul
         // 4. 공통 변경 이벤트 발행 (수급 밸런스, AI 정책, 예측 리포트 트리거용)
         eventPublisher.publishEvent(new com.farmbalance.farm.domain.event.CultivationChangedEvent(
                 fullData.getId(),
+                farm.getUserId(),
                 fullData.getCropName(),
                 null, // 신규 등록이므로 oldCropName은 없음
                 "CREATED",
@@ -62,8 +63,10 @@ public class CultivationService implements RegisterCultivationUseCase, UpdateCul
         // 5. 기존 히스토리 자동 생성 이벤트 발행 (하위 호환성 유지)
         eventPublisher.publishEvent(new CultivationRegisteredEvent(
                 saved.getId(),
+                farm.getUserId(),
                 command.getFarmId(),
                 command.getCropId(),
+                fullData.getCropName(),
                 command.getCultivationArea()
         ));
 
@@ -102,6 +105,7 @@ public class CultivationService implements RegisterCultivationUseCase, UpdateCul
             // 1. 공통 변경 이벤트 발행 (수급 밸런스 반영을 위해 cropName 포함)
             eventPublisher.publishEvent(new com.farmbalance.farm.domain.event.CultivationChangedEvent(
                     id,
+                    null, // 삭제의 경우 userId 생략 (필요하다면 Farm을 추가 조회)
                     cult.getCropName(),
                     cult.getCropName(), // 삭제 시에는 현재 작물이 곧 이전 작물
                     "DELETED",
@@ -128,19 +132,20 @@ public class CultivationService implements RegisterCultivationUseCase, UpdateCul
      * @param farmId          농장 ID
      * @param cultivationId   수정 시 본인의 재배 등록 ID (신규 등록 시 null)
      * @param requestedArea   등록/수정하려는 면적 (㎡)
+     * @return Farm 객체
      * @throws BusinessException 가용 면적을 초과하는 경우
      */
-    private void validateAvailableArea(Long farmId, Long cultivationId, Double requestedArea) {
-        if (requestedArea == null || requestedArea <= 0) {
-            return; // 면적이 없으면 검증 불필요
-        }
-
+    private Farm validateAvailableArea(Long farmId, Long cultivationId, Double requestedArea) {
         // 1. 비관적 락을 적용하여 농장 조회 (동시성 제어)
         Farm farm = loadFarmPort.loadFarmByIdWithLock(farmId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
 
+        if (requestedArea == null || requestedArea <= 0) {
+            return farm; // 면적이 없으면 검증 불필요
+        }
+
         if (farm.getArea() == null || farm.getArea() <= 0) {
-            return; // 농장 면적이 미설정이면 검증 스킵
+            return farm; // 농장 면적이 미설정이면 검증 스킵
         }
 
         // 2. 현재 사용 중인 면적 합산 (수정 시 본인 면적 제외)
@@ -156,5 +161,7 @@ public class CultivationService implements RegisterCultivationUseCase, UpdateCul
                 BigDecimal.valueOf(requestedArea),
                 BigDecimal.valueOf(currentUsedArea != null ? currentUsedArea : 0.0)
         );
+        
+        return farm;
     }
 }

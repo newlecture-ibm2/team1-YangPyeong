@@ -88,7 +88,7 @@ export interface RecommendedPolicy {
   applyEnd: string | null;
   sourceUrl: string | null;
   matchScore: number;
-  matchReasons: string[];
+  matchReason: string;
   summary: string;
 }
 

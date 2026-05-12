@@ -64,6 +64,11 @@
   margin-bottom: 16px;
 }
 
+/* 공통 Input — 모달 안 세로 간격만 맞춤 */
+.field .modalPasswordField {
+  margin-bottom: 0;
+}
+
 .label {
   display: block;
   font-size: 0.85rem;

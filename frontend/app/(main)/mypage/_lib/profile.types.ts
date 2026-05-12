@@ -30,6 +30,9 @@ export interface UserProfile {
   provider: AuthProvider;
   profileImageUrl: string | null;
   createdAt: string | null;
+  /** 백엔드 탈퇴 유예 중 */
+  withdrawalPending?: boolean;
+  withdrawalCompletesAt?: string | null;
 }
 
 /** 프로필 수정 요청 */
