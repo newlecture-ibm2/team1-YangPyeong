@@ -24,7 +24,7 @@ export default function useRecommend() {
   }, [selectedFarmIdx]);
 
   const handleAnalyze = async () => {
-    if (!farm) return;
+    if (!farm || !farm.id) return;
     setIsAnalyzing(true);
 
     try {
@@ -41,7 +41,7 @@ export default function useRecommend() {
       }
     } catch (err) {
       console.error('AI 분석 실패:', err);
-      // TODO: 에러 상태를 UI에 표시
+      alert('AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setIsAnalyzing(false);
     }
