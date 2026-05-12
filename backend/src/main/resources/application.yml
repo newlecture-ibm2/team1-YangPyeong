@@ -88,7 +88,8 @@ external:
 # ── KAMIS API (농산물 시세 조회) 설정 ──
 kamis:
   api:
-    url: ${KAMIS_API_URL:http://www.kamis.or.kr/service/price/xml.do}
+    # http는 리다이렉트 HTML 등으로 JSON 파싱 실패할 수 있어 https 기본값 권장
+    url: ${KAMIS_API_URL:https://www.kamis.or.kr/service/price/xml.do}
     cert-key: ${KAMIS_CERT_KEY:8291e7b2-28a1-469c-93ac-fba3ef05f174}
     cert-id: ${KAMIS_CERT_ID:7941}
 
