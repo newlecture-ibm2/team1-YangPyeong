@@ -11,11 +11,11 @@ class Settings(BaseSettings):
     """환경변수 기반 설정 클래스"""
 
     # ── LLM Provider 설정 ──
-    LLM_PROVIDER: str = "gemini"  # gemini | groq | bedrock
+    LLM_PROVIDER: str = "groq"  # gemini | groq | bedrock
 
     # ── Gemini ──
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-1.5-flash-latest"
 
     # ── Groq ──
     GROQ_API_KEY: Optional[str] = None
