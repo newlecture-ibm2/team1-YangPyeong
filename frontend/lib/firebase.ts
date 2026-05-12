@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getMessaging, getToken, isSupported, onMessage } from 'firebase/messaging';
+import { getMessaging, getToken, isSupported, onMessage, MessagePayload } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -54,7 +54,7 @@ export const onMessageListener = () =>
     if (typeof window === 'undefined' || !app) return;
     try {
       const messaging = getMessaging(app);
-      onMessage(messaging, (payload) => {
+      onMessage(messaging, (payload: MessagePayload) => {
         resolve(payload);
       });
     } catch (e) {
