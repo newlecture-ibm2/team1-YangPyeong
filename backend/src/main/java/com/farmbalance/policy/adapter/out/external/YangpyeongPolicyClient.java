@@ -3,14 +3,13 @@ package com.farmbalance.policy.adapter.out.external;
 import com.farmbalance.policy.application.port.out.PolicyExternalFetchPort;
 import com.farmbalance.policy.domain.model.PolicyData;
 import com.farmbalance.policy.domain.model.PolicySource;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -26,10 +25,9 @@ import java.util.List;
  * 페이지 구조가 변경되거나 접근이 차단될 경우 빈 리스트를 반환하며,
  * 전체 sync 파이프라인은 계속 진행됩니다.
  */
+@Slf4j
 @Component
 public class YangpyeongPolicyClient implements PolicyExternalFetchPort {
-
-    private static final Logger log = LoggerFactory.getLogger(YangpyeongPolicyClient.class);
 
     // ── URL 상수 ──
     private static final String BASE_URL = "https://www.yp21.go.kr";
