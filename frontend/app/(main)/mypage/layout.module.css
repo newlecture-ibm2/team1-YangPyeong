@@ -5,14 +5,11 @@
 /* ── 탭 네비게이션 ── */
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   border-bottom: 2px solid var(--color-border);
   margin-bottom: var(--space-xl);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  /* 스크롤바 숨김 */
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  overflow: visible;
 }
 
 .tabs::-webkit-scrollbar {
@@ -57,6 +54,12 @@
 @media (max-width: 768px) {
   .tabs {
     gap: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    /* 스크롤바 숨김 */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
   .tab {
