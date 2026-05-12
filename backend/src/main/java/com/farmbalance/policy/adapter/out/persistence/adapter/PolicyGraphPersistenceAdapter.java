@@ -28,19 +28,19 @@ public class PolicyGraphPersistenceAdapter implements PolicyGraphQueryPort {
             WITH RECURSIVE farmer_graph AS (
                 -- 1. FARMER 출발
                 SELECT ge.id AS entity_id
-                FROM graph_entity ge
+                FROM graph.graph_entity ge
                 WHERE ge.entity_type = 'FARMER' AND ge.source_id = ?
                 
                 UNION
                 
                 -- 2. FARMER와 연결된 FARM, REGION 등
                 SELECT gr.to_entity_id
-                FROM graph_relation gr
+                FROM graph.graph_relation gr
                 JOIN farmer_graph fg ON fg.entity_id = gr.from_entity_id
             ),
             target_policies AS (
                 SELECT ge.id AS entity_id
-                FROM graph_entity ge
+                FROM graph.graph_entity ge
                 WHERE ge.entity_type = 'POLICY' AND ge.source_id IN (%s)
             ),
             relevant_entities AS (
@@ -50,7 +50,7 @@ public class PolicyGraphPersistenceAdapter implements PolicyGraphQueryPort {
                 UNION
                 -- 정책이 가리키는 CROP, REGION 포함
                 SELECT gr.to_entity_id 
-                FROM graph_relation gr
+                FROM graph.graph_relation gr
                 JOIN target_policies tp ON tp.entity_id = gr.from_entity_id
             )
             SELECT 
@@ -60,9 +60,9 @@ public class PolicyGraphPersistenceAdapter implements PolicyGraphQueryPort {
                 e_to.entity_type AS to_type,
                 e_to.name AS to_name,
                 gr.properties AS relation_properties
-            FROM graph_relation gr
-            JOIN graph_entity e_from ON e_from.id = gr.from_entity_id
-            JOIN graph_entity e_to ON e_to.id = gr.to_entity_id
+            FROM graph.graph_relation gr
+            JOIN graph.graph_entity e_from ON e_from.id = gr.from_entity_id
+            JOIN graph.graph_entity e_to ON e_to.id = gr.to_entity_id
             WHERE gr.from_entity_id IN (SELECT entity_id FROM relevant_entities)
               AND gr.to_entity_id IN (SELECT entity_id FROM relevant_entities)
         """.formatted(policyIdsStr);

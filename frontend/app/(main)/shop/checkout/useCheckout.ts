@@ -56,22 +56,54 @@ interface DaumPostcodeData {
   roadAddress: string;
 }
 
-/** 전화번호 유효성 검사 (한국 형식) */
 function validatePhone(phone: string): string | undefined {
   if (!phone.trim()) return '연락처를 입력해주세요.';
   const cleaned = phone.replace(/[^0-9]/g, '');
-  if (cleaned.length < 10 || cleaned.length > 11 || !/^01[0-9]/.test(cleaned)) {
-    return '올바른 휴대폰 번호를 입력해주세요.';
+
+  // 1. 전국 대표번호 (1588-1588 등, 8자리)
+  if (cleaned.length === 8 && /^[1][5-8][0-9]{6}$/.test(cleaned)) {
+    return undefined;
   }
-  return undefined;
+
+  // 2. 지역번호, 휴대폰, 인터넷전화 등 (9~11자리, 0으로 시작)
+  if (cleaned.length >= 9 && cleaned.length <= 11 && cleaned.startsWith('0')) {
+    // 02(서울), 01X(모바일), 070(인터넷), 03X~06X(지역), 050X(안심번호 등) 검증
+    if (/^(02|0[1-9][0-9])[0-9]{6,8}$/.test(cleaned)) {
+      return undefined;
+    }
+  }
+
+  return '올바른 연락처 형식(휴대폰, 유선번호, 대표번호)을 입력해주세요.';
 }
 
-/** 전화번호 자동 하이픈 포매팅 (010-1234-5678) */
+/** 전화번호 자동 하이픈 포매팅 */
 function formatPhoneNumber(value: string): string {
   const digits = value.replace(/[^0-9]/g, '').slice(0, 11);
+  
+  if (!digits) return '';
+
+  // 1. 전국 대표번호 (8자리, 1588 등)
+  if (digits.length === 8 && digits.startsWith('1')) {
+    return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+  }
+
+  // 2. 서울 지역번호 (02)
+  if (digits.startsWith('02')) {
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 5) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+    if (digits.length === 9) return `${digits.slice(0, 2)}-${digits.slice(2, 5)}-${digits.slice(5)}`;
+    return `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6, 10)}`;
+  }
+
+  // 3. 그 외 번호 (010, 031, 070 등)
   if (digits.length <= 3) return digits;
-  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  if (digits.length === 10) {
+    // 031-123-4567 형태 (가운데 3자리)
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  // 11자리 (010-1234-5678 형태)
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
 }
 
 /** 이름 유효성 검사 */

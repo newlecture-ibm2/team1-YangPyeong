@@ -3,7 +3,6 @@ package com.farmbalance.recommend.adapter.out.external;
 import com.farmbalance.recommend.adapter.out.persistence.CropPriceCacheEntity;
 import com.farmbalance.recommend.adapter.out.persistence.CropPriceCacheRepository;
 import com.farmbalance.recommend.application.port.out.RecommendPricePort;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -85,32 +84,40 @@ public class KamisPriceAdapter implements RecommendPricePort {
                     .build().toUriString();
 
             String jsonResponse = restTemplate.getForObject(url, String.class);
-            
-            @SuppressWarnings("unchecked")
-            Map<String, Object> response = objectMapper.readValue(jsonResponse, Map.class);
+            if (jsonResponse == null || jsonResponse.isBlank()) {
+                log.warn("KAMIS API 빈 응답 (작물: {})", cropName);
+            } else if (!looksLikeJson(jsonResponse)) {
+                // 인증 실패·차단·리다이렉트(HTML)·XML 등 → Jackson 파싱 전에 건너뜀
+                String trimmed = jsonResponse.stripLeading();
+                String head = trimmed.substring(0, Math.min(120, trimmed.length()));
+                log.warn("KAMIS API가 JSON이 아닌 본문을 반환했습니다 (작물: {}). 응답 앞부분: [{}]. cert-key/id·KAMIS_API_URL(https) 확인.",
+                        cropName, head.replaceAll("\\s+", " "));
+            } else {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> response = objectMapper.readValue(jsonResponse, Map.class);
 
+                if (response != null && response.containsKey("data")) {
+                    Object dataObj = response.get("data");
+                    if (dataObj instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> dataMap = (Map<String, Object>) dataObj;
+                        if (dataMap.containsKey("item")) {
+                            Object itemObj = dataMap.get("item");
+                            Integer price = extractPriceFromItem(itemObj, itemCode);
 
-            if (response != null && response.containsKey("data")) {
-                Object dataObj = response.get("data");
-                if (dataObj instanceof Map) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> dataMap = (Map<String, Object>) dataObj;
-                    if (dataMap.containsKey("item")) {
-                        Object itemObj = dataMap.get("item");
-                        Integer price = extractPriceFromItem(itemObj, itemCode);
-                        
-                        if (price != null) {
-                            // 3. DB 캐싱 저장
-                            CropPriceCacheEntity newCache = CropPriceCacheEntity.builder()
-                                    .cropName(cropName)
-                                    .price(price)
-                                    .unit("1kg")
-                                    .priceDate(today)
-                                    .build();
-                            cacheRepository.save(newCache);
-                            
-                            log.info("KAMIS API 가격 조회 성공 및 캐시 저장: {} -> {}원", cropName, price);
-                            return price;
+                            if (price != null) {
+                                // 3. DB 캐싱 저장
+                                CropPriceCacheEntity newCache = CropPriceCacheEntity.builder()
+                                        .cropName(cropName)
+                                        .price(price)
+                                        .unit("1kg")
+                                        .priceDate(today)
+                                        .build();
+                                cacheRepository.save(newCache);
+
+                                log.info("KAMIS API 가격 조회 성공 및 캐시 저장: {} -> {}원", cropName, price);
+                                return price;
+                            }
                         }
                     }
                 }
@@ -156,5 +163,18 @@ public class KamisPriceAdapter implements RecommendPricePort {
             }
         }
         return null;
+    }
+
+    /** KAMIS가 HTML/XML/오류 페이지를 줄 때 '<' 로 시작하는 등 JSON이 아님 */
+    private static boolean looksLikeJson(String body) {
+        if (body == null) return false;
+        int i = 0;
+        int n = body.length();
+        while (i < n && (Character.isWhitespace(body.charAt(i)) || body.charAt(i) == '\uFEFF')) {
+            i++;
+        }
+        if (i >= n) return false;
+        char c = body.charAt(i);
+        return c == '{' || c == '[';
     }
 }

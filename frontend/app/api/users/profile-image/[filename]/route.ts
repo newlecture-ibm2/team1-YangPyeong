@@ -21,6 +21,7 @@ export async function GET(
     );
 
     if (!backendResponse.ok) {
+      // 이미지 파일이 실제로 없더라도 브라우저 콘솔 404를 만들지 않도록 기본 아바타를 반환한다.
       return new NextResponse(FALLBACK_PROFILE_SVG, {
         status: 200,
         headers: {
