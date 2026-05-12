@@ -50,4 +50,19 @@ public interface ManageCommunityUseCase {
      * 신규 공지사항 작성
      */
     void createNotice(Long adminId, CreateNoticeRequest request);
+
+    /**
+     * 신고 내역 조회 (페이징)
+     */
+    List<com.farmbalance.admin.domain.AdminReport> getReports(String status, int page, int size);
+
+    /**
+     * 신고 내역 개수 조회
+     */
+    long countReports(String status);
+
+    /**
+     * 신고 상태 변경 (RESOLVED, DISMISSED 등)
+     */
+    void updateReportStatus(Long reportId, String status);
 }

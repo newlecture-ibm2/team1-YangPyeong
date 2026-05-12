@@ -103,4 +103,38 @@ public class AdminCommunityController {
         manageCommunityUseCase.createNotice(adminId, request);
         return ApiResponse.ok(null);
     }
+
+    /**
+     * 신고 내역 목록 조회
+     * GET /api/admin/community/reports
+     */
+    @GetMapping("/reports")
+    public ApiResponse<Map<String, Object>> getReports(
+            @RequestParam(required = false, defaultValue = "PENDING") String status,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "20") int size) {
+        List<com.farmbalance.admin.domain.AdminReport> reports = manageCommunityUseCase.getReports(status, page, size);
+        long total = manageCommunityUseCase.countReports(status);
+        return ApiResponse.ok(Map.of(
+                "reports", reports,
+                "totalElements", total,
+                "totalPages", (int) Math.ceil((double) total / size)
+        ));
+    }
+
+    /**
+     * 신고 상태 변경 (처리 완료 등)
+     * PATCH /api/admin/community/reports/{reportId}/status
+     * Body: { "status": "RESOLVED" }
+     */
+    @PatchMapping("/reports/{reportId}/status")
+    public ApiResponse<Void> updateReportStatus(@PathVariable Long reportId,
+                                                @RequestBody Map<String, String> body) {
+        String status = body.get("status");
+        if (status == null || status.isBlank()) {
+            throw new IllegalArgumentException("Status is required");
+        }
+        manageCommunityUseCase.updateReportStatus(reportId, status.toUpperCase());
+        return ApiResponse.ok(null);
+    }
 }

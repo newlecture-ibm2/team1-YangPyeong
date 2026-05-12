@@ -9,8 +9,8 @@ import SearchInput from '@/components/common/SearchInput/SearchInput'
 import FilterBar from '@/components/common/FilterBar/FilterBar'
 import Dropdown from '@/components/common/Dropdown/Dropdown'
 import styles from './Community.module.css'
-import type { AdminPost } from '../_lib/community.types'
-import { fetchPosts, deletePost, toggleNotice, createNotice } from '../_lib/community.api'
+import type { AdminPost, AdminReport } from '../_lib/community.types'
+import { fetchPosts, deletePost, toggleNotice, createNotice, fetchReports, updateReportStatus } from '../_lib/community.api'
 import NoticeCreateModal from './_components/NoticeCreateModal'
 import PostDetailModal from './_components/PostDetailModal'
 import Button from '@/components/common/Button/Button'
@@ -22,12 +22,23 @@ function formatDate(dateStr: string | null): string {
 }
 
 export default function CommunityPage() {
+  const [activeTab, setActiveTab] = useState<'POSTS' | 'REPORTS'>('POSTS')
+
+  // Posts State
   const [posts, setPosts] = useState<AdminPost[]>([])
   const [totalElements, setTotalElements] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [page, setPage] = useState(0)
   const [keyword, setKeyword] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
+
+  // Reports State
+  const [reports, setReports] = useState<AdminReport[]>([])
+  const [reportTotalElements, setReportTotalElements] = useState(0)
+  const [reportTotalPages, setReportTotalPages] = useState(0)
+  const [reportPage, setReportPage] = useState(0)
+  const [reportStatusFilter, setReportStatusFilter] = useState('PENDING')
+
   const pageSize = 20
 
   const [loading, setLoading] = useState(true)
@@ -39,22 +50,34 @@ export default function CommunityPage() {
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null)
 
   const loadData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const data = await fetchPosts({ keyword, status: statusFilter, page, size: pageSize })
-      setPosts(data.posts || data) // fallback for legacy api if needed, but data is now PaginatedAdminPosts
-      if ('totalElements' in data) {
-        setTotalElements(data.totalElements)
-        setTotalPages(data.totalPages)
-      } else {
-        setTotalElements((data as any).length || 0)
+    if (activeTab === 'POSTS') {
+      setLoading(true)
+      try {
+        const data = await fetchPosts({ keyword, status: statusFilter, page, size: pageSize })
+        setPosts(data.posts || data) 
+        if ('totalElements' in data) {
+          setTotalElements(data.totalElements)
+          setTotalPages(data.totalPages)
+        }
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : '게시글 조회 실패')
+      } finally {
+        setLoading(false)
       }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '게시글 조회 실패')
-    } finally {
-      setLoading(false)
+    } else {
+      setLoading(true)
+      try {
+        const data = await fetchReports({ status: reportStatusFilter, page: reportPage, size: pageSize })
+        setReports(data.reports)
+        setReportTotalElements(data.totalElements)
+        setReportTotalPages(data.totalPages)
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : '신고 내역 조회 실패')
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [keyword, statusFilter, page, toast])
+  }, [activeTab, keyword, statusFilter, page, reportStatusFilter, reportPage, toast])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -90,6 +113,16 @@ export default function CommunityPage() {
     }
   }
 
+  const handleUpdateReportStatus = async (reportId: number, newStatus: string) => {
+    try {
+      await updateReportStatus(reportId, newStatus)
+      toast.success('신고 상태가 변경되었습니다.')
+      loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '신고 상태 변경 실패')
+    }
+  }
+
   const handleOpenDetail = (postId: number) => {
     setSelectedPostId(postId)
     setPostDetailModalOpen(true)
@@ -100,16 +133,36 @@ export default function CommunityPage() {
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>💬 커뮤니티 관리</h1>
-          <p className={styles.pageSub}>게시글 삭제, 공지 지정, 신고 처리를 관리합니다. 총 {totalElements}건</p>
+          <p className={styles.pageSub}>게시글 삭제, 공지 지정, 신고 처리를 관리합니다.</p>
         </div>
-        <Button variant="primary" onClick={() => setNoticeModalOpen(true)}>
-          + 공지사항 작성
-        </Button>
+        <div className={styles.headerActions}>
+          <div className={styles.tabs}>
+            <button 
+              className={`${styles.tabBtn} ${activeTab === 'POSTS' ? styles.activeTab : ''}`}
+              onClick={() => { setActiveTab('POSTS'); setPage(0); }}
+            >
+              게시글 관리
+            </button>
+            <button 
+              className={`${styles.tabBtn} ${activeTab === 'REPORTS' ? styles.activeTab : ''}`}
+              onClick={() => { setActiveTab('REPORTS'); setReportPage(0); }}
+            >
+              신고 관리
+            </button>
+          </div>
+          {activeTab === 'POSTS' && (
+            <Button variant="primary" onClick={() => setNoticeModalOpen(true)}>
+              + 공지사항 작성
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className={styles.filterSection}>
-        <FilterBar
-          dropdowns={[
+      {activeTab === 'POSTS' && (
+        <>
+          <div className={styles.filterSection}>
+            <FilterBar
+              dropdowns={[
             <Dropdown
               key="status"
               options={[
@@ -198,7 +251,7 @@ export default function CommunityPage() {
         </div>
       )}
 
-      {totalPages > 1 && (
+      {activeTab === 'POSTS' && totalPages > 1 && (
         <div className={styles.pagination}>
           <Button 
             variant="outline" 
@@ -216,6 +269,121 @@ export default function CommunityPage() {
             다음
           </Button>
         </div>
+      )}
+      </>
+      )}
+
+      {activeTab === 'REPORTS' && (
+        <>
+          <div className={styles.filterSection}>
+            <FilterBar
+              dropdowns={[
+                <Dropdown
+                  key="reportStatus"
+                  options={[
+                    { label: '전체 상태', value: 'ALL' },
+                    { label: '대기중', value: 'PENDING' },
+                    { label: '처리완료', value: 'RESOLVED' },
+                    { label: '반려', value: 'DISMISSED' }
+                  ]}
+                  value={reportStatusFilter}
+                  onChange={(val) => { setReportStatusFilter(val); setReportPage(0); }}
+                />
+              ]}
+              search={<div/>}
+            />
+          </div>
+
+          {loading && reports.length === 0 ? (
+            <div className={styles.loadingWrap}>신고 내역 로딩 중...</div>
+          ) : reports.length === 0 ? (
+            <div className={styles.emptyState}>신고 내역이 없습니다.</div>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>대상</th>
+                    <th>대상ID</th>
+                    <th>신고자ID</th>
+                    <th>사유</th>
+                    <th>신고일</th>
+                    <th>상태</th>
+                    <th>액션</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reports.map(report => (
+                    <tr key={report.id}>
+                      <td>{report.id}</td>
+                      <td>
+                        {report.targetType === 'POST' ? <Badge variant="blue">게시글</Badge> : <Badge variant="gray">댓글</Badge>}
+                      </td>
+                      <td>{report.targetId}</td>
+                      <td>{report.reporterId}</td>
+                      <td className={styles.titleCell}>{report.reason}</td>
+                      <td>{formatDate(report.createdAt)}</td>
+                      <td>
+                        {report.status === 'PENDING' && <Badge variant="orange">대기중</Badge>}
+                        {report.status === 'RESOLVED' && <Badge variant="green">처리완료</Badge>}
+                        {report.status === 'DISMISSED' && <Badge variant="gray">반려</Badge>}
+                      </td>
+                      <td>
+                        <div className={styles.actionGroup}>
+                          {report.targetType === 'POST' && (
+                            <button
+                              className={styles.actionBtnNotice}
+                              onClick={() => handleOpenDetail(report.targetId)}
+                            >
+                              게시글 보기
+                            </button>
+                          )}
+                          {report.status === 'PENDING' && (
+                            <>
+                              <button
+                                className={styles.actionBtnNotice}
+                                onClick={() => handleUpdateReportStatus(report.id, 'RESOLVED')}
+                              >
+                                처리 완료
+                              </button>
+                              <button
+                                className={styles.actionBtnDanger}
+                                onClick={() => handleUpdateReportStatus(report.id, 'DISMISSED')}
+                              >
+                                반려
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {reportTotalPages > 1 && (
+            <div className={styles.pagination}>
+              <Button 
+                variant="outline" 
+                disabled={reportPage === 0} 
+                onClick={() => setReportPage(p => p - 1)}
+              >
+                이전
+              </Button>
+              <span className={styles.pageInfo}>{reportPage + 1} / {reportTotalPages}</span>
+              <Button 
+                variant="outline" 
+                disabled={reportPage >= reportTotalPages - 1} 
+                onClick={() => setReportPage(p => p + 1)}
+              >
+                다음
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       <ModalDialog

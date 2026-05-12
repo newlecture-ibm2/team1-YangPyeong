@@ -22,6 +22,7 @@ public class CommunityManagementService implements ManageCommunityUseCase {
 
     private final AdminPostPort adminPostPort;
     private final com.farmbalance.admin.application.port.out.AdminCommentPort adminCommentPort;
+    private final com.farmbalance.admin.application.port.out.AdminReportPort adminReportPort;
 
     @Override
     public List<AdminPost> getPosts(String keyword, String status, int page, int size) {
@@ -81,5 +82,22 @@ public class CommunityManagementService implements ManageCommunityUseCase {
                 .build();
         
         adminPostPort.save(notice);
+    }
+
+    @Override
+    public List<com.farmbalance.admin.domain.AdminReport> getReports(String status, int page, int size) {
+        int offset = page * size;
+        return adminReportPort.findByFilter(status, offset, size);
+    }
+
+    @Override
+    public long countReports(String status) {
+        return adminReportPort.countByFilter(status);
+    }
+
+    @Override
+    @Transactional
+    public void updateReportStatus(Long reportId, String status) {
+        adminReportPort.updateStatus(reportId, status);
     }
 }
