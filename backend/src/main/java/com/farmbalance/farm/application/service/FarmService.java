@@ -97,8 +97,10 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
             for (CultivationRegistration reg : savedRegistrations) {
                 eventPublisher.publishEvent(new CultivationRegisteredEvent(
                         reg.getId(),
+                        savedFarm.getUserId(),
                         savedFarm.getId(),
                         reg.getCropId(),
+                        reg.getCropName(), // cropName이 없는 경우 null이 전달되며 리스너에서 안전하게 처리됩니다.
                         reg.getCultivationArea()
                 ));
             }

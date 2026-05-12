@@ -7,6 +7,7 @@ import { createComment, acceptComment, updateComment, deleteComment } from '../_
 import { apiFetch } from '@/lib/api-fetch';
 import { formatDate } from '../_lib/formatUtils';
 import ReportButton from './ReportButton';
+import { useToast } from '@/components/common/Toast/ToastContext';
 
 interface Comment {
   id: number;
@@ -36,6 +37,7 @@ export default function CommentSection({
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState('');
+  const { success: toastSuccess, error: toastError } = useToast();
 
   useEffect(() => {
     // 현재 사용자 ID 가져오기
@@ -62,12 +64,13 @@ export default function CommentSection({
       if (res.success && res.data) {
         setComments([...comments, res.data]);
         setNewComment('');
+        toastSuccess('댓글이 등록되었습니다.');
       } else {
-        alert('댓글 등록에 실패했습니다.');
+        toastError('댓글 등록에 실패했습니다.');
       }
     } catch (err) {
       console.error(err);
-      alert('에러가 발생했습니다.');
+      toastError('에러가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -80,12 +83,13 @@ export default function CommentSection({
       if (res.success && res.data) {
         setComments(comments.map(c => c.id === commentId ? res.data! : c));
         setEditingId(null);
+        toastSuccess('댓글이 수정되었습니다.');
       } else {
-        alert(res.error?.message || '댓글 수정에 실패했습니다.');
+        toastError(res.error?.message || '댓글 수정에 실패했습니다.');
       }
     } catch (err) {
       console.error(err);
-      alert('에러가 발생했습니다.');
+      toastError('에러가 발생했습니다.');
     }
   };
 
@@ -95,12 +99,13 @@ export default function CommentSection({
       const res = await deleteComment(commentId);
       if (res.success) {
         setComments(comments.filter(c => c.id !== commentId));
+        toastSuccess('댓글이 삭제되었습니다.');
       } else {
-        alert(res.error?.message || '댓글 삭제에 실패했습니다.');
+        toastError(res.error?.message || '댓글 삭제에 실패했습니다.');
       }
     } catch (err) {
       console.error(err);
-      alert('에러가 발생했습니다.');
+      toastError('에러가 발생했습니다.');
     }
   };
 
@@ -113,13 +118,13 @@ export default function CommentSection({
         setComments(comments.map(c => 
           c.id === commentId ? { ...c, accepted: true } : c
         ));
-        alert('답변이 채택되었습니다.');
+        toastSuccess('답변이 채택되었습니다.');
       } else {
-        alert(res.error?.message || '채택에 실패했습니다.');
+        toastError(res.error?.message || '채택에 실패했습니다.');
       }
     } catch (err) {
       console.error(err);
-      alert('에러가 발생했습니다.');
+      toastError('에러가 발생했습니다.');
     }
   };
 

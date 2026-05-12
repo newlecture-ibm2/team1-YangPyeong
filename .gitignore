@@ -29,6 +29,9 @@ agent/**/__pycache__/
 # ===== IDE =====
 .idea/
 .vscode/
+
+# ===== Firebase =====
+backend/src/main/resources/firebase/
 *.iml
 *.iws
 *.ipr

@@ -95,6 +95,9 @@ public enum ErrorCode {
     ADMIN_INVALID_STATUS("E-ADMIN-003", "허용되지 않은 상태입니다. (ACTIVE, SUSPENDED만 가능)", HttpStatus.BAD_REQUEST),
     API_SYNC_NOT_FOUND("E-ADMIN-004", "API 동기화 상태 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
+    // ── 알림 ──
+    NOTIFICATION_NOT_FOUND("E-NOTI-001", "알림을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
     // ── 지자체 ──
     GOV_REPORT_FAILED("E-GOV-001", "보고서 생성에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     ;
