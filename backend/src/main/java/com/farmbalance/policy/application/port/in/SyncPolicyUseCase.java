@@ -20,6 +20,13 @@ public interface SyncPolicyUseCase {
     void onHealthCheckTriggerEvent(HealthCheckTriggerEvent event);
 
     /**
+     * 기존 DB의 policy_data 중 정규화가 안 된 건(title=null 등)을
+     * content 기반으로 재정규화합니다.
+     * AI 서버 없이 Java 로직만으로 title/category/region_code를 보정합니다.
+     */
+    ReprocessResult reprocessExisting();
+
+    /**
      * 동기화 결과를 담는 record.
      *
      * @param fetched   수집된 총 건수
@@ -33,5 +40,12 @@ public interface SyncPolicyUseCase {
     record SyncResult(int fetched, int created, int updated,
                       int analyzed, int skipped, int failed,
                       java.util.List<String> warnings) {
+    }
+
+    /**
+     * 재정규화 결과를 담는 record.
+     */
+    record ReprocessResult(int total, int updated, int failed,
+                           java.util.List<String> warnings) {
     }
 }

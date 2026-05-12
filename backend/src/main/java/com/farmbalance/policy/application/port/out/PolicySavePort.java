@@ -2,6 +2,7 @@ package com.farmbalance.policy.application.port.out;
 
 import com.farmbalance.policy.domain.model.PolicyData;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -20,4 +21,10 @@ public interface PolicySavePort {
      * upsert 판별에 사용합니다.
      */
     Optional<PolicyData> findByExternalIdAndSource(String externalId, String source);
+
+    /**
+     * 삭제되지 않은 전체 정책 데이터를 조회합니다.
+     * 재정규화(reprocess) 시 사용합니다.
+     */
+    List<PolicyData> findAll();
 }
