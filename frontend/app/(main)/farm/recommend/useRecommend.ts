@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { useMyFarms } from '../useFarm';
 import { requestCropRecommendation } from './_lib/recommend.api';
 import type { CropRecommendResponse } from './_lib/recommend.types';
+import { useToast } from '@/components/common/Toast/ToastContext';
 
 export default function useRecommend() {
   const { farms, isLoading: isFarmsLoading } = useMyFarms();
@@ -14,6 +15,7 @@ export default function useRecommend() {
   const [result, setResult] = useState<CropRecommendResponse | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const { success: toastSuccess, error: toastError } = useToast();
 
   const farm = farms.length > 0 ? farms[selectedFarmIdx] : null;
 
@@ -36,12 +38,12 @@ export default function useRecommend() {
       // 상세 페이지에서 접근할 수 있도록 sessionStorage에 저장
       try {
         sessionStorage.setItem('recommend_result', JSON.stringify(data));
-      } catch {
         // sessionStorage 접근 불가 시 무시
       }
+      toastSuccess('AI 작물 추천이 완료되었습니다.');
     } catch (err) {
       console.error('AI 분석 실패:', err);
-      // TODO: 에러 상태를 UI에 표시
+      toastError('AI 분석에 실패했습니다.');
     } finally {
       setIsAnalyzing(false);
     }

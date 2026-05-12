@@ -7,6 +7,7 @@ import { uploadFile } from '@/lib/upload.api';
 import styles from './PostWrite.module.css';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
+import { useToast } from '@/components/common/Toast/ToastContext';
 import type { CategoryResponse } from '../_lib/community.types';
 
 /**
@@ -22,6 +23,7 @@ function PostWriteContent() {
   const searchParams = useSearchParams();
   const postId = searchParams.get('postId');
   const isEditMode = !!postId;
+  const { success: toastSuccess, error: toastError } = useToast();
 
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
@@ -64,7 +66,7 @@ function PostWriteContent() {
         content: prev.content + `\n![이미지](${url})\n`
       }));
     } catch (error) {
-      alert('이미지 업로드에 실패했습니다.');
+      toastError('이미지 업로드에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -73,7 +75,7 @@ function PostWriteContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.content) {
-      alert('제목과 내용을 모두 입력해 주세요.');
+      toastError('제목과 내용을 모두 입력해 주세요.');
       return;
     }
 
@@ -84,14 +86,14 @@ function PostWriteContent() {
         : await createPost(formData);
 
       if (response.success) {
-        alert(isEditMode ? '수정되었습니다.' : '등록되었습니다.');
+        toastSuccess(isEditMode ? '게시글이 수정되었습니다.' : '게시글이 등록되었습니다.');
         router.push(isEditMode ? `/community/${postId}` : '/community');
         router.refresh();
       } else {
-        alert(response.error?.message || '실패했습니다.');
+        toastError(response.error?.message || '실패했습니다.');
       }
     } catch (error) {
-      alert('오류가 발생했습니다.');
+      toastError('오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { SellerOrder, SellerOrderKpi, OrderStatus } from '../../_lib/mypage.types';
 import { getSellerOrders, updateOrderStatus } from '@/app/(main)/shop/_lib/shop.api';
+import { useToast } from '@/components/common/Toast/ToastContext';
 
 /** 주문 상태 전환 규칙 */
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
@@ -17,6 +18,7 @@ export default function useSellerOrders() {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
   const [detailOrder, setDetailOrder] = useState<SellerOrder | null>(null);
   const [cancelTarget, setCancelTarget] = useState<SellerOrder | null>(null);
+  const { success: toastSuccess, error: toastError } = useToast();
 
   // 판매자 주문 목록 로드
   useEffect(() => {
@@ -81,8 +83,13 @@ export default function useSellerOrders() {
       })
     );
     // 백엔드 동기화
-    await updateOrderStatus(orderId, action);
-  }, [orders]);
+    try {
+      await updateOrderStatus(orderId, action);
+      toastSuccess(action === 'ship' ? '주문이 발송 처리되었습니다.' : '주문이 접수되었습니다.');
+    } catch (e) {
+      toastError('주문 상태 변경에 실패했습니다.');
+    }
+  }, [orders, toastSuccess, toastError]);
 
   /** 주문 거절(취소) */
   const handleCancelRequest = useCallback((order: SellerOrder) => {
@@ -91,13 +98,19 @@ export default function useSellerOrders() {
 
   const confirmCancel = useCallback(async () => {
     if (!cancelTarget) return;
-    // 백엔드 동기화
-    await updateOrderStatus(cancelTarget.id, 'cancel');
-    setOrders((prev) =>
-      prev.map((o) => (o.id === cancelTarget.id ? { ...o, status: 'CANCELLED' as OrderStatus } : o))
-    );
-    setCancelTarget(null);
-  }, [cancelTarget]);
+    try {
+      // 백엔드 동기화
+      await updateOrderStatus(cancelTarget.id, 'cancel');
+      setOrders((prev) =>
+        prev.map((o) => (o.id === cancelTarget.id ? { ...o, status: 'CANCELLED' as OrderStatus } : o))
+      );
+      toastSuccess('주문이 취소되었습니다.');
+    } catch (e) {
+      toastError('주문 취소에 실패했습니다.');
+    } finally {
+      setCancelTarget(null);
+    }
+  }, [cancelTarget, toastSuccess, toastError]);
 
   const cancelCancelDialog = useCallback(() => {
     setCancelTarget(null);

@@ -10,6 +10,8 @@ import com.farmbalance.recommend.application.port.out.LoadRecommendHistoryPort;
 import com.farmbalance.recommend.application.port.out.SaveRecommendHistoryPort;
 import com.farmbalance.recommend.application.port.in.GetRecommendHistoryUseCase;
 import com.farmbalance.recommend.application.port.in.DiagnoseCropImageUseCase;
+import com.farmbalance.notification.application.port.in.NotificationUseCase;
+import com.farmbalance.notification.domain.NotificationType;
 import com.farmbalance.recommend.domain.*;
 
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
     private final SaveRecommendHistoryPort saveRecommendHistoryPort;
     private final LoadRecommendHistoryPort loadRecommendHistoryPort;
     private final com.farmbalance.recommend.application.port.out.RecommendAiPort recommendAiPort;
+    private final NotificationUseCase notificationUseCase;
 
     /** 점수 산출 엔진 (도메인 순수 객체, DI 불필요) */
     private final RecommendScoreCalculator calculator = new RecommendScoreCalculator();
@@ -159,6 +162,15 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
                 
         // 6. 추천 결과 이력 저장
         saveRecommendHistoryPort.save(result);
+        
+        // 7. AI 추천 결과 완료 알림 발송 (SYSTEM)
+        notificationUseCase.createNotification(
+                userId,
+                NotificationType.SYSTEM,
+                "AI 추천 완료",
+                String.format("'%s' 농장의 작물 추천이 완료되었습니다.", farm.getName()),
+                "/farm/recommend"
+        );
         
         return result;
     }
