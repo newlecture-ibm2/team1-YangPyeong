@@ -27,6 +27,7 @@ export function middleware(request: NextRequest) {
   // ── 2. 세션 쿠키 존재 여부 및 skipAuth 확인 ──
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
   const isAuthenticated = !!sessionCookie?.value;
+
   const skipAuth = process.env.SKIP_AUTH === 'true';
 
   // ── 3. 역할(Role) 기반 제어를 위해 Role 파싱 (가장 먼저 수행) ──
@@ -78,7 +79,9 @@ export function middleware(request: NextRequest) {
   }
 
   // ── 5. 이미 로그인한 사용자가 /login, /signup 접근 시 → 홈으로 리다이렉트 ──
-  if (isAuthenticated && AUTH_REDIRECT_PATHS.includes(pathname)) {
+  const userCookieDetail = request.cookies.get('fb-user');
+  const hasUserDetail = !!userCookieDetail?.value;
+  if (isAuthenticated && hasUserDetail && AUTH_REDIRECT_PATHS.includes(pathname)) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 

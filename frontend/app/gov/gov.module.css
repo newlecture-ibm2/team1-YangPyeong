@@ -243,7 +243,6 @@
 .compareTableWrap .table td:last-child {
   padding-right: 24px;
 }
-
 /* ── Bento Grid ── */
 .bento {
   display: grid;

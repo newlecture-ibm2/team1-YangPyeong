@@ -10,3 +10,13 @@ class ReasonResponse(BaseModel):
 
 class DiagnoseResponse(BaseModel):
     diagnosis: str
+
+class WeightsRequest(BaseModel):
+    farm_details: str
+
+class WeightsResponse(BaseModel):
+    w_soil: float
+    w_price: float
+    w_supply: float
+    w_difficulty: float
+    reasoning: str
