@@ -102,6 +102,11 @@ server:
   servlet:
     context-path: /
 
+graph:
+  refresh:
+    enabled: true
+    cron: "0 0 3 * * *"
+
 # ── Logging (X-Correlation-Id 포함) ──
 logging:
   pattern:
