@@ -11,11 +11,17 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { getScenarioForPath } from './farmBotScenarios';
 import type { FarmBotStep } from './farmBotScenarios';
+import { FARM_BOT_CONSTANTS } from './farmBotConstants';
 
 export type BotState = 'idle' | 'walking' | 'pointing' | 'waving';
 
-/** 가이드 진행 모드 (향후 'chat' 추가 예정) */
-export type GuideMode = 'minimized' | 'asking' | 'guiding' | 'hidden';
+export interface ChatMessage {
+  role: 'user' | 'bot';
+  content: string;
+}
+
+/** 가이드 진행 모드 */
+export type GuideMode = 'minimized' | 'asking' | 'guiding' | 'hidden' | 'chatting';
 
 interface Position {
   x: number;
@@ -43,6 +49,11 @@ export function useFarmBot() {
   const [steps, setSteps] = useState<FarmBotStep[]>([]);
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
   const [bubbleAbove, setBubbleAbove] = useState(true);
+
+  // ── 채팅 상태 ──
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const quickMsgRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -254,9 +265,78 @@ export function useFarmBot() {
     }
   }, [steps, askUser]);
 
+  /** 채팅 모드 시작 */
+  const startChat = useCallback(() => {
+    setMode('chatting');
+    setShowBubble(false);
+    setHighlightRect(null);
+    setBotState('idle');
+    if (chatMessages.length === 0) {
+      setChatMessages([{
+        role: 'bot',
+        content: FARM_BOT_CONSTANTS.WELCOME_MESSAGE,
+      }]);
+    }
+  }, [chatMessages.length]);
+
+  /** 메시지 전송 (대화 히스토리 포함) */
+  const sendChatMessage = useCallback(async (message: string) => {
+    if (!message.trim() || chatLoading) return;
+
+    const userMsg: ChatMessage = { role: 'user', content: message.trim() };
+    const updatedMessages = [...chatMessages, userMsg];
+    setChatMessages(updatedMessages);
+    setChatInput('');
+    setChatLoading(true);
+
+    // 최근 설정된 턴수만큼만 히스토리로 전송
+    const history = updatedMessages.slice(-FARM_BOT_CONSTANTS.HISTORY_LIMIT).map(m => ({
+      role: m.role === 'bot' ? 'assistant' : 'user',
+      content: m.content,
+    }));
+
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message.trim(), history }),
+      });
+      const data = await res.json();
+
+      const botReply: ChatMessage = {
+        role: 'bot',
+        content: data.success
+          ? data.data.reply
+          : FARM_BOT_CONSTANTS.ERROR_MESSAGE,
+      };
+      setChatMessages(prev => [...prev, botReply]);
+    } catch {
+      setChatMessages(prev => [...prev, {
+        role: 'bot',
+        content: FARM_BOT_CONSTANTS.NETWORK_ERROR,
+      }]);
+    } finally {
+      setChatLoading(false);
+    }
+  }, [chatLoading, chatMessages]);
+
+  /** 채팅 종료 */
+  const closeChat = useCallback(() => {
+    setMode('minimized');
+  }, []);
+
+  /** 채팅 초기화 */
+  const resetChat = useCallback(() => {
+    setChatMessages([{
+      role: 'bot',
+      content: FARM_BOT_CONSTANTS.RESET_MESSAGE,
+    }]);
+    setChatInput('');
+  }, []);
+
   // 가이드 중 스크롤 잠금
   useEffect(() => {
-    if (mode === 'guiding' || mode === 'asking') {
+    if (mode === 'guiding' || mode === 'asking' || mode === 'chatting') {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -299,5 +379,14 @@ export function useFarmBot() {
     showQuickMessage,
     hideBot,
     showBot,
+    // 채팅
+    startChat,
+    closeChat,
+    sendChatMessage,
+    resetChat,
+    chatMessages,
+    chatInput,
+    setChatInput,
+    chatLoading,
   };
 }

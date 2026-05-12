@@ -91,8 +91,11 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
       - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
+      - GROQ_API_KEY=${GROQ_API_KEY}
       - CHROMA_PERSIST_DIR=/app/data/chroma
     volumes:
+      - ./ai:/app
       - chroma-data:/app/data/chroma
     depends_on:
       - db
