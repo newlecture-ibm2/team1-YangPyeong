@@ -33,12 +33,12 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
                     .orElse(null);
         }
 
-        if (stats == null || stats.getTotalProduction() == null || stats.getTotalProduction() <= 0) {
+        if (stats == null || stats.getTotalProduction() == null || stats.getTotalProduction().compareTo(java.math.BigDecimal.ZERO) <= 0) {
             return new SupplyRatioResult(0.0, BalanceStatus.UNKNOWN, year);
         }
 
         Integer baseYear = stats.getYear();
-        double standardYieldKg = stats.getTotalProduction();
+        double standardYieldKg = stats.getTotalProduction().doubleValue();
         if ("톤".equals(stats.getUnitNm())) {
             standardYieldKg *= 1000;
         }
@@ -110,7 +110,7 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
                 CropProductionStats stats = historyMap.get(y);
                 if (stats != null) {
                     Double factor = "톤".equals(stats.getUnitNm()) ? 1000.0 : 1.0;
-                    Double prod = (stats.getTotalProduction() != null) ? stats.getTotalProduction() : 0.0;
+                    Double prod = (stats.getTotalProduction() != null) ? stats.getTotalProduction().doubleValue() : 0.0;
                     Double demandKg = prod * factor;
                     
                     trend.add(com.farmbalance.balance.domain.SupplyTrendResult.builder()
@@ -136,7 +136,7 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
         if (!history.isEmpty()) {
             CropProductionStats latestStats = history.get(history.size() - 1);
             Double factor = "톤".equals(latestStats.getUnitNm()) ? 1000.0 : 1.0;
-            Double latestProd = (latestStats.getTotalProduction() != null) ? latestStats.getTotalProduction() : 0.0;
+            Double latestProd = (latestStats.getTotalProduction() != null) ? latestStats.getTotalProduction().doubleValue() : 0.0;
             latestTargetDemand = latestProd * factor;
         }
 

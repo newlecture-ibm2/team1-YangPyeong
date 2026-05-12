@@ -12,6 +12,7 @@ import FilterBar from '@/components/common/FilterBar/FilterBar';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import SearchInput from '@/components/common/SearchInput/SearchInput';
 import Badge from '@/components/common/Badge/Badge';
+import Link from 'next/link';
 
 import styles from './page.module.css';
 
@@ -91,6 +92,23 @@ export default function PolicyListPage() {
         />
       </div>
 
+      {/* 맞춤 정책 추천 진입 배너 */}
+      <div className={styles.recommendBanner}>
+        <div className={styles.bannerContent}>
+          <span className={styles.bannerIcon}>✨</span>
+          <div className={styles.bannerText}>
+            <h3 className={styles.bannerTitle}>나에게 맞는 정책 추천</h3>
+            <p className={styles.bannerDesc}>
+              등록된 농장, 재배 작물, 지역 정보를 바탕으로 신청 가능성이 높은 정책을 AI가 찾아드려요.
+              <span className={styles.bannerSubText}> (농장 정보가 많을수록 추천 정확도가 높아집니다)</span>
+            </p>
+          </div>
+        </div>
+        <Link href="/policy/recommend" className={styles.bannerButton}>
+          맞춤 정책 보러가기
+        </Link>
+      </div>
+
       {/* 결과 요약 */}
       {!isLoading && !error && (
         <div className={styles.resultSummary}>
@@ -146,6 +164,33 @@ export default function PolicyListPage() {
   );
 }
 
+// ── 정책 뱃지 정보 생성 함수 ──
+function getPolicyBadges(policy: PolicyItem): { regionBadge: string; categoryBadge: string } {
+  let regionBadge = '전국';
+
+  // 1. 지역명이 있으면 우선 표시 (예: "양평군", "경기도")
+  if (policy.regionName && policy.regionName.trim() !== '') {
+    regionBadge = policy.regionName;
+  } else {
+    // 2. 지역 코드가 전국을 의미하면 표시
+    const rc = policy.regionCode?.toUpperCase();
+    if (rc === 'ALL' || rc === 'NATIONAL' || rc === '0000') {
+      regionBadge = '전국';
+    } else {
+      // 3. 대상이나 요약 내용에 '전국' 키워드가 있는지 확인
+      const text = `${policy.target ?? ''} ${policy.contentSummary ?? ''}`;
+      if (text.includes('전국')) {
+        regionBadge = '전국';
+      }
+    }
+  }
+
+  // 카테고리 뱃지는 실제 값을 그대로 사용 (없으면 '기타')
+  const categoryBadge = policy.category?.trim() || '기타';
+
+  return { regionBadge, categoryBadge };
+}
+
 // ── 정책 카드 컴포넌트 ──
 
 function PolicyCard({ policy }: { policy: PolicyItem }) {
@@ -169,6 +214,8 @@ function PolicyCard({ policy }: { policy: PolicyItem }) {
     }
   };
 
+  const { regionBadge, categoryBadge } = getPolicyBadges(policy);
+
   return (
     <div
       className={`${styles.policyCard} ${hasSourceUrl ? '' : styles.policyCardNoLink}`}
@@ -189,9 +236,8 @@ function PolicyCard({ policy }: { policy: PolicyItem }) {
     >
       <div className={styles.cardHeader}>
         <div>
-          {policy.category && (
-            <span className={styles.categoryTag}>{policy.category}</span>
-          )}
+          <span className={styles.categoryTag}>{regionBadge}</span>
+          <span className={styles.categoryTag}>{categoryBadge}</span>
           <span className={styles.cardTitle}>{policy.title}</span>
         </div>
         {policy.supportAmount && (
@@ -202,10 +248,12 @@ function PolicyCard({ policy }: { policy: PolicyItem }) {
       </div>
 
       <div className={styles.cardMeta}>
-        <span className={styles.metaItem}>
-          <span className={styles.metaLabel}>지원기관:</span>{' '}
-          {policy.organization || '-'}
-        </span>
+        {policy.organization && policy.organization.trim() !== '-' && (
+          <span className={styles.metaItem}>
+            <span className={styles.metaLabel}>지원기관:</span>{' '}
+            {policy.organization}
+          </span>
+        )}
         {policy.regionName && (
           <span className={styles.metaItem}>
             <span className={styles.metaLabel}>지역:</span>{' '}

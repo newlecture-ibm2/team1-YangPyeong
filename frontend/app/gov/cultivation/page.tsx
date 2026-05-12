@@ -62,46 +62,57 @@ export default function CultivationPage() {
         </select>
       </div>
 
-      <div className={styles.card}>
-        <h2 className={styles.cardTitle}>읍면별 재배 면적</h2>
-        {loading ? <p>로딩 중...</p> : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="region" />
-              <YAxis />
-              <Tooltip formatter={(value) => `${Number(value).toLocaleString()}㎡`} />
-              <Bar dataKey="areaM2" name="재배 면적(㎡)" fill="#2D6A4F" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
+          <div className={styles.twoColumnGrid}>
+            <div className={`${styles.card} ${styles.chartCard}`}>
+              <div className={styles.cardHeaderRow}>
+                <h2 className={styles.cardTitle}>읍면별 재배 면적</h2>
+                <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>단위: ㎡</span>
+              </div>
+              <div className={styles.chartContainer}>
+                {loading ? <p>로딩 중...</p> : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="region" />
+                      <YAxis width={60} />
+                      <Tooltip formatter={(value) => `${Number(value).toLocaleString()}㎡`} />
+                      <Bar dataKey="areaM2" name="재배 면적(㎡)" fill="#2D6A4F" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table} style={{ tableLayout: 'fixed' }}>
-          <thead>
-            <tr>
-              <th className={styles.col120}>읍면</th>
-              <th className={`${styles.numberCell} ${styles.col150}`}>농가 수</th>
-              <th className={`${styles.numberCell} ${styles.col150}`}>재배 면적</th>
-              <th className={styles.colAuto}>주요 작물</th>
-              <th className={`${styles.numberCell} ${styles.col150}`}>예상 생산량</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.length === 0 && <tr><td colSpan={5}>데이터가 없습니다.</td></tr>}
-            {data.map((r, i) => (
-              <tr key={i}>
-                <td className={styles.tdBold}>{r.region}</td>
-                <td className={styles.numberCell}>{r.farmCount.toLocaleString()}</td>
-                <td className={styles.numberCell}>{r.areaM2.toLocaleString()}㎡</td>
-                <td>{r.mainCrop}</td>
-                <td className={styles.numberCell}>{r.expectedTon.toLocaleString()}kg</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            <div className={styles.card} style={{ marginBottom: 0 }}>
+              <div className={styles.cardHeaderRow}>
+                <h2 className={styles.cardTitle}>재배 상세 현황</h2>
+                <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>총 {data.length}건</span>
+              </div>
+              <div className={styles.tableWrap} style={{ marginBottom: 0 }}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th className={styles.col100}>읍면</th>
+                      <th className={`${styles.numberCell} ${styles.col100}`}>농가 수</th>
+                      <th className={`${styles.numberCell} ${styles.col120}`}>재배 면적</th>
+                      <th className={styles.colAuto}>주요 작물</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.length === 0 && <tr><td colSpan={4} style={{ textAlign: 'center', padding: '24px' }}>데이터가 없습니다.</td></tr>}
+                    {data.map((r, i) => (
+                      <tr key={i}>
+                        <td className={styles.tdBold}>{r.region}</td>
+                        <td className={styles.numberCell}>{r.farmCount.toLocaleString()}</td>
+                        <td className={styles.numberCell}>{r.areaM2.toLocaleString()}㎡</td>
+                        <td>{r.mainCrop}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
     </div>
   );
 }
