@@ -1,21 +1,124 @@
-import Card from '@/components/common/Card/Card';
+'use client';
 
-/**
- * 마이페이지 — 알림
- * TODO: 다른 팀원이 구현 예정 (수급 알림, 주문 알림, 커뮤니티 알림 등)
- */
+import { useRouter } from 'next/navigation';
+import Card from '@/components/common/Card/Card';
+import Button from '@/components/common/Button/Button';
+import { useNotifications } from './useNotifications';
+import styles from './page.module.css';
+
+const TYPE_LABELS: Record<string, { label: string; icon: string }> = {
+  BALANCE_WARN: { label: '수급 알림', icon: '🚨' },
+  GUIDE: { label: '영농 가이드', icon: '💡' },
+  ORDER: { label: '주문/배송', icon: '📦' },
+  POLICY: { label: '정책/공지', icon: '📢' },
+  SYSTEM: { label: '시스템', icon: '⚙️' },
+};
+
 export default function MypageNotificationsPage() {
+  const router = useRouter();
+  const {
+    notifications,
+    isLoading,
+    hasMore,
+    filterType,
+    setFilterType,
+    fetchMore,
+    markAsRead,
+    markAllAsRead,
+  } = useNotifications();
+
+  const handleNotificationClick = (id: number, link: string) => {
+    markAsRead(id);
+    if (link) {
+      router.push(link);
+    }
+  };
+
+  // 간단한 상대 시간 포맷터 (date-fns 대신 직접 구현하여 의존성 최소화)
+  const timeAgo = (dateString: string) => {
+    const diff = new Date().getTime() - new Date(dateString).getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}일 전`;
+    if (hours > 0) return `${hours}시간 전`;
+    if (minutes > 0) return `${minutes}분 전`;
+    return '방금 전';
+  };
+
   return (
     <Card>
-      <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <p style={{ fontSize: '48px', marginBottom: '16px' }}>🔔</p>
-        <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>알림</h2>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '15px' }}>
-          수급 알림, 주문 알림, 커뮤니티 알림을 확인할 수 있습니다.
-        </p>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '13px', marginTop: '24px' }}>
-          🚧 구현 예정입니다.
-        </p>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h2 className={styles.title}>알림 내역</h2>
+          <Button variant="ghost" size="sm" onClick={markAllAsRead}>
+            모두 읽음 처리
+          </Button>
+        </div>
+
+        {/* 필터 칩 — 공통 Button의 variant와 맞지 않으므로 도메인 전용 스타일 사용 */}
+        <div className={styles.filters}>
+          <button
+            className={`${styles.filterChip} ${!filterType ? styles.filterChipActive : ''}`}
+            onClick={() => setFilterType(undefined)}
+          >
+            전체
+          </button>
+          {Object.entries(TYPE_LABELS).map(([key, { label }]) => (
+            <button
+              key={key}
+              className={`${styles.filterChip} ${filterType === key ? styles.filterChipActive : ''}`}
+              onClick={() => setFilterType(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className={styles.notificationList}>
+          {isLoading && notifications.length === 0 ? (
+            <div className={styles.emptyState}>불러오는 중...</div>
+          ) : notifications.length === 0 ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyIcon}>📭</div>
+              새로운 알림이 없습니다.
+            </div>
+          ) : (
+            notifications.map((notif) => (
+              <div
+                key={notif.id}
+                className={styles.notificationCard}
+                data-read={notif.isRead}
+                onClick={() => handleNotificationClick(notif.id, notif.link)}
+              >
+                <div className={`${styles.iconWrapper} ${styles[`icon_${notif.type}`]}`}>
+                  {TYPE_LABELS[notif.type]?.icon || '🔔'}
+                </div>
+                <div className={styles.content}>
+                  <div className={styles.topRow}>
+                    <span className={styles.time}>{timeAgo(notif.createdAt)}</span>
+                  </div>
+                  <h3 className={styles.cardTitle}>{notif.title}</h3>
+                  <p className={styles.message}>{notif.message}</p>
+                </div>
+                {!notif.isRead && <div className={styles.unreadDot} />}
+              </div>
+            ))
+          )}
+
+          {hasMore && (
+            <Button
+              variant="outline"
+              size="sm"
+              fullWidth
+              onClick={fetchMore}
+              disabled={isLoading}
+            >
+              {isLoading ? '불러오는 중...' : '이전 알림 더보기'}
+            </Button>
+          )}
+        </div>
       </div>
     </Card>
   );

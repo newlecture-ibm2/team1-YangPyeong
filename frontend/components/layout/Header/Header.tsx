@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api-fetch';
+import { useFCM } from './useFCM';
 import styles from './Header.module.css';
 
 const NAV_LINKS = [
@@ -20,6 +21,24 @@ interface HeaderUser {
   role: string;
   profileImageUrl?: string | null;
 }
+
+interface RecentNotification {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  link: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+const NOTIF_TYPE_ICONS: Record<string, string> = {
+  BALANCE_WARN: '🚨',
+  GUIDE: '💡',
+  ORDER: '📦',
+  POLICY: '📢',
+  SYSTEM: '⚙️',
+};
 
 /** 클라이언트 쿠키에서 fb-user 읽기 */
 function getUserFromCookie(): HeaderUser | null {
@@ -40,6 +59,15 @@ export default function Header() {
   const [cartCount, setCartCount] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 알림 관련 상태
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [recentNotifs, setRecentNotifs] = useState<RecentNotification[]>([]);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  // FCM Hook: 로그인 상태일 때 토큰 등록 및 백그라운드/포그라운드 리스너 활성화
+  useFCM(!!user);
 
   // 쿠키에서 사용자 정보 읽기 + API에서 최신 프로필 정보(이미지 등) 조회
   useEffect(() => {
@@ -105,19 +133,110 @@ export default function Header() {
     return () => window.removeEventListener('cart-updated', handleCartUpdate);
   }, [user, pathname]);
 
-  // 드롭다운 외부 클릭 시 닫기
+  // 드롭다운 외부 클릭 시 닫기 (유저 드롭다운 + 알림 드롭다운)
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // 알림 unread count 폴링 (30초 간격)
+  const fetchUnreadCount = useCallback(async () => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+    try {
+      const res = await fetch('/api/notifications/unread-count');
+      if (res.ok) {
+        const json = await res.json();
+        setUnreadCount(json.data?.unreadCount ?? 0);
+      }
+    } catch {
+      // 조회 실패 시 무시
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30_000);
+    
+    // 포그라운드 푸시 알림 수신 시 안읽은 개수 갱신
+    window.addEventListener('notif-updated', fetchUnreadCount);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notif-updated', fetchUnreadCount);
+    };
+  }, [fetchUnreadCount]);
+
+  // 알림 드롭다운 열 때 최근 5개 조회
+  const handleNotifToggle = async () => {
+    const nextState = !notifOpen;
+    setNotifOpen(nextState);
+    setDropdownOpen(false); // 유저 드롭다운 닫기
+
+    if (nextState && user) {
+      try {
+        const res = await fetch('/api/notifications?page=0&size=5');
+        if (res.ok) {
+          const json = await res.json();
+          setRecentNotifs(json.data ?? []);
+        }
+      } catch {
+        // 조회 실패 시 무시
+      }
+    }
+  };
+
+  // 알림 개별 클릭 → 읽음 처리 + 이동
+  const handleNotifClick = async (notif: RecentNotification) => {
+    setNotifOpen(false);
+    if (!notif.isRead) {
+      try {
+        await fetch(`/api/notifications/${notif.id}/read`, { method: 'PATCH' });
+        setUnreadCount((prev) => Math.max(prev - 1, 0));
+      } catch {
+        // ignore
+      }
+    }
+    if (notif.link) {
+      router.push(notif.link);
+    }
+  };
+
+  // 상대 시간 포맷
+  const timeAgo = (dateString: string) => {
+    const diff = Date.now() - new Date(dateString).getTime();
+    const mins = Math.floor(diff / 60000);
+    const hrs = Math.floor(mins / 60);
+    const days = Math.floor(hrs / 24);
+    if (days > 0) return `${days}일 전`;
+    if (hrs > 0) return `${hrs}시간 전`;
+    if (mins > 0) return `${mins}분 전`;
+    return '방금 전';
+  };
+
   const handleLogout = async () => {
     try {
+      // FCM 토큰 삭제 (로그아웃 시 푸시 알림 중단)
+      const savedToken = typeof window !== 'undefined' ? localStorage.getItem('fcm-token') : null;
+      if (savedToken) {
+        await fetch('/api/fcm/tokens', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: savedToken }),
+        }).catch(() => {});
+        localStorage.removeItem('fcm-token');
+      }
+
       await apiFetch('/api/auth/logout', { method: 'POST' });
     } catch {
       // ignore
@@ -165,6 +284,68 @@ export default function Header() {
       </div>
 
       <div className={styles.right}>
+        {/* 🔔 알림 벨 버튼 */}
+        {user && (
+          <div className={styles.notifArea} ref={notifRef}>
+            <button
+              className={styles.notifBtn}
+              onClick={handleNotifToggle}
+              aria-label="알림"
+              type="button"
+              data-guide="notif-btn"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className={styles.notifBadge}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <div className={styles.notifDropdown}>
+                <div className={styles.notifDropdownHeader}>
+                  <span className={styles.notifDropdownTitle}>알림</span>
+                  {unreadCount > 0 && (
+                    <span className={styles.notifDropdownCount}>{unreadCount}개 안읽음</span>
+                  )}
+                </div>
+                <div className={styles.notifDropdownDivider} />
+
+                {recentNotifs.length === 0 ? (
+                  <div className={styles.notifEmpty}>새로운 알림이 없습니다.</div>
+                ) : (
+                  recentNotifs.map((n) => (
+                    <button
+                      key={n.id}
+                      className={`${styles.notifItem} ${!n.isRead ? styles.notifItemUnread : ''}`}
+                      onClick={() => handleNotifClick(n)}
+                    >
+                      <span className={styles.notifItemIcon}>{NOTIF_TYPE_ICONS[n.type] || '🔔'}</span>
+                      <span className={styles.notifItemContent}>
+                        <span className={styles.notifItemTitle}>{n.title}</span>
+                        <span className={styles.notifItemTime}>{timeAgo(n.createdAt)}</span>
+                      </span>
+                    </button>
+                  ))
+                )}
+
+                <div className={styles.notifDropdownDivider} />
+                <Link
+                  href="/mypage/notifications"
+                  className={styles.notifViewAll}
+                  onClick={() => setNotifOpen(false)}
+                >
+                  전체 알림 보기 →
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 장바구니 버튼 */}
         <button
           className={styles.cartBtn}

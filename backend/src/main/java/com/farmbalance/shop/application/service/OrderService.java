@@ -39,7 +39,7 @@ public class OrderService implements OrderUseCase {
     private final EmailService emailService;
 
     public OrderService(OrderRepository orderRepository, ProductRepository productRepository,
-                        UserRepository userRepository, EmailService emailService) {
+            UserRepository userRepository, EmailService emailService) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
@@ -49,8 +49,8 @@ public class OrderService implements OrderUseCase {
     @Override
     @Transactional
     public Order createOrder(Long buyerId, String receiverName, String receiverPhone,
-                             String shippingAddress, String shippingMemo,
-                             List<OrderItemCommand> items) {
+            String shippingAddress, String shippingMemo,
+            List<OrderItemCommand> items) {
         List<OrderItem> orderItems = new ArrayList<>();
         int totalAmount = 0;
 
@@ -72,8 +72,7 @@ public class OrderService implements OrderUseCase {
 
             orderItems.add(new OrderItem(
                     null, null, product.getId(), product.getName(),
-                    cmd.quantity(), product.getPrice()
-            ));
+                    cmd.quantity(), product.getPrice()));
         }
 
         String orderNumber = generateOrderNumber();
@@ -81,8 +80,7 @@ public class OrderService implements OrderUseCase {
         Order order = new Order(
                 null, buyerId, orderNumber, totalAmount, OrderStatus.ORDERED,
                 receiverName, receiverPhone, shippingAddress, shippingMemo,
-                null, null, orderItems, LocalDateTime.now(), null
-        );
+                null, null, orderItems, LocalDateTime.now(), null);
 
         return orderRepository.save(order);
     }
@@ -186,13 +184,15 @@ public class OrderService implements OrderUseCase {
     private void sendStatusEmail(Order order, OrderStatus previousStatus) {
         try {
             User buyer = userRepository.findById(order.getBuyerId()).orElse(null);
-            if (buyer == null || buyer.getEmail() == null || buyer.getEmail().isBlank()) return;
+            if (buyer == null || buyer.getEmail() == null || buyer.getEmail().isBlank())
+                return;
 
             String buyerName = buyer.getName() != null ? buyer.getName() : "고객";
 
             // ORDERED → ACCEPTED (접수 확인)
             if (previousStatus == OrderStatus.ORDERED && order.getStatus() == OrderStatus.ACCEPTED) {
-                String html = OrderEmailTemplate.orderAccepted(buyerName, order.getOrderNumber(), order.getTotalAmount());
+                String html = OrderEmailTemplate.orderAccepted(buyerName, order.getOrderNumber(),
+                        order.getTotalAmount());
                 emailService.send(buyer.getEmail(), "[FarmBalance] 주문이 접수되었습니다", html);
             }
             // ACCEPTED → SHIPPED (배송 시작)
@@ -209,7 +209,8 @@ public class OrderService implements OrderUseCase {
     private void sendCancelEmail(Order order) {
         try {
             User buyer = userRepository.findById(order.getBuyerId()).orElse(null);
-            if (buyer == null || buyer.getEmail() == null || buyer.getEmail().isBlank()) return;
+            if (buyer == null || buyer.getEmail() == null || buyer.getEmail().isBlank())
+                return;
 
             String buyerName = buyer.getName() != null ? buyer.getName() : "고객";
             String html = OrderEmailTemplate.orderCancelled(buyerName, order.getOrderNumber(), order.getTotalAmount());

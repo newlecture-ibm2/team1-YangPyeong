@@ -68,6 +68,9 @@ dependencies {
     // Excel Export (Apache POI)
     implementation 'org.apache.poi:poi-ooxml:5.2.5'
 
+    // Firebase Admin SDK (FCM)
+    implementation 'com.google.firebase:firebase-admin:9.2.0'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
