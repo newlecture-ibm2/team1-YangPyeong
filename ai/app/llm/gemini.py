@@ -4,11 +4,11 @@ google-generativeai SDK를 사용합니다.
 """
 
 import logging
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator, Any, Optional
 
 import google.generativeai as genai
-
 from langchain_google_genai import ChatGoogleGenerativeAI
+
 from app.config import get_settings
 from app.llm.base import BaseLLM
 
@@ -25,14 +25,15 @@ class GeminiLLM(BaseLLM):
 
         genai.configure(api_key=settings.GEMINI_API_KEY)
         self._model_name = settings.GEMINI_MODEL
+        self._api_key = settings.GEMINI_API_KEY
         logger.info("GeminiLLM 초기화 완료 (모델: %s)", self._model_name)
 
-    def get_chat_model(self, temperature: float = 0.7):
-        """LangChain Chat Model 인스턴스 반환"""
+    def get_chat_model(self, **kwargs: Any) -> ChatGoogleGenerativeAI:
+        """LangChain 호환 Gemini ChatModel 반환"""
         return ChatGoogleGenerativeAI(
             model=self._model_name,
-            temperature=temperature,
-            google_api_key=get_settings().GEMINI_API_KEY
+            google_api_key=self._api_key,
+            **kwargs
         )
 
     def _get_model(
