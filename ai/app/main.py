@@ -2,14 +2,15 @@
 FarmBalance AI 서버 엔트리포인트.
 """
 import logging
-
 from fastapi import FastAPI
-from app.routers import analysis, health
+
+from app.routers import health
 from app.routers import policy as policy_router
 from app.routers import chat as chat_router
 from app.routers import product_assist as product_assist_router
 from app.routers import recommend as recommend_router
 from app.routers import gov as gov_router
+from app.routers import analysis as analysis_router
 
 # 로깅 설정
 logging.basicConfig(
@@ -27,9 +28,9 @@ app = FastAPI(
 app.include_router(health.router)
 app.include_router(policy_router.router)
 app.include_router(chat_router.router)
-app.include_router(analysis.router)
+app.include_router(analysis_router.router)
 app.include_router(product_assist_router.router)
 app.include_router(recommend_router.router)
 app.include_router(gov_router.router)
 
-# TODO: STEP 10에서 chat/agent 라우터 등록
+# TODO: 추가적인 Agent 라우터는 필요 시 여기에 등록합니다.
