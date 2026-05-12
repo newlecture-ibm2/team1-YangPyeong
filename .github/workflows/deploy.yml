@@ -30,6 +30,9 @@ jobs:
           NONGSARO_API_KEY_DEFAULT=${{ secrets.NONGSARO_API_KEY_DEFAULT }}
           NONGSARO_API_KEY_CROP_EBOOK=${{ secrets.NONGSARO_API_KEY_CROP_EBOOK }}
           KOSIS_API_KEY=${{ secrets.KOSIS_API_KEY }}
+          KAMIS_API_URL=https://www.kamis.or.kr/service/price/xml.do
+          KAMIS_CERT_KEY=${{ secrets.KAMIS_CERT_KEY }}
+          KAMIS_CERT_ID=${{ secrets.KAMIS_CERT_ID }}
           KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}

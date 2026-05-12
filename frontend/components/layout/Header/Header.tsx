@@ -56,6 +56,7 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<HeaderUser | null>(null);
+  const [profileImageLoadFailed, setProfileImageLoadFailed] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -68,6 +69,10 @@ export default function Header() {
 
   // FCM Hook: 로그인 상태일 때 토큰 등록 및 백그라운드/포그라운드 리스너 활성화
   useFCM(!!user);
+
+  useEffect(() => {
+    setProfileImageLoadFailed(false);
+  }, [user?.profileImageUrl]);
 
   // 쿠키에서 사용자 정보 읽기 + API에서 최신 프로필 정보(이미지 등) 조회
   useEffect(() => {
@@ -373,7 +378,7 @@ export default function Header() {
               className={styles.userBtn}
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
-              {user.profileImageUrl ? (
+              {user.profileImageUrl && !profileImageLoadFailed ? (
                 <span className={styles.avatar}>
                   <Image
                     src={user.profileImageUrl}
@@ -381,6 +386,7 @@ export default function Header() {
                     width={32}
                     height={32}
                     className={styles.avatarImg}
+                    onError={() => setProfileImageLoadFailed(true)}
                   />
                 </span>
               ) : (
