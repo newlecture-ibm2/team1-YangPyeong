@@ -94,7 +94,7 @@ kamis:
 
 # ── AI Server ──
 ai:
-  server-url: ${AI_SERVER_URL}
+  server-url: ${AI_SERVER_URL:http://ai-server:8000}
 
 # ── Server ──
 server:
