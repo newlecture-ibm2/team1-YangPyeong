@@ -106,7 +106,7 @@ public class BalanceEventListener {
                     NotificationType.BALANCE_WARN,
                     "수급 임계값 안내",
                     message,
-                    "/farm/balance"
+                    "/balance"
             );
             log.info("[Event-Balance] 수급 알림 발송 완료 - 작물: {}, 발송 대상 수: {}", cropName, uniqueIds.size());
         }

@@ -208,6 +208,9 @@ export default function Header() {
       try {
         await fetch(`/api/notifications/${notif.id}/read`, { method: 'PATCH' });
         setUnreadCount((prev) => Math.max(prev - 1, 0));
+        setRecentNotifs((prev) =>
+          prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n))
+        );
       } catch {
         // ignore
       }
@@ -332,6 +335,7 @@ export default function Header() {
                       <span className={styles.notifItemIcon}>{NOTIF_TYPE_ICONS[n.type] || '🔔'}</span>
                       <span className={styles.notifItemContent}>
                         <span className={styles.notifItemTitle}>{n.title}</span>
+                        <span className={styles.notifItemMessage}>{n.message}</span>
                         <span className={styles.notifItemTime}>{timeAgo(n.createdAt)}</span>
                       </span>
                     </button>
