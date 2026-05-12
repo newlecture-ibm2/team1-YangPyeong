@@ -16,11 +16,10 @@ export default function GovAiPanel() {
   const region = user?.regionName || process.env.NEXT_PUBLIC_DEFAULT_GOV_REGION || '양평군';
 
   const suggestions = [
-    `현재 수급 상황 요약해줘`,
-    `과잉 품목 원인 분석해줘`,
-    `부족 품목 대응 방향 알려줘`,
-    `배추 위험도 알려줘`,
-    `수급 경고 품목 정리해줘`
+    `수급 요약`,
+    `과잉 품목 분석`,
+    `부족 품목 대응`,
+    `배추 위험도`
   ];
 
   // Auto-scroll to bottom
