@@ -75,25 +75,44 @@
 
 .suggestions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   margin-bottom: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; /* for smooth mobile scroll */
+  padding-bottom: 4px; /* optional padding to prevent cut off */
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.suggestions::-webkit-scrollbar {
+  display: none;
 }
 
 .suggestionBtn {
-  padding: 5px 10px;
+  height: 34px;
+  padding: 0 14px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .suggestionBtn:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  background: #f1f5f9;
+  color: var(--color-text);
 }
 
 .inputArea {
