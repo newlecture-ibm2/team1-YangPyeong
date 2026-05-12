@@ -4,9 +4,10 @@ groq SDK를 사용합니다. (챗봇용 — 빠른 응답 속도)
 """
 
 import logging
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator, Any, Optional
 
 from groq import AsyncGroq
+from langchain_groq import ChatGroq
 
 from app.config import get_settings
 from app.llm.base import BaseLLM
@@ -24,7 +25,16 @@ class GroqLLM(BaseLLM):
 
         self._client = AsyncGroq(api_key=settings.GROQ_API_KEY)
         self._model_name = settings.GROQ_MODEL
+        self._api_key = settings.GROQ_API_KEY
         logger.info("GroqLLM 초기화 완료 (모델: %s)", self._model_name)
+
+    def get_chat_model(self, **kwargs: Any) -> ChatGroq:
+        """LangChain 호환 Groq ChatModel 반환"""
+        return ChatGroq(
+            model_name=self._model_name,
+            groq_api_key=self._api_key,
+            **kwargs
+        )
 
     async def generate(
         self,
