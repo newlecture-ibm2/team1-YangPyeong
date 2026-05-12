@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { PasswordVisibilityIcon } from '@/components/icons';
 import styles from './Input.module.css';
-import { PasswordVisibilityGlyph } from './PasswordVisibilityGlyph';
 
 interface InputProps {
   label?: string;
@@ -93,7 +93,7 @@ export default function Input({
           disabled={disabled}
           onClick={() => setPasswordVisible((v) => !v)}
         >
-          <PasswordVisibilityGlyph revealed={passwordVisible} />
+          <PasswordVisibilityIcon revealed={passwordVisible} />
         </button>
       </div>
     );
