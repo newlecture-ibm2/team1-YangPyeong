@@ -28,9 +28,9 @@ export default function MypageNotificationsPage() {
     markAllAsRead,
   } = useNotifications();
 
-  const handleNotificationClick = async (id: number, link: string, isRead: boolean) => {
+  const handleNotificationClick = (id: number, link: string, isRead: boolean) => {
     if (!isRead) {
-      await markAsRead(id);
+      markAsRead(id); // 백그라운드 처리 (await 없이 즉시 이동)
     }
     if (link) {
       router.push(link);

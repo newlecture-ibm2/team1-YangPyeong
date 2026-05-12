@@ -69,6 +69,8 @@ export default function Header() {
   const notifRef = useRef<HTMLDivElement>(null);
   // 로컬에서 읽음 처리한 알림 ID를 기억 (서버 stale 데이터 방어)
   const localReadIds = useRef<Set<number>>(new Set());
+  // 드롭다운 마지막 fetch 시간 (10초 캐시)
+  const lastNotifFetchTime = useRef(0);
 
   // FCM Hook: 로그인 상태일 때 토큰 등록 및 백그라운드/포그라운드 리스너 활성화
   useFCM(!!user);
@@ -179,12 +181,15 @@ export default function Header() {
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 30_000);
     
-    // 포그라운드 푸시 알림 수신 시 안읽은 개수 갱신
-    window.addEventListener('notif-updated', fetchUnreadCount);
+    // FCM 포그라운드 수신 시 로컬에서 즉시 +1 (서버 왔복 없이)
+    const handleNotifReceived = () => {
+      setUnreadCount((prev) => prev + 1);
+    };
+    window.addEventListener('notif-received', handleNotifReceived);
     
     return () => {
       clearInterval(interval);
-      window.removeEventListener('notif-updated', fetchUnreadCount);
+      window.removeEventListener('notif-received', handleNotifReceived);
     };
   }, [fetchUnreadCount]);
 
@@ -195,20 +200,24 @@ export default function Header() {
     );
   }, []);
 
-  // 알림 드롭다운 열 때 최근 5개 조회
+  // 알림 드롭다운 열 때 최근 5개 조회 (10초 캐시)
   const handleNotifToggle = async () => {
     const nextState = !notifOpen;
     setNotifOpen(nextState);
     setDropdownOpen(false);
 
     if (nextState && user) {
-      // 기존 데이터가 없을 때만 로딩 스피너 표시
+      // 10초 이내 재열기면 캐시된 데이터 사용 (서버 요청 생략)
+      const now = Date.now();
+      if (now - lastNotifFetchTime.current < 10_000 && recentNotifs.length > 0) return;
+
       if (recentNotifs.length === 0) setNotifLoading(true);
       try {
         const res = await fetch('/api/notifications?page=0&size=5');
         if (res.ok) {
           const json = await res.json();
           setRecentNotifs(mergeReadState(json.data ?? []));
+          lastNotifFetchTime.current = Date.now();
         }
       } catch {
         // 조회 실패 시 무시

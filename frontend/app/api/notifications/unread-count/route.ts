@@ -17,7 +17,10 @@ export async function GET(request: NextRequest) {
     });
 
     const data = await res.json();
-    return NextResponse.json(data, { status: res.status });
+    const response = NextResponse.json(data, { status: res.status });
+    // 10초간 브라우저 캐시 → 30초 폴링 중 불필요한 서버 왕복 감소
+    response.headers.set('Cache-Control', 'private, max-age=10');
+    return response;
   } catch (error) {
     console.error('BFF /api/notifications/unread-count GET error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });

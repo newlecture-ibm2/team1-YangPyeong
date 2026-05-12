@@ -57,7 +57,7 @@ export function useFCM(userPresent: boolean) {
     // 4. 포그라운드 메시지 수신 시 처리
     const unsubscribe = onMessageListener((payload: any) => {
       console.log('[FCM] 포그라운드 메시지 수신:', payload);
-      window.dispatchEvent(new Event('notif-updated'));
+      window.dispatchEvent(new Event('notif-received'));
 
       // 탭이 비활성(다른 탭/사이트를 보고 있을 때)일 때만 브라우저 알림을 띄웁니다.
       // 탭이 활성 상태(우리 사이트를 보고 있을 때)에는 벨 아이콘 배지 갱신만 합니다.
