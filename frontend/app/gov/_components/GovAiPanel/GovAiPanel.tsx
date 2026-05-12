@@ -78,7 +78,6 @@ export default function GovAiPanel() {
     <div className={styles.aiPanel}>
       <div className={styles.header}>
         <h2 className={styles.title}>🤖 FarmBalance AI 분석</h2>
-        <p className={styles.desc}>현재 수급 데이터와 경고 품목을 기반으로 AI 분석을 제공합니다.</p>
       </div>
 
       <div className={styles.chatBox} ref={chatBoxRef}>

@@ -24,39 +24,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── 2. 세션 쿠키 존재 여부 확인 ──
+  // ── 2. 세션 쿠키 존재 여부 및 skipAuth 확인 ──
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
   const isAuthenticated = !!sessionCookie?.value;
-
-  // ── 3. 이미 로그인한 사용자가 /login, /signup 접근 시 → 홈으로 리다이렉트 ──
-  if (isAuthenticated && AUTH_REDIRECT_PATHS.includes(pathname)) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
-  // ── 4. 공개 경로는 인증 없이 통과 ──
-  const isPublicPath = PUBLIC_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
-  if (isPublicPath) {
-    return NextResponse.next();
-  }
-
-  // ── 5. 보호된 경로에 미인증 접근 시 → /login 리다이렉트 ──
-  // SKIP_AUTH=true 설정 시 인증 없이 모든 페이지 접근 허용 (개발/시연용)
   const skipAuth = process.env.SKIP_AUTH === 'true';
-  if (!isAuthenticated && !skipAuth) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
 
-  // ── 6. 역할(Role) 기반 라우팅 및 접근 제어 ──
-  // ⚠️ 이 middleware는 UX용 라우트 가드입니다.
-  //    실제 API 권한 검증은 반드시 백엔드(Spring Security)에서 수행합니다.
-  //    fb-user 쿠키는 클라이언트에서 조작 가능하므로 보안 목적으로 신뢰하지 않습니다.
+  // ── 3. 역할(Role) 기반 제어를 위해 Role 파싱 (가장 먼저 수행) ──
+  // ⚠️ 실제 API 권한 검증은 백엔드에서 수행하며, 이는 UX용 라우트 가드입니다.
   let userRole = '';
   if (skipAuth) {
-    // 개발/시연 모드: GOV 역할로 시뮬레이션
+    // 개발/시연 모드: 테스트 편의를 위해 GOV 역할로 시뮬레이션
     userRole = 'GOV';
   } else if (isAuthenticated) {
     // 방법 1: fb-user 쿠키에서 role 읽기 (로그인 시 BFF가 설정한 non-httpOnly 쿠키)
@@ -66,14 +43,13 @@ export function middleware(request: NextRequest) {
         const userData = JSON.parse(decodeURIComponent(userCookie.value));
         userRole = (userData.role || '').toUpperCase();
       } catch {
-        // fb-user 쿠키 파싱 실패 → fallback 시도
+        // 파싱 실패 시 fallback으로 넘어감
       }
     }
 
     // 방법 2: fb-user가 없으면 fb-session에서 JWT 추출 후 role 파싱 (fallback)
     if (!userRole && sessionCookie?.value) {
       try {
-        // fb-session = Base64(JSON { token, refreshToken })
         const decoded = Buffer.from(sessionCookie.value, 'base64').toString('utf-8');
         const sessionData = JSON.parse(decoded);
         const jwt = sessionData.token || sessionData.accessToken;
@@ -85,19 +61,46 @@ export function middleware(request: NextRequest) {
           }
         }
       } catch {
-        // JWT fallback 파싱 실패 시 무시
+        // 무시
       }
     }
   }
 
-  // GOV 롤이 홈(/) 접근 시 → 지자체 대시보드로 리다이렉트
-  if (userRole === 'GOV' && pathname === '/') {
-    return NextResponse.redirect(new URL('/gov', request.url));
+  // ── 4. GOV 롤 사용자 강제 격리 ──
+  // GOV 사용자는 어떤 URL로 접근하든 무조건 /gov 로 보냅니다. (PUBLIC_PATHS 포함)
+  // 단, skipAuth=true 인 개발 모드에서는 프론트엔드 일반 페이지 테스트를 위해 격리하지 않습니다.
+  if (userRole === 'GOV' && !skipAuth) {
+    if (!pathname.startsWith('/gov')) {
+      return NextResponse.redirect(new URL('/gov', request.url));
+    }
+    // 이미 /gov 경로라면 통과
+    return NextResponse.next();
   }
 
-  // /gov 경로 접근 시 GOV 또는 ADMIN 권한 필요
+  // ── 5. 이미 로그인한 사용자가 /login, /signup 접근 시 → 홈으로 리다이렉트 ──
+  if (isAuthenticated && AUTH_REDIRECT_PATHS.includes(pathname)) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  // ── 6. 공개 경로는 인증 없이 통과 ──
+  const isPublicPath = PUBLIC_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
+  if (isPublicPath) {
+    return NextResponse.next();
+  }
+
+  // ── 7. 보호된 경로에 미인증 접근 시 → /login 리다이렉트 ──
+  if (!isAuthenticated && !skipAuth) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // ── 8. (FARMER 등 일반 유저) /gov 경로 접근 차단 ──
   if (pathname.startsWith('/gov') && !skipAuth) {
-    if (userRole !== 'GOV' && userRole !== 'ADMIN') {
+    // GOV 롤은 4단계에서 이미 next()로 통과했으므로 여기 도달한 사람은 ADMIN 또는 일반 유저입니다.
+    if (userRole !== 'ADMIN') {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
