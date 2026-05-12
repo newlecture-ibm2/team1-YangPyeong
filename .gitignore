@@ -41,6 +41,9 @@ backend/src/main/resources/firebase/
 .DS_Store
 Thumbs.db
 
+# ===== Docker (로컬 개발 전용 override) =====
+docker-compose.override.yml
+
 # ===== Env =====
 .env
 .env.local

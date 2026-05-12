@@ -36,7 +36,7 @@ public class PolicyRecommendResponse {
         private String applyEnd;
         private String sourceUrl;
         private int matchScore;
-        private List<String> matchReasons;
+        private String matchReason;
         private String summary;
     }
 }

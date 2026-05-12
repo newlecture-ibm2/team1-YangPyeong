@@ -26,7 +26,7 @@ export default function useRecommend() {
   }, [selectedFarmIdx]);
 
   const handleAnalyze = async () => {
-    if (!farm) return;
+    if (!farm || !farm.id) return;
     setIsAnalyzing(true);
 
     try {
@@ -43,7 +43,7 @@ export default function useRecommend() {
       toastSuccess('AI 작물 추천이 완료되었습니다.');
     } catch (err) {
       console.error('AI 분석 실패:', err);
-      toastError('AI 분석에 실패했습니다.');
+      toastError('AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setIsAnalyzing(false);
     }
