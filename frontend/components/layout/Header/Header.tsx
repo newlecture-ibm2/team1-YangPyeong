@@ -158,9 +158,10 @@ export default function Header() {
   }, []);
 
   // ────── 알림 unread count ──────
-  // user가 설정된 후에만 폴링 시작 (핵심: user가 null이면 실행 안 함)
+  // user 존재 여부가 바뀔 때만 폴링을 시작/중지 (객체 변경에는 반응하지 않음)
+  const isLoggedIn = !!user;
   useEffect(() => {
-    if (!user) {
+    if (!isLoggedIn) {
       setUnreadCount(0);
       return;
     }
@@ -200,7 +201,7 @@ export default function Header() {
       window.removeEventListener('notif-received', handleNotifReceived);
       window.removeEventListener('notif-read-changed', handleReadChanged);
     };
-  }, [user]);
+  }, [isLoggedIn]);
 
   // 서버에서 받아온 알림 목록에 로컬 읽음 상태를 합산
   const mergeReadState = useCallback((serverData: RecentNotification[]): RecentNotification[] => {
