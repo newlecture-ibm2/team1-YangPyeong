@@ -6,6 +6,15 @@
 .pageTitle { font-family: var(--font-serif); font-size: 32px; font-weight: 400; color: var(--color-text); margin-bottom: var(--space-xs); }
 .pageSub { font-size: 16px; color: var(--color-text-secondary); }
 
+/* ── 필터 & 검색 ── */
+.filterSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+  gap: var(--space-md);
+}
+
 /* ── 테이블 ── */
 .tableWrap {
   background: var(--color-surface);
@@ -87,3 +96,18 @@
 /* ── 로딩/빈 상태 ── */
 .loadingWrap { display: flex; justify-content: center; align-items: center; min-height: 200px; color: var(--color-text-secondary); font-size: 16px; }
 .emptyState { text-align: center; padding: var(--space-2xl); color: var(--color-text-secondary); }
+
+/* ── 페이지네이션 ── */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+}
+
+.pageInfo {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
