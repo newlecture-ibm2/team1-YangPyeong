@@ -169,19 +169,20 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
         List<Map<String, Object>> graphRelations = policyGraphQueryPort.findRelationsForFarmerAndPolicies(userId, topPolicyIds);
 
         // 7. AI 추천 사유 생성을 위한 데이터 준비
-        Map<String, Object> farmerProfileMap = Map.of(
-            "name", profile.name(),
-            "regionName", profile.regionName(),
-            "totalArea", totalArea,
-            "crops", userCrops
-        );
+        Map<String, Object> farmerProfileMap = new java.util.HashMap<>();
+        farmerProfileMap.put("name", profile.name());
+        farmerProfileMap.put("regionName", profile.regionName());
+        farmerProfileMap.put("totalArea", totalArea);
+        farmerProfileMap.put("crops", userCrops);
 
-        List<Map<String, Object>> candidatePoliciesMap = topPolicies.stream().map(p -> Map.<String, Object>of(
-            "policyId", p.getId(),
-            "title", p.getTitle(),
-            "category", p.getCategory() != null ? p.getCategory() : "",
-            "supportAmount", p.getSupportAmount() != null ? p.getSupportAmount() : ""
-        )).toList();
+        List<Map<String, Object>> candidatePoliciesMap = topPolicies.stream().map(p -> {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("policyId", p.getId());
+            map.put("title", p.getTitle());
+            map.put("category", p.getCategory());
+            map.put("supportAmount", p.getSupportAmount());
+            return map;
+        }).toList();
 
         // 8. AI 초개인화 사유 요청
         PolicyAiPort.AiPolicyRecommendation aiResult = policyAiPort.generatePolicyReason(userId, farmerProfileMap, graphRelations, candidatePoliciesMap);

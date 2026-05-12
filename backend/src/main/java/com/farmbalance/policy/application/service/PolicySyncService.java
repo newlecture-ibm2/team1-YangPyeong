@@ -109,6 +109,9 @@ public class PolicySyncService implements SyncPolicyUseCase {
                         }
 
                         // ── STEP 3: Correct (region/category/date/content) ──
+                        if (policyData.getTitle() == null || policyData.getTitle().isBlank()) {
+                            extractFieldsFromContent(policyData);
+                        }
                         correctFields(policyData, warnings);
 
                         // ── STEP 4: Persist ──
@@ -199,8 +202,8 @@ public class PolicySyncService implements SyncPolicyUseCase {
 
         boolean extracted = false;
 
-        // 서비스명 → title
-        String title = extractField(content, "서비스명");
+        // 서비스명/사업명/정책명/공고명 → title (수정된 안전한 추출)
+        String title = extractTitleSafely(content);
         if (title != null && !title.isBlank()) {
             policy.setTitle(title);
             extracted = true;
@@ -231,6 +234,29 @@ public class PolicySyncService implements SyncPolicyUseCase {
         }
 
         return extracted;
+    }
+
+    /**
+     * 정규식을 이용하여 본문 침범 없이 짧은 제목만 안전하게 추출합니다.
+     */
+    private String extractTitleSafely(String content) {
+        if (content == null || content.isBlank()) return null;
+
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile(
+                "(?:서비스명|사업명|정책명|공고명)\\s*:\\s*(.*?)(?=\\n|서비스목적요약:|지원대상:|지원내용:|선정기준:|신청기한:|신청방법:|소관기관명:|전화문의:|$)",
+                java.util.regex.Pattern.DOTALL).matcher(content);
+
+        if (m.find()) {
+            String title = m.group(1);
+            // 연속 공백 및 캐리지 리턴 제거
+            title = title.replaceAll("[\\r\\n]+", " ").replaceAll("\\s+", " ").trim();
+            // 최대 80자 제한
+            if (title.length() > 80) {
+                title = title.substring(0, 80).trim();
+            }
+            return title;
+        }
+        return null;
     }
 
     /**

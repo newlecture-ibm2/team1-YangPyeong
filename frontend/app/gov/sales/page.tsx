@@ -63,7 +63,7 @@ export default function SalesPage() {
       </div> */}
 
       <div className={styles.kpiRow}>
-        <div className={styles.kpi}><div className={styles.kpiLabel}>이번달 총 거래액</div><div className={styles.kpiValue}>{summary.totalAmount}</div></div>
+        <div className={styles.kpi}><div className={styles.kpiLabel}>이번달 총 거래액</div><div className={styles.kpiValue}>₩{summary.totalAmount.toLocaleString()}</div></div>
         <div className={styles.kpi}><div className={styles.kpiLabel}>거래 건수</div><div className={styles.kpiValue}>{summary.txCount.toLocaleString()}</div></div>
         <div className={styles.kpi}><div className={styles.kpiLabel}>활성 판매자</div><div className={styles.kpiValue}>{summary.activeSellers}</div></div>
         <div className={styles.kpi}><div className={styles.kpiLabel}>전월 대비</div><div className={styles.kpiValue} style={{ color: 'var(--color-primary)' }}>{summary.momRate}</div></div>
