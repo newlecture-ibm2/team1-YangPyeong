@@ -11,7 +11,9 @@ import lombok.Getter;
 @AllArgsConstructor
 public class CultivationRegisteredEvent {
     private final Long id; // cultivation_registration_id
+    private final Long userId;
     private final Long farmId;
     private final Long cropId;
+    private final String cropName;
     private final Double cultivationArea;
 }

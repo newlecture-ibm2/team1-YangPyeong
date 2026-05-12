@@ -72,13 +72,14 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
 
     @Override
     @org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
-    public void recalculate(String cropName) {
+    public SupplyRatioResult recalculate(String cropName) {
         // 실시간 계산 수행 (현재는 로그만 남기지만, 추후 요약 테이블이나 캐시 갱신 로직이 여기에 들어갑니다)
         SupplyRatioResult result = calculateSupplyRatio(cropName, null);
         
         System.out.println("[Recalculate-Core] " + cropName + "의 최신 수급 비율: " + result.getRatio() + "% (" + result.getStatus() + ")");
         
         // TODO: 결과를 CropBalanceSummary 테이블 등에 저장하여 대시보드 조회 성능 최적화 가능
+        return result;
     }
 
     @Override
