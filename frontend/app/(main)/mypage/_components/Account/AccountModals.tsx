@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { getPasswordStrength } from '@/lib/utils';
+import Input from '@/components/common/Input';
 import styles from './AccountModals.module.css';
 
 /* ── 비밀번호 변경 모달 ── */
@@ -116,13 +117,20 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
         )}
 
         <div className={styles.field}>
-          <label className={styles.label}>현재 비밀번호</label>
-          <input
+          <Input
+            className={styles.modalPasswordField}
+            label="현재 비밀번호"
+            id="mypage-change-pw-current"
             type="password"
-            className={`${styles.input} ${currentPwError ? styles.inputError : ''}`}
+            autoComplete="current-password"
             value={currentPassword}
-            onChange={(e) => { setCurrentPassword(e.target.value); setInlineError(''); setCurrentPwError(''); }}
+            onChange={(e) => {
+              setCurrentPassword(e.target.value);
+              setInlineError('');
+              setCurrentPwError('');
+            }}
             placeholder="현재 비밀번호 입력"
+            invalid={!!currentPwError}
           />
           {currentPwError && (
             <div className={styles.fieldHint}>{currentPwError}</div>
@@ -130,10 +138,12 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>새 비밀번호</label>
-          <input
+          <Input
+            className={styles.modalPasswordField}
+            label="새 비밀번호"
+            id="mypage-change-pw-new"
             type="password"
-            className={styles.input}
+            autoComplete="new-password"
             value={newPassword}
             onChange={(e) => { setNewPassword(e.target.value); setInlineError(''); }}
             placeholder="8자 이상, 영문자·숫자·특수문자 포함"
@@ -175,10 +185,12 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>새 비밀번호 확인</label>
-          <input
+          <Input
+            className={styles.modalPasswordField}
+            label="새 비밀번호 확인"
+            id="mypage-change-pw-confirm"
             type="password"
-            className={styles.input}
+            autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => { setConfirmPassword(e.target.value); setInlineError(''); }}
             placeholder="새 비밀번호 재입력"
@@ -293,10 +305,12 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, isSocial = fals
         {/* LOCAL 유저만 비밀번호 입력 표시 */}
         {!isSocial && (
           <div className={styles.field}>
-            <label className={styles.label} style={{ fontWeight: 500 }}>비밀번호 확인</label>
-            <input
+            <Input
+              className={styles.modalPasswordField}
+              label="비밀번호 확인"
+              id="mypage-delete-pw"
               type="password"
-              className={styles.input}
+              autoComplete="current-password"
               value={password}
               onChange={(e) => { setPassword(e.target.value); setInlineError(''); }}
               placeholder="현재 비밀번호 입력"
