@@ -54,4 +54,15 @@ public interface PolicyDataRepository extends JpaRepository<PolicyDataJpaEntity,
      * source 기준 일괄 삭제 (Mock 데이터 정리용).
      */
     void deleteBySource(String source);
+
+    /**
+     * 맞춤 정책 추천용 활성 정책 전체 조회.
+     * 삭제되지 않았으며, 마감일이 지나지 않은(또는 없는) 정책만 가져옵니다.
+     */
+    @Query("""
+        SELECT p FROM PolicyDataJpaEntity p
+        WHERE p.deletedAt IS NULL
+          AND (p.applyEnd IS NULL OR p.applyEnd >= CURRENT_DATE)
+    """)
+    java.util.List<PolicyDataJpaEntity> findActivePolicies();
 }

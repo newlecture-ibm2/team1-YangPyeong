@@ -11,6 +11,7 @@ from app.routers import product_assist as product_assist_router
 from app.routers import recommend as recommend_router
 from app.routers import gov as gov_router
 from app.routers import revenue as revenue_router
+from app.routers import farm_agent as farm_agent_router
 
 # 로깅 설정
 logging.basicConfig(
@@ -33,5 +34,6 @@ app.include_router(product_assist_router.router)
 app.include_router(recommend_router.router)
 app.include_router(gov_router.router)
 app.include_router(revenue_router.router)
+app.include_router(farm_agent_router.router)
 
-# TODO: STEP 10에서 chat/agent 라우터 등록
+# TODO: STEP 10에서 chat/agent 라우터 등록 (완료)

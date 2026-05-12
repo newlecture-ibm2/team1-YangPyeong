@@ -94,7 +94,7 @@ kamis:
 
 # ── AI Server ──
 ai:
-  server-url: ${AI_SERVER_URL:http://ai-server:8000}
+  server-url: ${AI_SERVER_URL}
 
 # ── Server ──
 server:
@@ -157,3 +157,7 @@ resilience4j:
       oauthCircuitBreaker:
         base-config: default
 
+# ── Custom App Properties ──
+app:
+  policy:
+    scheduler-enabled: true

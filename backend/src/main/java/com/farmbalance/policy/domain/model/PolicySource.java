@@ -21,6 +21,10 @@ public enum PolicySource {
     GREENDAERO,
     /** 수동 업로드 문서 (PDF/HWP) */
     MANUAL,
+    /** 양평군청 공고 크롤링 */
+    YANGPYEONG,
+    /** 경기도청 농정 크롤링 */
+    GYEONGGI,
     /** 기타 웹 크롤링 */
     CRAWL,
     /** 개발용 Seed 데이터 */
