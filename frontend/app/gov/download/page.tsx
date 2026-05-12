@@ -161,9 +161,9 @@ export default function DownloadPage() {
           <p className={styles.breadcrumb}>지자체 / 데이터 다운로드</p>
           <h1 className={styles.pageTitle}>📥 데이터 다운로드</h1>
           <p className={styles.pageSub}>{region} 농업 데이터를 Excel/CSV 형식으로 다운로드할 수 있습니다.</p>
-        </div>
-        <div>
-          <GovTabs />
+          <div className={styles.tabsWrapper}>
+            <GovTabs />
+          </div>
         </div>
       </div>
 

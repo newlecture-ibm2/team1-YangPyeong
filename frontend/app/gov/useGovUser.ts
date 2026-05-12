@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 export interface GovUser {
   id: number;
+  email: string;
   name: string;
   role: string;
   regionCode: string;
