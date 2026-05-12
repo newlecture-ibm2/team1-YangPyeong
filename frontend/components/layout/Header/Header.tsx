@@ -69,7 +69,7 @@ export default function Header() {
   const notifRef = useRef<HTMLDivElement>(null);
   // 로컬에서 읽음 처리한 알림 ID를 기억 (서버 stale 데이터 방어)
   const localReadIds = useRef<Set<number>>(new Set());
-  // 드롭다운 마지막 fetch 시간 (10초 캐시)
+  // 드롭다운 마지막 fetch 시간 (캐시)
   const lastNotifFetchTime = useRef(0);
 
   // FCM Hook: 로그인 상태일 때 토큰 등록 및 백그라운드/포그라운드 리스너 활성화
@@ -157,41 +157,50 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 알림 unread count 폴링 (30초 간격)
-  const userRef = useRef(user);
-  useEffect(() => { userRef.current = user; }, [user]);
-
-  const fetchUnreadCount = useCallback(async () => {
-    if (!userRef.current) {
+  // ────── 알림 unread count ──────
+  // user가 설정된 후에만 폴링 시작 (핵심: user가 null이면 실행 안 함)
+  useEffect(() => {
+    if (!user) {
       setUnreadCount(0);
       return;
     }
-    try {
-      const res = await fetch('/api/notifications/unread-count');
-      if (res.ok) {
-        const json = await res.json();
-        setUnreadCount(json.data?.unreadCount ?? 0);
-      }
-    } catch {
-      // 조회 실패 시 무시
-    }
-  }, []);
 
-  useEffect(() => {
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30_000);
-    
-    // FCM 포그라운드 수신 시 로컬에서 즉시 +1 (서버 왔복 없이)
+    const fetchCount = async () => {
+      try {
+        const res = await fetch('/api/notifications/unread-count');
+        if (res.ok) {
+          const json = await res.json();
+          setUnreadCount(json.data?.unreadCount ?? 0);
+        }
+      } catch {
+        // 조회 실패 시 무시
+      }
+    };
+
+    // 즉시 한 번 호출 + 30초 폴링
+    fetchCount();
+    const interval = setInterval(fetchCount, 30_000);
+
+    // FCM 포그라운드 수신 시 로컬에서 즉시 +1
     const handleNotifReceived = () => {
       setUnreadCount((prev) => prev + 1);
+      lastNotifFetchTime.current = 0; // 드롭다운 캐시 무효화
     };
     window.addEventListener('notif-received', handleNotifReceived);
-    
+
+    // 마이페이지 등에서 읽음 처리 시 서버에서 정확한 카운트 재조회
+    const handleReadChanged = () => {
+      fetchCount();
+      lastNotifFetchTime.current = 0; // 드롭다운 캐시 무효화
+    };
+    window.addEventListener('notif-read-changed', handleReadChanged);
+
     return () => {
       clearInterval(interval);
       window.removeEventListener('notif-received', handleNotifReceived);
+      window.removeEventListener('notif-read-changed', handleReadChanged);
     };
-  }, [fetchUnreadCount]);
+  }, [user]);
 
   // 서버에서 받아온 알림 목록에 로컬 읽음 상태를 합산
   const mergeReadState = useCallback((serverData: RecentNotification[]): RecentNotification[] => {
@@ -200,14 +209,14 @@ export default function Header() {
     );
   }, []);
 
-  // 알림 드롭다운 열 때 최근 5개 조회 (10초 캐시)
+  // ────── 알림 드롭다운 ──────
   const handleNotifToggle = async () => {
     const nextState = !notifOpen;
     setNotifOpen(nextState);
     setDropdownOpen(false);
 
     if (nextState && user) {
-      // 10초 이내 재열기면 캐시된 데이터 사용 (서버 요청 생략)
+      // 10초 이내 재열기면 캐시된 데이터 사용
       const now = Date.now();
       if (now - lastNotifFetchTime.current < 10_000 && recentNotifs.length > 0) return;
 
@@ -227,8 +236,8 @@ export default function Header() {
     }
   };
 
-  // 알림 개별 클릭 → 읽음 처리 + 이동
-  const handleNotifClick = async (notif: RecentNotification) => {
+  // ────── 알림 개별 클릭 → 읽음 처리 + 이동 ──────
+  const handleNotifClick = (notif: RecentNotification) => {
     // 1. 즉시 로컬 상태 업데이트 (UI 먼저 반영)
     if (!notif.isRead) {
       localReadIds.current.add(notif.id);
@@ -236,17 +245,18 @@ export default function Header() {
       setRecentNotifs((prev) =>
         prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n))
       );
+      // 캐시 무효화 (다음 열기 시 서버에서 최신 데이터 가져옴)
+      lastNotifFetchTime.current = 0;
+      // 서버에 읽음 처리 (백그라운드) + 마이페이지와 동기화 이벤트
+      fetch(`/api/notifications/${notif.id}/read`, { method: 'PATCH' })
+        .then(() => window.dispatchEvent(new Event('notif-read-changed')))
+        .catch(() => {});
     }
 
     // 2. 드롭다운 닫기 + 페이지 이동
     setNotifOpen(false);
     if (notif.link) {
       router.push(notif.link);
-    }
-
-    // 3. 서버에 읽음 처리 (백그라운드)
-    if (!notif.isRead) {
-      fetch(`/api/notifications/${notif.id}/read`, { method: 'PATCH' }).catch(() => {});
     }
   };
 

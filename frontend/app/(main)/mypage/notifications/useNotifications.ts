@@ -44,12 +44,21 @@ export function useNotifications() {
     fetchNotifications(true);
   }, [fetchNotifications]);
 
+  // 헤더 드롭다운에서 읽음 처리 시 마이페이지 목록도 동기화
+  useEffect(() => {
+    const handleReadChanged = () => fetchNotifications(true);
+    window.addEventListener('notif-read-changed', handleReadChanged);
+    return () => window.removeEventListener('notif-read-changed', handleReadChanged);
+  }, [fetchNotifications]);
+
   const markAsRead = async (id: number) => {
     try {
       await notificationApi.markAsRead(id);
       setNotifications((prev) => 
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
+      // 헤더 배지 카운트 동기화
+      window.dispatchEvent(new Event('notif-read-changed'));
     } catch (err) {
       console.error(err);
     }
@@ -61,6 +70,8 @@ export function useNotifications() {
       setNotifications((prev) => 
         prev.map((n) => ({ ...n, isRead: true }))
       );
+      // 헤더 배지 카운트 동기화
+      window.dispatchEvent(new Event('notif-read-changed'));
     } catch (err) {
       console.error(err);
     }
