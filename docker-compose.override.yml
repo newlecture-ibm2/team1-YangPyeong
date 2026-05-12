@@ -1,6 +1,0 @@
-# ── 로컬 개발 전용 (gitignore 대상) ──
-# docker-compose.yml을 수정하지 않고, AI 서버 포트만 로컬에 개방합니다.
-services:
-  ai-server:
-    ports:
-      - "8000:8000"
