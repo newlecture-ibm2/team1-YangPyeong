@@ -3,6 +3,7 @@ package com.farmbalance.admin.adapter.in.web;
 import com.farmbalance.admin.adapter.in.web.dto.AdminUserResponse;
 import com.farmbalance.admin.adapter.in.web.dto.ChangeUserRoleRequest;
 import com.farmbalance.admin.adapter.in.web.dto.ChangeUserStatusRequest;
+import com.farmbalance.admin.adapter.in.web.dto.ForceWithdrawRequest;
 import com.farmbalance.admin.application.port.in.dto.AdminUserDto;
 import com.farmbalance.admin.application.port.in.ManageUserUseCase;
 import com.farmbalance.global.response.ApiResponse;
@@ -101,6 +102,27 @@ public class AdminUserController {
     public ApiResponse<Void> changeStatus(@PathVariable Long id,
                                           @Valid @RequestBody ChangeUserStatusRequest request) {
         manageUserUseCase.changeStatus(id, request.getStatus());
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 관리자 강제 탈퇴 (제재)
+     * POST /api/admin/users/{id}/withdraw
+     */
+    @PostMapping("/{id}/withdraw")
+    public ApiResponse<Void> forceWithdraw(@PathVariable Long id,
+                                           @Valid @RequestBody ForceWithdrawRequest request) {
+        manageUserUseCase.forceWithdrawUser(id, request.getReasonType(), request.getReasonDetail());
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 관리자 수동 탈퇴 복구
+     * POST /api/admin/users/{id}/reactivate
+     */
+    @PostMapping("/{id}/reactivate")
+    public ApiResponse<Void> reactivateUser(@PathVariable Long id) {
+        manageUserUseCase.reactivateUser(id);
         return ApiResponse.ok(null);
     }
 }

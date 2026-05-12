@@ -49,3 +49,24 @@ export async function changeUserStatus(id: number, body: ChangeStatusRequest): P
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '상태 변경 실패')
 }
+
+/** 강제 탈퇴 (제재) */
+export async function forceWithdrawUser(id: number, reasonType: string, reasonDetail: string): Promise<void> {
+  const res = await fetch(`${BASE}/${id}/withdraw`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reasonType, reasonDetail }),
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '강제 탈퇴 처리에 실패했습니다.')
+}
+
+/** 수동 복구 */
+export async function reactivateUser(id: number): Promise<void> {
+  const res = await fetch(`${BASE}/${id}/reactivate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '수동 복구에 실패했습니다.')
+}

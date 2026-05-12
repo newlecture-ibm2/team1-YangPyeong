@@ -29,7 +29,7 @@ public class AdminUserDto {
                 .status(domain.getStatus() != null ? domain.getStatus().name() : null)
                 .createdAt(domain.getCreatedAt())
                 .updatedAt(domain.getUpdatedAt())
-                .deletedAt(null)
+                .deletedAt(domain.getWithdrawalRequestedAt())
                 .build();
     }
 }

@@ -34,4 +34,14 @@ public interface ManageUserUseCase {
      * 상태 변경 (ACTIVE ↔ SUSPENDED)
      */
     void changeStatus(Long id, String status);
+
+    /**
+     * 관리자 강제 탈퇴 처리
+     */
+    void forceWithdrawUser(Long id, String reasonType, String detail);
+
+    /**
+     * 관리자 수동 탈퇴 복구
+     */
+    void reactivateUser(Long id);
 }

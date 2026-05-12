@@ -13,7 +13,7 @@ export interface AdminUser {
 }
 
 export type UserRole = 'USER' | 'FARMER' | 'ADMIN' | 'GOV'
-export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING'
+export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING' | 'WITHDRAWN'
 
 /** 역할 변경 허용 값 (GOV 제외) */
 export type ChangeableRole = 'USER' | 'FARMER'
@@ -58,4 +58,5 @@ export const STATUS_LABELS: Record<UserStatus, string> = {
   ACTIVE: '활성',
   SUSPENDED: '정지',
   PENDING: '대기',
+  WITHDRAWN: '탈퇴',
 }

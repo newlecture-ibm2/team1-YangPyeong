@@ -60,35 +60,15 @@ export default function MyPage() {
     return success;
   };
 
-  /** 회원 탈퇴 요청 성공 — 유예 중에는 로그아웃하지 않음 */
-  const handleDeleteSuccess = async (info?: { withdrawalCompletesAt?: string }) => {
-    if (info?.withdrawalCompletesAt) {
-      const when = new Date(info.withdrawalCompletesAt);
-      const label = Number.isNaN(when.getTime())
-        ? info.withdrawalCompletesAt
-        : when.toLocaleString('ko-KR');
-      toast(`탈퇴가 접수되었습니다. 최종 처리 예정: ${label}. 유예 기간 내 취소할 수 있습니다.`, 'success');
-      setShowDeleteModal(false);
-      window.location.reload();
-      return;
-    }
-    toast('회원 탈퇴가 완료되었습니다. 이용해주셔서 감사합니다.', 'success');
+  /** 회원 탈퇴 성공 — 즉시 로그아웃 */
+  const handleDeleteSuccess = async () => {
+    toast('회원 탈퇴가 완료되었습니다. 30일 이내 재로그인 시 복구할 수 있습니다.', 'success');
     await apiFetch('/api/auth/logout', { method: 'POST' });
     if (typeof document !== 'undefined') {
       document.cookie = 'fb-user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
     router.push('/');
     router.refresh();
-  };
-
-  const handleCancelWithdrawal = async () => {
-    const res = await apiFetch<unknown>('/api/users/me/withdrawal/cancel', { method: 'POST' });
-    if (res.success) {
-      toast('탈퇴 요청이 취소되었습니다.', 'success');
-      window.location.reload();
-      return;
-    }
-    toast(res.error?.message || '탈퇴 취소에 실패했습니다.', 'error');
   };
 
   if (loading) {
@@ -139,7 +119,6 @@ export default function MyPage() {
           <ProfileInfoView
             profile={profile}
             onEdit={startEditing}
-            onCancelWithdrawal={profile.withdrawalPending ? handleCancelWithdrawal : undefined}
           />
         )}
       </div>
@@ -160,7 +139,6 @@ export default function MyPage() {
               </button>
             </div>
           )}
-          {!profile.withdrawalPending && (
           <div className={styles.settingItem}>
             <span className={styles.dangerText}>회원 탈퇴</span>
             <button
@@ -170,7 +148,6 @@ export default function MyPage() {
               탈퇴하기
             </button>
           </div>
-          )}
         </div>
       </div>
 

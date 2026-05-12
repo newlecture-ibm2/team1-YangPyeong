@@ -42,4 +42,7 @@ public interface OrderJpaRepository extends JpaRepository<OrderJpaEntity, Long> 
     /** 송장번호로 주문 조회 */
     @EntityGraph(attributePaths = "items")
     Optional<OrderJpaEntity> findByTrackingNumberAndDeletedAtIsNull(String trackingNumber);
+
+    /** 해당 유저의 주문 존재 여부 (유저 비식별화 분기용) */
+    boolean existsByBuyerIdAndDeletedAtIsNull(Long buyerId);
 }

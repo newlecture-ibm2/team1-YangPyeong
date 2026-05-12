@@ -14,6 +14,7 @@ interface Comment {
   content: string;
   authorId: number;
   authorNickname?: string;
+  authorStatus?: string;
   accepted: boolean;
   createdAt: string;
 }
@@ -137,7 +138,16 @@ export default function CommentSection({
           <div key={comment.id} className={`${styles.commentItem} ${comment.accepted ? styles.commentItemAccepted : ''}`}>
             <div className={styles.commentHeader}>
               <div className={styles.commentHeaderLeft}>
-                <span className={styles.author}>{comment.authorNickname || '알 수 없음'} {comment.authorId === postAuthorId ? '(글쓴이)' : ''}</span>
+                <span
+                  className={styles.author}
+                  style={comment.authorStatus === 'WITHDRAWN' ? { color: 'var(--color-text-tertiary, #999)' } : undefined}
+                >
+                  {comment.authorStatus === 'WITHDRAWN'
+                    ? '(탈퇴한 사용자)'
+                    : (comment.authorNickname || '알 수 없음')}
+                  {' '}
+                  {comment.authorStatus !== 'WITHDRAWN' && comment.authorId === postAuthorId ? '(글쓴이)' : ''}
+                </span>
                 {comment.accepted && <span className={styles.acceptedBadge}>✅ 채택된 답변</span>}
               </div>
               <div className={styles.commentHeaderRight}>

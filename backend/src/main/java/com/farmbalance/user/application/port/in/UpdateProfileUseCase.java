@@ -8,6 +8,5 @@ public interface UpdateProfileUseCase {
     void updateProfileImage(String email, String imageUrl);
     void changePassword(String email, String encodedPassword);
     void withdrawAccount(String email);
-    void cancelPendingWithdrawal(String email);
     void reactivateAccount(String email);
 }

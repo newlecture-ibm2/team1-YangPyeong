@@ -6,7 +6,6 @@ import com.farmbalance.user.application.port.in.CheckNicknameUseCase;
 import com.farmbalance.user.application.port.in.GetProfileUseCase;
 import com.farmbalance.user.application.port.in.UpdateProfileCommand;
 import com.farmbalance.user.application.port.in.UpdateProfileUseCase;
-import com.farmbalance.user.config.UserAccountProperties;
 import com.farmbalance.user.domain.User;
 import com.farmbalance.user.domain.UserStatus;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,7 +40,6 @@ public class UserController {
     private final CheckNicknameUseCase checkNicknameUseCase;
     private final GetProfileUseCase getProfileUseCase;
     private final PasswordEncoder passwordEncoder;
-    private final UserAccountProperties userAccountProperties;
 
     /** 프로필 이미지 저장 디렉토리 */
     private static final Path UPLOAD_DIR = Paths.get("uploads", "profiles");
@@ -96,20 +93,6 @@ public class UserController {
         private String provider;
         private String profileImageUrl;
         private String createdAt;
-        /** 탈퇴 유예 중이면 true */
-        private Boolean withdrawalPending;
-        /** 최종 탈퇴(WITHDRAWN) 예정 시각 (ISO-8601), 유예 중일 때만 */
-        private String withdrawalCompletesAt;
-    }
-
-    /**
-     * 탈퇴 요청 직후 응답 (유예 기간 안내)
-     */
-    @lombok.Getter
-    @lombok.Builder
-    public static class WithdrawalScheduledResponse {
-        private String status;
-        private String withdrawalCompletesAt;
     }
 
     /**
@@ -139,14 +122,6 @@ public class UserController {
     public ApiResponse<ProfileResponse> getMyProfile() {
         User user = requireCurrentUser();
 
-        boolean withdrawalPending = user.getStatus() == UserStatus.PENDING_WITHDRAWAL;
-        String withdrawalCompletesAt = null;
-        if (withdrawalPending && user.getWithdrawalRequestedAt() != null) {
-            withdrawalCompletesAt = user.getWithdrawalRequestedAt()
-                    .plusDays(userAccountProperties.getWithdrawalGraceDays())
-                    .toString();
-        }
-
         ProfileResponse response = ProfileResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -158,8 +133,6 @@ public class UserController {
                 .provider(user.getProvider() != null ? user.getProvider().name() : "LOCAL")
                 .profileImageUrl(resolveProfileImageUrlForApi(user))
                 .createdAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null)
-                .withdrawalPending(withdrawalPending)
-                .withdrawalCompletesAt(withdrawalCompletesAt)
                 .build();
 
         return ApiResponse.ok(response);
@@ -347,10 +320,10 @@ public class UserController {
     }
 
     /**
-     * 회원 탈퇴 요청 — 유예 기간 후 최종 WITHDRAWN 처리 (배치)
+     * 회원 탈퇴 — 즉시 WITHDRAWN 처리, 30일 이내 재로그인으로 복구 가능
      */
     @DeleteMapping("/me")
-    public ApiResponse<WithdrawalScheduledResponse> deleteAccount(
+    public ApiResponse<Void> deleteAccount(
             @RequestBody DeleteAccountRequest request) {
 
         User user = requireCurrentUser();
@@ -369,32 +342,12 @@ public class UserController {
         }
 
         updateProfileUseCase.withdrawAccount(email);
-        User after = getProfileUseCase.getProfileByUserId(user.getId());
-        String completesAt = after.getWithdrawalRequestedAt() != null
-                ? after.getWithdrawalRequestedAt()
-                .plusDays(userAccountProperties.getWithdrawalGraceDays())
-                .toString()
-                : null;
-        log.info("회원 탈퇴 요청 (유예 시작): email={}, completesAt={}", email, completesAt);
-        return ApiResponse.ok(WithdrawalScheduledResponse.builder()
-                .status("pending_withdrawal")
-                .withdrawalCompletesAt(completesAt)
-                .build());
-    }
-
-    /**
-     * 탈퇴 유예 취소 (로그인 상태에서만)
-     */
-    @PostMapping("/me/withdrawal/cancel")
-    public ApiResponse<Void> cancelPendingWithdrawal() {
-        User user = requireCurrentUser();
-        updateProfileUseCase.cancelPendingWithdrawal(user.getEmail());
-        log.info("탈퇴 유예 취소: email={}", user.getEmail());
+        log.info("회원 즉시 탈퇴 완료: email={}", email);
         return ApiResponse.ok(null);
     }
 
     /**
-     * 탈퇴 계정 재활성화
+     * 탈퇴 계정 재활성화 (30일 이내 재로그인 복구용)
      */
     @PostMapping("/reactivate")
     public ApiResponse<Void> reactivateAccount(@RequestBody Map<String, String> request) {

@@ -12,7 +12,8 @@ import { useToast } from '@/components/common/Toast'
 import styles from './UserManagement.module.css'
 import type { AdminUser, UserRole, ChangeableRole } from '../_lib/user.types'
 import { ROLE_LABELS, STATUS_LABELS } from '../_lib/user.types'
-import { fetchUsers, changeUserRole, changeUserStatus } from '../_lib/user.api'
+import { fetchUsers, changeUserRole, changeUserStatus, forceWithdrawUser, reactivateUser } from '../_lib/user.api'
+import ForceWithdrawModal from './_components/ForceWithdrawModal'
 
 export default function UserManagementPage() {
   // 필터 상태
@@ -29,6 +30,9 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState(true)
   const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
+  const [forceWithdrawModalOpen, setForceWithdrawModalOpen] = useState(false)
+  const [targetUserForWithdraw, setTargetUserForWithdraw] = useState<AdminUser | null>(null)
+
   const toast = useToast()
   const toastRef = useRef(toast)
   toastRef.current = toast
@@ -44,7 +48,11 @@ export default function UserManagementPage() {
         page,
         size: pageSize,
       })
-      setUsers(result.users)
+      
+      // 마스킹 완료 유저(비식별화) 필터링: 이름이 "탈퇴한 사용자"인 경우 등
+      const visibleUsers = result.users.filter(u => u.name !== '탈퇴한 사용자' && !u.email.startsWith('withdrawn-'))
+      
+      setUsers(visibleUsers)
       setTotalCount(result.meta.totalCount)
       setTotalPages(result.meta.totalPages)
     } catch (e: unknown) {
@@ -95,6 +103,41 @@ export default function UserManagementPage() {
     }
   }
 
+  // 관리자 강제 탈퇴 오픈
+  const openForceWithdrawModal = (user: AdminUser) => {
+    setTargetUserForWithdraw(user)
+    setForceWithdrawModalOpen(true)
+  }
+
+  // 관리자 강제 탈퇴 실행
+  const handleForceWithdraw = async (reasonType: string, reasonDetail: string) => {
+    if (!targetUserForWithdraw) return
+    try {
+      await forceWithdrawUser(targetUserForWithdraw.id, reasonType, reasonDetail)
+      toast.success(`${targetUserForWithdraw.name} 사용자가 강제 탈퇴되었습니다.`)
+      setForceWithdrawModalOpen(false)
+      await loadUsers()
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '강제 탈퇴 처리에 실패했습니다.'
+      toast.error(msg)
+    }
+  }
+
+  // 관리자 수동 복구
+  const handleReactivate = async (user: AdminUser) => {
+    const confirmed = await showConfirm(`${user.name} 사용자의 탈퇴를 취소하고 원상 복구하시겠습니까?`)
+    if (!confirmed) return
+
+    try {
+      await reactivateUser(user.id)
+      toast.success(`${user.name} 사용자가 복구되었습니다.`)
+      await loadUsers()
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '사용자 복구에 실패했습니다.'
+      toast.error(msg)
+    }
+  }
+
   // 역할 배지 variant (Badge 컴포넌트 실제 variant에 맞춤)
   const getRoleBadgeVariant = (role: UserRole): 'green' | 'lime' | 'orange' | 'gray' => {
     switch (role) {
@@ -117,6 +160,7 @@ export default function UserManagementPage() {
     { label: '상태: 전체', value: 'ALL' },
     { label: '활성', value: 'ACTIVE' },
     { label: '정지', value: 'SUSPENDED' },
+    { label: '탈퇴', value: 'WITHDRAWN' },
   ]
 
   // 역할 변경 드롭다운 옵션
@@ -234,14 +278,25 @@ export default function UserManagementPage() {
                   </td>
                   <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}</td>
                   <td>
-                    <Badge variant={user.status === 'ACTIVE' ? 'green' : 'red'}>
-                      {STATUS_LABELS[user.status] ?? user.status}
-                    </Badge>
+                    {user.status === 'WITHDRAWN' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+                        <Badge variant="gray">[탈퇴 (파기 대기중)]</Badge>
+                        {user.deletedAt && (
+                          <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600 }}>
+                            D-{30 - Math.floor((Date.now() - new Date(user.deletedAt).getTime()) / (1000 * 60 * 60 * 24))}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <Badge variant={user.status === 'ACTIVE' ? 'green' : 'red'}>
+                        {STATUS_LABELS[user.status] ?? user.status}
+                      </Badge>
+                    )}
                   </td>
                   <td>
                     <div className={styles.actions}>
                       {/* 역할 변경 (ADMIN, GOV는 변경 불가) — Dropdown 공통 컴포넌트 사용 */}
-                      {user.role !== 'ADMIN' && user.role !== 'GOV' && (
+                      {user.role !== 'ADMIN' && user.role !== 'GOV' && user.status !== 'WITHDRAWN' && (
                         <Dropdown
                           options={changeableRoleOptions}
                           value={user.role}
@@ -251,13 +306,35 @@ export default function UserManagementPage() {
                       )}
 
                       {/* 정지/재활성화 (ADMIN은 정지 불가) */}
-                      {user.role !== 'ADMIN' && (
+                      {user.role !== 'ADMIN' && user.status !== 'WITHDRAWN' && (
                         <Button
                           variant={user.status === 'ACTIVE' ? 'outline' : 'primary'}
                           size="sm"
                           onClick={() => handleStatusToggle(user)}
                         >
                           {user.status === 'ACTIVE' ? '정지' : '해제'}
+                        </Button>
+                      )}
+
+                      {/* 강제 탈퇴 / 수동 복구 */}
+                      {user.role !== 'ADMIN' && user.status !== 'WITHDRAWN' && (
+                        <Button
+                          variant="outline"
+                          style={{ borderColor: '#ef4444', color: '#ef4444' }}
+                          size="sm"
+                          onClick={() => openForceWithdrawModal(user)}
+                        >
+                          강제 탈퇴
+                        </Button>
+                      )}
+                      
+                      {user.status === 'WITHDRAWN' && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleReactivate(user)}
+                        >
+                          수동 복구
                         </Button>
                       )}
                     </div>
@@ -276,6 +353,13 @@ export default function UserManagementPage() {
         {...dialog}
         onConfirm={handleConfirm}
         onClose={handleClose}
+      />
+
+      <ForceWithdrawModal
+        isOpen={forceWithdrawModalOpen}
+        userName={targetUserForWithdraw?.name || ''}
+        onClose={() => setForceWithdrawModalOpen(false)}
+        onConfirm={handleForceWithdraw}
       />
     </div>
   )

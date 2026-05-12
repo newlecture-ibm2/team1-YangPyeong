@@ -43,7 +43,9 @@ export default async function PostDetailPage({
         <h1 className={styles.title}>{post.title}</h1>
         <div className={styles.authorInfo}>
           <div className={styles.author}>
-            <strong>{post.authorNickname || '알 수 없음'}</strong>
+            <strong style={post.authorStatus === 'WITHDRAWN' ? { color: 'var(--color-text-tertiary, #999)' } : undefined}>
+              {post.authorStatus === 'WITHDRAWN' ? '(탈퇴한 사용자)' : (post.authorNickname || '알 수 없음')}
+            </strong>
             <span>조회 {post.viewCount}</span>
           </div>
           <PostActions postId={post.id} authorId={post.authorId} />

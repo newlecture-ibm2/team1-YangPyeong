@@ -16,15 +16,17 @@ public class CommentResponse {
     private String content;
     private boolean accepted;
     private String authorNickname;
+    private String authorStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static CommentResponse fromDomain(Comment comment, String authorNickname) {
+    public static CommentResponse fromDomain(Comment comment, String authorNickname, String authorStatus) {
         return CommentResponse.builder()
                 .id(comment.getId())
                 .postId(comment.getPostId())
                 .authorId(comment.getAuthorId())
                 .authorNickname(authorNickname)
+                .authorStatus(authorStatus)
                 .content(comment.getContent())
                 .accepted(comment.isAccepted())
                 .createdAt(comment.getCreatedAt())

@@ -46,6 +46,13 @@ public class PostController {
                 .orElse("알 수 없음");
     }
 
+    /** 작성자 계정 상태 문자열 (ACTIVE / WITHDRAWN / SUSPENDED 등) */
+    private String resolveStatus(Long authorId) {
+        return userJpaRepository.findById(authorId)
+                .map(u -> u.getStatus().name())
+                .orElse("UNKNOWN");
+    }
+
     private Long getUserId(Authentication auth) {
         return SecurityUtil.getCurrentUserId();
     }
@@ -67,8 +74,9 @@ public class PostController {
         PostResponse response = PostResponse.fromDomain(
                 domainPost,
                 loadPostCategoryPort.findNameById(domainPost.getCategoryId()),
-                0, // 신규 글은 댓글 0개
+                0,
                 resolveNickname(domainPost.getAuthorId()),
+                resolveStatus(domainPost.getAuthorId()),
                 false
         );
         return ApiResponse.ok(response);
@@ -88,6 +96,7 @@ public class PostController {
                         loadPostCategoryPort.findNameById(post.getCategoryId()),
                         (int) commentPort.countByPostId(post.getId()),
                         resolveNickname(post.getAuthorId()),
+                        resolveStatus(post.getAuthorId()),
                         commentPort.existsAcceptedByPostId(post.getId())
                 ));
         
@@ -106,6 +115,7 @@ public class PostController {
                 loadPostCategoryPort.findNameById(post.getCategoryId()),
                 (int) commentPort.countByPostId(post.getId()),
                 resolveNickname(post.getAuthorId()),
+                resolveStatus(post.getAuthorId()),
                 commentPort.existsAcceptedByPostId(post.getId())
         ));
     }
@@ -128,6 +138,7 @@ public class PostController {
                 loadPostCategoryPort.findNameById(post.getCategoryId()),
                 (int) commentPort.countByPostId(post.getId()),
                 resolveNickname(post.getAuthorId()),
+                resolveStatus(post.getAuthorId()),
                 commentPort.existsAcceptedByPostId(post.getId())
         );
         return ApiResponse.ok(response);

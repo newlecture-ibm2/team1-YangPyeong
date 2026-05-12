@@ -18,12 +18,19 @@ import java.util.Set;
  * 헥사고날 아키텍처: user 도메인의 Output Port를 통해 데이터에 접근합니다.
  * Domain → DTO 변환은 Service에서 담당합니다.
  */
+import com.farmbalance.admin.adapter.out.persistence.entity.UserSanctionLogJpaEntity;
+import com.farmbalance.admin.adapter.out.persistence.repository.UserSanctionLogJpaRepository;
+import com.farmbalance.user.application.port.in.UpdateProfileUseCase;
+import com.farmbalance.user.application.port.out.UserRepository;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AdminUserService implements ManageUserUseCase {
 
     private final UserRepository userRepository;
+    private final UpdateProfileUseCase updateProfileUseCase;
+    private final UserSanctionLogJpaRepository sanctionLogRepository;
 
     /** 역할 변경 시 허용되는 값 */
     private static final Set<String> ALLOWED_ROLES = Set.of("USER", "FARMER");
@@ -75,5 +82,43 @@ public class AdminUserService implements ManageUserUseCase {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         userRepository.updateStatus(id, upperStatus);
+    }
+
+    @Override
+    @Transactional
+    public void forceWithdrawUser(Long id, String reasonType, String detail) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 로그 기록
+        UserSanctionLogJpaEntity logEntity = UserSanctionLogJpaEntity.builder()
+                .targetUserId(id)
+                .actionType("WITHDRAW")
+                .reasonType(reasonType)
+                .reasonDetail(detail)
+                .build();
+        sanctionLogRepository.save(logEntity);
+
+        // 실제 탈퇴 로직 위임 (당일 즉시 WITHDRAWN 처리 및 이벤트 발행)
+        updateProfileUseCase.withdrawAccount(user.getEmail());
+    }
+
+    @Override
+    @Transactional
+    public void reactivateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 로그 기록
+        UserSanctionLogJpaEntity logEntity = UserSanctionLogJpaEntity.builder()
+                .targetUserId(id)
+                .actionType("REACTIVATE")
+                .reasonType("MANUAL_RESTORE")
+                .reasonDetail("관리자 수동 복구")
+                .build();
+        sanctionLogRepository.save(logEntity);
+
+        // 실제 복구 로직 위임 (상태 ACTIVE 전환 등)
+        updateProfileUseCase.reactivateAccount(user.getEmail());
     }
 }
