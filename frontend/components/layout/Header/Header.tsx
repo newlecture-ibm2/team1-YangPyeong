@@ -67,6 +67,8 @@ export default function Header() {
   const [notifLoading, setNotifLoading] = useState(false);
   const [recentNotifs, setRecentNotifs] = useState<RecentNotification[]>([]);
   const notifRef = useRef<HTMLDivElement>(null);
+  // 로컬에서 읽음 처리한 알림 ID를 기억 (서버 stale 데이터 방어)
+  const localReadIds = useRef<Set<number>>(new Set());
 
   // FCM Hook: 로그인 상태일 때 토큰 등록 및 백그라운드/포그라운드 리스너 활성화
   useFCM(!!user);
@@ -186,19 +188,27 @@ export default function Header() {
     };
   }, [fetchUnreadCount]);
 
+  // 서버에서 받아온 알림 목록에 로컬 읽음 상태를 합산
+  const mergeReadState = useCallback((serverData: RecentNotification[]): RecentNotification[] => {
+    return serverData.map((n) =>
+      localReadIds.current.has(n.id) ? { ...n, isRead: true } : n
+    );
+  }, []);
+
   // 알림 드롭다운 열 때 최근 5개 조회
   const handleNotifToggle = async () => {
     const nextState = !notifOpen;
     setNotifOpen(nextState);
-    setDropdownOpen(false); // 유저 드롭다운 닫기
+    setDropdownOpen(false);
 
     if (nextState && user) {
-      setNotifLoading(true);
+      // 기존 데이터가 없을 때만 로딩 스피너 표시
+      if (recentNotifs.length === 0) setNotifLoading(true);
       try {
         const res = await fetch('/api/notifications?page=0&size=5');
         if (res.ok) {
           const json = await res.json();
-          setRecentNotifs(json.data ?? []);
+          setRecentNotifs(mergeReadState(json.data ?? []));
         }
       } catch {
         // 조회 실패 시 무시
@@ -210,20 +220,24 @@ export default function Header() {
 
   // 알림 개별 클릭 → 읽음 처리 + 이동
   const handleNotifClick = async (notif: RecentNotification) => {
-    setNotifOpen(false);
+    // 1. 즉시 로컬 상태 업데이트 (UI 먼저 반영)
     if (!notif.isRead) {
-      try {
-        await fetch(`/api/notifications/${notif.id}/read`, { method: 'PATCH' });
-        setUnreadCount((prev) => Math.max(prev - 1, 0));
-        setRecentNotifs((prev) =>
-          prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n))
-        );
-      } catch {
-        // ignore
-      }
+      localReadIds.current.add(notif.id);
+      setUnreadCount((prev) => Math.max(prev - 1, 0));
+      setRecentNotifs((prev) =>
+        prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n))
+      );
     }
+
+    // 2. 드롭다운 닫기 + 페이지 이동
+    setNotifOpen(false);
     if (notif.link) {
       router.push(notif.link);
+    }
+
+    // 3. 서버에 읽음 처리 (백그라운드)
+    if (!notif.isRead) {
+      fetch(`/api/notifications/${notif.id}/read`, { method: 'PATCH' }).catch(() => {});
     }
   };
 
