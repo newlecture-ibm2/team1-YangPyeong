@@ -153,8 +153,11 @@ export default function Header() {
   }, []);
 
   // 알림 unread count 폴링 (30초 간격)
+  const userRef = useRef(user);
+  useEffect(() => { userRef.current = user; }, [user]);
+
   const fetchUnreadCount = useCallback(async () => {
-    if (!user) {
+    if (!userRef.current) {
       setUnreadCount(0);
       return;
     }
@@ -167,7 +170,7 @@ export default function Header() {
     } catch {
       // 조회 실패 시 무시
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     fetchUnreadCount();
