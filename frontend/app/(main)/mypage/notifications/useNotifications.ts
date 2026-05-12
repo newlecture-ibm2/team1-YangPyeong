@@ -11,26 +11,18 @@ export function useNotifications() {
   const [filterType, setFilterType] = useState<string | undefined>(undefined);
   const [filterIsRead, setFilterIsRead] = useState<boolean | undefined>(undefined);
 
-  // Pagination — useRef로 관리하여 useCallback 의존성 순환 방지
-  const pageRef = useRef(0);
-  const [hasMore, setHasMore] = useState(false);
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  const fetchNotifications = useCallback(async (reset: boolean = false) => {
+  const fetchNotifications = useCallback(async (page: number) => {
     try {
       setIsLoading(true);
-      const currentPage = reset ? 0 : pageRef.current;
-      const res = await notificationApi.getNotifications(currentPage, 20, filterType, filterIsRead);
+      const res = await notificationApi.getNotifications(page, 10, filterType, filterIsRead);
       
-      if (reset) {
-        setNotifications(res.data ?? []);
-        pageRef.current = 1;
-      } else {
-        setNotifications((prev) => [...prev, ...(res.data ?? [])]);
-        pageRef.current = currentPage + 1;
-      }
-      
-      const total = res.meta?.totalElements ?? 0;
-      setHasMore((reset ? 1 : currentPage + 1) * 20 < total);
+      setNotifications(res.data ?? []);
+      setTotalPages(res.meta?.totalPages ?? 0);
+      setCurrentPage(page);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('알림을 불러오는 데 실패했습니다.'));
@@ -39,17 +31,17 @@ export function useNotifications() {
     }
   }, [filterType, filterIsRead]);
 
-  // 최초 로드 및 필터 변경 시 리패치
+  // 최초 로드 및 필터 변경 시 첫 페이지 리패치
   useEffect(() => {
-    fetchNotifications(true);
+    fetchNotifications(0);
   }, [fetchNotifications]);
 
-  // 헤더 드롭다운에서 읽음 처리 시 마이페이지 목록도 동기화
+  // 헤더 드롭다운에서 읽음 처리 시 현재 페이지 리패치
   useEffect(() => {
-    const handleReadChanged = () => fetchNotifications(true);
+    const handleReadChanged = () => fetchNotifications(currentPage);
     window.addEventListener('notif-read-changed', handleReadChanged);
     return () => window.removeEventListener('notif-read-changed', handleReadChanged);
-  }, [fetchNotifications]);
+  }, [fetchNotifications, currentPage]);
 
   const markAsRead = async (id: number) => {
     try {
@@ -81,14 +73,15 @@ export function useNotifications() {
     notifications,
     isLoading,
     error,
-    hasMore,
+    currentPage,
+    totalPages,
+    setPage: fetchNotifications,
     filterType,
     setFilterType,
     filterIsRead,
     setFilterIsRead,
-    fetchMore: () => fetchNotifications(false),
     markAsRead,
     markAllAsRead,
-    refetch: () => fetchNotifications(true),
+    refetch: () => fetchNotifications(currentPage),
   };
 }
