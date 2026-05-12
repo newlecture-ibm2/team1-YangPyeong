@@ -40,8 +40,9 @@ public class UserService implements UpdateProfileUseCase, CheckNicknameUseCase, 
         User user = userRepository.findByEmail(command.getEmail())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 닉네임이 변경된 경우에만 중복 검사
-        if (!user.getName().equals(command.getName())) {
+        // 닉네임이 변경된 경우에만 중복 검사 (DB name 미설정 null 대비)
+        String previousName = user.getName() != null ? user.getName() : "";
+        if (!previousName.equals(command.getName())) {
             if (userRepository.existsByName(command.getName())) {
                 throw new BusinessException(ErrorCode.VALIDATION_ERROR, "이미 사용 중인 이름입니다.");
             }
@@ -76,6 +77,13 @@ public class UserService implements UpdateProfileUseCase, CheckNicknameUseCase, 
     @Transactional(readOnly = true)
     public User getProfile(String email) {
         return userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public User getProfileByUserId(Long userId) {
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
