@@ -45,6 +45,8 @@ export function useProfile() {
             provider: (fetched.provider as UserProfile['provider']) || 'LOCAL',
             profileImageUrl: fetched.profileImageUrl || null,
             createdAt: fetched.createdAt || null,
+            withdrawalPending: (fetched as { withdrawalPending?: boolean }).withdrawalPending,
+            withdrawalCompletesAt: (fetched as { withdrawalCompletesAt?: string | null }).withdrawalCompletesAt ?? null,
           };
           setProfile(profileData);
           setFormData({
@@ -74,6 +76,8 @@ export function useProfile() {
             provider: (cookieUser.provider as UserProfile['provider']) || 'LOCAL',
             profileImageUrl: cookieUser.profileImageUrl || null,
             createdAt: cookieUser.createdAt || null,
+            withdrawalPending: cookieUser.withdrawalPending,
+            withdrawalCompletesAt: cookieUser.withdrawalCompletesAt ?? null,
           };
           setProfile(initialProfile);
           setFormData({

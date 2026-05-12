@@ -6,6 +6,8 @@ import com.farmbalance.farm.domain.CultivationStatus;
 import com.farmbalance.farm.domain.event.CultivationChangedEvent;
 import com.farmbalance.farm.domain.event.CultivationRegisteredEvent;
 import com.farmbalance.farm.domain.event.HarvestCanceledEvent;
+import com.farmbalance.notification.application.port.in.NotificationUseCase;
+import com.farmbalance.notification.domain.NotificationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -26,6 +28,7 @@ public class CultivationEventListener {
     private final PredictYieldPort predictYieldPort;
     private final UpdateCultivationStatePort updateCultivationStatePort;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificationUseCase notificationUseCase;
 
     /**
      * 재배 등록 시 비동기로 AI 수확량 예측 수행
@@ -46,7 +49,18 @@ public class CultivationEventListener {
 
             log.info("AI Analysis - Predicted yield for cultivation ID {}: {} kg", event.getId(), predictedYield);
             
-            // TODO: 추후 분석 전용 테이블이나 수급 알림 엔진으로 데이터 연동이 필요한 경우 이곳에 추가 로직 구현
+            // 2. 정책 매칭 알림 발송 (기획서 반영)
+            if (event.getUserId() != null && event.getCropName() != null) {
+                String message = String.format("등록하신 [%s] 재배에 대한 양평군의 최신 지원 정책을 확인해 보세요!", event.getCropName());
+                notificationUseCase.createNotification(
+                        event.getUserId(),
+                        NotificationType.POLICY,
+                        "정책 추천 알림",
+                        message,
+                        "/policy"
+                );
+                log.info("Policy Matching Notification sent to user {} for crop {}", event.getUserId(), event.getCropName());
+            }
             
         } catch (Exception e) {
             log.error("Failed to predict yield for cultivation ID: {}", event.getId(), e);
@@ -70,6 +84,7 @@ public class CultivationEventListener {
             // 2. 대시보드 캐시 무효화를 위해 변경 이벤트 재발행
             eventPublisher.publishEvent(new CultivationChangedEvent(
                     event.getCultivationRegistrationId(),
+                    null, // userId (여기서는 생략)
                     event.getCropName(),
                     null, // oldCropName은 필요 없음
                     "UPDATED",

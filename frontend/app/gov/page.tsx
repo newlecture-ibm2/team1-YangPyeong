@@ -50,10 +50,9 @@ export default function GovDashboardPage() {
         <div className={styles.pageHeader}>
           <p className={styles.breadcrumb}>지자체 / 대시보드</p>
           <h1 className={styles.pageTitle}>{region} <em>대시보드</em></h1>
-          <p className={styles.pageSub}>{region} 전체 농업 현황과 수급 밸런스를 모니터링합니다.</p>
-        </div>
-        <div>
-          <GovTabs />
+          <div className={styles.tabsWrapper}>
+            <GovTabs />
+          </div>
         </div>
       </div>
 

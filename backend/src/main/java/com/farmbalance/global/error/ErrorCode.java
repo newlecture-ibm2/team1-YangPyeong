@@ -41,8 +41,7 @@ public enum ErrorCode {
     USER_EMAIL_DUPLICATE("E-USER-002", "이미 등록된 이메일입니다.", HttpStatus.CONFLICT),
     USER_INVALID_ROLE("E-USER-003", "올바르지 않은 역할입니다.", HttpStatus.BAD_REQUEST),
     USER_WITHDRAWN("E-USER-004", "탈퇴한 계정입니다. 다시 가입하시겠습니까?", HttpStatus.FORBIDDEN),
-
-    // ── 농장 ──
+    USER_WITHDRAWAL_ALREADY_PENDING("E-USER-005", "이미 탈퇴 처리 중인 계정입니다.", HttpStatus.CONFLICT),
     FARM_NOT_FOUND("E-FARM-001", "농장을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     FARM_ALREADY_EXISTS("E-FARM-002", "이미 등록된 농장이 있습니다.", HttpStatus.CONFLICT),
     FARM_APPROVAL_PENDING("E-FARM-003", "승인 대기 중인 농장 등록 신청이 있습니다.", HttpStatus.CONFLICT),
@@ -93,6 +92,9 @@ public enum ErrorCode {
     ADMIN_INVALID_ROLE("E-ADMIN-002", "허용되지 않은 역할입니다. (GENERAL, FARMER만 가능)", HttpStatus.BAD_REQUEST),
     ADMIN_INVALID_STATUS("E-ADMIN-003", "허용되지 않은 상태입니다. (ACTIVE, SUSPENDED만 가능)", HttpStatus.BAD_REQUEST),
     API_SYNC_NOT_FOUND("E-ADMIN-004", "API 동기화 상태 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+    // ── 알림 ──
+    NOTIFICATION_NOT_FOUND("E-NOTI-001", "알림을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
     // ── 지자체 ──
     GOV_REPORT_FAILED("E-GOV-001", "보고서 생성에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),

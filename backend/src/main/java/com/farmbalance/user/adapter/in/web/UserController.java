@@ -6,7 +6,9 @@ import com.farmbalance.user.application.port.in.CheckNicknameUseCase;
 import com.farmbalance.user.application.port.in.GetProfileUseCase;
 import com.farmbalance.user.application.port.in.UpdateProfileCommand;
 import com.farmbalance.user.application.port.in.UpdateProfileUseCase;
+import com.farmbalance.user.config.UserAccountProperties;
 import com.farmbalance.user.domain.User;
+import com.farmbalance.user.domain.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
@@ -40,6 +42,7 @@ import java.util.UUID;
     private final CheckNicknameUseCase checkNicknameUseCase;
     private final GetProfileUseCase getProfileUseCase;
     private final PasswordEncoder passwordEncoder;
+    private final UserAccountProperties userAccountProperties;
 
     /** 프로필 이미지 저장 디렉토리 */
     private static final Path UPLOAD_DIR = Paths.get("uploads", "profiles");
@@ -60,6 +63,20 @@ import java.util.UUID;
         private String provider;
         private String profileImageUrl;
         private String createdAt;
+        /** 탈퇴 유예 중이면 true */
+        private Boolean withdrawalPending;
+        /** 최종 탈퇴(WITHDRAWN) 예정 시각 (ISO-8601), 유예 중일 때만 */
+        private String withdrawalCompletesAt;
+    }
+
+    /**
+     * 탈퇴 요청 직후 응답 (유예 기간 안내)
+     */
+    @lombok.Getter
+    @lombok.Builder
+    public static class WithdrawalScheduledResponse {
+        private String status;
+        private String withdrawalCompletesAt;
     }
 
     /**
@@ -90,6 +107,14 @@ import java.util.UUID;
         String email = SecurityUtil.getCurrentEmail();
         User user = getProfileUseCase.getProfile(email);
 
+        boolean withdrawalPending = user.getStatus() == UserStatus.PENDING_WITHDRAWAL;
+        String withdrawalCompletesAt = null;
+        if (withdrawalPending && user.getWithdrawalRequestedAt() != null) {
+            withdrawalCompletesAt = user.getWithdrawalRequestedAt()
+                    .plusDays(userAccountProperties.getWithdrawalGraceDays())
+                    .toString();
+        }
+
         ProfileResponse response = ProfileResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -101,6 +126,8 @@ import java.util.UUID;
                 .provider(user.getProvider() != null ? user.getProvider().name() : "LOCAL")
                 .profileImageUrl(user.getProfileImageUrl())
                 .createdAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null)
+                .withdrawalPending(withdrawalPending)
+                .withdrawalCompletesAt(withdrawalCompletesAt)
                 .build();
 
         return ApiResponse.ok(response);
@@ -221,7 +248,7 @@ import java.util.UUID;
     /**
      * 이메일 상태 확인 (회원가입 시 실시간 검증용)
      * - available: 사용 가능
-     * - exists: 이미 활성 계정 존재
+     * - exists: 활성·탈퇴 유예 중 등 사용 중인 이메일
      * - withdrawn: 탈퇴 계정 (재가입 가능)
      */
     @GetMapping("/check-email")
@@ -233,7 +260,7 @@ import java.util.UUID;
         }
 
         User user = userOpt.get();
-        if (user.getStatus() == com.farmbalance.user.domain.UserStatus.WITHDRAWN) {
+        if (user.getStatus() == UserStatus.WITHDRAWN) {
             return ApiResponse.ok(Map.of("status", "withdrawn"));
         }
 
@@ -290,10 +317,10 @@ import java.util.UUID;
     }
 
     /**
-     * 회원 탈퇴 (Soft Delete → WITHDRAWN 상태로 변경)
+     * 회원 탈퇴 요청 — 유예 기간 후 최종 WITHDRAWN 처리 (배치)
      */
     @DeleteMapping("/me")
-    public ApiResponse<Void> deleteAccount(
+    public ApiResponse<WithdrawalScheduledResponse> deleteAccount(
             @RequestBody DeleteAccountRequest request) {
 
         String email = SecurityUtil.getCurrentEmail();
@@ -312,7 +339,27 @@ import java.util.UUID;
         }
 
         updateProfileUseCase.withdrawAccount(email);
-        log.info("회원 탈퇴 완료 (WITHDRAWN): email={}", email);
+        User after = getProfileUseCase.getProfile(email);
+        String completesAt = after.getWithdrawalRequestedAt() != null
+                ? after.getWithdrawalRequestedAt()
+                .plusDays(userAccountProperties.getWithdrawalGraceDays())
+                .toString()
+                : null;
+        log.info("회원 탈퇴 요청 (유예 시작): email={}, completesAt={}", email, completesAt);
+        return ApiResponse.ok(WithdrawalScheduledResponse.builder()
+                .status("pending_withdrawal")
+                .withdrawalCompletesAt(completesAt)
+                .build());
+    }
+
+    /**
+     * 탈퇴 유예 취소 (로그인 상태에서만)
+     */
+    @PostMapping("/me/withdrawal/cancel")
+    public ApiResponse<Void> cancelPendingWithdrawal() {
+        String email = SecurityUtil.getCurrentEmail();
+        updateProfileUseCase.cancelPendingWithdrawal(email);
+        log.info("탈퇴 유예 취소: email={}", email);
         return ApiResponse.ok(null);
     }
 

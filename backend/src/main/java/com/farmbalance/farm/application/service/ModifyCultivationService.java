@@ -40,8 +40,12 @@ public class ModifyCultivationService implements ModifyCultivationUseCase {
         saveCultivationPort.updateCultivationRegistration(cultivation);
 
         // 4. 공통 변경 이벤트 발행 (수급 밸런스, AI 정책, 예측 리포트 트리거용)
+        com.farmbalance.farm.domain.Farm farm = loadFarmPort.loadFarmById(cultivation.getFarmId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+        
         eventPublisher.publishEvent(new com.farmbalance.farm.domain.event.CultivationChangedEvent(
                 cultivation.getId(),
+                farm.getUserId(),
                 cultivation.getCropName(),
                 oldCropName,
                 "UPDATED",

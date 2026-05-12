@@ -179,10 +179,9 @@ function FarmDashboardContent() {
           }
           setMonthlyRevenue(estimatedTotal);
         })
-        .catch(err => {
-          console.error('최근 AI 추천 이력을 불러오지 못했습니다:', err);
+        .catch(() => {
           setLatestAiScore(null);
-          
+
           // 추천 이력을 못 불러왔더라도, 재배 작물이 있다면 기본 단가(3000원)로 계산
           let estimatedTotal = 0;
           if (cultivations && cultivations.length > 0) {

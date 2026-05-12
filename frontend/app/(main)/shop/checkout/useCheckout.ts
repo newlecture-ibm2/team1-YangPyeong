@@ -11,6 +11,7 @@ import {
   DEFAULT_DELIVERY_FEE,
   DELIVERY_MEMO_OPTIONS,
 } from '@/lib/constants';
+import { useToast } from '@/components';
 
 /** 유저 프로필 응답 타입 (배송지 관련 필드만) */
 interface UserProfile {
@@ -132,6 +133,7 @@ interface UseCheckoutReturn {
 export function useCheckout(): UseCheckoutReturn {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { success: toastSuccess, error: toastError } = useToast();
 
   // ── 주문 아이템 ──
   const [orderItems, setOrderItems] = useState<CartItem[]>([]);
@@ -412,12 +414,14 @@ export function useCheckout(): UseCheckoutReturn {
         totalAmount: String(finalTotal),
         payMethod: paymentMethod === 'card' ? '카드 결제' : '가상계좌',
       });
+      toastSuccess('주문/결제가 완료되었습니다.');
       router.push(`/shop/checkout/complete?${completeParams.toString()}`);
 
     } catch (err) {
       const message = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
       console.error('[결제 오류]', err);
       setPaymentError(message);
+      toastError(message);
     } finally {
       setIsProcessing(false);
     }
