@@ -98,4 +98,31 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
         }
         return "AI 서버 진단 중 오류가 발생했습니다.";
     }
+
+    @Override
+    public double[] tuneWeights(String farmDetails) {
+        String url = aiServerUrl + "/api/recommend/weights";
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("farm_details", farmDetails);
+
+        HttpEntity<Map<String, String>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            Map<String, Object> response = restTemplate.postForObject(url, entity, Map.class);
+            if (response != null) {
+                double wSoil = Double.parseDouble(response.getOrDefault("w_soil", "0.35").toString());
+                double wPrice = Double.parseDouble(response.getOrDefault("w_price", "0.25").toString());
+                double wSupply = Double.parseDouble(response.getOrDefault("w_supply", "0.25").toString());
+                double wDifficulty = Double.parseDouble(response.getOrDefault("w_difficulty", "0.15").toString());
+                return new double[]{wSoil, wPrice, wSupply, wDifficulty};
+            }
+        } catch (Exception e) {
+            log.error("AI 서버 통신 중 오류 발생 (가중치 튜닝)", e);
+        }
+        return new double[]{0.35, 0.25, 0.25, 0.15};
+    }
 }

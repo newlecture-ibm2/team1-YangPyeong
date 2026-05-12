@@ -48,8 +48,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
     private final com.farmbalance.recommend.application.port.out.RecommendAiPort recommendAiPort;
     private final RecommendPricePort recommendPricePort;
 
-    /** 점수 산출 엔진 (도메인 순수 객체, DI 불필요) */
-    private final RecommendScoreCalculator calculator = new RecommendScoreCalculator();
+
 
     @Override
     @Transactional
@@ -74,7 +73,16 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
         log.info("추천 시작: farmId={}, farmName={}, regionCode={}, 후보작물={}건",
                 farmId, farm.getName(), regionCode, candidates.size());
 
-        // 3. 각 작물에 대해 점수 산출
+        // 3. AI 가중치 튜닝 (농장 상황 기반)
+        String farmDetails = String.format("위치: %s, 면적: %.1f평, 토양pH: %.1f, 유기물: %.1f, 토성: %s",
+                farm.getAddress(), farm.getArea() / 3.3058, farm.getPh(), farm.getOrganicMatter(), farm.getSoilType());
+        
+        double[] tunedWeights = recommendAiPort.tuneWeights(farmDetails);
+        RecommendScoreCalculator calculator = new RecommendScoreCalculator(
+                tunedWeights[0], tunedWeights[1], tunedWeights[2], tunedWeights[3]
+        );
+
+        // 4. 각 작물에 대해 점수 산출
         List<CropRecommendation> recommendations = new ArrayList<>();
 
         for (CropCandidateData candidate : candidates) {
@@ -133,14 +141,12 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
             recommendations.add(rec);
         }
 
-        // 4. 점수 기준 내림차순 정렬 + 순위 부여 및 AI 사유 생성 (Top 3)
+        // 5. 점수 기준 내림차순 정렬 + 순위 부여 및 AI 사유 생성 (Top 3)
         recommendations.sort(Comparator.comparingInt(CropRecommendation::getScore).reversed());
         for (int i = 0; i < recommendations.size(); i++) {
             CropRecommendation rec = recommendations.get(i);
             String aiReason = null;
             if (i < 3) {
-                String farmDetails = String.format("면적 %.1f㎡, 산도 %.1f, 유기물 %.1fg/kg, 토양 '%s'", 
-                        farm.getArea(), farm.getPh(), farm.getOrganicMatter(), farm.getSoilType());
                 try {
                     aiReason = recommendAiPort.generateReason(farmDetails, rec.getCropName(), rec.getCategory().getLabel());
                 } catch (Exception e) {
@@ -151,10 +157,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
             recommendations.set(i, rec.toBuilder().rank(i + 1).aiReason(aiReason).build());
         }
 
-        // 5. 상위 5개 항목에 대해 실시간 AI 분석 사유 생성 (파이썬 서버 호출)
-        String farmDetails = String.format("위치: %s, 면적: %.1f평, 토양pH: %.1f, 유기물: %.1f, 토성: %s",
-                farm.getAddress(), farm.getArea(), farm.getPh(), farm.getOrganicMatter(), farm.getSoilType());
-
+        // 6. 상위 5개 항목에 대해 실시간 AI 분석 사유 생성 (파이썬 서버 호출)
         for (int i = 0; i < Math.min(recommendations.size(), 5); i++) {
             CropRecommendation rec = recommendations.get(i);
             try {

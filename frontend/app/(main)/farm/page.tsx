@@ -109,7 +109,7 @@ function FarmDashboardContent() {
   } = useCultivation(farm?.id);
 
   // 수익 예측 연동
-  const { prediction, isLoading: isRevenueLoading, getPrediction } = useRevenue();
+  const { prediction, isLoading: isRevenueLoading, getPrediction, revertPrediction } = useRevenue();
   const [actualYield, setActualYield] = useState<number | ''>('');
 
   const handleCalculateRevenue = useCallback(() => {
@@ -134,6 +134,11 @@ function FarmDashboardContent() {
     getPrediction(request);
   }, [farm, cultivations, actualYield, weather, getPrediction]);
 
+  const handleResetRevenue = useCallback(() => {
+    setActualYield('');
+    revertPrediction();
+  }, [revertPrediction]);
+
   // Initial fetch for revenue
   useEffect(() => {
     if (activeSubTab === 'DASHBOARD' && farm && farm.cropNames.length > 0 && !prediction && !isRevenueLoading) {
@@ -152,7 +157,7 @@ function FarmDashboardContent() {
       getLatestRecommendHistory(farm.id)
         .then(res => {
           let aiScore = null;
-          let recommendations = [];
+          let recommendations: any[] = [];
           
           if (res && res.recommendations && res.recommendations.length > 0) {
             aiScore = res.recommendations[0].score;
@@ -537,8 +542,11 @@ function FarmDashboardContent() {
                         onChange={(e) => setActualYield(e.target.value ? Number(e.target.value) : '')}
                         style={{ flex: 1, padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '14px' }}
                       />
+                      <Button variant="outline" size="sm" onClick={handleResetRevenue} disabled={isRevenueLoading || actualYield === ''}>
+                        되돌리기
+                      </Button>
                       <Button variant="outline" size="sm" onClick={handleCalculateRevenue} disabled={isRevenueLoading}>
-                        {isRevenueLoading ? '계산 중...' : '적용 및 재계산'}
+                        {isRevenueLoading ? '계산 중...' : '적용'}
                       </Button>
                     </div>
                   </div>
