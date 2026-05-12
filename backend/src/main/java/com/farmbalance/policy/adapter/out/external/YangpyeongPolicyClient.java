@@ -5,15 +5,12 @@ import com.farmbalance.policy.domain.model.PolicyData;
 import com.farmbalance.policy.domain.model.PolicySource;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
-import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
-import javax.net.ssl.SSLHandshakeException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -76,11 +73,11 @@ public class YangpyeongPolicyClient implements PolicyExternalFetchPort {
         Document doc;
         try {
             doc = createConnection(pageUrl).get();
-        } catch (SSLHandshakeException e) {
+        } catch (javax.net.ssl.SSLHandshakeException e) {
             log.warn("[YangpyeongPolicyClient] SSL handshake failed. " +
                      "Check server certificate chain or network policy. url={}", pageUrl);
             return Collections.emptyList();
-        } catch (HttpStatusException e) {
+        } catch (org.jsoup.HttpStatusException e) {
             log.warn("[YangpyeongPolicyClient] 양평군 게시판 접근 실패: status={} url={}",
                      e.getStatusCode(), pageUrl);
             return Collections.emptyList();
