@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/common/Toast/ToastContext';
 import { Spinner } from '@/components';
+import Button from '@/components/common/Button/Button';
 import { apiFetch } from '@/lib/api-fetch';
 import { useProfile } from './useProfile';
 import { ProfileHeader } from './_components/Header/ProfileHeader';
@@ -26,6 +27,7 @@ export default function MyPage() {
     isSaving,
     isUploading,
     loading,
+    profileError,
     handleChange,
     startEditing,
     cancelEditing,
@@ -93,7 +95,25 @@ export default function MyPage() {
     return <Spinner message="프로필 정보를 불러오는 중입니다..." fullHeight={true} />;
   }
 
-  if (!profile) return null;
+  if (profileError || !profile) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.contentCard} style={{ textAlign: 'center', padding: '2rem' }}>
+          <p style={{ marginBottom: '1rem', color: 'var(--color-text-secondary, #555)' }}>
+            프로필 정보를 불러오지 못했습니다. 로그인 상태를 확인한 뒤 다시 시도해 주세요.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button type="button" variant="primary" onClick={() => window.location.reload()}>
+              새로고침
+            </Button>
+            <Button type="button" variant="outline" onClick={() => router.push('/login')}>
+              로그인으로 이동
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>

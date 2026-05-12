@@ -3,7 +3,6 @@ package com.farmbalance.recommend.adapter.out.external;
 import com.farmbalance.recommend.adapter.out.persistence.CropPriceCacheEntity;
 import com.farmbalance.recommend.adapter.out.persistence.CropPriceCacheRepository;
 import com.farmbalance.recommend.application.port.out.RecommendPricePort;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -89,7 +88,8 @@ public class KamisPriceAdapter implements RecommendPricePort {
                 log.warn("KAMIS API 빈 응답 (작물: {})", cropName);
             } else if (!looksLikeJson(jsonResponse)) {
                 // 인증 실패·차단·리다이렉트(HTML)·XML 등 → Jackson 파싱 전에 건너뜀
-                String head = jsonResponse.stripLeading().substring(0, Math.min(120, jsonResponse.stripLeading().length()));
+                String trimmed = jsonResponse.stripLeading();
+                String head = trimmed.substring(0, Math.min(120, trimmed.length()));
                 log.warn("KAMIS API가 JSON이 아닌 본문을 반환했습니다 (작물: {}). 응답 앞부분: [{}]. cert-key/id·KAMIS_API_URL(https) 확인.",
                         cropName, head.replaceAll("\\s+", " "));
             } else {
@@ -169,10 +169,11 @@ public class KamisPriceAdapter implements RecommendPricePort {
     private static boolean looksLikeJson(String body) {
         if (body == null) return false;
         int i = 0;
-        while (i < body.length() && Character.isWhitespace(body.charAt(i))) {
+        int n = body.length();
+        while (i < n && (Character.isWhitespace(body.charAt(i)) || body.charAt(i) == '\uFEFF')) {
             i++;
         }
-        if (i >= body.length()) return false;
+        if (i >= n) return false;
         char c = body.charAt(i);
         return c == '{' || c == '[';
     }
