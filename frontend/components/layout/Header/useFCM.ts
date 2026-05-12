@@ -50,14 +50,6 @@ export function useFCM(userPresent: boolean) {
     const unsubscribe = onMessageListener((payload: any) => {
       console.log('[FCM] 포그라운드 메시지 수신:', payload);
       window.dispatchEvent(new Event('notif-updated'));
-
-      // 브라우저가 열려있을 때(포그라운드)는 시스템 알림이 자동으로 안 뜨므로 수동으로 띄워줍니다.
-      if (Notification.permission === 'granted' && payload.notification) {
-        new Notification(payload.notification.title || '알림', {
-          body: payload.notification.body || '',
-          icon: '/logo.png',
-        });
-      }
     });
 
     return () => {

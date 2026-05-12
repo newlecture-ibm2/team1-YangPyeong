@@ -13,7 +13,7 @@ spring:
 
   # ── DataSource ──
   datasource:
-    url: jdbc:postgresql://localhost:5151/farm_db
+    url: jdbc:postgresql://localhost:5151/farm_db?sslmode=disable
     username: farm
     password: farmbalance1234!
   data:
