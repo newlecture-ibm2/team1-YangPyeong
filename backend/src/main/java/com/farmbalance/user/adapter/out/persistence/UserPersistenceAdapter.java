@@ -10,6 +10,7 @@ import com.farmbalance.user.domain.UserStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +72,24 @@ public class UserPersistenceAdapter implements UserRepository {
     @Override
     public void deleteByEmail(String email) {
         userJpaRepository.deleteByEmail(email);
+    }
+
+    @Override
+    public List<User> findPendingWithdrawalsForFinalization(UserStatus status, LocalDateTime deadlineInclusive) {
+        return userJpaRepository
+                .findByStatusAndWithdrawalRequestedAtIsNotNullAndWithdrawalRequestedAtLessThanEqual(status, deadlineInclusive)
+                .stream()
+                .map(UserJpaEntity::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<User> findWithdrawnUsersForAnonymization(UserStatus status, LocalDateTime updatedAtInclusive) {
+        return userJpaRepository
+                .findByStatusAndAnonymizedAtIsNullAndUpdatedAtLessThanEqual(status, updatedAtInclusive)
+                .stream()
+                .map(UserJpaEntity::toDomain)
+                .collect(Collectors.toList());
     }
 
     @Override

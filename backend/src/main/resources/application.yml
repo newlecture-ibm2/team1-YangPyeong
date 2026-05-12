@@ -166,3 +166,8 @@ resilience4j:
 app:
   policy:
     scheduler-enabled: true
+  user:
+    # 자진 탈퇴 요청 후 최종 WITHDRAWN(농장 소프트삭제 이벤트)까지 일수
+    withdrawal-grace-days: ${APP_USER_WITHDRAWAL_GRACE_DAYS:7}
+    # 최종 탈퇴 처리(updatedAt) 후 비식별화 스케줄까지 일수
+    anonymization-days-after-withdrawal: ${APP_USER_ANONYMIZATION_DAYS:30}

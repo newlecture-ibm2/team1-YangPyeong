@@ -4,6 +4,26 @@
   gap: 28px;
 }
 
+.withdrawalPendingBanner {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  color: #92400e;
+}
+
+.withdrawalPendingBanner p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
 /* ── 섹션 구분 라벨 ── */
 .sectionLabel {
   font-size: 0.8rem;

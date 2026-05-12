@@ -1,3 +1,7 @@
+'use client';
+
+import { useState } from 'react';
+import { PasswordVisibilityIcon } from '@/components/icons';
 import styles from './Input.module.css';
 
 interface InputProps {
@@ -15,6 +19,10 @@ interface InputProps {
   as?: 'input' | 'textarea';
   rows?: number;
   autoComplete?: string;
+  /** type="password"일 때 눈 아이콘 토글 표시 (기본 true) */
+  passwordToggle?: boolean;
+  /** 검증 실패 시 입력 테두리 강조 */
+  invalid?: boolean;
 }
 
 export default function Input({
@@ -32,7 +40,13 @@ export default function Input({
   as = 'input',
   rows = 4,
   autoComplete,
+  passwordToggle = true,
+  invalid = false,
 }: InputProps) {
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const showPwToggle = as === 'input' && type === 'password' && passwordToggle;
+  const inputType = showPwToggle && passwordVisible ? 'text' : type;
+
   const renderField = () => {
     if (as === 'textarea') {
       return (
@@ -52,10 +66,18 @@ export default function Input({
       );
     }
 
-    return (
+    const inputClass = [
+      styles.input,
+      showPwToggle ? styles.inputWithToggle : '',
+      invalid ? styles.inputInvalid : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    const inputEl = (
       <input
-        className={styles.input}
-        type={type}
+        className={inputClass}
+        type={inputType}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
@@ -66,6 +88,23 @@ export default function Input({
         disabled={disabled}
         autoComplete={autoComplete}
       />
+    );
+
+    if (!showPwToggle) return inputEl;
+
+    return (
+      <div className={styles.inputWrap}>
+        {inputEl}
+        <button
+          type="button"
+          className={`${styles.toggleVisibility}${passwordVisible ? ` ${styles.toggleVisibilityActive}` : ''}`}
+          aria-label={passwordVisible ? '비밀번호 숨기기' : '비밀번호 표시'}
+          disabled={disabled}
+          onClick={() => setPasswordVisible((v) => !v)}
+        >
+          <PasswordVisibilityIcon revealed={passwordVisible} />
+        </button>
+      </div>
     );
   };
 

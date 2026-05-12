@@ -32,7 +32,9 @@ interface CultivationEntry {
   yieldUnit: string;
 }
 
-export default function CultivationRegisterPage() {
+import { Suspense } from 'react';
+
+function CultivationRegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
@@ -356,5 +358,13 @@ export default function CultivationRegisterPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function CultivationRegisterPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>데이터를 불러오는 중...</div>}>
+      <CultivationRegisterContent />
+    </Suspense>
   );
 }
