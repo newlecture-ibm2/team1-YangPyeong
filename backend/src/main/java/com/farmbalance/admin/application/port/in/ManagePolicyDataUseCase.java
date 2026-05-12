@@ -30,4 +30,9 @@ public interface ManagePolicyDataUseCase {
      * 정책 데이터 수정
      */
     void updatePolicy(Long id, String externalId, String data);
+
+    /**
+     * 정책 데이터 삭제 (Soft Delete)
+     */
+    void deletePolicy(Long id);
 }

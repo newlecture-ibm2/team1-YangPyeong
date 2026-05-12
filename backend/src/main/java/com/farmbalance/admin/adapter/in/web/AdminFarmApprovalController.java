@@ -79,4 +79,14 @@ public class AdminFarmApprovalController {
         manageFarmApprovalUseCase.reject(farmId, request.getReason());
         return ApiResponse.ok(null);
     }
+
+    /**
+     * 농장 삭제 (관리자 강제 삭제 - Soft Delete)
+     * DELETE /api/admin/farms/{farmId}
+     */
+    @DeleteMapping("/{farmId}")
+    public ApiResponse<Void> deleteFarm(@PathVariable Long farmId) {
+        manageFarmApprovalUseCase.deleteFarm(farmId);
+        return ApiResponse.ok(null);
+    }
 }

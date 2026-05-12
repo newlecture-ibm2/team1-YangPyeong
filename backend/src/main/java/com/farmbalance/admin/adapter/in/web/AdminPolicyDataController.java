@@ -80,4 +80,14 @@ public class AdminPolicyDataController {
         managePolicyDataUseCase.updatePolicy(id, request.getExternalId(), request.getData());
         return ApiResponse.ok(null);
     }
+
+    /**
+     * 정책 데이터 삭제
+     * DELETE /api/admin/policy/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deletePolicy(@PathVariable Long id) {
+        managePolicyDataUseCase.deletePolicy(id);
+        return ApiResponse.ok(null);
+    }
 }

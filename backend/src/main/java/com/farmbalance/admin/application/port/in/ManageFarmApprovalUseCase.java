@@ -25,4 +25,9 @@ public interface ManageFarmApprovalUseCase {
      * 농장 반려 (farm.certification_status → REJECTED, 반려 사유 저장)
      */
     void reject(Long farmId, String reason);
+
+    /**
+     * 농장 삭제 (Soft Delete) - 관리자 강제 삭제용
+     */
+    void deleteFarm(Long farmId);
 }

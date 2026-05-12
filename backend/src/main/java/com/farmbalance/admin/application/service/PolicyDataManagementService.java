@@ -65,4 +65,14 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
 
         policySavePort.save(existing);
     }
+
+    @Override
+    @Transactional
+    public void deletePolicy(Long id) {
+        PolicyData existing = policyQueryPort.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POLICY_NOT_FOUND));
+
+        existing.setDeletedAt(LocalDateTime.now());
+        policySavePort.save(existing);
+    }
 }

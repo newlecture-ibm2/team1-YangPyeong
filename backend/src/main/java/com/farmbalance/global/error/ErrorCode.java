@@ -22,6 +22,7 @@ public enum ErrorCode {
     FILE_UPLOAD_FAILED("E-COMMON-005", "파일 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     EXTERNAL_API_ERROR("E-COMMON-006", "외부 API 연동 중 오류가 발생했습니다.", HttpStatus.BAD_GATEWAY),
     API_TEMPORARILY_UNAVAILABLE("E-COMMON-007", "해당 서비스의 외부 연동이 일시 중단되었습니다. (관리자 설정)", HttpStatus.SERVICE_UNAVAILABLE),
+    UNSUPPORTED_OPERATION("E-COMMON-008", "지원하지 않는 작업입니다.", HttpStatus.BAD_REQUEST),
 
 
     // ── 인증 ──

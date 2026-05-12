@@ -76,4 +76,13 @@ public class FarmApprovalService implements ManageFarmApprovalUseCase {
         // 농장 상태 → REJECTED + 반려 사유 저장
         saveFarmPort.updateCertificationStatusWithReason(farmId, "REJECTED", reason);
     }
+
+    @Override
+    @Transactional
+    public void deleteFarm(Long farmId) {
+        Farm farm = loadFarmPort.loadFarmById(farmId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+
+        saveFarmPort.deleteFarm(farmId);
+    }
 }

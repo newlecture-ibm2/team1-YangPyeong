@@ -33,11 +33,14 @@ public class AdminNongsaroApiAdapter implements AdminNongsaroApiPort {
 
     private static final String BASE_URL = "http://api.nongsaro.go.kr/service/farmWorkingPlan";
 
+    private static class GrpResponse extends NongsaroApiResponse<WorkScheduleGrpDto> {}
+    private static class LstResponse extends NongsaroApiResponse<WorkScheduleLstDto> {}
+
     @Override
     public List<AdminNongsaroCropGroupDto> getWorkScheduleGroupList() {
         String url = BASE_URL + "/workScheduleGrpList?apiKey=" + apiKey;
-        ResponseEntity<NongsaroApiResponse<WorkScheduleGrpDto>> response = restTemplate.exchange(
-                url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {}
+        ResponseEntity<GrpResponse> response = restTemplate.exchange(
+                url, HttpMethod.GET, null, GrpResponse.class
         );
         List<WorkScheduleGrpDto> dtoList = extractItems(response.getBody());
         return dtoList.stream()
@@ -52,8 +55,8 @@ public class AdminNongsaroApiAdapter implements AdminNongsaroApiPort {
     @Override
     public List<AdminNongsaroCropDto> getWorkScheduleList(String groupExternalId) {
         String url = BASE_URL + "/workScheduleLst?apiKey=" + apiKey + "&kidofcomdtySeCode=" + groupExternalId;
-        ResponseEntity<NongsaroApiResponse<WorkScheduleLstDto>> response = restTemplate.exchange(
-                url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {}
+        ResponseEntity<LstResponse> response = restTemplate.exchange(
+                url, HttpMethod.GET, null, LstResponse.class
         );
         List<WorkScheduleLstDto> dtoList = extractItems(response.getBody());
         return dtoList.stream()
