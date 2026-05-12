@@ -60,8 +60,8 @@ interface DaumPostcodeData {
 function validatePhone(phone: string): string | undefined {
   if (!phone.trim()) return '연락처를 입력해주세요.';
   const cleaned = phone.replace(/[^0-9]/g, '');
-  if (cleaned.length < 10 || cleaned.length > 11 || !/^01[0-9]/.test(cleaned)) {
-    return '올바른 휴대폰 번호를 입력해주세요.';
+  if (cleaned.length < 9 || cleaned.length > 11 || !/^0[0-9]{1,2}/.test(cleaned)) {
+    return '올바른 연락처를 입력해주세요.';
   }
   return undefined;
 }
