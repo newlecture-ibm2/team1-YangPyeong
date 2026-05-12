@@ -17,6 +17,9 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.category WHERE p.id = :id AND p.deletedAt IS NULL")
     Optional<PostEntity> findActiveById(@Param("id") Long id);
 
+    @Query("SELECT p.id, p.title FROM PostEntity p WHERE p.id IN :ids AND p.deletedAt IS NULL")
+    List<Object[]> findActiveTitlesByIds(@Param("ids") List<Long> ids);
+
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.category " +
            "WHERE p.deletedAt IS NULL " +
            "AND (:categoryIds IS NULL OR p.category.id IN :categoryIds) " +
@@ -45,4 +48,8 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             Pageable pageable);
 
     List<PostEntity> findTop5ByDeletedAtIsNullOrderByCreatedAtDesc();
+
+    @Query("SELECT p FROM PostEntity p JOIN FETCH p.category " +
+           "WHERE p.authorId = :authorId AND p.deletedAt IS NULL")
+    Page<PostEntity> findByAuthorId(@Param("authorId") Long authorId, Pageable pageable);
 }
