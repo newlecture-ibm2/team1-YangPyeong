@@ -6,6 +6,8 @@ import com.farmbalance.policy.adapter.out.persistence.repository.PolicyDataRepos
 import com.farmbalance.policy.application.port.in.RecommendPolicyUseCase;
 import com.farmbalance.policy.application.port.out.LoadFarmerProfilePort;
 import com.farmbalance.policy.application.port.out.LoadFarmerProfilePort.FarmerProfileData;
+import com.farmbalance.policy.application.port.out.PolicyGraphQueryPort;
+import com.farmbalance.policy.application.port.out.PolicyAiPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -23,6 +26,8 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
 
     private final LoadFarmerProfilePort loadFarmerProfilePort;
     private final PolicyDataRepository policyDataRepository;
+    private final PolicyGraphQueryPort policyGraphQueryPort;
+    private final PolicyAiPort policyAiPort;
 
     @Override
     public PolicyRecommendResponse recommendForUser(Long userId) {
@@ -155,14 +160,45 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
             return Long.compare(c2.policy.getId(), c1.policy.getId());
         });
 
-        // 5. DTO 변환 및 상위 반환
-        List<PolicyRecommendResponse.RecommendedPolicyDto> topRecommendations = candidates.stream()
-                .limit(5)
+        // 5. 상위 5개 추출
+        List<Candidate> topCandidates = candidates.stream().limit(5).toList();
+        List<PolicyDataJpaEntity> topPolicies = topCandidates.stream().map(c -> c.policy).toList();
+        List<Long> topPolicyIds = topPolicies.stream().map(PolicyDataJpaEntity::getId).toList();
+
+        // 6. GraphRAG 릴레이션 조회
+        List<Map<String, Object>> graphRelations = policyGraphQueryPort.findRelationsForFarmerAndPolicies(userId, topPolicyIds);
+
+        // 7. AI 추천 사유 생성을 위한 데이터 준비
+        Map<String, Object> farmerProfileMap = Map.of(
+            "name", profile.name(),
+            "regionName", profile.regionName(),
+            "totalArea", totalArea,
+            "crops", userCrops
+        );
+
+        List<Map<String, Object>> candidatePoliciesMap = topPolicies.stream().map(p -> Map.<String, Object>of(
+            "policyId", p.getId(),
+            "title", p.getTitle(),
+            "category", p.getCategory() != null ? p.getCategory() : "",
+            "supportAmount", p.getSupportAmount() != null ? p.getSupportAmount() : ""
+        )).toList();
+
+        // 8. AI 초개인화 사유 요청
+        PolicyAiPort.AiPolicyRecommendation aiResult = policyAiPort.generatePolicyReason(userId, farmerProfileMap, graphRelations, candidatePoliciesMap);
+        Map<Long, PolicyAiPort.PolicyReason> aiReasonMap = aiResult.reasons() != null ? 
+            aiResult.reasons().stream().collect(java.util.stream.Collectors.toMap(PolicyAiPort.PolicyReason::policyId, r -> r, (r1, r2) -> r1)) : Map.of();
+
+        // 9. DTO 변환
+        List<PolicyRecommendResponse.RecommendedPolicyDto> topRecommendations = topCandidates.stream()
                 .map(c -> {
                     PolicyDataJpaEntity p = c.policy;
                     String safeSummary = p.getContent() != null ? 
                         (p.getContent().length() > 100 ? p.getContent().substring(0, 100) + "..." : p.getContent()) 
                         : "지원 내용 상세는 원문을 확인해주세요.";
+                    
+                    PolicyAiPort.PolicyReason aiReason = aiReasonMap.get(p.getId());
+                    String finalReason = (aiReason != null && aiReason.matchReason() != null) ? aiReason.matchReason() : String.join(" ", c.reasons);
+                    int finalScore = (aiReason != null && aiReason.matchScore() > 0) ? aiReason.matchScore() : c.score;
                     
                     return new PolicyRecommendResponse.RecommendedPolicyDto(
                             p.getId(),
@@ -172,8 +208,8 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
                             p.getOrganization(),
                             p.getApplyEnd() != null ? p.getApplyEnd().toString() : null,
                             p.getSourceUrl(),
-                            c.score,
-                            c.reasons,
+                            finalScore,
+                            finalReason,
                             safeSummary
                     );
                 })

@@ -72,7 +72,7 @@ export default function RecommendDetailPage() {
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>🔍</div>
           <h2>추천 정보를 찾을 수 없습니다</h2>
-          <p>요청하신 작물의 추천 분석 데이터가 존재하지 않습니다.</p>
+          <p>요청하신 작물의 추천 분석 데이터가 존재하지 않거나 분석 이력이 없습니다.</p>
           <Link href="/farm/recommend" className={styles.backBtn}>← 추천 목록으로 돌아가기</Link>
         </div>
       </div>
@@ -123,10 +123,14 @@ export default function RecommendDetailPage() {
 
       <OtherCrops recommendations={otherRecs} />
 
-      {/* ── 하단 버튼 ── */}
       <div className={`${styles.actionButtons} ${styles.fadeIn}`} style={{ animationDelay: '0.6s' }}>
         <Link href="/farm/recommend" className={styles.backBtn}>← 목록으로</Link>
-        <Link href="/farm/plan" className={styles.planBtn}>이 작물로 재배 등록 →</Link>
+        <Link 
+          href={`/farm/cultivation-register?cropId=${rec.cropId}&cropName=${rec.cropName}`} 
+          className={styles.planBtn}
+        >
+          이 작물로 재배 등록 →
+        </Link>
       </div>
     </div>
   );
