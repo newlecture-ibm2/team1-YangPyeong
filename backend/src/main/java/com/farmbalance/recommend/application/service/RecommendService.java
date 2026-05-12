@@ -220,8 +220,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
     @Override
     public RecommendResult getLatestHistory(Long userId, Long farmId) {
         validateFarmOwnership(userId, farmId);
-        return loadRecommendHistoryPort.loadLatestByFarmId(farmId)
-                .orElseThrow(() -> new IllegalArgumentException("추천 이력이 없습니다: " + farmId));
+        return loadRecommendHistoryPort.loadLatestByFarmId(farmId).orElse(null);
     }
 
     @Override

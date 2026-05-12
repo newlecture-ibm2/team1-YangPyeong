@@ -13,3 +13,5 @@ langchain-google-genai==4.2.2
 langchain-groq==0.2.7
 langgraph==1.1.10
 python-multipart==0.0.12
+langchain-groq
+

@@ -39,7 +39,7 @@ class GovAgent:
     async def _extract_entities(self, message: str) -> ExtractedEntities:
         if self._dict_cache is None:
             self._dict_cache = {"REGION": [], "CROP": [], "FARM": []}
-            query = text("SELECT entity_type, name FROM graph_entity WHERE entity_type IN ('REGION', 'CROP', 'FARM')")
+            query = text("SELECT entity_type, name FROM graph.graph_entity WHERE entity_type IN ('REGION', 'CROP', 'FARM')")
             session = get_db_session()
             if session:
                 try:

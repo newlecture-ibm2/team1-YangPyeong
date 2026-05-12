@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, ChangeEvent } from 'react';
+import { useRef, useState, useEffect, ChangeEvent } from 'react';
 import Image from 'next/image';
 import ModalDialog from '@/components/common/Modal/ModalDialog';
 import { useModalDialog } from '@/components/common/Modal/useModalDialog';
@@ -19,6 +19,11 @@ export default function ProfileImageUpload({
 }: ProfileImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { dialog, showAlert, handleConfirm, handleClose } = useModalDialog();
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setImageLoadFailed(false);
+  }, [currentImageUrl]);
 
   const handleClick = () => {
     if (!disabled) fileInputRef.current?.click();
@@ -45,8 +50,15 @@ export default function ProfileImageUpload({
         className={`${styles.imageWrapper} ${disabled ? styles.disabled : ''}`} 
         onClick={handleClick}
       >
-        {currentImageUrl ? (
-          <Image src={currentImageUrl} alt="프로필" fill className={styles.image} priority />
+        {currentImageUrl && !imageLoadFailed ? (
+          <Image
+            src={currentImageUrl}
+            alt="프로필"
+            fill
+            className={styles.image}
+            priority
+            onError={() => setImageLoadFailed(true)}
+          />
         ) : (
           <div className={styles.placeholder}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

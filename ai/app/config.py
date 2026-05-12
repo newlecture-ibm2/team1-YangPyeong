@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     # ── Groq ──
     GROQ_API_KEY: Optional[str] = None
-    GROQ_MODEL: str = "llama-3.1-70b-versatile"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
 
     # ── AWS Bedrock ──
     AWS_REGION: str = "us-east-1"
