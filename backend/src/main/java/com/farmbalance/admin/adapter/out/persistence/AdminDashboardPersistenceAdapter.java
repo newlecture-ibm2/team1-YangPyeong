@@ -6,10 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-/**
- * ADM-011 관리자 대시보드 통계 집계 Persistence Adapter
- * 여러 테이블을 단일 SQL로 집계하여 KPI 데이터를 반환한다.
- */
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class AdminDashboardPersistenceAdapter implements AdminDashboardPort {
@@ -20,27 +18,54 @@ public class AdminDashboardPersistenceAdapter implements AdminDashboardPort {
     public AdminDashboard aggregateDashboard() {
         String sql = """
             SELECT
-                (SELECT COUNT(*) FROM users WHERE deleted_at IS NULL) AS total_users,
-                (SELECT COUNT(*) FROM users WHERE role = 'FARMER' AND deleted_at IS NULL) AS total_farmers,
                 (SELECT COUNT(*) FROM farms WHERE certification_status = 'PENDING' AND deleted_at IS NULL) AS pending_approvals,
-                (SELECT COUNT(*) FROM farms WHERE deleted_at IS NULL) AS total_farms,
-                (SELECT COUNT(*) FROM crops WHERE deleted_at IS NULL) AS total_crops,
-                (SELECT COUNT(*) FROM posts WHERE deleted_at IS NULL) AS total_posts,
-                (SELECT COUNT(*) FROM products WHERE deleted_at IS NULL) AS total_products,
-                (SELECT COUNT(*) FROM orders WHERE deleted_at IS NULL) AS total_orders,
-                (SELECT COUNT(*) FROM users WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE) AS today_registrations
+                (SELECT COUNT(*) FROM reports WHERE status = 'PENDING') AS pending_reports,
+                (SELECT COUNT(*) FROM users WHERE deleted_at IS NULL) AS active_users,
+                (SELECT COUNT(*) FROM orders WHERE created_at >= (CURRENT_DATE - INTERVAL '7' DAY)) AS weekly_new_orders
             """;
 
-        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> AdminDashboard.builder()
-                .totalUsers(rs.getLong("total_users"))
-                .totalFarmers(rs.getLong("total_farmers"))
-                .pendingApprovals(rs.getLong("pending_approvals"))
-                .totalFarms(rs.getLong("total_farms"))
-                .totalCrops(rs.getLong("total_crops"))
-                .totalPosts(rs.getLong("total_posts"))
-                .totalProducts(rs.getLong("total_products"))
-                .totalOrders(rs.getLong("total_orders"))
-                .todayRegistrations(rs.getLong("today_registrations"))
+        AdminDashboard partialDashboard = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> AdminDashboard.builder()
+                .pendingFarmApprovals(rs.getLong("pending_approvals"))
+                .pendingReports(rs.getLong("pending_reports"))
+                .activeUsers(rs.getLong("active_users"))
+                .weeklyNewOrders(rs.getLong("weekly_new_orders"))
                 .build());
+
+        String cropAreaSql = """
+            SELECT
+                c.crop_name, SUM(c.area) AS total_area
+            FROM
+                cultivations c
+            JOIN farms f ON c.farm_id = f.id
+            WHERE f.certification_status = 'APPROVED' AND c.deleted_at IS NULL AND f.deleted_at IS NULL
+            GROUP BY c.crop_name
+            ORDER BY SUM(c.area) DESC
+            LIMIT 5
+            """;
+
+        List<AdminDashboard.CropAreaStat> topCrops = jdbcTemplate.query(cropAreaSql, (rs, rowNum) ->
+                new AdminDashboard.CropAreaStat(rs.getString("crop_name"), rs.getDouble("total_area")));
+
+        String seedSalesSql = """
+            SELECT
+                p.name, p.sales_count
+            FROM
+                products p
+            WHERE p.deleted_at IS NULL
+            ORDER BY p.sales_count DESC
+            LIMIT 5
+            """;
+
+        List<AdminDashboard.SeedSalesStat> topSeeds = jdbcTemplate.query(seedSalesSql, (rs, rowNum) ->
+                new AdminDashboard.SeedSalesStat(rs.getString("name"), rs.getLong("sales_count")));
+
+        return AdminDashboard.builder()
+                .pendingFarmApprovals(partialDashboard.getPendingFarmApprovals())
+                .pendingReports(partialDashboard.getPendingReports())
+                .activeUsers(partialDashboard.getActiveUsers())
+                .weeklyNewOrders(partialDashboard.getWeeklyNewOrders())
+                .topCropsByArea(topCrops)
+                .topSeedsBySales(topSeeds)
+                .build();
     }
 }
