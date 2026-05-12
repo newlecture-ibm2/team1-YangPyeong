@@ -28,3 +28,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# ── AI Server (로컬 개발용: docker-compose.override.yml로 열린 포트 사용) ──
+ai:
+  server-url: http://localhost:8000
