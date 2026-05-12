@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.models.policy import PolicyAnalyzeRequest, PolicyAnalyzeResponse
 from app.services.policy_analyzer import analyze_policy
+from app.services.policy_recommend_service import generate_recommend_reasons
 
 logger = logging.getLogger(__name__)
 
@@ -62,3 +63,14 @@ async def analyze(request: PolicyAnalyzeRequest) -> PolicyAnalyzeResponse:
                 "message": f"정책 분석 중 오류가 발생했습니다: {str(e)}",
             },
         )
+
+@router.post("/recommend-reasons")
+async def recommend_reasons(request_data: dict) -> dict:
+    """
+    GraphRAG 데이터를 기반으로 초개인화된 정책 추천 사유를 생성합니다.
+    """
+    try:
+        return await generate_recommend_reasons(request_data)
+    except Exception as e:
+        logger.error(f"[policy/recommend-reasons] 실패: {e}")
+        return {"reasons": []}

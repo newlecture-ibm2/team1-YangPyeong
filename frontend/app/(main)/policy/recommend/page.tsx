@@ -156,15 +156,10 @@ export default function PolicyRecommendPage() {
                           </div>
 
                           <div className={styles.reasonsBox}>
-                            <p className={styles.reasonsTitle}>🔍 왜 추천됐나요?</p>
-                            <ul className={styles.reasonsList}>
-                              {policy.matchReasons.slice(0, 3).map((reason, idx) => (
-                                <li key={idx}>{reason}</li>
-                              ))}
-                              {policy.matchReasons.length > 3 && (
-                                <li className={styles.moreReasons}>+ 외 {policy.matchReasons.length - 3}건의 매칭 요소 더 보기</li>
-                              )}
-                            </ul>
+                            <p className={styles.reasonsTitle}>🤖 AI 추천 분석</p>
+                            <div className={styles.reasonsList} style={{ fontSize: '0.9rem', lineHeight: '1.5', marginTop: '0.5rem', color: 'var(--color-text)' }}>
+                              {policy.matchReason}
+                            </div>
                           </div>
 
                           {policy.sourceUrl ? (
