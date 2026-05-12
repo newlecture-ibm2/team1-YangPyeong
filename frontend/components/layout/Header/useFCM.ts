@@ -47,27 +47,21 @@ export function useFCM(userPresent: boolean) {
     initFCM();
 
     // 4. 포그라운드 메시지 수신 시 처리
-    let active = true;
-    const handleForegroundMessage = async () => {
-      while (active) {
-        try {
-          const payload: any = await onMessageListener();
-          if (payload) {
-            console.log('[FCM] 포그라운드 메시지 수신:', payload);
-            
-            // Header 등에서 안읽은 알림 수를 갱신할 수 있도록 이벤트를 발생시킵니다.
-            window.dispatchEvent(new Event('notif-updated'));
-          }
-        } catch (e) {
-          break;
-        }
+    const unsubscribe = onMessageListener((payload: any) => {
+      console.log('[FCM] 포그라운드 메시지 수신:', payload);
+      window.dispatchEvent(new Event('notif-updated'));
+
+      // 브라우저가 열려있을 때(포그라운드)는 시스템 알림이 자동으로 안 뜨므로 수동으로 띄워줍니다.
+      if (Notification.permission === 'granted' && payload.notification) {
+        new Notification(payload.notification.title || '알림', {
+          body: payload.notification.body || '',
+          icon: '/logo.png',
+        });
       }
-    };
-    
-    handleForegroundMessage();
+    });
 
     return () => {
-      active = false;
+      if (unsubscribe) unsubscribe();
     };
   }, [userPresent]);
 }
