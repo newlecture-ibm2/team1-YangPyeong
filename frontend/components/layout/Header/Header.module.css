@@ -366,7 +366,26 @@
 }
 
 .notifItemUnread {
-  background: var(--color-primary-pale, rgba(45, 106, 79, 0.05));
+  background: var(--color-primary-pale, rgba(45, 106, 79, 0.08));
+  border-left: 3px solid var(--color-primary);
+}
+
+.notifItemRead {
+  opacity: 0.55;
+}
+
+.notifSpinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: notifSpin 0.7s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes notifSpin {
+  to { transform: rotate(360deg); }
 }
 
 .notifItemIcon {

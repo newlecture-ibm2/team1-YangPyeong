@@ -64,6 +64,7 @@ export default function Header() {
   // 알림 관련 상태
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(false);
   const [recentNotifs, setRecentNotifs] = useState<RecentNotification[]>([]);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -192,6 +193,7 @@ export default function Header() {
     setDropdownOpen(false); // 유저 드롭다운 닫기
 
     if (nextState && user) {
+      setNotifLoading(true);
       try {
         const res = await fetch('/api/notifications?page=0&size=5');
         if (res.ok) {
@@ -200,6 +202,8 @@ export default function Header() {
         }
       } catch {
         // 조회 실패 시 무시
+      } finally {
+        setNotifLoading(false);
       }
     }
   };
@@ -326,13 +330,17 @@ export default function Header() {
                 </div>
                 <div className={styles.notifDropdownDivider} />
 
-                {recentNotifs.length === 0 ? (
+                {notifLoading ? (
+                  <div className={styles.notifEmpty}>
+                    <div className={styles.notifSpinner} />
+                  </div>
+                ) : recentNotifs.length === 0 ? (
                   <div className={styles.notifEmpty}>새로운 알림이 없습니다.</div>
                 ) : (
                   recentNotifs.map((n) => (
                     <button
                       key={n.id}
-                      className={`${styles.notifItem} ${!n.isRead ? styles.notifItemUnread : ''}`}
+                      className={`${styles.notifItem} ${!n.isRead ? styles.notifItemUnread : styles.notifItemRead}`}
                       onClick={() => handleNotifClick(n)}
                     >
                       <span className={styles.notifItemIcon}>{NOTIF_TYPE_ICONS[n.type] || '🔔'}</span>

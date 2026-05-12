@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Card from '@/components/common/Card/Card';
 import Button from '@/components/common/Button/Button';
+import Spinner from '@/components/common/Spinner/Spinner';
 import { useNotifications } from './useNotifications';
 import styles from './page.module.css';
 
@@ -27,8 +28,10 @@ export default function MypageNotificationsPage() {
     markAllAsRead,
   } = useNotifications();
 
-  const handleNotificationClick = (id: number, link: string) => {
-    markAsRead(id);
+  const handleNotificationClick = async (id: number, link: string, isRead: boolean) => {
+    if (!isRead) {
+      await markAsRead(id);
+    }
     if (link) {
       router.push(link);
     }
@@ -78,7 +81,7 @@ export default function MypageNotificationsPage() {
 
         <div className={styles.notificationList}>
           {isLoading && notifications.length === 0 ? (
-            <div className={styles.emptyState}>불러오는 중...</div>
+            <Spinner message="알림을 불러오는 중입니다..." />
           ) : notifications.length === 0 ? (
             <div className={styles.emptyState}>
               <div className={styles.emptyIcon}>📭</div>
@@ -90,7 +93,7 @@ export default function MypageNotificationsPage() {
                 key={notif.id}
                 className={styles.notificationCard}
                 data-read={notif.isRead}
-                onClick={() => handleNotificationClick(notif.id, notif.link)}
+                onClick={() => handleNotificationClick(notif.id, notif.link, notif.isRead)}
               >
                 <div className={`${styles.iconWrapper} ${styles[`icon_${notif.type}`]}`}>
                   {TYPE_LABELS[notif.type]?.icon || '🔔'}
