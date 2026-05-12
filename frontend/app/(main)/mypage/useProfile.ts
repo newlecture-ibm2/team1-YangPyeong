@@ -25,15 +25,17 @@ export function useProfile() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState(false);
 
   // 초기 데이터 로드 — 백엔드 API에서 최신 프로필 조회
   useEffect(() => {
     let cancelled = false;
 
     const fetchProfile = async () => {
+      setProfileError(false);
       try {
         const res = await apiFetch<UserProfile>('/api/users/me');
-        if (!cancelled && res.success && res.data) {
+        if (!cancelled && res.success && res.data && res.data.email) {
           const fetched = res.data;
           const profileData: UserProfile = {
             email: fetched.email,
@@ -86,6 +88,11 @@ export function useProfile() {
             address: initialProfile.address || '',
             bio: initialProfile.bio || '',
           });
+          setProfileError(false);
+        } else {
+          setProfile(null);
+          setFormData(null);
+          setProfileError(true);
         }
         setLoading(false);
       }
@@ -234,6 +241,7 @@ export function useProfile() {
     isSaving,
     isUploading,
     loading,
+    profileError,
     handleChange,
     startEditing,
     cancelEditing,

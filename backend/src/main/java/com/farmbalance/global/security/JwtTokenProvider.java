@@ -47,9 +47,9 @@ public class JwtTokenProvider {
         Date now = new Date();
         return Jwts.builder()
                 .subject(String.valueOf(userId))
-                .claim("email", email)
-                .claim("role", role)
-                .claim("name", name)
+                .claim("email", email != null ? email : "")
+                .claim("role", role != null ? role : "USER")
+                .claim("name", name != null ? name : "")
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + accessTokenExpiration))
                 .signWith(secretKey)

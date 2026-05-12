@@ -85,12 +85,12 @@ external:
   kosis:
     api-key: ${KOSIS_API_KEY:}
 
-# ── KAMIS API (농산물 시세 조회) 설정 ──
+# ── KAMIS API (농산물 시세 조회) — 값은 루트 .env 의 KAMIS_* (Docker는 compose가 전달)
 kamis:
   api:
-    url: ${KAMIS_API_URL:http://www.kamis.or.kr/service/price/xml.do}
-    cert-key: ${KAMIS_CERT_KEY:8291e7b2-28a1-469c-93ac-fba3ef05f174}
-    cert-id: ${KAMIS_CERT_ID:7941}
+    url: ${KAMIS_API_URL:https://www.kamis.or.kr/service/price/xml.do}
+    cert-key: ${KAMIS_CERT_KEY}
+    cert-id: ${KAMIS_CERT_ID}
 
 # ── AI Server ──
 ai:

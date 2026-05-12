@@ -32,11 +32,11 @@ import java.util.UUID;
 /**
  * 사용자 정보 관리 컨트롤러
  */
-    @Slf4j
-    @RestController
-    @RequestMapping("/api/users")
-    @RequiredArgsConstructor
-    public class UserController {
+@Slf4j
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
 
     private final UpdateProfileUseCase updateProfileUseCase;
     private final CheckNicknameUseCase checkNicknameUseCase;
@@ -46,6 +46,39 @@ import java.util.UUID;
 
     /** 프로필 이미지 저장 디렉토리 */
     private static final Path UPLOAD_DIR = Paths.get("uploads", "profiles");
+
+    /** JWT principal(userId)로 현재 사용자 로드 — 이메일 claim 미포함 토큰에서도 동작 */
+    private User requireCurrentUser() {
+        return getProfileUseCase.getProfileByUserId(SecurityUtil.getCurrentUserId());
+    }
+
+    /**
+     * DB에 프로필 이미지 URL이 있어도 디스크에 파일이 없으면 null로 내려보냄(클라이언트 404 방지).
+     */
+    private String resolveProfileImageUrlForApi(User user) {
+        String url = user.getProfileImageUrl();
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        final String prefix = "/api/users/profile-image/";
+        if (!url.startsWith(prefix)) {
+            return url;
+        }
+        String filename = url.substring(prefix.length());
+        if (filename.isBlank() || filename.contains("/") || filename.contains("..")) {
+            return null;
+        }
+        Path filePath = UPLOAD_DIR.resolve(filename).normalize();
+        Path base = UPLOAD_DIR.normalize();
+        if (!filePath.startsWith(base)) {
+            return null;
+        }
+        if (!Files.exists(filePath) || !Files.isReadable(filePath)) {
+            log.debug("프로필 이미지 파일 없음 — 응답에서 제외: {}", filename);
+            return null;
+        }
+        return url;
+    }
 
     /**
      * 프로필 응답 DTO
@@ -104,8 +137,7 @@ import java.util.UUID;
      */
     @GetMapping("/me")
     public ApiResponse<ProfileResponse> getMyProfile() {
-        String email = SecurityUtil.getCurrentEmail();
-        User user = getProfileUseCase.getProfile(email);
+        User user = requireCurrentUser();
 
         boolean withdrawalPending = user.getStatus() == UserStatus.PENDING_WITHDRAWAL;
         String withdrawalCompletesAt = null;
@@ -124,7 +156,7 @@ import java.util.UUID;
                 .bio(user.getBio())
                 .role(user.getRole() != null ? user.getRole().name() : "USER")
                 .provider(user.getProvider() != null ? user.getProvider().name() : "LOCAL")
-                .profileImageUrl(user.getProfileImageUrl())
+                .profileImageUrl(resolveProfileImageUrlForApi(user))
                 .createdAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null)
                 .withdrawalPending(withdrawalPending)
                 .withdrawalCompletesAt(withdrawalCompletesAt)
@@ -140,10 +172,10 @@ import java.util.UUID;
     public ApiResponse<Void> updateProfile(
             @jakarta.validation.Valid @RequestBody ProfileUpdateRequest request) {
 
-        String email = SecurityUtil.getCurrentEmail();
-        
+        User user = requireCurrentUser();
+
         UpdateProfileCommand command = UpdateProfileCommand.builder()
-                .email(email)
+                .email(user.getEmail())
                 .name(request.getName())
                 .phone(request.getPhone())
                 .address(request.getAddress())
@@ -190,10 +222,8 @@ import java.util.UUID;
 
             // DB에 이미지 URL 저장
             String imageUrl = "/api/users/profile-image/" + storedFilename;
-            String email = SecurityUtil.getCurrentEmail();
-            User user = getProfileUseCase.getProfile(email);
-            user.updateProfileImageUrl(imageUrl);
-            // UserService를 통해 저장
+            User user = requireCurrentUser();
+            String email = user.getEmail();
             updateProfileUseCase.updateProfileImage(email, imageUrl);
 
             log.info("프로필 이미지 업로드 완료: email={}, file={}", email, storedFilename);
@@ -288,8 +318,8 @@ import java.util.UUID;
     public ApiResponse<Void> changePassword(
             @jakarta.validation.Valid @RequestBody ChangePasswordRequest request) {
 
-        String email = SecurityUtil.getCurrentEmail();
-        User user = getProfileUseCase.getProfile(email);
+        User user = requireCurrentUser();
+        String email = user.getEmail();
 
         // 현재 비밀번호 검증
         if (user.getPassword() == null || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
@@ -323,8 +353,8 @@ import java.util.UUID;
     public ApiResponse<WithdrawalScheduledResponse> deleteAccount(
             @RequestBody DeleteAccountRequest request) {
 
-        String email = SecurityUtil.getCurrentEmail();
-        User user = getProfileUseCase.getProfile(email);
+        User user = requireCurrentUser();
+        String email = user.getEmail();
 
         // LOCAL 유저인 경우 비밀번호 검증 필수
         if (user.getProvider() == com.farmbalance.user.domain.AuthProvider.LOCAL) {
@@ -339,7 +369,7 @@ import java.util.UUID;
         }
 
         updateProfileUseCase.withdrawAccount(email);
-        User after = getProfileUseCase.getProfile(email);
+        User after = getProfileUseCase.getProfileByUserId(user.getId());
         String completesAt = after.getWithdrawalRequestedAt() != null
                 ? after.getWithdrawalRequestedAt()
                 .plusDays(userAccountProperties.getWithdrawalGraceDays())
@@ -357,9 +387,9 @@ import java.util.UUID;
      */
     @PostMapping("/me/withdrawal/cancel")
     public ApiResponse<Void> cancelPendingWithdrawal() {
-        String email = SecurityUtil.getCurrentEmail();
-        updateProfileUseCase.cancelPendingWithdrawal(email);
-        log.info("탈퇴 유예 취소: email={}", email);
+        User user = requireCurrentUser();
+        updateProfileUseCase.cancelPendingWithdrawal(user.getEmail());
+        log.info("탈퇴 유예 취소: email={}", user.getEmail());
         return ApiResponse.ok(null);
     }
 
