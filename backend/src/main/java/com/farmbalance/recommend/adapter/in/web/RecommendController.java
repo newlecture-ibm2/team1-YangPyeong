@@ -77,11 +77,12 @@ public class RecommendController {
             @PathVariable Long farmId) {
             
         log.info("AI 작물 추천 이력 단건 조회: userId={}, farmId={}", userId, farmId);
-        
+
         RecommendResult result = getRecommendHistoryUseCase.getLatestHistory(userId, farmId);
-        RecommendResponse response = RecommendResponse.from(result);
-        
-        return ApiResponse.ok(response);
+        if (result == null) {
+            return ApiResponse.ok(null);
+        }
+        return ApiResponse.ok(RecommendResponse.from(result));
     }
 
     /**
