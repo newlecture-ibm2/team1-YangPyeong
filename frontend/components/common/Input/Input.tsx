@@ -21,6 +21,8 @@ interface InputProps {
   autoComplete?: string;
   /** type="password"일 때 눈 아이콘 토글 표시 (기본 true) */
   passwordToggle?: boolean;
+  /** 검증 실패 시 입력 테두리 강조 */
+  invalid?: boolean;
 }
 
 export default function Input({
@@ -39,6 +41,7 @@ export default function Input({
   rows = 4,
   autoComplete,
   passwordToggle = true,
+  invalid = false,
 }: InputProps) {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const showPwToggle = as === 'input' && type === 'password' && passwordToggle;
@@ -63,7 +66,13 @@ export default function Input({
       );
     }
 
-    const inputClass = `${styles.input}${showPwToggle ? ` ${styles.inputWithToggle}` : ''}`;
+    const inputClass = [
+      styles.input,
+      showPwToggle ? styles.inputWithToggle : '',
+      invalid ? styles.inputInvalid : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     const inputEl = (
       <input
@@ -88,7 +97,7 @@ export default function Input({
         {inputEl}
         <button
           type="button"
-          className={styles.toggleVisibility}
+          className={`${styles.toggleVisibility}${passwordVisible ? ` ${styles.toggleVisibilityActive}` : ''}`}
           aria-label={passwordVisible ? '비밀번호 숨기기' : '비밀번호 표시'}
           disabled={disabled}
           onClick={() => setPasswordVisible((v) => !v)}

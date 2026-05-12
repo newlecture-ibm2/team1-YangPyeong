@@ -27,6 +27,11 @@
   border-color: var(--color-primary);
 }
 
+.inputInvalid,
+.inputInvalid:focus {
+  border-color: var(--color-danger, #dc2626);
+}
+
 .input::placeholder {
   color: #C0C0C0;
 }
@@ -85,13 +90,22 @@ textarea.input {
   cursor: pointer;
   border-radius: var(--radius-sm);
   line-height: 0;
+  opacity: 0.38;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+}
+
+/* 비밀번호 표시 중 — 기존과 동일한 선명한 색 */
+.toggleVisibilityActive {
+  opacity: 1;
+  color: var(--color-text-muted, #6b7280);
 }
 
 .toggleVisibility:hover:not(:disabled) {
+  opacity: 1;
   color: var(--color-text);
 }
 
 .toggleVisibility:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.28;
 }

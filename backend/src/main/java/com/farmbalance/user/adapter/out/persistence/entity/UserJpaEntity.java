@@ -77,6 +77,12 @@ public class UserJpaEntity {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+    /** 탈퇴 유예 요청 시각 */
+    private LocalDateTime withdrawalRequestedAt;
+
+    /** 비식별화 완료 시각 */
+    private LocalDateTime anonymizedAt;
+
     /* ── 도메인 모델 변환 ── */
 
     public User toDomain() {
@@ -96,6 +102,8 @@ public class UserJpaEntity {
                 .bio(bio)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
+                .withdrawalRequestedAt(withdrawalRequestedAt)
+                .anonymizedAt(anonymizedAt)
                 .build();
     }
 
@@ -115,6 +123,8 @@ public class UserJpaEntity {
                 .address(user.getAddress())
                 .bio(user.getBio())
                 .updatedAt(user.getUpdatedAt())
+                .withdrawalRequestedAt(user.getWithdrawalRequestedAt())
+                .anonymizedAt(user.getAnonymizedAt())
                 .build();
     }
 
