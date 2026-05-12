@@ -12,4 +12,9 @@ public interface RecommendAiPort {
      * 작물 병해충 이미지 진단
      */
     String diagnoseImage(MultipartFile image);
+
+    /**
+     * 가중치 튜닝
+     */
+    double[] tuneWeights(String farmDetails);
 }

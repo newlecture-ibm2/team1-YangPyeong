@@ -24,6 +24,9 @@ public interface FarmJpaRepository extends JpaRepository<FarmJpaEntity, Long> {
     // PNU 코드로 조회 (삭제되지 않은 것만)
     Optional<FarmJpaEntity> findByPnuCodeAndDeletedAtIsNull(String pnuCode);
 
+    @Query("SELECT f FROM FarmJpaEntity f WHERE f.user.id = :userId AND f.deletedAt IS NULL")
+    List<FarmJpaEntity> findAllActiveFarmsByUserId(@Param("userId") Long userId);
+
     // 인증 상태별 농장 목록 조회 (Admin 승인 관리용)
     List<FarmJpaEntity> findByCertificationStatusOrderByCreatedAtDesc(
             com.farmbalance.farm.domain.CertificationStatus certificationStatus);

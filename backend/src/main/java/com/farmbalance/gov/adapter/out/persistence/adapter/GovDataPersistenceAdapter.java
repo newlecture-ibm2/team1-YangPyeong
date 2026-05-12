@@ -43,7 +43,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
     @Override
     public GovUserInfo getGovUserInfo(Long userId) {
         String sql = """
-            SELECT u.id, u.name, u.role,
+            SELECT u.id, u.name, u.role, u.email,
                    u.region_code AS region_code,
                    r.name AS region_name
             FROM users u
@@ -57,6 +57,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
             ((Number) row.get("id")).longValue(),
             (String) row.get("name"),
             (String) row.get("role"),
+            (String) row.get("email"),
             (String) row.get("region_code"),
             (String) row.get("region_name")
         );

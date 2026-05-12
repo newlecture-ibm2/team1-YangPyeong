@@ -4,11 +4,20 @@ LLM 추상 클래스 (BaseLLM)
 """
 
 from abc import ABC, abstractmethod
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator, Any, Optional
+from langchain_core.language_models import BaseChatModel
 
 
 class BaseLLM(ABC):
     """LLM Provider 공통 인터페이스"""
+
+    @abstractmethod
+    def get_chat_model(self, **kwargs: Any) -> BaseChatModel:
+        """
+        LangChain 호환 ChatModel 인스턴스를 반환합니다.
+        MAS(멀티 에이전트) 및 Tool Binding에 사용됩니다.
+        """
+        ...
 
     @abstractmethod
     async def generate(

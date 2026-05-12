@@ -1,8 +1,8 @@
 package com.farmbalance.gov.adapter.in.web.dto;
 import com.farmbalance.gov.domain.model.GovUserInfo;
-public record GovUserResponse(Long id, String name, String role, String regionCode, String regionName) {
+public record GovUserResponse(Long id, String name, String role, String email, String regionCode, String regionName) {
     public static GovUserResponse from(GovUserInfo info) {
-        return new GovUserResponse(info.id(), info.name(), info.role(), info.regionCode(), info.regionName());
+        return new GovUserResponse(info.id(), info.name(), info.role(), info.email(), info.regionCode(), info.regionName());
     }
 }
 
