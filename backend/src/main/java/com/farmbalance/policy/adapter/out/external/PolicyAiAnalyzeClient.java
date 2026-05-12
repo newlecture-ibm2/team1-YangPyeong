@@ -24,7 +24,7 @@ public class PolicyAiAnalyzeClient implements PolicyAiAnalyzePort {
     private final String aiServerUrl;
 
     public PolicyAiAnalyzeClient(
-            @Value("${ai.server-url:http://localhost:8000}") String aiServerUrl) {
+            @Value("${ai.server-url:http://ai-server:8000}") String aiServerUrl) {
         this.restTemplate = new RestTemplate();
         this.objectMapper = new ObjectMapper();
         this.aiServerUrl = aiServerUrl;

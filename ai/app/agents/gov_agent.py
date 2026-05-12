@@ -182,3 +182,11 @@ class GovAgent:
                 answer=f"AI 분석 중 오류가 발생했습니다.\n본 분석은 농가 지도를 위한 참고용입니다.",
                 error=str(e)
             )
+
+_gov_agent_instance = None
+
+def get_gov_agent() -> GovAgent:
+    global _gov_agent_instance
+    if _gov_agent_instance is None:
+        _gov_agent_instance = GovAgent()
+    return _gov_agent_instance
