@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -24,6 +25,16 @@ public class NotificationPersistenceAdapter implements NotificationPort {
     public Notification save(Notification notification) {
         NotificationJpaEntity entity = NotificationJpaEntity.fromDomain(notification);
         return notificationJpaRepository.save(entity).toDomain();
+    }
+
+    @Override
+    public List<Notification> saveAll(List<Notification> notifications) {
+        List<NotificationJpaEntity> entities = notifications.stream()
+                .map(NotificationJpaEntity::fromDomain)
+                .toList();
+        return notificationJpaRepository.saveAll(entities).stream()
+                .map(NotificationJpaEntity::toDomain)
+                .toList();
     }
 
     @Override
