@@ -81,11 +81,11 @@ export default function GovNav() {
           {dropdownOpen && (
             <div className={styles.dropdown} style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px' }}>
               <div className={styles.dropdownHeader}>
-                <span className={styles.dropdownEmail}>gov@farmbalance.kr</span>
+                <span className={styles.dropdownEmail}>{user?.email || 'gov@farmbalance.kr'}</span>
                 <span className={styles.dropdownRole}>GOV</span>
               </div>
               <div className={styles.dropdownDivider} />
-              <button className={styles.dropdownItem} onClick={handleLogout} style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}>
+              <button className={styles.dropdownItem} onClick={handleLogout} style={{ width: '100%', textAlign: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>
                 로그아웃
               </button>
             </div>
