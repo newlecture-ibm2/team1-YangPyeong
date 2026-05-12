@@ -38,6 +38,7 @@ export default function useRecommend() {
       // 상세 페이지에서 접근할 수 있도록 sessionStorage에 저장
       try {
         sessionStorage.setItem('recommend_result', JSON.stringify(data));
+      } catch {
         // sessionStorage 접근 불가 시 무시
       }
       toastSuccess('AI 작물 추천이 완료되었습니다.');
