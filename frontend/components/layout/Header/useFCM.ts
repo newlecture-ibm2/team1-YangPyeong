@@ -50,6 +50,15 @@ export function useFCM(userPresent: boolean) {
     const unsubscribe = onMessageListener((payload: any) => {
       console.log('[FCM] 포그라운드 메시지 수신:', payload);
       window.dispatchEvent(new Event('notif-updated'));
+
+      // 탭이 비활성(다른 탭/사이트를 보고 있을 때)일 때만 브라우저 알림을 띄웁니다.
+      // 탭이 활성 상태(우리 사이트를 보고 있을 때)에는 벨 아이콘 배지 갱신만 합니다.
+      if (document.hidden && Notification.permission === 'granted' && payload.notification) {
+        new Notification(payload.notification.title || '알림', {
+          body: payload.notification.body || '',
+          icon: '/logo.png',
+        });
+      }
     });
 
     return () => {
