@@ -15,11 +15,11 @@ class Settings(BaseSettings):
 
     # ── Gemini ──
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-1.5-flash-latest"
 
     # ── Groq ──
     GROQ_API_KEY: Optional[str] = None
-    GROQ_MODEL: str = "llama-3.1-70b-versatile"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
 
     # ── AWS Bedrock ──
     AWS_REGION: str = "us-east-1"

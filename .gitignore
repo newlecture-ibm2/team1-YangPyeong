@@ -53,3 +53,6 @@ Thumbs.db
 
 # ===== Test Scripts =====
 test_*.py
+
+# ===== Documentation =====
+docs/development/chatbot-full-guide.md
