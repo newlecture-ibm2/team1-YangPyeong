@@ -27,6 +27,14 @@ export function useFCM(userPresent: boolean) {
       // 2. 알림 권한 및 토큰 요청
       const token = await requestForToken();
       if (token) {
+        const savedToken = localStorage.getItem('fcm-token');
+
+        // 이미 같은 토큰이 등록되어 있으면 서버 전송 생략
+        if (savedToken === token) {
+          console.log('[FCM] 기존 토큰과 동일 — 서버 등록 생략');
+          return;
+        }
+
         // localStorage에 저장 (로그아웃 시 DELETE 호출용)
         localStorage.setItem('fcm-token', token);
 

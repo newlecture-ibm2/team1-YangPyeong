@@ -14,8 +14,11 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,6 +30,10 @@ public class BalanceEventListener {
     private final NotificationUseCase notificationUseCase;
     private final org.springframework.cache.CacheManager cacheManager;
     private final JdbcTemplate jdbcTemplate;
+
+    // 같은 작물에 대해 5분 이내 중복 알림 발송을 방지하기 위한 쿨다운 맵
+    private static final long NOTIFICATION_COOLDOWN_SECONDS = 300; // 5분
+    private final Map<String, Instant> lastNotificationTimeMap = new ConcurrentHashMap<>();
 
     @Async("eventTaskExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -78,6 +85,13 @@ public class BalanceEventListener {
     private void handleBalanceNotification(String cropName, double ratio) {
         if (ratio <= 0) return; // 데이터가 부족하여 0인 경우 패스
 
+        // 쿨다운 체크: 같은 작물에 대해 5분 이내 중복 알림 방지
+        Instant lastSent = lastNotificationTimeMap.get(cropName);
+        if (lastSent != null && Instant.now().isBefore(lastSent.plusSeconds(NOTIFICATION_COOLDOWN_SECONDS))) {
+            log.info("[Event-Balance] 수급 알림 쿨다운 중 - 작물: {}, 마지막 발송: {}", cropName, lastSent);
+            return;
+        }
+
         String message = null;
         List<Long> targetUserIds = new ArrayList<>();
 
@@ -108,6 +122,7 @@ public class BalanceEventListener {
                     message,
                     "/balance"
             );
+            lastNotificationTimeMap.put(cropName, Instant.now());
             log.info("[Event-Balance] 수급 알림 발송 완료 - 작물: {}, 발송 대상 수: {}", cropName, uniqueIds.size());
         }
     }
