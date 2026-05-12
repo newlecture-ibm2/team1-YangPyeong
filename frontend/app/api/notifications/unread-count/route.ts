@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const session = await getSessionFromCookie();
   if (!session?.token) {
@@ -14,6 +16,7 @@ export async function GET(request: NextRequest) {
       headers: {
         'Authorization': `Bearer ${session.token}`,
       },
+      cache: 'no-store',
     });
 
     const data = await res.json();
