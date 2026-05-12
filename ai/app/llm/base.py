@@ -54,4 +54,16 @@ class BaseLLM(ABC):
         Yields:
             텍스트 청크
         """
+    @abstractmethod
+    def get_chat_model(self, temperature: float = 0.7):
+        """
+        LangChain과 호환되는 Chat Model 인스턴스를 반환합니다.
+        (예: ChatGoogleGenerativeAI, ChatGroq 등)
+
+        Args:
+            temperature: 창의성 설정
+
+        Returns:
+            LangChain Chat Model 인스턴스
+        """
         ...

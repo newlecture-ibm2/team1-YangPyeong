@@ -7,6 +7,7 @@ import logging
 from typing import AsyncIterator, Optional
 
 from groq import AsyncGroq
+from langchain_groq import ChatGroq
 
 from app.config import get_settings
 from app.llm.base import BaseLLM
@@ -15,16 +16,25 @@ logger = logging.getLogger(__name__)
 
 
 class GroqLLM(BaseLLM):
-    """Groq API를 사용하는 LLM 구현체 (챗봇용)"""
+    """Groq API를 사용하는 LLM 구현체"""
 
     def __init__(self) -> None:
         settings = get_settings()
         if not settings.GROQ_API_KEY:
             raise ValueError("GROQ_API_KEY 환경변수가 설정되지 않았습니다.")
 
-        self._client = AsyncGroq(api_key=settings.GROQ_API_KEY)
+        self._api_key = settings.GROQ_API_KEY
+        self._client = AsyncGroq(api_key=self._api_key)
         self._model_name = settings.GROQ_MODEL
         logger.info("GroqLLM 초기화 완료 (모델: %s)", self._model_name)
+
+    def get_chat_model(self, temperature: float = 0.7):
+        """LangChain Chat Model 인스턴스 반환"""
+        return ChatGroq(
+            model=self._model_name,
+            temperature=temperature,
+            groq_api_key=self._api_key
+        )
 
     async def generate(
         self,
