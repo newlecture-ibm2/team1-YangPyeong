@@ -16,10 +16,13 @@ import org.springframework.web.client.RestClient;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class AiServerAdapter implements PredictYieldPort {
 
     private final RestClient aiRestClient;
+
+    public AiServerAdapter(@org.springframework.beans.factory.annotation.Qualifier("aiRestClient") RestClient aiRestClient) {
+        this.aiRestClient = aiRestClient;
+    }
 
     @Override
     public Double predictYield(Long cropId, Double area, String cultivationType) {

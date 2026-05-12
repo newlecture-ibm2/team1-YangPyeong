@@ -13,7 +13,7 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class AiClientConfig {
 
-    @Value("${ai.server-url}")
+    @Value("${ai.server-url:http://ai-server:8000}")
     private String aiServerUrl;
 
     /**

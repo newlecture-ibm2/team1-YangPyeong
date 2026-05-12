@@ -11,11 +11,13 @@ import java.util.Map;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class AgentRestAdapter implements AgentRouterPort {
 
-    // AiClientConfig에서 설정한 60초 타임아웃의 RestClient를 주입받음
     private final RestClient agentRestClient;
+
+    public AgentRestAdapter(@org.springframework.beans.factory.annotation.Qualifier("agentRestClient") RestClient agentRestClient) {
+        this.agentRestClient = agentRestClient;
+    }
 
     @Override
     @Retry(name = "aiRetry", fallbackMethod = "fallbackRouteToAgent") // Resilience4j 연동 (통신 실패시 재시도)
