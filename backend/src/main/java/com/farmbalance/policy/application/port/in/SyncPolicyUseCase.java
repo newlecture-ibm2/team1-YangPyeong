@@ -1,5 +1,7 @@
 package com.farmbalance.policy.application.port.in;
 
+import com.farmbalance.global.event.HealthCheckTriggerEvent;
+
 /**
  * 정책 동기화(수집) Input Port.
  */
@@ -11,6 +13,11 @@ public interface SyncPolicyUseCase {
      * @return 동기화 결과 (수집/업데이트/실패 건수)
      */
     SyncResult syncPolicies();
+
+    /**
+     * 정책 데이터 헬스체크 이벤트를 수신하여 가벼운 점검을 수행합니다.
+     */
+    void onHealthCheckTriggerEvent(HealthCheckTriggerEvent event);
 
     /**
      * 동기화 결과를 담는 record.
