@@ -479,3 +479,22 @@
     right: -40px;
   }
 }
+
+.notifList {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.notifList::-webkit-scrollbar {
+  width: 6px;
+}
+.notifList::-webkit-scrollbar-track {
+  background: transparent;
+}
+.notifList::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+.notifList::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}

@@ -223,7 +223,8 @@ export default function Header() {
 
       if (recentNotifs.length === 0) setNotifLoading(true);
       try {
-        const res = await fetch('/api/notifications?page=0&size=5');
+        // 안 읽은 알림만 최대 10개 가져오기
+        const res = await fetch('/api/notifications?page=0&size=10&isRead=false');
         if (res.ok) {
           const json = await res.json();
           setRecentNotifs(mergeReadState(json.data ?? []));
@@ -371,20 +372,22 @@ export default function Header() {
                 ) : recentNotifs.length === 0 ? (
                   <div className={styles.notifEmpty}>새로운 알림이 없습니다.</div>
                 ) : (
-                  recentNotifs.map((n) => (
-                    <button
-                      key={n.id}
-                      className={`${styles.notifItem} ${!n.isRead ? styles.notifItemUnread : styles.notifItemRead}`}
-                      onClick={() => handleNotifClick(n)}
-                    >
-                      <span className={styles.notifItemIcon}>{NOTIF_TYPE_ICONS[n.type] || '🔔'}</span>
-                      <span className={styles.notifItemContent}>
-                        <span className={styles.notifItemTitle}>{n.title}</span>
-                        <span className={styles.notifItemMessage}>{n.message}</span>
-                        <span className={styles.notifItemTime}>{timeAgo(n.createdAt)}</span>
-                      </span>
-                    </button>
-                  ))
+                  <div className={styles.notifList}>
+                    {recentNotifs.map((n) => (
+                      <button
+                        key={n.id}
+                        className={`${styles.notifItem} ${!n.isRead ? styles.notifItemUnread : styles.notifItemRead}`}
+                        onClick={() => handleNotifClick(n)}
+                      >
+                        <span className={styles.notifItemIcon}>{NOTIF_TYPE_ICONS[n.type] || '🔔'}</span>
+                        <span className={styles.notifItemContent}>
+                          <span className={styles.notifItemTitle}>{n.title}</span>
+                          <span className={styles.notifItemMessage}>{n.message}</span>
+                          <span className={styles.notifItemTime}>{timeAgo(n.createdAt)}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 )}
 
                 <div className={styles.notifDropdownDivider} />
@@ -393,7 +396,7 @@ export default function Header() {
                   className={styles.notifViewAll}
                   onClick={() => setNotifOpen(false)}
                 >
-                  전체 알림 보기 →
+                  {unreadCount > 10 ? `안 읽은 알림 ${unreadCount - 10}개 더보기 →` : '전체 알림 보기 →'}
                 </Link>
               </div>
             )}
