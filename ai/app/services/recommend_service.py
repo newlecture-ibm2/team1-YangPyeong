@@ -9,24 +9,7 @@ from app.models.recommend import ReasonRequest, ReasonResponse, DiagnoseResponse
 
 logger = logging.getLogger(__name__)
 
-def _extract_json(text: str) -> dict:
-    match = re.search(r"```json\s*([\s\S]*?)```", text)
-    if match:
-        try:
-            return json.loads(match.group(1).strip())
-        except json.JSONDecodeError:
-            pass
-    try:
-        return json.loads(text.strip())
-    except json.JSONDecodeError:
-        pass
-    match = re.search(r"\{[\s\S]*\}", text)
-    if match:
-        try:
-            return json.loads(match.group(0))
-        except json.JSONDecodeError:
-            pass
-    return {}
+from app.utils.json_utils import extract_json
 
 async def tune_recommend_weights(req: WeightsRequest) -> WeightsResponse:
     prompt = f"""당신은 AI 농업 컨설턴트입니다. 아래 농장 정보를 분석하여 작물 추천에 사용할 4가지 평가 지표(토양 적합도, 시세 전망, 수급 안정성, 재배 난이도)의 최적 가중치를 산출해주세요.
@@ -49,7 +32,7 @@ async def tune_recommend_weights(req: WeightsRequest) -> WeightsResponse:
 ```"""
     llm = get_llm("gemini")
     response_text = await llm.generate(prompt)
-    parsed = _extract_json(response_text)
+    parsed = extract_json(response_text)
     
     w_soil = float(parsed.get("w_soil", 0.35))
     w_price = float(parsed.get("w_price", 0.25))

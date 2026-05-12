@@ -3,8 +3,6 @@
 KAMIS 실시간 시세 + 환경 요인 + LLM Agent를 결합하여 예상 수익을 계산합니다.
 """
 
-import json
-import re
 import logging
 from typing import Optional
 
@@ -17,35 +15,9 @@ from app.agents.tools.kamis_tool import (
 )
 from app.prompts.revenue_prompt import build_revenue_prediction_prompt
 from app.models.revenue import RevenuePredictionRequest, RevenuePredictionResponse
+from app.utils.json_utils import extract_json
 
 logger = logging.getLogger(__name__)
-
-
-def _extract_json(text: str) -> dict:
-    """LLM 응답에서 JSON 블록을 추출합니다."""
-    # ```json ... ``` 블록 추출 시도
-    match = re.search(r"```json\s*([\s\S]*?)```", text)
-    if match:
-        try:
-            return json.loads(match.group(1).strip())
-        except json.JSONDecodeError:
-            pass
-
-    # 순수 JSON 시도
-    try:
-        return json.loads(text.strip())
-    except json.JSONDecodeError:
-        pass
-
-    # { ... } 패턴 검색
-    match = re.search(r"\{[\s\S]*\}", text)
-    if match:
-        try:
-            return json.loads(match.group(0))
-        except json.JSONDecodeError:
-            pass
-
-    return {}
 
 
 async def predict_revenue(req: RevenuePredictionRequest) -> RevenuePredictionResponse:
@@ -107,7 +79,7 @@ async def predict_revenue(req: RevenuePredictionRequest) -> RevenuePredictionRes
     logger.info(f"LLM 원본 응답 길이: {len(raw_response)}")
 
     # ── 7. JSON 파싱 ──
-    parsed = _extract_json(raw_response)
+    parsed = extract_json(raw_response)
 
     if not parsed:
         logger.error(f"LLM JSON 파싱 실패. 원본: {raw_response[:500]}")

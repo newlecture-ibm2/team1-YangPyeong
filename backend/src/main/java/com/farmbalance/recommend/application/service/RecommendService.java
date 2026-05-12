@@ -141,32 +141,40 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
             recommendations.add(rec);
         }
 
-        // 5. 점수 기준 내림차순 정렬 + 순위 부여 및 AI 사유 생성 (Top 3)
+        // 5. 점수 기준 내림차순 정렬 + 순위 부여
         recommendations.sort(Comparator.comparingInt(CropRecommendation::getScore).reversed());
+        
+        // 6. 상위 5개 항목에 대해 실시간 AI 분석 사유 생성 (병렬 처리)
+        // 병렬 스트림을 사용하여 LLM 호출 시간을 단축합니다.
+        List<java.util.concurrent.CompletableFuture<CropRecommendation>> futures = new ArrayList<>();
+        
+        final String finalFarmDetails = farmDetails;
         for (int i = 0; i < recommendations.size(); i++) {
-            CropRecommendation rec = recommendations.get(i);
-            String aiReason = null;
-            if (i < 3) {
-                try {
-                    aiReason = recommendAiPort.generateReason(farmDetails, rec.getCropName(), rec.getCategory().getLabel());
-                } catch (Exception e) {
-                    log.error("AI 사유 생성 실패: {}", e.getMessage());
-                    aiReason = "AI 분석을 일시적으로 사용할 수 없습니다.";
-                }
+            final int rank = i + 1;
+            final CropRecommendation rec = recommendations.get(i);
+            
+            if (i < 5) {
+                futures.add(java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                    String aiReason;
+                    try {
+                        aiReason = recommendAiPort.generateReason(finalFarmDetails, rec.getCropName(), rec.getCategory().getLabel());
+                    } catch (Exception e) {
+                        log.warn("AI 사유 생성 실패 (crop={}): {}", rec.getCropName(), e.getMessage());
+                        aiReason = "현재 데이터 기반 최적의 작물로 분석되었습니다.";
+                    }
+                    return rec.toBuilder().rank(rank).aiReason(aiReason).build();
+                }));
+            } else {
+                recommendations.set(i, rec.toBuilder().rank(rank).build());
             }
-            recommendations.set(i, rec.toBuilder().rank(i + 1).aiReason(aiReason).build());
         }
 
-        // 6. 상위 5개 항목에 대해 실시간 AI 분석 사유 생성 (파이썬 서버 호출)
-        for (int i = 0; i < Math.min(recommendations.size(), 5); i++) {
-            CropRecommendation rec = recommendations.get(i);
+        // 결과 대기 및 반영
+        for (int i = 0; i < futures.size(); i++) {
             try {
-                // 파이썬 AI 서버(Gemini/LLM)로부터 추천 사유 한 줄 가져오기
-                String aiReason = recommendAiPort.generateReason(farmDetails, rec.getCropName(), rec.getCategory().getLabel());
-                recommendations.set(i, rec.toBuilder().aiReason(aiReason).build());
+                recommendations.set(i, futures.get(i).get(10, java.util.concurrent.TimeUnit.SECONDS));
             } catch (Exception e) {
-                log.warn("AI 사유 생성 실패 (crop={}): {}", rec.getCropName(), e.getMessage());
-                recommendations.set(i, rec.toBuilder().aiReason("현재 데이터 기반 최적의 작물로 분석되었습니다.").build());
+                log.error("AI 사유 결과 대기 중 오류: {}", e.getMessage());
             }
         }
 
