@@ -34,7 +34,7 @@ export default function SellerEditPage({ params }: EditPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isAiAutofilling, setIsAiAutofilling] = useState(false);
-  const [isPriceRecommended, setIsPriceRecommended] = useState(false);
+  const [priceRecommendationType, setPriceRecommendationType] = useState<'KAMIS' | 'AI' | null>(null);
   const { showQuickMessage } = useFarmBotContext();
   const { dialog, showAlert, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
@@ -92,6 +92,9 @@ export default function SellerEditPage({ params }: EditPageProps) {
   const handleNumberInput = useCallback((field: string, value: string) => {
     const onlyNums = value.replace(/[^0-9]/g, '');
     updateField(field, onlyNums);
+    if (field === 'price') {
+      setPriceRecommendationType(null); // 사용자가 직접 수정하면 안내문구 제거
+    }
   }, [updateField]);
 
   /** 기존 이미지 삭제 */
@@ -269,7 +272,7 @@ export default function SellerEditPage({ params }: EditPageProps) {
         description: data.data.description,
       }));
 
-      setIsPriceRecommended(true);
+      setPriceRecommendationType(data.data.isKamisApplied ? 'KAMIS' : 'AI');
 
       showQuickMessage(
         'AI가 상품 정보를 채워넣었어요! 🌱\n가격이나 재고는 원하시는 대로\n수정하실 수 있습니다 😊',
@@ -406,15 +409,14 @@ export default function SellerEditPage({ params }: EditPageProps) {
                 label="가격 (원)"
                 placeholder="예: 8000"
                 value={form.price}
-                onChange={(e) => {
-                  handleNumberInput('price', e.target.value);
-                  setIsPriceRecommended(false);
-                }}
+                onChange={(e) => handleNumberInput('price', e.target.value)}
                 required
               />
-              {isPriceRecommended && (
+              {priceRecommendationType && (
                 <div style={{ fontSize: '0.875rem', color: 'var(--color-primary)', marginTop: '-12px', marginBottom: '20px', marginLeft: '4px' }}>
-                  💡 AI 추천 시세가 적용되었습니다. (수정 가능)
+                  {priceRecommendationType === 'KAMIS'
+                    ? '💡 KAMIS 최신 농산물 도매 시세를 반영한 AI 추천 가격입니다. (수정 가능)'
+                    : '💡 AI 추천 시세가 적용되었습니다. (수정 가능)'}
                 </div>
               )}
             </div>

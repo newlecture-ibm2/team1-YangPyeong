@@ -29,7 +29,8 @@ export default function SellerRegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isAiAutofilling, setIsAiAutofilling] = useState(false);
-  const [isPriceRecommended, setIsPriceRecommended] = useState(false);
+  const [priceRecommendationType, setPriceRecommendationType] = useState<'KAMIS' | 'AI' | null>(null);
+  const [kamisUnit, setKamisUnit] = useState<string | null>(null);
   /** 유효성 경고를 사용자가 한번 건드린 필드에만 표시하기 위한 touched 상태 */
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const { showQuickMessage } = useFarmBotContext();
@@ -65,6 +66,11 @@ export default function SellerRegisterPage() {
       // 앞자리 0 제거 (예: "007" → "7")
       const cleaned = String(Number(numericOnly));
       updateField(field, cleaned);
+      
+      if (field === 'price') {
+        setPriceRecommendationType(null); // 사용자가 직접 수정하면 안내문구 제거
+        setKamisUnit(null);
+      }
     },
     [updateField],
   );
@@ -329,7 +335,8 @@ export default function SellerRegisterPage() {
         description: data.data.description,
       }));
 
-      setIsPriceRecommended(true);
+      setPriceRecommendationType(data.data.isKamisApplied ? 'KAMIS' : 'AI');
+      setKamisUnit(data.data.kamisUnit || null);
 
       // 가이드봇 안내 메시지 — 재배 이력 사용 여부에 따라 분기
       showQuickMessage(
@@ -344,7 +351,7 @@ export default function SellerRegisterPage() {
     } finally {
       setIsAiAutofilling(false);
     }
-  }, [form.name, form.price, form.stock, form.categoryName, form.description, showQuickMessage, categoryOptions]);
+  }, [form.name, categoryOptions, showQuickMessage]);
 
 
 
@@ -435,10 +442,7 @@ export default function SellerRegisterPage() {
                 label="가격 (원)"
                 placeholder="예: 8000"
                 value={form.price}
-                onChange={(e) => {
-                  handleNumberInput('price', e.target.value);
-                  setIsPriceRecommended(false);
-                }}
+                onChange={(e) => handleNumberInput('price', e.target.value)}
                 onBlur={() => handleBlur('price')}
                 required
               />
@@ -447,9 +451,11 @@ export default function SellerRegisterPage() {
                   ⚠️ {getFieldError('price')}
                 </div>
               )}
-              {isPriceRecommended && (
-                <div style={{ fontSize: '0.875rem', color: 'var(--color-primary)', marginTop: '-12px', marginBottom: '20px', marginLeft: '4px' }}>
-                  💡 AI 추천 시세가 적용되었습니다. (수정 가능)
+              {priceRecommendationType && (
+                <div style={{ fontSize: '0.8125rem', color: 'var(--color-primary)', marginTop: '-12px', marginBottom: '20px', marginLeft: '4px', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
+                  {priceRecommendationType === 'KAMIS'
+                    ? `💡 KAMIS 도매 시세 기반 추천가입니다. ${kamisUnit ? `(${kamisUnit} 기준, 수정 가능)` : '(수정 가능)'}`
+                    : '💡 AI 추천 시세가 적용되었습니다. (수정 가능)'}
                 </div>
               )}
             </div>
