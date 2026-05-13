@@ -77,11 +77,14 @@ public class NotificationService implements NotificationUseCase {
     @Transactional
     public void createBulkNotifications(List<Long> userIds, NotificationType type,
                                          String title, String message, String link) {
+        // DB 배치 INSERT (N+1 방지)
+        List<Notification> notifications = userIds.stream()
+                .map(userId -> Notification.create(userId, type, title, message, link))
+                .toList();
+        notificationPort.saveAll(notifications);
+
+        // FCM 발송 (비동기 — 유저별 개별 발송)
         for (Long userId : userIds) {
-            Notification notification = Notification.create(userId, type, title, message, link);
-            notificationPort.save(notification);
-            
-            // 일괄 발송 시에도 FCM 발송 (비동기)
             fcmNotificationService.sendToUser(userId, title, message, link);
         }
         log.info("[알림 벌크 생성] {}명에게 {} 타입 알림 발송 완료", userIds.size(), type);

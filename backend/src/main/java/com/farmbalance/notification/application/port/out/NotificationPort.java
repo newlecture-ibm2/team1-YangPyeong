@@ -4,6 +4,7 @@ import com.farmbalance.notification.domain.Notification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -11,6 +12,7 @@ import java.util.Optional;
  */
 public interface NotificationPort {
     Notification save(Notification notification);
+    List<Notification> saveAll(List<Notification> notifications);
     Optional<Notification> findActiveById(Long id);
     Page<Notification> findByUserIdAndFilters(Long userId, String type, Boolean isRead, Pageable pageable);
     long countUnreadByUserId(Long userId);
