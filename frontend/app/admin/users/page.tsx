@@ -12,8 +12,10 @@ import { useToast } from '@/components/common/Toast'
 import styles from './UserManagement.module.css'
 import type { AdminUser, UserRole, ChangeableRole } from '../_lib/user.types'
 import { ROLE_LABELS, STATUS_LABELS } from '../_lib/user.types'
-import { fetchUsers, changeUserRole, changeUserStatus, forceWithdrawUser, reactivateUser } from '../_lib/user.api'
+import { fetchUsers, changeUserRole, changeUserStatus, forceWithdrawUser, reactivateUser, createUser } from '../_lib/user.api'
 import ForceWithdrawModal from './_components/ForceWithdrawModal'
+import CreateAccountModal from './_components/CreateAccountModal'
+import type { CreateUserRequest } from '../_lib/user.types'
 
 export default function UserManagementPage() {
   // 필터 상태
@@ -32,6 +34,8 @@ export default function UserManagementPage() {
 
   const [forceWithdrawModalOpen, setForceWithdrawModalOpen] = useState(false)
   const [targetUserForWithdraw, setTargetUserForWithdraw] = useState<AdminUser | null>(null)
+  
+  const [createModalOpen, setCreateModalOpen] = useState(false)
 
   const toast = useToast()
   const toastRef = useRef(toast)
@@ -138,6 +142,19 @@ export default function UserManagementPage() {
     }
   }
 
+  // 특수 계정(지자체/관리자) 발급
+  const handleCreateUser = async (data: CreateUserRequest) => {
+    try {
+      await createUser(data)
+      toast.success(`${ROLE_LABELS[data.role]} 계정(${data.email})이 성공적으로 발급되었습니다.`)
+      setCreateModalOpen(false)
+      await loadUsers()
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '계정 발급에 실패했습니다.'
+      toast.error(msg)
+    }
+  }
+
   // 역할 배지 variant (Badge 컴포넌트 실제 variant에 맞춤)
   const getRoleBadgeVariant = (role: UserRole): 'green' | 'lime' | 'orange' | 'gray' => {
     switch (role) {
@@ -214,8 +231,13 @@ export default function UserManagementPage() {
     <div className={styles.container}>
       {/* 헤더 */}
       <div className={styles.header}>
-        <h1 className={styles.title}>👥 사용자 관리</h1>
-        <span className={styles.totalCount}>총 {totalCount.toLocaleString()}명</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <h1 className={styles.title}>👥 사용자 관리</h1>
+          <span className={styles.totalCount}>총 {totalCount.toLocaleString()}명</span>
+        </div>
+        <Button variant="primary" onClick={() => setCreateModalOpen(true)}>
+          + 계정 발급
+        </Button>
       </div>
 
       {/* 검색 + 필터 (FilterBar 공통 컴포넌트 패턴) */}
@@ -360,6 +382,12 @@ export default function UserManagementPage() {
         userName={targetUserForWithdraw?.name || ''}
         onClose={() => setForceWithdrawModalOpen(false)}
         onConfirm={handleForceWithdraw}
+      />
+
+      <CreateAccountModal
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onConfirm={handleCreateUser}
       />
     </div>
   )

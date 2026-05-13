@@ -125,4 +125,19 @@ public class AdminUserController {
         manageUserUseCase.reactivateUser(id);
         return ApiResponse.ok(null);
     }
+
+    /**
+     * 특수 계정(지자체, 관리자) 직접 발급
+     * POST /api/admin/users
+     */
+    @PostMapping
+    public ApiResponse<Void> createUser(@Valid @RequestBody com.farmbalance.admin.adapter.in.web.dto.AdminCreateUserRequest request) {
+        manageUserUseCase.createUser(
+                request.getEmail(),
+                request.getPassword(),
+                request.getName(),
+                request.getRole()
+        );
+        return ApiResponse.ok(null);
+    }
 }

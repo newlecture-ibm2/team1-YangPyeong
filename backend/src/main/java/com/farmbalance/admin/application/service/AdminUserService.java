@@ -22,6 +22,7 @@ import com.farmbalance.admin.adapter.out.persistence.entity.UserSanctionLogJpaEn
 import com.farmbalance.admin.adapter.out.persistence.repository.UserSanctionLogJpaRepository;
 import com.farmbalance.user.application.port.in.UpdateProfileUseCase;
 import com.farmbalance.user.application.port.out.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,7 @@ public class AdminUserService implements ManageUserUseCase {
     private final UserRepository userRepository;
     private final UpdateProfileUseCase updateProfileUseCase;
     private final UserSanctionLogJpaRepository sanctionLogRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /** 역할 변경 시 허용되는 값 */
     private static final Set<String> ALLOWED_ROLES = Set.of("USER", "FARMER");
@@ -120,5 +122,36 @@ public class AdminUserService implements ManageUserUseCase {
 
         // 실제 복구 로직 위임 (상태 ACTIVE 전환 등)
         updateProfileUseCase.reactivateAccount(user.getEmail());
+    }
+
+    @Override
+    @Transactional
+    public void createUser(String email, String password, String name, String role) {
+        if (userRepository.existsByEmail(email)) {
+            throw new BusinessException(ErrorCode.USER_EMAIL_DUPLICATE);
+        }
+
+        String upperRole = role.toUpperCase();
+        com.farmbalance.user.domain.Role userRole;
+        try {
+            userRole = com.farmbalance.user.domain.Role.valueOf(upperRole);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.ADMIN_INVALID_ROLE);
+        }
+
+        String encodedPassword = passwordEncoder.encode(password);
+
+        User newUser = User.builder()
+                .email(email)
+                .password(encodedPassword)
+                .name(name)
+                .role(userRole)
+                .status(com.farmbalance.user.domain.UserStatus.ACTIVE)
+                .provider(com.farmbalance.user.domain.AuthProvider.LOCAL)
+                .createdAt(java.time.LocalDateTime.now())
+                .updatedAt(java.time.LocalDateTime.now())
+                .build();
+
+        userRepository.save(newUser);
     }
 }

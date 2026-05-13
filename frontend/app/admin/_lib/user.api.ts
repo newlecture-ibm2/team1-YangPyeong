@@ -3,6 +3,7 @@ import type {
   UserListResponse,
   ChangeRoleRequest,
   ChangeStatusRequest,
+  CreateUserRequest,
 } from './user.types'
 
 const BASE = '/api/admin/users'
@@ -69,4 +70,18 @@ export async function reactivateUser(id: number): Promise<void> {
   })
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '수동 복구에 실패했습니다.')
+}
+
+/** 특수 계정(지자체, 관리자) 발급 */
+export async function createUser(body: CreateUserRequest): Promise<void> {
+  if (!body.password) {
+    body.password = 'gov1234!'
+  }
+  const res = await fetch(BASE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '계정 발급에 실패했습니다.')
 }

@@ -26,6 +26,13 @@ export interface ChangeStatusRequest {
   status: UserStatus
 }
 
+export interface CreateUserRequest {
+  email: string
+  password?: string // Optional on front, required on backend, front provides default if empty
+  name: string
+  role: 'ADMIN' | 'GOV'
+}
+
 export interface UserListResponse {
   users: AdminUser[]
   meta: {

@@ -44,4 +44,9 @@ public interface ManageUserUseCase {
      * 관리자 수동 탈퇴 복구
      */
     void reactivateUser(Long id);
+
+    /**
+     * 관리자 특수 계정(지자체, 관리자 등) 직접 발급
+     */
+    void createUser(String email, String password, String name, String role);
 }
