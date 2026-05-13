@@ -192,7 +192,7 @@ SELECT
     'CULTIVATES', 
     g_farm.id, 
     g_crop.id, 
-    jsonb_build_object('area', cr.cultivation_area, 'estimated_yield', cr.farmer_estimated_yield, 'yield_unit', cr.yield_unit, 'status', cr.status), 
+    jsonb_build_object('area', cr.cultivation_area, 'estimated_yield', cr.farmer_estimated_yield, 'yield_unit', cr.yield_unit), 
     'cultivation_registrations'
 FROM cultivation_registrations cr
 JOIN graph_entity g_farm ON g_farm.entity_type = 'FARM' AND g_farm.source_id = cr.farm_id
