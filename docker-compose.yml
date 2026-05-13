@@ -107,6 +107,7 @@ services:
       - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
       - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - GOV_AGENT_MODE=${GOV_AGENT_MODE:-classic}
       - CHROMA_PERSIST_DIR=/app/data/chroma
     volumes:
       - ./ai:/app
