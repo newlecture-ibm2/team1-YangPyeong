@@ -76,7 +76,7 @@ public class CommentController {
         Long userId = getUserId(authentication);
 
         com.farmbalance.community.domain.model.Comment domainComment = 
-                createCommentUseCase.createComment(postId, userId, request.getContent());
+                createCommentUseCase.createComment(postId, userId, request.getContent(), request.getParentId());
         
         CommentResponse response = CommentResponse.fromDomain(
                 domainComment,

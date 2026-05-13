@@ -14,7 +14,7 @@ import java.util.Optional;
 @Repository
 public interface CommentJpaRepository extends JpaRepository<CommentEntity, Long> {
 
-    @Query("SELECT c FROM CommentEntity c WHERE c.post.id = :postId AND c.deletedAt IS NULL ORDER BY c.createdAt ASC")
+    @Query("SELECT c FROM CommentEntity c WHERE c.post.id = :postId ORDER BY c.createdAt ASC")
     List<CommentEntity> findByPostId(@Param("postId") Long postId);
 
     @Query("SELECT c FROM CommentEntity c WHERE c.id = :id AND c.deletedAt IS NULL")

@@ -100,10 +100,10 @@ export async function getComments(postId: number) {
 /**
  * 댓글 작성
  */
-export async function createComment(postId: number, content: string) {
+export async function createComment(postId: number, content: string, parentId?: number) {
   return localApiFetch<Comment>(`/api/proxy/community/posts/${postId}/comments`, {
     method: 'POST',
-    body: JSON.stringify({ content })
+    body: JSON.stringify({ content, parentId })
   });
 }
 
