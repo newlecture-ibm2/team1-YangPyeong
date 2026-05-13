@@ -49,6 +49,8 @@ export interface Comment {
   authorStatus?: string;
   content: string;
   accepted: boolean;
+  parentId?: number;
+  isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
 }
