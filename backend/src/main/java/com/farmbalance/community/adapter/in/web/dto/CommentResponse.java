@@ -16,17 +16,23 @@ public class CommentResponse {
     private String content;
     private boolean accepted;
     private String authorNickname;
+    private Long parentId;
+    private boolean isDeleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public static CommentResponse fromDomain(Comment comment, String authorNickname) {
+        boolean deleted = comment.getDeletedAt() != null;
+        
         return CommentResponse.builder()
                 .id(comment.getId())
                 .postId(comment.getPostId())
-                .authorId(comment.getAuthorId())
-                .authorNickname(authorNickname)
-                .content(comment.getContent())
+                .authorId(deleted ? null : comment.getAuthorId())
+                .authorNickname(deleted ? "(삭제됨)" : authorNickname)
+                .content(deleted ? "삭제된 메시지입니다." : comment.getContent())
                 .accepted(comment.isAccepted())
+                .parentId(comment.getParentId())
+                .isDeleted(deleted)
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .build();

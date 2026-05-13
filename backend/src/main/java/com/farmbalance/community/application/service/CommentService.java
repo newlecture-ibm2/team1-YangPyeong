@@ -51,7 +51,7 @@ public class CommentService implements CreateCommentUseCase, LoadCommentUseCase,
     }
 
     @Override
-    public Comment createComment(Long postId, Long authorId, String content) {
+    public Comment createComment(Long postId, Long authorId, String content, Long parentId) {
         Post post = postPort.findActiveById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
@@ -60,6 +60,7 @@ public class CommentService implements CreateCommentUseCase, LoadCommentUseCase,
                 .authorId(authorId)
                 .content(content)
                 .accepted(false)
+                .parentId(parentId)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -74,6 +75,21 @@ public class CommentService implements CreateCommentUseCase, LoadCommentUseCase,
                     String.format("'%s' 게시글에 새 댓글이 달렸습니다.", post.getTitle()),
                     "/community/" + postId
             );
+        }
+
+        // C-3 내 댓글에 새 답글 알림
+        if (parentId != null) {
+            commentPort.findById(parentId).ifPresent(parentComment -> {
+                if (!parentComment.getAuthorId().equals(authorId)) {
+                    notificationUseCase.createNotification(
+                            parentComment.getAuthorId(),
+                            NotificationType.SYSTEM,
+                            "새 답글 등록",
+                            "내 댓글에 새로운 답글이 달렸습니다.",
+                            "/community/" + postId
+                    );
+                }
+            });
         }
 
         return savedComment;

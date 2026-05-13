@@ -10,8 +10,11 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// 필수 설정값이 있는지 확인 (없으면 초기화 스킵)
+const isFirebaseConfigValid = !!firebaseConfig.apiKey && !!firebaseConfig.projectId && firebaseConfig.projectId !== 'dummy';
+
 // SSR 환경에서는 Firebase 초기화를 건너뜁니다
-const app = typeof window !== 'undefined' 
+const app = typeof window !== 'undefined' && isFirebaseConfigValid
   ? (getApps().length === 0 ? initializeApp(firebaseConfig) : getApp())
   : null;
 

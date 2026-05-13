@@ -20,6 +20,7 @@ public class Comment {
     private Long authorId;
     private String content;
     private boolean accepted;
+    private Long parentId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
