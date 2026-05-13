@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { type SellerProduct, PRODUCT_STATUS_MAP } from '../_lib/mypage.types';
 
 const INSIGHT_CACHE_KEY = 'seller-insight-cache';
@@ -15,7 +15,7 @@ export default function useSellerInsight(products: SellerProduct[]) {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isStale, setIsStale] = useState<boolean>(false);
-  const [initialLoaded, setInitialLoaded] = useState<boolean>(false);
+  const initialLoaded = useRef<boolean>(false);
 
   const fetchInsight = useCallback(async (forceRefresh = false) => {
     if (!products || products.length === 0) return;
@@ -82,15 +82,15 @@ export default function useSellerInsight(products: SellerProduct[]) {
   // 상품 목록 로드가 완료된 후에만 한 번 호출되도록 함
   useEffect(() => {
     if (products.length > 0) {
-      if (!initialLoaded) {
+      if (!initialLoaded.current) {
         fetchInsight();
-        setInitialLoaded(true);
+        initialLoaded.current = true;
       } else {
         // 데이터 로드 이후 상품이 변경되면 Stale 상태로 마킹
         setIsStale(true);
       }
     }
-  }, [products, fetchInsight, initialLoaded]);
+  }, [products, fetchInsight]);
 
   const refreshInsight = () => fetchInsight(true);
 

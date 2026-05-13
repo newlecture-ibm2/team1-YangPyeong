@@ -55,6 +55,8 @@ class AutofillData(BaseModel):
     price: int = Field(..., description="추천 가격 (원)")
     stock: int = Field(..., description="추천 초기 재고")
     description: str = Field(..., description="AI가 생성한 상품 설명")
+    is_kamis_applied: bool = Field(False, description="KAMIS 시세 반영 여부")
+    kamis_unit: str | None = Field(None, description="KAMIS 단위 (예: 1kg)")
 
 
 class AutofillResponse(BaseModel):
