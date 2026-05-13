@@ -7,7 +7,7 @@ import styles from '../community.module.css';
 import Button from '@/components/common/Button';
 import { useRouter } from 'next/navigation';
 import { getCategories, getPosts } from '../_lib/community.api';
-import Pagination from './Pagination';
+import Pagination from '@/components/common/Pagination';
 
 interface PostListContainerProps {
   initialPosts: Post[];
