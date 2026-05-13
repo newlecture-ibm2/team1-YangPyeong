@@ -17,6 +17,7 @@ interface AutofillApiResponse {
     price: number;
     stock: number;
     description: string;
+    is_kamis_applied?: boolean;
   } | null;
   error: string | null;
 }
@@ -92,6 +93,7 @@ export async function POST(request: NextRequest) {
         price: data.data.price,
         stock: data.data.stock,
         description: data.data.description,
+        isKamisApplied: data.data.is_kamis_applied || false,
       },
       error: null,
     });

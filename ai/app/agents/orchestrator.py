@@ -4,6 +4,7 @@ from langgraph.graph import StateGraph, END, START
 from langgraph.prebuilt import ToolNode
 from app.agents.farm_agent import get_farm_agent
 from app.agents.policy_agent import get_policy_agent
+from app.agents.shop_agent import get_shop_agent
 from app.agents.gov_agent import GovAgent
 from app.models.gov import GovChatRequest
 import logging
@@ -41,6 +42,11 @@ def router_node(state: AgentState):
     gov_keywords = ["수급", "위험", "위험도", "과잉", "부족", "경고", "밸런스", "지역 현황", "현재 상황", "요약", "양평군", "대체"]
     if any(keyword in last_message for keyword in gov_keywords):
         return "gov_agent"
+        
+    # 4. 상점/상품 등록/판매 -> Shop Agent
+    shop_keywords = ["상품", "판매", "등록", "상점", "마켓", "알아서 채워", "입력해줘"]
+    if any(keyword in last_message for keyword in shop_keywords):
+        return "shop_agent"
     
     return "general_chat"
 
@@ -54,6 +60,12 @@ async def call_farm_agent(state: AgentState):
 async def call_policy_agent(state: AgentState):
     """Policy Agent 서브 그래프 호출"""
     agent = get_policy_agent()
+    response = await agent.ainvoke({"messages": state["messages"]})
+    return {"messages": [response["messages"][-1]]}
+
+async def call_shop_agent(state: AgentState):
+    """Shop Agent 서브 그래프 호출"""
+    agent = get_shop_agent()
     response = await agent.ainvoke({"messages": state["messages"]})
     return {"messages": [response["messages"][-1]]}
 
@@ -84,6 +96,7 @@ def get_main_orchestrator():
     # 노드 추가
     workflow.add_node("farm_agent", call_farm_agent)
     workflow.add_node("policy_agent", call_policy_agent)
+    workflow.add_node("shop_agent", call_shop_agent)
     workflow.add_node("gov_agent", call_gov_agent)
     workflow.add_node("blocked_guard", call_blocked_guard)
     
@@ -92,12 +105,14 @@ def get_main_orchestrator():
         "blocked_guard": "blocked_guard",
         "farm_agent": "farm_agent",
         "policy_agent": "policy_agent",
+        "shop_agent": "shop_agent",
         "gov_agent": "gov_agent",
         "general_chat": "farm_agent" # 기본 fallback
     })
     
     workflow.add_edge("farm_agent", END)
     workflow.add_edge("policy_agent", END)
+    workflow.add_edge("shop_agent", END)
     workflow.add_edge("gov_agent", END)
     workflow.add_edge("blocked_guard", END)
     
