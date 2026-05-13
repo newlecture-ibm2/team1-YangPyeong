@@ -3,6 +3,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from langgraph.graph import StateGraph, END, START
 from langgraph.prebuilt import ToolNode
 from app.agents.farm_agent import get_farm_agent
+from app.agents.balance_agent import get_balance_agent
 from app.agents.policy_agent import get_policy_agent
 from app.agents.gov_agent import GovAgent
 from app.models.gov import GovChatRequest
@@ -16,6 +17,7 @@ class AgentState(TypedDict):
     next_node: str
     farm_id: int
     user_id: int
+    current_focus: str  # 에이전트의 페르소나를 강화할 메타데이터
 
 # ── 오케스트레이터 노드 (Router) ──
 def router_node(state: AgentState):
@@ -32,12 +34,17 @@ def router_node(state: AgentState):
     if any(keyword in last_message for keyword in policy_keywords):
         return "policy_agent"
         
-    # 2. 개별 농장/재배 관련 질문 -> Farm Agent
-    farm_keywords = ["내 농장", "농장", "재배 이력", "수확", "날씨", "토양", "병해충", "내 작물"]
+    # 2. 경제/가격/수익 분석 질문 -> Balance Agent (우선순위 높임)
+    balance_keywords = ["가격", "돈", "수익", "시장", "비싸다", "공급", "경제"]
+    if any(keyword in last_message for keyword in balance_keywords):
+        return "balance_agent"
+
+    # 3. 개별 농장/재배 관련 질문 -> Farm Agent
+    farm_keywords = ["내 농장", "농장", "재배 이력", "수확", "날씨", "토양", "병해충", "내 작물", "면적"]
     if any(keyword in last_message for keyword in farm_keywords):
         return "farm_agent"
 
-    # 3. 지자체 수급/위험도/지역 현황 분석 -> Gov Agent
+    # 4. 지자체 수급/위험도/지역 현황 분석 -> Gov Agent
     gov_keywords = ["수급", "위험", "위험도", "과잉", "부족", "경고", "밸런스", "지역 현황", "현재 상황", "요약", "양평군", "대체"]
     if any(keyword in last_message for keyword in gov_keywords):
         return "gov_agent"
@@ -45,10 +52,18 @@ def router_node(state: AgentState):
     return "general_chat"
 
 # ── 에이전트 노드 래퍼 ──
+async def call_balance_agent(state: AgentState):
+    """Balance Agent 서브 그래프 호출"""
+    agent = get_balance_agent()
+    # 경제 분석 맥락 메타데이터 주입
+    response = await agent.ainvoke({**state, "current_focus": "economic_analysis"})
+    return {"messages": [response["messages"][-1]]}
+
 async def call_farm_agent(state: AgentState):
     """Farm Agent 서브 그래프 호출"""
     agent = get_farm_agent()
-    response = await agent.ainvoke({"messages": state["messages"]})
+    # 오케스트레이터의 상태를 에이전트에게 전달
+    response = await agent.ainvoke(state)
     return {"messages": [response["messages"][-1]]}
 
 async def call_policy_agent(state: AgentState):
@@ -83,19 +98,22 @@ def get_main_orchestrator():
     
     # 노드 추가
     workflow.add_node("farm_agent", call_farm_agent)
+    workflow.add_node("balance_agent", call_balance_agent)
     workflow.add_node("policy_agent", call_policy_agent)
     workflow.add_node("gov_agent", call_gov_agent)
     workflow.add_node("blocked_guard", call_blocked_guard)
     
-    # 조건부 라우팅
+    # 조건부 라우팅 적용
     workflow.add_conditional_edges(START, router_node, {
         "blocked_guard": "blocked_guard",
+        "balance_agent": "balance_agent",
         "farm_agent": "farm_agent",
         "policy_agent": "policy_agent",
         "gov_agent": "gov_agent",
         "general_chat": "farm_agent" # 기본 fallback
     })
     
+    workflow.add_edge("balance_agent", END)
     workflow.add_edge("farm_agent", END)
     workflow.add_edge("policy_agent", END)
     workflow.add_edge("gov_agent", END)

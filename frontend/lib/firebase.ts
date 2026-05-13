@@ -31,7 +31,7 @@ export const requestForToken = async () => {
     if (!app) return null;
     const messaging = getMessaging(app);
     const permission = await Notification.requestPermission();
-    
+
     if (permission === 'granted') {
       const currentToken = await getToken(messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
