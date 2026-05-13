@@ -99,7 +99,7 @@ erDiagram
         bigint crop_id FK
         double cultivation_area "재배 면적(㎡)"
         double farmer_estimated_yield "농가 입력 예상 생산량"
-        varchar yield_unit "g | kg | ton"
+        varchar yield_unit "g | kg | 톤"
         varchar status "재배 상태: ACTIVE | COMPLETED"
         timestamp created_at
         timestamp updated_at
@@ -787,7 +787,7 @@ erDiagram
 | crop_id | BIGINT | FK → crops(id), NOT NULL | 작물 |
 | cultivation_area | DOUBLE PRECISION | NOT NULL | 재배 면적 (㎡) |
 | farmer_estimated_yield | DOUBLE PRECISION | | 농가 입력 예상 생산량 |
-| yield_unit | VARCHAR(10) | | 수확량 단위 (g / kg / ton) |
+| yield_unit | VARCHAR(10) | | 수확량 단위 (g / kg / 톤) |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE' | 재배 상태: ACTIVE / COMPLETED |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
