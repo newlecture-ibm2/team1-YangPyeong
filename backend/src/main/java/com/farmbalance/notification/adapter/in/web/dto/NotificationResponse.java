@@ -1,5 +1,6 @@
 package com.farmbalance.notification.adapter.in.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.farmbalance.notification.domain.Notification;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,8 @@ public class NotificationResponse {
     private String title;
     private String message;
     private String link;
+
+    @JsonProperty("isRead")
     private boolean isRead;
     private LocalDateTime createdAt;
 

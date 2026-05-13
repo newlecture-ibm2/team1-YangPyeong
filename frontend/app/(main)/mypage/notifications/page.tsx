@@ -3,7 +3,9 @@
 import { useRouter } from 'next/navigation';
 import Card from '@/components/common/Card/Card';
 import Button from '@/components/common/Button/Button';
+import Spinner from '@/components/common/Spinner/Spinner';
 import { useNotifications } from './useNotifications';
+import Pagination from '@/components/common/Pagination';
 import styles from './page.module.css';
 
 const TYPE_LABELS: Record<string, { label: string; icon: string }> = {
@@ -19,16 +21,19 @@ export default function MypageNotificationsPage() {
   const {
     notifications,
     isLoading,
-    hasMore,
+    currentPage,
+    totalPages,
+    setPage,
     filterType,
     setFilterType,
-    fetchMore,
     markAsRead,
     markAllAsRead,
   } = useNotifications();
 
-  const handleNotificationClick = (id: number, link: string) => {
-    markAsRead(id);
+  const handleNotificationClick = (id: number, link: string, isRead: boolean) => {
+    if (!isRead) {
+      markAsRead(id); // 백그라운드 처리 (await 없이 즉시 이동)
+    }
     if (link) {
       router.push(link);
     }
@@ -78,45 +83,43 @@ export default function MypageNotificationsPage() {
 
         <div className={styles.notificationList}>
           {isLoading && notifications.length === 0 ? (
-            <div className={styles.emptyState}>불러오는 중...</div>
+            <Spinner message="알림을 불러오는 중입니다..." />
           ) : notifications.length === 0 ? (
             <div className={styles.emptyState}>
               <div className={styles.emptyIcon}>📭</div>
               새로운 알림이 없습니다.
             </div>
           ) : (
-            notifications.map((notif) => (
-              <div
-                key={notif.id}
-                className={styles.notificationCard}
-                data-read={notif.isRead}
-                onClick={() => handleNotificationClick(notif.id, notif.link)}
-              >
-                <div className={`${styles.iconWrapper} ${styles[`icon_${notif.type}`]}`}>
-                  {TYPE_LABELS[notif.type]?.icon || '🔔'}
-                </div>
-                <div className={styles.content}>
-                  <div className={styles.topRow}>
-                    <span className={styles.time}>{timeAgo(notif.createdAt)}</span>
+            <>
+              {notifications.map((notif) => (
+                <div
+                  key={notif.id}
+                  className={styles.notificationCard}
+                  data-read={notif.isRead}
+                  onClick={() => handleNotificationClick(notif.id, notif.link, notif.isRead)}
+                >
+                  <div className={`${styles.iconWrapper} ${styles[`icon_${notif.type}`]}`}>
+                    {TYPE_LABELS[notif.type]?.icon || '🔔'}
                   </div>
-                  <h3 className={styles.cardTitle}>{notif.title}</h3>
-                  <p className={styles.message}>{notif.message}</p>
+                  <div className={styles.content}>
+                    <div className={styles.topRow}>
+                      <span className={styles.time}>{timeAgo(notif.createdAt)}</span>
+                    </div>
+                    <h3 className={styles.cardTitle}>{notif.title}</h3>
+                    <p className={styles.message}>{notif.message}</p>
+                  </div>
+                  {!notif.isRead && <div className={styles.unreadDot} />}
                 </div>
-                {!notif.isRead && <div className={styles.unreadDot} />}
+              ))}
+              
+              <div className={styles.paginationWrapper}>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                />
               </div>
-            ))
-          )}
-
-          {hasMore && (
-            <Button
-              variant="outline"
-              size="sm"
-              fullWidth
-              onClick={fetchMore}
-              disabled={isLoading}
-            >
-              {isLoading ? '불러오는 중...' : '이전 알림 더보기'}
-            </Button>
+            </>
           )}
         </div>
       </div>
