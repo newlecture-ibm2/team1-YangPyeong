@@ -24,6 +24,10 @@ public class NongsaroCropSyncService {
     private final AdminCropCategoryPort adminCropCategoryPort;
     private final AdminCropPort adminCropPort;
 
+    private static final List<String> EXCLUDED_CATEGORIES = List.of(
+            "화훼", "사료작물", "foreign workers", "축산"
+    );
+
     @Transactional
     public void syncCrops(String syncMode) {
         log.info("Starting Nongsaro farmWorkingPlan synchronization with mode: {}", syncMode);
@@ -35,6 +39,14 @@ public class NongsaroCropSyncService {
             String categoryName = cleanName(group.getCategoryName());
             String groupExternalId = group.getExternalId();
             if (categoryName == null || categoryName.isEmpty() || groupExternalId == null) continue;
+            
+            // 제외할 카테고리 필터링 (대소문자 무시)
+            boolean isExcluded = EXCLUDED_CATEGORIES.stream()
+                    .anyMatch(excluded -> excluded.equalsIgnoreCase(categoryName));
+            if (isExcluded) {
+                log.info("Skipping excluded category: {}", categoryName);
+                continue;
+            }
             
             // 1. 카테고리 저장/업데이트
             Long categoryId;
