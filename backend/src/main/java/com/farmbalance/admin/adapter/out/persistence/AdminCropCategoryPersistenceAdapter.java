@@ -61,6 +61,13 @@ public class AdminCropCategoryPersistenceAdapter implements AdminCropCategoryPor
     }
 
     @Override
+    public Optional<AdminCropCategory> findByName(String name) {
+        String sql = "SELECT * FROM crop_categories WHERE name = ? AND deleted_at IS NULL";
+        List<AdminCropCategory> result = jdbcTemplate.query(sql, rowMapper, name);
+        return result.stream().findFirst();
+    }
+
+    @Override
     public Optional<AdminCropCategory> findByExternalId(String externalId) {
         if (externalId == null || externalId.trim().isEmpty()) return Optional.empty();
         String sql = "SELECT * FROM crop_categories WHERE external_id = ? AND deleted_at IS NULL";

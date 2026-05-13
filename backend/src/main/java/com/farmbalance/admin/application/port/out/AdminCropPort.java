@@ -19,6 +19,7 @@ public interface AdminCropPort {
     boolean existsByName(String name);
 
     boolean existsByNameExcludeId(String name, Long excludeId);
+    Optional<AdminCrop> findByName(String name);
     Optional<AdminCrop> findByExternalId(String externalId);
 
     Long save(AdminCrop crop);

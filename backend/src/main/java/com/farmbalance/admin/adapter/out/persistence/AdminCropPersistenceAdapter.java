@@ -78,6 +78,13 @@ public class AdminCropPersistenceAdapter implements AdminCropPort {
     }
 
     @Override
+    public Optional<AdminCrop> findByName(String name) {
+        String sql = "SELECT * FROM crops WHERE name = ? AND deleted_at IS NULL";
+        List<AdminCrop> result = jdbcTemplate.query(sql, rowMapper, name);
+        return result.stream().findFirst();
+    }
+
+    @Override
     public Optional<AdminCrop> findByExternalId(String externalId) {
         if (externalId == null || externalId.trim().isEmpty()) return Optional.empty();
         String sql = "SELECT * FROM crops WHERE external_id = ? AND deleted_at IS NULL";

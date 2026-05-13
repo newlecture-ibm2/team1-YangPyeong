@@ -41,15 +41,26 @@ public class NongsaroCropSyncService {
             Optional<AdminCropCategory> existingCatOpt = adminCropCategoryPort.findByExternalId(groupExternalId);
             
             if (existingCatOpt.isEmpty()) {
-                AdminCropCategory newCategory = AdminCropCategory.builder()
-                        .name(categoryName)
-                        .description("농사로 농작업일정에서 동기화된 카테고리")
-                        .displayOrder(group.getSortOrder() != null ? group.getSortOrder() : 999)
-                        .isActive(true)
-                        .externalId(groupExternalId)
-                        .dataSource("NONGSARO")
-                        .build();
-                categoryId = adminCropCategoryPort.save(newCategory);
+                Optional<AdminCropCategory> existingByName = adminCropCategoryPort.findByName(categoryName);
+                if (existingByName.isPresent()) {
+                    AdminCropCategory existingCat = existingByName.get();
+                    existingCat.setExternalId(groupExternalId);
+                    if (isForce && "NONGSARO".equals(existingCat.getDataSource())) {
+                        existingCat.setDescription("농사로 농작업일정에서 동기화된 카테고리");
+                    }
+                    adminCropCategoryPort.update(existingCat);
+                    categoryId = existingCat.getId();
+                } else {
+                    AdminCropCategory newCategory = AdminCropCategory.builder()
+                            .name(categoryName)
+                            .description("농사로 농작업일정에서 동기화된 카테고리")
+                            .displayOrder(group.getSortOrder() != null ? group.getSortOrder() : 999)
+                            .isActive(true)
+                            .externalId(groupExternalId)
+                            .dataSource("NONGSARO")
+                            .build();
+                    categoryId = adminCropCategoryPort.save(newCategory);
+                }
             } else {
                 AdminCropCategory existingCat = existingCatOpt.get();
                 categoryId = existingCat.getId();
@@ -73,13 +84,23 @@ public class NongsaroCropSyncService {
                 Optional<AdminCrop> existingCropOpt = adminCropPort.findByExternalId(cropExternalId);
                 
                 if (existingCropOpt.isEmpty()) {
-                    AdminCrop newCrop = AdminCrop.builder()
-                            .categoryId(categoryId)
-                            .name(cropName)
-                            .externalId(cropExternalId)
-                            .dataSource("NONGSARO")
-                            .build();
-                    adminCropPort.save(newCrop);
+                    Optional<AdminCrop> existingByName = adminCropPort.findByName(cropName);
+                    if (existingByName.isPresent()) {
+                        AdminCrop existingCrop = existingByName.get();
+                        existingCrop.setExternalId(cropExternalId);
+                        if (isForce && "NONGSARO".equals(existingCrop.getDataSource())) {
+                            existingCrop.setCategoryId(categoryId);
+                        }
+                        adminCropPort.update(existingCrop);
+                    } else {
+                        AdminCrop newCrop = AdminCrop.builder()
+                                .categoryId(categoryId)
+                                .name(cropName)
+                                .externalId(cropExternalId)
+                                .dataSource("NONGSARO")
+                                .build();
+                        adminCropPort.save(newCrop);
+                    }
                 } else {
                     AdminCrop existingCrop = existingCropOpt.get();
                     if (isForce && "NONGSARO".equals(existingCrop.getDataSource())) {
