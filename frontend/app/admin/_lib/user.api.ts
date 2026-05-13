@@ -74,9 +74,6 @@ export async function reactivateUser(id: number): Promise<void> {
 
 /** 특수 계정(지자체, 관리자) 발급 */
 export async function createUser(body: CreateUserRequest): Promise<void> {
-  if (!body.password) {
-    body.password = 'gov1234!'
-  }
   const res = await fetch(BASE, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

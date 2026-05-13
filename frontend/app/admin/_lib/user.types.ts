@@ -28,7 +28,7 @@ export interface ChangeStatusRequest {
 
 export interface CreateUserRequest {
   email: string
-  password?: string // Optional on front, required on backend, front provides default if empty
+  password: string
   name: string
   role: 'ADMIN' | 'GOV'
 }

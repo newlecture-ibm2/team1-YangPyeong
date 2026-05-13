@@ -16,6 +16,7 @@ interface CreateAccountModalProps {
 export default function CreateAccountModal({ isOpen, onClose, onConfirm }: CreateAccountModalProps) {
   const [role, setRole] = useState<'GOV' | 'ADMIN'>('GOV')
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -24,14 +25,15 @@ export default function CreateAccountModal({ isOpen, onClose, onConfirm }: Creat
     if (isOpen) {
       setRole('GOV')
       setEmail('')
+      setPassword('')
       setName('')
       setIsSubmitting(false)
     }
   }, [isOpen])
 
   const handleSubmit = async () => {
-    if (!email || !name) {
-      alert('이메일과 기관명(이름)을 모두 입력해주세요.')
+    if (!email || !name || !password) {
+      alert('모든 입력 필드를 채워주세요.')
       return
     }
 
@@ -42,9 +44,14 @@ export default function CreateAccountModal({ isOpen, onClose, onConfirm }: Creat
       return
     }
 
+    if (password.length < 8) {
+      alert('비밀번호는 최소 8자 이상이어야 합니다.')
+      return
+    }
+
     setIsSubmitting(true)
     try {
-      await onConfirm({ email, name, role })
+      await onConfirm({ email, password, name, role })
     } finally {
       setIsSubmitting(false)
     }
@@ -103,7 +110,7 @@ export default function CreateAccountModal({ isOpen, onClose, onConfirm }: Creat
           </div>
 
           <div className={styles.formGroup}>
-            <label>기관명 (또는 이름)</label>
+            <label>{role === 'GOV' ? '기관명' : '이름'}</label>
             <Input
               type="text"
               placeholder={role === 'GOV' ? "예) 양평군청 농업기술센터" : "예) 시스템 관리자 2"}
@@ -113,14 +120,15 @@ export default function CreateAccountModal({ isOpen, onClose, onConfirm }: Creat
           </div>
 
           <div className={styles.formGroup}>
-            <label>초기 비밀번호</label>
+            <label>초기 임시 비밀번호</label>
             <Input
               type="text"
-              value="gov1234!"
-              disabled
+              placeholder="임시 비밀번호 입력 (8자 이상)"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <span className={styles.helpText}>
-              ※ 생성된 계정은 공통 초기 비밀번호가 부여되며, 대상자가 최초 로그인 시 변경해야 합니다.
+              ※ 관리자가 임의로 지정하며, 대상자가 최초 로그인 시 변경해야 합니다.
             </span>
           </div>
         </div>
