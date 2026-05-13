@@ -409,6 +409,7 @@ async def autofill_product(
         desc = desc.replace("\\n", "\n")  # JSON에서 리터럴 \n으로 온 경우 실제 줄바꿈으로 변환
         parsed["description"] = _truncate_description(desc)
         parsed["is_kamis_applied"] = bool(kamis_data)
+        parsed["kamis_unit"] = kamis_data["unit"] if kamis_data else None
 
         if not parsed["description"]:
             raise ValueError("AI가 설명을 생성하지 못했습니다.")

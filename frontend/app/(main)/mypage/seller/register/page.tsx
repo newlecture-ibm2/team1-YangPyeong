@@ -30,6 +30,7 @@ export default function SellerRegisterPage() {
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isAiAutofilling, setIsAiAutofilling] = useState(false);
   const [priceRecommendationType, setPriceRecommendationType] = useState<'KAMIS' | 'AI' | null>(null);
+  const [kamisUnit, setKamisUnit] = useState<string | null>(null);
   /** 유효성 경고를 사용자가 한번 건드린 필드에만 표시하기 위한 touched 상태 */
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const { showQuickMessage } = useFarmBotContext();
@@ -68,6 +69,7 @@ export default function SellerRegisterPage() {
       
       if (field === 'price') {
         setPriceRecommendationType(null); // 사용자가 직접 수정하면 안내문구 제거
+        setKamisUnit(null);
       }
     },
     [updateField],
@@ -334,6 +336,7 @@ export default function SellerRegisterPage() {
       }));
 
       setPriceRecommendationType(data.data.isKamisApplied ? 'KAMIS' : 'AI');
+      setKamisUnit(data.data.kamisUnit || null);
 
       // 가이드봇 안내 메시지 — 재배 이력 사용 여부에 따라 분기
       showQuickMessage(
@@ -449,9 +452,9 @@ export default function SellerRegisterPage() {
                 </div>
               )}
               {priceRecommendationType && (
-                <div style={{ fontSize: '0.875rem', color: 'var(--color-primary)', marginTop: '-12px', marginBottom: '20px', marginLeft: '4px' }}>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--color-primary)', marginTop: '-12px', marginBottom: '20px', marginLeft: '4px', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
                   {priceRecommendationType === 'KAMIS'
-                    ? '💡 KAMIS 최신 농산물 도매 시세를 반영한 AI 추천 가격입니다. (수정 가능)'
+                    ? `💡 KAMIS 도매 시세 기반 추천가입니다. ${kamisUnit ? `(${kamisUnit} 기준, 수정 가능)` : '(수정 가능)'}`
                     : '💡 AI 추천 시세가 적용되었습니다. (수정 가능)'}
                 </div>
               )}
