@@ -5,6 +5,7 @@ import com.farmbalance.balance.adapter.out.persistence.repository.CropProduction
 import com.farmbalance.balance.application.port.out.LoadCropStatsPort;
 import com.farmbalance.balance.application.port.out.LoadFarmSupplyPort;
 import com.farmbalance.balance.domain.CropProductionStats;
+import com.farmbalance.balance.domain.YieldUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -49,7 +50,7 @@ public class BalancePersistenceAdapter implements LoadCropStatsPort, LoadFarmSup
 
     @Override
     public Double sumEstimatedYieldByCropName(String cropName) {
-        String sql = "SELECT COALESCE(SUM(cr.farmer_estimated_yield), 0.0) " +
+        String sql = "SELECT COALESCE(SUM(CASE WHEN cr.yield_unit = '" + YieldUnit.TON.getLabel() + "' THEN cr.farmer_estimated_yield * 1000 ELSE cr.farmer_estimated_yield END), 0.0) " +
                      "FROM cultivation_registrations cr " +
                      "JOIN crops c ON cr.crop_id = c.id " +
                      "WHERE c.name = ? AND cr.deleted_at IS NULL AND cr.status = 'ACTIVE'";
