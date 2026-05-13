@@ -1,18 +1,24 @@
 self.addEventListener('push', function(event) {
-  if (event.data) {
-    const data = event.data.json();
-    const notificationTitle = data.notification?.title || data.data?.title || 'FarmBalance';
-    const notificationOptions = {
-      body: data.notification?.body || data.data?.body || '',
-      icon: '/logo.png', // public 폴더의 로고
-      data: {
-        link: data.data?.link || '/'
-      }
-    };
-    event.waitUntil(
-      self.registration.showNotification(notificationTitle, notificationOptions)
-    );
-  }
+  if (!event.data) return;
+
+  const data = event.data.json();
+  const notificationTitle = data.notification?.title || data.data?.title || 'FarmBalance';
+  const notificationOptions = {
+    body: data.notification?.body || data.data?.body || '',
+    icon: '/logo.png',
+    data: {
+      link: data.data?.link || '/'
+    }
+  };
+
+  event.waitUntil(
+    // 포그라운드 탭이 열려있으면 서비스 워커에서는 알림 표시 안 함 (useFCM.ts에서 처리)
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
+      var hasFocused = windowClients.some(function(c) { return c.focused; });
+      if (hasFocused) return; // 포그라운드 탭이 처리
+      return self.registration.showNotification(notificationTitle, notificationOptions);
+    })
+  );
 });
 
 self.addEventListener('notificationclick', function(event) {

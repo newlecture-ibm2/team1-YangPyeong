@@ -13,7 +13,8 @@ export interface NotificationResponse {
   meta: {
     page: number;
     size: number;
-    totalElements: number;
+    total: number;
+    totalPages: number;
   };
 }
 

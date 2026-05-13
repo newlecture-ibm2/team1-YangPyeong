@@ -49,15 +49,8 @@ export const requestForToken = async () => {
   }
 };
 
-export const onMessageListener = () =>
-  new Promise((resolve) => {
-    if (typeof window === 'undefined' || !app) return;
-    try {
-      const messaging = getMessaging(app);
-      onMessage(messaging, (payload: MessagePayload) => {
-        resolve(payload);
-      });
-    } catch (e) {
-      // ignore
-    }
-  });
+export const onMessageListener = (callback: (payload: MessagePayload) => void) => {
+  if (typeof window === 'undefined' || !app) return null;
+  const messaging = getMessaging(app);
+  return onMessage(messaging, callback);
+};
