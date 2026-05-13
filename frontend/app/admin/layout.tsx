@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import Link from 'next/link'
 import styles from './AdminLayout.module.css'
 import Button from '@/components/common/Button/Button'
+import AdminLogoutButton from './_components/AdminLogoutButton'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -44,6 +45,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               ← 일반 페이지로 돌아가기
             </Button>
           </Link>
+          <AdminLogoutButton />
         </div>
       </aside>
       
