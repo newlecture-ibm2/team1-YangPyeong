@@ -33,13 +33,14 @@ public class AdminDashboardPersistenceAdapter implements AdminDashboardPort {
 
         String cropAreaSql = """
             SELECT
-                c.crop_name, SUM(c.area) AS total_area
+                cr.name AS crop_name, SUM(c.cultivation_area) AS total_area
             FROM
-                cultivations c
+                cultivation_registrations c
+            JOIN crops cr ON c.crop_id = cr.id
             JOIN farms f ON c.farm_id = f.id
             WHERE f.certification_status = 'APPROVED' AND c.deleted_at IS NULL AND f.deleted_at IS NULL
-            GROUP BY c.crop_name
-            ORDER BY SUM(c.area) DESC
+            GROUP BY cr.name
+            ORDER BY SUM(c.cultivation_area) DESC
             LIMIT 5
             """;
 
