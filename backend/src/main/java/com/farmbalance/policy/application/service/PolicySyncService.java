@@ -138,8 +138,6 @@ public class PolicySyncService implements SyncPolicyUseCase {
             }
         }
 
-        eventPublisher.publishEvent(new ApiSyncEvent("POLICY_DATA", "SUCCESS", totalFetched, null));
-
         return new SyncResult(totalFetched, totalCreated, totalUpdated,
                 totalAnalyzed, totalSkipped, totalFailed, warnings);
     }

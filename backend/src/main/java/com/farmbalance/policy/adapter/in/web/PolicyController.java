@@ -90,19 +90,6 @@ public class PolicyController {
         return ApiResponse.ok(toDetailResponse(policy));
     }
 
-    /**
-     * 정책 동기화 API (관리자용)
-     * POST /api/admin/policies/sync
-     *
-     * TODO: 운영 시 @PreAuthorize("hasRole('ADMIN')") 또는 SecurityConfig에서
-     *       .requestMatchers("/api/admin/**").hasRole("ADMIN") 으로 권한 제한 필요.
-     *       현재는 인증 미완성으로 임시 permitAll 상태.
-     */
-    @PostMapping("/api/admin/policies/sync")
-    public ApiResponse<SyncPolicyUseCase.SyncResult> syncPolicies() {
-        SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies();
-        return ApiResponse.ok(result);
-    }
 
     /**
      * 기존 정책 데이터 재정규화 API (관리자용)
