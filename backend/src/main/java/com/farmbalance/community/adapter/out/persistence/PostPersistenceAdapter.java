@@ -12,8 +12,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -42,6 +44,16 @@ public class PostPersistenceAdapter implements PostPort, LoadPostCategoryPort {
     }
 
     @Override
+    public Map<Long, String> findActiveTitlesByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return Map.of();
+        return postJpaRepository.findActiveTitlesByIds(ids).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (String) row[1]
+                ));
+    }
+
+    @Override
     public Page<Post> findByFilters(List<Long> categoryIds, String keyword, String searchType, Pageable pageable) {
         Page<PostEntity> entityPage;
         
@@ -60,6 +72,11 @@ public class PostPersistenceAdapter implements PostPort, LoadPostCategoryPort {
         }
         
         return entityPage.map(PostEntity::toDomain);
+    }
+
+    @Override
+    public Page<Post> findByAuthorId(Long authorId, Pageable pageable) {
+        return postJpaRepository.findByAuthorId(authorId, pageable).map(PostEntity::toDomain);
     }
 
     @Override

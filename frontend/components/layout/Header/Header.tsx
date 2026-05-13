@@ -64,8 +64,13 @@ export default function Header() {
   // 알림 관련 상태
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(false);
   const [recentNotifs, setRecentNotifs] = useState<RecentNotification[]>([]);
   const notifRef = useRef<HTMLDivElement>(null);
+  // 로컬에서 읽음 처리한 알림 ID를 기억 (서버 stale 데이터 방어)
+  const localReadIds = useRef<Set<number>>(new Set());
+  // 드롭다운 마지막 fetch 시간 (캐시)
+  const lastNotifFetchTime = useRef(0);
 
   // FCM Hook: 로그인 상태일 때 토큰 등록 및 백그라운드/포그라운드 리스너 활성화
   useFCM(!!user);
@@ -152,66 +157,106 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 알림 unread count 폴링 (30초 간격)
-  const fetchUnreadCount = useCallback(async () => {
-    if (!user) {
+  // ────── 알림 unread count ──────
+  // user 존재 여부가 바뀔 때만 폴링을 시작/중지 (객체 변경에는 반응하지 않음)
+  const isLoggedIn = !!user;
+  useEffect(() => {
+    if (!isLoggedIn) {
       setUnreadCount(0);
       return;
     }
-    try {
-      const res = await fetch('/api/notifications/unread-count');
-      if (res.ok) {
-        const json = await res.json();
-        setUnreadCount(json.data?.unreadCount ?? 0);
-      }
-    } catch {
-      // 조회 실패 시 무시
-    }
-  }, [user]);
 
-  useEffect(() => {
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30_000);
-    
-    // 포그라운드 푸시 알림 수신 시 안읽은 개수 갱신
-    window.addEventListener('notif-updated', fetchUnreadCount);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('notif-updated', fetchUnreadCount);
-    };
-  }, [fetchUnreadCount]);
-
-  // 알림 드롭다운 열 때 최근 5개 조회
-  const handleNotifToggle = async () => {
-    const nextState = !notifOpen;
-    setNotifOpen(nextState);
-    setDropdownOpen(false); // 유저 드롭다운 닫기
-
-    if (nextState && user) {
+    const fetchCount = async () => {
       try {
-        const res = await fetch('/api/notifications?page=0&size=5');
+        const res = await fetch('/api/notifications/unread-count');
         if (res.ok) {
           const json = await res.json();
-          setRecentNotifs(json.data ?? []);
+          setUnreadCount(json.data?.unreadCount ?? 0);
         }
       } catch {
         // 조회 실패 시 무시
       }
+    };
+
+    // 즉시 한 번 호출 + 30초 폴링
+    fetchCount();
+    const interval = setInterval(fetchCount, 30_000);
+
+    // FCM 포그라운드 수신 시 로컬에서 즉시 +1
+    const handleNotifReceived = () => {
+      setUnreadCount((prev) => prev + 1);
+      lastNotifFetchTime.current = 0; // 드롭다운 캐시 무효화
+    };
+    window.addEventListener('notif-received', handleNotifReceived);
+
+    // 마이페이지 등에서 읽음 처리 시 서버에서 정확한 카운트 재조회
+    const handleReadChanged = () => {
+      fetchCount();
+      lastNotifFetchTime.current = 0; // 드롭다운 캐시 무효화
+    };
+    window.addEventListener('notif-read-changed', handleReadChanged);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notif-received', handleNotifReceived);
+      window.removeEventListener('notif-read-changed', handleReadChanged);
+    };
+  }, [isLoggedIn]);
+
+  // 서버에서 받아온 알림 목록에 로컬 읽음 상태를 합산
+  const mergeReadState = useCallback((serverData: RecentNotification[]): RecentNotification[] => {
+    return serverData.map((n) =>
+      localReadIds.current.has(n.id) ? { ...n, isRead: true } : n
+    );
+  }, []);
+
+  // ────── 알림 드롭다운 ──────
+  const handleNotifToggle = async () => {
+    const nextState = !notifOpen;
+    setNotifOpen(nextState);
+    setDropdownOpen(false);
+
+    if (nextState && user) {
+      // 10초 이내 재열기면 캐시된 데이터 사용
+      const now = Date.now();
+      if (now - lastNotifFetchTime.current < 10_000 && recentNotifs.length > 0) return;
+
+      if (recentNotifs.length === 0) setNotifLoading(true);
+      try {
+        // 안 읽은 알림만 최대 10개 가져오기
+        const res = await fetch('/api/notifications?page=0&size=10&isRead=false');
+        if (res.ok) {
+          const json = await res.json();
+          setRecentNotifs(mergeReadState(json.data ?? []));
+          lastNotifFetchTime.current = Date.now();
+        }
+      } catch {
+        // 조회 실패 시 무시
+      } finally {
+        setNotifLoading(false);
+      }
     }
   };
 
-  // 알림 개별 클릭 → 읽음 처리 + 이동
-  const handleNotifClick = async (notif: RecentNotification) => {
-    setNotifOpen(false);
+  // ────── 알림 개별 클릭 → 읽음 처리 + 이동 ──────
+  const handleNotifClick = (notif: RecentNotification) => {
+    // 1. 즉시 로컬 상태 업데이트 (UI 먼저 반영)
     if (!notif.isRead) {
-      try {
-        await fetch(`/api/notifications/${notif.id}/read`, { method: 'PATCH' });
-        setUnreadCount((prev) => Math.max(prev - 1, 0));
-      } catch {
-        // ignore
-      }
+      localReadIds.current.add(notif.id);
+      setUnreadCount((prev) => Math.max(prev - 1, 0));
+      setRecentNotifs((prev) =>
+        prev.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n))
+      );
+      // 캐시 무효화 (다음 열기 시 서버에서 최신 데이터 가져옴)
+      lastNotifFetchTime.current = 0;
+      // 서버에 읽음 처리 (백그라운드) + 마이페이지와 동기화 이벤트
+      fetch(`/api/notifications/${notif.id}/read`, { method: 'PATCH' })
+        .then(() => window.dispatchEvent(new Event('notif-read-changed')))
+        .catch(() => {});
     }
+
+    // 2. 드롭다운 닫기 + 페이지 이동
+    setNotifOpen(false);
     if (notif.link) {
       router.push(notif.link);
     }
@@ -320,22 +365,29 @@ export default function Header() {
                 </div>
                 <div className={styles.notifDropdownDivider} />
 
-                {recentNotifs.length === 0 ? (
+                {notifLoading ? (
+                  <div className={styles.notifEmpty}>
+                    <div className={styles.notifSpinner} />
+                  </div>
+                ) : recentNotifs.length === 0 ? (
                   <div className={styles.notifEmpty}>새로운 알림이 없습니다.</div>
                 ) : (
-                  recentNotifs.map((n) => (
-                    <button
-                      key={n.id}
-                      className={`${styles.notifItem} ${!n.isRead ? styles.notifItemUnread : ''}`}
-                      onClick={() => handleNotifClick(n)}
-                    >
-                      <span className={styles.notifItemIcon}>{NOTIF_TYPE_ICONS[n.type] || '🔔'}</span>
-                      <span className={styles.notifItemContent}>
-                        <span className={styles.notifItemTitle}>{n.title}</span>
-                        <span className={styles.notifItemTime}>{timeAgo(n.createdAt)}</span>
-                      </span>
-                    </button>
-                  ))
+                  <div className={styles.notifList}>
+                    {recentNotifs.map((n) => (
+                      <button
+                        key={n.id}
+                        className={`${styles.notifItem} ${!n.isRead ? styles.notifItemUnread : styles.notifItemRead}`}
+                        onClick={() => handleNotifClick(n)}
+                      >
+                        <span className={styles.notifItemIcon}>{NOTIF_TYPE_ICONS[n.type] || '🔔'}</span>
+                        <span className={styles.notifItemContent}>
+                          <span className={styles.notifItemTitle}>{n.title}</span>
+                          <span className={styles.notifItemMessage}>{n.message}</span>
+                          <span className={styles.notifItemTime}>{timeAgo(n.createdAt)}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 )}
 
                 <div className={styles.notifDropdownDivider} />
@@ -344,7 +396,7 @@ export default function Header() {
                   className={styles.notifViewAll}
                   onClick={() => setNotifOpen(false)}
                 >
-                  전체 알림 보기 →
+                  {unreadCount > 10 ? `안 읽은 알림 ${unreadCount - 10}개 더보기 →` : '전체 알림 보기 →'}
                 </Link>
               </div>
             )}

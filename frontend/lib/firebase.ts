@@ -11,7 +11,7 @@ const firebaseConfig = {
 };
 
 // SSR 환경에서는 Firebase 초기화를 건너뜁니다
-const app = typeof window !== 'undefined' 
+const app = typeof window !== 'undefined'
   ? (getApps().length === 0 ? initializeApp(firebaseConfig) : getApp())
   : null;
 
@@ -28,7 +28,7 @@ export const requestForToken = async () => {
     if (!app) return null;
     const messaging = getMessaging(app);
     const permission = await Notification.requestPermission();
-    
+
     if (permission === 'granted') {
       const currentToken = await getToken(messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
@@ -49,15 +49,8 @@ export const requestForToken = async () => {
   }
 };
 
-export const onMessageListener = () =>
-  new Promise((resolve) => {
-    if (typeof window === 'undefined' || !app) return;
-    try {
-      const messaging = getMessaging(app);
-      onMessage(messaging, (payload: MessagePayload) => {
-        resolve(payload);
-      });
-    } catch (e) {
-      // ignore
-    }
-  });
+export const onMessageListener = (callback: (payload: MessagePayload) => void) => {
+  if (typeof window === 'undefined' || !app) return null;
+  const messaging = getMessaging(app);
+  return onMessage(messaging, callback);
+};

@@ -7,6 +7,9 @@ import styles from './layout.module.css';
 const MYPAGE_TABS = [
   { href: '/mypage', label: '프로필', icon: '👤' },
   { href: '/mypage/notifications', label: '알림', icon: '🔔' },
+  { href: '/mypage/posts', label: '내 게시글', icon: '📝' },
+  { href: '/mypage/comments', label: '내 댓글', icon: '💬' },
+  { href: '/mypage/reports', label: '신고 내역', icon: '🚩' },
   { href: '/mypage/history', label: '주문내역', icon: '📦' },
   { href: '/mypage/seller', label: '판매 상품', icon: '🏷️' },
   { href: '/mypage/seller/orders', label: '판매 주문', icon: '📋' },

@@ -71,9 +71,9 @@ def build_revenue_prediction_prompt(context: dict) -> str:
 {weather_section}
 
 # 분석 요청사항
-다음 JSON 형식으로 응답해주세요. 반드시 JSON만 출력하고 다른 텍스트는 포함하지 마세요:
+아래 필드 구조를 따른 순수 JSON 한 덩어리만 출력하세요. 마크다운·코드펜스·앞뒤 설명 금지.
 
-```json
+예시 구조(플레이스홀더를 실제 값으로 채움):
 {{
   "predicted_yield_kg": <최종 예측 수확량 (kg, 소수점 1자리)>,
   "predicted_price_per_kg": <예측 시세 (원/kg, 정수)>,
@@ -87,7 +87,6 @@ def build_revenue_prediction_prompt(context: dict) -> str:
   "revenue_insight": "<수익 종합 인사이트 (2~3문장, 핵심 수익 전망과 농가에 도움이 되는 조언)>",
   "confidence": "<예측 신뢰도: '높음' | '보통' | '낮음'>"
 }}
-```
 
 중요: 
 1. 실제 수확량이 입력된 경우 그 값을 predicted_yield_kg에 그대로 사용하세요.

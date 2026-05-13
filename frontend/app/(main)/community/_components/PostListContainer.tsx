@@ -7,7 +7,7 @@ import styles from '../community.module.css';
 import Button from '@/components/common/Button';
 import { useRouter } from 'next/navigation';
 import { getCategories, getPosts } from '../_lib/community.api';
-import Pagination from './Pagination';
+import Pagination from '@/components/common/Pagination';
 
 interface PostListContainerProps {
   initialPosts: Post[];
@@ -15,10 +15,10 @@ interface PostListContainerProps {
   initialTotalCount: number;
 }
 
-export default function PostListContainer({ 
-  initialPosts, 
-  initialTotalPages, 
-  initialTotalCount 
+export default function PostListContainer({
+  initialPosts,
+  initialTotalPages,
+  initialTotalCount
 }: PostListContainerProps) {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
@@ -27,7 +27,7 @@ export default function PostListContainer({
   const [searchType, setSearchType] = useState<'all' | 'title' | 'content' | 'nickname'>('all');
   const [sortBy, setSortBy] = useState('createdAt,desc');
   const [loading, setLoading] = useState(false);
-  
+
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
@@ -48,9 +48,9 @@ export default function PostListContainer({
 
   // 통합 검색/필터링 함수
   const fetchPosts = async (
-    categoryId?: number | null, 
-    keyword?: string, 
-    sort?: string, 
+    categoryId?: number | null,
+    keyword?: string,
+    sort?: string,
     page: number = 0
   ) => {
     setLoading(true);
@@ -62,7 +62,7 @@ export default function PostListContainer({
       page: page,
       size: 10
     });
-    
+
     if (response.success && response.data) {
       setPosts(response.data);
       if (response.meta) {
@@ -109,7 +109,7 @@ export default function PostListContainer({
     <div className={styles.listWrapper}>
       {/* ... (카테고리 탭 영역) */}
       <nav className={styles.categoryTabs}>
-        <button 
+        <button
           className={`${styles.tab} ${selectedCategoryId === null ? styles.activeTab : ''}`}
           onClick={() => handleCategoryClick(null)}
         >
@@ -128,8 +128,8 @@ export default function PostListContainer({
 
       <div className={styles.filterSection}>
         <form onSubmit={handleSearch} className={styles.searchBar}>
-          <select 
-            value={searchType} 
+          <select
+            value={searchType}
             onChange={(e) => setSearchType(e.target.value as any)}
             className={styles.searchTypeSelect}
           >
@@ -137,8 +137,8 @@ export default function PostListContainer({
             <option value="title">제목</option>
             <option value="content">내용</option>
           </select>
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="검색어를 입력하세요"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
@@ -160,9 +160,9 @@ export default function PostListContainer({
           {loading ? '불러오는 중...' : <>총 <strong>{totalCount}</strong>개의 지혜가 쌓여있습니다. (페이지 {currentPage + 1} / {totalPages})</>}
         </div>
         <div className={styles.actions}>
-          <Button 
-            variant="primary" 
-            size="md" 
+          <Button
+            variant="primary"
+            size="md"
             onClick={handleWriteClick}
           >
             지식 공유하기
@@ -177,8 +177,8 @@ export default function PostListContainer({
               <PostCard key={post.id} post={post} />
             ))}
           </div>
-          
-          <Pagination 
+
+          <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
