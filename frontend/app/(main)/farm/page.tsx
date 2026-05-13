@@ -18,6 +18,8 @@ import CultivationEditModal from './_components/CultivationEditModal/Cultivation
 import ModalDialog from '@/components/common/Modal/ModalDialog';
 import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import UnifiedActionButton from './_components/UnifiedActionButton/UnifiedActionButton';
+import GuestPreviewBanner from '@/components/common/GuestPreviewBanner/GuestPreviewBanner';
+import { DUMMY_FARM, DUMMY_CULTIVATIONS, DUMMY_BALANCE } from '@/lib/preview-data';
 import styles from './page.module.css';
 
 // 임시 KPI 및 활동 데이터 (백엔드 연동 전까지 유지할 데이터 구조)
@@ -255,16 +257,52 @@ function FarmDashboardContent() {
     );
   }
 
-  // 농장이 하나도 없는 경우
+  // 농장이 하나도 없는 경우 -> 미리보기 모드 제공
   if (farms.length === 0) {
+    const previewFarm = DUMMY_FARM;
     return (
       <div className={styles.container}>
+        <GuestPreviewBanner />
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>내 농장 <span className={styles.italic}>선택</span></h1>
-            <p className={styles.subtitle}>관리할 농장을 선택하거나 새로운 농장을 등록하세요.</p>
+            <h1 className={styles.title}>내 농장 <span className={styles.italic}>미리보기</span></h1>
+            <p className={styles.subtitle}>농업인 인증 시 실제 본인의 농장 데이터를 관리할 수 있습니다.</p>
+          </div>
+          <div className={styles.headerButtons}>
+            <Link href="/signup?type=farmer">
+              <Button variant="primary" style={{ borderRadius: '50px' }}>농업인 인증하기</Button>
+            </Link>
           </div>
         </div>
+        <div className={styles.kpiRow} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
+          <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
+            <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>농장 전체 면적</p>
+            <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>{previewFarm.area.toLocaleString()}㎡</p>
+          </div>
+          <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
+            <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>재배 중인 면적</p>
+            <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-primary)' }}>330㎡</p>
+          </div>
+          <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
+            <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>재배 작물</p>
+            <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>2종</p>
+          </div>
+          <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
+            <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>예상 수익 (월)</p>
+            <p style={{ fontSize: '24px', fontWeight: 700, color: '#f59e0b' }}>₩3,500,000</p>
+          </div>
+        </div>
+
+        <div style={{ background: 'rgba(255, 255, 255, 0.5)', filter: 'grayscale(0.5)', pointerEvents: 'none', userSelect: 'none' }}>
+           <Card>
+             <h3 style={{ marginBottom: '20px' }}>농장 인터랙션 미리보기</h3>
+             <p>실제 농장 데이터가 등록되면 상세한 분석 리포트와 실시간 날씨 정보를 확인할 수 있습니다.</p>
+             <div style={{ height: '200px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
+               [ 대시보드 차트 및 지도 영역 샘플 ]
+             </div>
+           </Card>
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px', marginTop: '32px' }}>
           <Link href="/farm/register" style={{ textDecoration: 'none' }}>
             <div style={{ border: '2px dashed var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'var(--color-text-light)', height: '100%', cursor: 'pointer', transition: 'all 0.2s' }}

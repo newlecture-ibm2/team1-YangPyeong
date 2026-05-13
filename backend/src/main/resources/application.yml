@@ -171,3 +171,11 @@ app:
     withdrawal-grace-days: ${APP_USER_WITHDRAWAL_GRACE_DAYS:7}
     # 최종 탈퇴 처리(updatedAt) 후 비식별화 스케줄까지 일수
     anonymization-days-after-withdrawal: ${APP_USER_ANONYMIZATION_DAYS:30}
+  balance:
+    thresholds:
+      excess-warn: ${BALANCE_THRESHOLD_EXCESS_WARN:150.0}
+      excess-caution: ${BALANCE_THRESHOLD_EXCESS_CAUTION:120.0}
+      short-caution: ${BALANCE_THRESHOLD_SHORT_CAUTION:80.0}
+      short-warn: ${BALANCE_THRESHOLD_SHORT_WARN:50.0}
+    region:
+      default-code: ${BALANCE_REGION_CODE:YP}
