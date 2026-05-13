@@ -27,6 +27,14 @@ export function useFCM(userPresent: boolean) {
       // 2. 알림 권한 및 토큰 요청
       const token = await requestForToken();
       if (token) {
+        const savedToken = localStorage.getItem('fcm-token');
+
+        // 이미 같은 토큰이 등록되어 있으면 서버 전송 생략
+        if (savedToken === token) {
+          console.log('[FCM] 기존 토큰과 동일 — 서버 등록 생략');
+          return;
+        }
+
         // localStorage에 저장 (로그아웃 시 DELETE 호출용)
         localStorage.setItem('fcm-token', token);
 
@@ -47,27 +55,22 @@ export function useFCM(userPresent: boolean) {
     initFCM();
 
     // 4. 포그라운드 메시지 수신 시 처리
-    let active = true;
-    const handleForegroundMessage = async () => {
-      while (active) {
-        try {
-          const payload: any = await onMessageListener();
-          if (payload) {
-            console.log('[FCM] 포그라운드 메시지 수신:', payload);
-            
-            // Header 등에서 안읽은 알림 수를 갱신할 수 있도록 이벤트를 발생시킵니다.
-            window.dispatchEvent(new Event('notif-updated'));
-          }
-        } catch (e) {
-          break;
-        }
+    const unsubscribe = onMessageListener((payload: any) => {
+      console.log('[FCM] 포그라운드 메시지 수신:', payload);
+      window.dispatchEvent(new Event('notif-received'));
+
+      // 탭이 비활성(다른 탭/사이트를 보고 있을 때)일 때만 브라우저 알림을 띄웁니다.
+      // 탭이 활성 상태(우리 사이트를 보고 있을 때)에는 벨 아이콘 배지 갱신만 합니다.
+      if (document.hidden && Notification.permission === 'granted' && payload.notification) {
+        new Notification(payload.notification.title || '알림', {
+          body: payload.notification.body || '',
+          icon: '/logo.png',
+        });
       }
-    };
-    
-    handleForegroundMessage();
+    });
 
     return () => {
-      active = false;
+      if (unsubscribe) unsubscribe();
     };
   }, [userPresent]);
 }
