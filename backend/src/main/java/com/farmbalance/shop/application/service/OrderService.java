@@ -87,22 +87,25 @@ public class OrderService implements OrderUseCase {
         String orderNumber = generateOrderNumber();
 
         Order order = new Order(
-                null, buyerId, orderNumber, totalAmount, OrderStatus.ORDERED,
+                null, buyerId, orderNumber, totalAmount, OrderStatus.ACCEPTED,
                 receiverName, receiverPhone, shippingAddress, shippingMemo,
                 null, null, orderItems, LocalDateTime.now(), null);
 
         Order savedOrder = orderRepository.save(order);
 
-        // O-1 새 주문 접수 알림 (셀러 대상)
+        // O-1 새 주문 결제 완료 알림 (셀러 대상)
         for (Long sellerId : sellerIds) {
             notificationUseCase.createNotification(
                     sellerId,
                     NotificationType.ORDER,
-                    "새 주문 접수",
-                    String.format("새 주문이 접수되었습니다. (주문번호: %s)", savedOrder.getOrderNumber()),
+                    "새 결제/주문 완료",
+                    String.format("새 결제 및 주문이 확정되었습니다. 배송을 준비해주세요. (주문번호: %s)", savedOrder.getOrderNumber()),
                     "/shop/seller/orders"
             );
         }
+
+        // 구매자에게 결제/주문 확정 이메일 및 알림 자동 발송
+        sendStatusEmail(savedOrder, OrderStatus.ORDERED);
 
         return savedOrder;
     }
