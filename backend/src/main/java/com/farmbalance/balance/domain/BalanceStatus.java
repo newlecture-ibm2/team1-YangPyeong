@@ -22,12 +22,18 @@ public enum BalanceStatus {
         return description;
     }
 
-    public static BalanceStatus calculateFromRatio(double ratio) {
-        if (ratio == 0.0) return UNKNOWN;
-        if (ratio >= 130.0) return EXCESS_WARN;
-        if (ratio >= 110.0) return EXCESS_CAUTION;
-        if (ratio >= 90.0) return BALANCED;
-        if (ratio >= 70.0) return SHORT_CAUTION;
+    /**
+     * 비율(%)에 따른 수급 상태 계산
+     */
+    public static BalanceStatus calculateFromRatio(double ratio, 
+                                                  double excessWarn, 
+                                                  double excessCaution, 
+                                                  double shortCaution, 
+                                                  double shortWarn) {
+        if (ratio >= excessWarn) return EXCESS_WARN;
+        if (ratio >= excessCaution) return EXCESS_CAUTION;
+        if (ratio > shortCaution) return BALANCED;
+        if (ratio > shortWarn) return SHORT_CAUTION;
         return SHORT_WARN;
     }
 }
