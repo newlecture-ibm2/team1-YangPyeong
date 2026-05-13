@@ -4,8 +4,7 @@ from langgraph.graph import StateGraph, END, START
 from langgraph.prebuilt import ToolNode
 from app.agents.farm_agent import get_farm_agent
 from app.agents.policy_agent import get_policy_agent
-from app.agents.gov_agent import GovAgent
-from app.models.gov import GovChatRequest
+from app.agents.gov_agent import gov_agent_ainvoke
 import logging
 
 logger = logging.getLogger(__name__)
@@ -63,16 +62,10 @@ async def call_blocked_guard(state: AgentState):
     return {"messages": [AIMessage(content=msg)]}
 
 async def call_gov_agent(state: AgentState):
-    """Gov Agent 서브 그래프 호출 (통합 챗봇용 래퍼)"""
+    """Gov Agent 호출 (ainvoke 호환 래퍼 경유)"""
     try:
-        message = state["messages"][-1].content
-        agent = GovAgent()
-        request = GovChatRequest(
-            message=message,
-            user_role="FARMER"  # 일반 사용자 관점으로 제한
-        )
-        response = await agent.run(request)
-        return {"messages": [AIMessage(content=response.answer)]}
+        result = await gov_agent_ainvoke({"messages": state["messages"]})
+        return {"messages": [result["messages"][-1]]}
     except Exception:
         logger.exception("[Orchestrator] GovAgent call failed")
         return {"messages": [AIMessage(content="지역 수급 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")]}
