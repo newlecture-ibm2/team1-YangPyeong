@@ -329,7 +329,9 @@ export default function FarmRegisterPage() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        toast.error(errorData.message || '농장 등록에 실패했습니다. 유효한 문서인지 확인해주세요.');
+        // 백엔드 ApiResponse 구조(error.message)에 맞게 맵핑
+        const errorMessage = errorData?.error?.message || errorData?.message || '농장 등록에 실패했습니다. 유효한 문서인지 확인해주세요.';
+        toast.error(errorMessage);
         return;
       }
 
