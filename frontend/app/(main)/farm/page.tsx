@@ -49,17 +49,6 @@ function FarmDashboardContent() {
   const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
   // 농장 목록 뷰 여부 상태
   const [isListView, setIsListView] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-
-  useEffect(() => {
-    const match = document.cookie.match(/(?:^|;\s*)fb-user=([^;]*)/);
-    if (match) {
-      try {
-        const user = JSON.parse(decodeURIComponent(match[1]));
-        setUserRole(user?.role || null);
-      } catch (e) {}
-    }
-  }, []);
   const [activeSubTab, setActiveSubTab] = useState<'DASHBOARD' | 'HISTORY' | 'POLICY' | 'REPORT'>(initialTab);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isCultivationModalOpen, setIsCultivationModalOpen] = useState(false);
@@ -268,33 +257,8 @@ function FarmDashboardContent() {
     );
   }
 
-  // 농장이 하나도 없는 경우 -> 미리보기 모드 또는 등록 안내 모드
+  // 농장이 하나도 없는 경우 -> 미리보기 모드 제공
   if (farms.length === 0) {
-    // 농업인 계정이면 빈 상태(새 농장 등록 안내) 표시
-    if (userRole === 'FARMER') {
-      return (
-        <div className={styles.container}>
-          <div className={styles.header}>
-            <div>
-              <h1 className={styles.title}>내 농장 <span className={styles.italic}>관리</span></h1>
-              <p className={styles.subtitle}>아직 등록된 농장이 없습니다. 새로운 농장을 등록하고 관리해보세요.</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '6rem 2rem', background: '#fff', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-lg)', marginTop: '2rem' }}>
-            <span style={{ fontSize: '4rem', marginBottom: '1rem' }}>🚜</span>
-            <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>첫 농장을 등록해주세요!</h3>
-            <p style={{ color: 'var(--color-text-light)', marginBottom: '2rem', textAlign: 'center' }}>
-              농장을 등록하시면 AI 작물 추천, 예상 수익 계산,<br />맞춤 정책 지원 등 다양한 기능을 이용하실 수 있습니다.
-            </p>
-            <Link href="/farm/register">
-              <Button variant="primary" style={{ borderRadius: '50px', padding: '0.75rem 2rem' }}>새로운 농장 등록하기</Button>
-            </Link>
-          </div>
-        </div>
-      );
-    }
-
-    // 일반 회원이나 비회원은 기존의 미리보기 모드 표시
     const previewFarm = DUMMY_FARM;
     return (
       <div className={styles.container}>
