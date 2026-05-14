@@ -27,3 +27,10 @@ export async function rejectFarm(farmId: number, reason: string): Promise<void> 
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '반려 처리 실패')
 }
+
+/** 농장 강제 삭제 */
+export async function deleteFarm(farmId: number): Promise<void> {
+  const res = await fetch(`${BASE}/${farmId}`, { method: 'DELETE' })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '삭제 처리 실패')
+}

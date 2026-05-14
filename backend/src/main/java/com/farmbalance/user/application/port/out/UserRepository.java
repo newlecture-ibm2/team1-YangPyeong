@@ -30,14 +30,9 @@ public interface UserRepository {
     void deleteByEmail(String email);
 
     /**
-     * 탈퇴 유예 종료 대상 (withdrawal_requested_at ≤ deadline).
+     * 비식별화 대상 (WITHDRAWN, anonymized_at 없음, withdrawal_requested_at ≤ cutoff).
      */
-    List<User> findPendingWithdrawalsForFinalization(UserStatus status, LocalDateTime deadlineInclusive);
-
-    /**
-     * 비식별화 대상 (WITHDRAWN, anonymized_at 없음, updated_at ≤ cutoff).
-     */
-    List<User> findWithdrawnUsersForAnonymization(UserStatus status, LocalDateTime updatedAtInclusive);
+    List<User> findWithdrawnUsersForAnonymization(UserStatus status, LocalDateTime withdrawalRequestedAtInclusive);
 
     /**
      * 삭제되지 않은 전체 사용자 목록 조회 (최신순)

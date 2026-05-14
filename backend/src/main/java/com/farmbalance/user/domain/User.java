@@ -29,7 +29,7 @@ public class User {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    /** 탈퇴 유예 시작 시각 (PENDING_WITHDRAWAL일 때만) */
+    /** 탈퇴 요청/복구 골든타임 시작 시각 */
     private LocalDateTime withdrawalRequestedAt;
 
     /** 비식별화(anonymize) 처리 완료 시각 */
@@ -85,34 +85,25 @@ public class User {
     }
 
     /**
-     * 자진 탈퇴 요청 — 유예 기간 동안 PENDING_WITHDRAWAL.
+     * 자진 탈퇴 — 즉시 WITHDRAWN 상태로 전환.
+     * 탈퇴일(withdrawalRequestedAt)로부터 30일 이내에 재로그인하면 복구 가능.
      * 호출 전 ACTIVE 여부는 유스케이스에서 검증합니다.
      */
     public void requestWithdrawal() {
-        this.status = UserStatus.PENDING_WITHDRAWAL;
+        this.status = UserStatus.WITHDRAWN;
         this.withdrawalRequestedAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
 
     /**
-     * 유예 종료 후 최종 탈퇴 (스케줄러 전용).
-     * 호출 전 PENDING_WITHDRAWAL 여부는 스케줄러/서비스에서 검증합니다.
+     * 탈퇴된 계정을 다시 활성화합니다. (WITHDRAWN → ACTIVE)
+     * 30일 이내에만 복구 가능하며, 초과 시 IllegalStateException.
      */
-    public void completeFinalWithdrawal() {
-        this.status = UserStatus.WITHDRAWN;
-        this.withdrawalRequestedAt = null;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    /** 탈퇴 유예 취소 — ACTIVE로 복귀 */
-    public void cancelPendingWithdrawal() {
-        this.status = UserStatus.ACTIVE;
-        this.withdrawalRequestedAt = null;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    /** 탈퇴된 계정을 다시 활성화합니다. (WITHDRAWN → ACTIVE) */
-    public void reactivate() {
+    public void reactivate(int graceDays) {
+        if (this.withdrawalRequestedAt != null
+                && this.withdrawalRequestedAt.plusDays(graceDays).isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("복구 가능 기간(" + graceDays + "일)이 만료되었습니다.");
+        }
         this.status = UserStatus.ACTIVE;
         this.withdrawalRequestedAt = null;
         this.updatedAt = LocalDateTime.now();

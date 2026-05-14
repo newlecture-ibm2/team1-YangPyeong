@@ -20,16 +20,18 @@ public class PostResponse {
     private String categoryName;
     private boolean isNotice;
     private String authorNickname;
+    private String authorStatus;
     private boolean hasAcceptedComment;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static PostResponse fromDomain(Post post, String categoryName, int commentCount, String authorNickname, boolean hasAcceptedComment) {
+    public static PostResponse fromDomain(Post post, String categoryName, int commentCount, String authorNickname, String authorStatus, boolean hasAcceptedComment) {
         return PostResponse.builder()
                 .id(post.getId())
                 .categoryId(post.getCategoryId())
                 .authorId(post.getAuthorId())
                 .authorNickname(authorNickname)
+                .authorStatus(authorStatus)
                 .hasAcceptedComment(hasAcceptedComment)
                 .title(post.getTitle())
                 .content(post.getContent())

@@ -14,6 +14,7 @@ export interface ApiSyncStatus {
   apiName: string
   displayName: string
   lastSynced: string | null
+  lastHealthChecked: string | null
   syncStatus: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED'
   lastRecordCount: number | null
   errorMessage: string | null

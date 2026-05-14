@@ -77,6 +77,8 @@ erDiagram
         varchar description
         int display_order
         boolean is_active
+        varchar external_id "외부 연동 ID"
+        varchar data_source "MANUAL | NONGSARO"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -86,6 +88,8 @@ erDiagram
         bigint id PK
         bigint category_id FK
         varchar name
+        varchar external_id "외부 연동 ID"
+        varchar data_source "MANUAL | NONGSARO"
         timestamp created_at
         timestamp updated_at
         timestamp deleted_at
@@ -280,6 +284,15 @@ erDiagram
         timestamp created_at
     }
 
+    user_sanction_logs {
+        bigint id PK
+        bigint target_user_id FK "대상 유저 (users.id)"
+        varchar action_type "제재 유형"
+        varchar reason_type "사유 유형"
+        text reason_detail "상세 사유"
+        timestamp created_at
+    }
+
     %% ===== 정책 도메인 =====
 
     policy_data {
@@ -373,6 +386,7 @@ erDiagram
     users ||--o{ notifications : "수신"
     users ||--o{ download_history : "다운로드이력"
     users ||--o{ reports : "신고"
+    users ||--o{ user_sanction_logs : "제재 기록"
 
     farms ||--o{ cultivation_registrations : "재배등록"
     farms ||--o{ cultivation_history : "이력관리"
@@ -727,6 +741,17 @@ erDiagram
 > **region_code**: GOV 사용자의 관할 시군구를 `regions` 테이블과 연결하여 하위 읍면동 목록을 동적으로 조회하기 위함.  
 > ~~기존 `region` 문자열 컬럼~~은 V23 마이그레이션(`V23__drop_users_region_column.sql`)으로 삭제되었습니다.
 
+### 2.1.1 user_sanction_logs (유저 제재 기록) — V39
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO | 고유 ID |
+| target_user_id | BIGINT | FK → users(id) ON DELETE CASCADE | 대상 유저 |
+| action_type | VARCHAR(50) | NOT NULL | 제재 조치 (예: SUSPEND_30_DAYS) |
+| reason_type | VARCHAR(50) | NOT NULL | 제재 사유 유형 (예: SPAM, ABUSE 등) |
+| reason_detail | TEXT | | 상세 제재 사유 |
+| created_at | TIMESTAMP | DEFAULT NOW() | 제재일 |
+
 ### 2.2 farms (농장)
 
 | 컬럼 | 타입 | 제약 | 설명 |
@@ -763,6 +788,8 @@ erDiagram
 | description | VARCHAR(200) | | 설명 |
 | display_order | INT | DEFAULT 0 | 표시 순서 |
 | is_active | BOOLEAN | DEFAULT true | 활성 여부 |
+| external_id | VARCHAR(50) | | 농사로 API 고유 코드 등 외부 식별자 |
+| data_source | VARCHAR(20) | DEFAULT 'MANUAL' | 데이터 출처 (NONGSARO, MANUAL 등) |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
@@ -774,11 +801,14 @@ erDiagram
 | id | BIGINT | PK, AUTO | 작물 고유 ID |
 | category_id | BIGINT | FK -> crop_categories(id), NOT NULL | 작물 카테고리 |
 | name | VARCHAR(50) | NOT NULL | 작물명 |
+| external_id | VARCHAR(50) | | 농사로 API 고유 코드 등 외부 식별자 |
+| data_source | VARCHAR(20) | DEFAULT 'MANUAL' | 데이터 출처 (NONGSARO, MANUAL 등) |
 | created_at | TIMESTAMP | NOT NULL | 등록일 |
 | updated_at | TIMESTAMP | | 수정일 |
 | deleted_at | TIMESTAMP | | 삭제 시각 |
 
 > **V15 적용**: `code`, `growth_days`, `yield_per_sqm`, `avg_cost_per_sqm`, `climate_conditions`, `is_active` 컬럼이 삭제되었습니다. crops 테이블은 조회 전용 마스터 데이터로 전환되었습니다.
+> **V35 적용**: `external_id`, `data_source` 컬럼이 추가되어 외부 API 연동 시 수동 데이터와 분리 및 중복 방지가 가능해졌습니다.
 
 ### 2.5 cultivation_registrations (재배 등록)
 
@@ -1519,6 +1549,9 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_region ON users(region);
 CREATE INDEX idx_users_region_code ON users(region_code);
+
+-- 유저 제재 기록
+CREATE INDEX idx_user_sanction_logs_target_user_id ON user_sanction_logs(target_user_id);
 
 -- 농장
 CREATE INDEX idx_farms_user_id ON farms(user_id);

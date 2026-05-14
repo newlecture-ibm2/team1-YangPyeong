@@ -29,3 +29,11 @@ export async function updatePolicy(id: number, body: PolicyDataRequest): Promise
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '정책 수정 실패')
 }
+
+export async function deletePolicy(id: number): Promise<void> {
+  const res = await fetch(`${BASE}/${id}`, {
+    method: 'DELETE',
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '정책 삭제 실패')
+}

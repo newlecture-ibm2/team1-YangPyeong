@@ -8,9 +8,14 @@ import com.farmbalance.policy.application.port.out.PolicySavePort;
 import com.farmbalance.policy.application.port.out.RegionCodeResolvePort;
 import com.farmbalance.policy.domain.model.PolicyData;
 import com.farmbalance.policy.domain.model.SyncWarningType;
+import com.farmbalance.global.event.ApiSyncEvent;
+import com.farmbalance.global.event.HealthCheckTriggerEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +53,7 @@ public class PolicySyncService implements SyncPolicyUseCase {
     private final PolicySavePort policySavePort;
     private final PolicyAiAnalyzePort aiAnalyzePort;
     private final RegionCodeResolvePort regionCodeResolvePort;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static final List<String> VALID_CATEGORIES =
             List.of("청년농", "귀농귀촌", "스마트농업", "농기계", "재배지원", "판로지원", "여성농업", "축산", "친환경", "교육", "금융지원", "기타");
@@ -571,6 +577,25 @@ public class PolicySyncService implements SyncPolicyUseCase {
             return LocalDate.parse(dateStr);
         } catch (DateTimeParseException e) {
             return null;
+        }
+    }
+
+    @Async
+    @EventListener
+    public void onHealthCheckTriggerEvent(HealthCheckTriggerEvent event) {
+        if (!"POLICY_DATA".equals(event.apiName())) {
+            return;
+        }
+        log.info("[PolicySync] 정책 데이터 헬스체크 지시 수신");
+        try {
+            // 외부 소스 1건만 단순 호출하여 상태 확인
+            if (!fetchPorts.isEmpty()) {
+                fetchPorts.get(0).fetchPolicies();
+            }
+            eventPublisher.publishEvent(new ApiSyncEvent("POLICY_DATA", "SUCCESS", 0, null, true));
+        } catch (Exception e) {
+            log.error("[PolicySync] 정책 헬스체크 실패: {}", e.getMessage());
+            eventPublisher.publishEvent(new ApiSyncEvent("POLICY_DATA", "FAILED", 0, e.getMessage(), true));
         }
     }
 }

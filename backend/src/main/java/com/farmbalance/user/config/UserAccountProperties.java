@@ -12,9 +12,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app.user")
 public class UserAccountProperties {
 
-    /** 탈퇴 요청 후 최종 WITHDRAWN 처리까지 대기 일수 */
-    private int withdrawalGraceDays = 7;
+    /** 탈퇴 후 복구 가능 + 비식별화까지 대기 일수 (기본 30일) */
+    private int anonymizationGraceDays = 30;
 
-    /** 최종 탈퇴(updatedAt) 후 비식별화 스케줄 대상이 되기까지 일수 */
-    private int anonymizationDaysAfterWithdrawal = 30;
+    /** 전자상거래법 거래 기록 보존 의무 일수 (기본 5년 = 1825일) */
+    private int ecommerceRetentionDays = 1825;
 }

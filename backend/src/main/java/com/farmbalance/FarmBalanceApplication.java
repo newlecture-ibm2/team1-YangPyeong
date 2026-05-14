@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 @EnableScheduling
 @EnableConfigurationProperties(UserAccountProperties.class)
 @org.springframework.cache.annotation.EnableCaching
+@org.springframework.scheduling.annotation.EnableAsync
 public class FarmBalanceApplication {
     public static void main(String[] args) {
         SpringApplication.run(FarmBalanceApplication.class, args);

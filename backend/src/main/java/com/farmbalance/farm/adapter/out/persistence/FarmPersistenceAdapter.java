@@ -86,6 +86,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                     farm.getPh(),
                     farm.getOrganicMatter()
             );
+            entity.updateCertificationStatusWithReason(farm.getCertificationStatus(), farm.getRejectReason());
         }
 
         // 3. DB 저장

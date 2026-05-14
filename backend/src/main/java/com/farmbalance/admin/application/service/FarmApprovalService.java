@@ -1,6 +1,6 @@
 package com.farmbalance.admin.application.service;
 
-import com.farmbalance.admin.adapter.in.web.dto.AdminFarmApprovalResponse;
+import com.farmbalance.admin.application.port.in.dto.AdminFarmApprovalDto;
 import com.farmbalance.admin.application.port.in.ManageFarmApprovalUseCase;
 import com.farmbalance.farm.application.port.out.LoadFarmPort;
 import com.farmbalance.farm.application.port.out.SaveFarmPort;
@@ -37,12 +37,12 @@ public class FarmApprovalService implements ManageFarmApprovalUseCase {
     private final NotificationUseCase notificationUseCase;
 
     @Override
-    public List<AdminFarmApprovalResponse> getApprovalsByStatus(String status) {
+    public List<AdminFarmApprovalDto> getApprovalsByStatus(String status) {
         List<Farm> farms = loadFarmPort.loadFarmsByStatus(status.toUpperCase());
         return farms.stream()
                 .map(farm -> {
                     User user = userRepository.findById(farm.getUserId()).orElse(null);
-                    return AdminFarmApprovalResponse.from(farm, user);
+                    return AdminFarmApprovalDto.from(farm, user);
                 })
                 .collect(Collectors.toList());
     }
@@ -96,5 +96,14 @@ public class FarmApprovalService implements ManageFarmApprovalUseCase {
                 String.format("[%s] 농장 등록이 반려되었습니다. 사유: %s", farm.getName(), reason),
                 "/farm/register"
         );
+    }
+
+    @Override
+    @Transactional
+    public void deleteFarm(Long farmId) {
+        Farm farm = loadFarmPort.loadFarmById(farmId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FARM_NOT_FOUND));
+
+        saveFarmPort.deleteFarm(farmId);
     }
 }

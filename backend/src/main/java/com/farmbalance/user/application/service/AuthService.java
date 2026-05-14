@@ -81,7 +81,7 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
     @Override
     @Transactional
     public SignUpResponse signUp(SignUpRequest request) {
-        // 이메일 중복 검사: WITHDRAWN(탈퇴 완료)만 재가입 시 기존 행 삭제. 유예 중(PENDING_WITHDRAWAL)은 중복으로 처리
+        // 이메일 중복 검사: WITHDRAWN(탈퇴 완료)만 재가입 시 기존 행 삭제.
         userRepository.findByEmail(request.getEmail()).ifPresent(existingUser -> {
             if (existingUser.getStatus() == UserStatus.WITHDRAWN) {
                 // 탈퇴 계정의 보안질문 및 유저 레코드 삭제 후 새로 생성 (unique constraint 충돌 방지)

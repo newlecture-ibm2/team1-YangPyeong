@@ -21,6 +21,9 @@ public interface ProductJpaRepository extends JpaRepository<ProductJpaEntity, Lo
     /** 판매자의 상품 목록 (삭제되지 않은 것만) */
     List<ProductJpaEntity> findBySellerIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long sellerId);
 
+    /** 판매자의 상품 목록 중 삭제된(Soft Delete) 것만 */
+    List<ProductJpaEntity> findBySellerIdAndDeletedAtIsNotNull(Long sellerId);
+
     /** 활성 상품 목록 (카테고리 필터 + 키워드 검색) - 품절 상품도 장터에 노출되도록 IN 조건 추가 */
     @Query("""
             SELECT p FROM ProductJpaEntity p

@@ -18,5 +18,10 @@ public record ApiSyncEvent(
         String apiName,
         String status,
         int recordCount,
-        String errorMessage
-) {}
+        String errorMessage,
+        boolean isHealthCheck
+) {
+    public ApiSyncEvent(String apiName, String status, int recordCount, String errorMessage) {
+        this(apiName, status, recordCount, errorMessage, false);
+    }
+}

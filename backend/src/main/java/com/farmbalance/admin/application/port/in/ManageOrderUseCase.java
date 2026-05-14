@@ -1,9 +1,9 @@
 package com.farmbalance.admin.application.port.in;
 
-import com.farmbalance.admin.adapter.in.web.dto.AdminOrderResponse;
+import com.farmbalance.admin.application.port.in.dto.AdminOrderDto;
 import java.util.List;
 
 public interface ManageOrderUseCase {
-    List<AdminOrderResponse> getAllOrders();
+    List<AdminOrderDto> getAllOrders();
     void updateOrderStatus(Long orderId, String status);
 }

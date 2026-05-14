@@ -21,12 +21,52 @@ public class AdminCommunityController {
     private final ManageCommunityUseCase manageCommunityUseCase;
 
     /**
-     * 전체 게시글 목록 조회 (관리자용)
+     * 전체 게시글 목록 조회 (검색 + 필터 + 페이징)
      * GET /api/admin/community
      */
     @GetMapping
-    public ApiResponse<List<AdminPost>> getAllPosts() {
-        return ApiResponse.ok(manageCommunityUseCase.getAllPosts());
+    public ApiResponse<Map<String, Object>> getPosts(
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "ALL") String status,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "20") int size) {
+
+        List<AdminPost> posts = manageCommunityUseCase.getPosts(keyword, status, page, size);
+        long total = manageCommunityUseCase.countPosts(keyword, status);
+
+        return ApiResponse.ok(Map.of(
+                "posts", posts,
+                "totalElements", total,
+                "totalPages", (int) Math.ceil((double) total / size)
+        ));
+    }
+
+    /**
+     * 특정 게시글 상세 조회
+     * GET /api/admin/community/{postId}
+     */
+    @GetMapping("/{postId}")
+    public ApiResponse<AdminPost> getPostDetail(@PathVariable Long postId) {
+        return ApiResponse.ok(manageCommunityUseCase.getPost(postId));
+    }
+
+    /**
+     * 특정 게시글의 댓글 목록 조회
+     * GET /api/admin/community/{postId}/comments
+     */
+    @GetMapping("/{postId}/comments")
+    public ApiResponse<List<com.farmbalance.admin.domain.AdminComment>> getComments(@PathVariable Long postId) {
+        return ApiResponse.ok(manageCommunityUseCase.getComments(postId));
+    }
+
+    /**
+     * 댓글 삭제 (soft delete)
+     * DELETE /api/admin/community/comments/{commentId}
+     */
+    @DeleteMapping("/comments/{commentId}")
+    public ApiResponse<Void> deleteComment(@PathVariable Long commentId) {
+        manageCommunityUseCase.deleteComment(commentId);
+        return ApiResponse.ok(null);
     }
 
     /**
@@ -49,6 +89,51 @@ public class AdminCommunityController {
                                            @RequestBody Map<String, Boolean> body) {
         Boolean isNotice = body.getOrDefault("isNotice", false);
         manageCommunityUseCase.toggleNotice(postId, isNotice);
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 신규 공지사항 작성
+     * POST /api/admin/community/notices
+     */
+    @PostMapping("/notices")
+    public ApiResponse<Void> createNotice(@RequestBody com.farmbalance.admin.adapter.in.web.dto.CreateNoticeRequest request) {
+        Long adminId = com.farmbalance.global.security.SecurityUtil.getCurrentUserId();
+        manageCommunityUseCase.createNotice(adminId, request);
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 신고 내역 목록 조회
+     * GET /api/admin/community/reports
+     */
+    @GetMapping("/reports")
+    public ApiResponse<Map<String, Object>> getReports(
+            @RequestParam(required = false, defaultValue = "PENDING") String status,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "20") int size) {
+        List<com.farmbalance.admin.domain.AdminReport> reports = manageCommunityUseCase.getReports(status, page, size);
+        long total = manageCommunityUseCase.countReports(status);
+        return ApiResponse.ok(Map.of(
+                "reports", reports,
+                "totalElements", total,
+                "totalPages", (int) Math.ceil((double) total / size)
+        ));
+    }
+
+    /**
+     * 신고 상태 변경 (처리 완료 등)
+     * PATCH /api/admin/community/reports/{reportId}/status
+     * Body: { "status": "RESOLVED" }
+     */
+    @PatchMapping("/reports/{reportId}/status")
+    public ApiResponse<Void> updateReportStatus(@PathVariable Long reportId,
+                                                @RequestBody Map<String, String> body) {
+        String status = body.get("status");
+        if (status == null || status.isBlank()) {
+            throw new IllegalArgumentException("Status is required");
+        }
+        manageCommunityUseCase.updateReportStatus(reportId, status.toUpperCase());
         return ApiResponse.ok(null);
     }
 }

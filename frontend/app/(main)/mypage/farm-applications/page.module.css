@@ -1,0 +1,138 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 0;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: var(--color-text-light);
+  font-size: 15px;
+}
+
+.emptyState {
+  background: var(--color-bg);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 4rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  transition: all 0.2s ease;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 16px;
+}
+
+.cardTitleArea {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.cardDate {
+  font-size: 13px;
+  color: var(--color-text-light);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.address {
+  font-size: 15px;
+  color: var(--color-text);
+}
+
+.crops {
+  font-size: 14px;
+  color: var(--color-text-light);
+}
+
+.rejectBox {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+}
+
+.rejectTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #dc2626;
+  margin-bottom: 8px;
+}
+
+.rejectReason {
+  font-size: 14px;
+  color: #991b1b;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.actionArea {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.linkText {
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pendingText {
+  color: var(--color-text-light);
+  font-size: 13px;
+  font-style: italic;
+}

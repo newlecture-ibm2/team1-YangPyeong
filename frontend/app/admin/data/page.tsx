@@ -9,6 +9,7 @@ import {
   fetchApiSyncStatuses,
   toggleApiSync,
   triggerApiSync,
+  triggerHealthCheck,
 } from '../_lib/apiSync.api'
 
 /** 동기화 상태별 Badge variant 매핑 */
@@ -41,6 +42,7 @@ export default function DataPage() {
   const [statuses, setStatuses] = useState<ApiSyncStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState<Set<number>>(new Set())
+  const [healthChecking, setHealthChecking] = useState<Set<number>>(new Set())
   const toast = useToast()
 
   const loadData = useCallback(async () => {
@@ -83,6 +85,24 @@ export default function DataPage() {
       toast.error(err instanceof Error ? err.message : '동기화 트리거 실패')
     } finally {
       setSyncing(prev => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+  }
+
+  /** 수동 헬스체크 트리거 */
+  const handleHealthCheck = async (id: number, displayName: string) => {
+    setHealthChecking(prev => new Set(prev).add(id))
+    try {
+      await triggerHealthCheck(id)
+      toast.success(`${displayName} 헬스체크를 시작했습니다.`)
+      setTimeout(() => loadData(), 1500)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '헬스체크 트리거 실패')
+    } finally {
+      setHealthChecking(prev => {
         const next = new Set(prev)
         next.delete(id)
         return next
@@ -142,6 +162,7 @@ export default function DataPage() {
           {statuses.map(status => {
             const badge = getStatusBadge(status.syncStatus)
             const isSyncing = syncing.has(status.id)
+            const isHealthChecking = healthChecking.has(status.id)
 
             return (
               <div
@@ -164,14 +185,25 @@ export default function DataPage() {
                   </label>
                 </div>
 
-                {/* 카드 본문 */}
                 <div className={styles.cardBody}>
-                  <div className={styles.lastSynced}>
-                    {formatDate(status.lastSynced)}
+                  <div className={styles.infoRow}>
+                    <span className={styles.infoLabel}>최근 동기화</span>
+                    <span className={styles.infoValue}>{formatDate(status.lastSynced)}</span>
+                  </div>
+                  <div className={styles.infoRow}>
+                    <span className={styles.infoLabel}>최근 헬스체크</span>
+                    <span className={styles.infoValue}>{formatDate(status.lastHealthChecked)}</span>
                   </div>
                   <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>상태</span>
-                    <Badge variant={badge.variant}>{badge.label}</Badge>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <Badge variant={badge.variant}>{badge.label}</Badge>
+                      {status.apiName === 'KAKAO_LOCAL' && (
+                        <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
+                          *실시간 점검 전용
+                        </span>
+                      )}
+                    </div>
                   </div>
                   {status.lastRecordCount !== null && (
                     <div className={styles.infoRow}>
@@ -188,15 +220,24 @@ export default function DataPage() {
                   </div>
                 )}
 
-                {/* 카드 푸터: 수동 수집 버튼 */}
+                {/* 카드 푸터: 수동 헬스체크 및 동기화 버튼 */}
                 <div className={styles.cardFooter}>
                   <button
-                    className={styles.syncBtn}
-                    onClick={() => handleSync(status.id, status.displayName)}
-                    disabled={isSyncing || !status.isActive}
+                    className={styles.healthCheckBtn}
+                    onClick={() => handleHealthCheck(status.id, status.displayName)}
+                    disabled={isSyncing || isHealthChecking || !status.isActive}
                   >
-                    {isSyncing ? '⏳ 수집 중...' : '🔄 수동 수집'}
+                    {isHealthChecking ? '⏳ 헬스체크 중...' : '💓 헬스체크'}
                   </button>
+                  {status.apiName !== 'KAKAO_LOCAL' && (
+                    <button
+                      className={styles.syncBtn}
+                      onClick={() => handleSync(status.id, status.displayName)}
+                      disabled={isSyncing || isHealthChecking || !status.isActive}
+                    >
+                      {isSyncing ? '⏳ 수집 중...' : '🔄 수집'}
+                    </button>
+                  )}
                 </div>
               </div>
             )

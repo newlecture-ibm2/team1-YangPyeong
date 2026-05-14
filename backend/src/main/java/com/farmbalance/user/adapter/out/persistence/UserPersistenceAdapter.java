@@ -75,18 +75,9 @@ public class UserPersistenceAdapter implements UserRepository {
     }
 
     @Override
-    public List<User> findPendingWithdrawalsForFinalization(UserStatus status, LocalDateTime deadlineInclusive) {
+    public List<User> findWithdrawnUsersForAnonymization(UserStatus status, LocalDateTime withdrawalRequestedAtInclusive) {
         return userJpaRepository
-                .findByStatusAndWithdrawalRequestedAtIsNotNullAndWithdrawalRequestedAtLessThanEqual(status, deadlineInclusive)
-                .stream()
-                .map(UserJpaEntity::toDomain)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<User> findWithdrawnUsersForAnonymization(UserStatus status, LocalDateTime updatedAtInclusive) {
-        return userJpaRepository
-                .findByStatusAndAnonymizedAtIsNullAndUpdatedAtLessThanEqual(status, updatedAtInclusive)
+                .findByStatusAndAnonymizedAtIsNullAndWithdrawalRequestedAtLessThanEqual(status, withdrawalRequestedAtInclusive)
                 .stream()
                 .map(UserJpaEntity::toDomain)
                 .collect(Collectors.toList());

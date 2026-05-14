@@ -12,9 +12,15 @@ public interface AdminPostPort {
 
     List<AdminPost> findAll();
 
+    List<AdminPost> findByFilter(String keyword, String status, int offset, int limit);
+
+    long countByFilter(String keyword, String status);
+
     Optional<AdminPost> findById(Long id);
 
     void delete(Long id);
 
     void updateNotice(Long id, Boolean isNotice);
+
+    void save(AdminPost post);
 }

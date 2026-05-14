@@ -8,7 +8,6 @@ import styles from './Info.module.css';
 interface ProfileInfoViewProps {
   profile: UserProfile;
   onEdit: () => void;
-  onCancelWithdrawal?: () => void;
 }
 
 /** 날짜 포맷 (2026-04-27T... → 2026년 4월 27일) */
@@ -19,29 +18,11 @@ function formatDate(dateStr: string | null): string {
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
 
-export default function ProfileInfoView({ profile, onEdit, onCancelWithdrawal }: ProfileInfoViewProps) {
+export default function ProfileInfoView({ profile, onEdit }: ProfileInfoViewProps) {
   const isFarmer = profile.role === 'FARMER';
 
   return (
     <div className={styles.infoGrid}>
-      {profile.withdrawalPending && (
-        <div className={`${styles.infoItem} ${styles.fullWidth}`}>
-          <div className={styles.withdrawalPendingBanner} role="status">
-            <p>
-              <strong>탈퇴 처리가 진행 중입니다.</strong>
-              {profile.withdrawalCompletesAt && (
-                <> 최종 탈퇴 예정: {formatDate(profile.withdrawalCompletesAt)}</>
-              )}
-            </p>
-            {onCancelWithdrawal && (
-              <Button type="button" variant="outline" size="sm" onClick={onCancelWithdrawal}>
-                탈퇴 취소
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* 계정 정보 섹션 */}
       <div className={`${styles.infoItem} ${styles.fullWidth}`}>
         <div className={styles.sectionLabel}>계정 정보</div>

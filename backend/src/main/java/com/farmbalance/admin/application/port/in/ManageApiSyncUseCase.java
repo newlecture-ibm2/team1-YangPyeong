@@ -23,5 +23,8 @@ public interface ManageApiSyncUseCase {
     void toggleActive(Long id, boolean isActive);
 
     /** 수동 동기화 트리거 */
-    void triggerSync(Long id);
+    void triggerSync(Long id, String syncMode);
+
+    /** 수동 헬스체크 트리거 */
+    void triggerHealthCheck(Long id);
 }
