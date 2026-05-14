@@ -105,6 +105,8 @@ class GeminiLLM(BaseLLM):
         system_instruction: Optional[str] = None,
         temperature: float = 0.1,
         max_tokens: int = 2048,
+        file_bytes: Optional[bytes] = None,
+        mime_type: Optional[str] = None,
     ) -> str:
         model = self._get_model(system_instruction)
 
@@ -113,10 +115,19 @@ class GeminiLLM(BaseLLM):
             "max_output_tokens": max_tokens,
             "response_mime_type": "application/json",
         }
+        
+        # 파일이 첨부된 경우 멀티모달 입력 구성
+        if file_bytes and mime_type:
+            content_parts = [
+                prompt,
+                {"mime_type": mime_type, "data": file_bytes}
+            ]
+        else:
+            content_parts = prompt
 
         try:
             response = await model.generate_content_async(
-                prompt,
+                content_parts,
                 generation_config=generation_config,
             )
             return response.text

@@ -1,13 +1,28 @@
 /* ── 농부 승인/반려 타입 정의 ── */
 
+export interface FarmDocumentDto {
+  type: string;
+  url: string;
+  name: string;
+}
+
+export interface FarmDocumentData {
+  isValid: boolean;
+  errorMessage?: string;
+  documentType?: string;
+  farmOwnerName?: string;
+  address?: string;
+  area?: number;
+  documentIssueNumber?: string;
+}
+
 export interface FarmApprovalView {
   farmId: number
   farmName: string
   address: string
   areaSize: number
-  businessNumber: string | null
-  landCertImageUrl: string | null
-  landCertVerified: boolean
+  documents?: FarmDocumentDto[]
+  documentData?: FarmDocumentData
   status: ApprovalStatus
   createdAt: string
 

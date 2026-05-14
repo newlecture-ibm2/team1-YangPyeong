@@ -10,13 +10,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import org.springframework.http.client.MultipartBodyBuilder;
+import org.springframework.web.multipart.MultipartFile;
+import com.farmbalance.farm.application.port.out.AnalyzeFarmDocumentPort;
+import com.farmbalance.farm.domain.FarmDocumentData;
+
 /**
  * AI 서버 연동 어댑터 (External Adapter)
  * 현재는 재배 수확량 예측을 담당하므로 farm 도메인에 위치함
  */
 @Slf4j
 @Component
-public class AiServerAdapter implements PredictYieldPort {
+public class AiServerAdapter implements PredictYieldPort, AnalyzeFarmDocumentPort {
 
     private final RestClient aiRestClient;
 
@@ -48,6 +53,40 @@ public class AiServerAdapter implements PredictYieldPort {
         } catch (Exception e) {
             log.error("Error occurred while calling AI server for yield prediction", e);
             return 0.0;
+        }
+    }
+
+    @Override
+    public FarmDocumentData analyzeDocument(MultipartFile file) {
+        log.info("Requesting document OCR to AI server: filename={}", file.getOriginalFilename());
+        
+        try {
+            MultipartBodyBuilder builder = new MultipartBodyBuilder();
+            builder.part("file", file.getResource());
+            
+            FarmDocumentData response = aiRestClient.post()
+                    .uri("/api/ocr/farm-document")
+                    .body(builder.build())
+                    .retrieve()
+                    .body(FarmDocumentData.class);
+                    
+            if (response == null) {
+                log.warn("AI server returned empty response for document OCR");
+                return FarmDocumentData.builder()
+                        .isValid(false)
+                        .errorMessage("AI 서버 응답이 없습니다.")
+                        .build();
+            }
+            
+            log.info("Received OCR result from AI server: isValid={}", response.getIsValid());
+            return response;
+            
+        } catch (Exception e) {
+            log.error("Error occurred while calling AI server for document OCR", e);
+            return FarmDocumentData.builder()
+                    .isValid(false)
+                    .errorMessage("OCR 처리 중 백엔드 시스템 오류가 발생했습니다.")
+                    .build();
         }
     }
 

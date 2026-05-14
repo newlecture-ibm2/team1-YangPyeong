@@ -17,6 +17,7 @@ public class RegisterFarmCommand {
     private String mainNo;
     private String subNo;
     private List<com.farmbalance.farm.domain.FarmDocument> documents;
+    private com.farmbalance.farm.domain.FarmDocumentData documentData;
     private Double latitude;
     private Double longitude;
     private String soilType;

@@ -14,6 +14,8 @@ from app.routers import analysis as analysis_router
 from app.routers import revenue as revenue_router
 from app.routers import farm_agent as farm_agent_router
 
+from app.routers import ocr as ocr_router
+
 # 로깅 설정
 logging.basicConfig(
     level=logging.INFO,
@@ -22,7 +24,7 @@ logging.basicConfig(
 
 app = FastAPI(
     title="FarmBalance AI Server",
-    description="정책/혜택 분석, 챗봇 Agent, 맞춤 추천, 상품 AI 어시스트 API",
+    description="정책/혜택 분석, 챗봇 Agent, 맞춤 추천, 상품 AI 어시스트, OCR API",
     version="0.3.0",
 )
 
@@ -36,5 +38,6 @@ app.include_router(recommend_router.router)
 app.include_router(gov_router.router)
 app.include_router(revenue_router.router)
 app.include_router(farm_agent_router.router)
+app.include_router(ocr_router.router)
 
 # TODO: 추가적인 Agent 라우터는 필요 시 여기에 등록합니다.

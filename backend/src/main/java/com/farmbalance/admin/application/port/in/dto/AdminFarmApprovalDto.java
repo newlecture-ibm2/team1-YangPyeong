@@ -18,6 +18,7 @@ public class AdminFarmApprovalDto {
     private String address;
     private Double areaSize;
     private List<AdminFarmDocumentDto> documents;
+    private com.farmbalance.farm.domain.FarmDocumentData documentData;
     private String status;
     private String createdAt;
 
@@ -50,6 +51,7 @@ public class AdminFarmApprovalDto {
                 .areaSize(farm.getArea())
                 .documents(farm.getDocuments() != null ?
                         farm.getDocuments().stream().map(AdminFarmDocumentDto::from).collect(Collectors.toList()) : null)
+                .documentData(farm.getDocumentData())
                 .status(farm.getCertificationStatus() != null
                         ? farm.getCertificationStatus().name() : "PENDING")
                 .createdAt(farm.getCreatedAt() != null

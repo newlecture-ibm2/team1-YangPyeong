@@ -120,6 +120,9 @@ export default function FarmRegisterPage() {
     }));
   };
 
+  // 파일 상태 추가
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   // 임시 가이드: 작물별 대략적인 1㎡당 평균 생산량(kg) (실제 데이터 연동 전 임시값)
   const getAverageYieldPerSqm = (cropName: string) => {
     if (cropName.includes('감자')) return 3.5;
@@ -147,13 +150,9 @@ export default function FarmRegisterPage() {
       return;
     }
 
-    try {
-      const fileUrl = await uploadFile(file);
-      setFormData((prev) => ({ ...prev, documentUrl: fileUrl }));
-      toast.success('증빙 서류가 업로드되었습니다.');
-    } catch {
-      toast.error('파일 업로드에 실패했습니다.');
-    }
+    // 파일을 즉시 업로드하지 않고 state에 저장 (submit 시 함께 전송)
+    setSelectedFile(file);
+    toast.success('증빙 서류가 선택되었습니다. (등록 시 자동 분석됩니다)');
   };
 
   // 카카오 우편번호 검색 완료 핸들러
@@ -267,6 +266,10 @@ export default function FarmRegisterPage() {
       toast.error('재배 작물을 선택해주세요.');
       return;
     }
+    if (!selectedFile) {
+      toast.error('증빙 서류를 업로드해주세요.');
+      return;
+    }
 
     const totalFarmArea = Number(String(formData.area).replace(/,/g, ''));
     const totalCultivationArea = formData.cultivations.reduce((sum, c) => sum + (Number(c.area) || 0), 0);
@@ -276,46 +279,57 @@ export default function FarmRegisterPage() {
       return;
     }
 
-    // 백엔드 API로 전송 (좌표는 프론트엔드 카카오 Maps JS SDK에서 변환)
-    const payload = {
-      name: formData.name,
-      registrationNumber: formData.registrationNumber,
-      zipCode: formData.zipCode,
-      address: formData.baseAddress,
-      detailAddress: formData.detailAddress,
-      area: Number(String(formData.area).replace(/,/g, '')),
-      // cropIds 대신 cultivations 전달 (cropIds는 하위호환용으로 일단 유지)
-      cropIds: formData.cultivations.map(c => c.cropId),
-      cultivations: formData.cultivations.map(c => ({
-        cropId: c.cropId,
-        area: Number(c.area) || 0,
-        expectedYield: Number(c.expectedYield) || null
-      })),
-      operationStatus: formData.operationStatus,
-      soilType: formData.soilType || null,
-      ph: formData.ph ? Number(formData.ph) : null,
-      organicMatter: formData.organicMatter ? Number(formData.organicMatter) : null,
-      documentUrl: formData.documentUrl,
-      // PNU 생성용 필드
-      bjdCode: formData.bjdCode,
-      isMountain: formData.isMountain,
-      mainNo: formData.mainNo,
-      subNo: formData.subNo,
-      // 좌표 (카카오 Maps JS SDK에서 변환)
-      latitude: formData.latitude,
-      longitude: formData.longitude,
-    };
+    setIsAnalyzing(true);
+    toast.info('농장 정보를 등록하고 서류를 분석 중입니다. 잠시만 기다려주세요...', 8000);
 
     try {
+      // 1. 파일 스토리지 업로드하여 URL 획득 (화면 표시용)
+      const fileUrl = await uploadFile(selectedFile);
+
+      // 백엔드 API로 전송 (좌표는 프론트엔드 카카오 Maps JS SDK에서 변환)
+      const payload = {
+        name: formData.name,
+        registrationNumber: formData.registrationNumber,
+        zipCode: formData.zipCode,
+        address: formData.baseAddress,
+        detailAddress: formData.detailAddress,
+        area: totalFarmArea,
+        // cropIds 대신 cultivations 전달 (cropIds는 하위호환용으로 일단 유지)
+        cropIds: formData.cultivations.map(c => c.cropId),
+        cultivations: formData.cultivations.map(c => ({
+          cropId: c.cropId,
+          area: Number(c.area) || 0,
+          expectedYield: Number(c.expectedYield) || null
+        })),
+        operationStatus: formData.operationStatus,
+        soilType: formData.soilType || null,
+        ph: formData.ph ? Number(formData.ph) : null,
+        organicMatter: formData.organicMatter ? Number(formData.organicMatter) : null,
+        documents: [
+          { type: '농업경영체 등록 확인서', name: selectedFile.name, url: fileUrl }
+        ],
+        // PNU 생성용 필드
+        bjdCode: formData.bjdCode,
+        isMountain: formData.isMountain,
+        mainNo: formData.mainNo,
+        subNo: formData.subNo,
+        // 좌표 (카카오 Maps JS SDK에서 변환)
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+      };
+
+      const formDataObj = new FormData();
+      formDataObj.append('request', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+      formDataObj.append('file', selectedFile);
+
       const res = await fetch('/api/farm', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: formDataObj,
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        toast.error(errorData.message || '농장 등록에 실패했습니다.');
+        toast.error(errorData.message || '농장 등록에 실패했습니다. 유효한 문서인지 확인해주세요.');
         return;
       }
 
@@ -323,6 +337,8 @@ export default function FarmRegisterPage() {
       router.push('/mypage/farm-applications');
     } catch {
       toast.error('서버와 통신에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -372,10 +388,21 @@ export default function FarmRegisterPage() {
                     onChange={handleFileUpload}
                     className={styles.fileInput}
                   />
-                  <p className={styles.fileHelperText}>
-                    (지원 형식: jpg, png, pdf / 최대 크기: 5MB)
-                  </p>
-                  {formData.documentUrl && (
+                  <div style={{ marginTop: '8px', fontSize: '13px' }}>
+                    <p style={{ fontWeight: 'bold', color: 'var(--color-primary)', marginBottom: '4px' }}>
+                      [허용 증명서] 농업경영체 등록 확인서, 토지대장, 농지대장
+                    </p>
+                    <p className={styles.fileHelperText}>
+                      (지원 형식: jpg, png, pdf / 최대 크기: 5MB)
+                    </p>
+                    <p style={{ color: 'var(--color-danger)', fontWeight: 'bold', marginTop: '6px' }}>
+                      ⚠️ 주의: 개인 간 작성한 '임대차계약서' 등 사문서는 온라인 진위확인이 불가하여 자동 반려됩니다.
+                    </p>
+                  </div>
+                  {selectedFile && (
+                    <p className={styles.uploadSuccess}>✅ {selectedFile.name} 선택됨</p>
+                  )}
+                  {formData.documentUrl && !selectedFile && (
                     <p className={styles.uploadSuccess}>✅ 업로드 완료</p>
                   )}
                 </div>
