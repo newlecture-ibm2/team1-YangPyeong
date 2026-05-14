@@ -1,5 +1,6 @@
 package com.farmbalance.policy.adapter.in.scheduler;
 
+import com.farmbalance.global.batch.BatchLogService;
 import com.farmbalance.policy.application.service.GraphRefreshService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class GraphRefreshScheduler {
 
     private final GraphRefreshService graphRefreshService;
+    private final BatchLogService batchLogService;
 
     // 매일 새벽 3시 실행
     @Scheduled(cron = "${graph.refresh.cron:0 0 3 * * *}", zone = "Asia/Seoul")
@@ -22,6 +24,7 @@ public class GraphRefreshScheduler {
         // TODO: 정책 크롤링/정규화 배치와 순서 관계
         // 정책 sync가 먼저 돌고 graph refresh가 나중에 도는 것이 이상적
         // (예: 02:00 policy sync -> 03:00 graph refresh)
-        graphRefreshService.refreshGraph();
+        batchLogService.execute("GRAPH_REFRESH", () -> graphRefreshService.refreshGraph());
     }
 }
+

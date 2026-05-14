@@ -33,6 +33,9 @@ public class BatchLogJpaEntity {
     @Column(name = "messages", columnDefinition = "TEXT")
     private String messages;
 
+    @Column(name = "duration_ms")
+    private Long durationMs;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
