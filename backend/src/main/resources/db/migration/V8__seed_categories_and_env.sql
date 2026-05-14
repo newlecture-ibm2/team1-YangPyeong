@@ -11,6 +11,26 @@ VALUES
 ('Q&A', '궁금한 점을 묻고 답하는 공간입니다.', 3, true, NOW())
 ON CONFLICT (name) DO NOTHING;
 
+-- 1.2 작물 카테고리 기초 데이터
+INSERT INTO crop_categories (name, description, display_order)
+VALUES 
+('곡물', '벼, 보리, 밀 등 주요 곡물', 1),
+('채소', '배추, 무, 고추 등 채소류', 2),
+('과수', '사과, 배, 포도 등 과일류', 3),
+('서류', '감자, 고구마 등 뿌리 작물', 4),
+('특용', '인삼, 참깨 등 특수 목적 작물', 5)
+ON CONFLICT (name) DO NOTHING;
+
+-- 1.3 기본 작물 기초 데이터 (시드 참조용)
+INSERT INTO crops (category_id, code, name, growth_days)
+VALUES 
+((SELECT id FROM crop_categories WHERE name = '곡물'), 'RICE', '벼', 150),
+((SELECT id FROM crop_categories WHERE name = '채소'), 'PEPPER', '고추', 150),
+((SELECT id FROM crop_categories WHERE name = '과수'), 'APPLE', '사과', 180),
+((SELECT id FROM crop_categories WHERE name = '서류'), 'POTATO', '감자', 90),
+((SELECT id FROM crop_categories WHERE name = '특용'), 'GINSENG', '인삼', 1800)
+ON CONFLICT (code) DO NOTHING;
+
 -- 2. 행정구역 시드
 INSERT INTO regions (id, code, name, type, parent_id) VALUES
 (1, '41', '경기도', 'PROVINCE', NULL)
