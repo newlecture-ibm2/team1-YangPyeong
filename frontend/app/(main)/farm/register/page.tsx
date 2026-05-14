@@ -213,7 +213,7 @@ export default function FarmRegisterPage() {
         setSoilAnalysis(result);
         
         if (result.isBjdAverage) {
-          toast.info('해당 필지의 정밀 데이터가 없어 인근 지역 평균값을 불러왔습니다.', { duration: 5000 });
+          toast.info('해당 필지의 정밀 데이터가 없어 인근 지역 평균값을 불러왔습니다.', 5000);
         } else {
           toast.success('해당 필지의 토양 분석 데이터를 불러왔습니다.');
         }

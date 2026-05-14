@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { pnu: string } }
+  { params }: { params: Promise<{ pnu: string }> }
 ) {
   const { pnu } = await params;
   const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
