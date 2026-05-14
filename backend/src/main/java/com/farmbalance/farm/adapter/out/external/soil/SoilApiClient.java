@@ -32,7 +32,7 @@ public class SoilApiClient {
 
     public SoilApiClient() {
         this.restClient = RestClient.builder().build();
-        this.xmlMapper = new XmlMapper();
+        this.xmlMapper = com.fasterxml.jackson.dataformat.xml.XmlMapper.builder().build();
     }
 
     public SoilV3Response getSoilCharacteristics(String pnuCode) {

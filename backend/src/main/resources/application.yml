@@ -89,8 +89,8 @@ external:
 kamis:
   api:
     url: ${KAMIS_API_URL:https://www.kamis.or.kr/service/price/xml.do}
-    cert-key: ${KAMIS_CERT_KEY}
-    cert-id: ${KAMIS_CERT_ID}
+    cert-key: ${KAMIS_CERT_KEY:}
+    cert-id: ${KAMIS_CERT_ID:}
 
 # ── AI Server ──
 ai:
