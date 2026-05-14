@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { usePolicyRecommend } from '../_lib/usePolicyRecommend';
-import GuestPreviewBanner from '@/components/common/GuestPreviewBanner/GuestPreviewBanner';
-import { DUMMY_POLICIES } from '@/lib/preview-data';
+import PolicyRecommendGuideBanner from '@/components/common/PolicyRecommendGuideBanner/PolicyRecommendGuideBanner';
 import styles from './page.module.css';
 
 export default function PolicyRecommendPage() {
@@ -18,7 +17,6 @@ export default function PolicyRecommendPage() {
 
   return (
     <div className={styles.container}>
-      <GuestPreviewBanner />
       <div className={styles.header}>
         <h1 className={styles.title}>나에게 맞는 정책 추천</h1>
         <p className={styles.description}>
@@ -47,11 +45,7 @@ export default function PolicyRecommendPage() {
                 </div>
               </>
             ) : statusCode === 403 ? (
-              <>
-                <h2 className={styles.stateTitle}>농업인 계정에서 이용할 수 있는 기능입니다</h2>
-                <p className={styles.stateMessage}>맞춤 정책 추천은 등록된 농장 정보를 기반으로 제공됩니다.</p>
-                <Link href="/policy" className={styles.actionButton}>정책 목록으로 돌아가기</Link>
-              </>
+              <PolicyRecommendGuideBanner userRole="GENERAL" farmCount={0} variant="page" />
             ) : (
               <>
                 <h2 className={styles.stateTitle}>알 수 없는 오류가 발생했습니다</h2>
@@ -66,18 +60,7 @@ export default function PolicyRecommendPage() {
           <div className={styles.resultContainer}>
             {data.farmerProfile.farmCount === 0 ? (
               // 농장이 하나도 없을 때는 추천 리스트나 프로필을 숨기고 등록 유도 가이드만 표시
-              <div className={styles.emptyState} style={{ marginTop: '2rem', padding: '4rem 2rem' }}>
-                <span className={styles.icon} style={{ fontSize: '4rem' }}>🌱</span>
-                <h3 className={styles.emptyStateTitle}>나만의 맞춤 정책을 추천받으려면?</h3>
-                <p className={styles.emptyStateDesc}>
-                  아직 등록된 농장 정보가 없습니다.<br />
-                  농장 정보를 등록하시면 지역, 면적, 토양 정보 등을 바탕으로 가장 적합한 지원사업과 보조금을 찾아드립니다!
-                </p>
-                <div className={styles.buttonGroup} style={{ marginTop: '2rem' }}>
-                  <Link href="/farm/register" className={styles.actionButton}>농장 등록하고 추천받기</Link>
-                  <Link href="/policy" className={styles.secondaryButton}>전체 정책 보기</Link>
-                </div>
-              </div>
+              <PolicyRecommendGuideBanner userRole="FARMER" farmCount={0} variant="page" />
             ) : (
               // 농장이 1개 이상 있을 때 정상적으로 추천 결과 표시
               <>
