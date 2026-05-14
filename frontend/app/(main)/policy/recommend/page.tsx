@@ -2,8 +2,6 @@
 
 import Link from 'next/link';
 import { usePolicyRecommend } from '../_lib/usePolicyRecommend';
-import GuestPreviewBanner from '@/components/common/GuestPreviewBanner/GuestPreviewBanner';
-import { DUMMY_POLICIES } from '@/lib/preview-data';
 import styles from './page.module.css';
 
 export default function PolicyRecommendPage() {
@@ -18,7 +16,6 @@ export default function PolicyRecommendPage() {
 
   return (
     <div className={styles.container}>
-      <GuestPreviewBanner />
       <div className={styles.header}>
         <h1 className={styles.title}>나에게 맞는 정책 추천</h1>
         <p className={styles.description}>
