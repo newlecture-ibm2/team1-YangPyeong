@@ -85,7 +85,7 @@ public class AiServerAdapter implements PredictYieldPort, AnalyzeFarmDocumentPor
             log.error("Error occurred while calling AI server for document OCR", e);
             return FarmDocumentData.builder()
                     .isValid(false)
-                    .errorMessage("OCR 처리 중 백엔드 시스템 오류가 발생했습니다.")
+                    .errorMessage("유효하지 않은 문서입니다.")
                     .build();
         }
     }
