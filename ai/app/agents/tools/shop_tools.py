@@ -37,7 +37,8 @@ async def autofill_product_info(product_name: str) -> str:
                 "stock": data.stock,
                 "categoryName": data.category_name,
                 "description": data.description,
-                "isKamisApplied": data.is_kamis_applied
+                "isKamisApplied": data.is_kamis_applied,
+                "kamisUnit": data.kamis_unit
             }
         }
         return f"[ACTION:{json.dumps(payload, ensure_ascii=False)}]"

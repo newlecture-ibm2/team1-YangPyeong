@@ -50,7 +50,7 @@ function SeedFormContent() {
           <Card>
             <div className={styles.section}>
               <h3 className={styles.sectionTitle}>1. 농장 및 작물 선택</h3>
-              <div className={styles.row}>
+              <div className={styles.row} data-guide="seed-farm-select">
                 <Dropdown
                   label="대상 농장"
                   options={farmOptions}
@@ -70,7 +70,7 @@ function SeedFormContent() {
               </div>
             </div>
 
-            <div className={styles.section}>
+            <div className={styles.section} data-guide="seed-crop-select">
               <h3 className={styles.sectionTitle}>2. 재배 상세 정보</h3>
               <div className={styles.row}>
                 <Dropdown
@@ -117,7 +117,7 @@ function SeedFormContent() {
               </p>
             </div>
 
-            <div className={styles.actions}>
+            <div className={styles.actions} data-guide="seed-submit">
               <Link href="/farm">
                 <Button variant="outline" type="button">취소</Button>
               </Link>
