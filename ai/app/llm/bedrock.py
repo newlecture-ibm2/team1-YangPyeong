@@ -42,3 +42,13 @@ class BedrockLLM(BaseLLM):
     ) -> AsyncIterator[str]:
         raise NotImplementedError
         yield  # AsyncIterator 타입 힌트를 위한 yield
+
+    async def generate_json(
+        self,
+        prompt: str,
+        *,
+        system_instruction: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> str:
+        raise NotImplementedError
