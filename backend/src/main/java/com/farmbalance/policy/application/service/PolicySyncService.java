@@ -348,9 +348,9 @@ public class PolicySyncService implements SyncPolicyUseCase {
      */
     private void applyAiResult(PolicyData policyData, AiAnalyzeResult result) {
         if (result.title() != null) policyData.setTitle(result.title());
-        policyData.setOrganization(result.organization());
+        policyData.setOrganization(truncate(result.organization(), 200));
         policyData.setCategory(result.category());
-        policyData.setTarget(result.target());
+        policyData.setTarget(truncate(result.target(), 200));
         if (result.contentSummary() != null) policyData.setContent(result.contentSummary());
         policyData.setSupportAmount(result.supportAmount());
         policyData.setConfidence(BigDecimal.valueOf(result.confidence()));
@@ -578,6 +578,11 @@ public class PolicySyncService implements SyncPolicyUseCase {
         } catch (DateTimeParseException e) {
             return null;
         }
+    }
+
+    private String truncate(String val, int maxLen) {
+        if (val == null) return null;
+        return val.length() > maxLen ? val.substring(0, maxLen - 3) + "..." : val;
     }
 
     @Async

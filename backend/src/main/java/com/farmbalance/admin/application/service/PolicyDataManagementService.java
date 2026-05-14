@@ -43,10 +43,15 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
 
     @Override
     @Transactional
-    public Long createPolicy(String externalId, String data) {
+    public Long createPolicy(String externalId, String title, String category, String organization, String regionCode, String contentSummary, String sourceUrl) {
         PolicyData policyData = new PolicyData();
         policyData.setExternalId(externalId);
-        policyData.setRawData(data);
+        policyData.setTitle(title);
+        policyData.setCategory(category);
+        policyData.setOrganization(organization);
+        policyData.setRegionCode(regionCode);
+        policyData.setContent(contentSummary);
+        policyData.setSourceUrl(sourceUrl);
         policyData.setFetchedAt(LocalDateTime.now());
 
         PolicyData saved = policySavePort.save(policyData);
@@ -55,12 +60,17 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
 
     @Override
     @Transactional
-    public void updatePolicy(Long id, String externalId, String data) {
+    public void updatePolicy(Long id, String externalId, String title, String category, String organization, String regionCode, String contentSummary, String sourceUrl) {
         PolicyData existing = policyQueryPort.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POLICY_NOT_FOUND));
 
         existing.setExternalId(externalId);
-        existing.setRawData(data);
+        existing.setTitle(title);
+        existing.setCategory(category);
+        existing.setOrganization(organization);
+        existing.setRegionCode(regionCode);
+        existing.setContent(contentSummary);
+        existing.setSourceUrl(sourceUrl);
         existing.setFetchedAt(LocalDateTime.now());
 
         policySavePort.save(existing);

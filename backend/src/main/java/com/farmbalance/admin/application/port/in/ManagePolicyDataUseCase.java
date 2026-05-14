@@ -24,12 +24,12 @@ public interface ManagePolicyDataUseCase {
      * 정책 데이터 등록
      * @return 생성된 정책 ID
      */
-    Long createPolicy(String externalId, String data);
+    Long createPolicy(String externalId, String title, String category, String organization, String regionCode, String contentSummary, String sourceUrl);
 
     /**
      * 정책 데이터 수정
      */
-    void updatePolicy(Long id, String externalId, String data);
+    void updatePolicy(Long id, String externalId, String title, String category, String organization, String regionCode, String contentSummary, String sourceUrl);
 
     /**
      * 정책 데이터 삭제 (Soft Delete)

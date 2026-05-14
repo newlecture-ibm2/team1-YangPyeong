@@ -14,20 +14,14 @@ function formatDate(dateStr: string | null): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-function parsePolicyData(jsonStr: string) {
-  try {
-    return JSON.parse(jsonStr)
-  } catch {
-    return null
-  }
-}
+// parsePolicyData removed as we use explicit fields now
 
 export default function PolicyPage() {
   const [policies, setPolicies] = useState<AdminPolicyData[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingPolicy, setEditingPolicy] = useState<AdminPolicyData | null>(null)
-  const [formData, setFormData] = useState<PolicyDataRequest>({ externalId: '', data: '' })
+  const [formData, setFormData] = useState<PolicyDataRequest>({ externalId: '', title: '', category: '', organization: '', regionCode: '', contentSummary: '', sourceUrl: '' })
   const [parsedData, setParsedData] = useState<Record<string, any>>({})
   const toast = useToast()
 
@@ -46,24 +40,46 @@ export default function PolicyPage() {
 
   const openCreateModal = () => {
     setEditingPolicy(null)
-    setFormData({ externalId: '', data: '' })
+    setFormData({ externalId: '', title: '', category: '', organization: '', regionCode: '', contentSummary: '', sourceUrl: '' })
     setParsedData({ title: '', regionName: '', category: '', organization: '', contentSummary: '', sourceUrl: '' })
     setShowModal(true)
   }
 
   const openEditModal = (policy: AdminPolicyData) => {
     setEditingPolicy(policy)
-    setFormData({ externalId: policy.externalId, data: policy.data })
-    setParsedData(parsePolicyData(policy.data) || {})
+    setFormData({ 
+      externalId: policy.externalId, 
+      title: policy.title,
+      category: policy.category,
+      organization: policy.organization,
+      regionCode: policy.regionCode,
+      contentSummary: policy.contentSummary,
+      sourceUrl: policy.sourceUrl 
+    })
+    setParsedData({ 
+      title: policy.title || '', 
+      regionName: policy.regionCode || '', 
+      category: policy.category || '', 
+      organization: policy.organization || '', 
+      contentSummary: policy.contentSummary || '', 
+      sourceUrl: policy.sourceUrl || '' 
+    })
     setShowModal(true)
   }
 
   const handleSubmit = async () => {
-    const finalDataStr = JSON.stringify(parsedData)
-    const payload = { ...formData, data: finalDataStr }
+    const payload: PolicyDataRequest = { 
+      externalId: formData.externalId,
+      title: parsedData.title,
+      category: parsedData.category,
+      organization: parsedData.organization,
+      regionCode: parsedData.regionName,
+      contentSummary: parsedData.contentSummary,
+      sourceUrl: parsedData.sourceUrl
+    }
 
-    if (!payload.externalId.trim() || !finalDataStr.trim() || finalDataStr === '{}') {
-      toast.error('외부 ID와 정책 정보를 모두 입력해주세요.')
+    if (!payload.externalId.trim()) {
+      toast.error('외부 ID를 입력해주세요.')
       return
     }
 
@@ -122,11 +138,10 @@ export default function PolicyPage() {
             </thead>
             <tbody>
               {policies.map(policy => {
-                const parsedData = parsePolicyData(policy.data)
-                const title = parsedData?.title || '제목 없음'
-                const category = parsedData?.category || '기타'
-                const region = parsedData?.regionName || '전국'
-                const org = parsedData?.organization || '-'
+                const title = policy.title || '제목 없음'
+                const category = policy.category || '기타'
+                const region = policy.regionCode || '전국'
+                const org = policy.organization || '-'
                 
                 return (
                   <tr key={policy.id}>

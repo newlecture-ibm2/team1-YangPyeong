@@ -17,7 +17,12 @@ public class AdminPolicyDataResponse {
 
     private final Long id;
     private final String externalId;
-    private final String data;
+    private final String title;
+    private final String category;
+    private final String organization;
+    private final String regionCode;
+    private final String contentSummary;
+    private final String sourceUrl;
     private final LocalDateTime fetchedAt;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
@@ -25,13 +30,17 @@ public class AdminPolicyDataResponse {
 
     /**
      * PolicyData 도메인 객체 → 관리자 응답 DTO 변환
-     * PolicyData.rawData → AdminPolicyDataResponse.data 매핑
      */
     public static AdminPolicyDataResponse from(PolicyData domain) {
         return AdminPolicyDataResponse.builder()
                 .id(domain.getId())
                 .externalId(domain.getExternalId())
-                .data(domain.getRawData())
+                .title(domain.getTitle())
+                .category(domain.getCategory())
+                .organization(domain.getOrganization())
+                .regionCode(domain.getRegionCode())
+                .contentSummary(domain.getContentSummary())
+                .sourceUrl(domain.getSourceUrl())
                 .fetchedAt(domain.getFetchedAt())
                 .createdAt(domain.getCreatedAt())
                 .updatedAt(domain.getUpdatedAt())
