@@ -36,6 +36,15 @@ public class AdminBalanceEngineService implements AdminBalanceEngineUseCase {
     @Override
     @CacheEvict(value = "supplyTrends", allEntries = true)
     public void updateThresholds(BalanceThresholdsDto dto) {
+        // 논리적 예외 방어 (API 방어)
+        if (dto.getShortWarn() >= dto.getShortCaution() ||
+            dto.getShortCaution() >= 100 ||
+            dto.getExcessCaution() <= 100 ||
+            dto.getExcessCaution() >= dto.getExcessWarn()) {
+            throw new IllegalArgumentException("올바르지 않은 임계치 제약조건입니다.");
+        }
+
+        // 메모리 변수 즉시 반영
         BalanceProperties.Thresholds thresholds = balanceProperties.getThresholds();
         thresholds.setExcessWarn(dto.getExcessWarn());
         thresholds.setExcessCaution(dto.getExcessCaution());
@@ -43,6 +52,14 @@ public class AdminBalanceEngineService implements AdminBalanceEngineUseCase {
         thresholds.setShortWarn(dto.getShortWarn());
         
         System.out.println("[Balance-Engine] Hot Reloaded Thresholds: " + dto);
-        // Note: AI Server weight broadcast has been removed per recent plan decisions.
+
+        // balance_data 테이블의 전체 작물 상태(balance_status) 일괄 갱신
+        adminBalanceDataPort.updateBalanceStatuses(
+                dto.getExcessWarn(),
+                dto.getExcessCaution(),
+                dto.getShortWarn(),
+                dto.getShortCaution()
+        );
+        System.out.println("[Balance-Engine] Updated all balance_data statuses in database.");
     }
 }

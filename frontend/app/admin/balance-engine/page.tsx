@@ -64,6 +64,19 @@ export default function AdminBalanceEnginePage() {
     }
   };
 
+  const handleThresholdChange = (key: keyof BalanceThresholdsDto, value: number) => {
+    if (!thresholds) return;
+    const t = { ...thresholds, [key]: value };
+
+    // 논리적 예외 방지: shortWarn < shortCaution < 100 < excessCaution < excessWarn
+    if (key === 'excessWarn' && value <= t.excessCaution) return;
+    if (key === 'excessCaution' && (value >= t.excessWarn || value <= 100)) return;
+    if (key === 'shortCaution' && (value >= 100 || value <= t.shortWarn)) return;
+    if (key === 'shortWarn' && value >= t.shortCaution) return;
+
+    setThresholds(t);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'BALANCED': return <Badge variant="green">적정</Badge>;
@@ -110,7 +123,7 @@ export default function AdminBalanceEnginePage() {
               </div>
               <input type="range" min="100" max="250" step="1" 
                 value={thresholds.excessWarn}
-                onChange={e => setThresholds({...thresholds, excessWarn: Number(e.target.value)})}
+                onChange={e => handleThresholdChange('excessWarn', Number(e.target.value))}
                 className={styles.sliderInput} />
             </div>
 
@@ -121,7 +134,7 @@ export default function AdminBalanceEnginePage() {
               </div>
               <input type="range" min="100" max="200" step="1" 
                 value={thresholds.excessCaution}
-                onChange={e => setThresholds({...thresholds, excessCaution: Number(e.target.value)})}
+                onChange={e => handleThresholdChange('excessCaution', Number(e.target.value))}
                 className={styles.sliderInput} />
             </div>
 
@@ -132,7 +145,7 @@ export default function AdminBalanceEnginePage() {
               </div>
               <input type="range" min="50" max="100" step="1" 
                 value={thresholds.shortCaution}
-                onChange={e => setThresholds({...thresholds, shortCaution: Number(e.target.value)})}
+                onChange={e => handleThresholdChange('shortCaution', Number(e.target.value))}
                 className={styles.sliderInput} />
             </div>
 
@@ -143,7 +156,7 @@ export default function AdminBalanceEnginePage() {
               </div>
               <input type="range" min="10" max="80" step="1" 
                 value={thresholds.shortWarn}
-                onChange={e => setThresholds({...thresholds, shortWarn: Number(e.target.value)})}
+                onChange={e => handleThresholdChange('shortWarn', Number(e.target.value))}
                 className={styles.sliderInput} />
             </div>
           </div>

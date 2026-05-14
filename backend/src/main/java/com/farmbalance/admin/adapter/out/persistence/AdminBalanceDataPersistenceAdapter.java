@@ -58,4 +58,21 @@ public class AdminBalanceDataPersistenceAdapter implements AdminBalanceDataPort 
         """;
         return jdbcTemplate.query(sql, rowMapper, regionCode, cropId);
     }
+
+    @Override
+    public void updateBalanceStatuses(double excessWarn, double excessCaution, double shortWarn, double shortCaution) {
+        String sql = """
+            UPDATE balance_data
+            SET balance_status = CASE 
+                WHEN supply_ratio >= ? THEN 'EXCESS_WARN'
+                WHEN supply_ratio >= ? THEN 'EXCESS_CAUTION'
+                WHEN supply_ratio <= ? THEN 'SHORT_WARN'
+                WHEN supply_ratio <= ? THEN 'SHORT_CAUTION'
+                ELSE 'BALANCED'
+            END,
+            updated_at = NOW()
+            WHERE deleted_at IS NULL
+        """;
+        jdbcTemplate.update(sql, excessWarn, excessCaution, shortWarn, shortCaution);
+    }
 }
