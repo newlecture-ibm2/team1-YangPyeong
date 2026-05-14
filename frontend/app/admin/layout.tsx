@@ -19,6 +19,7 @@ const ADMIN_MENUS = [
   { href: '/admin/policy', label: '정책 관리', icon: '📄' },
   { href: '/admin/rag', label: 'AI RAG 관리', icon: '🤖' },
   { href: '/admin/data', label: '외부 데이터 연동 관리', icon: '🔌' },
+  { href: '/admin/balance-engine', label: '밸런스 엔진 관리', icon: '⚖️' },
 ]
 
 export default function AdminLayout({ children }: AdminLayoutProps) {

@@ -18,6 +18,7 @@ public class AdminBalanceData {
     private Long id;
     private String regionCode;
     private Long cropId;
+    private String cropName;
     private Integer year;
     private String season;
     private BigDecimal supplyForecast;
