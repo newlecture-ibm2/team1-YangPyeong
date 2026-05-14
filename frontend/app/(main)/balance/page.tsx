@@ -77,7 +77,7 @@ export default function BalanceListPage() {
       </div>
 
       {/* TOP 3 SUMMARY */}
-      <div className={styles.topSummary}>
+      <div className={styles.topSummary} data-guide="balance-summary">
         {top3.map(item => (
           <Card key={item.cropName} className={styles.summaryCard}>
             <p className={styles.cardLabel}>{item.cropName}</p>
@@ -119,7 +119,7 @@ export default function BalanceListPage() {
       </div>
 
       {/* TABLE */}
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} data-guide="balance-table">
         <table className={styles.table}>
           <thead>
             <tr>

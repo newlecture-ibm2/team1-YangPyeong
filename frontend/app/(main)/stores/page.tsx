@@ -168,7 +168,7 @@ export default function StoreMapPage() {
         </h1>
       </div>
       
-      <div style={{ marginBottom: '32px' }}>
+      <div style={{ marginBottom: '32px' }} data-guide="stores-search">
         <FilterBar
           dropdowns={[
             <Dropdown
@@ -199,7 +199,7 @@ export default function StoreMapPage() {
       </div>
 
       <div className={styles.contentWrapper}>
-        <div className={styles.mapSection}>
+        <div className={styles.mapSection} data-guide="stores-map">
           <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10 }}>
             <button 
               onClick={findMyLocation}

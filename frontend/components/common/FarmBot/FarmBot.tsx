@@ -110,6 +110,7 @@ export default function FarmBot({ children }: FarmBotProps) {
     chatInput,
     setChatInput,
     chatLoading,
+    getVisibleStepInfo,
   } = useFarmBot();
 
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -371,6 +372,8 @@ export default function FarmBot({ children }: FarmBotProps) {
 
   // ── 가이드 모드 ──
   const bubbleClass = bubbleAbove ? styles.bubbleAbove : styles.bubbleBelow;
+  
+  const { visibleIndex, visibleTotal } = getVisibleStepInfo();
 
   return (
     <FarmBotContext.Provider value={{ showQuickMessage, startChat }}>
@@ -412,12 +415,12 @@ export default function FarmBot({ children }: FarmBotProps) {
             <p className={styles.bubbleText}>{bubbleMessage}</p>
             {currentStep >= 0 && (
               <div className={styles.bubbleActions}>
-                <span className={styles.stepCounter}>{currentStep + 1} / {totalSteps}</span>
+                <span className={styles.stepCounter}>{visibleIndex + 1} / {visibleTotal}</span>
                 <div className={styles.bubbleBtns}>
-                  {currentStep > 0 && (
+                  {visibleIndex > 0 && (
                     <button className={styles.bubbleBtnPrev} onClick={prevStep}>← 이전</button>
                   )}
-                  {currentStep < totalSteps - 1 ? (
+                  {visibleIndex < visibleTotal - 1 ? (
                     <button className={styles.bubbleBtnNext} onClick={nextStep}>다음 →</button>
                   ) : (
                     <>
