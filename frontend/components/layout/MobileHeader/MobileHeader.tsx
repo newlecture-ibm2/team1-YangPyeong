@@ -6,12 +6,12 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Menu, Bell, ShoppingCart } from 'lucide-react';
 import HamburgerMenu from '../HamburgerMenu/HamburgerMenu';
-import { useHeaderData } from '@/lib/hooks/useHeaderData';
+import { useHeaderContext } from '../HeaderProvider';
 import styles from './MobileHeader.module.css';
 
 export default function MobileHeader() {
   const router = useRouter();
-  const { user, cartCount, unreadCount } = useHeaderData();
+  const { user, cartCount, unreadCount } = useHeaderContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleCartClick = () => {
@@ -108,9 +108,6 @@ export default function MobileHeader() {
       <HamburgerMenu
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        user={user}
-        unreadCount={unreadCount}
-        cartCount={cartCount}
       />
     </>
   );

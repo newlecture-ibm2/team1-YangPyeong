@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api-fetch';
 
 export interface HeaderUser {
@@ -41,6 +41,7 @@ function getUserFromCookie(): HeaderUser | null {
  */
 export function useHeaderData() {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [cartCount, setCartCount] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -185,6 +186,30 @@ export function useHeaderData() {
       .catch(() => {});
   }, []);
 
+  /** 로그아웃 처리 (FCM 토큰 제거 + 쿠키 제거 + auth-changed 이벤트) */
+  const handleLogout = useCallback(async () => {
+    try {
+      const savedToken = typeof window !== 'undefined' ? localStorage.getItem('fcm-token') : null;
+      if (savedToken) {
+        await fetch('/api/fcm/tokens', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: savedToken }),
+        }).catch(() => {});
+        localStorage.removeItem('fcm-token');
+      }
+      await apiFetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // 무시
+    } finally {
+      document.cookie = 'fb-user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      setUser(null);
+      window.dispatchEvent(new Event('auth-changed'));
+      router.push('/');
+      router.refresh();
+    }
+  }, [router]);
+
   return {
     user,
     setUser,
@@ -194,5 +219,6 @@ export function useHeaderData() {
     notifLoading,
     fetchRecentNotifs,
     markNotifRead,
+    handleLogout,
   };
 }

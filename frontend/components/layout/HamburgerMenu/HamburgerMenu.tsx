@@ -3,28 +3,19 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { X, Bell, ShoppingCart, User, LogOut, LogIn, UserPlus, Shield } from 'lucide-react';
-import { apiFetch } from '@/lib/api-fetch';
+import { useHeaderContext } from '../HeaderProvider';
 import styles from './HamburgerMenu.module.css';
-
-interface HamburgerUser {
-  email: string;
-  role: string;
-  profileImageUrl?: string | null;
-}
 
 interface HamburgerMenuProps {
   open: boolean;
   onClose: () => void;
-  user: HamburgerUser | null;
-  unreadCount: number;
-  cartCount: number;
 }
 
-export default function HamburgerMenu({ open, onClose, user, unreadCount, cartCount }: HamburgerMenuProps) {
+export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
   const pathname = usePathname();
-  const router = useRouter();
+  const { user, cartCount, unreadCount, handleLogout } = useHeaderContext();
 
   // 경로 변경 시 자동으로 닫기 (첫 마운트 제외)
   const prevPathname = useRef(pathname);
@@ -57,27 +48,9 @@ export default function HamburgerMenu({ open, onClose, user, unreadCount, cartCo
     return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  const handleLogout = async () => {
-    try {
-      const savedToken = typeof window !== 'undefined' ? localStorage.getItem('fcm-token') : null;
-      if (savedToken) {
-        await fetch('/api/fcm/tokens', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: savedToken }),
-        }).catch(() => {});
-        localStorage.removeItem('fcm-token');
-      }
-      await apiFetch('/api/auth/logout', { method: 'POST' });
-    } catch {
-      // ignore
-    } finally {
-      document.cookie = 'fb-user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      window.dispatchEvent(new Event('auth-changed'));
-      onClose();
-      router.push('/');
-      router.refresh();
-    }
+  const onLogoutClick = async () => {
+    onClose();
+    await handleLogout();
   };
 
   const displayName = user?.email ? user.email.split('@')[0] : '';
@@ -173,7 +146,7 @@ export default function HamburgerMenu({ open, onClose, user, unreadCount, cartCo
             )}
 
             <div className={styles.menuDivider} />
-            <button className={styles.menuItem} onClick={handleLogout} type="button">
+            <button className={styles.menuItem} onClick={onLogoutClick} type="button">
               <LogOut size={18} />
               <span className={styles.menuLabel}>로그아웃</span>
             </button>
