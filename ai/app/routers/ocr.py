@@ -3,7 +3,7 @@ import logging
 from app.models.ocr import DocumentOcrResponse
 from app.services.ocr_service import OcrService
 
-router = APIRouter(prefix="/ocr", tags=["OCR"])
+router = APIRouter(prefix="/api/ocr", tags=["OCR"])
 logger = logging.getLogger(__name__)
 
 @router.post("/farm-document", response_model=DocumentOcrResponse)
