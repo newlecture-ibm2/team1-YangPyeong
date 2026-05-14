@@ -11,6 +11,7 @@ import com.farmbalance.farm.adapter.in.web.dto.FarmUpdateRequest;
 import com.farmbalance.farm.application.port.in.LoadFarmUseCase;
 import com.farmbalance.farm.application.port.in.RegisterFarmCommand;
 import com.farmbalance.farm.application.port.in.RegisterFarmUseCase;
+import com.farmbalance.farm.application.port.in.AnalyzeFarmDocumentUseCase;
 import com.farmbalance.farm.domain.Farm;
 import com.farmbalance.global.response.ApiResponse;
 import jakarta.validation.Valid;
