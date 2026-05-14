@@ -24,16 +24,16 @@ BEGIN
     SELECT id INTO v_category_id FROM crop_categories ORDER BY id ASC LIMIT 1;
     
     -- 작물 보충 (쌀, 콩, 방울토마토가 crops 테이블에 없는 경우를 대비)
-    INSERT INTO crops (category_id, name)
-    SELECT v_category_id, '쌀'
+    INSERT INTO crops (category_id, code, name)
+    SELECT v_category_id, 'RICE', '쌀'
     WHERE NOT EXISTS (SELECT 1 FROM crops WHERE name = '쌀');
 
-    INSERT INTO crops (category_id, name)
-    SELECT v_category_id, '콩'
+    INSERT INTO crops (category_id, code, name)
+    SELECT v_category_id, 'SOYBEAN', '콩'
     WHERE NOT EXISTS (SELECT 1 FROM crops WHERE name = '콩');
 
-    INSERT INTO crops (category_id, name)
-    SELECT v_category_id, '방울토마토'
+    INSERT INTO crops (category_id, code, name)
+    SELECT v_category_id, 'CHERRY_TOMATO', '방울토마토'
     WHERE NOT EXISTS (SELECT 1 FROM crops WHERE name = '방울토마토');
 
     -- 3. 기존 시연 데이터 삭제 (해당 농장의 데이터만 초기화)
