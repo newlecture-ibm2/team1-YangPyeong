@@ -10,12 +10,16 @@ import { useToast } from '@/components/common/Toast';
 import { useMyFarms } from './useFarm';
 import { useHistory } from './useHistory';
 import { useCultivation } from './useCultivation';
+import { getLatestRecommendHistory } from './recommend/_lib/recommend.api';
+import { useRevenue } from './useRevenue';
 import Timeline from './_components/Timeline/Timeline';
 import HistoryModal from './_components/HistoryModal/HistoryModal';
 import CultivationEditModal from './_components/CultivationEditModal/CultivationEditModal';
 import ModalDialog from '@/components/common/Modal/ModalDialog';
 import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import UnifiedActionButton from './_components/UnifiedActionButton/UnifiedActionButton';
+import PolicyRecommendGuideBanner from '@/components/common/PolicyRecommendGuideBanner/PolicyRecommendGuideBanner';
+import { DUMMY_FARM, DUMMY_CULTIVATIONS, DUMMY_BALANCE } from '@/lib/preview-data';
 import styles from './page.module.css';
 
 // 임시 KPI 및 활동 데이터 (백엔드 연동 전까지 유지할 데이터 구조)
@@ -39,7 +43,9 @@ function FarmDashboardContent() {
   const initialTab = searchParams.get('tab') === 'history' ? 'HISTORY' : 'DASHBOARD';
 
   const toast = useToast();
-  const { farms, isLoading: isFarmsLoading, removeFarm: deleteSelectedFarm } = useMyFarms();
+  const { farms: allFarms, isLoading: isFarmsLoading, removeFarm: deleteSelectedFarm } = useMyFarms();
+  const farms = allFarms.filter(f => f.certificationStatus === 'APPROVED');
+  const hasUnapprovedFarms = allFarms.length > farms.length;
   const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
   // 농장 목록 뷰 여부 상태
   const [isListView, setIsListView] = useState(false);
@@ -49,6 +55,20 @@ function FarmDashboardContent() {
   const [selectedCultivation, setSelectedCultivation] = useState<any>(null);
   const [cropOptions, setCropOptions] = useState<{ id: number, name: string }[]>([]);
   const [weather, setWeather] = useState<{ tmp: number, pty: number, sky: number } | null>(null);
+  const [latestAiScore, setLatestAiScore] = useState<number | null>(null);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<number>(0);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // 유저 권한 확인
+  useEffect(() => {
+    const match = document.cookie.match(/(?:^|;\s*)fb-user=([^;]*)/);
+    if (match) {
+      try {
+        const user = JSON.parse(decodeURIComponent(match[1]));
+        setUserRole(user.role);
+      } catch {}
+    }
+  }, []);
 
   // 기상 정보 조회
   useEffect(() => {
@@ -104,10 +124,95 @@ function FarmDashboardContent() {
     refresh: refreshCultivations
   } = useCultivation(farm?.id);
 
+  // 수익 예측 연동
+  const { prediction, isLoading: isRevenueLoading, getPrediction, revertPrediction } = useRevenue();
+  const [actualYield, setActualYield] = useState<number | ''>('');
+
+  const handleCalculateRevenue = useCallback(() => {
+    if (!farm || farm.cropNames.length === 0) return;
+    const mainCrop = farm.cropNames[0];
+    const area = cultivations.find(c => c.cropName === mainCrop)?.cultivationArea || farm.area;
+    
+    const request: any = {
+      crop_name: mainCrop,
+      area_sqm: area,
+      farm_id: farm.id,
+    };
+    
+    if (actualYield !== '') {
+      request.actual_yield_kg = Number(actualYield);
+    }
+    
+    if (weather) {
+       request.weather_context = `현재 양평 날씨: 기온 ${weather.tmp}도, 강수형태 ${weather.pty}, 하늘상태 ${weather.sky}`;
+    }
+    
+    getPrediction(request);
+  }, [farm, cultivations, actualYield, weather, getPrediction]);
+
+  const handleResetRevenue = useCallback(() => {
+    setActualYield('');
+    revertPrediction();
+  }, [revertPrediction]);
+
+  // Initial fetch for revenue
+  useEffect(() => {
+    if (activeSubTab === 'DASHBOARD' && farm && farm.cropNames.length > 0 && !prediction && !isRevenueLoading) {
+      handleCalculateRevenue();
+    }
+  }, [activeSubTab, farm, cultivations, prediction, isRevenueLoading, handleCalculateRevenue]);
+
   // 통합 새로고침
   const refreshAll = useCallback(async () => {
     await Promise.all([refreshHistories(), refreshCultivations()]);
   }, [refreshHistories, refreshCultivations]);
+
+  // AI 추천 최근 이력 및 예상 수익 계산
+  useEffect(() => {
+    if (farm?.id) {
+      getLatestRecommendHistory(farm.id)
+        .then(res => {
+          let aiScore = null;
+          let recommendations: any[] = [];
+          
+          if (res && res.recommendations && res.recommendations.length > 0) {
+            aiScore = res.recommendations[0].score;
+            recommendations = res.recommendations;
+          }
+          setLatestAiScore(aiScore);
+          
+          // 사용자가 등록한 재배 작물의 예상 수익 합산
+          // 계산식: 등록된 작물의 예상 수확량(kg) * 해당 작물의 예상 수익(원/kg)
+          let estimatedTotal = 0;
+          if (cultivations && cultivations.length > 0) {
+            cultivations.forEach(c => {
+              // AI 추천 목록에서 해당 작물의 단가를 찾음 (없으면 기본값 3000원)
+              const rec = recommendations.find((r: any) => r.cropId === c.cropId);
+              const pricePerKg = rec?.expectedRevenuePerKg || 3000;
+              const yieldAmount = c.farmerEstimatedYield || 0;
+              estimatedTotal += yieldAmount * pricePerKg;
+            });
+          }
+          setMonthlyRevenue(estimatedTotal);
+        })
+        .catch(() => {
+          setLatestAiScore(null);
+
+          // 추천 이력을 못 불러왔더라도, 재배 작물이 있다면 기본 단가(3000원)로 계산
+          let estimatedTotal = 0;
+          if (cultivations && cultivations.length > 0) {
+            cultivations.forEach(c => {
+              const yieldAmount = c.farmerEstimatedYield || 0;
+              estimatedTotal += yieldAmount * 3000;
+            });
+          }
+          setMonthlyRevenue(estimatedTotal);
+        });
+    } else {
+      setLatestAiScore(null);
+      setMonthlyRevenue(0);
+    }
+  }, [farm?.id, cultivations]);
 
   const isLoading = isFarmsLoading;
 
@@ -164,16 +269,56 @@ function FarmDashboardContent() {
     );
   }
 
-  // 농장이 하나도 없는 경우
+  // 농장이 하나도 없는 경우 -> 미리보기 모드 제공
   if (farms.length === 0) {
+    const previewFarm = DUMMY_FARM;
     return (
       <div className={styles.container}>
+        <div data-guide="farm-guest-banner">
+          <PolicyRecommendGuideBanner userRole={userRole} farmCount={farms.length} variant="inline" />
+        </div>
         <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>내 농장 <span className={styles.italic}>선택</span></h1>
-            <p className={styles.subtitle}>관리할 농장을 선택하거나 새로운 농장을 등록하세요.</p>
+          <div data-guide="farm-guest-preview">
+            <h1 className={styles.title}>내 농장 <span className={styles.italic}>미리보기</span></h1>
+            <p className={styles.subtitle}>농업인 인증 시 실제 본인의 농장 데이터를 관리할 수 있습니다.</p>
+          </div>
+          <div className={styles.headerButtons}>
+            <Link href="/signup?type=farmer" data-guide="farm-guest-certify">
+              <Button variant="primary" style={{ borderRadius: '50px' }}>농업인 인증하기</Button>
+            </Link>
           </div>
         </div>
+        <div className={styles.kpiRow} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }} data-guide="farm-guest-kpi">
+          <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
+            <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>농장 전체 면적</p>
+            <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>{previewFarm.area.toLocaleString()}㎡</p>
+          </div>
+          <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
+            <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>재배 중인 면적</p>
+            <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-primary)' }}>330㎡</p>
+          </div>
+          <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
+            <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>재배 작물</p>
+            <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>2종</p>
+          </div>
+          <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
+            <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>예상 수익 (월)</p>
+            <p style={{ fontSize: '24px', fontWeight: 700, color: '#f59e0b' }}>₩3,500,000</p>
+          </div>
+        </div>
+
+        <div data-guide="farm-guest-interaction">
+          <div style={{ background: 'rgba(255, 255, 255, 0.5)', filter: 'grayscale(0.5)', pointerEvents: 'none', userSelect: 'none' }}>
+           <Card>
+             <h3 style={{ marginBottom: '20px' }}>농장 인터랙션 미리보기</h3>
+             <p>실제 농장 데이터가 등록되면 상세한 분석 리포트와 실시간 날씨 정보를 확인할 수 있습니다.</p>
+             <div style={{ height: '200px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
+               [ 대시보드 차트 및 지도 영역 샘플 ]
+             </div>
+           </Card>
+          </div>
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px', marginTop: '32px' }}>
           <Link href="/farm/register" style={{ textDecoration: 'none' }}>
             <div style={{ border: '2px dashed var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'var(--color-text-light)', height: '100%', cursor: 'pointer', transition: 'all 0.2s' }}
@@ -184,6 +329,17 @@ function FarmDashboardContent() {
               <p style={{ fontSize: '14px', marginTop: '8px', opacity: 0.8 }}>등록된 농장이 없습니다. 농장을 등록해 주세요.</p>
             </div>
           </Link>
+          {hasUnapprovedFarms && (
+            <Link href="/mypage/farm-applications" style={{ textDecoration: 'none' }}>
+              <div style={{ border: '2px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'var(--color-text)', height: '100%', cursor: 'pointer', transition: 'all 0.2s', background: 'var(--color-bg)' }}
+                onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(16,185,129,0.1)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                <div style={{ fontSize: '32px', marginBottom: '12px' }}>📋</div>
+                <div style={{ fontWeight: 600, fontSize: '16px' }}>심사 현황 확인하기</div>
+                <p style={{ fontSize: '14px', marginTop: '8px', opacity: 0.8, color: 'var(--color-text-light)' }}>현재 마이페이지에서 심사 대기 중인 농장이 있습니다.</p>
+              </div>
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -200,7 +356,7 @@ function FarmDashboardContent() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px', marginTop: '32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px', marginTop: '32px' }} data-guide="farm-list">
           {farms.map((f, idx) => (
             <div
                 key={f.id}
@@ -284,6 +440,17 @@ function FarmDashboardContent() {
               <p style={{ fontSize: '14px', marginTop: '8px', opacity: 0.8 }}>또 다른 농장이 있으신가요?</p>
             </div>
           </Link>
+          {hasUnapprovedFarms && (
+            <Link href="/mypage/farm-applications" style={{ textDecoration: 'none' }}>
+              <div style={{ border: '2px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'var(--color-text)', height: '100%', cursor: 'pointer', transition: 'all 0.2s', minHeight: '200px', background: 'var(--color-bg)' }}
+                onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(16,185,129,0.1)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                <div style={{ fontSize: '32px', marginBottom: '12px' }}>📋</div>
+                <div style={{ fontWeight: 600, fontSize: '16px' }}>심사 현황 확인하기</div>
+                <p style={{ fontSize: '14px', marginTop: '8px', opacity: 0.8, color: 'var(--color-text-light)' }}>현재 마이페이지에서 심사 대기 중인 농장이 있습니다.</p>
+              </div>
+            </Link>
+          )}
         </div>
 
         <ModalDialog
@@ -328,7 +495,7 @@ function FarmDashboardContent() {
           </p>
         </div>
         <div className={styles.headerButtons}>
-          <UnifiedActionButton onAddHistory={() => setIsHistoryModalOpen(true)} />
+          <UnifiedActionButton onAddHistory={() => setIsHistoryModalOpen(true)} data-guide="farm-register" />
           {activeSubTab === 'HISTORY' && (
             <Link href="/farm/register">
               <Button variant="outline" style={{ borderRadius: '50px' }}>+ 새 농장 등록</Button>
@@ -361,7 +528,7 @@ function FarmDashboardContent() {
       />
 
       {/* Main Tabs (Navigation) */}
-      <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0', marginBottom: '32px', display: 'flex', gap: '32px' }}>
+      <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0', marginBottom: '32px', display: 'flex', gap: '32px' }} data-guide="farm-farmer-tabs">
         <button
           style={{ background: 'none', border: 'none', color: activeSubTab === 'DASHBOARD' ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: activeSubTab === 'DASHBOARD' ? 700 : 600, borderBottom: activeSubTab === 'DASHBOARD' ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-1px', cursor: 'pointer', fontSize: '16px' }}
           onClick={() => setActiveSubTab('DASHBOARD')}
@@ -385,7 +552,7 @@ function FarmDashboardContent() {
       {activeSubTab === 'DASHBOARD' && (
         <>
           {/* KPI 카드 Row (Dashboard 전용) */}
-          <div className={styles.kpiRow} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
+          <div className={styles.kpiRow} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }} data-guide="farm-farmer-kpi">
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
               <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>농장 전체 면적</p>
               <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>
@@ -403,10 +570,83 @@ function FarmDashboardContent() {
               <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>{farm?.cropNames.length}종</p>
             </div>
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
-              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>이번 달 예상 수익</p>
-              <p style={{ fontSize: '24px', fontWeight: 700, color: '#f59e0b' }}>₩0</p>
+              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>현재 작물의 예상 수익</p>
+              <p style={{ fontSize: '24px', fontWeight: 700, color: '#f59e0b' }}>
+                {isRevenueLoading ? '계산 중...' : `₩${(prediction?.predicted_revenue || 0).toLocaleString()}`}
+              </p>
             </div>
           </div>
+
+          {/* AI 예측 수확량 및 인사이트 패널 */}
+          {farm && farm.cropNames.length > 0 && (
+            <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)', border: '1px solid var(--color-primary)', padding: '24px', borderRadius: 'var(--radius-lg)', marginBottom: '32px' }} data-guide="farm-farmer-insight">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ background: 'var(--color-primary)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 700 }}>AI 예측 인사이트</span>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700 }}>{farm.cropNames[0]} 수익 분석</h3>
+                </div>
+                {prediction && (
+                  <Badge variant="lime">신뢰도: {prediction.confidence}</Badge>
+                )}
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                {/* 좌측: 수확량 및 단가 정보 */}
+                <div style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '20px', borderRadius: '8px' }}>
+                  <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>AI 예측 수확량</span>
+                    <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                      {prediction ? `${(prediction.predicted_yield_kg || 0).toLocaleString()} kg` : '-'}
+                    </span>
+                  </div>
+                  <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>KAMIS 도매 시세 (1kg)</span>
+                    <span style={{ fontSize: '18px', fontWeight: 700 }}>
+                      {prediction ? `₩${(prediction.predicted_price_per_kg || 0).toLocaleString()}` : '-'}
+                    </span>
+                  </div>
+                  
+                  {/* 실제 수확량 입력 (Override) */}
+                  <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px dashed var(--color-border)' }}>
+                    <label style={{ display: 'block', fontSize: '13px', color: 'var(--color-text-light)', marginBottom: '8px' }}>
+                      💡 실제 수확량이 다르다면 직접 입력해주세요. 이를 바탕으로 예상 수익이 다시 계산됩니다.
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input 
+                        type="number" 
+                        placeholder="실제 수확량 (kg)" 
+                        value={actualYield}
+                        onChange={(e) => setActualYield(e.target.value ? Number(e.target.value) : '')}
+                        style={{ flex: 1, padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '14px' }}
+                      />
+                      <Button variant="outline" size="sm" onClick={handleResetRevenue} disabled={isRevenueLoading || actualYield === ''}>
+                        되돌리기
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleCalculateRevenue} disabled={isRevenueLoading}>
+                        {isRevenueLoading ? '계산 중...' : '적용'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* 우측: AI 설명 (Insight) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', borderLeft: '4px solid var(--color-primary)' }}>
+                    <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px', color: 'var(--color-text)' }}>📈 시세 전망</h4>
+                    <p style={{ fontSize: '14px', color: 'var(--color-text-light)', lineHeight: 1.5 }}>
+                      {prediction?.price_insight || 'AI 분석 데이터를 불러오고 있습니다...'}
+                    </p>
+                  </div>
+                  <div style={{ background: '#fef3c7', padding: '16px', borderRadius: '8px', borderLeft: '4px solid #f59e0b' }}>
+                    <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px', color: '#b45309' }}>💡 종합 수익 분석</h4>
+                    <p style={{ fontSize: '14px', color: '#92400e', lineHeight: 1.5 }}>
+                      {prediction?.revenue_insight || 'AI 분석 데이터를 불러오고 있습니다...'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 면적 사용 현황 게이지 차트 (작물별 분할) */}
           <div style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', marginBottom: '32px' }}>
@@ -481,9 +721,10 @@ function FarmDashboardContent() {
 
           {/* 벤토 레이아웃 (Dashboard 전용) */}
           <div className={styles.grid2} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px', alignItems: 'start' }}>
-            <Card>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 700 }}>최근 활동</h3>
+            <div data-guide="farm-farmer-recent">
+              <Card>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700 }}>최근 활동</h3>
                 <Button variant="ghost" size="sm" onClick={() => setActiveSubTab('HISTORY')}>전체보기 →</Button>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -513,10 +754,12 @@ function FarmDashboardContent() {
                   )}
                 </tbody>
               </table>
-            </Card>
+              </Card>
+            </div>
 
-            <Card variant="dark">
-              <h3 style={{ color: 'var(--color-accent)', marginBottom: '20px', fontSize: '18px' }}>농장 정보</h3>
+            <div data-guide="farm-farmer-info">
+              <Card variant="dark">
+                <h3 style={{ color: 'var(--color-accent)', marginBottom: '20px', fontSize: '18px' }}>농장 정보</h3>
               <dl style={{ fontSize: '14px', lineHeight: '2.2' }}>
                 <dt style={{ opacity: 0.5 }}>위치</dt><dd>{farm?.address}</dd>
                 <dt style={{ opacity: 0.5, marginTop: '12px' }}>면적</dt><dd>{farm?.area.toLocaleString()} ㎡ ({Math.round((farm?.area || 0) / 3.3058)}평)</dd>
@@ -539,8 +782,9 @@ function FarmDashboardContent() {
                 >
                   삭제
                 </Button>
-              </div>
-            </Card>
+                </div>
+              </Card>
+            </div>
           </div>
         </>
       )}

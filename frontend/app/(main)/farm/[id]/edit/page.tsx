@@ -197,7 +197,11 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
         organicMatter: formData.organicMatter ? Number(formData.organicMatter) : undefined,
       });
       toast.success('농장 정보가 수정되었습니다.');
-      router.push('/farm');
+      if (farm?.certificationStatus === 'APPROVED') {
+        router.push('/farm');
+      } else {
+        router.push('/mypage/farm-applications');
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '수정에 실패했습니다.';
       toast.error(message);

@@ -1,0 +1,174 @@
+/* page.module.css */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* ── 필터 칩 (도메인 전용 스타일) ── */
+.filters {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+.filterChip {
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.filterChip:hover {
+  border-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.filterChipActive {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.filterChipActive:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+  color: #fff;
+}
+
+/* ── 알림 리스트 ── */
+.notificationList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emptyState {
+  padding: 80px 20px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.emptyIcon {
+  font-size: 40px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* ── 알림 카드 ── */
+.notificationCard {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.notificationCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+.notificationCard[data-read="true"] {
+  opacity: 0.65;
+  background: var(--color-bg-secondary);
+  box-shadow: none;
+  transform: none;
+}
+
+.iconWrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 22px;
+}
+
+/* Icon colors based on type */
+.icon_BALANCE_WARN { background: #ffebee; color: #d32f2f; }
+.icon_GUIDE { background: #e8f5e9; color: #2e7d32; }
+.icon_ORDER { background: #e3f2fd; color: #1565c0; }
+.icon_POLICY { background: #fff8e1; color: #f57f17; }
+.icon_SYSTEM { background: #f3e5f5; color: #7b1fa2; }
+
+.content {
+  flex: 1;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.time {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 6px 0;
+}
+
+.message {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+.unreadDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-green-500);
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.paginationWrapper {
+  margin-top: 32px;
+  display: flex;
+  justify-content: center;
+}

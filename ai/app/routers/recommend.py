@@ -1,7 +1,7 @@
 import logging
 from fastapi import APIRouter, File, UploadFile, HTTPException
 
-from app.models.recommend import ReasonRequest, ReasonResponse, DiagnoseResponse
+from app.models.recommend import ReasonRequest, ReasonResponse, DiagnoseResponse, WeightsRequest, WeightsResponse
 from app.services import recommend_service
 
 router = APIRouter(prefix="/api/recommend", tags=["Recommend"])
@@ -15,6 +15,15 @@ async def generate_reason(req: ReasonRequest):
     except Exception as e:
         logger.error(f"추천 사유 생성 실패: {e}")
         raise HTTPException(status_code=500, detail="AI 처리 중 오류가 발생했습니다.")
+
+@router.post("/weights", response_model=WeightsResponse)
+async def tune_weights(req: WeightsRequest):
+    logger.info(f"가중치 튜닝 요청: {req.farm_details}")
+    try:
+        return await recommend_service.tune_recommend_weights(req)
+    except Exception as e:
+        logger.error(f"가중치 튜닝 실패: {e}")
+        raise HTTPException(status_code=500, detail="가중치 튜닝 중 오류가 발생했습니다.")
 
 @router.post("/diagnose", response_model=DiagnoseResponse)
 async def diagnose_image(image: UploadFile = File(...)):

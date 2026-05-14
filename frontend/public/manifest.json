@@ -1,0 +1,16 @@
+{
+  "name": "FarmBalance",
+  "short_name": "FarmBalance",
+  "description": "데이터와 AI로 맞추는 농업의 균형",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2D6A4F",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ]
+}

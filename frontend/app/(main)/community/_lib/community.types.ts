@@ -16,6 +16,7 @@ export interface Post {
   categoryId: number;
   authorId: number;
   authorNickname?: string;
+  authorStatus?: string;
   title: string;
   content: string;
   viewCount: number;
@@ -45,8 +46,11 @@ export interface Comment {
   postId: number;
   authorId: number;
   authorNickname?: string;
+  authorStatus?: string;
   content: string;
   accepted: boolean;
+  parentId?: number;
+  isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -45,7 +45,8 @@ public class CommentController {
         
         CommentResponse response = CommentResponse.fromDomain(
                 domainComment,
-                resolveNickname(domainComment.getAuthorId())
+                resolveNickname(domainComment.getAuthorId()),
+                resolveStatus(domainComment.getAuthorId())
         );
         return ApiResponse.ok(response);
     }
@@ -54,6 +55,12 @@ public class CommentController {
         return userJpaRepository.findById(authorId)
                 .map(UserJpaEntity::getName)
                 .orElse("알 수 없음");
+    }
+
+    private String resolveStatus(Long authorId) {
+        return userJpaRepository.findById(authorId)
+                .map(u -> u.getStatus().name())
+                .orElse("UNKNOWN");
     }
 
     private Long getUserId(Authentication auth) {
@@ -76,11 +83,12 @@ public class CommentController {
         Long userId = getUserId(authentication);
 
         com.farmbalance.community.domain.model.Comment domainComment = 
-                createCommentUseCase.createComment(postId, userId, request.getContent());
+                createCommentUseCase.createComment(postId, userId, request.getContent(), request.getParentId());
         
         CommentResponse response = CommentResponse.fromDomain(
                 domainComment,
-                resolveNickname(domainComment.getAuthorId())
+                resolveNickname(domainComment.getAuthorId()),
+                resolveStatus(domainComment.getAuthorId())
         );
         return ApiResponse.ok(response);
     }
@@ -89,7 +97,10 @@ public class CommentController {
     @GetMapping("/posts/{postId}/comments")
     public ApiResponse<List<CommentResponse>> getComments(@PathVariable Long postId) {
         List<CommentResponse> response = loadCommentUseCase.getComments(postId).stream()
-                .map(comment -> CommentResponse.fromDomain(comment, resolveNickname(comment.getAuthorId())))
+                .map(comment -> CommentResponse.fromDomain(
+                        comment,
+                        resolveNickname(comment.getAuthorId()),
+                        resolveStatus(comment.getAuthorId())))
                 .collect(Collectors.toList());
         return ApiResponse.ok(response);
     }

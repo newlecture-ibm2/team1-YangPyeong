@@ -7,14 +7,13 @@
 .page {
   max-width: 1440px; /* Increase width */
   margin: 0 auto;
-  padding: 32px 48px 80px;
+  padding: 24px 48px 80px;
 }
 
 .headerWrapper {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 24px;
+  flex-direction: column;
+  margin-bottom: 20px;
 }
 
 .pageHeader {
@@ -24,7 +23,7 @@
 .breadcrumb {
   font-size: 13px;
   color: var(--color-text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .pageTitle {
@@ -41,6 +40,10 @@
   color: var(--color-text-secondary);
   max-width: 600px;
   line-height: 1.7;
+}
+
+.tabsWrapper {
+  margin-top: 12px;
 }
 
 .tabs {
@@ -77,14 +80,14 @@
 .kpiRow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .kpi {
   background: var(--color-surface);
   border-radius: var(--radius-md);
-  padding: 20px;
+  padding: 16px;
   text-align: center;
 }
 
@@ -128,8 +131,8 @@
 /* ── Main Layout (Dashboard + AI) ── */
 .mainGrid {
   display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: 24px;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 20px;
   align-items: start;
 }
 
@@ -145,10 +148,101 @@
 .chartsColumn {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.chartsColumn .card {
+  margin-bottom: 0;
+}
+
+/* ── 2 Column Layout for Dashboard ── */
+.twoColumnGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .twoColumnGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chartCard {
+  height: 460px;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chartContainer {
+  flex: 1;
+  min-height: 0;
+}
+
+.cardHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.cardHeaderRow .cardTitle {
+  margin-bottom: 0;
+}
+
+.chartContainer {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Compare Page Layout ── */
+.compareGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
   margin-bottom: 24px;
 }
 
+@media (max-width: 1024px) {
+  .compareGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.compareCharts {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.compareTableWrap {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+/* 약간 더 조밀한 테이블 셀 패딩 (오른쪽 폭에 맞추기 위함) */
+.compareTableWrap .table th {
+  padding: 12px 10px;
+  font-size: 12px;
+}
+
+.compareTableWrap .table td {
+  padding: 14px 10px;
+  font-size: 13px;
+}
+
+/* 우측 정렬된 마지막 컬럼(매출액 등)의 여백 확보 */
+.compareTableWrap .table th:last-child,
+.compareTableWrap .table td:last-child {
+  padding-right: 24px;
+}
 /* ── Bento Grid ── */
 .bento {
   display: grid;
@@ -256,6 +350,8 @@
 }
 
 /* 범용 테이블 컬럼 넓이 */
+.table .col60 { width: 60px; }
+.table .col80 { width: 80px; }
 .table .col100 { width: 100px; }
 .table .col120 { width: 120px; }
 .table .col150 { width: 150px; }

@@ -42,19 +42,13 @@ export const POLICY_CATEGORY_OPTIONS = [
   { value: '', label: '분야: 전체' },
   { value: '청년농', label: '청년농' },
   { value: '친환경', label: '친환경' },
-  { value: '스마트팜', label: '스마트팜' },
   { value: '귀농귀촌', label: '귀농귀촌' },
   { value: '농기계', label: '농기계' },
-  { value: '재해보험', label: '재해보험' },
-  { value: '시설하우스', label: '시설하우스' },
-  { value: '로컬푸드', label: '로컬푸드' },
-  { value: '종자', label: '종자' },
-  { value: '농업교육', label: '농업교육' },
-  { value: '에너지', label: '에너지' },
-  { value: '복지', label: '복지' },
-  { value: '가공창업', label: '가공창업' },
   { value: '축산', label: '축산' },
-  { value: '안전', label: '안전' },
+  { value: '금융지원', label: '금융지원' },
+  { value: '판로지원', label: '판로지원' },
+  { value: '교육', label: '교육' },
+  { value: '기타', label: '기타' },
 ];
 
 /** 기간 필터 옵션 */
@@ -71,7 +65,35 @@ export const POLICY_PERIOD_OPTIONS = [
  */
 export const POLICY_REGION_OPTIONS = [
   { value: '', label: '지역: 전체' },
-  { value: '0000', label: '전국' },
   { value: '4183', label: '양평군' },
   { value: '41', label: '경기도' },
 ];
+
+/** 농업인 프로필 요약 (추천용) */
+export interface FarmerProfileSummary {
+  name: string;
+  regionName: string | null;
+  farmCount: number;
+  totalArea: number;
+  crops: string[];
+}
+
+/** 추천된 정책 항목 */
+export interface RecommendedPolicy {
+  policyId: number;
+  title: string;
+  category: string;
+  supportAmount: string | null;
+  organization: string | null;
+  applyEnd: string | null;
+  sourceUrl: string | null;
+  matchScore: number;
+  matchReason: string;
+  summary: string;
+}
+
+/** 맞춤 정책 추천 API 응답 */
+export interface PolicyRecommendResponse {
+  farmerProfile: FarmerProfileSummary;
+  recommendedPolicies: RecommendedPolicy[];
+}

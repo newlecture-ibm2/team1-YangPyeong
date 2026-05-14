@@ -3,6 +3,7 @@ package com.farmbalance.admin.adapter.in.web;
 import com.farmbalance.admin.adapter.in.web.dto.AdminPolicyDataResponse;
 import com.farmbalance.admin.adapter.in.web.dto.PolicyDataRequest;
 import com.farmbalance.admin.application.port.in.ManagePolicyDataUseCase;
+import com.farmbalance.admin.application.port.in.dto.AdminPolicyDataDto;
 import com.farmbalance.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * ADM-012 정책 데이터 관리 Controller (Driving Adapter)
@@ -29,7 +31,11 @@ public class AdminPolicyDataController {
      */
     @GetMapping
     public ApiResponse<List<AdminPolicyDataResponse>> getAllPolicies() {
-        return ApiResponse.ok(managePolicyDataUseCase.getAllPolicies());
+        List<AdminPolicyDataDto> dtos = managePolicyDataUseCase.getAllPolicies();
+        List<AdminPolicyDataResponse> responses = dtos.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+        return ApiResponse.ok(responses);
     }
 
     /**
@@ -38,7 +44,20 @@ public class AdminPolicyDataController {
      */
     @GetMapping("/{id}")
     public ApiResponse<AdminPolicyDataResponse> getPolicy(@PathVariable Long id) {
-        return ApiResponse.ok(managePolicyDataUseCase.getPolicy(id));
+        AdminPolicyDataDto dto = managePolicyDataUseCase.getPolicy(id);
+        return ApiResponse.ok(mapToResponse(dto));
+    }
+
+    private AdminPolicyDataResponse mapToResponse(AdminPolicyDataDto dto) {
+        return AdminPolicyDataResponse.builder()
+                .id(dto.getId())
+                .externalId(dto.getExternalId())
+                .data(dto.getData())
+                .fetchedAt(dto.getFetchedAt())
+                .createdAt(dto.getCreatedAt())
+                .updatedAt(dto.getUpdatedAt())
+                .deletedAt(dto.getDeletedAt())
+                .build();
     }
 
     /**
@@ -59,6 +78,16 @@ public class AdminPolicyDataController {
     public ApiResponse<Void> updatePolicy(@PathVariable Long id,
                                            @Valid @RequestBody PolicyDataRequest request) {
         managePolicyDataUseCase.updatePolicy(id, request.getExternalId(), request.getData());
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 정책 데이터 삭제
+     * DELETE /api/admin/policy/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deletePolicy(@PathVariable Long id) {
+        managePolicyDataUseCase.deletePolicy(id);
         return ApiResponse.ok(null);
     }
 }

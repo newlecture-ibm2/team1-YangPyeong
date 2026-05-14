@@ -1,5 +1,6 @@
 package com.farmbalance.admin.application.service;
 
+import com.farmbalance.admin.adapter.in.web.dto.CreateNoticeRequest;
 import com.farmbalance.admin.application.port.in.ManageCommunityUseCase;
 import com.farmbalance.admin.application.port.out.AdminPostPort;
 import com.farmbalance.admin.domain.AdminPost;
@@ -20,10 +21,35 @@ import java.util.List;
 public class CommunityManagementService implements ManageCommunityUseCase {
 
     private final AdminPostPort adminPostPort;
+    private final com.farmbalance.admin.application.port.out.AdminCommentPort adminCommentPort;
+    private final com.farmbalance.admin.application.port.out.AdminReportPort adminReportPort;
 
     @Override
-    public List<AdminPost> getAllPosts() {
-        return adminPostPort.findAll();
+    public List<AdminPost> getPosts(String keyword, String status, int page, int size) {
+        int offset = page * size;
+        return adminPostPort.findByFilter(keyword, status, offset, size);
+    }
+
+    @Override
+    public long countPosts(String keyword, String status) {
+        return adminPostPort.countByFilter(keyword, status);
+    }
+
+    @Override
+    public AdminPost getPost(Long postId) {
+        return adminPostPort.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+    }
+
+    @Override
+    public List<com.farmbalance.admin.domain.AdminComment> getComments(Long postId) {
+        return adminCommentPort.findByPostId(postId);
+    }
+
+    @Override
+    @Transactional
+    public void deleteComment(Long commentId) {
+        adminCommentPort.delete(commentId);
     }
 
     @Override
@@ -42,5 +68,36 @@ public class CommunityManagementService implements ManageCommunityUseCase {
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         adminPostPort.updateNotice(postId, isNotice);
+    }
+
+    @Override
+    @Transactional
+    public void createNotice(Long adminId, CreateNoticeRequest request) {
+        AdminPost notice = AdminPost.builder()
+                .authorId(adminId)
+                .categoryId(request.getCategoryId())
+                .title(request.getTitle())
+                .content(request.getContent())
+                .isNotice(true)
+                .build();
+        
+        adminPostPort.save(notice);
+    }
+
+    @Override
+    public List<com.farmbalance.admin.domain.AdminReport> getReports(String status, int page, int size) {
+        int offset = page * size;
+        return adminReportPort.findByFilter(status, offset, size);
+    }
+
+    @Override
+    public long countReports(String status) {
+        return adminReportPort.countByFilter(status);
+    }
+
+    @Override
+    @Transactional
+    public void updateReportStatus(Long reportId, String status) {
+        adminReportPort.updateStatus(reportId, status);
     }
 }

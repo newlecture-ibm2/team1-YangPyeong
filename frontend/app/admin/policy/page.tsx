@@ -6,12 +6,20 @@ import Button from '@/components/common/Button/Button'
 import { useToast } from '@/components/common/Toast'
 import styles from './Policy.module.css'
 import type { AdminPolicyData, PolicyDataRequest } from '../_lib/policy.types'
-import { fetchPolicies, createPolicy, updatePolicy } from '../_lib/policy.api'
+import { fetchPolicies, createPolicy, updatePolicy, deletePolicy } from '../_lib/policy.api'
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '-'
   const d = new Date(dateStr)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+function parsePolicyData(jsonStr: string) {
+  try {
+    return JSON.parse(jsonStr)
+  } catch {
+    return null
+  }
 }
 
 export default function PolicyPage() {
@@ -20,6 +28,7 @@ export default function PolicyPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingPolicy, setEditingPolicy] = useState<AdminPolicyData | null>(null)
   const [formData, setFormData] = useState<PolicyDataRequest>({ externalId: '', data: '' })
+  const [parsedData, setParsedData] = useState<Record<string, any>>({})
   const toast = useToast()
 
   const loadData = useCallback(async () => {
@@ -38,33 +47,50 @@ export default function PolicyPage() {
   const openCreateModal = () => {
     setEditingPolicy(null)
     setFormData({ externalId: '', data: '' })
+    setParsedData({ title: '', regionName: '', category: '', organization: '', contentSummary: '', sourceUrl: '' })
     setShowModal(true)
   }
 
   const openEditModal = (policy: AdminPolicyData) => {
     setEditingPolicy(policy)
     setFormData({ externalId: policy.externalId, data: policy.data })
+    setParsedData(parsePolicyData(policy.data) || {})
     setShowModal(true)
   }
 
   const handleSubmit = async () => {
-    if (!formData.externalId.trim() || !formData.data.trim()) {
-      toast.error('외부 ID와 데이터를 모두 입력해주세요.')
+    const finalDataStr = JSON.stringify(parsedData)
+    const payload = { ...formData, data: finalDataStr }
+
+    if (!payload.externalId.trim() || !finalDataStr.trim() || finalDataStr === '{}') {
+      toast.error('외부 ID와 정책 정보를 모두 입력해주세요.')
       return
     }
 
     try {
       if (editingPolicy) {
-        await updatePolicy(editingPolicy.id, formData)
+        await updatePolicy(editingPolicy.id, payload)
         toast.success('정책이 수정되었습니다.')
       } else {
-        await createPolicy(formData)
+        await createPolicy(payload)
         toast.success('정책이 등록되었습니다.')
       }
       setShowModal(false)
       loadData()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '저장 실패')
+    }
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('정말로 이 정책을 삭제하시겠습니까?')) return
+    
+    try {
+      await deletePolicy(id)
+      toast.success('정책이 삭제되었습니다.')
+      loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '삭제 실패')
     }
   }
 
@@ -87,29 +113,49 @@ export default function PolicyPage() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>ID</th>
-                <th>외부 정책 ID</th>
-                <th>데이터 미리보기</th>
-                <th>수집일</th>
-                <th>등록일</th>
+                <th>외부 ID</th>
+                <th>정책 기본정보 (미리보기)</th>
+                <th>지원기관</th>
+                <th>수집일 / 등록일</th>
                 <th>액션</th>
               </tr>
             </thead>
             <tbody>
-              {policies.map(policy => (
-                <tr key={policy.id}>
-                  <td>{policy.id}</td>
-                  <td className={styles.externalId}>{policy.externalId}</td>
-                  <td className={styles.dataPreview}>{policy.data}</td>
-                  <td>{formatDate(policy.fetchedAt)}</td>
-                  <td>{formatDate(policy.createdAt)}</td>
-                  <td>
-                    <div className={styles.actionGroup}>
-                      <button className={styles.editBtn} onClick={() => openEditModal(policy)}>수정</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {policies.map(policy => {
+                const parsedData = parsePolicyData(policy.data)
+                const title = parsedData?.title || '제목 없음'
+                const category = parsedData?.category || '기타'
+                const region = parsedData?.regionName || '전국'
+                const org = parsedData?.organization || '-'
+                
+                return (
+                  <tr key={policy.id}>
+                    <td className={styles.externalId}>{policy.externalId}</td>
+                    <td>
+                      <div className={styles.policyPreviewInfo}>
+                        <div className={styles.policyPreviewBadges}>
+                          <span className={styles.previewBadge}>{region}</span>
+                          <span className={styles.previewBadge}>{category}</span>
+                        </div>
+                        <div className={styles.policyPreviewTitle}>{title}</div>
+                      </div>
+                    </td>
+                    <td>{org}</td>
+                    <td>
+                      <div className={styles.dateBlock}>
+                        <span><small>수집:</small> {formatDate(policy.fetchedAt)}</span>
+                        <span><small>등록:</small> {formatDate(policy.createdAt)}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className={styles.actionGroup}>
+                        <button className={styles.editBtn} onClick={() => openEditModal(policy)}>수정</button>
+                        <button className={styles.deleteBtn} onClick={() => handleDelete(policy.id)}>삭제</button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -132,12 +178,60 @@ export default function PolicyPage() {
             />
           </div>
           <div className={styles.formGroup}>
-            <label className={styles.formLabel}>정책 데이터 (JSON)</label>
+            <label className={styles.formLabel}>정책명 (제목)</label>
+            <input
+              className={styles.formInput}
+              value={parsedData.title || ''}
+              onChange={e => setParsedData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="예: 양평군 친환경 농업 지원"
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>지역명</label>
+              <input
+                className={styles.formInput}
+                value={parsedData.regionName || ''}
+                onChange={e => setParsedData(prev => ({ ...prev, regionName: e.target.value }))}
+                placeholder="예: 양평군"
+              />
+            </div>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>분야 (카테고리)</label>
+              <input
+                className={styles.formInput}
+                value={parsedData.category || ''}
+                onChange={e => setParsedData(prev => ({ ...prev, category: e.target.value }))}
+                placeholder="예: 금융/세제"
+              />
+            </div>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>지원기관</label>
+              <input
+                className={styles.formInput}
+                value={parsedData.organization || ''}
+                onChange={e => setParsedData(prev => ({ ...prev, organization: e.target.value }))}
+                placeholder="예: 농림축산식품부"
+              />
+            </div>
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>주요 내용 요약</label>
             <textarea
               className={styles.formTextarea}
-              value={formData.data}
-              onChange={e => setFormData(prev => ({ ...prev, data: e.target.value }))}
-              placeholder='{"title":"양평군 친환경 농업 지원","amount":500000,...}'
+              style={{ minHeight: '80px' }}
+              value={parsedData.contentSummary || ''}
+              onChange={e => setParsedData(prev => ({ ...prev, contentSummary: e.target.value }))}
+              placeholder="정책의 주요 내용을 요약해서 입력하세요."
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>상세 원문 URL</label>
+            <input
+              className={styles.formInput}
+              value={parsedData.sourceUrl || ''}
+              onChange={e => setParsedData(prev => ({ ...prev, sourceUrl: e.target.value }))}
+              placeholder="예: https://www.yp21.go.kr/..."
             />
           </div>
           <div className={styles.modalFooter}>

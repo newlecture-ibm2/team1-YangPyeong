@@ -1,6 +1,8 @@
 """
 지자체 분석 전용 AI Agent.
 """
+# orchestrator ainvoke 호환용
+from langchain_core.messages import HumanMessage, AIMessage
 import re
 import logging
 from sqlalchemy import text
@@ -16,6 +18,11 @@ from app.llm import get_llm
 
 logger = logging.getLogger(__name__)
 
+
+# TODO Phase 3: GovAgent를 ReAct 기반으로 전환 가능.
+#   from app.agents.tools.gov_tools import get_gov_tools
+#   agent = create_react_agent(model=chat_model, tools=get_gov_tools(), prompt=GOV_PROMPT)
+#   현재는 수동 파이프라인(intent→entity→graph→prompt→LLM)을 유지함.
 class GovAgent:
     def __init__(self):
         self.graph_tool = GovGraphTool()
@@ -39,7 +46,7 @@ class GovAgent:
     async def _extract_entities(self, message: str) -> ExtractedEntities:
         if self._dict_cache is None:
             self._dict_cache = {"REGION": [], "CROP": [], "FARM": []}
-            query = text("SELECT entity_type, name FROM graph_entity WHERE entity_type IN ('REGION', 'CROP', 'FARM')")
+            query = text("SELECT entity_type, name FROM graph.graph_entity WHERE entity_type IN ('REGION', 'CROP', 'FARM')")
             session = get_db_session()
             if session:
                 try:
@@ -182,3 +189,39 @@ class GovAgent:
                 answer=f"AI 분석 중 오류가 발생했습니다.\n본 분석은 농가 지도를 위한 참고용입니다.",
                 error=str(e)
             )
+
+_gov_agent_instance = None
+
+def get_gov_agent() -> GovAgent:
+    global _gov_agent_instance
+    if _gov_agent_instance is None:
+        _gov_agent_instance = GovAgent()
+    return _gov_agent_instance
+
+
+async def gov_agent_ainvoke(input_dict: dict) -> dict:
+    """
+    orchestrator에서 farm_agent/policy_agent와 동일한
+    ainvoke({"messages": [...]}) 인터페이스로 GovAgent를 호출하기 위한 래퍼.
+
+    내부적으로는 기존 GovAgent.run(GovChatRequest)을 그대로 사용합니다.
+    """
+    messages = input_dict.get("messages", [])
+    last_msg = messages[-1] if messages else None
+
+    if last_msg is None:
+        return {"messages": [AIMessage(content="질문을 입력해 주세요.")]}
+
+    # LangGraph 메시지 → 텍스트 추출
+    if isinstance(last_msg, (HumanMessage, AIMessage)):
+        user_text = last_msg.content
+    elif isinstance(last_msg, tuple):
+        user_text = last_msg[1]
+    else:
+        user_text = str(last_msg)
+
+    agent = get_gov_agent()
+    request = GovChatRequest(message=user_text, user_role="FARMER")
+    response = await agent.run(request)
+
+    return {"messages": [AIMessage(content=response.answer)]}

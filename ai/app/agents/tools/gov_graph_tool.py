@@ -1,6 +1,6 @@
 """
 GraphRAG-lite 기반 PostgreSQL 데이터 탐색 도구.
-graph_entity / graph_relation 참조.
+graph.graph_entity / graph.graph_relation 참조.
 """
 import logging
 from sqlalchemy import text
@@ -23,9 +23,9 @@ class GovGraphTool:
                     SELECT reg.name as region, c.name as crop, 
                            rhc.properties->>'balance_status' as status, 
                            rhc.properties->>'supply_ratio' as ratio
-                    FROM graph_entity reg
-                    JOIN graph_relation rhc ON rhc.from_entity_id = reg.id AND rhc.relation_type = 'REGION_HAS_CROP'
-                    JOIN graph_entity c ON c.id = rhc.to_entity_id
+                    FROM graph.graph_entity reg
+                    JOIN graph.graph_relation rhc ON rhc.from_entity_id = reg.id AND rhc.relation_type = 'REGION_HAS_CROP'
+                    JOIN graph.graph_entity c ON c.id = rhc.to_entity_id
                     WHERE reg.name = :region AND c.name = :crop;
                 """)
                 result = session.execute(query, {"region": region, "crop": crop})
@@ -42,9 +42,9 @@ class GovGraphTool:
                     SELECT reg.name as region, c.name as crop, 
                            rhc.properties->>'balance_status' as status, 
                            rhc.properties->>'supply_ratio' as ratio
-                    FROM graph_entity reg
-                    JOIN graph_relation rhc ON rhc.from_entity_id = reg.id AND rhc.relation_type = 'REGION_HAS_CROP'
-                    JOIN graph_entity c ON c.id = rhc.to_entity_id
+                    FROM graph.graph_entity reg
+                    JOIN graph.graph_relation rhc ON rhc.from_entity_id = reg.id AND rhc.relation_type = 'REGION_HAS_CROP'
+                    JOIN graph.graph_entity c ON c.id = rhc.to_entity_id
                     WHERE reg.name = :region
                     ORDER BY CASE WHEN rhc.properties->>'balance_status' IN ('과잉', '부족', '위험') THEN 1 ELSE 2 END
                     LIMIT 10;
@@ -62,9 +62,9 @@ class GovGraphTool:
                     SELECT reg.name as region, c.name as crop, 
                            rhc.properties->>'balance_status' as status, 
                            rhc.properties->>'supply_ratio' as ratio
-                    FROM graph_entity reg
-                    JOIN graph_relation rhc ON rhc.from_entity_id = reg.id AND rhc.relation_type = 'REGION_HAS_CROP'
-                    JOIN graph_entity c ON c.id = rhc.to_entity_id
+                    FROM graph.graph_entity reg
+                    JOIN graph.graph_relation rhc ON rhc.from_entity_id = reg.id AND rhc.relation_type = 'REGION_HAS_CROP'
+                    JOIN graph.graph_entity c ON c.id = rhc.to_entity_id
                     WHERE c.name = :crop
                     LIMIT 10;
                 """)
@@ -87,9 +87,9 @@ class GovGraphTool:
             SELECT c.name as crop, 
                    rhc.properties->>'balance_status' as status, 
                    rhc.properties->>'supply_ratio' as ratio
-            FROM graph_entity reg
-            JOIN graph_relation rhc ON rhc.from_entity_id = reg.id AND rhc.relation_type = 'REGION_HAS_CROP'
-            JOIN graph_entity c ON c.id = rhc.to_entity_id
+            FROM graph.graph_entity reg
+            JOIN graph.graph_relation rhc ON rhc.from_entity_id = reg.id AND rhc.relation_type = 'REGION_HAS_CROP'
+            JOIN graph.graph_entity c ON c.id = rhc.to_entity_id
             WHERE reg.name = :region
             ORDER BY CASE WHEN rhc.properties->>'balance_status' IN ('과잉', '부족', '위험') THEN 1 ELSE 2 END
             LIMIT 10;
@@ -122,11 +122,11 @@ class GovGraphTool:
             if region and crop:
                 query = text("""
                     SELECT p.name as policy_title, p.properties->>'support_amount' as amount, p.properties->>'category' as category
-                    FROM graph_entity c
-                    JOIN graph_relation tc ON tc.to_entity_id = c.id AND tc.relation_type = 'TARGETS_CROP'
-                    JOIN graph_entity p ON p.id = tc.from_entity_id
-                    JOIN graph_relation sup ON sup.from_entity_id = p.id AND sup.relation_type = 'SUPPORTS'
-                    JOIN graph_entity reg ON reg.id = sup.to_entity_id
+                    FROM graph.graph_entity c
+                    JOIN graph.graph_relation tc ON tc.to_entity_id = c.id AND tc.relation_type = 'TARGETS_CROP'
+                    JOIN graph.graph_entity p ON p.id = tc.from_entity_id
+                    JOIN graph.graph_relation sup ON sup.from_entity_id = p.id AND sup.relation_type = 'SUPPORTS'
+                    JOIN graph.graph_entity reg ON reg.id = sup.to_entity_id
                     WHERE c.name = :crop AND reg.name = :region
                     LIMIT 5;
                 """)
@@ -142,9 +142,9 @@ class GovGraphTool:
             if crop:
                 query = text("""
                     SELECT p.name as policy_title, p.properties->>'support_amount' as amount, p.properties->>'category' as category
-                    FROM graph_entity c
-                    JOIN graph_relation tc ON tc.to_entity_id = c.id AND tc.relation_type = 'TARGETS_CROP'
-                    JOIN graph_entity p ON p.id = tc.from_entity_id
+                    FROM graph.graph_entity c
+                    JOIN graph.graph_relation tc ON tc.to_entity_id = c.id AND tc.relation_type = 'TARGETS_CROP'
+                    JOIN graph.graph_entity p ON p.id = tc.from_entity_id
                     WHERE c.name = :crop
                     LIMIT 5;
                 """)
@@ -159,9 +159,9 @@ class GovGraphTool:
             elif region:
                 query = text("""
                     SELECT p.name as policy_title, p.properties->>'support_amount' as amount, p.properties->>'category' as category
-                    FROM graph_entity reg
-                    JOIN graph_relation sup ON sup.to_entity_id = reg.id AND sup.relation_type = 'SUPPORTS'
-                    JOIN graph_entity p ON p.id = sup.from_entity_id
+                    FROM graph.graph_entity reg
+                    JOIN graph.graph_relation sup ON sup.to_entity_id = reg.id AND sup.relation_type = 'SUPPORTS'
+                    JOIN graph.graph_entity p ON p.id = sup.from_entity_id
                     WHERE reg.name = :region
                     LIMIT 5;
                 """)
@@ -187,13 +187,13 @@ class GovGraphTool:
             if region:
                 query = text("""
                     SELECT c_alt.name as alt_crop
-                    FROM graph_entity c_origin
-                    JOIN graph_relation sf1 ON sf1.to_entity_id = c_origin.id AND sf1.relation_type = 'SUITED_FOR'
-                    JOIN graph_entity env ON env.id = sf1.from_entity_id
-                    JOIN graph_relation sf2 ON sf2.from_entity_id = env.id AND sf2.relation_type = 'SUITED_FOR'
-                    JOIN graph_entity c_alt ON c_alt.id = sf2.to_entity_id
-                    JOIN graph_relation rhc ON rhc.to_entity_id = c_alt.id AND rhc.relation_type = 'REGION_HAS_CROP'
-                    JOIN graph_entity reg ON reg.id = rhc.from_entity_id
+                    FROM graph.graph_entity c_origin
+                    JOIN graph.graph_relation sf1 ON sf1.to_entity_id = c_origin.id AND sf1.relation_type = 'SUITED_FOR'
+                    JOIN graph.graph_entity env ON env.id = sf1.from_entity_id
+                    JOIN graph.graph_relation sf2 ON sf2.from_entity_id = env.id AND sf2.relation_type = 'SUITED_FOR'
+                    JOIN graph.graph_entity c_alt ON c_alt.id = sf2.to_entity_id
+                    JOIN graph.graph_relation rhc ON rhc.to_entity_id = c_alt.id AND rhc.relation_type = 'REGION_HAS_CROP'
+                    JOIN graph.graph_entity reg ON reg.id = rhc.from_entity_id
                     WHERE c_origin.name = :crop AND c_alt.name != :crop
                       AND reg.name = :region
                       AND rhc.properties->>'balance_status' IN ('부족', '적정')
@@ -209,11 +209,11 @@ class GovGraphTool:
 
             query = text("""
                 SELECT c_alt.name as alt_crop
-                FROM graph_entity c_origin
-                JOIN graph_relation sf1 ON sf1.to_entity_id = c_origin.id AND sf1.relation_type = 'SUITED_FOR'
-                JOIN graph_entity env ON env.id = sf1.from_entity_id
-                JOIN graph_relation sf2 ON sf2.from_entity_id = env.id AND sf2.relation_type = 'SUITED_FOR'
-                JOIN graph_entity c_alt ON c_alt.id = sf2.to_entity_id
+                FROM graph.graph_entity c_origin
+                JOIN graph.graph_relation sf1 ON sf1.to_entity_id = c_origin.id AND sf1.relation_type = 'SUITED_FOR'
+                JOIN graph.graph_entity env ON env.id = sf1.from_entity_id
+                JOIN graph.graph_relation sf2 ON sf2.from_entity_id = env.id AND sf2.relation_type = 'SUITED_FOR'
+                JOIN graph.graph_entity c_alt ON c_alt.id = sf2.to_entity_id
                 WHERE c_origin.name = :crop AND c_alt.name != :crop
                 LIMIT 3;
             """)
@@ -234,9 +234,9 @@ class GovGraphTool:
             
         query = text("""
             SELECT c.name as crop, r.properties->>'score' as score
-            FROM graph_entity f
-            JOIN graph_relation r ON r.to_entity_id = f.id AND r.relation_type = 'RECOMMENDED_FOR'
-            JOIN graph_entity c ON c.id = r.from_entity_id
+            FROM graph.graph_entity f
+            JOIN graph.graph_relation r ON r.to_entity_id = f.id AND r.relation_type = 'RECOMMENDED_FOR'
+            JOIN graph.graph_entity c ON c.id = r.from_entity_id
             WHERE f.name = :farm_name AND f.entity_type = 'FARM'
             LIMIT 3;
         """)

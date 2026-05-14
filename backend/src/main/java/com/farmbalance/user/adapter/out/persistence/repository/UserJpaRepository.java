@@ -2,11 +2,14 @@ package com.farmbalance.user.adapter.out.persistence.repository;
 
 import com.farmbalance.user.adapter.out.persistence.entity.UserJpaEntity;
 import com.farmbalance.user.domain.AuthProvider;
+import com.farmbalance.user.domain.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -28,4 +31,9 @@ public interface UserJpaRepository extends JpaRepository<UserJpaEntity, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM UserJpaEntity u WHERE u.email = :email")
     void deleteByEmail(@Param("email") String email);
+
+    /** 비식별화 대상: WITHDRAWN이고 아직 anonymized_at 없고, withdrawalRequestedAt이 cutoff 이전(포함) */
+    List<UserJpaEntity> findByStatusAndAnonymizedAtIsNullAndWithdrawalRequestedAtLessThanEqual(
+            UserStatus status,
+            LocalDateTime withdrawalRequestedAtInclusive);
 }

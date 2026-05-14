@@ -12,6 +12,8 @@ import com.farmbalance.community.domain.model.Post;
 import com.farmbalance.community.application.port.in.ReportCommentUseCase;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
+import com.farmbalance.notification.application.port.in.NotificationUseCase;
+import com.farmbalance.notification.domain.NotificationType;
 import com.farmbalance.global.report.domain.Report;
 import com.farmbalance.global.report.port.ReportPort;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class CommentService implements CreateCommentUseCase, LoadCommentUseCase,
     private final CommentPort commentPort;
     private final PostPort postPort;
     private final ReportPort reportPort;
+    private final NotificationUseCase notificationUseCase;
 
     @Override
     public Comment updateComment(Long commentId, Long userId, String content) {
@@ -48,20 +51,48 @@ public class CommentService implements CreateCommentUseCase, LoadCommentUseCase,
     }
 
     @Override
-    public Comment createComment(Long postId, Long authorId, String content) {
-        if (!postPort.findActiveById(postId).isPresent()) {
-            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
-        }
+    public Comment createComment(Long postId, Long authorId, String content, Long parentId) {
+        Post post = postPort.findActiveById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         Comment comment = Comment.builder()
                 .postId(postId)
                 .authorId(authorId)
                 .content(content)
                 .accepted(false)
+                .parentId(parentId)
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        return commentPort.save(comment);
+        Comment savedComment = commentPort.save(comment);
+
+        // C-1 내 게시글에 새 댓글 알림
+        if (!post.getAuthorId().equals(authorId)) {
+            notificationUseCase.createNotification(
+                    post.getAuthorId(),
+                    NotificationType.SYSTEM,
+                    "새 댓글 등록",
+                    String.format("'%s' 게시글에 새 댓글이 달렸습니다.", post.getTitle()),
+                    "/community/" + postId
+            );
+        }
+
+        // C-3 내 댓글에 새 답글 알림
+        if (parentId != null) {
+            commentPort.findById(parentId).ifPresent(parentComment -> {
+                if (!parentComment.getAuthorId().equals(authorId)) {
+                    notificationUseCase.createNotification(
+                            parentComment.getAuthorId(),
+                            NotificationType.SYSTEM,
+                            "새 답글 등록",
+                            "내 댓글에 새로운 답글이 달렸습니다.",
+                            "/community/" + postId
+                    );
+                }
+            });
+        }
+
+        return savedComment;
     }
 
     @Override
@@ -97,6 +128,17 @@ public class CommentService implements CreateCommentUseCase, LoadCommentUseCase,
 
         comment.accept();
         commentPort.save(comment);
+
+        // C-2 내 댓글이 답변 채택됨 알림
+        if (!comment.getAuthorId().equals(requesterId)) {
+            notificationUseCase.createNotification(
+                    comment.getAuthorId(),
+                    NotificationType.SYSTEM,
+                    "답변 채택",
+                    String.format("'%s' 질문에 작성하신 답변이 채택되었습니다! 🎉", post.getTitle()),
+                    "/community/" + post.getId()
+            );
+        }
     }
 
     @Override

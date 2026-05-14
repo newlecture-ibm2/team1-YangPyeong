@@ -33,6 +33,9 @@ public class CommentEntity extends BaseTimeEntity {
     @Builder.Default
     private boolean accepted = false;
 
+    @Column(name = "parent_id")
+    private Long parentId;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
@@ -43,6 +46,7 @@ public class CommentEntity extends BaseTimeEntity {
                 .authorId(this.authorId)
                 .content(this.content)
                 .accepted(this.accepted)
+                .parentId(this.parentId)
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getUpdatedAt())
                 .deletedAt(this.deletedAt)
@@ -56,6 +60,7 @@ public class CommentEntity extends BaseTimeEntity {
                 .authorId(comment.getAuthorId())
                 .content(comment.getContent())
                 .accepted(comment.isAccepted())
+                .parentId(comment.getParentId())
                 .deletedAt(comment.getDeletedAt())
                 .build();
     }

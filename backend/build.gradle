@@ -68,11 +68,21 @@ dependencies {
     // Excel Export (Apache POI)
     implementation 'org.apache.poi:poi-ooxml:5.2.5'
 
+    // HTML Parser (양평군청 크롤러용)
+    implementation 'org.jsoup:jsoup:1.17.2'
+
+    // Firebase Admin SDK (FCM)
+    implementation 'com.google.firebase:firebase-admin:9.2.0'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // XML Data Format
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+    implementation 'com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

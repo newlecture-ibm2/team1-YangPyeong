@@ -4,9 +4,10 @@ google-generativeai SDK를 사용합니다.
 """
 
 import logging
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator, Any, Optional
 
 import google.generativeai as genai
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.config import get_settings
 from app.llm.base import BaseLLM
@@ -24,7 +25,16 @@ class GeminiLLM(BaseLLM):
 
         genai.configure(api_key=settings.GEMINI_API_KEY)
         self._model_name = settings.GEMINI_MODEL
+        self._api_key = settings.GEMINI_API_KEY
         logger.info("GeminiLLM 초기화 완료 (모델: %s)", self._model_name)
+
+    def get_chat_model(self, **kwargs: Any) -> ChatGoogleGenerativeAI:
+        """LangChain 호환 Gemini ChatModel 반환"""
+        return ChatGoogleGenerativeAI(
+            model=self._model_name,
+            google_api_key=self._api_key,
+            **kwargs
+        )
 
     def _get_model(
         self, system_instruction: Optional[str] = None
@@ -86,4 +96,30 @@ class GeminiLLM(BaseLLM):
                     yield chunk.text
         except Exception as e:
             logger.error("Gemini generate_stream 실패: %s", e)
+            raise
+
+    async def generate_json(
+        self,
+        prompt: str,
+        *,
+        system_instruction: Optional[str] = None,
+        temperature: float = 0.1,
+        max_tokens: int = 2048,
+    ) -> str:
+        model = self._get_model(system_instruction)
+
+        generation_config = {
+            "temperature": temperature,
+            "max_output_tokens": max_tokens,
+            "response_mime_type": "application/json",
+        }
+
+        try:
+            response = await model.generate_content_async(
+                prompt,
+                generation_config=generation_config,
+            )
+            return response.text
+        except Exception as e:
+            logger.error("Gemini generate_json 실패: %s", e)
             raise

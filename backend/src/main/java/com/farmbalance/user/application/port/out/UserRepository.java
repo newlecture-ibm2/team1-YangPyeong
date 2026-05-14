@@ -1,7 +1,9 @@
 package com.farmbalance.user.application.port.out;
 
 import com.farmbalance.user.domain.User;
+import com.farmbalance.user.domain.UserStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +28,11 @@ public interface UserRepository {
     boolean existsByNameAndEmailNot(String name, String email);
 
     void deleteByEmail(String email);
+
+    /**
+     * 비식별화 대상 (WITHDRAWN, anonymized_at 없음, withdrawal_requested_at ≤ cutoff).
+     */
+    List<User> findWithdrawnUsersForAnonymization(UserStatus status, LocalDateTime withdrawalRequestedAtInclusive);
 
     /**
      * 삭제되지 않은 전체 사용자 목록 조회 (최신순)

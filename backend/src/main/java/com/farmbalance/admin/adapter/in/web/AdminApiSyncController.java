@@ -52,8 +52,16 @@ public class AdminApiSyncController {
 
     /** 수동 동기화 트리거 */
     @PostMapping("/{id}/trigger")
-    public ApiResponse<Void> triggerSync(@PathVariable Long id) {
-        manageApiSyncUseCase.triggerSync(id);
+    public ApiResponse<Void> triggerSync(@PathVariable Long id, 
+                                         @RequestParam(required = false, defaultValue = "MERGE") String syncMode) {
+        manageApiSyncUseCase.triggerSync(id, syncMode);
+        return ApiResponse.ok(null);
+    }
+
+    /** 수동 헬스체크 트리거 */
+    @PostMapping("/{id}/health-check")
+    public ApiResponse<Void> triggerHealthCheck(@PathVariable Long id) {
+        manageApiSyncUseCase.triggerHealthCheck(id);
         return ApiResponse.ok(null);
     }
 }

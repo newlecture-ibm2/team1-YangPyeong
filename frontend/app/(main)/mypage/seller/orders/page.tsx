@@ -103,7 +103,7 @@ export default function SellerOrdersPage() {
       </div>
 
       {/* 상태 필터 탭 */}
-      <div className={styles.filterTabs}>
+      <div className={styles.filterTabs} data-guide="orders-tabs">
         {ORDER_FILTER_TABS.map((tab) => (
           <button
             key={tab.value}
@@ -124,7 +124,7 @@ export default function SellerOrdersPage() {
           <p className={styles.emptyText}>해당 상태의 주문이 없습니다.</p>
         </div>
       ) : (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} data-guide="orders-list">
           <table className={styles.table}>
             <thead>
               <tr>

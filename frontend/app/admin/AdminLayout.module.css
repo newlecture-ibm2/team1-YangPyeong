@@ -1,0 +1,120 @@
+/* ══════════════════════════════════════════════════════
+   Admin Layout
+   ══════════════════════════════════════════════════════ */
+
+.adminLayout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 260px;
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sidebarHeader {
+  padding: var(--space-xl) var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.logo {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.2;
+}
+
+.logo span {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ── Navigation ── */
+.navMenu {
+  padding: var(--space-lg);
+  flex: 1;
+}
+
+.menuTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-md);
+  padding-left: var(--space-sm);
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.navItem:hover {
+  background-color: var(--color-bg);
+  color: var(--color-primary);
+}
+
+.navIcon {
+  font-size: 18px;
+  margin-right: 12px;
+  display: inline-block;
+  width: 24px;
+  text-align: center;
+}
+
+/* ── Footer (Go to Main) ── */
+.sidebarFooter {
+  padding: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Main Content ── */
+.mainContent {
+  flex: 1;
+  padding: var(--space-2xl);
+  max-width: calc(100vw - 260px);
+  overflow-x: hidden;
+}
+
+@media (max-width: 1024px) {
+  .adminLayout {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .mainContent {
+    max-width: 100%;
+    padding: var(--space-xl) var(--space-lg);
+  }
+}

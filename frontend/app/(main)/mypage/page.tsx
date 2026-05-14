@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/common/Toast/ToastContext';
 import { Spinner } from '@/components';
+import Button from '@/components/common/Button/Button';
 import { apiFetch } from '@/lib/api-fetch';
 import { useProfile } from './useProfile';
 import { ProfileHeader } from './_components/Header/ProfileHeader';
@@ -26,6 +27,7 @@ export default function MyPage() {
     isSaving,
     isUploading,
     loading,
+    profileError,
     handleChange,
     startEditing,
     cancelEditing,
@@ -58,12 +60,10 @@ export default function MyPage() {
     return success;
   };
 
-  /** 회원 탈퇴 성공 시 로그아웃 처리 */
+  /** 회원 탈퇴 성공 — 즉시 로그아웃 */
   const handleDeleteSuccess = async () => {
-    toast('회원 탈퇴가 완료되었습니다. 이용해주셔서 감사합니다.', 'success');
-    // 로그아웃 처리
+    toast('회원 탈퇴가 완료되었습니다. 30일 이내 재로그인 시 복구할 수 있습니다.', 'success');
     await apiFetch('/api/auth/logout', { method: 'POST' });
-    // 쿠키 제거
     if (typeof document !== 'undefined') {
       document.cookie = 'fb-user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
@@ -75,7 +75,25 @@ export default function MyPage() {
     return <Spinner message="프로필 정보를 불러오는 중입니다..." fullHeight={true} />;
   }
 
-  if (!profile) return null;
+  if (profileError || !profile) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.contentCard} style={{ textAlign: 'center', padding: '2rem' }}>
+          <p style={{ marginBottom: '1rem', color: 'var(--color-text-secondary, #555)' }}>
+            프로필 정보를 불러오지 못했습니다. 로그인 상태를 확인한 뒤 다시 시도해 주세요.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button type="button" variant="primary" onClick={() => window.location.reload()}>
+              새로고침
+            </Button>
+            <Button type="button" variant="outline" onClick={() => router.push('/login')}>
+              로그인으로 이동
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -83,7 +101,8 @@ export default function MyPage() {
       <ProfileHeader 
         profile={profile} 
         isUploading={isUploading} 
-        onImageUpload={handleImageUpload} 
+        onImageUpload={handleImageUpload}
+        data-guide="mypage-profile"
       />
 
       <div className={styles.contentCard}>
@@ -98,15 +117,15 @@ export default function MyPage() {
             onCheckNickname={checkNickname}
           />
         ) : (
-          <ProfileInfoView 
-            profile={profile} 
-            onEdit={startEditing} 
+          <ProfileInfoView
+            profile={profile}
+            onEdit={startEditing}
           />
         )}
       </div>
 
       {/* 3. 계정 설정 영역 */}
-      <div className={styles.accountSettings}>
+      <div className={styles.accountSettings} data-guide="mypage-tabs">
         <h2 className={styles.sectionTitle}>계정 설정</h2>
         <div className={styles.settingsList}>
           {/* LOCAL 유저만 비밀번호 변경 표시 */}

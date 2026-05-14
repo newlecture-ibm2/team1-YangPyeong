@@ -6,12 +6,16 @@ export interface AdminCropCategory {
   description: string | null
   displayOrder: number
   isActive: boolean
+  externalId?: string
+  dataSource?: string
 }
 
 export interface AdminCrop {
   id: number
   categoryId: number
   name: string
+  externalId?: string
+  dataSource?: string
   createdAt: string
   updatedAt: string | null
 }

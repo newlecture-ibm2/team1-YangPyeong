@@ -44,9 +44,9 @@ export default function ComparePage() {
         <div className={styles.pageHeader}>
           <p className={styles.breadcrumb}>지자체 / 연도 비교</p>
           <h1 className={styles.pageTitle}>📊 연도 비교</h1>
-        </div>
-        <div>
-          <GovTabs />
+          <div className={styles.tabsWrapper}>
+            <GovTabs />
+          </div>
         </div>
       </div>
 
@@ -67,69 +67,86 @@ export default function ComparePage() {
         </select>
       </div>
 
-      <div className={styles.grid2}>
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle}>생산량 비교</h2>
-          {loading ? <p>로딩 중...</p> : (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="crop" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="prevYearTon" name={`${baseYear}년`} fill="#52B788" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="currentYearTon" name={`${compareYear}년`} fill="#2D6A4F" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle}>증감률</h2>
-          {loading ? <p>로딩 중...</p> : (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="crop" />
-                <YAxis unit="%" />
-                <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toFixed(2)}%` : `${value}%`} />
-                <Bar dataKey="diffRate" name="증감률(%)" fill="#CCFF33" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </div>
+      <div className={styles.compareGrid}>
+        {/* 좌측: 생산량 및 증감률 차트 영역 (세로 배치) */}
+        <div className={styles.compareCharts}>
+          <div className={styles.card} style={{ marginBottom: 0 }}>
+            <div className={styles.cardHeaderRow}>
+              <h2 className={styles.cardTitle}>생산량 비교</h2>
+              <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>단위: kg</span>
+            </div>
+            {loading ? <p>로딩 중...</p> : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="crop" />
+                  <YAxis width={80} />
+                  <Tooltip formatter={(value) => `${Number(value).toLocaleString()}kg`} />
+                  <Legend />
+                  <Bar dataKey="prevYearTon" name={`${baseYear}년`} fill="#52B788" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="currentYearTon" name={`${compareYear}년`} fill="#2D6A4F" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table} style={{ tableLayout: 'fixed' }}>
-          <thead>
-            <tr>
-              <th className={styles.colAuto}>작물</th>
-              <th className={`${styles.numberCell} ${styles.col150}`}>{baseYear} 생산량</th>
-              <th className={`${styles.numberCell} ${styles.col150}`}>{compareYear} 생산량</th>
-              <th className={`${styles.numberCell} ${styles.col150}`}>증감</th>
-              <th className={`${styles.numberCell} ${styles.col120}`}>증감률</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.length === 0 && <tr><td colSpan={5}>데이터가 없습니다.</td></tr>}
-            {data.map((r, i) => (
-              <tr key={i}>
-                <td className={styles.tdBold}>{r.crop}</td>
-                <td className={styles.numberCell}>{r.prevYearTon.toLocaleString()}kg</td>
-                <td className={styles.numberCell}>{r.currentYearTon.toLocaleString()}kg</td>
-                <td className={styles.numberCell} style={{ color: r.diffTon >= 0 ? 'var(--color-primary)' : 'var(--color-danger)' }}>
-                  {r.diffTon >= 0 ? '+' : ''}{r.diffTon.toLocaleString()}kg
-                </td>
-                <td className={styles.numberCell}>
-                  <span className={`${styles.badge} ${r.diffRate >= 0 ? styles.badgeGreen : styles.badgeRed}`}>
-                    {r.diffRate >= 0 ? '+' : ''}{r.diffRate.toFixed(2)}%
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          <div className={styles.card} style={{ marginBottom: 0 }}>
+            <div className={styles.cardHeaderRow}>
+              <h2 className={styles.cardTitle}>증감률</h2>
+              <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>단위: %</span>
+            </div>
+            {loading ? <p>로딩 중...</p> : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="crop" />
+                  <YAxis width={60} unit="%" />
+                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toFixed(2)}%` : `${value}%`} />
+                  <Bar dataKey="diffRate" name="증감률(%)" fill="#CCFF33" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* 우측: 연도 비교 상세 테이블 카드 */}
+        <div className={styles.card} style={{ marginBottom: 0 }}>
+          <div className={styles.cardHeaderRow}>
+            <h2 className={styles.cardTitle}>연도 비교 상세 현황</h2>
+            <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>총 {data.length}건</span>
+          </div>
+          <div className={styles.compareTableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.colAuto}>작물</th>
+                  <th className={`${styles.numberCell} ${styles.col100}`}>{baseYear}년</th>
+                  <th className={`${styles.numberCell} ${styles.col100}`}>{compareYear}년</th>
+                  <th className={`${styles.numberCell} ${styles.col100}`}>증감</th>
+                  <th className={`${styles.numberCell} ${styles.col100}`}>비율</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', padding: '24px' }}>데이터가 없습니다.</td></tr>}
+                {data.map((r, i) => (
+                  <tr key={i}>
+                    <td className={styles.tdBold}>{r.crop}</td>
+                    <td className={styles.numberCell}>{r.prevYearTon.toLocaleString()}</td>
+                    <td className={styles.numberCell}>{r.currentYearTon.toLocaleString()}</td>
+                    <td className={styles.numberCell} style={{ color: r.diffTon >= 0 ? 'var(--color-primary)' : 'var(--color-danger)' }}>
+                      {r.diffTon >= 0 ? '+' : ''}{r.diffTon.toLocaleString()}
+                    </td>
+                    <td className={styles.numberCell}>
+                      <span className={`${styles.badge} ${r.diffRate >= 0 ? styles.badgeGreen : styles.badgeRed}`} style={{ minWidth: '48px', padding: '2px 8px' }}>
+                        {r.diffRate >= 0 ? '+' : ''}{r.diffRate.toFixed(1)}%
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

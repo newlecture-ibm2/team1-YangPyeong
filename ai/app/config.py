@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     # ── Groq ──
     GROQ_API_KEY: Optional[str] = None
-    GROQ_MODEL: str = "llama-3.1-70b-versatile"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
 
     # ── AWS Bedrock ──
     AWS_REGION: str = "us-east-1"
@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     # ── 백엔드 연동 ──
     BACKEND_INTERNAL_URL: str = "http://backend:8080"
     AI_INTERNAL_SECRET_KEY: str = "farm-balance-ai-secret-key"
+
+    # ── Gov Agent 모드 ──
+    # classic: 기존 GovAgent(수동 파이프라인), react: ReAct 기반 실험용 에이전트
+    GOV_AGENT_MODE: str = "classic"  # classic | react
 
     # ── 스케줄러 ──
     SCHEDULER_ENABLED: bool = False

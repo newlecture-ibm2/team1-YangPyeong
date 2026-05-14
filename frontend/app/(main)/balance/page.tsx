@@ -6,6 +6,7 @@ import Badge from '@/components/common/Badge/Badge';
 import Card from '@/components/common/Card/Card';
 import FilterBar from '@/components/common/FilterBar/FilterBar';
 import SearchInput from '@/components/common/SearchInput/SearchInput';
+import GuestPreviewBanner from '@/components/common/GuestPreviewBanner/GuestPreviewBanner';
 import { fetchAllBalances, BalanceAnalysisResponse } from './_lib/balance.api';
 import styles from './page.module.css';
 
@@ -61,6 +62,7 @@ export default function BalanceListPage() {
 
   return (
     <div className={styles.container}>
+      <GuestPreviewBanner />
       <div className={styles.pageHeader}>
         <p className={styles.breadcrumb}>홈 / 내 농장 / 수급 현황</p>
         <h1 className={styles.pageTitle}>수급 <span className={styles.italic}>현황</span></h1>
@@ -75,7 +77,7 @@ export default function BalanceListPage() {
       </div>
 
       {/* TOP 3 SUMMARY */}
-      <div className={styles.topSummary}>
+      <div className={styles.topSummary} data-guide="balance-summary">
         {top3.map(item => (
           <Card key={item.cropName} className={styles.summaryCard}>
             <p className={styles.cardLabel}>{item.cropName}</p>
@@ -117,7 +119,7 @@ export default function BalanceListPage() {
       </div>
 
       {/* TABLE */}
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} data-guide="balance-table">
         <table className={styles.table}>
           <thead>
             <tr>

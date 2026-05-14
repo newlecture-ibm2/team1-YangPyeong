@@ -1,9 +1,11 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useGovUser } from '@/app/gov/useGovUser';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useGovUser } from '@/app/gov/useGovUser';
+import { apiFetch } from '@/lib/api-fetch';
 import styles from '@/components/layout/Header/Header.module.css';
 
 /**
@@ -21,7 +23,36 @@ const GOV_NAV_LINKS = [
 
 export default function GovNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, loading } = useGovUser();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await apiFetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // ignore
+    } finally {
+      document.cookie = 'fb-user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      setDropdownOpen(false);
+      window.dispatchEvent(new Event('auth-changed'));
+      router.push('/login');
+      router.refresh();
+    }
+  };
+
+  const displayName = loading ? "로딩 중..." : (user?.regionName ? `${user.regionName} 담당자` : "양평군 담당자");
 
   return (
     <nav className={styles.nav}>
@@ -34,10 +65,32 @@ export default function GovNav() {
         {/* 지자체 상단 헤더 메뉴 제거 (GovTabs로 대체) */}
       </div>
 
-      <div className={styles.right} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <span className={styles.btnFill}>
-          {loading ? "로딩 중..." : (user?.regionName ? `${user.regionName} 담당자` : "양평군 담당자")}
-        </span>
+      <div className={styles.right} ref={dropdownRef}>
+        <div style={{ position: 'relative' }}>
+          <button 
+            className={styles.btnFill} 
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer' }}
+          >
+            <span>{displayName}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style={{ opacity: 0.8 }}>
+              <path d="M2 4l4 4 4-4" />
+            </svg>
+          </button>
+          
+          {dropdownOpen && (
+            <div className={styles.dropdown} style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px' }}>
+              <div className={styles.dropdownHeader}>
+                <span className={styles.dropdownEmail}>{user?.email || 'gov@farmbalance.kr'}</span>
+                <span className={styles.dropdownRole}>GOV</span>
+              </div>
+              <div className={styles.dropdownDivider} />
+              <button className={styles.dropdownItem} onClick={handleLogout} style={{ width: '100%', textAlign: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>
+                로그아웃
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );

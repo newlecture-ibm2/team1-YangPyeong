@@ -7,12 +7,12 @@ import com.farmbalance.user.application.port.in.GetProfileUseCase;
 import com.farmbalance.user.application.port.in.UpdateProfileCommand;
 import com.farmbalance.user.application.port.in.UpdateProfileUseCase;
 import com.farmbalance.user.domain.User;
+import com.farmbalance.user.domain.UserStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,11 +30,11 @@ import java.util.UUID;
 /**
  * 사용자 정보 관리 컨트롤러
  */
-    @Slf4j
-    @RestController
-    @RequestMapping("/api/users")
-    @RequiredArgsConstructor
-    public class UserController {
+@Slf4j
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
 
     private final UpdateProfileUseCase updateProfileUseCase;
     private final CheckNicknameUseCase checkNicknameUseCase;
@@ -43,6 +43,39 @@ import java.util.UUID;
 
     /** 프로필 이미지 저장 디렉토리 */
     private static final Path UPLOAD_DIR = Paths.get("uploads", "profiles");
+
+    /** JWT principal(userId)로 현재 사용자 로드 — 이메일 claim 미포함 토큰에서도 동작 */
+    private User requireCurrentUser() {
+        return getProfileUseCase.getProfileByUserId(SecurityUtil.getCurrentUserId());
+    }
+
+    /**
+     * DB에 프로필 이미지 URL이 있어도 디스크에 파일이 없으면 null로 내려보냄(클라이언트 404 방지).
+     */
+    private String resolveProfileImageUrlForApi(User user) {
+        String url = user.getProfileImageUrl();
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        final String prefix = "/api/users/profile-image/";
+        if (!url.startsWith(prefix)) {
+            return url;
+        }
+        String filename = url.substring(prefix.length());
+        if (filename.isBlank() || filename.contains("/") || filename.contains("..")) {
+            return null;
+        }
+        Path filePath = UPLOAD_DIR.resolve(filename).normalize();
+        Path base = UPLOAD_DIR.normalize();
+        if (!filePath.startsWith(base)) {
+            return null;
+        }
+        if (!Files.exists(filePath) || !Files.isReadable(filePath)) {
+            log.debug("프로필 이미지 파일 없음 — 응답에서 제외: {}", filename);
+            return null;
+        }
+        return url;
+    }
 
     /**
      * 프로필 응답 DTO
@@ -87,8 +120,7 @@ import java.util.UUID;
      */
     @GetMapping("/me")
     public ApiResponse<ProfileResponse> getMyProfile() {
-        String email = SecurityUtil.getCurrentEmail();
-        User user = getProfileUseCase.getProfile(email);
+        User user = requireCurrentUser();
 
         ProfileResponse response = ProfileResponse.builder()
                 .id(user.getId())
@@ -99,7 +131,7 @@ import java.util.UUID;
                 .bio(user.getBio())
                 .role(user.getRole() != null ? user.getRole().name() : "USER")
                 .provider(user.getProvider() != null ? user.getProvider().name() : "LOCAL")
-                .profileImageUrl(user.getProfileImageUrl())
+                .profileImageUrl(resolveProfileImageUrlForApi(user))
                 .createdAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null)
                 .build();
 
@@ -113,10 +145,10 @@ import java.util.UUID;
     public ApiResponse<Void> updateProfile(
             @jakarta.validation.Valid @RequestBody ProfileUpdateRequest request) {
 
-        String email = SecurityUtil.getCurrentEmail();
-        
+        User user = requireCurrentUser();
+
         UpdateProfileCommand command = UpdateProfileCommand.builder()
-                .email(email)
+                .email(user.getEmail())
                 .name(request.getName())
                 .phone(request.getPhone())
                 .address(request.getAddress())
@@ -163,10 +195,8 @@ import java.util.UUID;
 
             // DB에 이미지 URL 저장
             String imageUrl = "/api/users/profile-image/" + storedFilename;
-            String email = SecurityUtil.getCurrentEmail();
-            User user = getProfileUseCase.getProfile(email);
-            user.updateProfileImageUrl(imageUrl);
-            // UserService를 통해 저장
+            User user = requireCurrentUser();
+            String email = user.getEmail();
             updateProfileUseCase.updateProfileImage(email, imageUrl);
 
             log.info("프로필 이미지 업로드 완료: email={}, file={}", email, storedFilename);
@@ -221,7 +251,7 @@ import java.util.UUID;
     /**
      * 이메일 상태 확인 (회원가입 시 실시간 검증용)
      * - available: 사용 가능
-     * - exists: 이미 활성 계정 존재
+     * - exists: 활성·탈퇴 유예 중 등 사용 중인 이메일
      * - withdrawn: 탈퇴 계정 (재가입 가능)
      */
     @GetMapping("/check-email")
@@ -233,7 +263,7 @@ import java.util.UUID;
         }
 
         User user = userOpt.get();
-        if (user.getStatus() == com.farmbalance.user.domain.UserStatus.WITHDRAWN) {
+        if (user.getStatus() == UserStatus.WITHDRAWN) {
             return ApiResponse.ok(Map.of("status", "withdrawn"));
         }
 
@@ -261,8 +291,8 @@ import java.util.UUID;
     public ApiResponse<Void> changePassword(
             @jakarta.validation.Valid @RequestBody ChangePasswordRequest request) {
 
-        String email = SecurityUtil.getCurrentEmail();
-        User user = getProfileUseCase.getProfile(email);
+        User user = requireCurrentUser();
+        String email = user.getEmail();
 
         // 현재 비밀번호 검증
         if (user.getPassword() == null || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
@@ -290,14 +320,14 @@ import java.util.UUID;
     }
 
     /**
-     * 회원 탈퇴 (Soft Delete → WITHDRAWN 상태로 변경)
+     * 회원 탈퇴 — 즉시 WITHDRAWN 처리, 30일 이내 재로그인으로 복구 가능
      */
     @DeleteMapping("/me")
     public ApiResponse<Void> deleteAccount(
             @RequestBody DeleteAccountRequest request) {
 
-        String email = SecurityUtil.getCurrentEmail();
-        User user = getProfileUseCase.getProfile(email);
+        User user = requireCurrentUser();
+        String email = user.getEmail();
 
         // LOCAL 유저인 경우 비밀번호 검증 필수
         if (user.getProvider() == com.farmbalance.user.domain.AuthProvider.LOCAL) {
@@ -312,12 +342,12 @@ import java.util.UUID;
         }
 
         updateProfileUseCase.withdrawAccount(email);
-        log.info("회원 탈퇴 완료 (WITHDRAWN): email={}", email);
+        log.info("회원 즉시 탈퇴 완료: email={}", email);
         return ApiResponse.ok(null);
     }
 
     /**
-     * 탈퇴 계정 재활성화
+     * 탈퇴 계정 재활성화 (30일 이내 재로그인 복구용)
      */
     @PostMapping("/reactivate")
     public ApiResponse<Void> reactivateAccount(@RequestBody Map<String, String> request) {

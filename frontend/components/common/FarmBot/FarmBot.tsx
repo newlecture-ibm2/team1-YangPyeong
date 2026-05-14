@@ -7,12 +7,13 @@
 
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useFarmBot } from './useFarmBot';
 import { FarmBotContext } from './FarmBotContext';
 import Image from 'next/image';
 import styles from './FarmBot.module.css';
+import { FARM_BOT_CONSTANTS } from './farmBotConstants';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
@@ -101,12 +102,29 @@ export default function FarmBot({ children }: FarmBotProps) {
     hideBot,
     showBot,
     isMounted,
+    startChat,
+    closeChat,
+    sendChatMessage,
+    resetChat,
+    chatMessages,
+    chatInput,
+    setChatInput,
+    chatLoading,
+    getVisibleStepInfo,
   } = useFarmBot();
+
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (mode === 'chatting') {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, mode]);
 
   // 클라이언트 마운트 전에는 자식 요소만 렌더링 (Hydration 에러 방지)
   if (!isMounted) {
     return (
-      <FarmBotContext.Provider value={{ showQuickMessage }}>
+      <FarmBotContext.Provider value={{ showQuickMessage, startChat }}>
         {children}
       </FarmBotContext.Provider>
     );
@@ -115,7 +133,7 @@ export default function FarmBot({ children }: FarmBotProps) {
   // 시나리오 없으면 Provider만 제공
   if (!hasScenario && mode === 'minimized') {
     return (
-      <FarmBotContext.Provider value={{ showQuickMessage }}>
+      <FarmBotContext.Provider value={{ showQuickMessage, startChat }}>
         {children}
       </FarmBotContext.Provider>
     );
@@ -124,7 +142,7 @@ export default function FarmBot({ children }: FarmBotProps) {
   // ── 숨김 모드: 하단 구석에 복원 아이콘 ──
   if (mode === 'hidden') {
     return (
-      <FarmBotContext.Provider value={{ showQuickMessage }}>
+      <FarmBotContext.Provider value={{ showQuickMessage, startChat }}>
         {children}
         <button
           className={styles.restoreBtn}
@@ -141,7 +159,7 @@ export default function FarmBot({ children }: FarmBotProps) {
   // ── 축소 모드: Footer에서 걸어다님 ──
   if (mode === 'minimized') {
     return (
-      <FarmBotContext.Provider value={{ showQuickMessage }}>
+      <FarmBotContext.Provider value={{ showQuickMessage, startChat }}>
         {children}
         <div className={`${styles.footerWalkWrap} ${prefersReducedMotion ? styles.reducedMotion : ''}`}>
           <button
@@ -209,10 +227,105 @@ export default function FarmBot({ children }: FarmBotProps) {
     );
   }
 
+  // ── 채팅 모드 ──
+  if (mode === 'chatting') {
+    return (
+      <FarmBotContext.Provider value={{ showQuickMessage, startChat }}>
+        {children}
+        <div className={styles.chatOverlay}>
+          <div className={styles.chatContainer}>
+            {/* 헤더 */}
+            <div className={styles.chatHeader}>
+              <div className={styles.chatHeaderLeft}>
+                <div className={styles.chatHeaderLottie}>
+                  {lottieData && (
+                    <Lottie animationData={lottieData} loop autoplay className={styles.chatHeaderLottieAnim} />
+                  )}
+                </div>
+                <div className={styles.chatHeaderInfo}>
+                  <span className={styles.chatTitle}>{FARM_BOT_CONSTANTS.BOT_NAME}</span>
+                  <span className={styles.chatSubtitle}>{FARM_BOT_CONSTANTS.BOT_SUBTITLE}</span>
+                </div>
+              </div>
+              <div className={styles.chatHeaderBtns}>
+                <button className={styles.chatResetBtn} onClick={resetChat} aria-label="대화 초기화" title="새 대화">🔄</button>
+                <button className={styles.chatCloseBtn} onClick={closeChat} aria-label="채팅 닫기">✕</button>
+              </div>
+            </div>
+
+            {/* 메시지 목록 */}
+            <div className={styles.chatMessages}>
+              {chatMessages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`${styles.chatMsg} ${msg.role === 'user' ? styles.chatMsgUser : styles.chatMsgBot}`}
+                >
+                  {msg.role === 'bot' && (
+                    <Image src="/icon.png" alt="" width={28} height={28} className={styles.chatMsgAvatar} />
+                  )}
+                  <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleBot}`}>
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div className={`${styles.chatMsg} ${styles.chatMsgBot}`}>
+                  <Image src="/icon.png" alt="" width={28} height={28} className={styles.chatMsgAvatar} />
+                  <div className={`${styles.chatBubble} ${styles.chatBubbleBot}`}>
+                    <span className={styles.chatTyping}>할아버지가 생각 중... 🤔</span>
+                  </div>
+                </div>
+              )}
+              {/* 빠른 질문 버튼 */}
+              {chatMessages.length <= 1 && !chatLoading && (
+                <div className={styles.quickQuestions}>
+                  {FARM_BOT_CONSTANTS.QUICK_QUESTIONS.map((q, idx) => (
+                    <button
+                      key={idx}
+                      className={styles.quickQuestionBtn}
+                      onClick={() => sendChatMessage(`${q.emoji} ${q.text}`)}
+                    >
+                      <span className={styles.quickQuestionEmoji}>{q.emoji}</span>
+                      <span>{q.text}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* 입력창 */}
+            <form
+              className={styles.chatInputArea}
+              onSubmit={(e) => { e.preventDefault(); sendChatMessage(chatInput); }}
+            >
+              <input
+                type="text"
+                className={styles.chatInputField}
+                placeholder="궁금한 것을 물어보세요..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                disabled={chatLoading}
+                autoFocus
+              />
+              <button
+                type="submit"
+                className={styles.chatSendBtn}
+                disabled={chatLoading || !chatInput.trim()}
+              >
+                전송
+              </button>
+            </form>
+          </div>
+        </div>
+      </FarmBotContext.Provider>
+    );
+  }
+
   // ── 질문 모드: "가이드 해드릴까요?" ──
   if (mode === 'asking') {
     return (
-      <FarmBotContext.Provider value={{ showQuickMessage }}>
+      <FarmBotContext.Provider value={{ showQuickMessage, startChat }}>
         {children}
         <div
           className={styles.botContainer}
@@ -237,10 +350,16 @@ export default function FarmBot({ children }: FarmBotProps) {
               <p className={styles.bubbleText}>{bubbleMessage}</p>
               <div className={styles.askBtns}>
                 <button className={styles.askBtnYes} onClick={acceptGuide}>
-                  네, 안내해주세요! 🌱
+                  🌱 가이드 시작
+                </button>
+                <button
+                  className={styles.askBtnChat}
+                  onClick={(e) => { e.stopPropagation(); startChat(); }}
+                >
+                  💬 질문하기
                 </button>
                 <button className={styles.askBtnNo} onClick={declineGuide}>
-                  괜찮아요
+                  숨기기
                 </button>
               </div>
               <button className={styles.bubbleClose} onClick={declineGuide} aria-label="닫기">✕</button>
@@ -253,9 +372,11 @@ export default function FarmBot({ children }: FarmBotProps) {
 
   // ── 가이드 모드 ──
   const bubbleClass = bubbleAbove ? styles.bubbleAbove : styles.bubbleBelow;
+  
+  const { visibleIndex, visibleTotal } = getVisibleStepInfo();
 
   return (
-    <FarmBotContext.Provider value={{ showQuickMessage }}>
+    <FarmBotContext.Provider value={{ showQuickMessage, startChat }}>
       {children}
       {highlightRect && (
         <div className={styles.overlay}>
@@ -294,15 +415,28 @@ export default function FarmBot({ children }: FarmBotProps) {
             <p className={styles.bubbleText}>{bubbleMessage}</p>
             {currentStep >= 0 && (
               <div className={styles.bubbleActions}>
-                <span className={styles.stepCounter}>{currentStep + 1} / {totalSteps}</span>
+                <span className={styles.stepCounter}>{visibleIndex + 1} / {visibleTotal}</span>
                 <div className={styles.bubbleBtns}>
-                  {currentStep > 0 && (
+                  {visibleIndex > 0 && (
                     <button className={styles.bubbleBtnPrev} onClick={prevStep}>← 이전</button>
                   )}
-                  {currentStep < totalSteps - 1 ? (
+                  {visibleIndex < visibleTotal - 1 ? (
                     <button className={styles.bubbleBtnNext} onClick={nextStep}>다음 →</button>
                   ) : (
-                    <button className={styles.bubbleBtnNext} onClick={stopGuide}>완료 ✓</button>
+                    <>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        className={styles.tooltipChatBtn}
+                        onClick={(e) => { e.stopPropagation(); startChat(); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); startChat(); } }}
+                      >
+                        💬 질문하기
+                      </span>
+                      <button className={styles.tooltipGuideBtn} onClick={stopGuide}>
+                        완료 ✓
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

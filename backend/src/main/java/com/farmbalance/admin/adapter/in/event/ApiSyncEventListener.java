@@ -29,17 +29,22 @@ public class ApiSyncEventListener {
                 event.apiName(), event.status(), event.recordCount());
 
         adminApiSyncPort.findByApiName(event.apiName()).ifPresent(existing -> {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime newLastSynced = event.isHealthCheck() ? existing.getLastSynced() : now;
+            LocalDateTime newLastHealthChecked = now; // 둘 다 헬스체크 갱신
+            
             ApiSyncStatus updated = ApiSyncStatus.builder()
                     .id(existing.getId())
                     .apiName(existing.getApiName())
                     .displayName(existing.getDisplayName())
-                    .lastSynced(LocalDateTime.now())
+                    .lastSynced(newLastSynced)
+                    .lastHealthChecked(newLastHealthChecked)
                     .syncStatus(event.status())
                     .lastRecordCount(event.recordCount())
                     .errorMessage(event.errorMessage())
                     .isActive(existing.getIsActive())
                     .createdAt(existing.getCreatedAt())
-                    .updatedAt(LocalDateTime.now())
+                    .updatedAt(now)
                     .deletedAt(existing.getDeletedAt())
                     .build();
             adminApiSyncPort.update(updated);

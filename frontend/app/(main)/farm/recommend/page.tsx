@@ -6,6 +6,8 @@ import SoilPanel from './_components/SoilPanel/SoilPanel';
 import AnalyzeLoader from './_components/AnalyzeLoader/AnalyzeLoader';
 import RankingCard from './_components/RankingCard/RankingCard';
 import RecommendTable from './_components/RecommendTable/RecommendTable';
+import GuestPreviewBanner from '@/components/common/GuestPreviewBanner/GuestPreviewBanner';
+import { DUMMY_RECOMMENDATIONS } from '@/lib/preview-data';
 import styles from './page.module.css';
 import farmStyles from '../page.module.css';
 
@@ -20,24 +22,34 @@ export default function RecommendListPage() {
     );
   }
 
-  // 농장이 하나도 없는 경우 (Empty State)
+  // 농장이 하나도 없는 경우 (Preview Mode)
   if (hook.farms.length === 0) {
+    const previewRecs = DUMMY_RECOMMENDATIONS.map((r, i) => ({
+      cropId: i,
+      cropName: r.cropName,
+      score: r.score,
+      reason: r.reason,
+      expectedIncome: r.expectedIncome,
+      matchReasons: [r.reason]
+    })) as any;
+
     return (
       <div className={farmStyles.container}>
+        <GuestPreviewBanner />
         <div className={farmStyles.header}>
           <div>
-            <h1 className={farmStyles.title}>AI 작물 추천</h1>
-            <p className={farmStyles.subtitle}>농장을 먼저 등록해야 맞춤형 AI 작물 추천을 받을 수 있습니다.</p>
+            <h1 className={farmStyles.title}>AI 작물 추천 <span className={styles.italic}>미리보기</span></h1>
+            <p className={farmStyles.subtitle}>농장 환경에 맞는 최적의 작물을 미리 체험해 보세요.</p>
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px', marginTop: '32px' }}>
-          <Link href="/farm/register" style={{ textDecoration: 'none' }}>
-            <div style={{ border: '2px dashed var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'var(--color-text-light)', height: '100%', cursor: 'pointer', transition: 'all 0.2s' }}>
-              <div style={{ fontSize: '32px', marginBottom: '12px' }}>＋</div>
-              <div style={{ fontWeight: 600, fontSize: '16px' }}>새로운 농장 등록하기</div>
-              <p style={{ fontSize: '14px', marginTop: '8px', opacity: 0.8 }}>등록된 농장이 없습니다. 농장을 먼저 등록해 주세요.</p>
+
+        <div className={styles.content} style={{ opacity: 0.8, pointerEvents: 'none' }}>
+           <div className={styles.rankingGrid}>
+              {previewRecs.slice(0, 3).map((rec: any, idx: number) => (
+                <RankingCard key={rec.cropId} rec={rec} index={idx} />
+              ))}
             </div>
-          </Link>
+            <RecommendTable recommendations={previewRecs} />
         </div>
       </div>
     );
@@ -94,12 +106,14 @@ export default function RecommendListPage() {
         {/* ── 추천 결과 ── */}
         {hook.hasAnalyzed && hook.result && (
           <>
-            <div className={styles.rankingGrid}>
+            <div className={styles.rankingGrid} data-guide="recommend-ranking">
               {hook.top3.map((rec, idx) => (
                 <RankingCard key={rec.cropId} rec={rec} index={idx} />
               ))}
             </div>
-            <RecommendTable recommendations={hook.allRecs} />
+            <div data-guide="recommend-detail">
+              <RecommendTable recommendations={hook.allRecs} />
+            </div>
           </>
         )}
       </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import Button from '@/components/common/Button/Button';
@@ -32,8 +32,11 @@ interface CultivationEntry {
   yieldUnit: string;
 }
 
-export default function CultivationRegisterPage() {
+import { Suspense } from 'react';
+
+function CultivationRegisterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const { farms, isLoading: isFarmsLoading } = useMyFarms();
 
@@ -50,7 +53,22 @@ export default function CultivationRegisterPage() {
       .then(res => res.json())
       .then(json => { if (json.success) setCropCategories(json.data || []); })
       .catch(() => {});
-  }, []);
+
+    // [추가] 쿼리 파라미터로 넘어온 작물이 있다면 자동으로 추가
+    const cropId = searchParams.get('cropId');
+    const cropName = searchParams.get('cropName');
+
+    if (cropId && cropName) {
+      setCultivations([{
+        cropId: Number(cropId),
+        cropName: cropName,
+        area: '',
+        pyeong: '',
+        expectedYield: '',
+        yieldUnit: 'kg',
+      }]);
+    }
+  }, [searchParams]);
 
   // 작물 목록 가져오기
   useEffect(() => {
@@ -340,5 +358,13 @@ export default function CultivationRegisterPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function CultivationRegisterPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>데이터를 불러오는 중...</div>}>
+      <CultivationRegisterContent />
+    </Suspense>
   );
 }

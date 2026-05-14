@@ -18,3 +18,24 @@ export async function requestCropRecommendation(farmId: number): Promise<CropRec
   if (!response.data) throw new Error('추천 결과 데이터가 없습니다.');
   return response.data;
 }
+
+export async function getLatestRecommendHistory(farmId: number): Promise<CropRecommendResponse | null> {
+  const res = await fetch(`${BASE_URL}/${farmId}/history/latest`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  const response = (await res.json()) as ApiResponse<CropRecommendResponse>;
+
+  if (!res.ok) {
+    if (res.status === 404) return null;
+    const msg = response.error?.message ?? '';
+    // 구버전 백엔드: 이력 없음을 400으로 내려내던 경우
+    if (res.status === 400 && msg.includes('추천 이력이 없습니다')) {
+      return null;
+    }
+    throw new Error(msg || '최근 AI 추천 이력 조회에 실패했습니다.');
+  }
+
+  return response.data ?? null;
+}

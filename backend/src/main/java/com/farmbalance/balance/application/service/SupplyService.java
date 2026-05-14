@@ -6,6 +6,7 @@ import com.farmbalance.balance.application.port.out.LoadFarmSupplyPort;
 import com.farmbalance.balance.domain.BalanceStatus;
 import com.farmbalance.balance.domain.CropProductionStats;
 import com.farmbalance.balance.domain.SupplyRatioResult;
+import com.farmbalance.balance.domain.YieldUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,16 +21,18 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
 
     private final LoadCropStatsPort loadCropStatsPort;
     private final LoadFarmSupplyPort loadFarmSupplyPort;
+    private final BalanceProperties balanceProperties;
 
     @Override
     @Transactional(readOnly = true)
     public SupplyRatioResult calculateSupplyRatio(String cropName, Integer year) {
-        // ... (기존 로직 유지)
-        CropProductionStats stats = loadCropStatsPort.loadCropStats(cropName, year, "YP")
+        String regionCode = balanceProperties.getRegion().getDefaultCode();
+        
+        CropProductionStats stats = loadCropStatsPort.loadCropStats(cropName, year, regionCode)
                 .orElse(null);
 
         if (stats == null) {
-            stats = loadCropStatsPort.loadLatestCropStats(cropName, "YP")
+            stats = loadCropStatsPort.loadLatestCropStats(cropName, regionCode)
                     .orElse(null);
         }
 
@@ -39,8 +42,8 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
 
         Integer baseYear = stats.getYear();
         double standardYieldKg = stats.getTotalProduction().doubleValue();
-        if ("톤".equals(stats.getUnitNm())) {
-            standardYieldKg *= 1000;
+        if (YieldUnit.TON.getLabel().equals(stats.getUnitNm())) {
+            standardYieldKg *= YieldUnit.TON.getFactorToKg();
         }
 
         Double currentSupplyKg = loadFarmSupplyPort.sumEstimatedYieldByCropName(cropName);
@@ -50,7 +53,13 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
         }
 
         double ratio = (currentSupplyKg / standardYieldKg) * 100.0;
-        BalanceStatus status = BalanceStatus.calculateFromRatio(ratio);
+        
+        BalanceProperties.Thresholds thresholds = balanceProperties.getThresholds();
+        BalanceStatus status = BalanceStatus.calculateFromRatio(ratio, 
+                thresholds.getExcessWarn(), 
+                thresholds.getExcessCaution(), 
+                thresholds.getShortCaution(), 
+                thresholds.getShortWarn());
         
         return new SupplyRatioResult(ratio, status, baseYear);
     }
@@ -72,20 +81,23 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
 
     @Override
     @org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
-    public void recalculate(String cropName) {
+    public SupplyRatioResult recalculate(String cropName) {
         // 실시간 계산 수행 (현재는 로그만 남기지만, 추후 요약 테이블이나 캐시 갱신 로직이 여기에 들어갑니다)
         SupplyRatioResult result = calculateSupplyRatio(cropName, null);
         
         System.out.println("[Recalculate-Core] " + cropName + "의 최신 수급 비율: " + result.getRatio() + "% (" + result.getStatus() + ")");
         
         // TODO: 결과를 CropBalanceSummary 테이블 등에 저장하여 대시보드 조회 성능 최적화 가능
+        return result;
     }
 
     @Override
     @org.springframework.cache.annotation.Cacheable(value = "supplyTrends", key = "#cropName")
     public java.util.List<com.farmbalance.balance.domain.SupplyTrendResult> getSupplyTrend(String cropName) {
+        String regionCode = balanceProperties.getRegion().getDefaultCode();
+        
         // 1. 과거 통계 데이터 조회 (KOSIS)
-        java.util.List<CropProductionStats> history = loadCropStatsPort.loadHistoricalStats(cropName, "YP");
+        java.util.List<CropProductionStats> history = loadCropStatsPort.loadHistoricalStats(cropName, regionCode);
         
         // 2. 현재 실시간 공급량 조회
         Double rawSupplyKg = loadFarmSupplyPort.sumEstimatedYieldByCropName(cropName);
@@ -108,7 +120,7 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
             for (int y = startYear; y < currentYear; y++) {
                 CropProductionStats stats = historyMap.get(y);
                 if (stats != null) {
-                    Double factor = "톤".equals(stats.getUnitNm()) ? 1000.0 : 1.0;
+                    Double factor = YieldUnit.TON.getLabel().equals(stats.getUnitNm()) ? YieldUnit.TON.getFactorToKg() : 1.0;
                     Double prod = (stats.getTotalProduction() != null) ? stats.getTotalProduction().doubleValue() : 0.0;
                     Double demandKg = prod * factor;
                     
@@ -134,30 +146,27 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
         Double latestTargetDemand = 0.0;
         if (!history.isEmpty()) {
             CropProductionStats latestStats = history.get(history.size() - 1);
-            Double factor = "톤".equals(latestStats.getUnitNm()) ? 1000.0 : 1.0;
+            Double factor = YieldUnit.TON.getLabel().equals(latestStats.getUnitNm()) ? YieldUnit.TON.getFactorToKg() : 1.0;
             Double latestProd = (latestStats.getTotalProduction() != null) ? latestStats.getTotalProduction().doubleValue() : 0.0;
             latestTargetDemand = latestProd * factor;
         }
 
         Double currentRatio = (latestTargetDemand > 0) ? (currentSupplyKg / latestTargetDemand) * 100.0 : 0.0;
 
+        BalanceProperties.Thresholds thresholds = balanceProperties.getThresholds();
         trend.add(com.farmbalance.balance.domain.SupplyTrendResult.builder()
                 .year(currentYear)
                 .supply(currentSupplyKg)
                 .demand(latestTargetDemand)
                 .ratio(currentRatio)
-                .status(calculateStatus(currentRatio))
+                .status(BalanceStatus.calculateFromRatio(currentRatio, 
+                        thresholds.getExcessWarn(), 
+                        thresholds.getExcessCaution(), 
+                        thresholds.getShortCaution(), 
+                        thresholds.getShortWarn()))
                 .build());
 
         return trend;
     }
 
-    private BalanceStatus calculateStatus(Double ratio) {
-        if (ratio == 0) return BalanceStatus.UNKNOWN;
-        if (ratio > 150) return BalanceStatus.EXCESS_WARN;
-        if (ratio > 120) return BalanceStatus.EXCESS_CAUTION;
-        if (ratio > 80) return BalanceStatus.BALANCED;
-        if (ratio > 50) return BalanceStatus.SHORT_CAUTION;
-        return BalanceStatus.SHORT_WARN;
-    }
 }

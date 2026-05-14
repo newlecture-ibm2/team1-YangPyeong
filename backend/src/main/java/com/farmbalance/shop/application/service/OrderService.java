@@ -11,6 +11,8 @@ import com.farmbalance.shop.domain.Order;
 import com.farmbalance.shop.domain.OrderItem;
 import com.farmbalance.shop.domain.OrderStatus;
 import com.farmbalance.shop.domain.Product;
+import com.farmbalance.notification.application.port.in.NotificationUseCase;
+import com.farmbalance.notification.domain.NotificationType;
 import com.farmbalance.user.application.port.out.UserRepository;
 import com.farmbalance.user.domain.User;
 import org.slf4j.Logger;
@@ -37,22 +39,25 @@ public class OrderService implements OrderUseCase {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final NotificationUseCase notificationUseCase;
 
     public OrderService(OrderRepository orderRepository, ProductRepository productRepository,
-                        UserRepository userRepository, EmailService emailService) {
+            UserRepository userRepository, EmailService emailService, NotificationUseCase notificationUseCase) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
+        this.notificationUseCase = notificationUseCase;
     }
 
     @Override
     @Transactional
     public Order createOrder(Long buyerId, String receiverName, String receiverPhone,
-                             String shippingAddress, String shippingMemo,
-                             List<OrderItemCommand> items) {
+            String shippingAddress, String shippingMemo,
+            List<OrderItemCommand> items) {
         List<OrderItem> orderItems = new ArrayList<>();
         int totalAmount = 0;
+        List<Long> sellerIds = new ArrayList<>();
 
         for (OrderItemCommand cmd : items) {
             Product product = productRepository.findById(cmd.productId())
@@ -72,19 +77,37 @@ public class OrderService implements OrderUseCase {
 
             orderItems.add(new OrderItem(
                     null, null, product.getId(), product.getName(),
-                    cmd.quantity(), product.getPrice()
-            ));
+                    cmd.quantity(), product.getPrice()));
+            
+            if (!sellerIds.contains(product.getSellerId())) {
+                sellerIds.add(product.getSellerId());
+            }
         }
 
         String orderNumber = generateOrderNumber();
 
         Order order = new Order(
-                null, buyerId, orderNumber, totalAmount, OrderStatus.ORDERED,
+                null, buyerId, orderNumber, totalAmount, OrderStatus.ACCEPTED,
                 receiverName, receiverPhone, shippingAddress, shippingMemo,
-                null, null, orderItems, LocalDateTime.now(), null
-        );
+                null, null, orderItems, LocalDateTime.now(), null);
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        // O-1 새 주문 결제 완료 알림 (셀러 대상)
+        for (Long sellerId : sellerIds) {
+            notificationUseCase.createNotification(
+                    sellerId,
+                    NotificationType.ORDER,
+                    "새 결제/주문 완료",
+                    String.format("새 결제 및 주문이 확정되었습니다. 배송을 준비해주세요. (주문번호: %s)", savedOrder.getOrderNumber()),
+                    "/shop/seller/orders"
+            );
+        }
+
+        // 구매자에게 결제/주문 확정 이메일 및 알림 자동 발송
+        sendStatusEmail(savedOrder, OrderStatus.ORDERED);
+
+        return savedOrder;
     }
 
     @Override
@@ -186,22 +209,42 @@ public class OrderService implements OrderUseCase {
     private void sendStatusEmail(Order order, OrderStatus previousStatus) {
         try {
             User buyer = userRepository.findById(order.getBuyerId()).orElse(null);
-            if (buyer == null || buyer.getEmail() == null || buyer.getEmail().isBlank()) return;
+            if (buyer == null || buyer.getEmail() == null || buyer.getEmail().isBlank())
+                return;
 
             String buyerName = buyer.getName() != null ? buyer.getName() : "고객";
 
             // ORDERED → ACCEPTED (접수 확인)
             if (previousStatus == OrderStatus.ORDERED && order.getStatus() == OrderStatus.ACCEPTED) {
-                String html = OrderEmailTemplate.orderAccepted(buyerName, order.getOrderNumber(), order.getTotalAmount());
+                String html = OrderEmailTemplate.orderAccepted(buyerName, order.getOrderNumber(),
+                        order.getTotalAmount());
                 emailService.send(buyer.getEmail(), "[FarmBalance] 주문이 접수되었습니다", html);
+                
+                // O-2 주문 접수 확인 인앱 알림
+                notificationUseCase.createNotification(
+                        order.getBuyerId(),
+                        NotificationType.ORDER,
+                        "주문 접수 완료",
+                        "주문하신 상품이 접수되었습니다.",
+                        "/shop/orders"
+                );
             }
             // ACCEPTED → SHIPPED (배송 시작)
             else if (previousStatus == OrderStatus.ACCEPTED && order.getStatus() == OrderStatus.SHIPPED) {
                 String html = OrderEmailTemplate.orderShipped(buyerName, order.getOrderNumber());
                 emailService.send(buyer.getEmail(), "[FarmBalance] 배송이 시작되었습니다", html);
+                
+                // O-3 배송 시작 인앱 알림
+                notificationUseCase.createNotification(
+                        order.getBuyerId(),
+                        NotificationType.ORDER,
+                        "배송 시작",
+                        String.format("주문하신 상품이 배송 시작되었습니다. (송장: %s)", order.getTrackingNumber()),
+                        "/shop/orders"
+                );
             }
         } catch (Exception e) {
-            log.warn("[주문 이메일] 발송 실패 (주문: {}): {}", order.getOrderNumber(), e.getMessage());
+            log.warn("[주문 알림] 발송 실패 (주문: {}): {}", order.getOrderNumber(), e.getMessage());
         }
     }
 
@@ -209,13 +252,23 @@ public class OrderService implements OrderUseCase {
     private void sendCancelEmail(Order order) {
         try {
             User buyer = userRepository.findById(order.getBuyerId()).orElse(null);
-            if (buyer == null || buyer.getEmail() == null || buyer.getEmail().isBlank()) return;
+            if (buyer == null || buyer.getEmail() == null || buyer.getEmail().isBlank())
+                return;
 
             String buyerName = buyer.getName() != null ? buyer.getName() : "고객";
             String html = OrderEmailTemplate.orderCancelled(buyerName, order.getOrderNumber(), order.getTotalAmount());
             emailService.send(buyer.getEmail(), "[FarmBalance] 주문이 거절되었습니다", html);
+            
+            // O-4 주문 거절 인앱 알림
+            notificationUseCase.createNotification(
+                    order.getBuyerId(),
+                    NotificationType.ORDER,
+                    "주문 거절",
+                    String.format("주문이 거절되었습니다. (주문번호: %s)", order.getOrderNumber()),
+                    "/shop/orders"
+            );
         } catch (Exception e) {
-            log.warn("[주문 거절 이메일] 발송 실패 (주문: {}): {}", order.getOrderNumber(), e.getMessage());
+            log.warn("[주문 거절 알림] 발송 실패 (주문: {}): {}", order.getOrderNumber(), e.getMessage());
         }
     }
 }
