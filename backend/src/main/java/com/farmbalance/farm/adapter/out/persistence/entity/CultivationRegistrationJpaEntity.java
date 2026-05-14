@@ -31,11 +31,11 @@ public class CultivationRegistrationJpaEntity extends BaseTimeEntity {
     private Long cropId;
 
     /** 재배 면적 (㎡) — V14에서 신규 추가 */
-    @Column(name = "cultivation_area")
+    @Column(name = "cultivation_area", columnDefinition = "NUMERIC")
     private Double cultivationArea;
 
     /** 농가 예상 수확량 (kg) — V14에서 신규 추가 */
-    @Column(name = "farmer_estimated_yield")
+    @Column(name = "farmer_estimated_yield", columnDefinition = "NUMERIC")
     private Double farmerEstimatedYield;
 
     /** 수확량 단위 (g | kg | ton) */
