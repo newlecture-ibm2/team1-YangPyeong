@@ -70,6 +70,9 @@ public class UserJpaEntity {
     @Column(columnDefinition = "TEXT")
     private String bio;
 
+    @Column(length = 20)
+    private String regionCode;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -100,6 +103,7 @@ public class UserJpaEntity {
                 .profileImageUrl(profileImageUrl)
                 .address(address)
                 .bio(bio)
+                .regionCode(regionCode)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .withdrawalRequestedAt(withdrawalRequestedAt)
@@ -122,6 +126,7 @@ public class UserJpaEntity {
                 .profileImageUrl(user.getProfileImageUrl())
                 .address(user.getAddress())
                 .bio(user.getBio())
+                .regionCode(user.getRegionCode())
                 .updatedAt(user.getUpdatedAt())
                 .withdrawalRequestedAt(user.getWithdrawalRequestedAt())
                 .anonymizedAt(user.getAnonymizedAt())
