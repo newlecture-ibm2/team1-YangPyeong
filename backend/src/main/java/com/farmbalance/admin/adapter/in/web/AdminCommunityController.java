@@ -98,8 +98,7 @@ public class AdminCommunityController {
      */
     @PostMapping("/notices")
     public ApiResponse<Void> createNotice(@RequestBody com.farmbalance.admin.adapter.in.web.dto.CreateNoticeRequest request) {
-        // TODO: 로그인 기능 연동 후 실제 Admin ID 사용 (현재는 임시 1L)
-        Long adminId = 1L; 
+        Long adminId = com.farmbalance.global.security.SecurityUtil.getCurrentUserId();
         manageCommunityUseCase.createNotice(adminId, request);
         return ApiResponse.ok(null);
     }
