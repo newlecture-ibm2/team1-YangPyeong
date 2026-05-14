@@ -17,4 +17,6 @@ public class FarmDocumentData {
     private String address;
     private String area;
     private String documentIssueNumber;
+    private String registrationNumber;
+    private String pnuCode;
 }

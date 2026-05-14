@@ -234,7 +234,7 @@ export default function FarmsPage() {
                         <span className={styles.infoValue}>{item.documentData.documentType || '-'}</span>
                       </div>
                       <div className={styles.infoItem} style={{ gridColumn: 'span 2' }}>
-                        <span className={styles.infoLabel}>발급 번호</span>
+                        <span className={styles.infoLabel}>발급 번호 (진위확인용)</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span className={styles.infoValue} style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
                             {item.documentData.documentIssueNumber || '-'}
@@ -244,6 +244,44 @@ export default function FarmsPage() {
                               onClick={() => {
                                 navigator.clipboard.writeText(item.documentData?.documentIssueNumber || '');
                                 toast.success('발급 번호가 복사되었습니다.');
+                              }}
+                              style={{ padding: '2px 6px', fontSize: '11px', background: 'var(--color-bg-subtle)', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              복사
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className={styles.infoItem} style={{ gridColumn: 'span 2' }}>
+                        <span className={styles.infoLabel}>등록 번호 (조회용 메인키)</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className={styles.infoValue} style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                            {item.documentData.registrationNumber || '-'}
+                          </span>
+                          {item.documentData.registrationNumber && (
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(item.documentData?.registrationNumber || '');
+                                toast.success('등록 번호가 복사되었습니다.');
+                              }}
+                              style={{ padding: '2px 6px', fontSize: '11px', background: 'var(--color-bg-subtle)', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              복사
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className={styles.infoItem} style={{ gridColumn: 'span 2' }}>
+                        <span className={styles.infoLabel}>토지 고유번호 (PNU)</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className={styles.infoValue} style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                            {item.documentData.pnuCode || '-'}
+                          </span>
+                          {item.documentData.pnuCode && (
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(item.documentData?.pnuCode || '');
+                                toast.success('PNU 코드가 복사되었습니다.');
                               }}
                               style={{ padding: '2px 6px', fontSize: '11px', background: 'var(--color-bg-subtle)', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer' }}
                             >

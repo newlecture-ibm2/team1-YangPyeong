@@ -9,8 +9,10 @@ class DocumentOcrResponse(BaseModel):
     address: Optional[str] = Field(None, description="농장 소재지")
     area: Optional[str] = Field(None, description="전체 면적(숫자만)")
     documentIssueNumber: Optional[str] = Field(None, description="문서 발급/확인 번호")
+    registrationNumber: Optional[str] = Field(None, description="조회용 메인 등록번호")
+    pnuCode: Optional[str] = Field(None, description="토지 고유번호(PNU)")
 
-    @field_validator('errorMessage', 'documentType', 'farmOwnerName', 'address', 'area', 'documentIssueNumber', mode='before')
+    @field_validator('errorMessage', 'documentType', 'farmOwnerName', 'address', 'area', 'documentIssueNumber', 'registrationNumber', 'pnuCode', mode='before')
     @classmethod
     def coerce_to_string(cls, v: Any) -> Optional[str]:
         """AI가 숫자형 등으로 잘못 추출하더라도 Pydantic이 에러를 뱉지 않도록 문자열로 안전하게 형변환합니다."""

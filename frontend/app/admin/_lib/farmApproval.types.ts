@@ -12,8 +12,10 @@ export interface FarmDocumentData {
   documentType?: string;
   farmOwnerName?: string;
   address?: string;
-  area?: number;
+  area?: string;
   documentIssueNumber?: string;
+  registrationNumber?: string;
+  pnuCode?: string;
 }
 
 export interface FarmApprovalView {

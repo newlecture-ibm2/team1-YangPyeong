@@ -23,9 +23,11 @@ class OcrService:
   "errorMessage": "isValid가 false일 경우 사용자에게 보여줄 안내 메시지 (예: '화질이 흐립니다. 다시 찍어주세요' 또는 '허용되지 않는 문서입니다')",
   "documentType": "어떤 문서인지 기재 (예: 농업경영체 등록 확인서)",
   "farmOwnerName": "소유주 또는 임차인(경작자) 성명",
-  "address": "농장 소재지 (지번/도로명 주소 전체)",
+  "address": "(주의) 소유자/신청인의 집 주소가 아닌, 실제 농사가 이루어지는 '농지(토지) 소재지' 지번/도로명 전체",
   "area": "전체 면적(숫자만, 단위 제외, ㎡ 기준 변환)",
-  "documentIssueNumber": "문서 최상단 또는 하단의 '문서확인번호' 또는 '발급번호' (형식: xxxx-xxxx-xxxx)"
+  "documentIssueNumber": "문서 최상단 또는 하단의 '문서확인번호' 또는 '발급번호' (형식: xxxx-xxxx-xxxx)",
+  "registrationNumber": "조회용 메인 등록번호 (농업경영체 등록 확인서는 '경영체 등록번호', 농지대장은 '농지대장 번호', 없으면 null)",
+  "pnuCode": "문서 내에 기재된 19자리 토지 고유번호(PNU). 없으면 null"
 }"""
         
         try:
