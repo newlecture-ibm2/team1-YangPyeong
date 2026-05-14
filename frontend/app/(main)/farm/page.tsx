@@ -18,7 +18,7 @@ import CultivationEditModal from './_components/CultivationEditModal/Cultivation
 import ModalDialog from '@/components/common/Modal/ModalDialog';
 import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import UnifiedActionButton from './_components/UnifiedActionButton/UnifiedActionButton';
-import GuestPreviewBanner from '@/components/common/GuestPreviewBanner/GuestPreviewBanner';
+import PolicyRecommendGuideBanner from '@/components/common/PolicyRecommendGuideBanner/PolicyRecommendGuideBanner';
 import { DUMMY_FARM, DUMMY_CULTIVATIONS, DUMMY_BALANCE } from '@/lib/preview-data';
 import styles from './page.module.css';
 
@@ -57,6 +57,18 @@ function FarmDashboardContent() {
   const [weather, setWeather] = useState<{ tmp: number, pty: number, sky: number } | null>(null);
   const [latestAiScore, setLatestAiScore] = useState<number | null>(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState<number>(0);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // 유저 권한 확인
+  useEffect(() => {
+    const match = document.cookie.match(/(?:^|;\s*)fb-user=([^;]*)/);
+    if (match) {
+      try {
+        const user = JSON.parse(decodeURIComponent(match[1]));
+        setUserRole(user.role);
+      } catch {}
+    }
+  }, []);
 
   // 기상 정보 조회
   useEffect(() => {
@@ -263,7 +275,7 @@ function FarmDashboardContent() {
     return (
       <div className={styles.container}>
         <div data-guide="farm-guest-banner">
-          <GuestPreviewBanner />
+          <PolicyRecommendGuideBanner userRole={userRole} farmCount={farms.length} variant="inline" />
         </div>
         <div className={styles.header}>
           <div data-guide="farm-guest-preview">
