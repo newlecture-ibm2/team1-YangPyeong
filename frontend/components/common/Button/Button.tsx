@@ -10,7 +10,7 @@ interface ButtonProps {
   variant?: 'primary' | 'outline' | 'ghost' | 'dark' | 'kakao' | 'google';
   size?: 'sm' | 'md' | 'lg';
   href?: string;
-  onClick?: () => void;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
   type?: 'button' | 'submit' | 'reset';
   fullWidth?: boolean;
   disabled?: boolean;
