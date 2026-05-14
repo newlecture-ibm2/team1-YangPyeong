@@ -91,3 +91,36 @@ class GroqLLM(BaseLLM):
         except Exception as e:
             logger.error("Groq generate_stream 실패: %s", e)
             raise
+
+    async def generate_json(
+        self,
+        prompt: str,
+        *,
+        system_instruction: Optional[str] = None,
+        temperature: float = 0.1,
+        max_tokens: int = 2048,
+    ) -> str:
+        """Groq JSON 모드를 사용하여 JSON 응답을 생성합니다."""
+        
+        # Groq 필수 요구사항: 프롬프트에 'JSON' 단어가 명시되어야 함
+        refined_system_instruction = system_instruction or "You are a helpful assistant that outputs JSON."
+        if "json" not in refined_system_instruction.lower():
+            refined_system_instruction += " Always respond in valid JSON format."
+
+        messages = [
+            {"role": "system", "content": refined_system_instruction},
+            {"role": "user", "content": prompt}
+        ]
+
+        try:
+            completion = await self._client.chat.completions.create(
+                model=self._model_name,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                response_format={"type": "json_object"},
+            )
+            return completion.choices[0].message.content
+        except Exception as e:
+            logger.error("Groq generate_json 실패: %s", e)
+            raise

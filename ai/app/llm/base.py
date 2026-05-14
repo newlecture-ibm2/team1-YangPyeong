@@ -60,6 +60,8 @@ class BaseLLM(ABC):
             temperature: 창의성 (0.0 ~ 1.0)
             max_tokens: 최대 토큰 수
 
+        Yields:
+            텍스트 청크
         """
         ...
 
