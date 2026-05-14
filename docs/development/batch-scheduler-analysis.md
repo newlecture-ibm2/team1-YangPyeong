@@ -1,7 +1,7 @@
 # 배치 스케줄러(Batch Scheduler) 현황 분석 및 공통 로깅 구조 개선안
 
 > **작성일**: 2026-05-14  
-> **상태**: 분석 완료 (마이그레이션 통합 후 진행 대기)  
+> **상태**: ✅ 구현 완료  
 > **목표**: 현재 프로젝트의 모든 `@Scheduled` 배치 흐름을 분석하고, 기존 `batch_logs` 테이블을 재사용하여 "공통 배치 로그 기록 구조"로 최소 범위 내에서 개선 가능한 구조를 제안.
 
 ---
@@ -50,31 +50,43 @@ AOP(어노테이션 기반 자동화)나 복잡한 배치 프레임워크(Spring
 
 ## 5. 추천 구조 (설계 예시)
 
-### [BatchLogService.java]
+### [BatchLogService.java] (`global/batch/BatchLogService.java`)
 ```java
 @Service
 @RequiredArgsConstructor
 public class BatchLogService {
     private final BatchLogRepository batchLogRepository;
 
-    // 트랜잭션 전파를 분리하여 예외 시에도 로그는 무조건 남게 함
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    // execute() 자체에는 트랜잭션을 걸지 않음 — 비즈니스 로직(task)의 트랜잭션에 간섭하지 않음
     public void execute(String jobName, Runnable task) {
-        BatchLogJpaEntity log = new BatchLogJpaEntity();
-        log.setJobName(jobName);
         long start = System.currentTimeMillis();
-
+        String status = "SUCCESS";
+        String messages = null;
         try {
             task.run();
-            log.setStatus("SUCCESS");
         } catch (Exception e) {
-            log.setStatus("FAILED");
-            log.setMessages(e.getMessage());
-            throw e; // 원래 스케줄러 쓰레드로 예외 전파
+            status = "FAILED";
+            messages = e.getMessage();
+            throw e;
         } finally {
-            log.setDurationMs(System.currentTimeMillis() - start);
-            batchLogRepository.save(log);
+            long durationMs = System.currentTimeMillis() - start;
+            try {
+                saveBatchLog(jobName, status, messages, durationMs); // 독립 트랜잭션
+            } catch (Exception saveEx) {
+                // 로그 저장 실패가 배치 흐름에 영향을 주지 않음
+            }
         }
+    }
+
+    // 로그 저장만 REQUIRES_NEW — 비즈니스 롤백 시에도 실패 로그는 반드시 커밋
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void saveBatchLog(String jobName, String status, String messages, long durationMs) {
+        BatchLogJpaEntity logEntity = new BatchLogJpaEntity();
+        logEntity.setJobName(jobName);
+        logEntity.setStatus(status);
+        logEntity.setMessages(messages);
+        logEntity.setDurationMs(durationMs);
+        batchLogRepository.save(logEntity);
     }
 }
 ```
