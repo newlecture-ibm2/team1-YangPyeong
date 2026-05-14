@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { type SellerProduct, PRODUCT_STATUS_MAP } from '../_lib/mypage.types';
 
 const INSIGHT_CACHE_KEY = 'seller-insight-cache';
@@ -15,13 +15,27 @@ export default function useSellerInsight(products: SellerProduct[]) {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isStale, setIsStale] = useState<boolean>(false);
-  const [initialLoaded, setInitialLoaded] = useState<boolean>(false);
+  const initialLoaded = useRef<boolean>(false);
+
+  // 상품 데이터의 실질적 변경을 감지하기 위한 안정적인 핑거프린트
+  const productsFingerprint = useMemo(() => {
+    if (!products || products.length === 0) return '';
+    return products
+      .map(p => `${p.id}:${p.name}:${p.price}:${p.stock}:${p.status}:${p.salesCount}`)
+      .sort()
+      .join('|');
+  }, [products]);
+
+  // 초기 로드 시점의 핑거프린트를 저장
+  const initialFingerprint = useRef<string>('');
 
   const fetchInsight = useCallback(async (forceRefresh = false) => {
     if (!products || products.length === 0) return;
 
     if (forceRefresh) {
       setIsStale(false);
+      // 새로고침 시 현재 핑거프린트를 기준점으로 갱신
+      initialFingerprint.current = productsFingerprint;
     }
 
     const today = new Date().toISOString().split('T')[0];
@@ -77,20 +91,28 @@ export default function useSellerInsight(products: SellerProduct[]) {
     } finally {
       setLoading(false);
     }
-  }, [products]);
+  }, [products, productsFingerprint]);
 
-  // 상품 목록 로드가 완료된 후에만 한 번 호출되도록 함
+  // 초기 로드: 상품이 처음 들어왔을 때 한 번만 인사이트 생성
   useEffect(() => {
-    if (products.length > 0) {
-      if (!initialLoaded) {
-        fetchInsight();
-        setInitialLoaded(true);
-      } else {
-        // 데이터 로드 이후 상품이 변경되면 Stale 상태로 마킹
-        setIsStale(true);
-      }
+    if (productsFingerprint && !initialLoaded.current) {
+      initialFingerprint.current = productsFingerprint;
+      fetchInsight();
+      initialLoaded.current = true;
     }
-  }, [products, fetchInsight, initialLoaded]);
+  }, [productsFingerprint, fetchInsight]);
+
+  // 데이터 변경 감지: 핑거프린트가 초기 시점과 달라졌을 때만 stale 처리
+  useEffect(() => {
+    if (
+      initialLoaded.current &&
+      initialFingerprint.current &&
+      productsFingerprint &&
+      productsFingerprint !== initialFingerprint.current
+    ) {
+      setIsStale(true);
+    }
+  }, [productsFingerprint]);
 
   const refreshInsight = () => fetchInsight(true);
 

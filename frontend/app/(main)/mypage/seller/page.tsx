@@ -38,7 +38,7 @@ export default function SellerProductsPage() {
     <>
       {/* 상단 요약 + 등록 버튼 */}
       <div className={styles.topBar}>
-        <div className={styles.statsRow}>
+        <div className={styles.statsRow} data-guide="seller-stats">
           <button 
             className={`${styles.statItem} ${filterTab === 'ALL' ? styles.statActiveTab : ''}`}
             onClick={() => setFilterTab('ALL')}
@@ -84,6 +84,7 @@ export default function SellerProductsPage() {
         <Button
           variant="primary"
           onClick={() => router.push('/mypage/seller/register')}
+          data-guide="seller-register"
         >
           ＋ 새 상품 등록
         </Button>
@@ -91,7 +92,7 @@ export default function SellerProductsPage() {
 
       {/* AI 인사이트 카드 */}
       {!productsLoading && products.length > 0 && (
-        <div className={styles.insightCard}>
+        <div className={styles.insightCard} data-guide="seller-insight">
           <div className={styles.insightHeader}>
             <h3 className={styles.insightTitle}>
               <span className={styles.insightIcon}>🤖</span>
