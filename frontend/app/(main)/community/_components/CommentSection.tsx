@@ -54,8 +54,8 @@ export default function CommentSection({
   const isQA = categoryName.includes('Q&A');
   const hasAccepted = comments.some(c => c.accepted);
 
-  const handleSubmit = async (e: React.FormEvent, parentId?: number) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent | React.MouseEvent | undefined, parentId?: number) => {
+    if (e) e.preventDefault();
     const content = parentId ? replyContent : newComment;
     if (!content.trim() || isSubmitting) return;
 
@@ -152,9 +152,14 @@ export default function CommentSection({
             <div className={`${styles.commentItem} ${comment.accepted ? styles.commentItemAccepted : ''}`}>
               <div className={styles.commentHeader}>
                 <div className={styles.commentHeaderLeft}>
-                  <span className={styles.author}>
-                    {comment.authorNickname || '알 수 없음'} 
-                    {comment.authorId === postAuthorId && (
+                  <span 
+                    className={styles.author}
+                    style={comment.authorStatus === 'WITHDRAWN' ? { color: 'var(--color-text-tertiary, #999)' } : undefined}
+                  >
+                    {comment.authorStatus === 'WITHDRAWN'
+                      ? '(탈퇴한 사용자)'
+                      : (comment.authorNickname || '알 수 없음')} 
+                    {comment.authorStatus !== 'WITHDRAWN' && comment.authorId === postAuthorId && (
                       <Badge variant="dark" className={styles.authorBadge}>글쓴이</Badge>
                     )}
                   </span>
@@ -252,7 +257,7 @@ export default function CommentSection({
                     <Button 
                       variant="primary"
                       size="sm"
-                      onClick={(e) => handleSubmit(e as any, comment.id)} 
+                      onClick={() => handleSubmit(undefined, comment.id)} 
                       disabled={isSubmitting || !replyContent.trim()}
                     >
                       {isSubmitting ? '등록 중...' : '답글 등록'}
@@ -267,9 +272,14 @@ export default function CommentSection({
               <div key={child.id} className={`${styles.commentItem} ${styles.replyItem}`}>
                 <div className={styles.commentHeader}>
                   <div className={styles.commentHeaderLeft}>
-                    <span className={styles.author}>
-                      {child.authorNickname || '알 수 없음'} 
-                      {child.authorId === postAuthorId && (
+                    <span 
+                      className={styles.author}
+                      style={child.authorStatus === 'WITHDRAWN' ? { color: 'var(--color-text-tertiary, #999)' } : undefined}
+                    >
+                      {child.authorStatus === 'WITHDRAWN'
+                        ? '(탈퇴한 사용자)'
+                        : (child.authorNickname || '알 수 없음')} 
+                      {child.authorStatus !== 'WITHDRAWN' && child.authorId === postAuthorId && (
                         <Badge variant="dark" className={styles.authorBadge}>글쓴이</Badge>
                       )}
                     </span>

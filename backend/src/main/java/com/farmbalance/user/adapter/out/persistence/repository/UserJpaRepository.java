@@ -32,13 +32,8 @@ public interface UserJpaRepository extends JpaRepository<UserJpaEntity, Long> {
     @Query("DELETE FROM UserJpaEntity u WHERE u.email = :email")
     void deleteByEmail(@Param("email") String email);
 
-    /** 탈퇴 유예 종료 대상: 요청 시각이 deadline 이전(포함)인 PENDING_WITHDRAWAL */
-    List<UserJpaEntity> findByStatusAndWithdrawalRequestedAtIsNotNullAndWithdrawalRequestedAtLessThanEqual(
+    /** 비식별화 대상: WITHDRAWN이고 아직 anonymized_at 없고, withdrawalRequestedAt이 cutoff 이전(포함) */
+    List<UserJpaEntity> findByStatusAndAnonymizedAtIsNullAndWithdrawalRequestedAtLessThanEqual(
             UserStatus status,
-            LocalDateTime deadlineInclusive);
-
-    /** 비식별화 대상: WITHDRAWN이고 아직 anonymized_at 없고, updatedAt이 cutoff 이전(포함) */
-    List<UserJpaEntity> findByStatusAndAnonymizedAtIsNullAndUpdatedAtLessThanEqual(
-            UserStatus status,
-            LocalDateTime updatedAtInclusive);
+            LocalDateTime withdrawalRequestedAtInclusive);
 }

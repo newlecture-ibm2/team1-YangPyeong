@@ -217,7 +217,7 @@ export function ChangePasswordModal({ isOpen, onClose, onSuccess, onError }: Cha
 interface DeleteAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (info?: { withdrawalCompletesAt?: string }) => void;
+  onSuccess: () => void;
   isSocial?: boolean;
 }
 
@@ -263,8 +263,7 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, isSocial = fals
       const data = await res.json();
 
       if (data.success) {
-        const completesAt = data.data?.withdrawalCompletesAt as string | undefined;
-        onSuccess(completesAt ? { withdrawalCompletesAt: completesAt } : undefined);
+        onSuccess();
         handleClose();
       } else {
         const errMsg = data.error?.message || '회원 탈퇴에 실패했습니다.';
@@ -297,8 +296,8 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, isSocial = fals
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
           <p>
-            탈퇴 요청 후 유예 기간이 지나면 최종 탈퇴됩니다. 유예 중에는 마이페이지에서 탈퇴를 취소할 수 있으며,
-            최종 탈퇴 후에는 재가입 절차가 필요합니다.
+            탈퇴 즉시 서비스 이용이 제한되며, 30일 이내 재로그인 시 100% 복구할 수 있습니다.
+            30일 경과 후에는 개인정보가 영구 삭제되며 복구가 불가능합니다.
           </p>
         </div>
 

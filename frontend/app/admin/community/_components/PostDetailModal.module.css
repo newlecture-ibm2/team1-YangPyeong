@@ -1,0 +1,129 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.centerText {
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: 20px 0;
+}
+
+.errorText {
+  text-align: center;
+  color: var(--color-danger);
+  padding: 20px 0;
+}
+
+/* Post Section */
+.postSection {
+  background: var(--color-bg);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.postHeader {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.postMeta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.postContent {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  white-space: pre-wrap;
+}
+
+/* Comment Section */
+.commentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.commentTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.commentList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.commentItem {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+.commentItem.deleted {
+  opacity: 0.5;
+  background: var(--color-bg);
+}
+
+.commentItem.deleted .commentContent {
+  text-decoration: line-through;
+}
+
+.commentMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+
+.commentAuthor {
+  font-weight: 600;
+}
+
+.commentBody {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.commentContent {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}

@@ -10,7 +10,7 @@ import { useToast } from '@/components/common/Toast'
 import styles from './Farms.module.css'
 import type { FarmApprovalView, ApprovalStatus } from '../_lib/farmApproval.types'
 import { APPROVAL_STATUS_LABELS } from '../_lib/farmApproval.types'
-import { fetchApprovals, approveFarm, rejectFarm } from '../_lib/farmApproval.api'
+import { fetchApprovals, approveFarm, rejectFarm, deleteFarm } from '../_lib/farmApproval.api'
 
 type Tab = 'PENDING' | 'APPROVED' | 'REJECTED'
 
@@ -87,6 +87,20 @@ export default function FarmsPage() {
       toast.error(msg)
     } finally {
       setRejecting(false)
+    }
+  }
+
+  // 삭제 처리
+  const handleDelete = async (farmId: number) => {
+    const confirmed = await showConfirm('정말로 이 농장을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')
+    if (!confirmed) return
+    try {
+      await deleteFarm(farmId)
+      toast.success('농장이 삭제되었습니다.')
+      await loadApprovals()
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '삭제 처리에 실패했습니다.'
+      toast.error(msg)
     }
   }
 
@@ -194,17 +208,22 @@ export default function FarmsPage() {
                 </div>
               </div>
 
-              {/* 액션 버튼 (PENDING만 표시) */}
-              {item.status === 'PENDING' && (
-                <div className={styles.cardActions}>
-                  <Button variant="outline" size="sm" onClick={() => openRejectModal(item)}>
-                    반려
-                  </Button>
-                  <Button variant="primary" size="sm" onClick={() => handleApprove(item)}>
-                    승인
-                  </Button>
-                </div>
-              )}
+              {/* 액션 버튼 */}
+              <div className={styles.cardActions} style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                {item.status === 'PENDING' && (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => openRejectModal(item)}>
+                      반려
+                    </Button>
+                    <Button variant="primary" size="sm" onClick={() => handleApprove(item)}>
+                      승인
+                    </Button>
+                  </>
+                )}
+                <Button variant="outline" size="sm" onClick={() => handleDelete(item.farmId)} style={{ borderColor: '#ef4444', color: '#ef4444' }}>
+                  삭제
+                </Button>
+              </div>
             </div>
           ))}
         </div>

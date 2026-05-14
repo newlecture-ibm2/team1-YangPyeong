@@ -34,8 +34,38 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
 
     @Override
     public List<AdminPost> findAll() {
-        String sql = "SELECT * FROM posts WHERE deleted_at IS NULL ORDER BY created_at DESC";
+        String sql = "SELECT * FROM posts ORDER BY created_at DESC";
         return jdbcTemplate.query(sql, rowMapper);
+    }
+
+    @Override
+    public List<AdminPost> findByFilter(String keyword, String status, int offset, int limit) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM posts WHERE 1=1 ");
+        if (keyword != null && !keyword.isBlank()) {
+            sql.append("AND title LIKE '%").append(keyword).append("%' ");
+        }
+        if ("ACTIVE".equalsIgnoreCase(status)) {
+            sql.append("AND deleted_at IS NULL ");
+        } else if ("DELETED".equalsIgnoreCase(status)) {
+            sql.append("AND deleted_at IS NOT NULL ");
+        }
+        sql.append("ORDER BY created_at DESC LIMIT ? OFFSET ?");
+        return jdbcTemplate.query(sql.toString(), rowMapper, limit, offset);
+    }
+
+    @Override
+    public long countByFilter(String keyword, String status) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM posts WHERE 1=1 ");
+        if (keyword != null && !keyword.isBlank()) {
+            sql.append("AND title LIKE '%").append(keyword).append("%' ");
+        }
+        if ("ACTIVE".equalsIgnoreCase(status)) {
+            sql.append("AND deleted_at IS NULL ");
+        } else if ("DELETED".equalsIgnoreCase(status)) {
+            sql.append("AND deleted_at IS NOT NULL ");
+        }
+        Long count = jdbcTemplate.queryForObject(sql.toString(), Long.class);
+        return count != null ? count : 0L;
     }
 
     @Override
@@ -55,5 +85,12 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
     public void updateNotice(Long id, Boolean isNotice) {
         String sql = "UPDATE posts SET is_notice = ?, updated_at = NOW() WHERE id = ?";
         jdbcTemplate.update(sql, isNotice, id);
+    }
+
+    @Override
+    public void save(AdminPost post) {
+        String sql = "INSERT INTO posts (author_id, category_id, title, content, is_notice, created_at, updated_at) " +
+                     "VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+        jdbcTemplate.update(sql, post.getAuthorId(), post.getCategoryId(), post.getTitle(), post.getContent(), post.getIsNotice());
     }
 }

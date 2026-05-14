@@ -46,7 +46,12 @@ export default function PostCard({ post }: PostCardProps) {
           {hasImage && <span className={styles.imageIcon}>🖼️</span>}
         </h3>
         <div className={styles.details}>
-          <span className={styles.nickname}>{post.authorNickname || '알 수 없음'}</span>
+          <span
+            className={styles.nickname}
+            style={post.authorStatus === 'WITHDRAWN' ? { color: 'var(--color-text-tertiary, #999)' } : undefined}
+          >
+            {post.authorStatus === 'WITHDRAWN' ? '(탈퇴한 사용자)' : (post.authorNickname || '알 수 없음')}
+          </span>
           <span className={styles.divider}>|</span>
           <span className={styles.date}>{formatDate(post.createdAt)}</span>
         </div>

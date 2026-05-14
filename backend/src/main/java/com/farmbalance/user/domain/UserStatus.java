@@ -7,7 +7,6 @@ public enum UserStatus {
     ACTIVE,
     SUSPENDED,
     PENDING,
-    /** 탈퇴 유예 중 — 로그인 가능, 유예 종료 시 WITHDRAWN으로 전환 */
-    PENDING_WITHDRAWAL,
+
     WITHDRAWN
 }

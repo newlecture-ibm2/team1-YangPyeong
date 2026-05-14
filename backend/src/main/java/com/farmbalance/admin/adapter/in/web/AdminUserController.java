@@ -3,6 +3,8 @@ package com.farmbalance.admin.adapter.in.web;
 import com.farmbalance.admin.adapter.in.web.dto.AdminUserResponse;
 import com.farmbalance.admin.adapter.in.web.dto.ChangeUserRoleRequest;
 import com.farmbalance.admin.adapter.in.web.dto.ChangeUserStatusRequest;
+import com.farmbalance.admin.adapter.in.web.dto.ForceWithdrawRequest;
+import com.farmbalance.admin.application.port.in.dto.AdminUserDto;
 import com.farmbalance.admin.application.port.in.ManageUserUseCase;
 import com.farmbalance.global.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * ADM-001 사용자 관리 Controller (Driving Adapter)
@@ -36,7 +39,11 @@ public class AdminUserController {
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "20") int size) {
 
-        List<AdminUserResponse> users = manageUserUseCase.getUsers(keyword, role, status, page, size);
+        List<AdminUserDto> dtos = manageUserUseCase.getUsers(keyword, role, status, page, size);
+        List<AdminUserResponse> users = dtos.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+                
         long totalCount = manageUserUseCase.countUsers(keyword, role, status);
         int totalPages = (int) Math.ceil((double) totalCount / size);
 
@@ -58,7 +65,22 @@ public class AdminUserController {
      */
     @GetMapping("/{id}")
     public ApiResponse<AdminUserResponse> getUserById(@PathVariable Long id) {
-        return ApiResponse.ok(manageUserUseCase.getUserById(id));
+        AdminUserDto dto = manageUserUseCase.getUserById(id);
+        return ApiResponse.ok(mapToResponse(dto));
+    }
+
+    private AdminUserResponse mapToResponse(AdminUserDto dto) {
+        return AdminUserResponse.builder()
+                .id(dto.getId())
+                .email(dto.getEmail())
+                .name(dto.getName())
+                .phone(dto.getPhone())
+                .role(dto.getRole())
+                .status(dto.getStatus())
+                .createdAt(dto.getCreatedAt())
+                .updatedAt(dto.getUpdatedAt())
+                .deletedAt(dto.getDeletedAt())
+                .build();
     }
 
     /**
@@ -80,6 +102,42 @@ public class AdminUserController {
     public ApiResponse<Void> changeStatus(@PathVariable Long id,
                                           @Valid @RequestBody ChangeUserStatusRequest request) {
         manageUserUseCase.changeStatus(id, request.getStatus());
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 관리자 강제 탈퇴 (제재)
+     * POST /api/admin/users/{id}/withdraw
+     */
+    @PostMapping("/{id}/withdraw")
+    public ApiResponse<Void> forceWithdraw(@PathVariable Long id,
+                                           @Valid @RequestBody ForceWithdrawRequest request) {
+        manageUserUseCase.forceWithdrawUser(id, request.getReasonType(), request.getReasonDetail());
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 관리자 수동 탈퇴 복구
+     * POST /api/admin/users/{id}/reactivate
+     */
+    @PostMapping("/{id}/reactivate")
+    public ApiResponse<Void> reactivateUser(@PathVariable Long id) {
+        manageUserUseCase.reactivateUser(id);
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 특수 계정(지자체, 관리자) 직접 발급
+     * POST /api/admin/users
+     */
+    @PostMapping
+    public ApiResponse<Void> createUser(@Valid @RequestBody com.farmbalance.admin.adapter.in.web.dto.AdminCreateUserRequest request) {
+        manageUserUseCase.createUser(
+                request.getEmail(),
+                request.getPassword(),
+                request.getName(),
+                request.getRole()
+        );
         return ApiResponse.ok(null);
     }
 }

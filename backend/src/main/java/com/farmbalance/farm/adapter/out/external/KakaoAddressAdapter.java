@@ -12,6 +12,11 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.farmbalance.admin.application.port.in.ManageApiSyncUseCase;
+import com.farmbalance.admin.domain.ApiSyncStatus;
+import com.farmbalance.global.error.BusinessException;
+import com.farmbalance.global.error.ErrorCode;
+
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -28,16 +33,26 @@ public class KakaoAddressAdapter implements GetCoordinatesPort {
 
     private final RestTemplate restTemplate;
     private final String kakaoRestApiKey;
+    private final ManageApiSyncUseCase manageApiSyncUseCase;
 
     public KakaoAddressAdapter(
-            @Value("${external.kakao.rest-api-key}") String kakaoRestApiKey
+            @Value("${external.kakao.rest-api-key}") String kakaoRestApiKey,
+            ManageApiSyncUseCase manageApiSyncUseCase
     ) {
         this.restTemplate = new RestTemplate();
         this.kakaoRestApiKey = kakaoRestApiKey;
+        this.manageApiSyncUseCase = manageApiSyncUseCase;
     }
 
     @Override
     public Coordinates getCoordinates(String address) {
+        // [우회 로직] KAKAO_LOCAL API가 활성화 상태인지 확인
+        ApiSyncStatus status = manageApiSyncUseCase.getApiSyncStatusByName("KAKAO_LOCAL");
+        if (!status.getIsActive()) {
+            log.warn("[우회 처리] KAKAO_LOCAL API가 비활성화 상태입니다. address={}", address);
+            throw new BusinessException(ErrorCode.API_TEMPORARILY_UNAVAILABLE);
+        }
+
         log.debug("카카오 주소 검색 요청: address={}", address);
 
         // 1. 요청 URI 구성

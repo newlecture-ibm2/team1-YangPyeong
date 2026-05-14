@@ -9,13 +9,17 @@ import java.time.LocalDateTime;
  * crops 테이블: 조회 전용 작물 마스터 데이터
  */
 @Getter
+@Setter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class AdminCrop {
 
     private Long id;
     private Long categoryId;
     private String name;
+    private String externalId;
+    private String dataSource;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;

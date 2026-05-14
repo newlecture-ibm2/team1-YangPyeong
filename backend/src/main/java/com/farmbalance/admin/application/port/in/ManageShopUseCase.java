@@ -1,6 +1,6 @@
 package com.farmbalance.admin.application.port.in;
 
-import com.farmbalance.admin.adapter.in.web.dto.AdminShopProductResponse;
+import com.farmbalance.admin.application.port.in.dto.AdminShopProductDto;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ public interface ManageShopUseCase {
     /**
      * 상품 목록 조회 (검색 + 필터 + 정렬 + 페이징)
      */
-    List<AdminShopProductResponse> getProducts(String keyword, String category, String status, String sort, int page, int size);
+    List<AdminShopProductDto> getProducts(String keyword, String category, String status, String sort, int page, int size);
 
     /**
      * 상품 목록 총 개수 (검색 + 필터)

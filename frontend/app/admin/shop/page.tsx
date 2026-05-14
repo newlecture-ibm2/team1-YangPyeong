@@ -63,7 +63,7 @@ type TabType = 'INVENTORY' | 'REVIEW'
 export default function ShopPage() {
   const [products, setProducts] = useState<AdminProduct[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   // 페이징 및 필터 상태
   const [activeTab, setActiveTab] = useState<TabType>('INVENTORY')
   const [statusFilter, setStatusFilter] = useState('ALL')
@@ -71,7 +71,7 @@ export default function ShopPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
   const [pendingCount, setPendingCount] = useState(0)
-  
+
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('ALL')
   const [sort, setSort] = useState('createdAt')
@@ -89,12 +89,12 @@ export default function ShopPage() {
           .map(t => t.value)
           .join(',')
       }
-      
+
       const [mainData, pendingData] = await Promise.all([
         fetchProducts(keyword, category, statusQuery, sort, page, 20),
         fetchProducts('', 'ALL', 'PENDING', 'createdAt', 0, 1) // 승인대기 카운트용
       ])
-      
+
       setProducts(mainData.products)
       setTotalPages(mainData.meta.totalPages)
       setTotalCount(mainData.meta.totalCount)
@@ -186,7 +186,7 @@ export default function ShopPage() {
         </div>
       )
     }
-    
+
     return null
   }
 
@@ -207,13 +207,13 @@ export default function ShopPage() {
       </div>
 
       <div className={styles.tabs}>
-        <button 
+        <button
           className={`${styles.tabItem} ${activeTab === 'INVENTORY' ? styles.tabActive : ''}`}
           onClick={() => handleTabChange('INVENTORY')}
         >
           상점 상품 관리
         </button>
-        <button 
+        <button
           className={`${styles.tabItem} ${activeTab === 'REVIEW' ? styles.tabActive : ''}`}
           onClick={() => handleTabChange('REVIEW')}
         >
@@ -284,12 +284,12 @@ export default function ShopPage() {
               ) : (
                 products.map(product => {
                   const badge = getStatusBadge(product.status)
-                  
+
                   return (
                     <tr key={product.id}>
                       <td>#{product.id}</td>
                       <td className={styles.productName}>
-                        {product.status === 'PENDING' && <span title="신규 요청" style={{marginRight: '4px'}}>🆕</span>}
+                        {product.status === 'PENDING' && <span title="신규 요청" style={{ marginRight: '4px' }}>🆕</span>}
                         {product.name}
                       </td>
                       <td>{product.categoryName || '-'}</td>
@@ -311,14 +311,14 @@ export default function ShopPage() {
       {/* 페이지네이션 */}
       {!loading && totalPages > 1 && (
         <div className={styles.pagination}>
-          <button 
-            className={styles.pageBtn} 
+          <button
+            className={styles.pageBtn}
             disabled={page === 0}
             onClick={() => setPage(p => p - 1)}
           >
             ◀
           </button>
-          
+
           {Array.from({ length: totalPages }).map((_, i) => {
             // 간단한 표시용
             if (i < page - 2 || i > page + 2) return null;
@@ -333,8 +333,8 @@ export default function ShopPage() {
             )
           })}
 
-          <button 
-            className={styles.pageBtn} 
+          <button
+            className={styles.pageBtn}
             disabled={page === totalPages - 1}
             onClick={() => setPage(p => p + 1)}
           >

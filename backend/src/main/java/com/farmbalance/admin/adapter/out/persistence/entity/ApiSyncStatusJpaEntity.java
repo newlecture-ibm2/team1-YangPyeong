@@ -37,6 +37,8 @@ public class ApiSyncStatusJpaEntity {
     private String displayName;
 
     private LocalDateTime lastSynced;
+    
+    private LocalDateTime lastHealthChecked;
 
     @Column(length = 20)
     @Builder.Default
@@ -60,6 +62,18 @@ public class ApiSyncStatusJpaEntity {
 
     private LocalDateTime deletedAt;
 
+    public void updateActiveStatus(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public void updateAll(LocalDateTime lastSynced, LocalDateTime lastHealthChecked, String syncStatus, Integer count, String error) {
+        this.lastSynced = lastSynced;
+        this.lastHealthChecked = lastHealthChecked;
+        this.syncStatus = syncStatus;
+        this.lastRecordCount = count;
+        this.errorMessage = error;
+    }
+
     /* ── 도메인 모델 변환 ── */
 
     public ApiSyncStatus toDomain() {
@@ -68,6 +82,7 @@ public class ApiSyncStatusJpaEntity {
                 .apiName(apiName)
                 .displayName(displayName)
                 .lastSynced(lastSynced)
+                .lastHealthChecked(lastHealthChecked)
                 .syncStatus(syncStatus)
                 .lastRecordCount(lastRecordCount)
                 .errorMessage(errorMessage)
@@ -84,6 +99,7 @@ public class ApiSyncStatusJpaEntity {
                 .apiName(domain.getApiName())
                 .displayName(domain.getDisplayName())
                 .lastSynced(domain.getLastSynced())
+                .lastHealthChecked(domain.getLastHealthChecked())
                 .syncStatus(domain.getSyncStatus())
                 .lastRecordCount(domain.getLastRecordCount())
                 .errorMessage(domain.getErrorMessage())

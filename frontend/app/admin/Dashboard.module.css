@@ -9,7 +9,7 @@
 /* ── KPI 카드 그리드 ── */
 .kpiGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: var(--space-md);
   margin-bottom: var(--space-xl);
 }
@@ -56,39 +56,79 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
 }
 
 .chartCardLabel {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-secondary);
+  color: var(--color-text);
   margin-bottom: var(--space-md);
 }
 
-.chartPlaceholder {
-  height: 220px;
+
+
+/* ── 위험 작물 리스트 ── */
+.riskList {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-bg);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-  font-size: 14px;
+  gap: var(--space-md);
+  flex: 1;
 }
 
-/* ── 로딩 ── */
-.loadingWrap {
+.riskColumn {
+  flex: 1;
+  background: var(--color-bg);
+  padding: var(--space-md);
+  border-radius: var(--radius-sm);
+}
+
+.riskTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-xs);
+}
+
+.riskItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.ratioText {
+  margin-right: 8px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.emptyRisk {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  padding: var(--space-sm) 0;
+  text-align: center;
+}
+
+
+
+/* ── 로딩 / 엠프티 ── */
+.loadingWrap, .emptyState {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 300px;
+  min-height: 200px;
   color: var(--color-text-secondary);
-  font-size: 16px;
+  font-size: 14px;
 }
 
 @media (max-width: 768px) {
   .kpiGrid { grid-template-columns: repeat(2, 1fr); }
   .chartGrid { grid-template-columns: 1fr; }
+  .riskList { flex-direction: column; }
 }

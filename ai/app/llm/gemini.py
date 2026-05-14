@@ -97,3 +97,29 @@ class GeminiLLM(BaseLLM):
         except Exception as e:
             logger.error("Gemini generate_stream 실패: %s", e)
             raise
+
+    async def generate_json(
+        self,
+        prompt: str,
+        *,
+        system_instruction: Optional[str] = None,
+        temperature: float = 0.1,
+        max_tokens: int = 2048,
+    ) -> str:
+        model = self._get_model(system_instruction)
+
+        generation_config = {
+            "temperature": temperature,
+            "max_output_tokens": max_tokens,
+            "response_mime_type": "application/json",
+        }
+
+        try:
+            response = await model.generate_content_async(
+                prompt,
+                generation_config=generation_config,
+            )
+            return response.text
+        except Exception as e:
+            logger.error("Gemini generate_json 실패: %s", e)
+            raise
