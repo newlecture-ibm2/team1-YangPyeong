@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, Any
 
 class DocumentOcrResponse(BaseModel):
     isValid: bool = Field(..., description="정상적인 농장 등록 문서(토지대장 등)인지 여부")
@@ -9,3 +9,11 @@ class DocumentOcrResponse(BaseModel):
     address: Optional[str] = Field(None, description="농장 소재지")
     area: Optional[str] = Field(None, description="전체 면적(숫자만)")
     documentIssueNumber: Optional[str] = Field(None, description="문서 발급/확인 번호")
+
+    @field_validator('errorMessage', 'documentType', 'farmOwnerName', 'address', 'area', 'documentIssueNumber', mode='before')
+    @classmethod
+    def coerce_to_string(cls, v: Any) -> Optional[str]:
+        """AI가 숫자형 등으로 잘못 추출하더라도 Pydantic이 에러를 뱉지 않도록 문자열로 안전하게 형변환합니다."""
+        if v is not None:
+            return str(v)
+        return v
