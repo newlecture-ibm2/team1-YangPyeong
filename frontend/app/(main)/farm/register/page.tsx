@@ -651,11 +651,51 @@ export default function FarmRegisterPage() {
             💡 등록하신 정보는 관리자 검토 및 승인 후 최종 반영되며, 이후 농업인 권한이 부여됩니다.
           </p>
           <div className={styles.buttonGroup}>
-            <Button type="submit" variant="primary" style={{ flex: 1 }}>등록하기 →</Button>
-            <Button type="button" variant="outline" onClick={() => router.back()}>취소</Button>
+            <Button type="submit" variant="primary" style={{ flex: 1 }} disabled={isAnalyzing}>
+              {isAnalyzing ? '문서 분석 및 등록 중...' : '등록하기 →'}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isAnalyzing}>
+              취소
+            </Button>
           </div>
         </div>
       </form>
+
+      {/* AI OCR 분석 중 오버레이 스피너 */}
+      {isAnalyzing && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(255, 255, 255, 0.85)',
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backdropFilter: 'blur(3px)'
+        }}>
+          <div style={{
+            width: '48px', height: '48px',
+            border: '4px solid var(--color-border)',
+            borderTop: '4px solid var(--color-primary)',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            marginBottom: '20px'
+          }}></div>
+          <p style={{ fontWeight: 'bold', color: 'var(--color-primary)', fontSize: '18px', marginBottom: '8px' }}>
+            ✨ AI가 증빙 서류를 분석하고 있습니다...
+          </p>
+          <p style={{ fontSize: '14px', color: 'var(--color-secondary)' }}>
+            화면을 닫지 말고 잠시만 기다려주세요. (최대 10초 소요)
+          </p>
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      )}
 
       {/* 카카오 우편번호 검색 모달 */}
       <Modal
