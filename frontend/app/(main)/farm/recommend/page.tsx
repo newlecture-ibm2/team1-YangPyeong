@@ -106,12 +106,14 @@ export default function RecommendListPage() {
         {/* ── 추천 결과 ── */}
         {hook.hasAnalyzed && hook.result && (
           <>
-            <div className={styles.rankingGrid}>
+            <div className={styles.rankingGrid} data-guide="recommend-ranking">
               {hook.top3.map((rec, idx) => (
                 <RankingCard key={rec.cropId} rec={rec} index={idx} />
               ))}
             </div>
-            <RecommendTable recommendations={hook.allRecs} />
+            <div data-guide="recommend-detail">
+              <RecommendTable recommendations={hook.allRecs} />
+            </div>
           </>
         )}
       </div>

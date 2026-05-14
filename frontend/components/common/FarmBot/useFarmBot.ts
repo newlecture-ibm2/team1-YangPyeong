@@ -62,11 +62,7 @@ export function useFarmBot() {
   // 페이지 변경 시 시나리오 갱신
   useEffect(() => {
     const scenario = getScenarioForPath(pathname || '/');
-    if (scenario) {
-      setSteps(scenario.steps);
-    } else {
-      setSteps([]);
-    }
+
     // 페이지 변경 시 진행 중인 가이드 중지 + 리셋
     setMode('minimized');
     setShowBubble(false);
@@ -75,6 +71,12 @@ export function useFarmBot() {
     setCurrentStep(-1);
     hasAsked.current = false;
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    if (scenario) {
+      setSteps(scenario.steps);
+    } else {
+      setSteps([]);
+    }
   }, [pathname]);
 
   /** 타겟 요소로 캐릭터를 이동시킵니다 */
@@ -85,40 +87,62 @@ export function useFarmBot() {
       onArrive();
       return;
     }
-    const rect = el.getBoundingClientRect();
-    if (rect.width === 0 && rect.height === 0) {
-      onArrive();
+    
+    // 먼저 요소가 화면 중앙에 오도록 부드럽게 스크롤합니다
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // 이동 시작 즉시 말풍선 숨김 (캐릭터 이동 전에 말풍선이 잔류하지 않도록)
+    setShowBubble(false);
+
+    // 스크롤이 어느 정도 완료된 후 위치를 계산합니다
+    setTimeout(() => {
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) {
+        onArrive();
+        return;
+      }
+
+      setHighlightRect(rect);
+
+      const targetX = rect.left + rect.width / 2 - CHARACTER_SIZE / 2;
+      const targetY = rect.bottom + 12;
+
+      // 방향 결정
+      setFacingRight(targetX > position.x);
+
+      setBotState('walking');
+      const finalY = Math.min(targetY, window.innerHeight - CHARACTER_SIZE - 20);
+      setPosition({ x: targetX, y: finalY });
+      setBubbleAbove(finalY > window.innerHeight / 2);
+
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        setBotState('idle');
+        onArrive();
+      }, 1350); // 총 1850ms 중 스크롤 대기 시간 500ms를 뺀 나머지 시간
+    }, 500);
+  }, [position.x]);
+
+  /** 특정 스텝으로 이동 — 타겟이 DOM에 없으면 자동으로 다음 스텝으로 건너뜀 */
+  const goToStep = useCallback((stepIdx: number, _visited?: Set<number>) => {
+    if (stepIdx < 0 || stepIdx >= steps.length) return;
+
+    const visited = _visited || new Set<number>();
+    if (visited.has(stepIdx)) return; // 무한루프 방지
+    visited.add(stepIdx);
+
+    const step = steps[stepIdx];
+    const el = document.querySelector(step.target);
+
+    // 타겟이 DOM에 존재하지 않으면 다음 스텝으로 건너뛰기
+    if (!el) {
+      if (stepIdx + 1 < steps.length) {
+        goToStep(stepIdx + 1, visited);
+      }
       return;
     }
 
-    setHighlightRect(rect);
-
-    const targetX = rect.left + rect.width / 2 - CHARACTER_SIZE / 2;
-    const targetY = rect.bottom + 12;
-
-    // 방향 결정
-    setFacingRight(targetX > position.x);
-
-    setBotState('walking');
-    setShowBubble(false);
-    const finalY = Math.min(targetY, window.innerHeight - CHARACTER_SIZE - 20);
-    setPosition({ x: targetX, y: finalY });
-    setBubbleAbove(finalY > window.innerHeight / 2);
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      setBotState('idle');
-      onArrive();
-    }, 1850);
-  }, [position.x]);
-
-  /** 특정 스텝으로 이동 */
-  const goToStep = useCallback((stepIdx: number) => {
-    if (stepIdx < 0 || stepIdx >= steps.length) return;
-
     setCurrentStep(stepIdx);
-    const step = steps[stepIdx];
-
     moveToElement(step, () => {
       setBubbleMessage(step.message);
       setShowBubble(true);
@@ -182,12 +206,16 @@ export function useFarmBot() {
     }
   }, [currentStep, steps, goToStep]);
 
-  /** 이전 스텝 */
+  /** 이전 스텝 (타겟 없는 스텝은 건너뜀) */
   const prevStep = useCallback(() => {
-    if (currentStep > 0) {
-      goToStep(currentStep - 1);
+    for (let i = currentStep - 1; i >= 0; i--) {
+      const el = document.querySelector(steps[i].target);
+      if (el) {
+        goToStep(i);
+        return;
+      }
     }
-  }, [currentStep, goToStep]);
+  }, [currentStep, steps, goToStep]);
 
   /** 가이드 중지 */
   const stopGuide = useCallback(() => {
@@ -357,11 +385,25 @@ export function useFarmBot() {
     };
   }, []);
 
+  // DOM에 존재하는 유효 스텝 인덱스 목록 (카운터 표시용)
+  const getVisibleStepInfo = useCallback(() => {
+    const validIndices = steps
+      .map((s, i) => ({ idx: i, exists: !!document.querySelector(s.target) }))
+      .filter((v) => v.exists)
+      .map((v) => v.idx);
+    const visiblePos = validIndices.indexOf(currentStep);
+    return {
+      visibleIndex: visiblePos >= 0 ? visiblePos : 0,
+      visibleTotal: validIndices.length || steps.length,
+    };
+  }, [steps, currentStep]);
+
   return {
     isMounted,
     mode,
     currentStep,
     totalSteps: steps.length,
+    getVisibleStepInfo,
     botState,
     position,
     facingRight,

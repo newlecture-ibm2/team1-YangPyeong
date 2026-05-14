@@ -50,7 +50,7 @@ export default function PolicyListPage() {
       </div>
 
       {/* 필터 영역 */}
-      <div className={styles.filterSection}>
+      <div className={styles.filterSection} data-guide="policy-filter">
         <FilterBar
           dropdowns={[
             <Dropdown
@@ -144,7 +144,7 @@ export default function PolicyListPage() {
       {/* 정책 카드 리스트 */}
       {!isLoading && !error && policies.length > 0 && (
         <>
-          <div className={styles.policyList}>
+          <div className={styles.policyList} data-guide="policy-list">
             {policies.map((policy) => (
               <PolicyCard key={policy.id} policy={policy} />
             ))}

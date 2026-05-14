@@ -403,6 +403,7 @@ export default function SellerRegisterPage() {
               className={styles.aiAutofillButton}
               onClick={handleAiAutofill}
               disabled={isAiAutofilling}
+              data-guide="register-autofill"
             >
               {isAiAutofilling ? (
                 <>
@@ -415,7 +416,7 @@ export default function SellerRegisterPage() {
             </button>
           </div>
 
-          <div>
+          <div data-guide="register-name">
             <Input
               label="상품명"
               placeholder="예: 유기농 상추 (500g)"
@@ -551,6 +552,7 @@ export default function SellerRegisterPage() {
             variant="primary"
             onClick={handleSubmit}
             disabled={!isValid || isSubmitting}
+            data-guide="register-submit"
           >
             {isSubmitting ? '등록 중...' : '상품 등록'}
           </Button>

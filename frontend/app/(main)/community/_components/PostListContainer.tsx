@@ -127,7 +127,7 @@ export default function PostListContainer({
       </nav>
 
       <div className={styles.filterSection}>
-        <form onSubmit={handleSearch} className={styles.searchBar}>
+        <form onSubmit={handleSearch} className={styles.searchBar} data-guide="community-search">
           <select
             value={searchType}
             onChange={(e) => setSearchType(e.target.value as any)}
@@ -164,6 +164,7 @@ export default function PostListContainer({
             variant="primary"
             size="md"
             onClick={handleWriteClick}
+            data-guide="community-write"
           >
             지식 공유하기
           </Button>
@@ -172,7 +173,7 @@ export default function PostListContainer({
 
       {posts.length > 0 ? (
         <>
-          <div className={styles.list}>
+          <div className={styles.list} data-guide="community-posts">
             {posts.map((post) => (
               <PostCard key={post.id} post={post} />
             ))}

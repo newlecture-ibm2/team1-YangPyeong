@@ -121,7 +121,8 @@ export default function MyPage() {
       <ProfileHeader 
         profile={profile} 
         isUploading={isUploading} 
-        onImageUpload={handleImageUpload} 
+        onImageUpload={handleImageUpload}
+        data-guide="mypage-profile"
       />
 
       <div className={styles.contentCard}>
@@ -145,7 +146,7 @@ export default function MyPage() {
       </div>
 
       {/* 3. 계정 설정 영역 */}
-      <div className={styles.accountSettings}>
+      <div className={styles.accountSettings} data-guide="mypage-tabs">
         <h2 className={styles.sectionTitle}>계정 설정</h2>
         <div className={styles.settingsList}>
           {/* LOCAL 유저만 비밀번호 변경 표시 */}
