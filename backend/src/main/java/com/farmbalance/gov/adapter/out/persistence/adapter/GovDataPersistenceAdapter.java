@@ -48,7 +48,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
                    r.name AS region_name
             FROM users u
             LEFT JOIN regions r ON r.code = u.region_code AND r.type = 'CITY'
-            WHERE u.id = ? AND u.deleted_at IS NULL
+            WHERE u.id = ? AND u.status = 'ACTIVE'
             """;
         List<Map<String, Object>> result = jdbc.queryForList(sql, userId);
         if (result.isEmpty()) return null;
