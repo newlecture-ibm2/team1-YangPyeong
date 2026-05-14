@@ -26,6 +26,7 @@ public class User {
     private String profileImageUrl;
     private String address;
     private String bio;
+    private String regionCode;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -50,6 +51,7 @@ public class User {
                 .profileImageUrl(this.profileImageUrl)
                 .address(this.address)
                 .bio(this.bio)
+                .regionCode(this.regionCode)
                 .createdAt(this.createdAt)
                 .updatedAt(this.updatedAt)
                 .withdrawalRequestedAt(this.withdrawalRequestedAt)
@@ -70,6 +72,12 @@ public class User {
         this.address = address;
         this.bio = bio;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    /** 프로필 정보를 업데이트합니다 (regionCode 포함). */
+    public void updateProfileWithRegion(String name, String phone, String address, String bio, String regionCode) {
+        updateProfile(name, phone, address, bio);
+        this.regionCode = regionCode;
     }
 
     /** 프로필 이미지 URL을 업데이트합니다. */
