@@ -119,7 +119,7 @@ export default function PolicyRecommendPage() {
                       </div>
                     )}
                     <div className={styles.policyList}>
-                      {data.recommendedPolicies.map((policy) => (
+                      {[...data.recommendedPolicies].sort((a, b) => b.matchScore - a.matchScore).map((policy) => (
                         <div key={policy.policyId} className={styles.policyCard}>
                           <div className={styles.policyHeader}>
                             <div className={`${styles.matchBadge} ${getScoreClass(policy.matchScore)}`}>
