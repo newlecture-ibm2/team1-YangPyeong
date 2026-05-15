@@ -146,10 +146,15 @@ public class GovQueryService implements GetGovUserInfoUseCase, GetGovDashboardUs
         java.util.Set<String> allCrops = new java.util.HashSet<>(map1.keySet());
         allCrops.addAll(map2.keySet());
         for (String c : allCrops) {
-            double v1 = map1.getOrDefault(c, 0.0);
-            double v2 = map2.getOrDefault(c, 0.0);
-            double diff = v2 - v1;
-            double pct = v1 == 0 ? 0 : (diff / v1) * 100;
+            Double v1 = map1.get(c);
+            Double v2 = map2.get(c);
+            Double diff = null;
+            if (v1 != null || v2 != null) {
+                double val1 = v1 != null ? v1 : 0.0;
+                double val2 = v2 != null ? v2 : 0.0;
+                diff = val2 - val1;
+            }
+            Double pct = (v1 == null || v1 == 0.0) ? null : (diff / v1) * 100;
             res.add(GovCompareResult.builder().crop(c).prevYearTon(v1).currentYearTon(v2).diffTon(diff).diffRate(pct).build());
         }
         return res;

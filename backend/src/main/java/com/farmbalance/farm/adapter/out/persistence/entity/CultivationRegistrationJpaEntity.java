@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -51,10 +52,17 @@ public class CultivationRegistrationJpaEntity extends BaseTimeEntity {
     @Column(name = "status", nullable = false, length = 20)
     private CultivationStatus status = CultivationStatus.ACTIVE;
 
+    @Column(name = "sowing_date")
+    private LocalDate sowingDate;
+
+    @Column(name = "in_season", nullable = false)
+    private boolean inSeason = false;
+
     @Builder
     public CultivationRegistrationJpaEntity(Long id, Long farmId, Long cropId,
                                             Double cultivationArea, Double farmerEstimatedYield,
-                                            String yieldUnit, CultivationStatus status) {
+                                            String yieldUnit, CultivationStatus status,
+                                            LocalDate sowingDate, Boolean inSeason) {
         this.id = id;
         this.farmId = farmId;
         this.cropId = cropId;
@@ -62,6 +70,8 @@ public class CultivationRegistrationJpaEntity extends BaseTimeEntity {
         this.farmerEstimatedYield = farmerEstimatedYield;
         this.yieldUnit = yieldUnit;
         this.status = status != null ? status : CultivationStatus.ACTIVE;
+        this.sowingDate = sowingDate;
+        this.inSeason = inSeason != null && inSeason;
     }
 
     public void softDelete() {

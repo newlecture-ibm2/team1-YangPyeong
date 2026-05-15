@@ -8,7 +8,17 @@ export interface ApiResponse<T> {
 export interface AdminPolicyData {
   id: number
   externalId: string
-  data: string
+  title: string | null
+  category: string | null
+  organization: string | null
+  regionCode: string | null
+  regionName: string | null
+  target: string | null
+  supportAmount: string | null
+  applyStart: string | null
+  applyEnd: string | null
+  contentSummary: string | null
+  sourceUrl: string | null
   fetchedAt: string | null
   createdAt: string
   updatedAt: string | null
@@ -18,5 +28,14 @@ export interface AdminPolicyData {
 /** 정책 생성/수정 요청 */
 export interface PolicyDataRequest {
   externalId: string
-  data: string
+  title: string | null
+  category: string | null
+  organization: string | null
+  regionCode: string | null
+  target: string | null
+  supportAmount: string | null
+  applyStart: string | null
+  applyEnd: string | null
+  contentSummary: string | null
+  sourceUrl: string | null
 }

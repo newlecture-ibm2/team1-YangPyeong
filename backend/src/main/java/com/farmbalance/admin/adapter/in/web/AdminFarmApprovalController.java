@@ -50,6 +50,7 @@ public class AdminFarmApprovalController {
                                 .name(doc.getName())
                                 .build())
                         .collect(Collectors.toList()) : null)
+                .documentData(dto.getDocumentData())
                 .status(dto.getStatus())
                 .createdAt(dto.getCreatedAt())
                 .userId(dto.getUserId())

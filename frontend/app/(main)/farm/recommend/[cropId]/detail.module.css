@@ -11,6 +11,23 @@
   gap: 28px;
 }
 
+.adviceModeLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: -12px 0 0;
+}
+
+.mismatchBanner {
+  padding: 14px 18px;
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #92400e;
+}
+
 /* ── 페이지 헤더 ── */
 .pageHeader {
   margin-bottom: 8px;

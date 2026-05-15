@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { CropRecommendation } from '../../_lib/recommend.types';
-import { SUPPLY_STATUS_MAP } from '../../_lib/recommend.types';
+import { SUPPLY_STATUS_MAP, ADVICE_TYPE_LABEL } from '../../_lib/recommend.types';
 import styles from './RecommendTable.module.css';
 
 interface RecommendTableProps {
@@ -45,6 +45,7 @@ export default function RecommendTable({ recommendations, farmId }: RecommendTab
             <tr>
               <th>순위</th>
               <th>작물명</th>
+              <th>유형</th>
               <th>분류</th>
               <th>AI 점수</th>
               <th>예상 수익</th>
@@ -57,6 +58,7 @@ export default function RecommendTable({ recommendations, farmId }: RecommendTab
               <tr key={rec.cropId}>
                 <td><span className={styles.rankNum}>{rec.rank}</span></td>
                 <td style={{ fontWeight: 500 }}>{rec.cropName}</td>
+                <td>{rec.adviceType ? (ADVICE_TYPE_LABEL[rec.adviceType] ?? rec.adviceType) : '—'}</td>
                 <td><CategoryPill category={rec.category} /></td>
                 <td style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{rec.score}</td>
                 <td>₩{rec.expectedRevenuePerKg.toLocaleString('ko-KR')}/kg</td>
