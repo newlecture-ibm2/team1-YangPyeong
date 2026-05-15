@@ -10,12 +10,21 @@ import com.farmbalance.recommend.adapter.out.external.KamisPriceAdapter;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 
+import jakarta.annotation.PostConstruct;
+import java.util.TimeZone;
+
 @SpringBootApplication
 @EnableScheduling
 @EnableConfigurationProperties(UserAccountProperties.class)
 @org.springframework.cache.annotation.EnableCaching
 @org.springframework.scheduling.annotation.EnableAsync
 public class FarmBalanceApplication {
+
+    @PostConstruct
+    public void init() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
+    }
+
     public static void main(String[] args) {
         SpringApplication.run(FarmBalanceApplication.class, args);
     }
