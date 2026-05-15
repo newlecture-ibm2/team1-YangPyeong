@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -65,6 +66,7 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
                 env.sowing_info       AS env_sowing_info,
                 env.harvest_info      AS env_harvest_info,
                 env.growth_days       AS env_growth_days,
+                env.major_pests       AS env_major_pests,
                 -- nongsaro_farm_schedules: 파종 시기 (동적 조회)
                 sowing_sch.sowing_period,
                 -- nongsaro_farm_schedules: 수확 시기 (동적 조회)
@@ -209,6 +211,8 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
         // 재배 기간: DB 값 우선
         Integer dbGrowthDays = rs.getObject("env_growth_days") != null ? rs.getInt("env_growth_days") : null;
 
+        String[] pests = parseMajorPests(rs.getString("env_major_pests"));
+
         return new DefaultCropCandidateData(
                 cropId, cropName, category,
                 phMin, phMax,
@@ -220,8 +224,19 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
                 sowingPeriod,
                 harvestPeriod,
                 difficulty,
-                new String[]{}
+                pests
         );
+    }
+
+    /** crop_cultivation_env.major_pests — 쉼표 구분 문자열을 개별 항목 배열로 변환 */
+    private static String[] parseMajorPests(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return new String[0];
+        }
+        return Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toArray(String[]::new);
     }
 
     private int estimatePriceForecast(Double totalProd, Double yieldPer10a) {
