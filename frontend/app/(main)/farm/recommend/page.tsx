@@ -8,7 +8,7 @@ import RankingCard from './_components/RankingCard/RankingCard';
 import RecommendTable from './_components/RecommendTable/RecommendTable';
 import GuestPreviewBanner from '@/components/common/GuestPreviewBanner/GuestPreviewBanner';
 import { DUMMY_RECOMMENDATIONS } from '@/lib/preview-data';
-import { RECOMMEND_MODE_LABEL } from './_lib/recommend.types';
+import { RECOMMEND_MODE_LABEL, type CropRecommendation } from './_lib/recommend.types';
 import styles from './page.module.css';
 import farmStyles from '../page.module.css';
 
@@ -28,7 +28,7 @@ export default function RecommendListPage() {
       cropId: i,
       cropName: r.cropName,
       score: r.score,
-    })) as never;
+    })) as CropRecommendation[];
 
     return (
       <div className={farmStyles.container}>
@@ -41,8 +41,8 @@ export default function RecommendListPage() {
         </div>
         <div className={styles.content} style={{ opacity: 0.8, pointerEvents: 'none' }}>
           <div className={styles.rankingGrid}>
-            {previewRecs.slice(0, 3).map((rec: { cropId: number }, idx: number) => (
-              <RankingCard key={rec.cropId} rec={rec as never} index={idx} />
+            {previewRecs.slice(0, 3).map((rec, idx) => (
+              <RankingCard key={rec.cropId} rec={rec} index={idx} />
             ))}
           </div>
           <RecommendTable recommendations={previewRecs} />
