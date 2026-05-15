@@ -11,7 +11,7 @@ import Spinner from '@/components/common/Spinner/Spinner';
 import Dropdown from '@/components/common/Dropdown';
 
 interface CompareRow {
-  crop: string; prevYearTon: number; currentYearTon: number; diffTon: number; diffRate: number;
+  crop: string; prevYearTon: number | null; currentYearTon: number | null; diffTon: number; diffRate: number | null;
 }
 
 
@@ -28,7 +28,16 @@ export default function ComparePage() {
     setLoading(true);
     fetch(`/api/gov/compare?baseYear=${baseYear}&compareYear=${compareYear}`)
       .then(r => r.json())
-      .then(res => { setData(res.data || []); setLoading(false); })
+      .then(res => { 
+        const mappedData = (res.data || []).map((row: any) => {
+          if (row.prevYearTon === 0) row.prevYearTon = null;
+          if (row.currentYearTon === 0) row.currentYearTon = null;
+          if (row.prevYearTon == null) row.diffRate = null;
+          return row;
+        });
+        setData(mappedData); 
+        setLoading(false); 
+      })
       .catch(() => setLoading(false));
   }, [baseYear, compareYear]);
 
@@ -80,7 +89,7 @@ export default function ComparePage() {
                 <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="crop" />
-                  <YAxis width={80} />
+                  <YAxis width={80} tickFormatter={(value) => value.toLocaleString()} />
                   <Tooltip formatter={(value) => `${Number(value).toLocaleString()}kg`} />
                   <Legend />
                   <Bar dataKey="prevYearTon" name={`${baseYear}년`} fill="#52B788" radius={[4, 4, 0, 0]} />
@@ -100,8 +109,8 @@ export default function ComparePage() {
                 <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="crop" />
-                  <YAxis width={60} unit="%" />
-                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toFixed(2)}%` : `${value}%`} />
+                  <YAxis width={60} unit="%" tickFormatter={(value) => value.toLocaleString()} />
+                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toFixed(2)}%` : `계산 불가`} />
                   <Bar dataKey="diffRate" name="증감률(%)" fill="#CCFF33" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -131,15 +140,21 @@ export default function ComparePage() {
                 {data.map((r, i) => (
                   <tr key={i}>
                     <td className={styles.tdBold}>{r.crop}</td>
-                    <td className={styles.numberCell}>{r.prevYearTon.toLocaleString()}</td>
-                    <td className={styles.numberCell}>{r.currentYearTon.toLocaleString()}</td>
-                    <td className={styles.numberCell} style={{ color: r.diffTon >= 0 ? 'var(--color-primary)' : 'var(--color-danger)' }}>
-                      {r.diffTon >= 0 ? '+' : ''}{r.diffTon.toLocaleString()}
+                    <td className={styles.numberCell}>{r.prevYearTon != null ? r.prevYearTon.toLocaleString() : '-'}</td>
+                    <td className={styles.numberCell}>{r.currentYearTon != null ? r.currentYearTon.toLocaleString() : '-'}</td>
+                    <td className={styles.numberCell} style={{ color: r.diffTon > 0 ? 'var(--color-primary)' : (r.diffTon < 0 ? 'var(--color-danger)' : 'var(--color-text)') }}>
+                      {r.diffTon > 0 ? '+' : ''}{r.diffTon.toLocaleString()}
                     </td>
                     <td className={styles.numberCell}>
-                      <span className={`${styles.badge} ${r.diffRate >= 0 ? styles.badgeGreen : styles.badgeRed}`} style={{ minWidth: '48px', padding: '2px 8px' }}>
-                        {r.diffRate >= 0 ? '+' : ''}{r.diffRate.toFixed(1)}%
-                      </span>
+                      {r.diffRate == null ? (
+                        <span className={`${styles.badge} ${styles.badgeGhost}`} style={{ minWidth: '48px', padding: '2px 8px' }}>
+                          {r.diffTon > 0 ? '신규' : '-'}
+                        </span>
+                      ) : (
+                        <span className={`${styles.badge} ${r.diffRate > 0 ? styles.badgeGreen : (r.diffRate < 0 ? styles.badgeRed : styles.badgeGhost)}`} style={{ minWidth: '48px', padding: '2px 8px' }}>
+                          {r.diffRate > 0 ? '+' : ''}{r.diffRate.toFixed(1)}%
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

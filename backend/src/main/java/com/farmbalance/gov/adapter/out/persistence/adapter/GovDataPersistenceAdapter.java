@@ -180,11 +180,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
      * - 10자리 이상 → 그대로 사용
      */
     private String resolveBalanceRegionCode(String govRegionCode) {
-        if (govRegionCode == null || govRegionCode.isBlank()) return "4183000000";
-        // 이미 10자리 코드
-        if (govRegionCode.length() >= 10 && govRegionCode.matches("\\d+")) return govRegionCode;
-        // 4자리 시군구 코드 → 10자리 보정
-        if (govRegionCode.matches("\\d{4}")) return govRegionCode + "000000";
+        if (govRegionCode == null || govRegionCode.isBlank()) return "4183";
         return govRegionCode;
     }
 
