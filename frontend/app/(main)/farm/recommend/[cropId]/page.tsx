@@ -30,7 +30,9 @@ function useRecommendDetailResult(cropId: number, farmIdQuery: number | null) {
         const stored = sessionStorage.getItem('recommend_result');
         if (stored) {
           const parsed = JSON.parse(stored) as CropRecommendResponse;
-          if (!cancelled) {
+          const cachedRec = parsed.recommendations?.find((r) => r.cropId === cropId);
+          const hasPests = (cachedRec?.pests?.length ?? 0) > 0;
+          if (hasPests && !cancelled) {
             setResult(parsed);
             setPhase('ready');
             return;
