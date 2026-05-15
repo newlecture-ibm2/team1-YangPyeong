@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useMyFarms } from '../useFarm';
-import { requestCropRecommendation } from './_lib/recommend.api';
+import { getLatestRecommendHistory, requestCropRecommendation } from './_lib/recommend.api';
 import type { CropRecommendResponse } from './_lib/recommend.types';
 import { useToast } from '@/components/common/Toast/ToastContext';
 
@@ -15,6 +15,7 @@ export default function useRecommend() {
   const [result, setResult] = useState<CropRecommendResponse | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const [isHydrating, setIsHydrating] = useState(false);
   const { success: toastSuccess, error: toastError } = useToast();
 
   const farm = farms.length > 0 ? farms[selectedFarmIdx] : null;
@@ -24,6 +25,42 @@ export default function useRecommend() {
     setResult(null);
     setHasAnalyzed(false);
   }, [selectedFarmIdx]);
+
+  // 서버에 저장된 최근 추천 1건으로 목록 복원 (상세에서 돌아올 때 재분석 불필요)
+  useEffect(() => {
+    const farmId = farm?.id;
+    if (farmId == null) {
+      setIsHydrating(false);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      setIsHydrating(true);
+      try {
+        const data = await getLatestRecommendHistory(farmId);
+        if (cancelled) return;
+        if (data?.farmInfo?.id != null && data.farmInfo.id !== farmId) return;
+        if (data) {
+          setResult(data);
+          setHasAnalyzed(true);
+          try {
+            sessionStorage.setItem('recommend_result', JSON.stringify(data));
+          } catch {
+            // ignore
+          }
+        }
+      } catch (e) {
+        console.error('최근 AI 추천 이력 복원 실패:', e);
+      } finally {
+        if (!cancelled) setIsHydrating(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [farm?.id]);
 
   const handleAnalyze = async () => {
     if (!farm || !farm.id) return;
@@ -61,6 +98,7 @@ export default function useRecommend() {
     farm,
     result,
     isAnalyzing,
+    isHydrating,
     hasAnalyzed,
     handleAnalyze,
     top3,

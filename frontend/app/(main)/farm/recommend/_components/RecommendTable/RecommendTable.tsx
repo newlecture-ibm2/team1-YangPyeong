@@ -7,6 +7,8 @@ import styles from './RecommendTable.module.css';
 
 interface RecommendTableProps {
   recommendations: CropRecommendation[];
+  /** 상세·직링크 복원용으로 최근 추천 API 조회에 사용 */
+  farmId?: number;
 }
 
 function SupplyBadge({ status }: { status: CropRecommendation['supplyStatus'] }) {
@@ -27,7 +29,13 @@ function CategoryPill({ category }: { category: CropRecommendation['category'] }
   );
 }
 
-export default function RecommendTable({ recommendations }: RecommendTableProps) {
+function detailHref(cropId: number, farmId?: number) {
+  return farmId != null
+    ? `/farm/recommend/${cropId}?farmId=${farmId}`
+    : `/farm/recommend/${cropId}`;
+}
+
+export default function RecommendTable({ recommendations, farmId }: RecommendTableProps) {
   return (
     <div className={styles.section}>
       <h3 className={styles.title}>전체 추천 목록</h3>
@@ -55,7 +63,7 @@ export default function RecommendTable({ recommendations }: RecommendTableProps)
                 <td><SupplyBadge status={rec.supplyStatus} /></td>
                 <td>
                   <Link
-                    href={`/farm/recommend/${rec.cropId}`}
+                    href={detailHref(rec.cropId, farmId)}
                     className={`${styles.detailBtn} ${rec.rank <= 3 ? styles.detailBtnPrimary : styles.detailBtnOutline}`}
                   >
                     상세 →
