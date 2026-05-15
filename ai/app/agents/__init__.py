@@ -4,6 +4,8 @@ from .gov_agent import get_gov_agent, gov_agent_ainvoke
 from .gov_react_agent import get_gov_react_agent
 from .policy_agent import get_policy_agent
 from .shop_agent import get_shop_agent
+from .community_agent import get_community_agent
+from .general_agent import get_general_agent
 from .orchestrator import get_main_orchestrator
 
 __all__ = [
@@ -13,5 +15,7 @@ __all__ = [
     "get_gov_react_agent",
     "get_policy_agent",
     "get_shop_agent",
+    "get_community_agent",
+    "get_general_agent",
     "get_main_orchestrator",
 ]
