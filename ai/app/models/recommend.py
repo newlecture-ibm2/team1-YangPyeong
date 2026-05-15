@@ -4,6 +4,10 @@ class ReasonRequest(BaseModel):
     farm_details: str
     crop_name: str
     crop_category: str
+    recommend_mode: str = "PLAN"
+    advice_type: str = "NEW_RECOMMEND"
+    is_current_crop: bool = False
+    soil_mismatch: str | None = None
 
 class ReasonResponse(BaseModel):
     ai_reason: str

@@ -30,6 +30,7 @@ interface CultivationEntry {
   pyeong: string;
   expectedYield: string;
   yieldUnit: string;
+  alreadyPlanted: boolean;
 }
 
 import { Suspense } from 'react';
@@ -66,6 +67,7 @@ function CultivationRegisterContent() {
         pyeong: '',
         expectedYield: '',
         yieldUnit: 'kg',
+        alreadyPlanted: false,
       }]);
     }
   }, [searchParams]);
@@ -114,8 +116,15 @@ function CultivationRegisterContent() {
         pyeong: '',
         expectedYield: '',
         yieldUnit: 'kg',
+        alreadyPlanted: false,
       },
     ]);
+  };
+
+  const toggleAlreadyPlanted = (cropId: number, checked: boolean) => {
+    setCultivations(prev =>
+      prev.map(c => (c.cropId === cropId ? { ...c, alreadyPlanted: checked } : c))
+    );
   };
 
   const removeCrop = (cropId: number) => {
@@ -177,6 +186,10 @@ function CultivationRegisterContent() {
           cultivationArea: Number(c.area),
           expectedYield: Number(c.expectedYield) || 0,
           yieldUnit: c.yieldUnit,
+          alreadyPlanted: c.alreadyPlanted,
+          ...(c.alreadyPlanted
+            ? { sowingDate: new Date().toISOString().slice(0, 10) }
+            : {}),
         });
       }
       toast.success('재배 등록이 완료되었습니다!');
@@ -304,6 +317,24 @@ function CultivationRegisterContent() {
               <p style={{ fontSize: '12px', color: 'var(--color-text-light)', marginTop: '-12px', marginBottom: '8px' }}>
                 💡 평 또는 ㎡ 중 하나만 입력하면 자동으로 환산됩니다.
               </p>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginTop: '12px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={cult.alreadyPlanted}
+                  onChange={e => toggleAlreadyPlanted(cult.cropId, e.target.checked)}
+                />
+                이미 파종·정식했습니다 (재배 중으로 반영)
+              </label>
 
               <div style={{ marginTop: '16px' }}>
                 <label style={{ fontSize: '14px', fontWeight: 600, marginBottom: '6px', display: 'block' }}>

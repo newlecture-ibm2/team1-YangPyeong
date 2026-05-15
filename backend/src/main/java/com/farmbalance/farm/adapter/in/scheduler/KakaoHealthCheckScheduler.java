@@ -1,5 +1,7 @@
 package com.farmbalance.farm.adapter.in.scheduler;
 
+import com.farmbalance.admin.application.port.in.ManageApiSyncUseCase;
+import com.farmbalance.admin.domain.ApiSyncStatus;
 import com.farmbalance.global.event.ApiSyncEvent;
 import com.farmbalance.global.event.HealthCheckTriggerEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -25,19 +27,31 @@ public class KakaoHealthCheckScheduler {
     private final RestTemplate restTemplate;
     private final String kakaoRestApiKey;
     private final ApplicationEventPublisher eventPublisher;
+    private final ManageApiSyncUseCase manageApiSyncUseCase;
     private static final String API_NAME = "KAKAO_LOCAL";
 
     public KakaoHealthCheckScheduler(
             @Value("${external.kakao.rest-api-key:}") String kakaoRestApiKey,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            ManageApiSyncUseCase manageApiSyncUseCase) {
         this.restTemplate = new RestTemplate();
         this.kakaoRestApiKey = kakaoRestApiKey;
         this.eventPublisher = eventPublisher;
+        this.manageApiSyncUseCase = manageApiSyncUseCase;
     }
 
     // 매 1시간마다 헬스체크 실행 (매시 15분)
     @Scheduled(cron = "0 15 * * * *")
     public void scheduledHealthCheck() {
+        try {
+            ApiSyncStatus status = manageApiSyncUseCase.getApiSyncStatusByName(API_NAME);
+            if (status != null && !status.getIsActive()) {
+                log.info("[KakaoHealthCheck] {} API가 비활성화되어 있어 스케줄러를 종료합니다.", API_NAME);
+                return;
+            }
+        } catch (Exception e) {
+            log.warn("[KakaoHealthCheck] API 상태 조회 실패. (기본 동작 수행)");
+        }
         checkHealth();
     }
 

@@ -51,7 +51,9 @@ export default function GovDashboardPage() {
       <div className={styles.headerWrapper}>
         <div className={styles.pageHeader}>
           <p className={styles.breadcrumb}>지자체 / 대시보드</p>
-          <h1 className={styles.pageTitle}>{region} <em>대시보드</em></h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <h1 className={styles.pageTitle}>{region} <em>대시보드</em></h1>
+          </div>
           <div className={styles.tabsWrapper}>
             <GovTabs />
           </div>
@@ -77,7 +79,7 @@ export default function GovDashboardPage() {
             <LineChart data={monthlySupply}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="label" />
-              <YAxis />
+              <YAxis tickFormatter={(value) => value.toLocaleString()} />
               <Tooltip />
               <Legend />
               <Line type="monotone" dataKey="supply" name="공급" stroke="#2D6A4F" strokeWidth={2} />

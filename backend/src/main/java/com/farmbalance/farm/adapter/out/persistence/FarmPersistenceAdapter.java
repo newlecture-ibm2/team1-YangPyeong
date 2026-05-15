@@ -207,6 +207,8 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .cultivationArea(reg.getCultivationArea())
                 .farmerEstimatedYield(reg.getFarmerEstimatedYield())
                 .yieldUnit(reg.getYieldUnit() != null ? reg.getYieldUnit() : "kg")
+                .sowingDate(reg.getSowingDate())
+                .inSeason(reg.isInSeason())
                 .build();
 
         CultivationRegistrationJpaEntity saved = cultivationRepository.save(entity);

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/constants'
 
+export const dynamic = 'force-dynamic'
+
 /** GET /api/admin/api-sync 전체 목록 조회 프록시*/
 export async function GET() {
   try {

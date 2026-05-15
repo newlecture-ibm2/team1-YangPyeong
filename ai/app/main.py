@@ -17,6 +17,8 @@ from app.routers import farm_agent as farm_agent_router
 from app.routers import general_agent as general_agent_router
 from app.routers import community_agent as community_agent_router
 
+from app.routers import ocr as ocr_router
+
 # 로깅 설정
 logging.basicConfig(
     level=logging.INFO,
@@ -26,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="FarmBalance AI Server",
-    description="정책/혜택 분석, 챗봇 Agent, 맞춤 추천, 상품 AI 어시스트 API",
+    description="정책/혜택 분석, 챗봇 Agent, 맞춤 추천, 상품 AI 어시스트, OCR API",
     version="0.3.0",
 )
 
@@ -49,6 +51,7 @@ app.include_router(recommend_router.router)
 app.include_router(gov_router.router)
 app.include_router(revenue_router.router)
 app.include_router(farm_agent_router.router)
+app.include_router(ocr_router.router)
 app.include_router(general_agent_router.router)
 app.include_router(community_agent_router.router)
 

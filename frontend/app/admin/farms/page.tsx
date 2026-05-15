@@ -163,48 +163,151 @@ export default function FarmsPage() {
                 </span>
               </div>
 
-              {/* 정보 그리드 */}
-              <div className={styles.infoGrid}>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>이름</span>
-                  <span className={styles.infoValue}>{item.userName}</span>
-                </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>이메일</span>
-                  <span className={styles.infoValue}>{item.userEmail}</span>
-                </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>주소</span>
-                  <span className={styles.infoValue}>{item.address}</span>
-                </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>면적</span>
-                  <span className={styles.infoValue}>{item.areaSize?.toLocaleString()}㎡</span>
-                </div>
-                {item.businessNumber && (
-                  <div className={styles.infoItem}>
-                    <span className={styles.infoLabel}>사업자</span>
-                    <span className={styles.infoValue}>{item.businessNumber}</span>
+              {/* 정보 및 서류 검수 영역 (Split View) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
+                {/* 좌측: 원본 정보 */}
+                <div style={{ padding: '16px', background: 'var(--color-bg-subtle)', borderRadius: '8px' }}>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: 'var(--color-text)' }}>신청자 정보</h4>
+                  <div className={styles.infoGrid}>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>이름</span>
+                      <span className={styles.infoValue}>{item.userName}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>이메일</span>
+                      <span className={styles.infoValue}>{item.userEmail}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>농장 주소</span>
+                      <span className={styles.infoValue}>{item.address}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>신청 면적</span>
+                      <span className={styles.infoValue}>{item.areaSize?.toLocaleString()}㎡</span>
+                    </div>
+                    {item.documents && item.documents.length > 0 && (
+                      <div className={styles.infoItem} style={{ gridColumn: 'span 2' }}>
+                        <span className={styles.infoLabel}>첨부 서류</span>
+                        <a
+                          href={item.documents[0].url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.certLink}
+                        >
+                          {item.documents[0].name || '증빙서류 원본 보기'}
+                        </a>
+                      </div>
+                    )}
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>상태</span>
+                      <Badge variant={item.status === 'APPROVED' ? 'green' : item.status === 'REJECTED' ? 'red' : 'orange'}>
+                        {APPROVAL_STATUS_LABELS[item.status as ApprovalStatus]}
+                      </Badge>
+                    </div>
                   </div>
-                )}
-                {item.landCertImageUrl && (
-                  <div className={styles.infoItem}>
-                    <span className={styles.infoLabel}>증명서</span>
-                    <a
-                      href={item.landCertImageUrl}
-                      target="_blank"
+                </div>
+
+                {/* 우측: AI 분석 결과 */}
+                <div style={{ padding: '16px', background: 'var(--color-bg)', border: '1px solid var(--color-primary-light)', borderRadius: '8px' }}>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>✨ AI 분석 데이터</span>
+                    <a 
+                      href="https://www.gov.kr/portal/main/nologin" 
+                      target="_blank" 
                       rel="noopener noreferrer"
-                      className={styles.certLink}
+                      style={{ fontSize: '12px', color: '#3b82f6', textDecoration: 'underline' }}
                     >
-                      토지증명서 보기
+                      정부24 진위확인 바로가기 ↗
                     </a>
-                  </div>
-                )}
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>상태</span>
-                  <Badge variant={item.status === 'APPROVED' ? 'green' : item.status === 'REJECTED' ? 'red' : 'orange'}>
-                    {APPROVAL_STATUS_LABELS[item.status as ApprovalStatus]}
-                  </Badge>
+                  </h4>
+                  
+                  {item.documentData ? (
+                    <div className={styles.infoGrid}>
+                      <div className={styles.infoItem} style={{ gridColumn: 'span 2' }}>
+                        <span className={styles.infoLabel}>서류 유효성</span>
+                        <span className={styles.infoValue} style={{ color: item.documentData.isValid ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                          {item.documentData.isValid ? '✅ 정상 서류' : `❌ ${item.documentData.errorMessage || '반려 권장'}`}
+                        </span>
+                      </div>
+                      <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>서류 종류</span>
+                        <span className={styles.infoValue}>{item.documentData.documentType || '-'}</span>
+                      </div>
+                      <div className={styles.infoItem} style={{ gridColumn: 'span 2' }}>
+                        <span className={styles.infoLabel}>발급 번호 (진위확인용)</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className={styles.infoValue} style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                            {item.documentData.documentIssueNumber || '-'}
+                          </span>
+                          {item.documentData.documentIssueNumber && (
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(item.documentData?.documentIssueNumber || '');
+                                toast.success('발급 번호가 복사되었습니다.');
+                              }}
+                              style={{ padding: '2px 6px', fontSize: '11px', background: 'var(--color-bg-subtle)', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              복사
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className={styles.infoItem} style={{ gridColumn: 'span 2' }}>
+                        <span className={styles.infoLabel}>등록 번호 (조회용 메인키)</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className={styles.infoValue} style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                            {item.documentData.registrationNumber || '-'}
+                          </span>
+                          {item.documentData.registrationNumber && (
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(item.documentData?.registrationNumber || '');
+                                toast.success('등록 번호가 복사되었습니다.');
+                              }}
+                              style={{ padding: '2px 6px', fontSize: '11px', background: 'var(--color-bg-subtle)', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              복사
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className={styles.infoItem} style={{ gridColumn: 'span 2' }}>
+                        <span className={styles.infoLabel}>토지 고유번호 (PNU)</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className={styles.infoValue} style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                            {item.documentData.pnuCode || '-'}
+                          </span>
+                          {item.documentData.pnuCode && (
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(item.documentData?.pnuCode || '');
+                                toast.success('PNU 코드가 복사되었습니다.');
+                              }}
+                              style={{ padding: '2px 6px', fontSize: '11px', background: 'var(--color-bg-subtle)', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              복사
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>문서상 성명</span>
+                        <span className={styles.infoValue}>{item.documentData.farmOwnerName || '-'}</span>
+                      </div>
+                      <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>문서상 면적</span>
+                        <span className={styles.infoValue}>{item.documentData.area ? `${item.documentData.area.toLocaleString()}㎡` : '-'}</span>
+                      </div>
+                      <div className={styles.infoItem} style={{ gridColumn: 'span 2' }}>
+                        <span className={styles.infoLabel}>문서상 주소</span>
+                        <span className={styles.infoValue}>{item.documentData.address || '-'}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ color: 'var(--color-secondary)', fontSize: '13px', padding: '20px 0', textAlign: 'center' }}>
+                      AI 분석 데이터가 없습니다. (구버전 신청 또는 분석 실패)
+                    </div>
+                  )}
                 </div>
               </div>
 

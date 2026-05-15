@@ -90,8 +90,10 @@ export default function useRecommend() {
     }
   };
 
-  const top3 = result?.recommendations.slice(0, 3) || [];
-  const allRecs = result?.recommendations || [];
+  const currentCropAdvices = result?.currentCropAdvices ?? [];
+  const newRecommendations = result?.recommendations ?? [];
+  const top3 = newRecommendations.slice(0, 3);
+  const allRecs = newRecommendations;
 
   return {
     farms,
@@ -107,5 +109,7 @@ export default function useRecommend() {
     handleAnalyze,
     top3,
     allRecs,
+    currentCropAdvices,
+    recommendMode: result?.recommendMode,
   };
 }

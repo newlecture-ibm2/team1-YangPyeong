@@ -6,11 +6,13 @@ import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.policy.application.port.out.PolicyQueryPort;
 import com.farmbalance.policy.application.port.out.PolicySavePort;
+import com.farmbalance.policy.application.port.out.RegionNameResolvePort;
 import com.farmbalance.policy.domain.model.PolicyData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -26,11 +28,17 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
 
     private final PolicyQueryPort policyQueryPort;
     private final PolicySavePort policySavePort;
+    private final RegionNameResolvePort regionNameResolvePort;
+
+    private String resolveRegionName(String regionCode) {
+        if (regionCode == null) return null;
+        return regionNameResolvePort.findNameByCode(regionCode).orElse(regionCode);
+    }
 
     @Override
     public List<AdminPolicyDataDto> getAllPolicies() {
         return policyQueryPort.findAll().stream()
-                .map(AdminPolicyDataDto::from)
+                .map(domain -> AdminPolicyDataDto.from(domain, resolveRegionName(domain.getRegionCode())))
                 .toList();
     }
 
@@ -38,15 +46,24 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
     public AdminPolicyDataDto getPolicy(Long id) {
         PolicyData domain = policyQueryPort.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POLICY_NOT_FOUND));
-        return AdminPolicyDataDto.from(domain);
+        return AdminPolicyDataDto.from(domain, resolveRegionName(domain.getRegionCode()));
     }
 
     @Override
     @Transactional
-    public Long createPolicy(String externalId, String data) {
+    public Long createPolicy(String externalId, String title, String category, String organization, String regionCode, String target, String supportAmount, LocalDate applyStart, LocalDate applyEnd, String contentSummary, String sourceUrl) {
         PolicyData policyData = new PolicyData();
         policyData.setExternalId(externalId);
-        policyData.setRawData(data);
+        policyData.setTitle(title);
+        policyData.setCategory(category);
+        policyData.setOrganization(organization);
+        policyData.setRegionCode(regionCode);
+        policyData.setTarget(target);
+        policyData.setSupportAmount(supportAmount);
+        policyData.setApplyStart(applyStart);
+        policyData.setApplyEnd(applyEnd);
+        policyData.setContent(contentSummary);
+        policyData.setSourceUrl(sourceUrl);
         policyData.setFetchedAt(LocalDateTime.now());
 
         PolicyData saved = policySavePort.save(policyData);
@@ -55,12 +72,21 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
 
     @Override
     @Transactional
-    public void updatePolicy(Long id, String externalId, String data) {
+    public void updatePolicy(Long id, String externalId, String title, String category, String organization, String regionCode, String target, String supportAmount, LocalDate applyStart, LocalDate applyEnd, String contentSummary, String sourceUrl) {
         PolicyData existing = policyQueryPort.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POLICY_NOT_FOUND));
 
         existing.setExternalId(externalId);
-        existing.setRawData(data);
+        existing.setTitle(title);
+        existing.setCategory(category);
+        existing.setOrganization(organization);
+        existing.setRegionCode(regionCode);
+        existing.setTarget(target);
+        existing.setSupportAmount(supportAmount);
+        existing.setApplyStart(applyStart);
+        existing.setApplyEnd(applyEnd);
+        existing.setContent(contentSummary);
+        existing.setSourceUrl(sourceUrl);
         existing.setFetchedAt(LocalDateTime.now());
 
         policySavePort.save(existing);

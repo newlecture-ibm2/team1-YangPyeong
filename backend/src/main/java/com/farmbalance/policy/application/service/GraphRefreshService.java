@@ -62,6 +62,7 @@ public class GraphRefreshService {
             log.info("Graph refresh completed duration={}ms, entities={}, relations={}", durationMs, entityCounts, relationCounts);
         } catch (Exception e) {
             log.error("Graph refresh failed", e);
+            throw new RuntimeException("Graph refresh failed: " + e.getMessage(), e);
         }
     }
 
