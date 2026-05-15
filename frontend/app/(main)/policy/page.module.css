@@ -336,53 +336,7 @@
   100% { background-position: -200% 0; }
 }
 
-/* ── 페이지네이션 ── */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-top: var(--space-xl);
-  padding-top: var(--space-lg);
-}
-
-.pageButton {
-  min-width: 40px;
-  height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.pageButton:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-.pageButton:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.pageButtonActive {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
-  font-weight: 600;
-}
-
-.pageButtonActive:hover {
-  background: var(--color-primary-light);
-  border-color: var(--color-primary-light);
-  color: #fff;
-}
+/* 페이지네이션: 공통 컴포넌트 Pagination 사용 (CSS는 Pagination.module.css) */
 
 /* ── 태그 배지 ── */
 .categoryTag {
@@ -402,5 +356,4 @@
   .cardHeader { flex-direction: column; gap: var(--space-xs); }
   .cardMeta { flex-direction: column; gap: var(--space-xs); }
   .cardFooter { flex-direction: column; gap: var(--space-sm); align-items: flex-start; }
-  .pagination { flex-wrap: wrap; }
 }

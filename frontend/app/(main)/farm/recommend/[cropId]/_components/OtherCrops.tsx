@@ -7,9 +7,10 @@ import styles from '../detail.module.css';
 
 interface OtherCropsProps {
   recommendations: CropRecommendation[];
+  farmId?: number;
 }
 
-export default function OtherCrops({ recommendations }: OtherCropsProps) {
+export default function OtherCrops({ recommendations, farmId }: OtherCropsProps) {
   return (
     <div className={`${styles.card} ${styles.fadeIn}`} style={{ animationDelay: '0.5s' }}>
       <div className={styles.otherHeader}>
@@ -17,7 +18,9 @@ export default function OtherCrops({ recommendations }: OtherCropsProps) {
         <Link href="/farm/recommend" className={styles.viewAllLink}>전체 보기 →</Link>
       </div>
       <div className={styles.miniCardGrid}>
-        {recommendations.map((r) => <MiniRecommendCard key={r.cropId} rec={r} />)}
+        {recommendations.map((r) => (
+          <MiniRecommendCard key={r.cropId} rec={r} farmId={farmId} />
+        ))}
       </div>
     </div>
   );

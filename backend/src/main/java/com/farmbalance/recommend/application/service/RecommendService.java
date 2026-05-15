@@ -12,6 +12,7 @@ import com.farmbalance.recommend.application.port.out.RecommendAiPort;
 import com.farmbalance.recommend.application.port.out.RecommendPricePort;
 import com.farmbalance.recommend.application.port.in.GetRecommendHistoryUseCase;
 import com.farmbalance.recommend.application.port.in.DiagnoseCropImageUseCase;
+import com.farmbalance.recommend.adapter.out.persistence.CropCultivationEnvLookup;
 import com.farmbalance.notification.application.port.in.NotificationUseCase;
 import com.farmbalance.notification.domain.NotificationType;
 import com.farmbalance.recommend.domain.*;
@@ -26,7 +27,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * AI 작물 추천 서비스
@@ -51,6 +54,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
     private final RecommendPricePort recommendPricePort;
 
     private final NotificationUseCase notificationUseCase;
+    private final CropCultivationEnvLookup cropCultivationEnvLookup;
 
     @Override
     @Transactional
@@ -184,6 +188,8 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
                 recommendations.isEmpty() ? "-" : recommendations.get(0).getCropName(),
                 recommendations.isEmpty() ? 0 : recommendations.get(0).getScore());
 
+        recommendations = enrichMissingPests(recommendations);
+
         // 6. 결과 조합
         RecommendResult result = RecommendResult.builder()
                 .farmId(farm.getId())
@@ -214,13 +220,17 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
     @Override
     public List<RecommendResult> getHistory(Long userId, Long farmId) {
         validateFarmOwnership(userId, farmId);
-        return loadRecommendHistoryPort.loadByFarmId(farmId);
+        return loadRecommendHistoryPort.loadByFarmId(farmId).stream()
+                .map(this::enrichResultPests)
+                .toList();
     }
 
     @Override
     public RecommendResult getLatestHistory(Long userId, Long farmId) {
         validateFarmOwnership(userId, farmId);
-        return loadRecommendHistoryPort.loadLatestByFarmId(farmId).orElse(null);
+        return loadRecommendHistoryPort.loadLatestByFarmId(farmId)
+                .map(this::enrichResultPests)
+                .orElse(null);
     }
 
     @Override
@@ -247,5 +257,33 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
     /** 순위를 부여한 새 객체 생성 (toBuilder로 immutable 유지) */
     private CropRecommendation withRank(CropRecommendation rec, int rank) {
         return rec.toBuilder().rank(rank).build();
+    }
+
+    private RecommendResult enrichResultPests(RecommendResult result) {
+        if (result == null || result.getRecommendations() == null) {
+            return result;
+        }
+        return result.toBuilder()
+                .recommendations(enrichMissingPests(result.getRecommendations()))
+                .build();
+    }
+
+    /** 이력·매칭 실패 등으로 비어 있는 병해충을 재배환경 DB에서 보완 */
+    private List<CropRecommendation> enrichMissingPests(List<CropRecommendation> recommendations) {
+        Map<String, List<String>> pestsByCropName = new HashMap<>();
+        List<CropRecommendation> enriched = new ArrayList<>(recommendations.size());
+        for (CropRecommendation rec : recommendations) {
+            if (rec.getPests() != null && !rec.getPests().isEmpty()) {
+                enriched.add(rec);
+                continue;
+            }
+            String cropName = rec.getCropName();
+            List<String> pests = pestsByCropName.computeIfAbsent(
+                    cropName,
+                    cropCultivationEnvLookup::findMajorPests
+            );
+            enriched.add(pests.isEmpty() ? rec : rec.toBuilder().pests(pests).build());
+        }
+        return enriched;
     }
 }

@@ -98,6 +98,7 @@ export default function RecommendListPage() {
         {/* ── CTA / 분석 로딩 ── */}
         <AnalyzeLoader
           isAnalyzing={hook.isAnalyzing}
+          isHydrating={hook.isHydrating}
           hasAnalyzed={hook.hasAnalyzed}
           disabled={!hook.farm}
           onAnalyze={hook.handleAnalyze}
@@ -112,7 +113,7 @@ export default function RecommendListPage() {
               ))}
             </div>
             <div data-guide="recommend-detail">
-              <RecommendTable recommendations={hook.allRecs} />
+              <RecommendTable farmId={hook.farm?.id} recommendations={hook.allRecs} />
             </div>
           </>
         )}

@@ -22,11 +22,11 @@ interface CommentSectionProps {
   categoryName: string;
 }
 
-export default function CommentSection({ 
-  postId, 
+export default function CommentSection({
+  postId,
   initialComments,
   postAuthorId,
-  categoryName 
+  categoryName
 }: CommentSectionProps) {
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [newComment, setNewComment] = useState('');
@@ -106,9 +106,9 @@ export default function CommentSection({
     try {
       const res = await deleteComment(commentId);
       if (res.success) {
-        setComments(comments.map(c => 
-          c.id === commentId 
-            ? { ...c, isDeleted: true, content: '삭제된 메시지입니다.', authorNickname: '(삭제됨)', authorId: 0 } 
+        setComments(comments.map(c =>
+          c.id === commentId
+            ? { ...c, isDeleted: true, content: '삭제된 메시지입니다.', authorNickname: '(삭제됨)', authorId: 0 }
             : c
         ));
         toastSuccess('댓글이 삭제되었습니다.');
@@ -128,7 +128,7 @@ export default function CommentSection({
     try {
       const res = await acceptComment(commentId);
       if (res.success) {
-        setComments(comments.map(c => 
+        setComments(comments.map(c =>
           c.id === commentId ? { ...c, accepted: true } : c
         ));
         toastSuccess('답변이 채택되었습니다.');
@@ -144,7 +144,7 @@ export default function CommentSection({
   return (
     <section className={styles.section}>
       <h3 className={styles.title}>댓글 {comments.filter(c => !c.isDeleted).length}</h3>
-      
+
       <div className={styles.commentList}>
         {comments.filter(c => !c.parentId).map((comment) => (
           <div key={comment.id} className={styles.commentContainer}>
@@ -152,13 +152,13 @@ export default function CommentSection({
             <div className={`${styles.commentItem} ${comment.accepted ? styles.commentItemAccepted : ''}`}>
               <div className={styles.commentHeader}>
                 <div className={styles.commentHeaderLeft}>
-                  <span 
+                  <span
                     className={styles.author}
                     style={comment.authorStatus === 'WITHDRAWN' ? { color: 'var(--color-text-tertiary, #999)' } : undefined}
                   >
                     {comment.authorStatus === 'WITHDRAWN'
                       ? '(탈퇴한 사용자)'
-                      : (comment.authorNickname || '알 수 없음')} 
+                      : (comment.authorNickname || '알 수 없음')}
                     {comment.authorStatus !== 'WITHDRAWN' && comment.authorId === postAuthorId && (
                       <Badge variant="dark" className={styles.authorBadge}>글쓴이</Badge>
                     )}
@@ -172,10 +172,10 @@ export default function CommentSection({
                       <>
                         {comment.authorId === currentUserId && !comment.accepted ? (
                           <>
-                            <Button 
+                            <Button
                               variant="ghost"
                               size="sm"
-                              className={styles.actionBtn} 
+                              className={styles.actionBtn}
                               onClick={() => {
                                 setEditingId(comment.id);
                                 setEditingContent(comment.content);
@@ -183,23 +183,23 @@ export default function CommentSection({
                             >
                               수정
                             </Button>
-                            <Button 
+                            <Button
                               variant="ghost"
                               size="sm"
-                              className={styles.actionBtn} 
+                              className={styles.actionBtn}
                               onClick={() => handleDelete(comment.id)}
                             >
                               삭제
                             </Button>
                           </>
                         ) : (
-                          <ReportButton 
-                            targetId={comment.id} 
-                            targetType="COMMENT" 
+                          <ReportButton
+                            targetId={comment.id}
+                            targetType="COMMENT"
                             className={styles.actionBtn}
                           />
                         )}
-                        <Button 
+                        <Button
                           variant="ghost"
                           size="sm"
                           className={styles.actionBtn}
@@ -210,10 +210,10 @@ export default function CommentSection({
                       </>
                     )}
                     {isQA && isPostAuthor && !hasAccepted && !comment.accepted && !comment.isDeleted && comment.authorId !== currentUserId && (
-                      <Button 
+                      <Button
                         variant="outline"
                         size="sm"
-                        className={styles.acceptBtn} 
+                        className={styles.acceptBtn}
                         onClick={() => handleAccept(comment.id)}
                       >
                         채택하기
@@ -222,10 +222,10 @@ export default function CommentSection({
                   </div>
                 </div>
               </div>
-              
+
               {editingId === comment.id ? (
                 <div className={styles.editForm}>
-                  <Input 
+                  <Input
                     as="textarea"
                     value={editingContent}
                     onChange={(e) => setEditingContent(e.target.value)}
@@ -254,10 +254,10 @@ export default function CommentSection({
                   />
                   <div className={styles.editActions}>
                     <Button variant="ghost" size="sm" onClick={() => setReplyingToId(null)}>취소</Button>
-                    <Button 
+                    <Button
                       variant="primary"
                       size="sm"
-                      onClick={() => handleSubmit(undefined, comment.id)} 
+                      onClick={() => handleSubmit(undefined, comment.id)}
                       disabled={isSubmitting || !replyContent.trim()}
                     >
                       {isSubmitting ? '등록 중...' : '답글 등록'}
@@ -272,13 +272,13 @@ export default function CommentSection({
               <div key={child.id} className={`${styles.commentItem} ${styles.replyItem}`}>
                 <div className={styles.commentHeader}>
                   <div className={styles.commentHeaderLeft}>
-                    <span 
+                    <span
                       className={styles.author}
                       style={child.authorStatus === 'WITHDRAWN' ? { color: 'var(--color-text-tertiary, #999)' } : undefined}
                     >
                       {child.authorStatus === 'WITHDRAWN'
                         ? '(탈퇴한 사용자)'
-                        : (child.authorNickname || '알 수 없음')} 
+                        : (child.authorNickname || '알 수 없음')}
                       {child.authorStatus !== 'WITHDRAWN' && child.authorId === postAuthorId && (
                         <Badge variant="dark" className={styles.authorBadge}>글쓴이</Badge>
                       )}
@@ -291,10 +291,10 @@ export default function CommentSection({
                         <>
                           {child.authorId === currentUserId ? (
                             <>
-                              <Button 
+                              <Button
                                 variant="ghost"
                                 size="sm"
-                                className={styles.actionBtn} 
+                                className={styles.actionBtn}
                                 onClick={() => {
                                   setEditingId(child.id);
                                   setEditingContent(child.content);
@@ -302,19 +302,19 @@ export default function CommentSection({
                               >
                                 수정
                               </Button>
-                              <Button 
+                              <Button
                                 variant="ghost"
                                 size="sm"
-                                className={styles.actionBtn} 
+                                className={styles.actionBtn}
                                 onClick={() => handleDelete(child.id)}
                               >
                                 삭제
                               </Button>
                             </>
                           ) : (
-                            <ReportButton 
-                              targetId={child.id} 
-                              targetType="COMMENT" 
+                            <ReportButton
+                              targetId={child.id}
+                              targetType="COMMENT"
                               className={styles.actionBtn}
                             />
                           )}
@@ -325,7 +325,7 @@ export default function CommentSection({
                 </div>
                 {editingId === child.id ? (
                   <div className={styles.editForm}>
-                    <Input 
+                    <Input
                       as="textarea"
                       value={editingContent}
                       onChange={(e) => setEditingContent(e.target.value)}
@@ -359,10 +359,10 @@ export default function CommentSection({
           rows={4}
         />
         <div className={styles.submitArea}>
-          <Button 
-            type="submit" 
-            variant="primary" 
-            size="sm" 
+          <Button
+            type="submit"
+            variant="primary"
+            size="sm"
             disabled={isSubmitting || !newComment.trim()}
           >
             {isSubmitting ? '등록 중...' : '댓글 등록'}

@@ -4,12 +4,19 @@ import styles from './AnalyzeLoader.module.css';
 
 interface AnalyzeLoaderProps {
   isAnalyzing: boolean;
+  isHydrating?: boolean;
   hasAnalyzed: boolean;
   disabled: boolean;
   onAnalyze: () => void;
 }
 
-export default function AnalyzeLoader({ isAnalyzing, hasAnalyzed, disabled, onAnalyze }: AnalyzeLoaderProps) {
+export default function AnalyzeLoader({
+  isAnalyzing,
+  isHydrating = false,
+  hasAnalyzed,
+  disabled,
+  onAnalyze,
+}: AnalyzeLoaderProps) {
   if (hasAnalyzed) return null;
 
   if (isAnalyzing) {
@@ -24,7 +31,12 @@ export default function AnalyzeLoader({ isAnalyzing, hasAnalyzed, disabled, onAn
 
   return (
     <div className={styles.cta}>
-      <button className={styles.ctaButton} onClick={onAnalyze} disabled={disabled}>
+      {isHydrating && (
+        <p className={styles.sub} style={{ marginBottom: '12px', textAlign: 'center' }}>
+          저장된 추천 결과를 불러오는 중입니다…
+        </p>
+      )}
+      <button className={styles.ctaButton} onClick={onAnalyze} disabled={disabled || isHydrating}>
         🤖 AI 작물 추천 분석 시작
       </button>
     </div>

@@ -1,23 +1,32 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getFarmHistories, recordFarmHistory, updateFarmHistory, deleteFarmHistory, CultivationHistory } from './_lib/history.api';
 import { useToast } from '@/components/common/Toast';
 
-export function useHistory(farmId?: number) {
+export function useHistory(farmId?: number, skipInitialFetch = false) {
   const [histories, setHistories] = useState<CultivationHistory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
+  const farmIdRef = useRef(farmId);
+  useEffect(() => {
+    farmIdRef.current = farmId;
+  }, [farmId]);
 
   const fetchHistories = useCallback(async () => {
     if (!farmId) return;
+    const targetFarmId = farmId;
     setIsLoading(true);
     try {
       const data = await getFarmHistories(farmId);
+      if (farmIdRef.current !== targetFarmId) return;
       setHistories(data);
     } catch (err: any) {
-      console.error(err);
-      // toast.error('이력을 불러오지 못했습니다.');
+      if (farmIdRef.current === targetFarmId) {
+        console.error(err);
+      }
     } finally {
-      setIsLoading(false);
+      if (farmIdRef.current === targetFarmId) {
+        setIsLoading(false);
+      }
     }
   }, [farmId]);
 
@@ -62,8 +71,14 @@ export function useHistory(farmId?: number) {
   };
 
   useEffect(() => {
+    if (!farmId) {
+      setHistories([]);
+      setIsLoading(false);
+      return;
+    }
+    if (skipInitialFetch) return;
     fetchHistories();
-  }, [fetchHistories]);
+  }, [farmId, skipInitialFetch, fetchHistories]);
 
   return { histories, isLoading, addHistory, updateHistory, removeHistory, refresh: fetchHistories };
 }

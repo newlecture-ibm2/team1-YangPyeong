@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Button from '@/components/common/Button/Button';
@@ -11,7 +11,8 @@ import { useMyFarms } from './useFarm';
 import { useHistory } from './useHistory';
 import { useCultivation } from './useCultivation';
 import { getLatestRecommendHistory } from './recommend/_lib/recommend.api';
-import { useRevenue } from './useRevenue';
+import type { CropRecommendResponse } from './recommend/_lib/recommend.types';
+import { predictRevenue, type RevenuePredictionResponse } from './_lib/revenue.api';
 import Timeline from './_components/Timeline/Timeline';
 import HistoryModal from './_components/HistoryModal/HistoryModal';
 import CultivationEditModal from './_components/CultivationEditModal/CultivationEditModal';
@@ -38,14 +39,44 @@ const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'li
   checking: { label: '점검중', variant: 'orange' },
 };
 
+/** AI 수익 예측 요청용 — 재배 등록이 있으면 작물별 면적 합산, 없으면 농장 작물명 + 면적 분할 */
+function getRevenueCropRows(
+  farm: { area: number; cropNames: string[] },
+  cultivations: { cropName: string; cultivationArea?: number | null }[],
+): { cropName: string; areaSqm: number }[] {
+  if (cultivations.length > 0) {
+    const map = new Map<string, number>();
+    for (const c of cultivations) {
+      const a = Number(c.cultivationArea) || 0;
+      map.set(c.cropName, (map.get(c.cropName) || 0) + a);
+    }
+    return Array.from(map.entries()).map(([cropName, sumArea]) => ({
+      cropName,
+      areaSqm: sumArea > 0 ? sumArea : farm.area,
+    }));
+  }
+  if (farm.cropNames.length > 0) {
+    const n = farm.cropNames.length;
+    const share = farm.area / n;
+    return farm.cropNames.map((cropName) => ({ cropName, areaSqm: share }));
+  }
+  return [];
+}
+
 function FarmDashboardContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab') === 'history' ? 'HISTORY' : 'DASHBOARD';
 
   const toast = useToast();
   const { farms: allFarms, isLoading: isFarmsLoading, removeFarm: deleteSelectedFarm } = useMyFarms();
-  const farms = allFarms.filter(f => f.certificationStatus === 'APPROVED');
-  const hasUnapprovedFarms = allFarms.length > farms.length;
+  const farms = useMemo(
+    () => allFarms.filter((f) => f.certificationStatus === 'APPROVED'),
+    [allFarms],
+  );
+  const hasUnapprovedFarms = useMemo(
+    () => allFarms.length > farms.length,
+    [allFarms, farms.length],
+  );
   const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
   // 농장 목록 뷰 여부 상태
   const [isListView, setIsListView] = useState(false);
@@ -57,6 +88,8 @@ function FarmDashboardContent() {
   const [weather, setWeather] = useState<{ tmp: number, pty: number, sky: number } | null>(null);
   const [latestAiScore, setLatestAiScore] = useState<number | null>(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState<number>(0);
+  /** 농장 단위로만 갱신 — 재배 목록 변경 시 재요청하지 않아 단가 매칭이 안정적 */
+  const [latestRecommendData, setLatestRecommendData] = useState<CropRecommendResponse | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
   // 유저 권한 확인
@@ -91,10 +124,12 @@ function FarmDashboardContent() {
   }, []);
   const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
-  // 농장 목록이 로드되었을 때, 2개 이상이면 목록 뷰를 기본으로 설정
+  // 농장이 2곳 이상일 때만 목록 뷰 기본값 (farms 참조는 useMemo로 안정화 — 매 렌더마다 effect가 돌면 클릭 직후 목록으로 되돌아가는 버그 방지)
   useEffect(() => {
     if (farms.length > 1) {
       setIsListView(true);
+    } else {
+      setIsListView(false);
     }
   }, [farms]);
 
@@ -104,6 +139,8 @@ function FarmDashboardContent() {
 
   // 선택된 농장
   const farm = farms.length > 0 ? farms[selectedFarmIdx] : null;
+  const farmRef = useRef(farm);
+  farmRef.current = farm;
 
   // 히스토리 데이터 연동
   const {
@@ -113,7 +150,7 @@ function FarmDashboardContent() {
     updateHistory,
     removeHistory,
     refresh: refreshHistories
-  } = useHistory(farm?.id);
+  } = useHistory(farm?.id, true);
 
   // 재배 정보 연동
   const {
@@ -122,97 +159,229 @@ function FarmDashboardContent() {
     modifyCultivation,
     removeCultivation,
     refresh: refreshCultivations
-  } = useCultivation(farm?.id);
+  } = useCultivation(farm?.id, true);
 
-  // 수익 예측 연동
-  const { prediction, isLoading: isRevenueLoading, getPrediction, revertPrediction } = useRevenue();
-  const [actualYield, setActualYield] = useState<number | ''>('');
+  const revenueCropRows = useMemo(
+    () => (farm ? getRevenueCropRows(farm, cultivations) : []),
+    [farm, cultivations],
+  );
+  const revenueCropRowsKey = revenueCropRows.map((r) => `${r.cropName}:${r.areaSqm}`).join('|');
 
-  const handleCalculateRevenue = useCallback(() => {
-    if (!farm || farm.cropNames.length === 0) return;
-    const mainCrop = farm.cropNames[0];
-    const area = cultivations.find(c => c.cropName === mainCrop)?.cultivationArea || farm.area;
-    
-    const request: any = {
-      crop_name: mainCrop,
-      area_sqm: area,
-      farm_id: farm.id,
-    };
-    
-    if (actualYield !== '') {
-      request.actual_yield_kg = Number(actualYield);
-    }
-    
-    if (weather) {
-       request.weather_context = `현재 양평 날씨: 기온 ${weather.tmp}도, 강수형태 ${weather.pty}, 하늘상태 ${weather.sky}`;
-    }
-    
-    getPrediction(request);
-  }, [farm, cultivations, actualYield, weather, getPrediction]);
+  const [predictionsByCrop, setPredictionsByCrop] = useState<Record<string, RevenuePredictionResponse>>({});
+  const [revenueErrorsByCrop, setRevenueErrorsByCrop] = useState<Record<string, string>>({});
+  const [isRevenueLoading, setIsRevenueLoading] = useState(false);
+  const [applyingCrop, setApplyingCrop] = useState<string | null>(null);
+  const [actualYieldByCrop, setActualYieldByCrop] = useState<Record<string, number | ''>>({});
+  const [expandedRevenueCrop, setExpandedRevenueCrop] = useState<string | null>(null);
 
-  const handleResetRevenue = useCallback(() => {
-    setActualYield('');
-    revertPrediction();
-  }, [revertPrediction]);
+  const totalPredictedRevenue = useMemo(
+    () => Object.values(predictionsByCrop).reduce((sum, p) => sum + (p.predicted_revenue ?? 0), 0),
+    [predictionsByCrop],
+  );
 
-  // Initial fetch for revenue
+  const buildWeatherContext = useCallback(() => {
+    if (!weather) return undefined;
+    return `현재 양평 날씨: 기온 ${weather.tmp}도, 강수형태 ${weather.pty}, 하늘상태 ${weather.sky}`;
+  }, [weather]);
+
+  const fetchPredictionOne = useCallback(
+    async (cropName: string, areaSqm: number, actualYield?: number) => {
+      if (!farm?.id) return null;
+      const wc = buildWeatherContext();
+      const request: Parameters<typeof predictRevenue>[0] = {
+        crop_name: cropName,
+        area_sqm: areaSqm,
+        farm_id: farm.id,
+        weather_context: wc,
+      };
+      if (actualYield != null && !Number.isNaN(actualYield)) {
+        request.actual_yield_kg = actualYield;
+      }
+      return predictRevenue(request);
+    },
+    [farm?.id, buildWeatherContext],
+  );
+
+  const handleApplyYieldForCrop = useCallback(
+    async (cropName: string, areaSqm: number) => {
+      if (!farm?.id) return;
+      const raw = actualYieldByCrop[cropName];
+      setApplyingCrop(cropName);
+      try {
+        const y = raw === '' || raw == null ? undefined : Number(raw);
+        const res = await fetchPredictionOne(cropName, areaSqm, y);
+        if (res) {
+          setPredictionsByCrop((prev) => ({ ...prev, [cropName]: res }));
+          setRevenueErrorsByCrop((prev) => {
+            const next = { ...prev };
+            delete next[cropName];
+            return next;
+          });
+        }
+      } catch (err: any) {
+        toast.error(err?.message || '수익 예측에 실패했습니다.');
+      } finally {
+        setApplyingCrop(null);
+      }
+    },
+    [farm?.id, actualYieldByCrop, fetchPredictionOne, toast],
+  );
+
+  const handleResetYieldForCrop = useCallback(
+    async (cropName: string, areaSqm: number) => {
+      setActualYieldByCrop((prev) => ({ ...prev, [cropName]: '' }));
+      setApplyingCrop(cropName);
+      try {
+        const res = await fetchPredictionOne(cropName, areaSqm);
+        if (res) {
+          setPredictionsByCrop((prev) => ({ ...prev, [cropName]: res }));
+          setRevenueErrorsByCrop((prev) => {
+            const next = { ...prev };
+            delete next[cropName];
+            return next;
+          });
+        }
+      } catch (err: any) {
+        toast.error(err?.message || '수익 예측에 실패했습니다.');
+      } finally {
+        setApplyingCrop(null);
+      }
+    },
+    [fetchPredictionOne, toast],
+  );
+
+  // 작물별 AI 수익 예측 (대시보드)
   useEffect(() => {
-    if (activeSubTab === 'DASHBOARD' && farm && farm.cropNames.length > 0 && !prediction && !isRevenueLoading) {
-      handleCalculateRevenue();
+    if (activeSubTab !== 'DASHBOARD' || !farm?.id) {
+      setPredictionsByCrop({});
+      setRevenueErrorsByCrop({});
+      setExpandedRevenueCrop(null);
+      return;
     }
-  }, [activeSubTab, farm, cultivations, prediction, isRevenueLoading, handleCalculateRevenue]);
+    if (revenueCropRows.length === 0) {
+      setPredictionsByCrop({});
+      setRevenueErrorsByCrop({});
+      setExpandedRevenueCrop(null);
+      return;
+    }
+
+    let cancelled = false;
+    setIsRevenueLoading(true);
+    setPredictionsByCrop({});
+    setRevenueErrorsByCrop({});
+
+    const wc = buildWeatherContext();
+    const fid = farm.id;
+    const rows = revenueCropRows;
+
+    (async () => {
+      const results = await Promise.all(
+        rows.map(async ({ cropName, areaSqm }) => {
+          try {
+            const data = await predictRevenue({
+              crop_name: cropName,
+              area_sqm: areaSqm,
+              farm_id: fid,
+              weather_context: wc,
+            });
+            return { cropName, ok: true as const, data };
+          } catch {
+            return { cropName, ok: false as const };
+          }
+        }),
+      );
+      if (cancelled) return;
+      const pred: Record<string, RevenuePredictionResponse> = {};
+      const err: Record<string, string> = {};
+      for (const r of results) {
+        if (r.ok) pred[r.cropName] = r.data;
+        else err[r.cropName] = '예측을 불러오지 못했습니다.';
+      }
+      setPredictionsByCrop(pred);
+      setRevenueErrorsByCrop(err);
+      const first = rows[0]?.cropName;
+      setExpandedRevenueCrop((prev) => (prev && pred[prev] ? prev : first ?? null));
+    })().finally(() => {
+      if (!cancelled) setIsRevenueLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSubTab, farm?.id, revenueCropRowsKey, weather, revenueCropRows, buildWeatherContext]);
+
+  // 이력·재배·최근 AI 추천을 한 번에 병렬 로드 (농장 전환 시에만 재요청)
+  useEffect(() => {
+    if (!farm?.id) {
+      setLatestRecommendData(null);
+      return;
+    }
+    const farmId = farm.id;
+    let cancelled = false;
+    setLatestRecommendData(null);
+
+    (async () => {
+      try {
+        const [, , rec] = await Promise.all([
+          refreshHistories(),
+          refreshCultivations(),
+          getLatestRecommendHistory(farmId).catch(() => null),
+        ]);
+        if (cancelled) return;
+        setLatestRecommendData(rec);
+      } catch {
+        if (!cancelled) {
+          setLatestRecommendData(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [farm?.id, refreshHistories, refreshCultivations]);
 
   // 통합 새로고침
   const refreshAll = useCallback(async () => {
-    await Promise.all([refreshHistories(), refreshCultivations()]);
+    const f = farmRef.current;
+    if (!f?.id) {
+      await Promise.all([refreshHistories(), refreshCultivations()]);
+      return;
+    }
+    const targetId = f.id;
+    const [, , rec] = await Promise.all([
+      refreshHistories(),
+      refreshCultivations(),
+      getLatestRecommendHistory(targetId).catch(() => null),
+    ]);
+    if (farmRef.current?.id === targetId) {
+      setLatestRecommendData(rec);
+    }
   }, [refreshHistories, refreshCultivations]);
 
-  // AI 추천 최근 이력 및 예상 수익 계산
+  // AI 점수·예상 수익 합산: 재배 변경 시에는 서버 이력을 다시 부르지 않고 로컬만 재계산
   useEffect(() => {
-    if (farm?.id) {
-      getLatestRecommendHistory(farm.id)
-        .then(res => {
-          let aiScore = null;
-          let recommendations: any[] = [];
-          
-          if (res && res.recommendations && res.recommendations.length > 0) {
-            aiScore = res.recommendations[0].score;
-            recommendations = res.recommendations;
-          }
-          setLatestAiScore(aiScore);
-          
-          // 사용자가 등록한 재배 작물의 예상 수익 합산
-          // 계산식: 등록된 작물의 예상 수확량(kg) * 해당 작물의 예상 수익(원/kg)
-          let estimatedTotal = 0;
-          if (cultivations && cultivations.length > 0) {
-            cultivations.forEach(c => {
-              // AI 추천 목록에서 해당 작물의 단가를 찾음 (없으면 기본값 3000원)
-              const rec = recommendations.find((r: any) => r.cropId === c.cropId);
-              const pricePerKg = rec?.expectedRevenuePerKg || 3000;
-              const yieldAmount = c.farmerEstimatedYield || 0;
-              estimatedTotal += yieldAmount * pricePerKg;
-            });
-          }
-          setMonthlyRevenue(estimatedTotal);
-        })
-        .catch(() => {
-          setLatestAiScore(null);
-
-          // 추천 이력을 못 불러왔더라도, 재배 작물이 있다면 기본 단가(3000원)로 계산
-          let estimatedTotal = 0;
-          if (cultivations && cultivations.length > 0) {
-            cultivations.forEach(c => {
-              const yieldAmount = c.farmerEstimatedYield || 0;
-              estimatedTotal += yieldAmount * 3000;
-            });
-          }
-          setMonthlyRevenue(estimatedTotal);
-        });
-    } else {
+    if (!farm?.id) {
       setLatestAiScore(null);
       setMonthlyRevenue(0);
+      return;
     }
-  }, [farm?.id, cultivations]);
+    const recommendations = latestRecommendData?.recommendations ?? [];
+    const aiScore =
+      latestRecommendData && recommendations.length > 0 ? recommendations[0].score : null;
+    setLatestAiScore(aiScore);
+
+    let estimatedTotal = 0;
+    if (cultivations?.length) {
+      for (const c of cultivations) {
+        const rec = recommendations.find((r) => r.cropId === c.cropId);
+        const pricePerKg = rec?.expectedRevenuePerKg ?? 3000;
+        const yieldAmount = Number(c.farmerEstimatedYield) || 0;
+        estimatedTotal += yieldAmount * pricePerKg;
+      }
+    }
+    setMonthlyRevenue(estimatedTotal);
+  }, [farm?.id, cultivations, latestRecommendData]);
 
   const isLoading = isFarmsLoading;
 
@@ -570,80 +739,148 @@ function FarmDashboardContent() {
               <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>{farm?.cropNames.length}종</p>
             </div>
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
-              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>현재 작물의 예상 수익</p>
+              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>AI 예측 수익 합계</p>
               <p style={{ fontSize: '24px', fontWeight: 700, color: '#f59e0b' }}>
-                {isRevenueLoading ? '계산 중...' : `₩${(prediction?.predicted_revenue || 0).toLocaleString()}`}
+                {isRevenueLoading ? '계산 중...' : `₩${totalPredictedRevenue.toLocaleString('ko-KR')}`}
               </p>
+              <p style={{ fontSize: '12px', color: 'var(--color-text-light)', marginTop: '6px' }}>작물별 AI 예측 금액의 합(추정)</p>
             </div>
           </div>
 
-          {/* AI 예측 수확량 및 인사이트 패널 */}
-          {farm && farm.cropNames.length > 0 && (
+          {/* 작물별 AI 수익 · 시세 인사이트 (아코디언) */}
+          {farm && revenueCropRows.length > 0 && (
             <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)', border: '1px solid var(--color-primary)', padding: '24px', borderRadius: 'var(--radius-lg)', marginBottom: '32px' }} data-guide="farm-farmer-insight">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <span style={{ background: 'var(--color-primary)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 700 }}>AI 예측 인사이트</span>
-                  <h3 style={{ fontSize: '18px', fontWeight: 700 }}>{farm.cropNames[0]} 수익 분석</h3>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>작물별 수익 · 시세 분석</h3>
                 </div>
-                {prediction && (
-                  <Badge variant="lime">신뢰도: {prediction.confidence}</Badge>
-                )}
+                <p style={{ fontSize: '13px', color: 'var(--color-text-light)', marginTop: '8px', marginBottom: 0 }}>
+                  재배 작물마다 AI 예측을 불러옵니다. 항목을 펼쳐 시세 전망·수익 분석을 확인하세요.
+                </p>
               </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                {/* 좌측: 수확량 및 단가 정보 */}
-                <div style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '20px', borderRadius: '8px' }}>
-                  <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>AI 예측 수확량</span>
-                    <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-primary)' }}>
-                      {prediction ? `${(prediction.predicted_yield_kg || 0).toLocaleString()} kg` : '-'}
-                    </span>
-                  </div>
-                  <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>KAMIS 도매 시세 (1kg)</span>
-                    <span style={{ fontSize: '18px', fontWeight: 700 }}>
-                      {prediction ? `₩${(prediction.predicted_price_per_kg || 0).toLocaleString()}` : '-'}
-                    </span>
-                  </div>
-                  
-                  {/* 실제 수확량 입력 (Override) */}
-                  <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px dashed var(--color-border)' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: 'var(--color-text-light)', marginBottom: '8px' }}>
-                      💡 실제 수확량이 다르다면 직접 입력해주세요. 이를 바탕으로 예상 수익이 다시 계산됩니다.
-                    </label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input 
-                        type="number" 
-                        placeholder="실제 수확량 (kg)" 
-                        value={actualYield}
-                        onChange={(e) => setActualYield(e.target.value ? Number(e.target.value) : '')}
-                        style={{ flex: 1, padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '14px' }}
-                      />
-                      <Button variant="outline" size="sm" onClick={handleResetRevenue} disabled={isRevenueLoading || actualYield === ''}>
-                        되돌리기
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={handleCalculateRevenue} disabled={isRevenueLoading}>
-                        {isRevenueLoading ? '계산 중...' : '적용'}
-                      </Button>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {revenueCropRows.map(({ cropName, areaSqm }) => {
+                  const open = expandedRevenueCrop === cropName;
+                  const prediction = predictionsByCrop[cropName];
+                  const errMsg = revenueErrorsByCrop[cropName];
+                  const busy = applyingCrop === cropName || isRevenueLoading;
+                  return (
+                    <div
+                      key={cropName}
+                      style={{
+                        border: '1px solid var(--color-border)',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        background: '#fff',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setExpandedRevenueCrop(open ? null : cropName)}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '14px 16px',
+                          border: 'none',
+                          background: open ? 'rgba(16, 185, 129, 0.08)' : '#fff',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '16px', color: 'var(--color-text)' }}>{cropName}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--color-text-light)', marginTop: '2px' }}>
+                            분석 면적 약 {areaSqm.toLocaleString('ko-KR')}㎡
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          {prediction && (
+                            <span style={{ fontSize: '15px', fontWeight: 700, color: '#f59e0b' }}>
+                              ₩{(prediction.predicted_revenue ?? 0).toLocaleString('ko-KR')}
+                            </span>
+                          )}
+                          {errMsg && <Badge variant="red">오류</Badge>}
+                          {prediction && <Badge variant="lime">신뢰도 {prediction.confidence}</Badge>}
+                          <span style={{ fontSize: '12px', color: 'var(--color-text-light)' }}>{open ? '접기 ▲' : '펼치기 ▼'}</span>
+                        </div>
+                      </button>
+
+                      {open && (
+                        <div style={{ padding: '16px 20px', borderTop: '1px solid var(--color-border)', background: '#fafafa' }}>
+                          {errMsg && !prediction && (
+                            <p style={{ color: 'var(--color-danger)', fontSize: '14px' }}>{errMsg}</p>
+                          )}
+                          {prediction && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                              <div style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '20px', borderRadius: '8px' }}>
+                                <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>AI 예측 수확량</span>
+                                  <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                                    {(prediction.predicted_yield_kg || 0).toLocaleString('ko-KR')} kg
+                                  </span>
+                                </div>
+                                <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>KAMIS 도매 시세 (1kg)</span>
+                                  <span style={{ fontSize: '18px', fontWeight: 700 }}>
+                                    ₩{(prediction.predicted_price_per_kg || 0).toLocaleString('ko-KR')}
+                                  </span>
+                                </div>
+                                <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px dashed var(--color-border)' }}>
+                                  <label style={{ display: 'block', fontSize: '13px', color: 'var(--color-text-light)', marginBottom: '8px' }}>
+                                    💡 이 작물의 실제 수확량(kg)이 다르면 입력 후 적용하세요.
+                                  </label>
+                                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    <input
+                                      type="number"
+                                      placeholder="실제 수확량 (kg)"
+                                      value={actualYieldByCrop[cropName] ?? ''}
+                                      onChange={(e) =>
+                                        setActualYieldByCrop((prev) => ({
+                                          ...prev,
+                                          [cropName]: e.target.value === '' ? '' : Number(e.target.value),
+                                        }))
+                                      }
+                                      style={{ flex: 1, minWidth: '120px', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '14px' }}
+                                    />
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleResetYieldForCrop(cropName, areaSqm)}
+                                      disabled={busy}
+                                    >
+                                      되돌리기
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={() => handleApplyYieldForCrop(cropName, areaSqm)} disabled={busy}>
+                                      {busy ? '계산 중...' : '적용'}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', borderLeft: '4px solid var(--color-primary)' }}>
+                                  <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px', color: 'var(--color-text)' }}>📈 시세 전망</h4>
+                                  <p style={{ fontSize: '14px', color: 'var(--color-text-light)', lineHeight: 1.5 }}>
+                                    {prediction.price_insight || '—'}
+                                  </p>
+                                </div>
+                                <div style={{ background: '#fef3c7', padding: '16px', borderRadius: '8px', borderLeft: '4px solid #f59e0b' }}>
+                                  <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px', color: '#b45309' }}>💡 종합 수익 분석</h4>
+                                  <p style={{ fontSize: '14px', color: '#92400e', lineHeight: 1.5 }}>
+                                    {prediction.revenue_insight || '—'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
-                
-                {/* 우측: AI 설명 (Insight) */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', borderLeft: '4px solid var(--color-primary)' }}>
-                    <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px', color: 'var(--color-text)' }}>📈 시세 전망</h4>
-                    <p style={{ fontSize: '14px', color: 'var(--color-text-light)', lineHeight: 1.5 }}>
-                      {prediction?.price_insight || 'AI 분석 데이터를 불러오고 있습니다...'}
-                    </p>
-                  </div>
-                  <div style={{ background: '#fef3c7', padding: '16px', borderRadius: '8px', borderLeft: '4px solid #f59e0b' }}>
-                    <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px', color: '#b45309' }}>💡 종합 수익 분석</h4>
-                    <p style={{ fontSize: '14px', color: '#92400e', lineHeight: 1.5 }}>
-                      {prediction?.revenue_insight || 'AI 분석 데이터를 불러오고 있습니다...'}
-                    </p>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -810,7 +1047,7 @@ function FarmDashboardContent() {
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 <span style={{ background: 'var(--color-accent)', color: '#1a1a1a', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 700 }}>AI SMART INSIGHT</span>
-                <span style={{ fontSize: '14px', color: 'var(--color-text)', fontWeight: 600 }}>"{farm?.cropNames.length ? farm.cropNames[0] : '작물'} 생육 최적기입니다"</span>
+                <span style={{ fontSize: '14px', color: 'var(--color-text)', fontWeight: 600 }}>&quot;{farm?.cropNames.length ? farm.cropNames.join(' · ') : '작물'} 생육 최적기입니다&quot;</span>
               </div>
               <p style={{ fontSize: '15px', color: 'var(--color-text)', lineHeight: 1.5 }}>
                 기온 상승과 최근 관수 기록을 분석할 때 작물의 생육이 매우 활발합니다.

@@ -39,7 +39,11 @@ export default function CropGuide({ rec }: CropGuideProps) {
             <tr><th>예상 수익</th><td className={styles.revenueHighlight}>₩{rec.expectedRevenuePerKg.toLocaleString('ko-KR')}/kg</td></tr>
             <tr>
               <th>주요 병해충</th>
-              <td>{rec.pests?.map((p) => <span key={p} className={styles.pestTag}>{p}</span>) || '—'}</td>
+              <td>
+                {rec.pests && rec.pests.length > 0
+                  ? rec.pests.map((p) => <span key={p} className={styles.pestTag}>{p}</span>)
+                  : '—'}
+              </td>
             </tr>
             <tr>
               <th>난이도</th>

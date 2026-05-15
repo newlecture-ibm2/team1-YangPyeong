@@ -11,7 +11,7 @@ import java.util.List;
  * 프론트엔드의 CropRecommendResponse 인터페이스와 대응
  */
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class RecommendResult {
 
     private Long farmId;
