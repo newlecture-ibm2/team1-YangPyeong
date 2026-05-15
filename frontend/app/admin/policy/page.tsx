@@ -21,7 +21,7 @@ export default function PolicyPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingPolicy, setEditingPolicy] = useState<AdminPolicyData | null>(null)
-  const [formData, setFormData] = useState<PolicyDataRequest>({ externalId: '', title: '', category: '', organization: '', regionCode: '', contentSummary: '', sourceUrl: '' })
+  const [formData, setFormData] = useState<PolicyDataRequest>({ externalId: '', title: '', category: '', organization: '', regionCode: '', target: '', supportAmount: '', applyStart: '', applyEnd: '', contentSummary: '', sourceUrl: '' })
   const [parsedData, setParsedData] = useState<Record<string, any>>({})
   const toast = useToast()
 
@@ -40,8 +40,8 @@ export default function PolicyPage() {
 
   const openCreateModal = () => {
     setEditingPolicy(null)
-    setFormData({ externalId: '', title: '', category: '', organization: '', regionCode: '', contentSummary: '', sourceUrl: '' })
-    setParsedData({ title: '', regionName: '', category: '', organization: '', contentSummary: '', sourceUrl: '' })
+    setFormData({ externalId: '', title: '', category: '', organization: '', regionCode: '', target: '', supportAmount: '', applyStart: '', applyEnd: '', contentSummary: '', sourceUrl: '' })
+    setParsedData({ title: '', regionName: '', category: '', organization: '', target: '', supportAmount: '', applyStart: '', applyEnd: '', contentSummary: '', sourceUrl: '' })
     setShowModal(true)
   }
 
@@ -53,6 +53,10 @@ export default function PolicyPage() {
       category: policy.category,
       organization: policy.organization,
       regionCode: policy.regionCode,
+      target: policy.target || '',
+      supportAmount: policy.supportAmount || '',
+      applyStart: policy.applyStart || '',
+      applyEnd: policy.applyEnd || '',
       contentSummary: policy.contentSummary,
       sourceUrl: policy.sourceUrl 
     })
@@ -60,7 +64,11 @@ export default function PolicyPage() {
       title: policy.title || '', 
       regionName: policy.regionCode || '', 
       category: policy.category || '', 
-      organization: policy.organization || '', 
+      organization: policy.organization || '',
+      target: policy.target || '',
+      supportAmount: policy.supportAmount || '',
+      applyStart: policy.applyStart || '',
+      applyEnd: policy.applyEnd || '',
       contentSummary: policy.contentSummary || '', 
       sourceUrl: policy.sourceUrl || '' 
     })
@@ -74,6 +82,10 @@ export default function PolicyPage() {
       category: parsedData.category,
       organization: parsedData.organization,
       regionCode: parsedData.regionName,
+      target: parsedData.target,
+      supportAmount: parsedData.supportAmount,
+      applyStart: parsedData.applyStart || null,
+      applyEnd: parsedData.applyEnd || null,
       contentSummary: parsedData.contentSummary,
       sourceUrl: parsedData.sourceUrl
     }
@@ -164,6 +176,9 @@ export default function PolicyPage() {
                     </td>
                     <td>
                       <div className={styles.actionGroup}>
+                        {policy.sourceUrl && (
+                          <button className={styles.editBtn} style={{ background: '#3b82f6', color: '#fff', border: 'none' }} onClick={() => window.open(policy.sourceUrl!, '_blank')}>원문 보기</button>
+                        )}
                         <button className={styles.editBtn} onClick={() => openEditModal(policy)}>수정</button>
                         <button className={styles.deleteBtn} onClick={() => handleDelete(policy.id)}>삭제</button>
                       </div>
@@ -227,6 +242,46 @@ export default function PolicyPage() {
                 value={parsedData.organization || ''}
                 onChange={e => setParsedData(prev => ({ ...prev, organization: e.target.value }))}
                 placeholder="예: 농림축산식품부"
+              />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>지원 대상</label>
+              <input
+                className={styles.formInput}
+                value={parsedData.target || ''}
+                onChange={e => setParsedData(prev => ({ ...prev, target: e.target.value }))}
+                placeholder="예: 청년 창업농"
+              />
+            </div>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>지원 금액/규모</label>
+              <input
+                className={styles.formInput}
+                value={parsedData.supportAmount || ''}
+                onChange={e => setParsedData(prev => ({ ...prev, supportAmount: e.target.value }))}
+                placeholder="예: 최대 1,000만원"
+              />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>신청 시작일</label>
+              <input
+                type="date"
+                className={styles.formInput}
+                value={parsedData.applyStart || ''}
+                onChange={e => setParsedData(prev => ({ ...prev, applyStart: e.target.value }))}
+              />
+            </div>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>신청 마감일</label>
+              <input
+                type="date"
+                className={styles.formInput}
+                value={parsedData.applyEnd || ''}
+                onChange={e => setParsedData(prev => ({ ...prev, applyEnd: e.target.value }))}
               />
             </div>
           </div>

@@ -13,6 +13,10 @@ export interface AdminPolicyData {
   organization: string | null
   regionCode: string | null
   regionName: string | null
+  target: string | null
+  supportAmount: string | null
+  applyStart: string | null
+  applyEnd: string | null
   contentSummary: string | null
   sourceUrl: string | null
   fetchedAt: string | null
@@ -28,6 +32,10 @@ export interface PolicyDataRequest {
   category: string | null
   organization: string | null
   regionCode: string | null
+  target: string | null
+  supportAmount: string | null
+  applyStart: string | null
+  applyEnd: string | null
   contentSummary: string | null
   sourceUrl: string | null
 }

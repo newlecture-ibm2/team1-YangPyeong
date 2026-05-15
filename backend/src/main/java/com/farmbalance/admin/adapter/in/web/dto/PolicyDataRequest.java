@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 /**
  * 정책 데이터 생성/수정 요청 DTO
  */
@@ -20,4 +22,8 @@ public class PolicyDataRequest {
     private String regionCode;
     private String contentSummary;
     private String sourceUrl;
+    private String target;
+    private String supportAmount;
+    private LocalDate applyStart;
+    private LocalDate applyEnd;
 }

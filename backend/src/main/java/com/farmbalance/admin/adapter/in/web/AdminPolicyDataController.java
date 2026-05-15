@@ -57,6 +57,10 @@ public class AdminPolicyDataController {
                 .organization(dto.getOrganization())
                 .regionCode(dto.getRegionCode())
                 .regionName(dto.getRegionName())
+                .target(dto.getTarget())
+                .supportAmount(dto.getSupportAmount())
+                .applyStart(dto.getApplyStart())
+                .applyEnd(dto.getApplyEnd())
                 .contentSummary(dto.getContentSummary())
                 .sourceUrl(dto.getSourceUrl())
                 .fetchedAt(dto.getFetchedAt())
@@ -78,6 +82,10 @@ public class AdminPolicyDataController {
                 request.getCategory(),
                 request.getOrganization(),
                 request.getRegionCode(),
+                request.getTarget(),
+                request.getSupportAmount(),
+                request.getApplyStart(),
+                request.getApplyEnd(),
                 request.getContentSummary(),
                 request.getSourceUrl()
         );
@@ -98,6 +106,10 @@ public class AdminPolicyDataController {
                 request.getCategory(),
                 request.getOrganization(),
                 request.getRegionCode(),
+                request.getTarget(),
+                request.getSupportAmount(),
+                request.getApplyStart(),
+                request.getApplyEnd(),
                 request.getContentSummary(),
                 request.getSourceUrl()
         );

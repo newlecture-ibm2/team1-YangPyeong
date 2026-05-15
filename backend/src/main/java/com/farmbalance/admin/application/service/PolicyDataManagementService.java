@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -50,13 +51,17 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
 
     @Override
     @Transactional
-    public Long createPolicy(String externalId, String title, String category, String organization, String regionCode, String contentSummary, String sourceUrl) {
+    public Long createPolicy(String externalId, String title, String category, String organization, String regionCode, String target, String supportAmount, LocalDate applyStart, LocalDate applyEnd, String contentSummary, String sourceUrl) {
         PolicyData policyData = new PolicyData();
         policyData.setExternalId(externalId);
         policyData.setTitle(title);
         policyData.setCategory(category);
         policyData.setOrganization(organization);
         policyData.setRegionCode(regionCode);
+        policyData.setTarget(target);
+        policyData.setSupportAmount(supportAmount);
+        policyData.setApplyStart(applyStart);
+        policyData.setApplyEnd(applyEnd);
         policyData.setContent(contentSummary);
         policyData.setSourceUrl(sourceUrl);
         policyData.setFetchedAt(LocalDateTime.now());
@@ -67,7 +72,7 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
 
     @Override
     @Transactional
-    public void updatePolicy(Long id, String externalId, String title, String category, String organization, String regionCode, String contentSummary, String sourceUrl) {
+    public void updatePolicy(Long id, String externalId, String title, String category, String organization, String regionCode, String target, String supportAmount, LocalDate applyStart, LocalDate applyEnd, String contentSummary, String sourceUrl) {
         PolicyData existing = policyQueryPort.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POLICY_NOT_FOUND));
 
@@ -76,6 +81,10 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
         existing.setCategory(category);
         existing.setOrganization(organization);
         existing.setRegionCode(regionCode);
+        existing.setTarget(target);
+        existing.setSupportAmount(supportAmount);
+        existing.setApplyStart(applyStart);
+        existing.setApplyEnd(applyEnd);
         existing.setContent(contentSummary);
         existing.setSourceUrl(sourceUrl);
         existing.setFetchedAt(LocalDateTime.now());
