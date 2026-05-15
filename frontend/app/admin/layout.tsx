@@ -15,7 +15,7 @@ const ADMIN_MENUS = [
   { href: '/admin/community', label: '커뮤니티 관리', icon: '💬' },
   { href: '/admin/shop', label: '상점 상품 관리', icon: '🛒' },
   { href: '/admin/orders', label: '주문 관리', icon: '📦' },
-  { href: '/admin/crops', label: '작물 동기화 관리', icon: '🌾' },
+  { href: '/admin/crops', label: '작물 정보 관리', icon: '🌾' },
   { href: '/admin/policy', label: '정책 관리', icon: '📄' },
   { href: '/admin/rag', label: 'AI RAG 관리', icon: '🤖' },
   { href: '/admin/data', label: '외부 데이터 연동 관리', icon: '🔌' },
