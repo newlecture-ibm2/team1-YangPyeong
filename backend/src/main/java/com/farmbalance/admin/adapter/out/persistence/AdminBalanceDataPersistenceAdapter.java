@@ -38,11 +38,14 @@ public class AdminBalanceDataPersistenceAdapter implements AdminBalanceDataPort 
     @Override
     public List<AdminBalanceData> findAll() {
         String sql = """
-            SELECT b.*, c.name as crop_name 
-            FROM balance_data b 
-            JOIN crops c ON b.crop_id = c.id 
-            WHERE b.deleted_at IS NULL 
-            ORDER BY b.calculated_at DESC
+            SELECT * FROM (
+                SELECT DISTINCT ON (b.crop_id) b.*, c.name as crop_name 
+                FROM balance_data b 
+                JOIN crops c ON b.crop_id = c.id 
+                WHERE b.deleted_at IS NULL 
+                ORDER BY b.crop_id, b.calculated_at DESC
+            ) latest_data
+            ORDER BY calculated_at DESC
         """;
         return jdbcTemplate.query(sql, rowMapper);
     }
