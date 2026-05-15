@@ -106,7 +106,7 @@ public class GraphRefreshService {
         String sql = """
             INSERT INTO graph.graph_entity (entity_type, entity_key, name, properties, source_table, source_id)
             SELECT 'FARMER', id::varchar, name, jsonb_build_object('email', email, 'region_code', region_code), 'users', id
-            FROM users WHERE role = 'FARMER' AND deleted_at IS NULL
+            FROM users WHERE role = 'FARMER' AND anonymized_at IS NULL
             ON CONFLICT (entity_type, entity_key) DO UPDATE SET 
                 name = EXCLUDED.name, properties = EXCLUDED.properties, source_id = EXCLUDED.source_id, source_table = EXCLUDED.source_table
             """;
@@ -199,7 +199,7 @@ public class GraphRefreshService {
             FROM users u
             JOIN graph.graph_entity g_user ON g_user.entity_type = 'FARMER' AND g_user.source_id = u.id
             JOIN graph.graph_entity g_region ON g_region.entity_type = 'REGION' AND g_region.entity_key = u.region_code
-            WHERE u.role = 'FARMER' AND u.deleted_at IS NULL
+            WHERE u.role = 'FARMER' AND u.anonymized_at IS NULL
             ON CONFLICT (relation_type, from_entity_id, to_entity_id) DO NOTHING
             """;
         return jdbcTemplate.update(sql);
