@@ -12,4 +12,6 @@ public interface AdminBalanceDataPort {
     List<AdminBalanceData> findAll();
 
     List<AdminBalanceData> findByRegionAndCrop(String regionCode, Long cropId);
+
+    void updateBalanceStatuses(double excessWarn, double excessCaution, double shortWarn, double shortCaution);
 }

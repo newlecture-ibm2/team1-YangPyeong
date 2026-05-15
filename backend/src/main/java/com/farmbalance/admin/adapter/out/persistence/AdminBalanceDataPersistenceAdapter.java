@@ -22,6 +22,7 @@ public class AdminBalanceDataPersistenceAdapter implements AdminBalanceDataPort 
             .id(rs.getLong("id"))
             .regionCode(rs.getString("region_code"))
             .cropId(rs.getLong("crop_id"))
+            .cropName(rs.getString("crop_name"))
             .year(rs.getInt("year"))
             .season(rs.getString("season"))
             .supplyForecast(rs.getBigDecimal("supply_forecast"))
@@ -36,13 +37,45 @@ public class AdminBalanceDataPersistenceAdapter implements AdminBalanceDataPort 
 
     @Override
     public List<AdminBalanceData> findAll() {
-        String sql = "SELECT * FROM balance_data WHERE deleted_at IS NULL ORDER BY calculated_at DESC";
+        String sql = """
+            SELECT * FROM (
+                SELECT DISTINCT ON (b.crop_id) b.*, c.name as crop_name 
+                FROM balance_data b 
+                JOIN crops c ON b.crop_id = c.id 
+                WHERE b.deleted_at IS NULL 
+                ORDER BY b.crop_id, b.calculated_at DESC
+            ) latest_data
+            ORDER BY calculated_at DESC
+        """;
         return jdbcTemplate.query(sql, rowMapper);
     }
 
     @Override
     public List<AdminBalanceData> findByRegionAndCrop(String regionCode, Long cropId) {
-        String sql = "SELECT * FROM balance_data WHERE region_code = ? AND crop_id = ? AND deleted_at IS NULL ORDER BY year DESC, season";
+        String sql = """
+            SELECT b.*, c.name as crop_name 
+            FROM balance_data b 
+            JOIN crops c ON b.crop_id = c.id 
+            WHERE b.region_code = ? AND b.crop_id = ? AND b.deleted_at IS NULL 
+            ORDER BY b.year DESC, b.season
+        """;
         return jdbcTemplate.query(sql, rowMapper, regionCode, cropId);
+    }
+
+    @Override
+    public void updateBalanceStatuses(double excessWarn, double excessCaution, double shortWarn, double shortCaution) {
+        String sql = """
+            UPDATE balance_data
+            SET balance_status = CASE 
+                WHEN supply_ratio >= ? THEN 'EXCESS_WARN'
+                WHEN supply_ratio >= ? THEN 'EXCESS_CAUTION'
+                WHEN supply_ratio <= ? THEN 'SHORT_WARN'
+                WHEN supply_ratio <= ? THEN 'SHORT_CAUTION'
+                ELSE 'BALANCED'
+            END,
+            updated_at = NOW()
+            WHERE deleted_at IS NULL
+        """;
+        jdbcTemplate.update(sql, excessWarn, excessCaution, shortWarn, shortCaution);
     }
 }
