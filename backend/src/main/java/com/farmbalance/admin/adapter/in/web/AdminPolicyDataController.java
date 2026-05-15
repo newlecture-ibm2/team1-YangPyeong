@@ -56,6 +56,7 @@ public class AdminPolicyDataController {
                 .category(dto.getCategory())
                 .organization(dto.getOrganization())
                 .regionCode(dto.getRegionCode())
+                .regionName(dto.getRegionName())
                 .contentSummary(dto.getContentSummary())
                 .sourceUrl(dto.getSourceUrl())
                 .fetchedAt(dto.getFetchedAt())

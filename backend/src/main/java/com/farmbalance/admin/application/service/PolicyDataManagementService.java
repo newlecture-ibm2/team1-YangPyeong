@@ -6,6 +6,7 @@ import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.policy.application.port.out.PolicyQueryPort;
 import com.farmbalance.policy.application.port.out.PolicySavePort;
+import com.farmbalance.policy.application.port.out.RegionNameResolvePort;
 import com.farmbalance.policy.domain.model.PolicyData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,11 +27,17 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
 
     private final PolicyQueryPort policyQueryPort;
     private final PolicySavePort policySavePort;
+    private final RegionNameResolvePort regionNameResolvePort;
+
+    private String resolveRegionName(String regionCode) {
+        if (regionCode == null) return null;
+        return regionNameResolvePort.findNameByCode(regionCode).orElse(regionCode);
+    }
 
     @Override
     public List<AdminPolicyDataDto> getAllPolicies() {
         return policyQueryPort.findAll().stream()
-                .map(AdminPolicyDataDto::from)
+                .map(domain -> AdminPolicyDataDto.from(domain, resolveRegionName(domain.getRegionCode())))
                 .toList();
     }
 
@@ -38,7 +45,7 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
     public AdminPolicyDataDto getPolicy(Long id) {
         PolicyData domain = policyQueryPort.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POLICY_NOT_FOUND));
-        return AdminPolicyDataDto.from(domain);
+        return AdminPolicyDataDto.from(domain, resolveRegionName(domain.getRegionCode()));
     }
 
     @Override

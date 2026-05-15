@@ -140,7 +140,7 @@ export default function PolicyPage() {
               {policies.map(policy => {
                 const title = policy.title || '제목 없음'
                 const category = policy.category || '기타'
-                const region = policy.regionCode || '전국'
+                const region = policy.regionName || policy.regionCode || '전국'
                 const org = policy.organization || '-'
                 
                 return (

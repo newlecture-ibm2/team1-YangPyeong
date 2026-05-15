@@ -12,6 +12,7 @@ export interface AdminPolicyData {
   category: string | null
   organization: string | null
   regionCode: string | null
+  regionName: string | null
   contentSummary: string | null
   sourceUrl: string | null
   fetchedAt: string | null
