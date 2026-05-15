@@ -13,8 +13,9 @@ import ModalDialog from '@/components/common/Modal/ModalDialog';
 import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import { useToast } from '@/components/common/Toast';
 import { uploadFile } from '@/lib/upload.api';
-import { useFarmDetail } from '../../useFarm';
+import { getMyFarms, useFarmDetail } from '../../useFarm';
 import { updateFarm } from '../../_lib/farm.api';
+import { getCultivations } from '../../_lib/cultivation.api';
 import styles from '../../register/page.module.css';
 
 interface CropOption {
@@ -41,6 +42,7 @@ interface FarmFormData {
   isMountain: boolean;
   mainNo: string;
   subNo: string;
+  cultivations: { cropId: number; area: string; expectedYield: string; unit: string }[];
 }
 
 export default function FarmEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -80,6 +82,7 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     isMountain: false,
     mainNo: '',
     subNo: '',
+    cultivations: [],
   });
 
   // 상세 데이터 로드 시 폼에 채우기
@@ -116,9 +119,23 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
         soilType: farm.soilType || '',
         ph: farm.ph?.toString() || '',
         organicMatter: farm.organicMatter?.toString() || '',
+        cultivations: [], // 아래에서 별도로 로드
       });
+
+      // 재배 상세 정보 로드
+      getCultivations(Number(id)).then(data => {
+        setFormData(prev => ({
+          ...prev,
+          cultivations: data.map(c => ({
+            cropId: c.cropId,
+            area: String(c.cultivationArea || ''),
+            expectedYield: String(c.farmerEstimatedYield || ''),
+            unit: c.yieldUnit || 'kg'
+          }))
+        }));
+      }).catch(() => {});
     }
-  }, [farm]);
+  }, [farm, id]);
 
   const handleChange = (field: keyof FarmFormData, value: string | boolean | number[]) => {
     if (field === 'registrationNumber' && typeof value === 'string') {
@@ -169,10 +186,31 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     toast.success('주소가 변경되었습니다. 저장 시 PNU 정보가 갱신됩니다.');
   };
 
+  const handleCropSelect = (cropIdStr: string) => {
+    const cropId = Number(cropIdStr);
+    if (!cropId) return;
+    
+    if (!formData.cultivations.find(c => c.cropId === cropId)) {
+      setFormData(prev => ({
+        ...prev,
+        cultivations: [...prev.cultivations, { cropId, area: '', expectedYield: '', unit: 'kg' }]
+      }));
+    }
+  };
+
   const removeCrop = (cropId: number) => {
     setFormData(prev => ({
       ...prev,
-      cropIds: prev.cropIds.filter(id => id !== cropId)
+      cultivations: prev.cultivations.filter(c => c.cropId !== cropId)
+    }));
+  };
+
+  const handleCultivationChange = (cropId: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      cultivations: prev.cultivations.map(c => 
+        c.cropId === cropId ? { ...c, [field]: value } : c
+      )
     }));
   };
 
@@ -185,7 +223,12 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
         name: formData.name,
         address: formData.baseAddress,
         area: Number(formData.area),
-        cropIds: formData.cropIds,
+        cropIds: formData.cultivations.map(c => c.cropId),
+        cultivations: formData.cultivations.map(c => ({
+          cropId: c.cropId,
+          area: Number(c.area) || 0,
+          expectedYield: Number(c.expectedYield) || null
+        })),
         bjdCode: formData.bjdCode || undefined,
         isMountain: formData.isMountain,
         mainNo: formData.mainNo || undefined,
@@ -285,24 +328,70 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
               </div>
               <div className={styles.inputGroup} style={{ gap: '8px' }}>
                 <Dropdown
-                  label="재배 작물"
+                  label="재배 작물 추가"
                   options={cropOptions.map(c => ({ value: String(c.id), label: c.name }))}
-                  multiple
-                  required
-                  value={formData.cropIds.map(String).join(',')}
-                  onChange={(val) => {
-                    const uniqueIds = Array.from(new Set(val.split(',').filter(Boolean).map(Number)));
-                    handleChange('cropIds', uniqueIds);
-                  }}
+                  placeholder="작물을 선택하여 추가하세요"
+                  value=""
+                  onChange={handleCropSelect}
                 />
-                {formData.cropIds.length > 0 && (
-                  <div className={styles.tagList}>
-                    {formData.cropIds.map(cropId => (
-                      <span key={cropId} className={styles.tag}>
-                        {cropOptions.find(c => c.id === cropId)?.name || cropId}
-                        <button type="button" className={styles.tagRemoveBtn} onClick={() => removeCrop(cropId)}>×</button>
-                      </span>
-                    ))}
+                {formData.cultivations.length > 0 && (
+                  <div className={styles.tagList} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+                    {formData.cultivations.map(cult => {
+                      const cropName = cropOptions.find(c => c.id === cult.cropId)?.name || `작물 ${cult.cropId}`;
+                      return (
+                        <div key={cult.cropId} style={{ border: '1px solid var(--color-border)', padding: '16px', borderRadius: '8px', position: 'relative', background: '#f8fafc' }}>
+                          <button 
+                            type="button" 
+                            className={styles.tagRemoveBtn} 
+                            onClick={() => removeCrop(cult.cropId)}
+                            style={{ position: 'absolute', top: '12px', right: '12px', fontSize: '18px' }}
+                          >
+                            ×
+                          </button>
+                          <h4 style={{ margin: '0 0 12px 0', fontSize: '15px', color: 'var(--color-text)', fontWeight: 700 }}>🌱 {cropName}</h4>
+                          <div style={{ display: 'flex', gap: '12px' }}>
+                            <div style={{ flex: 1 }}>
+                              <Input
+                                label="재배 면적 (㎡)"
+                                type="number"
+                                required
+                                value={cult.area}
+                                onChange={(e) => handleCultivationChange(cult.cropId, 'area', e.target.value)}
+                              />
+                              {cult.area && Number(cult.area) > 0 && (
+                                <div style={{ marginTop: '12px', fontSize: '13px', color: 'var(--color-secondary)', display: 'flex', alignItems: 'flex-start', gap: '6px', background: 'rgba(45,106,79,0.05)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(45,106,79,0.1)' }}>
+                                  <span>💡</span>
+                                  <div>
+                                    <strong>가이드:</strong> 양평군 평균적으로 <strong>{cropName}</strong>은(는) 1㎡당 약 {(
+                                      cropName.includes('감자') ? 3.0 : 
+                                      cropName.includes('양파') ? 6.2 : 
+                                      cropName.includes('배추') ? 8.5 : 
+                                      cropName.includes('무') ? 7.0 : 2.5
+                                    )}kg 생산됩니다.<br/>
+                                    <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>
+                                      입력하신 면적({cult.area}㎡) 기준, 약 <strong>{(Number(cult.area) * (
+                                        cropName.includes('감자') ? 3.0 : 
+                                        cropName.includes('양파') ? 6.2 : 
+                                        cropName.includes('배추') ? 8.5 : 
+                                        cropName.includes('무') ? 7.0 : 2.5
+                                      )).toLocaleString()}kg</strong> 수확을 예상해 볼 수 있습니다.
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <Input
+                                label="예상 총생산량 (kg)"
+                                type="number"
+                                value={cult.expectedYield}
+                                onChange={(e) => handleCultivationChange(cult.cropId, 'expectedYield', e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

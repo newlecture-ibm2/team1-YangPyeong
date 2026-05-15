@@ -182,4 +182,4 @@ app:
       short-caution: ${BALANCE_THRESHOLD_SHORT_CAUTION:80.0}
       short-warn: ${BALANCE_THRESHOLD_SHORT_WARN:50.0}
     region:
-      default-code: ${BALANCE_REGION_CODE:YP}
+      default-code: ${BALANCE_REGION_CODE:41830}

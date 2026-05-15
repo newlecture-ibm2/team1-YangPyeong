@@ -48,11 +48,9 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
 
         Double currentSupplyKg = loadFarmSupplyPort.sumEstimatedYieldByCropName(cropName);
 
-        if (currentSupplyKg == null || currentSupplyKg <= 0) {
-            return new SupplyRatioResult(0.0, BalanceStatus.UNKNOWN, baseYear);
-        }
-
-        double ratio = (currentSupplyKg / standardYieldKg) * 100.0;
+        // 등록된 농장이 없더라도 0%로 계산하여 '부족' 상태를 보여줌
+        double actualSupply = (currentSupplyKg != null) ? currentSupplyKg : 0.0;
+        double ratio = (actualSupply / standardYieldKg) * 100.0;
         
         BalanceProperties.Thresholds thresholds = balanceProperties.getThresholds();
         BalanceStatus status = BalanceStatus.calculateFromRatio(ratio, 
@@ -61,21 +59,55 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
                 thresholds.getShortCaution(), 
                 thresholds.getShortWarn());
         
+        System.out.printf("[Balance-Analysis] 작물: %s, 공급량: %.1fkg, 기준량: %.1fkg, 비율: %.1f%% (%s)\n", 
+                cropName, actualSupply, standardYieldKg, ratio, status.getDescription());
+        
         return new SupplyRatioResult(ratio, status, baseYear);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Map<String, SupplyRatioResult> calculateAllSupplyRatios(Integer year) {
-        List<String> cropNames = loadCropStatsPort.loadAllCropNames();
+        long startTime = System.currentTimeMillis();
+        String regionCode = balanceProperties.getRegion().getDefaultCode();
+        
+        // 1. 모든 최신 통계 데이터 일괄 조회 (1번의 쿼리)
+        List<CropProductionStats> allStats = loadCropStatsPort.loadAllLatestCropStats(regionCode);
+        
+        // 2. 모든 작물의 현재 공급량 일괄 조회 (1번의 쿼리)
+        Map<String, Double> allSupplies = loadFarmSupplyPort.sumAllEstimatedYields();
+        
         Map<String, SupplyRatioResult> results = new HashMap<>();
+        BalanceProperties.Thresholds thresholds = balanceProperties.getThresholds();
 
-        for (String cropName : cropNames) {
-            SupplyRatioResult result = calculateSupplyRatio(cropName, year);
-            if (result.getStatus() != BalanceStatus.UNKNOWN) {
-                results.put(cropName, result);
+        for (CropProductionStats stats : allStats) {
+            String cropName = stats.getItmNm();
+            
+            // 기준 생산량 계산 (Kg 단위)
+            double standardYieldKg = stats.getTotalProduction().doubleValue();
+            if (YieldUnit.TON.getLabel().equals(stats.getUnitNm())) {
+                standardYieldKg *= YieldUnit.TON.getFactorToKg();
             }
+            
+            if (standardYieldKg <= 0) continue;
+
+            // 현재 공급량 (등록된 정보가 없으면 0.0)
+            double actualSupply = allSupplies.getOrDefault(cropName, 0.0);
+            double ratio = (actualSupply / standardYieldKg) * 100.0;
+            
+            BalanceStatus status = BalanceStatus.calculateFromRatio(ratio, 
+                    thresholds.getExcessWarn(), 
+                    thresholds.getExcessCaution(), 
+                    thresholds.getShortCaution(), 
+                    thresholds.getShortWarn());
+            
+            results.put(cropName, new SupplyRatioResult(ratio, status, stats.getYear()));
         }
+        
+        long endTime = System.currentTimeMillis();
+        System.out.printf("[Balance-Optimization] 전체 수급 분석 완료 (작물 수: %d, 소요시간: %dms)\n", 
+                results.size(), (endTime - startTime));
+        
         return results;
     }
 

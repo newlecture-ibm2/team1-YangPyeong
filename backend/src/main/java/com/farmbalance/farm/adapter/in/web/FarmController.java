@@ -173,6 +173,14 @@ public class FarmController {
                 .soilType(request.getSoilType())
                 .ph(request.getPh())
                 .organicMatter(request.getOrganicMatter())
+                .cultivations(request.getCultivations() != null ? 
+                        request.getCultivations().stream()
+                                .map(c -> RegisterFarmCommand.CultivationDetail.builder()
+                                        .cropId(c.getCropId())
+                                        .area(c.getArea())
+                                        .expectedYield(c.getExpectedYield())
+                                        .build())
+                                .collect(java.util.stream.Collectors.toList()) : null)
                 .build();
 
         Farm updatedFarm = updateFarmUseCase.updateFarm(command);

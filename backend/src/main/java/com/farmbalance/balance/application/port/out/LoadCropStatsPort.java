@@ -14,4 +14,9 @@ public interface LoadCropStatsPort {
 
     List<String> loadAllCropNames();
     List<CropProductionStats> loadHistoricalStats(String itmNm, String regionCode);
+    
+    /**
+     * 특정 지역의 모든 작물에 대해 가장 최신 연도의 통계 데이터를 일괄 조회합니다.
+     */
+    List<CropProductionStats> loadAllLatestCropStats(String regionCode);
 }

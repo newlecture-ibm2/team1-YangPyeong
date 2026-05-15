@@ -20,4 +20,7 @@ public class UpdateFarmCommand {
     private String soilType;
     private Double ph;
     private Double organicMatter;
+
+    // 재배 등록 상세 정보 추가
+    private List<RegisterFarmCommand.CultivationDetail> cultivations;
 }
