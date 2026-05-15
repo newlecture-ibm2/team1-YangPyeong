@@ -372,7 +372,7 @@ export default function FarmBot({ children }: FarmBotProps) {
 
   // ── 가이드 모드 ──
   const bubbleClass = bubbleAbove ? styles.bubbleAbove : styles.bubbleBelow;
-  
+
   const { visibleIndex, visibleTotal } = getVisibleStepInfo();
 
   return (

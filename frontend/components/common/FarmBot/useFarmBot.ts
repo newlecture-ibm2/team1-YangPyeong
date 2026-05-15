@@ -87,7 +87,7 @@ export function useFarmBot() {
       onArrive();
       return;
     }
-    
+
     // 먼저 요소가 화면 중앙에 오도록 부드럽게 스크롤합니다
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 

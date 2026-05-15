@@ -63,15 +63,12 @@ async def chat(request: ChatRequest) -> ChatResponse:
         messages.append(HumanMessage(content=request.message))
 
         # ── 오케스트레이터 호출 ──
-        knowledge = request.metadata.get("knowledge", "") if request.metadata else ""
-        
         result = await orchestrator.ainvoke({
             "messages": messages,
             "user_id": request.userId,
             "farm_id": 0,
             "next_node": "",
             "current_focus": "",
-            "knowledge": knowledge,
         })
 
         reply = result["messages"][-1].content
