@@ -3,7 +3,7 @@
 import { Suspense, useMemo, useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { SUPPLY_STATUS_MAP, SOIL_FITNESS_MAP } from '../_lib/recommend.types';
+import { SUPPLY_STATUS_MAP, SOIL_FITNESS_MAP, ADVICE_TYPE_LABEL } from '../_lib/recommend.types';
 import type { CropRecommendation, CropRecommendResponse } from '../_lib/recommend.types';
 import { getLatestRecommendHistory } from '../_lib/recommend.api';
 import { getCropEmoji, getCropCalendar, generatePriceData } from '../_lib/recommend.constants';
@@ -101,12 +101,18 @@ function RecommendDetailInner() {
 
   const rec = useMemo(() => {
     if (!result) return null;
-    return result.recommendations.find((r) => r.cropId === cropId) || null;
+    const fromNew = result.recommendations.find((r) => r.cropId === cropId);
+    if (fromNew) return fromNew;
+    return result.currentCropAdvices?.find((r) => r.cropId === cropId) || null;
   }, [result, cropId]);
 
   const otherRecs = useMemo(() => {
     if (!result) return [];
-    return result.recommendations.filter((r) => r.cropId !== cropId).slice(0, 4);
+    const combined = [
+      ...(result.currentCropAdvices ?? []),
+      ...result.recommendations,
+    ];
+    return combined.filter((r) => r.cropId !== cropId).slice(0, 4);
   }, [result, cropId]);
 
   if (phase === 'loading') {
@@ -156,6 +162,15 @@ function RecommendDetailInner() {
         score={rec.score}
         soilFitnessPercent={rec.soilFitnessPercent}
       />
+
+      {rec.adviceType && (
+        <p className={styles.adviceModeLabel}>
+          {ADVICE_TYPE_LABEL[rec.adviceType] ?? rec.adviceType}
+        </p>
+      )}
+      {rec.mismatchNote && (
+        <div className={styles.mismatchBanner}>{rec.mismatchNote}</div>
+      )}
 
       <DetailKpiRow items={[
         { icon: '🏆', label: '추천 순위', value: `${rec.rank}위` },

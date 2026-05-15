@@ -31,4 +31,12 @@ public class SignUpRequest {
 
     @NotBlank(message = "보안질문 답변을 입력해주세요")
     private String securityAnswer;
+
+    @jakarta.validation.constraints.AssertTrue(message = "서비스 이용약관에 동의해주세요")
+    private boolean termsOfServiceAgreed;
+
+    @jakarta.validation.constraints.AssertTrue(message = "개인정보 처리방침에 동의해주세요")
+    private boolean privacyPolicyAgreed;
+
+    private boolean marketingAgreed;
 }

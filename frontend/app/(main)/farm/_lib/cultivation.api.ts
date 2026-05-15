@@ -7,6 +7,8 @@ export interface CultivationRegisterRequest {
   cultivationArea: number;   // 재배 면적 (㎡)
   expectedYield: number;     // 예상 수확량
   yieldUnit: string;         // g | kg | ton
+  alreadyPlanted?: boolean;
+  sowingDate?: string;       // YYYY-MM-DD
 }
 
 export interface CultivationRegisterResponse {

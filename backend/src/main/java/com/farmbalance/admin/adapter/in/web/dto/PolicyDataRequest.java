@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 /**
  * 정책 데이터 생성/수정 요청 DTO
  */
@@ -14,6 +16,14 @@ public class PolicyDataRequest {
     @NotBlank(message = "외부 정책 ID를 입력해주세요.")
     private String externalId;
 
-    @NotBlank(message = "정책 데이터(JSON)를 입력해주세요.")
-    private String data;
+    private String title;
+    private String category;
+    private String organization;
+    private String regionCode;
+    private String contentSummary;
+    private String sourceUrl;
+    private String target;
+    private String supportAmount;
+    private LocalDate applyStart;
+    private LocalDate applyEnd;
 }

@@ -59,7 +59,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionFromCookie();
-    const body = await request.json();
+    
+    // FormData로 수신
+    const formData = await request.formData();
 
     if (!session?.token && process.env.SKIP_AUTH !== 'true') {
       return NextResponse.json(
@@ -71,10 +73,10 @@ export async function POST(request: NextRequest) {
     const backendResponse = await fetch(`${BACKEND_URL}/api/farms`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        // multipart/form-data의 boundary를 fetch가 자동 생성하도록 Content-Type을 지정하지 않습니다.
         ...(session?.token ? { 'Authorization': `Bearer ${session.token}` } : {}),
       },
-      body: JSON.stringify(body),
+      body: formData,
       cache: 'no-store',
     });
 

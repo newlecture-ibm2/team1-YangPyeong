@@ -33,7 +33,9 @@ public class AdminNongsaroApiAdapter implements AdminNongsaroApiPort {
 
     private static final String BASE_URL = "http://api.nongsaro.go.kr/service/farmWorkingPlan";
 
+    @com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement(localName = "response")
     private static class GrpResponse extends NongsaroApiResponse<WorkScheduleGrpDto> {}
+    @com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement(localName = "response")
     private static class LstResponse extends NongsaroApiResponse<WorkScheduleLstDto> {}
 
     @Override

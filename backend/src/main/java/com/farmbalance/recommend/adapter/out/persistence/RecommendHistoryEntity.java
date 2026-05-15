@@ -28,6 +28,7 @@ public class RecommendHistoryEntity {
     private Double soilPh;
     private Double organicMatter;
     private String soilType;
+    private String recommendMode;
     private LocalDateTime generatedAt;
 
     @BatchSize(size = 100)
@@ -36,7 +37,8 @@ public class RecommendHistoryEntity {
 
     @Builder
     public RecommendHistoryEntity(Long farmId, String farmName, String farmAddress, Double farmArea,
-                                  Double soilPh, Double organicMatter, String soilType, LocalDateTime generatedAt) {
+                                  Double soilPh, Double organicMatter, String soilType,
+                                  String recommendMode, LocalDateTime generatedAt) {
         this.farmId = farmId;
         this.farmName = farmName;
         this.farmAddress = farmAddress;
@@ -44,6 +46,7 @@ public class RecommendHistoryEntity {
         this.soilPh = soilPh;
         this.organicMatter = organicMatter;
         this.soilType = soilType;
+        this.recommendMode = recommendMode;
         this.generatedAt = generatedAt;
     }
 
