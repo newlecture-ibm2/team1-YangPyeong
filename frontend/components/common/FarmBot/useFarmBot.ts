@@ -364,7 +364,7 @@ export function useFarmBot() {
 
   // 가이드 중 스크롤 잠금
   useEffect(() => {
-    if (mode === 'guiding' || mode === 'asking' || mode === 'chatting') {
+    if (mode === 'guiding' || mode === 'chatting') {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';

@@ -192,27 +192,7 @@ export default function FarmBot({ children }: FarmBotProps) {
             </div>
             {!showBubble && (
               <span className={styles.footerWalkTooltip}>
-                <span className={styles.tooltipTitle}>안녕하세요! 👋</span>
-                <span className={styles.tooltipBtns}>
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    className={styles.tooltipGuideBtn}
-                    onClick={(e) => { e.stopPropagation(); restartGuide(); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); restartGuide(); } }}
-                  >
-                    🌱 가이드 시작
-                  </span>
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    className={styles.tooltipHideBtn}
-                    onClick={(e) => { e.stopPropagation(); hideBot(); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); hideBot(); } }}
-                  >
-                    숨기기
-                  </span>
-                </span>
+                <span className={styles.tooltipTitle}>저 눌러주세요~ 👆</span>
               </span>
             )}
           </button>
@@ -358,7 +338,7 @@ export default function FarmBot({ children }: FarmBotProps) {
                 >
                   💬 질문하기
                 </button>
-                <button className={styles.askBtnNo} onClick={declineGuide}>
+                <button className={styles.askBtnNo} onClick={hideBot}>
                   숨기기
                 </button>
               </div>
