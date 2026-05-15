@@ -411,22 +411,6 @@
   flex-wrap: wrap;
 }
 
-.formSelect {
-  padding: 14px 16px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 15px;
-  font-family: var(--font-sans);
-  background: var(--color-surface);
-  color: var(--color-text);
-  transition: border-color 0.2s;
-  outline: none;
-}
-
-.formSelect:focus {
-  border-color: var(--color-primary);
-}
-
 .formInput {
   padding: 14px 16px;
   border: 1.5px solid var(--color-border);
@@ -455,73 +439,7 @@
   margin-bottom: 20px;
 }
 
-/* ── Buttons ── */
-.btnPrimary {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 28px;
-  border-radius: var(--radius-pill);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  background: var(--color-accent);
-  color: var(--color-primary);
-}
 
-.btnPrimary:hover {
-  background: var(--color-primary-light);
-  color: #fff;
-  transform: translateY(-1px);
-}
-
-.btnSm {
-  padding: 8px 18px;
-  font-size: 13px;
-}
-
-.btnLg {
-  padding: 18px 36px;
-  font-size: 17px;
-}
-
-.btnOutline {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 18px;
-  border-radius: var(--radius-pill);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  background: transparent;
-  border: 1.5px solid var(--color-text);
-  color: var(--color-text);
-}
-
-.btnOutline:hover {
-  background: var(--color-text);
-  color: #fff;
-}
-
-.btnGhost {
-  background: transparent;
-  color: var(--color-primary);
-  font-weight: 500;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.btnGhost:hover {
-  text-decoration: underline;
-}
 
 /* ── Section Header ── */
 .sectionHeader {
