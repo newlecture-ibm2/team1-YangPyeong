@@ -179,7 +179,7 @@ export default function useSignUp() {
 
     setError('');
     return true;
-  }, [name, email, phone, emailStatus]);
+  }, [name, email, phone, emailStatus, agreements]);
 
   const validateStep2 = useCallback(() => {
     if (password.length < 8) { setError('비밀번호는 8자 이상이어야 합니다.'); return false; }
