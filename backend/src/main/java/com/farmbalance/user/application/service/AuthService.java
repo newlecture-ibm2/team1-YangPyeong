@@ -12,6 +12,7 @@ import com.farmbalance.user.application.port.in.*;
 import com.farmbalance.user.application.port.out.SecurityQuestionRepository;
 import com.farmbalance.user.application.port.out.UserRepository;
 import com.farmbalance.user.application.port.out.UserSocialAccountRepository;
+import com.farmbalance.user.application.port.out.UserAgreementRepository;
 import com.farmbalance.user.domain.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
     private final UserRepository userRepository;
     private final UserSocialAccountRepository socialAccountRepository;
     private final SecurityQuestionRepository securityQuestionRepository;
+    private final UserAgreementRepository userAgreementRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenStore refreshTokenStore;
@@ -118,6 +120,9 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
                     .build();
             securityQuestionRepository.save(securityQuestion);
         }
+
+        // 약관 동의 내역 저장
+        saveAgreements(saved.getId(), request);
 
         log.info("회원가입 완료: userId={}, email={}", saved.getId(), saved.getEmail());
 
@@ -277,5 +282,32 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
         }
 
         return user;
+    }
+
+    /** 약관 동의 내역 저장 (v1.0 기준) */
+    private void saveAgreements(Long userId, SignUpRequest request) {
+        // 필수: 이용약관
+        userAgreementRepository.save(UserAgreement.builder()
+                .userId(userId)
+                .agreementType(UserAgreement.AgreementType.TERMS_OF_SERVICE)
+                .version("v1.0")
+                .isAgreed(request.isTermsOfServiceAgreed())
+                .build());
+
+        // 필수: 개인정보 처리방침
+        userAgreementRepository.save(UserAgreement.builder()
+                .userId(userId)
+                .agreementType(UserAgreement.AgreementType.PRIVACY_POLICY)
+                .version("v1.0")
+                .isAgreed(request.isPrivacyPolicyAgreed())
+                .build());
+
+        // 선택: 마케팅 (동의했을 경우에만 저장하거나, false로라도 이력을 남김)
+        userAgreementRepository.save(UserAgreement.builder()
+                .userId(userId)
+                .agreementType(UserAgreement.AgreementType.MARKETING)
+                .version("v1.0")
+                .isAgreed(request.isMarketingAgreed())
+                .build());
     }
 }

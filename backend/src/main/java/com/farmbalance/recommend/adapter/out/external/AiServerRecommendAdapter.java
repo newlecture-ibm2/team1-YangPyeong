@@ -1,6 +1,7 @@
 package com.farmbalance.recommend.adapter.out.external;
 
 import com.farmbalance.recommend.application.port.out.RecommendAiPort;
+import com.farmbalance.recommend.application.port.out.RecommendReasonCommand;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -32,18 +33,24 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
     private String aiServerUrl;
 
     @Override
-    public String generateReason(String farmDetails, String cropName, String cropCategory) {
+    public String generateReason(RecommendReasonCommand command) {
         String url = aiServerUrl + "/api/recommend/reason";
-        
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("farm_details", farmDetails);
-        requestBody.put("crop_name", cropName);
-        requestBody.put("crop_category", cropCategory);
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("farm_details", command.farmDetails());
+        requestBody.put("crop_name", command.cropName());
+        requestBody.put("crop_category", command.cropCategory());
+        requestBody.put("recommend_mode", command.recommendMode().name());
+        requestBody.put("advice_type", command.adviceType().name());
+        requestBody.put("is_current_crop", command.currentCrop());
+        if (command.mismatchNote() != null) {
+            requestBody.put("soil_mismatch", command.mismatchNote());
+        }
 
-        HttpEntity<Map<String, String>> entity = new HttpEntity<>(requestBody, headers);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
         try {
             Map<String, String> response = restTemplate.postForObject(url, entity, Map.class);
