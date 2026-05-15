@@ -54,11 +54,34 @@ async def tune_recommend_weights(req: WeightsRequest) -> WeightsResponse:
     )
 
 async def generate_recommend_reason(req: ReasonRequest) -> ReasonResponse:
-    prompt = (
-        f"다음 농장 정보를 바탕으로 '{req.crop_name}'({req.crop_category}) 작물이 "
-        f"왜 추천되었는지 3문장 이내로 전문적이고 친절하게 설명해줘.\n"
-        f"농장 정보: {req.farm_details}"
-    )
+    mismatch = f"\n토양 비교 참고: {req.soil_mismatch}" if req.soil_mismatch else ""
+    advice = req.advice_type or "NEW_RECOMMEND"
+
+    if advice == "IN_SEASON_COACHING" or (req.is_current_crop and req.recommend_mode in ("MANAGE", "MIXED")):
+        prompt = (
+            f"당신은 농업 컨설턴트입니다. 농장은 이미 '{req.crop_name}'({req.crop_category})을 재배 중입니다.\n"
+            f"지금 당장 다른 작물로 갈아엎으라고 하지 말고, 올해 수확까지의 관리(시비·관수·병해충·수확 전략)를 3~4문장으로 조언하세요.\n"
+            f"토양이 다른 작물에 더 맞다면 다음 시즌 전환만 짧게 언급하세요.{mismatch}\n"
+            f"농장 정보:\n{req.farm_details}"
+        )
+    elif advice == "PLANNED_CROP" or req.recommend_mode == "PLANNED":
+        prompt = (
+            f"농장은 '{req.crop_name}'({req.crop_category}) 재배를 **예정**했지만 아직 파종·관리 이력이 거의 없습니다.\n"
+            f"파종 전 준비·적기·예상 리스크를 3~4문장으로 안내하세요. '이미 심었다'고 가정하지 마세요.{mismatch}\n"
+            f"농장 정보:\n{req.farm_details}"
+        )
+    elif advice == "NEXT_SEASON":
+        prompt = (
+            f"'{req.crop_name}'({req.crop_category})은 **다음 시즌·전환 검토용** 참고 작물입니다.\n"
+            f"현재 재배 중인 작물을 대체하라고 하지 말고, 왜 참고할 만한지 2~3문장으로 설명하세요.{mismatch}\n"
+            f"농장 정보:\n{req.farm_details}"
+        )
+    else:
+        prompt = (
+            f"다음 농장 정보를 바탕으로 '{req.crop_name}'({req.crop_category}) 작물이 "
+            f"왜 추천되었는지 3문장 이내로 전문적이고 친절하게 설명해줘.\n"
+            f"농장 정보: {req.farm_details}{mismatch}"
+        )
     
     llm = get_llm("gemini")
     response_text = await llm.generate(prompt)

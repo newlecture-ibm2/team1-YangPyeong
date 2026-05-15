@@ -101,12 +101,18 @@ function RecommendDetailInner() {
 
   const rec = useMemo(() => {
     if (!result) return null;
-    return result.recommendations.find((r) => r.cropId === cropId) || null;
+    const fromNew = result.recommendations.find((r) => r.cropId === cropId);
+    if (fromNew) return fromNew;
+    return result.currentCropAdvices?.find((r) => r.cropId === cropId) || null;
   }, [result, cropId]);
 
   const otherRecs = useMemo(() => {
     if (!result) return [];
-    return result.recommendations.filter((r) => r.cropId !== cropId).slice(0, 4);
+    const combined = [
+      ...(result.currentCropAdvices ?? []),
+      ...result.recommendations,
+    ];
+    return combined.filter((r) => r.cropId !== cropId).slice(0, 4);
   }, [result, cropId]);
 
   if (phase === 'loading') {

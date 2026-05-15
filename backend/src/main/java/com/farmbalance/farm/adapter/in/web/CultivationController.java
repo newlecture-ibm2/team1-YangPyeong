@@ -53,6 +53,8 @@ public class CultivationController {
                 .cultivationArea(request.getCultivationArea())
                 .expectedYield(request.getExpectedYield())
                 .yieldUnit(request.getYieldUnit())
+                .alreadyPlanted(request.getAlreadyPlanted())
+                .sowingDate(request.getSowingDate())
                 .build();
 
         CultivationRegistration saved = registerCultivationUseCase.registerCultivation(command);
@@ -100,6 +102,9 @@ public class CultivationController {
         private Double cultivationArea;    // 재배 면적 (㎡)
         private Double expectedYield;      // 예상 수확량
         private String yieldUnit;          // g | kg | ton
+        /** true: 이미 파종·재배 중 */
+        private Boolean alreadyPlanted;
+        private java.time.LocalDate sowingDate;
     }
 
     @Getter
