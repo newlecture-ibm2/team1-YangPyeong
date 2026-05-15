@@ -29,7 +29,12 @@ public class DailyWeatherRecordScheduler {
     // 매일 낮 12시에 실행 (기상청 전일 데이터 갱신 시간 등 지연 고려)
     @Scheduled(cron = "0 0 12 * * *")
     public void recordDailyWeather() {
-        batchLogService.execute("WEATHER_RECORD", dailyWeatherRecordService::doRecordDailyWeather);
+        try {
+            batchLogService.execute("WEATHER_RECORD", dailyWeatherRecordService::doRecordDailyWeather);
+        } catch (Exception e) {
+            log.error("[Scheduler] 기상청 일일 데이터 수집 스케줄러 실패", e);
+            eventPublisher.publishEvent(new ApiSyncEvent("WEATHER_RECORD", "FAILED", 0, e.getMessage()));
+        }
     }
 
     @Async
