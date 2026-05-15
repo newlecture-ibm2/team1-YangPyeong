@@ -30,8 +30,6 @@ agent/**/__pycache__/
 .idea/
 .vscode/
 
-# ===== Firebase =====
-backend/src/main/resources/firebase/
 *.iml
 *.iws
 *.ipr
