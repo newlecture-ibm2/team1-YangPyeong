@@ -7,18 +7,14 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import styles from '../gov.module.css';
 import { useGovUser, getTestHeaders } from '../useGovUser';
 import GovTabs from '../_components/GovTabs';
+import Spinner from '@/components/common/Spinner/Spinner';
+import Dropdown from '@/components/common/Dropdown';
 
 interface CompareRow {
   crop: string; prevYearTon: number; currentYearTon: number; diffTon: number; diffRate: number;
 }
 
-const TABS = [
-  { href: '/gov', label: '대시보드' },
-  { href: '/gov/cultivation', label: '재배 현황' },
-  { href: '/gov/compare', label: '연도 비교' },
-  { href: '/gov/sales', label: '판매 현황' },
-  { href: '/gov/download', label: '데이터 다운로드' },
-];
+
 
 export default function ComparePage() {
   const pathname = usePathname();
@@ -50,21 +46,25 @@ export default function ComparePage() {
         </div>
       </div>
 
-      {/* <div className={styles.tabs}>
-        {TABS.map(t => (
-          <Link key={t.href} href={t.href} className={`${styles.tab} ${pathname === t.href ? styles.tabActive : ''}`}>{t.label}</Link>
-        ))}
-      </div> */}
+
 
       <div className={styles.filterBar}>
-        <select className={styles.formSelect} value={baseYear} onChange={e => setBaseYear(e.target.value)}>
-          <option value="2024">기준: 2024</option>
-          <option value="2025">기준: 2025</option>
-        </select>
-        <select className={styles.formSelect} value={compareYear} onChange={e => setCompareYear(e.target.value)}>
-          <option value="2025">비교: 2025</option>
-          <option value="2026">비교: 2026</option>
-        </select>
+        <Dropdown
+          options={[
+            { label: '기준: 2024', value: '2024' },
+            { label: '기준: 2025', value: '2025' }
+          ]}
+          value={baseYear}
+          onChange={setBaseYear}
+        />
+        <Dropdown
+          options={[
+            { label: '비교: 2025', value: '2025' },
+            { label: '비교: 2026', value: '2026' }
+          ]}
+          value={compareYear}
+          onChange={setCompareYear}
+        />
       </div>
 
       <div className={styles.compareGrid}>
@@ -75,7 +75,7 @@ export default function ComparePage() {
               <h2 className={styles.cardTitle}>생산량 비교</h2>
               <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>단위: kg</span>
             </div>
-            {loading ? <p>로딩 중...</p> : (
+            {loading ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '280px' }}><Spinner /></div> : (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -95,7 +95,7 @@ export default function ComparePage() {
               <h2 className={styles.cardTitle}>증감률</h2>
               <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>단위: %</span>
             </div>
-            {loading ? <p>로딩 중...</p> : (
+            {loading ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '280px' }}><Spinner /></div> : (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
