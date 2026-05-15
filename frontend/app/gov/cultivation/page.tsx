@@ -70,7 +70,7 @@ export default function CultivationPage() {
                     <BarChart data={data}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="region" />
-                      <YAxis width={60} />
+                      <YAxis width={80} tickFormatter={(value) => value.toLocaleString()} />
                       <Tooltip formatter={(value) => `${Number(value).toLocaleString()}㎡`} />
                       <Bar dataKey="areaM2" name="재배 면적(㎡)" fill="#2D6A4F" radius={[4, 4, 0, 0]} />
                     </BarChart>

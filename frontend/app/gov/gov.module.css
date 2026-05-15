@@ -48,32 +48,36 @@
 
 .tabs {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-bottom: 0;
 }
 
 .tab {
-  padding: 10px 20px;
-  border-radius: var(--radius-pill);
-  font-size: 14px;
+  padding: 12px 20px;
+  font-size: 15px;
   font-weight: 500;
   text-decoration: none;
   color: var(--color-text-secondary);
-  background: var(--color-surface);
-  border: 1.5px solid var(--color-border);
-  transition: all 0.2s;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .tab:hover {
-  border-color: var(--color-primary);
   color: var(--color-text);
 }
 
 .tabActive {
-  background: var(--color-primary);
-  color: #fff;
-  border-color: var(--color-primary);
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
+  background: none;
 }
 
 /* ── KPI Row ── */

@@ -54,7 +54,7 @@ export default function SalesPage() {
 
 
       <div className={styles.kpiRow}>
-        <div className={styles.kpi}><div className={styles.kpiLabel}>이번달 총 거래액</div><div className={styles.kpiValue}>₩{summary.totalAmount.toLocaleString()}</div></div>
+        <div className={styles.kpi}><div className={styles.kpiLabel}>이번달 총 거래액</div><div className={styles.kpiValue}>₩{Number(summary.totalAmount).toLocaleString()}</div></div>
         <div className={styles.kpi}><div className={styles.kpiLabel}>거래 건수</div><div className={styles.kpiValue}>{summary.txCount.toLocaleString()}</div></div>
         <div className={styles.kpi}><div className={styles.kpiLabel}>활성 판매자</div><div className={styles.kpiValue}>{summary.activeSellers}</div></div>
         <div className={styles.kpi}><div className={styles.kpiLabel}>전월 대비</div><div className={styles.kpiValue} style={{ color: 'var(--color-primary)' }}>{summary.momRate}</div></div>
@@ -72,7 +72,7 @@ export default function SalesPage() {
               <LineChart data={monthlySales}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis width={80} />
+                <YAxis width={80} tickFormatter={(value) => value.toLocaleString()} />
                 <Tooltip formatter={(value) => `₩${Number(value).toLocaleString()}`} />
                 <Line type="monotone" dataKey="amount" name="거래액" stroke="#2D6A4F" strokeWidth={2} dot={{ r: 4 }} />
               </LineChart>
