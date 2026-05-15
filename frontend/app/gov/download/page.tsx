@@ -40,13 +40,7 @@ const TYPE_LABEL_MAP: Record<string, string> = {
 
 
 
-const TABS = [
-  { href: '/gov', label: '대시보드' },
-  { href: '/gov/cultivation', label: '재배 현황' },
-  { href: '/gov/compare', label: '연도 비교' },
-  { href: '/gov/sales', label: '판매 현황' },
-  { href: '/gov/download', label: '데이터 다운로드' },
-];
+
 
 export default function DownloadPage() {
   const { user, loading: userLoading } = useGovUser();
@@ -167,17 +161,7 @@ export default function DownloadPage() {
         </div>
       </div>
 
-      {/* <div className={styles.tabs}>
-        {TABS.map((t) => (
-          <Link
-            key={t.href}
-            href={t.href}
-            className={`${styles.tab} ${pathname === t.href ? styles.tabActive : ''}`}
-          >
-            {t.label}
-          </Link>
-        ))}
-      </div> */}
+
 
       {/* ── Download Settings ── */}
       <div className={styles.card}>

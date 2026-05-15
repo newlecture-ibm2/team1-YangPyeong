@@ -7,6 +7,7 @@ import { useGovUser, getTestHeaders } from './useGovUser';
 import GovTabs from './_components/GovTabs';
 import GovAiPanel from './_components/GovAiPanel/GovAiPanel';
 import Modal from '@/components/common/Modal';
+import Spinner from '@/components/common/Spinner/Spinner';
 
 interface DashboardData {
   summary: { totalFarms: number; totalCrops: number; surplusCount: number; shortageCount: number };
@@ -28,7 +29,7 @@ export default function GovDashboardPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  if (userLoading || loading) return <div className={styles.page}><p>로딩 중...</p></div>;
+  if (userLoading || loading) return <div className={styles.page}><Spinner /></div>;
   if (!user || user.role !== 'GOV') return <div className={styles.page}><p>지자체 관리자만 접근할 수 있습니다.</p></div>;
   if (!data) return <div className={styles.page}><p>데이터를 불러올 수 없습니다.</p></div>;
 
