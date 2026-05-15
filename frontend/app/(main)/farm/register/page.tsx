@@ -262,10 +262,7 @@ export default function FarmRegisterPage() {
       toast.error('유효한 면적(숫자)을 입력해주세요.');
       return;
     }
-    if (formData.cultivations.length === 0) {
-      toast.error('재배 작물을 선택해주세요.');
-      return;
-    }
+
     if (!selectedFile) {
       toast.error('증빙 서류를 업로드해주세요.');
       return;

@@ -26,6 +26,6 @@ public class BalanceProperties {
     @Getter
     @Setter
     public static class Region {
-        private String defaultCode = "41830";
+        private String defaultCode = "4183";
     }
 }
