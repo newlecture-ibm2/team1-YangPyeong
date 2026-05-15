@@ -8,6 +8,7 @@ import GovTabs from './_components/GovTabs';
 import GovAiPanel from './_components/GovAiPanel/GovAiPanel';
 import Modal from '@/components/common/Modal';
 import Spinner from '@/components/common/Spinner/Spinner';
+import Button from '@/components/common/Button/Button';
 
 interface DashboardData {
   summary: { totalFarms: number; totalCrops: number; surplusCount: number; shortageCount: number };
@@ -102,7 +103,7 @@ export default function GovDashboardPage() {
       {/* Warning Table */}
       <div className={styles.sectionHeader}>
         <h3>⚠️ 수급 경고 품목</h3>
-        <button className={styles.btnGhost} onClick={() => setIsBoardModalOpen(true)}>전체보기 →</button>
+        <Button variant="ghost" onClick={() => setIsBoardModalOpen(true)}>전체보기 →</Button>
       </div>
       <div className={styles.tableWrap}>
         <table className={styles.table} style={{ tableLayout: 'fixed' }}>

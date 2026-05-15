@@ -8,6 +8,7 @@ import styles from '../gov.module.css';
 import { useGovUser, getTestHeaders } from '../useGovUser';
 import GovTabs from '../_components/GovTabs';
 import Spinner from '@/components/common/Spinner/Spinner';
+import Dropdown from '@/components/common/Dropdown';
 
 interface CultivationRow {
   region: string; farmCount: number; areaM2: number; mainCrop: string; expectedTon: number;
@@ -47,10 +48,14 @@ export default function CultivationPage() {
 
 
       <div className={styles.filterBar}>
-        <select className={styles.formSelect} value={year} onChange={e => setYear(e.target.value)}>
-          <option value="2026">연도: 2026</option>
-          <option value="2025">연도: 2025</option>
-        </select>
+        <Dropdown
+          options={[
+            { label: '연도: 2026', value: '2026' },
+            { label: '연도: 2025', value: '2025' }
+          ]}
+          value={year}
+          onChange={setYear}
+        />
       </div>
 
           <div className={styles.twoColumnGrid}>

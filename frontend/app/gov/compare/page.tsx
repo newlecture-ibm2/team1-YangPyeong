@@ -8,6 +8,7 @@ import styles from '../gov.module.css';
 import { useGovUser, getTestHeaders } from '../useGovUser';
 import GovTabs from '../_components/GovTabs';
 import Spinner from '@/components/common/Spinner/Spinner';
+import Dropdown from '@/components/common/Dropdown';
 
 interface CompareRow {
   crop: string; prevYearTon: number; currentYearTon: number; diffTon: number; diffRate: number;
@@ -48,14 +49,22 @@ export default function ComparePage() {
 
 
       <div className={styles.filterBar}>
-        <select className={styles.formSelect} value={baseYear} onChange={e => setBaseYear(e.target.value)}>
-          <option value="2024">기준: 2024</option>
-          <option value="2025">기준: 2025</option>
-        </select>
-        <select className={styles.formSelect} value={compareYear} onChange={e => setCompareYear(e.target.value)}>
-          <option value="2025">비교: 2025</option>
-          <option value="2026">비교: 2026</option>
-        </select>
+        <Dropdown
+          options={[
+            { label: '기준: 2024', value: '2024' },
+            { label: '기준: 2025', value: '2025' }
+          ]}
+          value={baseYear}
+          onChange={setBaseYear}
+        />
+        <Dropdown
+          options={[
+            { label: '비교: 2025', value: '2025' },
+            { label: '비교: 2026', value: '2026' }
+          ]}
+          value={compareYear}
+          onChange={setCompareYear}
+        />
       </div>
 
       <div className={styles.compareGrid}>
