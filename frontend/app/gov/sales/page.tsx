@@ -95,7 +95,7 @@ export default function SalesPage() {
             <h2 className={styles.cardTitle}>인기 상품 TOP 5</h2>
           </div>
           <div className={styles.compareTableWrap} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <table className={styles.table} style={{ height: '100%', marginBottom: 0 }}>
+            <table className={styles.table} style={{ marginBottom: 0 }}>
               <thead>
                 <tr>
                   <th className={`${styles.statusCell} ${styles.col60}`}>순위</th>
