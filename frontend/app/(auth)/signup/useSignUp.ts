@@ -259,7 +259,7 @@ export default function useSignUp() {
     } finally {
       setLoading(false);
     }
-  }, [email, password, name, phone, securityQuestion, securityAnswer]);
+  }, [email, password, name, phone, securityQuestion, securityAnswer, agreements]);
 
   return {
     step,

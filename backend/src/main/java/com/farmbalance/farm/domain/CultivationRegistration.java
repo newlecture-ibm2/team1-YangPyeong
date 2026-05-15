@@ -3,6 +3,7 @@ package com.farmbalance.farm.domain;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -20,6 +21,8 @@ public class CultivationRegistration {
     private Double farmerEstimatedYield;
     private String yieldUnit;
     private CultivationStatus status; // 재배 상태 (ACTIVE, COMPLETED)
+    private LocalDate sowingDate;
+    private boolean inSeason;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
