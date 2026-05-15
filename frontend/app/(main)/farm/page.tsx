@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Button from '@/components/common/Button/Button';
@@ -11,6 +11,7 @@ import { useMyFarms } from './useFarm';
 import { useHistory } from './useHistory';
 import { useCultivation } from './useCultivation';
 import { getLatestRecommendHistory } from './recommend/_lib/recommend.api';
+import type { CropRecommendResponse } from './recommend/_lib/recommend.types';
 import { useRevenue } from './useRevenue';
 import Timeline from './_components/Timeline/Timeline';
 import HistoryModal from './_components/HistoryModal/HistoryModal';
@@ -57,6 +58,8 @@ function FarmDashboardContent() {
   const [weather, setWeather] = useState<{ tmp: number, pty: number, sky: number } | null>(null);
   const [latestAiScore, setLatestAiScore] = useState<number | null>(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState<number>(0);
+  /** 농장 단위로만 갱신 — 재배 목록 변경 시 재요청하지 않아 단가 매칭이 안정적 */
+  const [latestRecommendData, setLatestRecommendData] = useState<CropRecommendResponse | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
   // 유저 권한 확인
@@ -104,6 +107,8 @@ function FarmDashboardContent() {
 
   // 선택된 농장
   const farm = farms.length > 0 ? farms[selectedFarmIdx] : null;
+  const farmRef = useRef(farm);
+  farmRef.current = farm;
 
   // 히스토리 데이터 연동
   const {
@@ -113,7 +118,7 @@ function FarmDashboardContent() {
     updateHistory,
     removeHistory,
     refresh: refreshHistories
-  } = useHistory(farm?.id);
+  } = useHistory(farm?.id, true);
 
   // 재배 정보 연동
   const {
@@ -122,7 +127,7 @@ function FarmDashboardContent() {
     modifyCultivation,
     removeCultivation,
     refresh: refreshCultivations
-  } = useCultivation(farm?.id);
+  } = useCultivation(farm?.id, true);
 
   // 수익 예측 연동
   const { prediction, isLoading: isRevenueLoading, getPrediction, revertPrediction } = useRevenue();
@@ -162,57 +167,78 @@ function FarmDashboardContent() {
     }
   }, [activeSubTab, farm, cultivations, prediction, isRevenueLoading, handleCalculateRevenue]);
 
+  // 이력·재배·최근 AI 추천을 한 번에 병렬 로드 (농장 전환 시에만 재요청)
+  useEffect(() => {
+    if (!farm?.id) {
+      setLatestRecommendData(null);
+      return;
+    }
+    const farmId = farm.id;
+    let cancelled = false;
+    setLatestRecommendData(null);
+
+    (async () => {
+      try {
+        const [, , rec] = await Promise.all([
+          refreshHistories(),
+          refreshCultivations(),
+          getLatestRecommendHistory(farmId).catch(() => null),
+        ]);
+        if (cancelled) return;
+        setLatestRecommendData(rec);
+      } catch {
+        if (!cancelled) {
+          setLatestRecommendData(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [farm?.id, refreshHistories, refreshCultivations]);
+
   // 통합 새로고침
   const refreshAll = useCallback(async () => {
-    await Promise.all([refreshHistories(), refreshCultivations()]);
+    const f = farmRef.current;
+    if (!f?.id) {
+      await Promise.all([refreshHistories(), refreshCultivations()]);
+      return;
+    }
+    const targetId = f.id;
+    const [, , rec] = await Promise.all([
+      refreshHistories(),
+      refreshCultivations(),
+      getLatestRecommendHistory(targetId).catch(() => null),
+    ]);
+    if (farmRef.current?.id === targetId) {
+      setLatestRecommendData(rec);
+    }
   }, [refreshHistories, refreshCultivations]);
 
-  // AI 추천 최근 이력 및 예상 수익 계산
+  // AI 점수·예상 수익 합산: 재배 변경 시에는 서버 이력을 다시 부르지 않고 로컬만 재계산
   useEffect(() => {
-    if (farm?.id) {
-      getLatestRecommendHistory(farm.id)
-        .then(res => {
-          let aiScore = null;
-          let recommendations: any[] = [];
-          
-          if (res && res.recommendations && res.recommendations.length > 0) {
-            aiScore = res.recommendations[0].score;
-            recommendations = res.recommendations;
-          }
-          setLatestAiScore(aiScore);
-          
-          // 사용자가 등록한 재배 작물의 예상 수익 합산
-          // 계산식: 등록된 작물의 예상 수확량(kg) * 해당 작물의 예상 수익(원/kg)
-          let estimatedTotal = 0;
-          if (cultivations && cultivations.length > 0) {
-            cultivations.forEach(c => {
-              // AI 추천 목록에서 해당 작물의 단가를 찾음 (없으면 기본값 3000원)
-              const rec = recommendations.find((r: any) => r.cropId === c.cropId);
-              const pricePerKg = rec?.expectedRevenuePerKg || 3000;
-              const yieldAmount = c.farmerEstimatedYield || 0;
-              estimatedTotal += yieldAmount * pricePerKg;
-            });
-          }
-          setMonthlyRevenue(estimatedTotal);
-        })
-        .catch(() => {
-          setLatestAiScore(null);
-
-          // 추천 이력을 못 불러왔더라도, 재배 작물이 있다면 기본 단가(3000원)로 계산
-          let estimatedTotal = 0;
-          if (cultivations && cultivations.length > 0) {
-            cultivations.forEach(c => {
-              const yieldAmount = c.farmerEstimatedYield || 0;
-              estimatedTotal += yieldAmount * 3000;
-            });
-          }
-          setMonthlyRevenue(estimatedTotal);
-        });
-    } else {
+    if (!farm?.id) {
       setLatestAiScore(null);
       setMonthlyRevenue(0);
+      return;
     }
-  }, [farm?.id, cultivations]);
+    const recommendations = latestRecommendData?.recommendations ?? [];
+    const aiScore =
+      latestRecommendData && recommendations.length > 0 ? recommendations[0].score : null;
+    setLatestAiScore(aiScore);
+
+    let estimatedTotal = 0;
+    if (cultivations?.length) {
+      for (const c of cultivations) {
+        const rec = recommendations.find((r) => r.cropId === c.cropId);
+        const pricePerKg = rec?.expectedRevenuePerKg ?? 3000;
+        const yieldAmount = Number(c.farmerEstimatedYield) || 0;
+        estimatedTotal += yieldAmount * pricePerKg;
+      }
+    }
+    setMonthlyRevenue(estimatedTotal);
+  }, [farm?.id, cultivations, latestRecommendData]);
 
   const isLoading = isFarmsLoading;
 

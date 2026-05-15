@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { Suspense, useMemo, useEffect, useState } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { SUPPLY_STATUS_MAP, SOIL_FITNESS_MAP } from '../_lib/recommend.types';
 import type { CropRecommendation, CropRecommendResponse } from '../_lib/recommend.types';
+import { getLatestRecommendHistory } from '../_lib/recommend.api';
 import { getCropEmoji, getCropCalendar, generatePriceData } from '../_lib/recommend.constants';
 import PriceChart from '../_components/PriceChart/PriceChart';
 import CropCalendar from '../_components/CropCalendar/CropCalendar';
@@ -15,32 +16,86 @@ import CropGuide from './_components/CropGuide';
 import OtherCrops from './_components/OtherCrops';
 import styles from './detail.module.css';
 
-/**
- * 세션 스토리지에서 마지막 추천 결과를 복원합니다.
- * 목록 페이지에서 분석 후 상세 페이지로 이동할 때,
- * 실제 API 응답 데이터를 그대로 전달받기 위해 사용합니다.
- */
-function useRecommendResult() {
+type LoadPhase = 'loading' | 'ready' | 'empty';
+
+function useRecommendDetailResult(cropId: number, farmIdQuery: number | null) {
   const [result, setResult] = useState<CropRecommendResponse | null>(null);
+  const [phase, setPhase] = useState<LoadPhase>('loading');
 
   useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem('recommend_result');
-      if (stored) {
-        setResult(JSON.parse(stored));
-      }
-    } catch {
-      // sessionStorage 접근 불가 시 무시
-    }
-  }, []);
+    let cancelled = false;
 
-  return result;
+    (async () => {
+      try {
+        const stored = sessionStorage.getItem('recommend_result');
+        if (stored) {
+          const parsed = JSON.parse(stored) as CropRecommendResponse;
+          if (!cancelled) {
+            setResult(parsed);
+            setPhase('ready');
+            return;
+          }
+        }
+      } catch {
+        // sessionStorage 접근/파싱 불가 시 무시
+      }
+
+      if (farmIdQuery != null && Number.isFinite(farmIdQuery)) {
+        try {
+          const data = await getLatestRecommendHistory(farmIdQuery);
+          if (cancelled) return;
+          if (data?.farmInfo?.id != null && data.farmInfo.id !== farmIdQuery) {
+            setPhase('empty');
+            return;
+          }
+          if (data) {
+            setResult(data);
+            try {
+              sessionStorage.setItem('recommend_result', JSON.stringify(data));
+            } catch {
+              // ignore
+            }
+            setPhase('ready');
+            return;
+          }
+        } catch (e) {
+          console.error('최근 AI 추천 이력으로 상세 복원 실패:', e);
+        }
+      }
+
+      if (!cancelled) setPhase('empty');
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cropId, farmIdQuery]);
+
+  return { result, phase };
 }
 
-export default function RecommendDetailPage() {
+function DetailLoading() {
+  return (
+    <div className={styles.container}>
+      <div className={styles.emptyState}>
+        <div className={styles.emptyIcon}>⏳</div>
+        <h2>추천 데이터를 불러오는 중...</h2>
+        <p>잠시만 기다려 주세요. 데이터를 복원하고 있습니다.</p>
+        <Link href="/farm/recommend" className={styles.backBtn}>← 추천 목록으로 돌아가기</Link>
+      </div>
+    </div>
+  );
+}
+
+function RecommendDetailInner() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const cropId = Number(params.cropId);
-  const result = useRecommendResult();
+  const farmIdRaw = searchParams.get('farmId');
+  const farmIdQuery = farmIdRaw != null && farmIdRaw !== '' ? Number(farmIdRaw) : null;
+  const farmIdQueryValid = farmIdQuery != null && Number.isFinite(farmIdQuery) ? farmIdQuery : null;
+
+  const { result, phase } = useRecommendDetailResult(cropId, farmIdQueryValid);
 
   const rec = useMemo(() => {
     if (!result) return null;
@@ -52,14 +107,17 @@ export default function RecommendDetailPage() {
     return result.recommendations.filter((r) => r.cropId !== cropId).slice(0, 4);
   }, [result, cropId]);
 
-  // 로딩 중 (sessionStorage에서 복원 대기)
-  if (!result) {
+  if (phase === 'loading') {
+    return <DetailLoading />;
+  }
+
+  if (phase === 'empty' || !result) {
     return (
       <div className={styles.container}>
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>⏳</div>
-          <h2>추천 데이터를 불러오는 중...</h2>
-          <p>잠시만 기다려 주세요. 데이터를 복원하고 있습니다.</p>
+          <div className={styles.emptyIcon}>🔍</div>
+          <h2>추천 정보를 찾을 수 없습니다</h2>
+          <p>목록에서 AI 추천을 실행한 뒤 작물을 선택하거나, 올바른 주소로 접속했는지 확인해 주세요.</p>
           <Link href="/farm/recommend" className={styles.backBtn}>← 추천 목록으로 돌아가기</Link>
         </div>
       </div>
@@ -83,6 +141,7 @@ export default function RecommendDetailPage() {
   const fitnessLabel = SOIL_FITNESS_MAP[rec.soilFitness];
   const priceData = generatePriceData(rec.expectedRevenuePerKg);
   const calendar = getCropCalendar(rec.cropName);
+  const farmIdForLinks = result.farmInfo?.id;
 
   return (
     <div className={styles.container}>
@@ -121,17 +180,25 @@ export default function RecommendDetailPage() {
         <PriceChart data={priceData} unit="kg" />
       </div>
 
-      <OtherCrops recommendations={otherRecs} />
+      <OtherCrops recommendations={otherRecs} farmId={farmIdForLinks} />
 
       <div className={`${styles.actionButtons} ${styles.fadeIn}`} style={{ animationDelay: '0.6s' }}>
         <Link href="/farm/recommend" className={styles.backBtn}>← 목록으로</Link>
-        <Link 
-          href={`/farm/cultivation-register?cropId=${rec.cropId}&cropName=${rec.cropName}`} 
+        <Link
+          href={`/farm/cultivation-register?cropId=${rec.cropId}&cropName=${rec.cropName}`}
           className={styles.planBtn}
         >
           이 작물로 재배 등록 →
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function RecommendDetailPage() {
+  return (
+    <Suspense fallback={<DetailLoading />}>
+      <RecommendDetailInner />
+    </Suspense>
   );
 }
