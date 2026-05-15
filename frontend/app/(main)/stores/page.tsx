@@ -56,14 +56,47 @@ export default function StoreMapPage() {
       query = selectedCategory;
     }
 
+    const ps = new kakao.maps.services.Places();
+    const bounds = map.getBounds();
+
+    // '전체' 카테고리이고 검색어가 없을 때: 대표 3가지 키워드로 동시 검색 후 병합
+    if (!query && selectedCategory === '') {
+      Promise.all([
+        new Promise<any>((resolve) => ps.keywordSearch('종묘사', (data, status) => resolve({ data, status }), { bounds })),
+        new Promise<any>((resolve) => ps.keywordSearch('농자재', (data, status) => resolve({ data, status }), { bounds })),
+        new Promise<any>((resolve) => ps.keywordSearch('직매장', (data, status) => resolve({ data, status }), { bounds }))
+      ]).then(results => {
+        let allStores: any[] = [];
+        results.forEach(res => {
+          if (res.status === kakao.maps.services.Status.OK && res.data) {
+            allStores = allStores.concat(res.data);
+          }
+        });
+        
+        // 중복 제거 (id 기준, Map 임포트 충돌 우회)
+        const uniqueStores = allStores.filter((store, index, self) => 
+          index === self.findIndex((s) => s.id === store.id)
+        );
+        
+        const stores: Store[] = uniqueStores.map((item: any) => ({
+          id: item.id,
+          name: item.place_name,
+          address: item.road_address_name || item.address_name,
+          lat: parseFloat(item.y),
+          lng: parseFloat(item.x),
+          phone: item.phone,
+          category: item.category_name.split(' > ').pop() || '',
+        }));
+        setVisibleStores(stores);
+      });
+      return;
+    }
+
     // 빈 키워드라면 API 호출 방지
     if (!query) {
       setVisibleStores([]);
       return;
     }
-
-    const ps = new kakao.maps.services.Places();
-    const bounds = map.getBounds();
 
     ps.keywordSearch(query, (data, status) => {
       if (status === kakao.maps.services.Status.OK) {
