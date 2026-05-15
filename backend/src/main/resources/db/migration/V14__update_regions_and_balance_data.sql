@@ -26,7 +26,7 @@ SET address = '경기도 양평군 ' ||
     END || ' 어느마을 ' || id
 WHERE address LIKE '양평군 어느마을%';
 
--- 4. balance_data 더미 데이터 삽입
+-- 4. balance_data 더미 데이터 삽입 (NOT EXISTS 활용, 계산 로직 병합)
 INSERT INTO balance_data (
     region_code,
     crop_id,
@@ -40,17 +40,19 @@ INSERT INTO balance_data (
     created_at
 )
 SELECT
-    '4183000000', -- 양평군 (수급 데이터 지역 코드)
-    c.id,
+    '4183000000', -- 양평군
+    src.id,
     EXTRACT(YEAR FROM CURRENT_DATE)::int,
     'ALL',
-    supply_forecast,
-    demand_forecast,
-    ROUND((supply_forecast::numeric / demand_forecast::numeric) * 100, 2),
+    src.supply_forecast,
+    src.demand_forecast,
+    ROUND((src.supply_forecast::numeric / src.demand_forecast::numeric) * 100, 2),
     CASE
-        WHEN (supply_forecast::numeric / demand_forecast::numeric) >= 1.2 THEN 'SURPLUS'
-        WHEN (supply_forecast::numeric / demand_forecast::numeric) <= 0.8 THEN 'SHORTAGE'
-        ELSE 'NORMAL'
+        WHEN (src.supply_forecast::numeric / src.demand_forecast::numeric) >= 1.3 THEN 'EXCESS_WARN'
+        WHEN (src.supply_forecast::numeric / src.demand_forecast::numeric) >= 1.15 THEN 'EXCESS_CAUTION'
+        WHEN (src.supply_forecast::numeric / src.demand_forecast::numeric) <= 0.7 THEN 'SHORT_WARN'
+        WHEN (src.supply_forecast::numeric / src.demand_forecast::numeric) <= 0.85 THEN 'SHORT_CAUTION'
+        ELSE 'BALANCED'
     END,
     NOW(),
     NOW()
@@ -60,22 +62,12 @@ FROM (
         FLOOR(RANDOM() * 5000 + 1000)::int AS supply_forecast,
         FLOOR(RANDOM() * 5000 + 1000)::int AS demand_forecast
     FROM crops
-) c
-ON CONFLICT (region_code, crop_id, year, season) DO NOTHING;
-
--- 5. balance_data supply_ratio 보정 (정수 나눗셈 방지를 위해 numeric 캐스팅 추가)
-UPDATE balance_data
-SET supply_ratio = ROUND((supply_forecast::numeric / demand_forecast::numeric) * 100, 2)
-WHERE region_code = '4183000000' AND year = EXTRACT(YEAR FROM CURRENT_DATE)::int;
-
--- 6. balance_data balance_status 보정
-UPDATE balance_data
-SET balance_status = CASE
-    WHEN supply_ratio >= 130 THEN 'EXCESS_WARN'
-    WHEN supply_ratio >= 115 THEN 'EXCESS_CAUTION'
-    WHEN supply_ratio <= 70 THEN 'SHORT_WARN'
-    WHEN supply_ratio <= 85 THEN 'SHORT_CAUTION'
-    ELSE 'NORMAL'
-END
-WHERE region_code = '4183000000'
-  AND year = EXTRACT(YEAR FROM CURRENT_DATE)::int;
+) src
+WHERE NOT EXISTS (
+    SELECT 1 
+    FROM balance_data bd 
+    WHERE bd.region_code = '4183000000'
+      AND bd.crop_id = src.id
+      AND bd.year = EXTRACT(YEAR FROM CURRENT_DATE)::int
+      AND bd.season = 'ALL'
+);
