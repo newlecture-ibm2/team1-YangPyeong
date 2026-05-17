@@ -6,6 +6,7 @@ import logging
 from langchain_core.messages import AIMessage, SystemMessage
 from langgraph.graph import StateGraph, END, START
 from app.llm import get_llm
+from app.agents.tools.rag_search_tool import search_rag_documents
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,21 @@ def get_general_agent():
     chat_model = llm.get_chat_model(temperature=0.4)
 
     def agent_node(state):
-        messages = [SystemMessage(content=GENERAL_AGENT_SYSTEM_PROMPT)] + state["messages"]
+        last_msg = state["messages"][-1].content if state["messages"] else ""
+        
+        # 1. ChromaDB (RAG)에서 관련 매뉴얼/텍스트 검색
+        rag_results = search_rag_documents(last_msg, top_k=2)
+        
+        # 2. 검색된 내용을 할아버지 프롬프트 뒤에 살짝 덧붙이기 위한 변수
+        rag_context = ""
+        if rag_results and "error" not in rag_results[0]:
+            rag_context = "\n\n[할아버지의 농사 수첩 (참고 자료)]\n"
+            for r in rag_results:
+                rag_context += f"- 출처: {r['source']}\n- 내용: {r['content']}\n\n"
+            rag_context += "위 참고 자료의 내용을 바탕으로, 할아버지 본인의 오랜 지혜인 것처럼 자연스럽게 섞어서 농업인에게 조언해주세요."
+
+        # 3. 기존 코드 완벽 유지 (내용물에 rag_context만 더함)
+        messages = [SystemMessage(content=GENERAL_AGENT_SYSTEM_PROMPT + rag_context)] + state["messages"]
         response = chat_model.invoke(messages)
         return {"messages": [response]}
 

@@ -13,3 +13,15 @@ VALUES
     ('KAMIS_PRICE', '농수산물 유통 데이터 (KAMIS)', 'PENDING', true, NOW(), NOW()),
     ('SOIL_ENVIRONMENT', '흙토람 토양 환경 데이터', 'PENDING', true, NOW(), NOW())
 ON CONFLICT (api_name) DO NOTHING;
+
+
+-- =============================================
+-- ERD 기준 crops 테이블 스키마 단순화 (사용 안하는 컬럼 삭제)
+-- =============================================
+ALTER TABLE crops
+    
+    DROP COLUMN IF EXISTS growth_days,
+    DROP COLUMN IF EXISTS yield_per_sqm,
+    DROP COLUMN IF EXISTS avg_cost_per_sqm,
+    DROP COLUMN IF EXISTS climate_conditions,
+    DROP COLUMN IF EXISTS is_active;
