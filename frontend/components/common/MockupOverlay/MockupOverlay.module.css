@@ -1,0 +1,43 @@
+/* --- 1. Wrapper 형태: children을 블러 처리하고 배너를 중앙에 표시 --- */
+.wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.blurContent {
+  filter: blur(8px) grayscale(0.3);
+  pointer-events: none;
+  user-select: none;
+}
+
+.bannerContainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+  width: 90%;
+  max-width: 800px;
+  pointer-events: auto;
+}
+
+/* --- 2. Absolute Overlay 형태: 부모 relative 영역을 덮는 오버레이 --- */
+.absoluteOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+}
+
+.bannerContainerAbsolute {
+  width: 90%;
+  max-width: 800px;
+  pointer-events: auto;
+}
