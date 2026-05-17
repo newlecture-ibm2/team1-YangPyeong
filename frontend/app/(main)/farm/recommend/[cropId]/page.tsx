@@ -7,8 +7,10 @@ import { SUPPLY_STATUS_MAP, SOIL_FITNESS_MAP, ADVICE_TYPE_LABEL } from '../_lib/
 import type { CropRecommendation, CropRecommendResponse } from '../_lib/recommend.types';
 import { getLatestRecommendHistory } from '../_lib/recommend.api';
 import { getCropEmoji, getCropCalendar, generatePriceData } from '../_lib/recommend.constants';
+import { getCropDetailedPlan } from '../_lib/calendarPlanData';
 import PriceChart from '../_components/PriceChart/PriceChart';
 import CropCalendar from '../_components/CropCalendar/CropCalendar';
+import CalendarPlanModal from '../_components/CalendarPlanModal/CalendarPlanModal';
 import DetailHeader from './_components/DetailHeader';
 import DetailKpiRow from './_components/DetailKpiRow';
 import ScoreAnalysis from './_components/ScoreAnalysis';
@@ -183,12 +185,8 @@ function RecommendDetailInner() {
 
       <CropGuide rec={rec} />
 
-      {/* ── 재배 캘린더 ── */}
-      <div className={`${styles.card} ${styles.fadeIn} ${styles.fadeInDelay3}`}>
-        <h2 className={styles.cardTitle}>재배 캘린더</h2>
-        <p className={styles.cardSub}>월별 주요 작업 일정을 한눈에 확인하세요.</p>
-        <CropCalendar phases={calendar} />
-      </div>
+      {/* ── 재배 캘린더 (클릭 시 세부 계획서 모달) ── */}
+      <CalendarSection cropName={rec.cropName} calendar={calendar} />
 
       {/* ── 가격 추이 ── */}
       <div className={`${styles.card} ${styles.fadeIn}`} style={{ animationDelay: '0.4s' }}>
@@ -209,6 +207,39 @@ function RecommendDetailInner() {
         </Link>
       </div>
     </div>
+  );
+}
+
+/** 재배 캘린더 + 세부 계획서 모달을 관리하는 서브 컴포넌트 */
+function CalendarSection({ cropName, calendar }: { cropName: string; calendar: import('../_lib/recommend.constants').CalendarPhase[] }) {
+  const [isPlanOpen, setIsPlanOpen] = useState(false);
+  const plan = getCropDetailedPlan(cropName);
+
+  return (
+    <>
+      <div
+        className={`${styles.card} ${styles.fadeIn} ${styles.fadeInDelay3}`}
+        style={{ cursor: 'pointer', position: 'relative' }}
+        onClick={() => setIsPlanOpen(true)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter') setIsPlanOpen(true); }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <h2 className={styles.cardTitle} style={{ marginBottom: 0 }}>재배 캘린더</h2>
+          <span style={{ fontSize: 13, color: 'var(--color-primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+            📅 클릭하여 주별 세부 계획서 보기 →
+          </span>
+        </div>
+        <p className={styles.cardSub}>월별 주요 작업 일정을 한눈에 확인하세요.</p>
+        <CropCalendar phases={calendar} />
+      </div>
+      <CalendarPlanModal
+        isOpen={isPlanOpen}
+        onClose={() => setIsPlanOpen(false)}
+        plan={plan}
+      />
+    </>
   );
 }
 

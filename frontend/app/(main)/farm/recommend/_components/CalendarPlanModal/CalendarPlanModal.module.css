@@ -1,0 +1,206 @@
+/* CalendarPlanModal — 세부 계획서 모달 스타일 */
+
+.container {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+/* ── 상단 요약 ── */
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border-radius: var(--radius-md);
+  margin-bottom: 28px;
+  border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.summaryIcon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.summaryTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.summaryDesc {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.summaryDesc strong {
+  color: var(--color-primary);
+}
+
+/* ── 타임라인 ── */
+.timeline {
+  position: relative;
+  padding-left: 0;
+}
+
+.monthBlock {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+/* ── 월 헤더 ── */
+.monthHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.monthBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.phaseLabel {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* ── 주별 카드 ── */
+.weekCards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-left: 8px;
+}
+
+.weekCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  transition: all 0.25s ease;
+}
+
+.weekCard:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08);
+}
+
+.weekHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.weekBadge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--color-primary-pale);
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.weekTask {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.weekDetail {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--color-text-secondary);
+}
+
+.weekTip {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #fffbeb;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.55;
+  color: #92400e;
+  border-left: 3px solid #f59e0b;
+}
+
+.tipIcon {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+/* ── 연결선 ── */
+.connector {
+  width: 2px;
+  height: 16px;
+  background: var(--color-border);
+  margin: 0 auto 8px 30px;
+  border-radius: 2px;
+}
+
+/* ── 하단 안내 ── */
+.footer {
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  text-align: center;
+}
+
+/* ── 스크롤바 ── */
+.container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.container::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  .summary {
+    flex-direction: column;
+    text-align: center;
+    padding: 16px;
+  }
+
+  .monthHeader {
+    flex-wrap: wrap;
+  }
+
+  .weekCards {
+    padding-left: 0;
+  }
+}
