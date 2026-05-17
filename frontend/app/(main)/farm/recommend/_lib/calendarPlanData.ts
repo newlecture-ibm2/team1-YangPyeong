@@ -64,7 +64,7 @@ const DETAILED_PLANS: Record<string, CropDetailedPlan> = {
         ],
       },
       {
-        month: 7, phase: '수확 준비기', phaseColor: '#95D5B2',
+        month: 7, phase: '수확 준비기', phaseColor: '#CCFF33',
         weeks: [
           { week: '1~2주차', task: '성숙도 확인', detail: '결구부를 손으로 눌러 단단한 정도 확인. 잎 색이 짙은 녹색이면 아직 미성숙.' },
           { week: '3~4주차', task: '적기 수확', detail: '결구부 상단이 약간 탄력 있을 때가 최적. 이른 아침 서늘할 때 수확.', tip: '수확 후 바로 예냉(0~2°C)하면 신선도가 2배 이상 유지됩니다.' },
@@ -142,7 +142,7 @@ const DETAILED_PLANS: Record<string, CropDetailedPlan> = {
         ],
       },
       {
-        month: 10, phase: '마무리 수확·정리', phaseColor: '#95D5B2',
+        month: 10, phase: '마무리 수확·정리', phaseColor: '#CCFF33',
         weeks: [
           { week: '1~2주차', task: '최종 수확', detail: '첫 서리 전 잔여 과실 모두 수확. 미착색 과실은 실내 후숙.' },
           { week: '3~4주차', task: '포장 정리', detail: '고추대 발근·잔재물 정리. 토양 환원(녹비 파종 또는 휴경).' },
@@ -192,7 +192,7 @@ const DETAILED_PLANS: Record<string, CropDetailedPlan> = {
         ],
       },
       {
-        month: 7, phase: '고온기 관리', phaseColor: '#2D6A4F',
+        month: 7, phase: '고온기 관리', phaseColor: '#CCFF33',
         weeks: [
           { week: '1~2주차', task: '고온 대응', detail: '차광막(30~40%) 설치. 관수량 유지. 흰가루병 예찰.' },
           { week: '3~4주차', task: '적심(생장점 제거)', detail: '목표 화방(8~10단)까지 도달하면 생장점 적심. 잔여 양분을 과실로 집중.' },
@@ -212,14 +212,14 @@ const DETAILED_PLANS: Record<string, CropDetailedPlan> = {
         ],
       },
       {
-        month: 10, phase: '마무리', phaseColor: '#95D5B2',
+        month: 10, phase: '마무리', phaseColor: '#CCFF33',
         weeks: [
           { week: '1~2주차', task: '최종 수확', detail: '서리 전 잔여 과실 모두 수확. 미착색 과실은 상온 후숙.' },
           { week: '3~4주차', task: '포장 정리', detail: '유인줄·지주 회수. 잔재물 정리 후 녹비 작물 파종 또는 휴경.' },
         ],
       },
       {
-        month: 11, phase: '후처리', phaseColor: '#B7E4C7',
+        month: 11, phase: '후처리', phaseColor: '#CCFF33',
         weeks: [
           { week: '1~2주차', task: '시설 정비', detail: '하우스 비닐 점검, 보온 자재 정비. 다음 시즌 품종 선정 및 종자 주문.' },
         ],
@@ -241,7 +241,7 @@ const DEFAULT_DETAILED_PLAN: CropDetailedPlan = {
       ],
     },
     {
-      month: 4, phase: '파종·정식기', phaseColor: '#40916C',
+      month: 4, phase: '파종·정식기', phaseColor: '#52B788',
       weeks: [
         { week: '1주차', task: '파종 또는 정식', detail: '적기에 맞춰 직파 또는 이식. 주간·열간 거리를 품종 특성에 맞춰 설정.' },
         { week: '2~3주차', task: '활착 관리', detail: '정식 후 7~10일간 매일 관수. 뿌리 활착 상태 확인. 시들음 발생 시 차광 조치.' },
@@ -263,7 +263,7 @@ const DEFAULT_DETAILED_PLAN: CropDetailedPlan = {
       ],
     },
     {
-      month: 7, phase: '수확 준비기', phaseColor: '#95D5B2',
+      month: 7, phase: '수확 준비기', phaseColor: '#CCFF33',
       weeks: [
         { week: '1~2주차', task: '성숙도 판단', detail: '작물별 수확 적기 판단 기준(색, 크기, 경도 등) 확인.' },
         { week: '3~4주차', task: '수확 도구 준비', detail: '수확 도구 점검 및 출하 자재(상자, 포장재) 확보.' },
@@ -277,7 +277,7 @@ const DEFAULT_DETAILED_PLAN: CropDetailedPlan = {
       ],
     },
     {
-      month: 9, phase: '후작 준비', phaseColor: '#B7E4C7',
+      month: 9, phase: '후작 준비', phaseColor: '#CCFF33',
       weeks: [
         { week: '1~2주차', task: '잔재물 정리', detail: '수확 후 작물 잔재물 제거. 토양에 환원하거나 퇴비화.' },
         { week: '3~4주차', task: '토양 관리', detail: '녹비 작물 파종 또는 토양 소독. 다음 시즌 작부 체계 계획 수립.' },
