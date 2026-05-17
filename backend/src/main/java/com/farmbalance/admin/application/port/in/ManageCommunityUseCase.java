@@ -65,4 +65,7 @@ public interface ManageCommunityUseCase {
      * 신고 상태 변경 (RESOLVED, DISMISSED 등)
      */
     void updateReportStatus(Long reportId, String status);
+
+    /** AI를 활용해 최근 작성된 ACTIVE 게시글의 스팸 여부를 일괄 자동 검사 */
+    int aiModerateActivePosts();
 }

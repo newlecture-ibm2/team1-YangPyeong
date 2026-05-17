@@ -3,6 +3,9 @@ package com.farmbalance.admin.application.service;
 import com.farmbalance.admin.adapter.in.web.dto.CreateNoticeRequest;
 import com.farmbalance.admin.application.port.in.ManageCommunityUseCase;
 import com.farmbalance.admin.application.port.out.AdminPostPort;
+import com.farmbalance.admin.application.port.out.AdminAiPort;
+import com.farmbalance.admin.application.port.out.AdminAiPort.ModerationItemDto;
+import com.farmbalance.admin.application.port.out.AdminAiPort.ModerationResultDto;
 import com.farmbalance.admin.domain.AdminPost;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
@@ -23,6 +26,7 @@ public class CommunityManagementService implements ManageCommunityUseCase {
     private final AdminPostPort adminPostPort;
     private final com.farmbalance.admin.application.port.out.AdminCommentPort adminCommentPort;
     private final com.farmbalance.admin.application.port.out.AdminReportPort adminReportPort;
+    private final AdminAiPort adminAiPort;
 
     @Override
     public List<AdminPost> getPosts(String keyword, String status, int page, int size) {
@@ -99,5 +103,38 @@ public class CommunityManagementService implements ManageCommunityUseCase {
     @Transactional
     public void updateReportStatus(Long reportId, String status) {
         adminReportPort.updateStatus(reportId, status);
+    }
+
+    @Override
+    @Transactional
+    public int aiModerateActivePosts() {
+        // 1. 최신 ACTIVE 게시글 조회 (예: 100개)
+        List<AdminPost> activePosts = adminPostPort.findByFilter("", "ACTIVE", 0, 100);
+        if (activePosts.isEmpty()) {
+            return 0;
+        }
+
+        // 2. DTO 변환
+        List<ModerationItemDto> itemsToAudit = activePosts.stream().map(p -> {
+            String content = p.getContent() != null ? p.getContent() : "";
+            if (content.length() > 300) {
+                content = content.substring(0, 300);
+            }
+            return new ModerationItemDto(p.getId(), p.getTitle(), content);
+        }).toList();
+
+        // 3. AI 서버 일괄 요청
+        List<ModerationResultDto> results = adminAiPort.moderatePostBatch(itemsToAudit);
+
+        // 4. 비정상(false)인 게시글을 HIDDEN으로 업데이트 (delete 처리)
+        int hiddenCount = 0;
+        for (ModerationResultDto result : results) {
+            if (!result.clean()) {
+                adminPostPort.delete(result.postId());
+                hiddenCount++;
+            }
+        }
+
+        return hiddenCount;
     }
 }
