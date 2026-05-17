@@ -158,7 +158,7 @@ function RecommendDetailInner() {
       <DetailHeader
         cropName={rec.cropName}
         category={rec.category}
-        emoji={getCropEmoji(rec.category)}
+        emoji={getCropEmoji(rec.category, rec.cropName)}
         growthDays={rec.growthDays}
         optimalTemp={rec.optimalTemp}
         score={rec.score}

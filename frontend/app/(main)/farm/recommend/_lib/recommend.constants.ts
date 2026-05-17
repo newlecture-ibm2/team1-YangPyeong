@@ -5,16 +5,75 @@
 /** TOP3 메달 이모지 */
 export const MEDALS = ['🥇', '🥈', '🥉'] as const;
 
-/** 카테고리별 이모지 매핑 */
-export function getCropEmoji(category: string): string {
-  switch (category) {
-    case '채소류': return '🥬';
-    case '과일류': return '🍅';
-    case '곡물':   return '🥔';
-    case '특용작물': return '🌿';
-    default: return '🌾';
+/** 작물명 → 이모지 (개별 매핑) */
+const CROP_EMOJI_MAP: Record<string, string> = {
+  // 채소류
+  '배추': '🥬', '유기농 배추': '🥬', '봄배추': '🥬', '가을배추': '🥬',
+  '고추': '🌶️', '청양고추': '🌶️', '풋고추': '🌶️', '홍고추': '🌶️',
+  '상추': '🥬', '양상추': '🥬',
+  '시금치': '🥬',
+  '당근': '🥕',
+  '양파': '🧅',
+  '마늘': '🧄',
+  '오이': '🥒',
+  '호박': '🎃', '애호박': '🎃', '단호박': '🎃',
+  '무': '🥬', '총각무': '🥬',
+  '파': '🧅', '대파': '🧅', '쪽파': '🧅',
+  '브로콜리': '🥦',
+  '가지': '🍆',
+  '옥수수': '🌽',
+  '피망': '🫑', '파프리카': '🫑',
+  '생강': '🫚',
+  // 과일류
+  '토마토': '🍅', '방울토마토': '🍅',
+  '딸기': '🍓',
+  '수박': '🍉',
+  '참외': '🍈', '멜론': '🍈',
+  '사과': '🍎',
+  '배': '🍐',
+  '포도': '🍇',
+  '감': '🍊', '단감': '🍊',
+  '복숭아': '🍑',
+  '자두': '🍑',
+  '블루베리': '🫐',
+  '감귤': '🍊', '귤': '🍊',
+  // 곡물
+  '감자': '🥔',
+  '고구마': '🍠',
+  '벼': '🌾', '쌀': '🌾',
+  '콩': '🫘', '대두': '🫘', '강낭콩': '🫘',
+  '보리': '🌾',
+  '밀': '🌾',
+  '조': '🌾', '수수': '🌾', '기장': '🌾',
+  // 특용작물
+  '인삼': '🌿',
+  '들깨': '🌿', '참깨': '🌿',
+  '녹차': '🍵',
+  '약초': '🌿',
+};
+
+/** 카테고리 → 기본 이모지 (폴백) */
+const CATEGORY_EMOJI_MAP: Record<string, string> = {
+  '채소류': '🥬',
+  '과일류': '🍎',
+  '곡물': '🌾',
+  '특용작물': '🌿',
+  '화훼류': '💐',
+};
+
+/** 작물명 우선 매핑 → 카테고리 폴백 */
+export function getCropEmoji(category: string, cropName?: string): string {
+  if (cropName) {
+    // 정확 매칭
+    if (CROP_EMOJI_MAP[cropName]) return CROP_EMOJI_MAP[cropName];
+    // 부분 매칭 (예: "유기농 배추" 에서 "배추" 검색)
+    for (const [key, emoji] of Object.entries(CROP_EMOJI_MAP)) {
+      if (cropName.includes(key)) return emoji;
+    }
   }
+  return CATEGORY_EMOJI_MAP[category] ?? '🌱';
 }
+
 
 /** 재배 캘린더 데이터 */
 export interface CalendarPhase {
