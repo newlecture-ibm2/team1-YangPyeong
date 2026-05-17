@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Badge, Dropdown, SearchInput, Spinner, FilterBar } from '@/components'
 import { useToast } from '@/components'
+import { DEFAULT_PRODUCT_IMAGE } from '@/lib/constants'
 import styles from './Shop.module.css'
 import type { AdminProduct } from '../_lib/shop.types'
 import { fetchProducts, updateProductStatus, deleteAdminProduct } from '../_lib/shop.api'
@@ -288,9 +289,19 @@ export default function ShopPage() {
                   return (
                     <tr key={product.id}>
                       <td>#{product.id}</td>
-                      <td className={styles.productName}>
-                        {product.status === 'PENDING' && <span title="신규 요청" style={{ marginRight: '4px' }}>🆕</span>}
-                        {product.name}
+                      <td>
+                        <div className={styles.productCell}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={product.imageUrl || DEFAULT_PRODUCT_IMAGE}
+                            alt={product.name}
+                            className={styles.productThumbnail}
+                          />
+                          <div className={styles.productName}>
+                            {product.status === 'PENDING' && <span title="신규 요청" style={{ marginRight: '4px' }}>🆕</span>}
+                            {product.name}
+                          </div>
+                        </div>
                       </td>
                       <td>{product.categoryName || '-'}</td>
                       <td>{product.sellerName}</td>
