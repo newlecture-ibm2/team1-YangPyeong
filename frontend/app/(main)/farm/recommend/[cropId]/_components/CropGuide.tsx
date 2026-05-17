@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { CropRecommendation } from '../../_lib/recommend.types';
 import { getCropDetailedGuide } from '../../_lib/cropGuideData';
 import CropGuideModal from '../../_components/CropGuideModal/CropGuideModal';
@@ -27,7 +27,7 @@ export default function CropGuide({ rec }: CropGuideProps) {
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
   const diffLevel = rec.difficulty || 0;
   const diffText = diffLevel <= 2 ? '(초보 가능)' : diffLevel <= 3 ? '(보통)' : '(숙련 필요)';
-  const detailedGuide = getCropDetailedGuide(rec.cropName);
+  const detailedGuide = useMemo(() => getCropDetailedGuide(rec.cropName), [rec.cropName]);
 
   return (
     <>
