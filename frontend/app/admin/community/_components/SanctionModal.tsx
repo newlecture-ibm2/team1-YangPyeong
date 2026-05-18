@@ -54,12 +54,12 @@ export default function SanctionModal({ isOpen, onClose, onConfirm }: SanctionMo
             onChange={(e) => setSuspendUser(e.target.checked)} 
             style={{ width: '18px', height: '18px' }}
           />
-          <span style={{ fontSize: '1rem', color: 'var(--color-red)' }}>작성자 계정 무기한 이용 정지 (영구 차단)</span>
+          <span style={{ fontSize: '1rem', color: 'var(--color-danger)' }}>작성자 계정 무기한 이용 정지 (영구 차단)</span>
         </label>
 
         <div style={{ marginTop: '24px', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
           <Button variant="outline" onClick={handleClose}>취소</Button>
-          <Button variant="primary" onClick={handleConfirm} style={{ backgroundColor: 'var(--color-red)', borderColor: 'var(--color-red)' }}>
+          <Button variant="primary" onClick={handleConfirm} style={{ backgroundColor: 'var(--color-danger)', borderColor: 'var(--color-danger)', color: 'white' }}>
             제재 확정
           </Button>
         </div>

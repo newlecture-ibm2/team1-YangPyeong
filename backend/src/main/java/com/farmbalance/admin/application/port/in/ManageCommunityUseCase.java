@@ -54,7 +54,7 @@ public interface ManageCommunityUseCase {
     /**
      * 신고 내역 조회 (페이징)
      */
-    List<com.farmbalance.admin.domain.AdminReport> getReports(String status, int page, int size);
+    List<com.farmbalance.admin.domain.AdminGroupedReport> getReports(String status, int page, int size);
 
     /**
      * 신고 내역 개수 조회
@@ -62,14 +62,14 @@ public interface ManageCommunityUseCase {
     long countReports(String status);
 
     /**
-     * 신고 상태 변경 (RESOLVED, DISMISSED 등)
+     * 특정 타겟(게시글/댓글)에 대한 신고 상태 일괄 변경
      */
-    void updateReportStatus(Long reportId, String status);
+    void updateReportStatusByTarget(String targetType, Long targetId, String status);
 
     /**
-     * 신고 제재 처리 (게시물 삭제 및 유저 정지)
+     * 특정 타겟(게시글/댓글) 제재 일괄 처리
      */
-    void sanctionReport(Long reportId, boolean deleteContent, boolean suspendUser);
+    void sanctionReportByTarget(String targetType, Long targetId, boolean deleteContent, boolean suspendUser);
 
     /** AI를 활용해 최근 작성된 ACTIVE 게시글의 스팸 여부를 일괄 자동 검사 */
     int aiModerateActivePosts();

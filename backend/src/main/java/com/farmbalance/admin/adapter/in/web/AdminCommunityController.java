@@ -112,7 +112,7 @@ public class AdminCommunityController {
             @RequestParam(required = false, defaultValue = "PENDING") String status,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "20") int size) {
-        List<com.farmbalance.admin.domain.AdminReport> reports = manageCommunityUseCase.getReports(status, page, size);
+        List<com.farmbalance.admin.domain.AdminGroupedReport> reports = manageCommunityUseCase.getReports(status, page, size);
         long total = manageCommunityUseCase.countReports(status);
         return ApiResponse.ok(Map.of(
                 "reports", reports,
@@ -122,29 +122,41 @@ public class AdminCommunityController {
     }
 
     /**
-     * 신고 상태 변경 (처리 완료 등)
-     * PATCH /api/admin/community/reports/{reportId}/status
-     * Body: { "status": "RESOLVED" }
+     * 특정 타겟 신고 상태 일괄 변경
+     * PATCH /api/admin/community/reports/target/status
+     * Body: { "targetType": "POST", "targetId": 1, "status": "RESOLVED" }
      */
-    @PatchMapping("/reports/{reportId}/status")
-    public ApiResponse<Void> updateReportStatus(@PathVariable Long reportId,
-                                                @RequestBody Map<String, String> body) {
-        String status = body.get("status");
-        if (status == null || status.isBlank()) {
-            throw new IllegalArgumentException("Status is required");
+    @PatchMapping("/reports/target/status")
+    public ApiResponse<Void> updateReportStatusByTarget(@RequestBody Map<String, Object> body) {
+        String targetType = (String) body.get("targetType");
+        Number targetIdNum = (Number) body.get("targetId");
+        String status = (String) body.get("status");
+
+        if (targetType == null || targetIdNum == null || status == null || status.isBlank()) {
+            throw new IllegalArgumentException("targetType, targetId, and status are required");
         }
-        manageCommunityUseCase.updateReportStatus(reportId, status.toUpperCase());
+
+        manageCommunityUseCase.updateReportStatusByTarget(targetType, targetIdNum.longValue(), status.toUpperCase());
         return ApiResponse.ok(null);
     }
 
     /**
-     * 신고 제재 처리 (게시물 삭제 및 계정 정지)
-     * POST /api/admin/community/reports/{reportId}/sanction
+     * 특정 타겟 신고 제재 일괄 처리
+     * POST /api/admin/community/reports/target/sanction
+     * Body: { "targetType": "POST", "targetId": 1, "deleteContent": true, "suspendUser": true }
      */
-    @PostMapping("/reports/{reportId}/sanction")
-    public ApiResponse<Void> sanctionReport(@PathVariable Long reportId,
-                                            @RequestBody com.farmbalance.admin.adapter.in.web.dto.SanctionRequest request) {
-        manageCommunityUseCase.sanctionReport(reportId, request.isDeleteContent(), request.isSuspendUser());
+    @PostMapping("/reports/target/sanction")
+    public ApiResponse<Void> sanctionReportByTarget(@RequestBody Map<String, Object> request) {
+        String targetType = (String) request.get("targetType");
+        Number targetIdNum = (Number) request.get("targetId");
+        Boolean deleteContent = (Boolean) request.getOrDefault("deleteContent", false);
+        Boolean suspendUser = (Boolean) request.getOrDefault("suspendUser", false);
+
+        if (targetType == null || targetIdNum == null) {
+            throw new IllegalArgumentException("targetType and targetId are required");
+        }
+
+        manageCommunityUseCase.sanctionReportByTarget(targetType, targetIdNum.longValue(), deleteContent, suspendUser);
         return ApiResponse.ok(null);
     }
 

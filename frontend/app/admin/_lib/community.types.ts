@@ -37,19 +37,18 @@ export interface AdminComment {
   deletedAt: string | null
 }
 
-/** 관리자용 신고 내역 */
-export interface AdminReport {
-  id: number
+/** 관리자용 그룹화된 신고 내역 */
+export interface AdminGroupedReport {
   targetType: string // "POST" | "COMMENT"
   targetId: number
-  reporterId: number
-  reason: string
+  reportCount: number
+  recentReason: string
   status: string // "PENDING" | "RESOLVED" | "DISMISSED"
-  createdAt: string
+  recentReportAt: string
 }
 
 export interface PaginatedAdminReports {
-  reports: AdminReport[]
+  reports: AdminGroupedReport[]
   totalElements: number
   totalPages: number
 }

@@ -9,7 +9,7 @@ import SearchInput from '@/components/common/SearchInput/SearchInput'
 import FilterBar from '@/components/common/FilterBar/FilterBar'
 import Dropdown from '@/components/common/Dropdown/Dropdown'
 import styles from './Community.module.css'
-import type { AdminPost, AdminReport } from '../_lib/community.types'
+import type { AdminPost, AdminGroupedReport } from '../_lib/community.types'
 import { fetchPosts, deletePost, toggleNotice, createNotice, fetchReports, updateReportStatus, aiModeratePosts } from '../_lib/community.api'
 import NoticeCreateModal from './_components/NoticeCreateModal'
 import PostDetailModal from './_components/PostDetailModal'
@@ -34,11 +34,11 @@ export default function CommunityPage() {
   const [statusFilter, setStatusFilter] = useState('ALL')
 
   // Reports State
-  const [reports, setReports] = useState<AdminReport[]>([])
+  const [reports, setReports] = useState<AdminGroupedReport[]>([])
   const [reportTotalElements, setReportTotalElements] = useState(0)
   const [reportTotalPages, setReportTotalPages] = useState(0)
-  const [reportPage, setReportPage] = useState(0)
   const [reportStatusFilter, setReportStatusFilter] = useState('PENDING')
+  const [reportPage, setReportPage] = useState(0)
 
   const pageSize = 20
 
@@ -52,7 +52,7 @@ export default function CommunityPage() {
   const [isModerating, setIsModerating] = useState(false)
 
   const [sanctionModalOpen, setSanctionModalOpen] = useState(false)
-  const [selectedReportId, setSelectedReportId] = useState<number | null>(null)
+  const [selectedTarget, setSelectedTarget] = useState<{ type: string, id: number } | null>(null)
 
   const loadData = useCallback(async () => {
     if (activeTab === 'POSTS') {
@@ -118,27 +118,27 @@ export default function CommunityPage() {
     }
   }
 
-  const handleUpdateReportStatus = async (reportId: number, newStatus: string) => {
+  const handleUpdateReportStatus = async (targetType: string, targetId: number, newStatus: string) => {
     try {
-      await updateReportStatus(reportId, newStatus)
-      toast.success('신고 상태가 변경되었습니다.')
+      await updateReportStatus(targetType, targetId, newStatus)
+      toast.success('신고 상태가 일괄 변경되었습니다.')
       loadData()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '신고 상태 변경 실패')
     }
   }
 
-  const handleOpenSanctionModal = (reportId: number) => {
-    setSelectedReportId(reportId)
+  const handleOpenSanctionModal = (targetType: string, targetId: number) => {
+    setSelectedTarget({ type: targetType, id: targetId })
     setSanctionModalOpen(true)
   }
 
   const handleSanctionConfirm = async (data: { deleteContent: boolean; suspendUser: boolean }) => {
-    if (!selectedReportId) return
+    if (!selectedTarget) return
     try {
       const { sanctionReport } = await import('../_lib/community.api')
-      await sanctionReport(selectedReportId, data)
-      toast.success('제재 처리가 완료되었습니다.')
+      await sanctionReport(selectedTarget.type, selectedTarget.id, data)
+      toast.success('제재 처리가 일괄 완료되었습니다.')
       setSanctionModalOpen(false)
       loadData()
     } catch (err) {
@@ -345,27 +345,25 @@ export default function CommunityPage() {
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th>ID</th>
                     <th>대상</th>
                     <th>대상ID</th>
-                    <th>신고자ID</th>
-                    <th>사유</th>
-                    <th>신고일</th>
+                    <th>누적 신고 수</th>
+                    <th>최근 사유</th>
+                    <th>최근 신고일</th>
                     <th>상태</th>
                     <th>액션</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {reports.map(report => (
-                    <tr key={report.id}>
-                      <td data-label="ID">{report.id}</td>
+                  {reports.map((report, idx) => (
+                    <tr key={`${report.targetType}-${report.targetId}-${idx}`}>
                       <td data-label="대상">
                         {report.targetType === 'POST' ? <Badge variant="blue">게시글</Badge> : <Badge variant="gray">댓글</Badge>}
                       </td>
                       <td data-label="대상ID">{report.targetId}</td>
-                      <td data-label="신고자">{report.reporterId}</td>
-                      <td className={styles.titleCell} data-label="사유">{report.reason}</td>
-                      <td data-label="신고일">{formatDate(report.createdAt)}</td>
+                      <td data-label="누적 신고 수">{report.reportCount}건</td>
+                      <td className={styles.titleCell} data-label="최근 사유">{report.recentReason}</td>
+                      <td data-label="최근 신고일">{formatDate(report.recentReportAt)}</td>
                       <td data-label="상태">
                         {report.status === 'PENDING' && <Badge variant="orange">대기중</Badge>}
                         {report.status === 'RESOLVED' && <Badge variant="green">처리완료</Badge>}
@@ -385,14 +383,14 @@ export default function CommunityPage() {
                             <>
                               <button
                                 className={styles.actionBtnNotice}
-                                onClick={() => handleOpenSanctionModal(report.id)}
-                                style={{ backgroundColor: 'var(--color-red)', borderColor: 'var(--color-red)', color: 'white' }}
+                                onClick={() => handleOpenSanctionModal(report.targetType, report.targetId)}
+                                style={{ backgroundColor: 'var(--color-danger)', borderColor: 'var(--color-danger)', color: 'white' }}
                               >
                                 🚨 제재 처리
                               </button>
                               <button
                                 className={styles.actionBtnDanger}
-                                onClick={() => handleUpdateReportStatus(report.id, 'DISMISSED')}
+                                onClick={() => handleUpdateReportStatus(report.targetType, report.targetId, 'DISMISSED')}
                               >
                                 반려
                               </button>

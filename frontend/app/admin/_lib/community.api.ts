@@ -73,21 +73,21 @@ export async function fetchReports(params: { status?: string; page?: number; siz
   return json.data
 }
 
-export async function updateReportStatus(reportId: number, status: string): Promise<void> {
-  const res = await fetch(`${BASE}/reports/${reportId}/status`, {
+export async function updateReportStatus(targetType: string, targetId: number, status: string): Promise<void> {
+  const res = await fetch(`${BASE}/reports/target/status`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status })
+    body: JSON.stringify({ targetType, targetId, status })
   })
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '신고 상태 변경 실패')
 }
 
-export async function sanctionReport(reportId: number, data: { deleteContent: boolean; suspendUser: boolean }): Promise<void> {
-  const res = await fetch(`${BASE}/reports/${reportId}/sanction`, {
+export async function sanctionReport(targetType: string, targetId: number, data: { deleteContent: boolean; suspendUser: boolean }): Promise<void> {
+  const res = await fetch(`${BASE}/reports/target/sanction`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
+    body: JSON.stringify({ targetType, targetId, ...data })
   })
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '신고 제재 실패')

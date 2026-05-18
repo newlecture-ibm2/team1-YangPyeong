@@ -1,0 +1,29 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie'
+import { BACKEND_URL } from '@/lib/constants'
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const session = await getSessionFromCookie()
+    if (!session?.token) {
+      return NextResponse.json({ success: false, error: { code: 'E-AUTH-001', message: '인증이 필요합니다.' } }, { status: 401 })
+    }
+
+    // Proxy request to backend
+    const backendUrl = `${BACKEND_URL}/api/admin/community/reports/target/status`
+    const res = await fetch(backendUrl, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${session.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    })
+
+    const result = await res.json()
+    return NextResponse.json(result, { status: res.status })
+  } catch (error) {
+    return NextResponse.json({ success: false, error: { code: 'E-COMMUNITY-999', message: '신고 상태 업데이트 실패' } }, { status: 500 })
+  }
+}

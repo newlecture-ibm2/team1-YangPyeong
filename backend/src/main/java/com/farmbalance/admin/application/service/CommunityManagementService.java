@@ -91,38 +91,36 @@ public class CommunityManagementService implements ManageCommunityUseCase {
     }
 
     @Override
-    public List<com.farmbalance.admin.domain.AdminReport> getReports(String status, int page, int size) {
+    public List<com.farmbalance.admin.domain.AdminGroupedReport> getReports(String status, int page, int size) {
         int offset = page * size;
-        return adminReportPort.findByFilter(status, offset, size);
+        return adminReportPort.findGroupedByFilter(status, offset, size);
     }
 
     @Override
     public long countReports(String status) {
-        return adminReportPort.countByFilter(status);
+        return adminReportPort.countGroupedByFilter(status);
     }
 
     @Override
     @Transactional
-    public void updateReportStatus(Long reportId, String status) {
-        adminReportPort.updateStatus(reportId, status);
+    public void updateReportStatusByTarget(String targetType, Long targetId, String status) {
+        adminReportPort.updateStatusByTarget(targetType, targetId, status);
     }
 
     @Override
     @Transactional
-    public void sanctionReport(Long reportId, boolean deleteContent, boolean suspendUser) {
-        com.farmbalance.admin.domain.AdminReport report = adminReportPort.findById(reportId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.REPORT_NOT_FOUND));
+    public void sanctionReportByTarget(String targetType, Long targetId, boolean deleteContent, boolean suspendUser) {
+        // 일괄 '처리완료' 상태로 업데이트
+        adminReportPort.updateStatusByTarget(targetType, targetId, "RESOLVED");
 
-        adminReportPort.updateStatus(reportId, "RESOLVED");
-
-        if ("POST".equals(report.getTargetType())) {
-            AdminPost post = adminPostPort.findById(report.getTargetId()).orElse(null);
+        if ("POST".equals(targetType)) {
+            AdminPost post = adminPostPort.findById(targetId).orElse(null);
             if (post != null) {
                 if (deleteContent) adminPostPort.delete(post.getId());
                 if (suspendUser) userRepository.updateStatus(post.getAuthorId(), "SUSPENDED");
             }
-        } else if ("COMMENT".equals(report.getTargetType())) {
-            com.farmbalance.admin.domain.AdminComment comment = adminCommentPort.findById(report.getTargetId()).orElse(null);
+        } else if ("COMMENT".equals(targetType)) {
+            com.farmbalance.admin.domain.AdminComment comment = adminCommentPort.findById(targetId).orElse(null);
             if (comment != null) {
                 if (deleteContent) adminCommentPort.delete(comment.getId());
                 if (suspendUser) userRepository.updateStatus(comment.getAuthorId(), "SUSPENDED");
