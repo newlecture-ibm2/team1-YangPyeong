@@ -303,3 +303,153 @@
   display: flex;
   align-items: center;
 }
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-lg) var(--space-md) 80px;
+  }
+
+  /* 헤더: 타이틀 + 정렬 드롭다운 세로 배치 */
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* 서브탭: 가로 스크롤 */
+  .subTabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 2px;
+  }
+
+  .subTabs::-webkit-scrollbar { display: none; }
+
+  .subTab {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* 테이블 → 카드형 */
+  .tableWrapper {
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
+    margin-top: var(--space-sm);
+  }
+
+  .table {
+    display: block;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "name    name"
+      "category seller"
+      "price   stock"
+      "status  date"
+      "actions actions";
+    gap: 6px 12px;
+    padding: 14px 16px;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .table td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0;
+    border-bottom: none;
+    font-size: 14px;
+    text-align: left;
+    vertical-align: unset;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .table td[data-label=""]::before { display: none; }
+
+  /* No → 숨김 */
+  .table td:nth-child(1) { display: none; }
+
+  /* 상품명 */
+  .table td:nth-child(2) {
+    grid-area: name;
+    font-size: 15px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 10px;
+    margin-bottom: 2px;
+  }
+  .table td:nth-child(2)::before { display: none; }
+
+  /* 카테고리 */
+  .table td:nth-child(3) { grid-area: category; }
+
+  /* 판매자 */
+  .table td:nth-child(4) { grid-area: seller; }
+
+  /* 판매가 */
+  .table td:nth-child(5) { grid-area: price; }
+
+  /* 재고 */
+  .table td:nth-child(6) { grid-area: stock; }
+
+  /* 상태 */
+  .table td:nth-child(7) { grid-area: status; }
+
+  /* 등록일 */
+  .table td:nth-child(8) { grid-area: date; }
+
+  /* 액션 */
+  .table td:nth-child(9) {
+    grid-area: actions;
+    border-top: 1px solid var(--color-border);
+    padding-top: 10px;
+    margin-top: 2px;
+  }
+
+  .productName { text-align: left; }
+
+  .actionButtons {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}

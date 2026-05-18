@@ -10,6 +10,13 @@
   background: var(--color-primary);
 }
 
+/* 모바일에서는 데스크탑 헤더 숨김. MobileHeader가 대신 표시됨. */
+@media (max-width: 768px) {
+  .nav {
+    display: none;
+  }
+}
+
 /* ── Logo ── */
 .logo {
   font-family: var(--font-serif);

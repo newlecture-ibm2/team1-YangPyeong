@@ -251,7 +251,7 @@ export default function ShopPage() {
           ))}
         </div>
         {activeTab === 'REVIEW' && (
-          <button 
+          <button
             className={`${styles.actionBtn} ${styles.btnApprove}`}
             style={{ padding: '8px 16px', fontSize: '14px', background: 'var(--color-primary)', color: 'white' }}
             onClick={handleAiAudit}
@@ -315,8 +315,8 @@ export default function ShopPage() {
 
                   return (
                     <tr key={product.id}>
-                      <td>#{product.id}</td>
-                      <td>
+                      <td data-label="No">#{product.id}</td>
+                      <td data-label="상품명">
                         <div className={styles.productCell}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -330,13 +330,13 @@ export default function ShopPage() {
                           </div>
                         </div>
                       </td>
-                      <td>{product.categoryName || '-'}</td>
-                      <td>{product.sellerName}</td>
-                      <td className={styles.priceCell}>{formatPrice(product.price)}</td>
-                      <td>{product.stock}개</td>
-                      <td><Badge variant={badge.variant as any}>{badge.label}</Badge></td>
-                      <td>{formatDate(product.createdAt)}</td>
-                      <td>{renderActionButtons(product)}</td>
+                      <td data-label="카테고리">{product.categoryName || '-'}</td>
+                      <td data-label="판매자">{product.sellerName}</td>
+                      <td className={styles.priceCell} data-label="판매가">{formatPrice(product.price)}</td>
+                      <td data-label="재고">{product.stock}개</td>
+                      <td data-label="상태"><Badge variant={badge.variant as any}>{badge.label}</Badge></td>
+                      <td data-label="등록일">{formatDate(product.createdAt)}</td>
+                      <td data-label="">{renderActionButtons(product)}</td>
                     </tr>
                   )
                 })

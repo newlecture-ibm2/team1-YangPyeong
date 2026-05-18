@@ -163,6 +163,8 @@
   line-height: 1.6;
 }
 
+.formRow3 { display: flex; gap: 16px; }
+
 .modalFooter { display: flex; justify-content: flex-end; gap: var(--space-sm); margin-top: var(--space-lg); }
 
 .cancelBtn {
@@ -186,3 +188,126 @@
 /* ── 로딩/빈 상태 ── */
 .loadingWrap { display: flex; justify-content: center; align-items: center; min-height: 200px; color: var(--color-text-secondary); font-size: 16px; }
 .emptyState { text-align: center; padding: var(--space-2xl); color: var(--color-text-secondary); }
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  /* 헤더 */
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+
+  .pageTitle {
+    font-size: 24px;
+  }
+
+  .addBtn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* 테이블 → 카드형 */
+  .tableWrap {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .table {
+    display: block;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "extid   extid"
+      "info    info"
+      "org     date"
+      "action  action";
+    gap: 6px 12px;
+    padding: 14px 16px;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .table td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0;
+    border-bottom: none;
+    font-size: 14px;
+    text-align: left;
+    vertical-align: unset;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .table td[data-label=""]::before {
+    display: none;
+  }
+
+  /* 외부 ID */
+  .table td:nth-child(1) {
+    grid-area: extid;
+    font-size: 13px;
+    word-break: break-all;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 10px;
+    margin-bottom: 2px;
+  }
+  .table td:nth-child(1)::before { display: none; }
+
+  /* 정책 기본정보 */
+  .table td:nth-child(2) { grid-area: info; }
+
+  /* 지원기관 */
+  .table td:nth-child(3) { grid-area: org; }
+
+  /* 수집일 / 등록일 */
+  .table td:nth-child(4) { grid-area: date; }
+
+  /* 액션 */
+  .table td:nth-child(5) {
+    grid-area: action;
+    border-top: 1px solid var(--color-border);
+    padding-top: 10px;
+    margin-top: 2px;
+  }
+
+  .actionGroup {
+    justify-content: flex-start;
+  }
+
+  .policyPreviewTitle {
+    white-space: normal;
+  }
+
+  /* 모달 폼 3열 → 1열 */
+  .formRow3 {
+    flex-direction: column !important;
+  }
+}

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { ReactNode } from 'react'
 import { ToastProvider } from '@/components/common/Toast'
 import SessionManager from './(auth)/_components/SessionManager'
@@ -8,6 +8,13 @@ export const metadata: Metadata = {
   title: 'FarmBalance — 양평군 스마트 파밍 플랫폼',
   description: '데이터 기반 작물 수급 예측과 AI 추천으로 농가 소득을 안정화하는 스마트 농업 플랫폼',
   manifest: '/manifest.json',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
 }
 
 interface RootLayoutProps {

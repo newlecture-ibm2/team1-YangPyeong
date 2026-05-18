@@ -78,3 +78,23 @@
   border-top: 1px solid var(--color-border);
 }
 
+@media (max-width: 768px) {
+  .chipGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .chip {
+    font-size: 12px;
+    padding: 0.5rem 0.4rem;
+  }
+
+  .footer {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .footer > * {
+    width: 100%;
+  }
+}
+

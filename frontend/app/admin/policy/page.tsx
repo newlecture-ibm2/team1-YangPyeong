@@ -157,8 +157,8 @@ export default function PolicyPage() {
                 
                 return (
                   <tr key={policy.id}>
-                    <td className={styles.externalId}>{policy.externalId}</td>
-                    <td>
+                    <td className={styles.externalId} data-label="외부 ID">{policy.externalId}</td>
+                    <td data-label="정책 기본정보">
                       <div className={styles.policyPreviewInfo}>
                         <div className={styles.policyPreviewBadges}>
                           <span className={styles.previewBadge}>{region}</span>
@@ -167,14 +167,14 @@ export default function PolicyPage() {
                         <div className={styles.policyPreviewTitle}>{title}</div>
                       </div>
                     </td>
-                    <td>{org}</td>
-                    <td>
+                    <td data-label="지원기관">{org}</td>
+                    <td data-label="수집일 / 등록일">
                       <div className={styles.dateBlock}>
                         <span><small>수집:</small> {formatDate(policy.fetchedAt)}</span>
                         <span><small>등록:</small> {formatDate(policy.createdAt)}</span>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="">
                       <div className={styles.actionGroup}>
                         {policy.sourceUrl && (
                           <button className={styles.editBtn} style={{ background: '#3b82f6', color: '#fff', border: 'none' }} onClick={() => window.open(policy.sourceUrl!, '_blank')}>원문 보기</button>
@@ -216,7 +216,7 @@ export default function PolicyPage() {
               placeholder="예: 양평군 친환경 농업 지원"
             />
           </div>
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div className={styles.formRow3}>
             <div className={styles.formGroup} style={{ flex: 1 }}>
               <label className={styles.formLabel}>지역명</label>
               <input

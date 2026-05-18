@@ -11,6 +11,7 @@ export default function GovAiPanel() {
   const [question, setQuestion] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const chatBoxRef = useRef<HTMLDivElement>(null);
 
   const region = user?.regionName || process.env.NEXT_PUBLIC_DEFAULT_GOV_REGION || '양평군';
@@ -74,54 +75,61 @@ export default function GovAiPanel() {
   };
 
   return (
-    <div className={styles.aiPanel}>
+    <div className={`${styles.aiPanel} ${isOpen ? styles.aiPanelOpen : ''}`}>
       <div className={styles.header}>
-        <h2 className={styles.title}>🤖 FarmBalance AI 분석</h2>
-      </div>
-
-      <div className={styles.chatBox} ref={chatBoxRef}>
-        {chatHistory.length === 0 && (
-          <div style={{ textAlign: "center", color: "#6B7280", margin: "auto 0" }}>
-            AI에게 궁금한 점을 물어보세요.<br />(예: 배추 위험도 알려줘)
-          </div>
-        )}
-        {chatHistory.map((msg) => (
-          <div key={msg.id} className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.aiMessage}`}>
-            {msg.role === 'ai' ? (
-              <div>
-                <div>
-                  {msg.content.split('\n').map((line, i) => (
-                    <Fragment key={i}>
-                      {line}
-                      <br />
-                    </Fragment>
-                  ))}
-                </div>
-                {msg.sources && msg.sources.length > 0 && (
-                  <details className={styles.sources}>
-                    <summary style={{ cursor: 'pointer', outline: 'none' }}>분석 근거 ({msg.sources.length}건)</summary>
-                    <ul style={{ marginTop: "8px", paddingLeft: "20px", margin: 0 }}>
-                      {msg.sources.map((s, idx) => (
-                        <li key={idx}>[{s.type}] {s.description}</li>
-                      ))}
-                    </ul>
-                  </details>
-                )}
-              </div>
-            ) : (
-              msg.content
-            )}
-          </div>
-        ))}
-        {isLoading && <div className={`${styles.message} ${styles.aiMessage}`}>분석 중입니다...</div>}
-      </div>
-
-      <div className={styles.suggestions}>
-        {suggestions.map((text, idx) => (
-          <button key={idx} className={styles.suggestionBtn} onClick={() => handleSendMessage(text)} disabled={isLoading}>
-            {text}
+        <div className={styles.headerRow}>
+          <h2 className={styles.title}>🤖 FarmBalance AI 분석</h2>
+          <button className={styles.mobileToggle} onClick={() => setIsOpen(o => !o)}>
+            {isOpen ? '▲ 접기' : '▼ 열기'}
           </button>
-        ))}
+        </div>
+      </div>
+
+      <div className={styles.chatBody}>
+        <div className={styles.chatBox} ref={chatBoxRef}>
+          {chatHistory.length === 0 && (
+            <div style={{ textAlign: "center", color: "#6B7280", margin: "auto 0" }}>
+              AI에게 궁금한 점을 물어보세요.<br />(예: 배추 위험도 알려줘)
+            </div>
+          )}
+          {chatHistory.map((msg) => (
+            <div key={msg.id} className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.aiMessage}`}>
+              {msg.role === 'ai' ? (
+                <div>
+                  <div>
+                    {msg.content.split('\n').map((line, i) => (
+                      <Fragment key={i}>
+                        {line}
+                        <br />
+                      </Fragment>
+                    ))}
+                  </div>
+                  {msg.sources && msg.sources.length > 0 && (
+                    <details className={styles.sources}>
+                      <summary style={{ cursor: 'pointer', outline: 'none' }}>분석 근거 ({msg.sources.length}건)</summary>
+                      <ul style={{ marginTop: "8px", paddingLeft: "20px", margin: 0 }}>
+                        {msg.sources.map((s, idx) => (
+                          <li key={idx}>[{s.type}] {s.description}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </div>
+              ) : (
+                msg.content
+              )}
+            </div>
+          ))}
+          {isLoading && <div className={`${styles.message} ${styles.aiMessage}`}>분석 중입니다...</div>}
+        </div>
+
+        <div className={styles.suggestions}>
+          {suggestions.map((text, idx) => (
+            <button key={idx} className={styles.suggestionBtn} onClick={() => handleSendMessage(text)} disabled={isLoading}>
+              {text}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className={styles.inputArea}>

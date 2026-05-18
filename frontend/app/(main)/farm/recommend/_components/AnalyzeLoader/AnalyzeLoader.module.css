@@ -65,3 +65,28 @@
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+@media (max-width: 768px) {
+  .cta {
+    margin-bottom: 28px;
+  }
+
+  .ctaButton {
+    padding: 14px 24px;
+    font-size: 15px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .overlay {
+    padding: 48px 16px;
+  }
+
+  .spinner {
+    width: 44px;
+    height: 44px;
+  }
+
+  .text { font-size: 16px; }
+  .sub  { font-size: 13px; }
+}
