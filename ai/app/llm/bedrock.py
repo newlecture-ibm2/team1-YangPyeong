@@ -22,6 +22,9 @@ class BedrockLLM(BaseLLM):
             "구현 시 boto3, bedrock-runtime SDK가 필요합니다."
         )
 
+    def get_provider_name(self) -> str:
+        return "bedrock"
+
     async def generate(
         self,
         prompt: str,
