@@ -28,7 +28,9 @@ const WEAK_INSIGHT_MARKERS = [
   '유효한 시세도 없어',
 ];
 
-/** 예전 폴백·짧은 LLM 응답은 캐시 히트로 쓰지 않음 */
+const INSIGHT_MIN_LEN = 20;
+
+/** 예전 폴백·짧은 LLM 응답은 캐시/화면에 쓰지 않음 (AI 서비스 기준과 동일) */
 export function isWeakRevenuePrediction(prediction: RevenuePredictionResponse): boolean {
   const priceInsight = (prediction.price_insight || '').trim();
   const revenueInsight = (prediction.revenue_insight || '').trim();
@@ -36,7 +38,14 @@ export function isWeakRevenuePrediction(prediction: RevenuePredictionResponse): 
   if (WEAK_INSIGHT_MARKERS.some((m) => priceInsight.includes(m) || revenueInsight.includes(m))) {
     return true;
   }
-  if (priceInsight.length < 28 && revenueInsight.length < 28) {
+  if (priceInsight.length < INSIGHT_MIN_LEN || revenueInsight.length < INSIGHT_MIN_LEN) {
+    return true;
+  }
+  const noNumbers =
+    (prediction.predicted_price_per_kg ?? 0) <= 0 &&
+    (prediction.predicted_revenue ?? 0) <= 0 &&
+    (prediction.predicted_yield_kg ?? 0) <= 0;
+  if (noNumbers) {
     return true;
   }
   if (prediction.confidence === '낮음' && priceInsight.length < 45 && revenueInsight.length < 45) {

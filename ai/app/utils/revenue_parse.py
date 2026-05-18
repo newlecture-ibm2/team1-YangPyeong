@@ -43,13 +43,17 @@ def _as_str(value: Any) -> str:
 
 
 def _unwrap_nested_dict(data: dict) -> dict:
-    for key in ("data", "result", "response", "prediction", "output"):
-        inner = data.get(key)
-        if isinstance(inner, dict):
-            merged = normalize_revenue_dict(inner)
-            if merged:
-                return merged
-    return data
+    """래퍼 키(data/result 등) 안쪽 필드를 바깥과 병합합니다."""
+    merged = dict(data)
+    for wrap_key in ("data", "result", "response", "prediction", "output"):
+        inner = data.get(wrap_key)
+        if not isinstance(inner, dict):
+            continue
+        for key, value in inner.items():
+            if key not in merged or merged.get(key) in (None, "", {}, []):
+                merged[key] = value
+        merged.pop(wrap_key, None)
+    return merged
 
 
 def normalize_revenue_dict(data: Any) -> dict:

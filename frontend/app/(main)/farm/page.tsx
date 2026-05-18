@@ -246,7 +246,9 @@ function FarmDashboardContent() {
         request.actual_yield_kg = actualYield;
       }
       const data = await predictRevenue(request);
-      writeRevenuePredictionCache(farm.id, row, data, actualYield);
+      if (!isWeakRevenuePrediction(data)) {
+        writeRevenuePredictionCache(farm.id, row, data, actualYield);
+      }
       return data;
     },
     [farm?.id, buildWeatherContext],
@@ -270,24 +272,48 @@ function FarmDashboardContent() {
         }
       }
 
+      const seq = (revenueFetchSeqRef.current[cropName] ?? 0) + 1;
+      revenueFetchSeqRef.current[cropName] = seq;
+
       setLoadingRevenueCrop(cropName);
       try {
         const data = await fetchPredictionOne(row, actualYield);
-        if (data) {
+        if (revenueFetchSeqRef.current[cropName] !== seq) return;
+
+        if (data && !isWeakRevenuePrediction(data)) {
           setPredictionsByCrop((prev) => ({ ...prev, [cropName]: data }));
           setRevenueErrorsByCrop((prev) => {
             const next = { ...prev };
             delete next[cropName];
             return next;
           });
+        } else {
+          setPredictionsByCrop((prev) => {
+            const next = { ...prev };
+            delete next[cropName];
+            return next;
+          });
+          setRevenueErrorsByCrop((prev) => ({
+            ...prev,
+            [cropName]:
+              'AI 분석 결과가 불완전합니다. farm-ai 재배포 후 다시 시도해 주세요.',
+          }));
         }
       } catch {
+        if (revenueFetchSeqRef.current[cropName] !== seq) return;
+        setPredictionsByCrop((prev) => {
+          const next = { ...prev };
+          delete next[cropName];
+          return next;
+        });
         setRevenueErrorsByCrop((prev) => ({
           ...prev,
           [cropName]: '예측을 불러오지 못했습니다.',
         }));
       } finally {
-        setLoadingRevenueCrop((prev) => (prev === cropName ? null : prev));
+        if (revenueFetchSeqRef.current[cropName] === seq) {
+          setLoadingRevenueCrop((prev) => (prev === cropName ? null : prev));
+        }
       }
     },
     [farm?.id, fetchPredictionOne],
@@ -295,6 +321,7 @@ function FarmDashboardContent() {
 
   const loadRevenueForCropRef = useRef(loadRevenueForCrop);
   loadRevenueForCropRef.current = loadRevenueForCrop;
+  const revenueFetchSeqRef = useRef<Record<string, number>>({});
 
   const handleApplyYieldForCrop = useCallback(
     async (row: RevenueCropRow) => {
@@ -331,8 +358,12 @@ function FarmDashboardContent() {
   const handleStartRevenueAnalysis = useCallback(
     (row: RevenueCropRow) => {
       setExpandedRevenueCrop(row.cropName);
-      if (!predictionsByCrop[row.cropName] && loadingRevenueCrop !== row.cropName) {
-        void loadRevenueForCrop(row);
+      const existing = predictionsByCrop[row.cropName];
+      const needsFetch =
+        (!existing || isWeakRevenuePrediction(existing)) &&
+        loadingRevenueCrop !== row.cropName;
+      if (needsFetch) {
+        void loadRevenueForCrop(row, undefined, { skipCache: Boolean(existing) });
       }
     },
     [predictionsByCrop, loadingRevenueCrop, loadRevenueForCrop],
@@ -786,7 +817,7 @@ function FarmDashboardContent() {
                   const isLoadingThis = loadingRevenueCrop === cropName;
                   const busy = applyingCrop === cropName || isLoadingThis;
                   const isAnalyzed = Boolean(prediction);
-                  const canExpand = isPrimary || isAnalyzed;
+                  const canExpand = isPrimary || isAnalyzed || Boolean(errMsg);
                   const showAnalyzeButton = !isPrimary && !isAnalyzed && !errMsg;
                   return (
                     <div
