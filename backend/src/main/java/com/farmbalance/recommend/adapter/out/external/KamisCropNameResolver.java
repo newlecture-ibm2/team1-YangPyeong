@@ -9,6 +9,9 @@ import java.util.List;
  */
 public final class KamisCropNameResolver {
 
+    /** 1글자 품목(배·무 등) 부분 일치 오매칭 방지 */
+    private static final int MIN_PARTIAL_MATCH_LENGTH = 2;
+
     private KamisCropNameResolver() {
     }
 
@@ -34,7 +37,7 @@ public final class KamisCropNameResolver {
         standards.sort(Comparator.comparingInt(String::length).reversed());
 
         for (String standard : standards) {
-            if (trimmed.contains(standard)) {
+            if (standard.length() >= MIN_PARTIAL_MATCH_LENGTH && trimmed.contains(standard)) {
                 String note = "'" + trimmed + "' → KAMIS 표준 품목 '" + standard + "' 시세를 사용합니다.";
                 return new ResolveResult(trimmed, standard, false, note);
             }

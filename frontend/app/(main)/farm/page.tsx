@@ -15,6 +15,7 @@ import type { CropRecommendResponse } from './recommend/_lib/recommend.types';
 import { predictRevenue, type RevenuePredictionResponse } from './_lib/revenue.api';
 import {
   hydrateRevenuePredictionsFromCache,
+  isWeakRevenuePrediction,
   pickPrimaryRevenueCrop,
   readRevenuePredictionCache,
   writeRevenuePredictionCache,
@@ -106,6 +107,7 @@ function FarmDashboardContent() {
   const [selectedCultivation, setSelectedCultivation] = useState<any>(null);
   const [cropOptions, setCropOptions] = useState<{ id: number, name: string }[]>([]);
   const [weather, setWeather] = useState<{ tmp: number, pty: number, sky: number } | null>(null);
+  const [weatherSettled, setWeatherSettled] = useState(false);
   const [latestAiScore, setLatestAiScore] = useState<number | null>(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState<number>(0);
   /** 농장 단위로만 갱신 — 재배 목록 변경 시 재요청하지 않아 단가 매칭이 안정적 */
@@ -123,14 +125,16 @@ function FarmDashboardContent() {
     }
   }, []);
 
-  // 기상 정보 조회
+  // 기상 정보 조회 (수익 예측은 로드 완료 후 시작)
   useEffect(() => {
+    setWeatherSettled(false);
     fetch('/api/weather/current')
       .then(res => res.json())
       .then(json => {
         if (json.success) setWeather(json.data);
       })
-      .catch();
+      .catch()
+      .finally(() => setWeatherSettled(true));
   }, []);
 
   // 작물 목록 조회
@@ -324,8 +328,20 @@ function FarmDashboardContent() {
     [loadRevenueForCrop, toast],
   );
 
+  const handleStartRevenueAnalysis = useCallback(
+    (row: RevenueCropRow) => {
+      setExpandedRevenueCrop(row.cropName);
+      if (!predictionsByCrop[row.cropName] && loadingRevenueCrop !== row.cropName) {
+        void loadRevenueForCrop(row);
+      }
+    },
+    [predictionsByCrop, loadingRevenueCrop, loadRevenueForCrop],
+  );
+
   // 대표 작물 1종만 LLM 요청, 나머지는 캐시 복원 또는 사용자 선택 시 로드
   useEffect(() => {
+    if (!weatherSettled) return;
+
     if (activeSubTab !== 'DASHBOARD' || !farm?.id) {
       setPredictionsByCrop({});
       setRevenueErrorsByCrop({});
@@ -350,8 +366,13 @@ function FarmDashboardContent() {
     const primary = pickPrimaryRevenueCrop(revenueCropRows);
     if (primary) {
       setExpandedRevenueCrop(primary.cropName);
-      if (!cached[primary.cropName]) {
-        void loadRevenueForCropRef.current(primary).then(() => {
+      const primaryCached = cached[primary.cropName];
+      const shouldFetchPrimary =
+        !primaryCached || isWeakRevenuePrediction(primaryCached);
+      if (shouldFetchPrimary) {
+        void loadRevenueForCropRef.current(primary, undefined, {
+          skipCache: Boolean(primaryCached),
+        }).then(() => {
           if (cancelled) return;
         });
       }
@@ -360,7 +381,7 @@ function FarmDashboardContent() {
     return () => {
       cancelled = true;
     };
-  }, [activeSubTab, farm?.id, revenueCropRowsKey]);
+  }, [activeSubTab, farm?.id, revenueCropRowsKey, weatherSettled]);
 
   // 이력·재배·최근 AI 추천을 한 번에 병렬 로드 (농장 전환 시에만 재요청)
   useEffect(() => {
@@ -751,11 +772,11 @@ function FarmDashboardContent() {
                   <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>작물별 수익 · 시세 분석</h3>
                 </div>
                 <p style={{ fontSize: '13px', color: 'var(--color-text-light)', marginTop: '8px', marginBottom: 0 }}>
-                  대표 작물은 자동으로 분석합니다. 다른 작물은 「AI 분석 보기」를 누르면 예측합니다(분석 결과는 당일 캐시됩니다).
+                  면적이 가장 큰 대표 작물은 자동 분석합니다. 다른 작물은 「분석받기」를 눌러야 AI 분석이 시작됩니다(당일 캐시).
                 </p>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className={styles.revenueCropList}>
                 {revenueCropRows.map((row) => {
                   const { cropName, areaSqm } = row;
                   const open = expandedRevenueCrop === cropName;
@@ -764,80 +785,82 @@ function FarmDashboardContent() {
                   const isPrimary = primaryRevenueCrop?.cropName === cropName;
                   const isLoadingThis = loadingRevenueCrop === cropName;
                   const busy = applyingCrop === cropName || isLoadingThis;
-                  const needsLoad = !prediction && !errMsg;
+                  const isAnalyzed = Boolean(prediction);
+                  const canExpand = isPrimary || isAnalyzed;
+                  const showAnalyzeButton = !isPrimary && !isAnalyzed && !errMsg;
                   return (
                     <div
                       key={cropName}
-                      style={{
-                        border: '1px solid var(--color-border)',
-                        borderRadius: '10px',
-                        overflow: 'hidden',
-                        background: '#fff',
-                      }}
+                      className={`${styles.revenueCropCard} ${open ? styles.revenueCropCardOpen : ''}`}
                     >
-                      <button
-                        type="button"
-                        onClick={() => setExpandedRevenueCrop(open ? null : cropName)}
-                        style={{
-                          width: '100%',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '14px 16px',
-                          border: 'none',
-                          background: open ? 'rgba(16, 185, 129, 0.08)' : '#fff',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: '16px', color: 'var(--color-text)' }}>
+                      <div className={styles.revenueCropHeader}>
+                        <button
+                          type="button"
+                          className={styles.revenueCropTitleBtn}
+                          disabled={!canExpand}
+                          onClick={() => {
+                            if (!canExpand) return;
+                            setExpandedRevenueCrop(open ? null : cropName);
+                          }}
+                        >
+                          <div className={styles.revenueCropTitle}>
                             {cropName}
-                            {isPrimary && (
-                              <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--color-primary)', fontWeight: 700 }}>
-                                대표
-                              </span>
-                            )}
+                            {isPrimary && <span className={styles.revenuePrimaryTag}>대표</span>}
                           </div>
-                          <div style={{ fontSize: '12px', color: 'var(--color-text-light)', marginTop: '2px' }}>
+                          <div className={styles.revenueCropMeta}>
                             분석 면적 약 {areaSqm.toLocaleString('ko-KR')}㎡
+                            {isPrimary && !isAnalyzed && isLoadingThis && ' · AI 분석 중...'}
                           </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        </button>
+                        <div className={styles.revenueCropActions}>
                           {prediction && (
-                            <span style={{ fontSize: '15px', fontWeight: 700, color: '#f59e0b' }}>
+                            <span className={styles.revenueCropAmount}>
                               ₩{(prediction.predicted_revenue ?? 0).toLocaleString('ko-KR')}
                             </span>
                           )}
-                          {needsLoad && !isPrimary && <Badge variant="orange">미분석</Badge>}
-                          {isLoadingThis && <Badge variant="orange">분석 중</Badge>}
+                          {showAnalyzeButton && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              disabled={busy}
+                              onClick={() => handleStartRevenueAnalysis(row)}
+                            >
+                              {isLoadingThis ? '분석 중...' : '분석받기'}
+                            </Button>
+                          )}
+                          {isPrimary && isLoadingThis && !prediction && (
+                            <Badge variant="orange">분석 중</Badge>
+                          )}
                           {errMsg && <Badge variant="red">오류</Badge>}
                           {prediction && <Badge variant="lime">신뢰도 {prediction.confidence}</Badge>}
-                          <span style={{ fontSize: '12px', color: 'var(--color-text-light)' }}>{open ? '접기 ▲' : '펼치기 ▼'}</span>
+                          {canExpand && (
+                            <button
+                              type="button"
+                              className={styles.revenueToggleBtn}
+                              onClick={() => setExpandedRevenueCrop(open ? null : cropName)}
+                            >
+                              {open ? '접기 ▲' : '펼치기 ▼'}
+                            </button>
+                          )}
                         </div>
-                      </button>
+                      </div>
 
                       {open && (
-                        <div style={{ padding: '16px 20px', borderTop: '1px solid var(--color-border)', background: '#fafafa' }}>
-                          {needsLoad && (
-                            <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-                              <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '16px' }}>
-                                이 작물의 AI 수익·시세 분석은 아직 실행하지 않았습니다.
-                              </p>
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                disabled={busy}
-                                onClick={() => loadRevenueForCrop(row)}
-                              >
-                                {isLoadingThis ? '분석 중...' : 'AI 분석 보기'}
-                              </Button>
-                            </div>
+                        <div className={styles.revenueCropBody}>
+                          {isPrimary && isLoadingThis && !prediction && !errMsg && (
+                            <p className={styles.revenueLoadingHint}>
+                              대표 작물 AI 수익·시세 분석을 준비하고 있습니다…
+                            </p>
                           )}
                           {errMsg && !prediction && (
-                            <div style={{ textAlign: 'center' }}>
-                              <p style={{ color: 'var(--color-danger)', fontSize: '14px', marginBottom: '12px' }}>{errMsg}</p>
-                              <Button variant="outline" size="sm" disabled={busy} onClick={() => loadRevenueForCrop(row)}>
+                            <div className={styles.revenueEmptyState}>
+                              <p className={styles.revenueErrorText}>{errMsg}</p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={busy}
+                                onClick={() => handleStartRevenueAnalysis(row)}
+                              >
                                 다시 시도
                               </Button>
                             </div>

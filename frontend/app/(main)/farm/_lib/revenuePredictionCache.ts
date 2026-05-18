@@ -10,12 +10,40 @@ export type RevenueCropRow = {
   sowingMonth?: number;
 };
 
+/** 캐시 스키마 변경 시 증가 → 구버전(빈약한 폴백) 자동 무효화 */
+export const REVENUE_CACHE_VERSION = 3;
+
 type CachePayload = {
+  v: number;
   rowKey: string;
   prediction: RevenuePredictionResponse;
 };
 
 const PREFIX = 'fb-revenue-pred';
+
+const WEAK_INSIGHT_MARKERS = [
+  'AI 응답을 JSON으로 해석하지 못했습니다',
+  '시세가 없어 수익 추정이 불완전합니다',
+  '현재 시세 기준 예상 수익은',
+  '유효한 시세도 없어',
+];
+
+/** 예전 폴백·짧은 LLM 응답은 캐시 히트로 쓰지 않음 */
+export function isWeakRevenuePrediction(prediction: RevenuePredictionResponse): boolean {
+  const priceInsight = (prediction.price_insight || '').trim();
+  const revenueInsight = (prediction.revenue_insight || '').trim();
+
+  if (WEAK_INSIGHT_MARKERS.some((m) => priceInsight.includes(m) || revenueInsight.includes(m))) {
+    return true;
+  }
+  if (priceInsight.length < 28 && revenueInsight.length < 28) {
+    return true;
+  }
+  if (prediction.confidence === '낮음' && priceInsight.length < 45 && revenueInsight.length < 45) {
+    return true;
+  }
+  return false;
+}
 
 function buildRowKey(row: RevenueCropRow, actualYieldKg?: number): string {
   const y =
@@ -25,7 +53,7 @@ function buildRowKey(row: RevenueCropRow, actualYieldKg?: number): string {
 
 function buildStorageKey(farmId: number, rowKey: string): string {
   const day = new Date().toISOString().slice(0, 10);
-  return `${PREFIX}:${farmId}:${day}:${rowKey}`;
+  return `${PREFIX}:v${REVENUE_CACHE_VERSION}:${farmId}:${day}:${rowKey}`;
 }
 
 export function readRevenuePredictionCache(
@@ -39,7 +67,8 @@ export function readRevenuePredictionCache(
     const raw = sessionStorage.getItem(buildStorageKey(farmId, key));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CachePayload;
-    if (parsed.rowKey !== key) return null;
+    if (parsed.v !== REVENUE_CACHE_VERSION || parsed.rowKey !== key) return null;
+    if (isWeakRevenuePrediction(parsed.prediction)) return null;
     return parsed.prediction;
   } catch {
     return null;
@@ -53,8 +82,14 @@ export function writeRevenuePredictionCache(
   actualYieldKg?: number,
 ): void {
   if (typeof sessionStorage === 'undefined') return;
+  if (isWeakRevenuePrediction(prediction)) return;
+
   const rowKey = buildRowKey(row, actualYieldKg);
-  const payload: CachePayload = { rowKey, prediction };
+  const payload: CachePayload = {
+    v: REVENUE_CACHE_VERSION,
+    rowKey,
+    prediction,
+  };
   try {
     sessionStorage.setItem(buildStorageKey(farmId, rowKey), JSON.stringify(payload));
   } catch {
@@ -62,7 +97,7 @@ export function writeRevenuePredictionCache(
   }
 }
 
-/** 재배 목록에 맞는 캐시만 메모리로 복원 (LLM 호출 없음) */
+/** 재배 목록에 맞는 유효 캐시만 복원 (LLM 호출 없음) */
 export function hydrateRevenuePredictionsFromCache(
   farmId: number,
   rows: RevenueCropRow[],

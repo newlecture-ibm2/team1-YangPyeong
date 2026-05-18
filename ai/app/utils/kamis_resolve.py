@@ -10,6 +10,8 @@ from typing import Optional
 # kamis_tool.CROP_CODE_MAP 과 키 집합을 맞춤
 from app.agents.tools.kamis_tool import CROP_CODE_MAP
 
+MIN_PARTIAL_MATCH_LENGTH = 2
+
 
 @dataclass(frozen=True)
 class ResolveResult:
@@ -29,7 +31,7 @@ def resolve_standard_crop_name(crop_name: str) -> ResolveResult:
 
     standards = sorted(CROP_CODE_MAP.keys(), key=len, reverse=True)
     for standard in standards:
-        if standard in trimmed:
+        if len(standard) >= MIN_PARTIAL_MATCH_LENGTH and standard in trimmed:
             note = f"'{trimmed}' → KAMIS 표준 품목 '{standard}' 시세를 사용합니다."
             return ResolveResult(trimmed, standard, False, note)
 
