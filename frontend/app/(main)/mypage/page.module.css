@@ -100,3 +100,33 @@
   background-color: #fef2f2;
   border-color: #fecaca;
 }
+
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 16px;
+  }
+
+  .contentCard {
+    padding: 20px 16px;
+    border-radius: 12px;
+  }
+
+  .accountSettings {
+    margin-top: 32px;
+  }
+
+  .sectionTitle {
+    font-size: 1.1rem;
+  }
+
+  .settingItem {
+    padding: 14px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .settingBtn {
+    width: 100%;
+    text-align: center;
+  }
+}

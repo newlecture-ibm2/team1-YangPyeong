@@ -31,3 +31,26 @@
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+@media (max-width: 768px) {
+  .card {
+    padding: 20px 16px;
+  }
+
+  .medal      { font-size: 36px; margin-bottom: 8px; }
+  .cropName   { font-size: 17px; }
+  .cropMeta   { font-size: 13px; margin-bottom: 12px; }
+  .score      { font-size: 36px; }
+  .scoreLabel { font-size: 11px; margin-bottom: 12px; }
+  .revenue    { font-size: 13px; }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 16px 12px;
+  }
+
+  .medal  { font-size: 28px; }
+  .score  { font-size: 28px; }
+  .cropName { font-size: 15px; }
+}

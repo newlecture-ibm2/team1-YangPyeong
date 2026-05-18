@@ -79,3 +79,24 @@
   padding: 10px 12px;
   font-size: 13px;
 }
+
+@media (max-width: 768px) {
+  .item {
+    padding: 12px 14px;
+    border-radius: 10px;
+  }
+
+  .titleRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .title {
+    font-size: 14px;
+  }
+
+  .meta {
+    font-size: 12px;
+  }
+}

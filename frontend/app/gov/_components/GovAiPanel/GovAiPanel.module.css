@@ -13,6 +13,12 @@
   margin-bottom: 12px;
 }
 
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .title {
   font-family: var(--font-sans);
   font-size: 16px;
@@ -21,6 +27,17 @@
   align-items: center;
   gap: 8px;
   margin: 0;
+}
+
+.mobileToggle {
+  display: none;
+}
+
+.chatBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .desc {
@@ -156,4 +173,52 @@
 }
 .chatBox::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.2);
+}
+
+/* ── 모바일 반응형 ── */
+@media (max-width: 768px) {
+  .aiPanel {
+    height: auto;
+    min-height: unset;
+  }
+
+  .mobileToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .mobileToggle:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .chatBody {
+    display: none;
+    overflow: hidden;
+  }
+
+  .aiPanelOpen {
+    height: 460px;
+  }
+
+  .aiPanelOpen .chatBody {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .inputArea {
+    margin-top: 8px;
+  }
 }

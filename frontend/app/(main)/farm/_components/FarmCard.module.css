@@ -50,3 +50,22 @@
   border-top: 1px solid var(--color-border);
   padding-top: 12px;
 }
+
+@media (max-width: 768px) {
+  .container:hover {
+    transform: none;
+  }
+
+  .name {
+    font-size: 16px;
+  }
+
+  .address {
+    font-size: 13px;
+  }
+
+  .footer {
+    flex-direction: column;
+    gap: 6px;
+  }
+}

@@ -118,11 +118,11 @@ export default function GovDashboardPage() {
             {topWarningItems.length === 0 && <tr><td colSpan={5}>경고 품목이 없습니다.</td></tr>}
             {topWarningItems.map((item, i) => (
               <tr key={i}>
-                <td className={styles.tdBold}>{item.cropName}</td>
-                <td className={styles.numberCell}>{Number(item.supplyRate).toFixed(2)}%</td>
-                <td className={styles.statusCell}><span className={`${styles.badge} ${item.status === '과잉' ? styles.badgeRed : styles.badgeOrange}`}>{item.status}</span></td>
-                <td className={styles.statusCell}><span className={`${styles.badge} ${item.level === '긴급' ? styles.badgeRed : styles.badgeOrange}`}>{item.level}</span></td>
-                <td className={styles.adviceCell}>{item.advice}</td>
+                <td className={styles.tdBold} data-label="작물">{item.cropName}</td>
+                <td className={styles.numberCell} data-label="현재 공급률">{Number(item.supplyRate).toFixed(2)}%</td>
+                <td className={styles.statusCell} data-label="상태"><span className={`${styles.badge} ${item.status === '과잉' ? styles.badgeRed : styles.badgeOrange}`}>{item.status}</span></td>
+                <td className={styles.statusCell} data-label="경고 수준"><span className={`${styles.badge} ${item.level === '긴급' ? styles.badgeRed : styles.badgeOrange}`}>{item.level}</span></td>
+                <td className={styles.adviceCell} data-label="권고 사항">{item.advice}</td>
               </tr>
             ))}
           </tbody>

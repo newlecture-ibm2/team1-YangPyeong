@@ -129,7 +129,7 @@ export default function CommunityPage() {
   }
 
   return (
-    <div>
+    <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>💬 커뮤니티 관리</h1>
@@ -206,21 +206,21 @@ export default function CommunityPage() {
             <tbody>
               {posts.map(post => (
                 <tr key={post.id} className={post.deletedAt ? styles.deletedRow : ''}>
-                  <td>{post.id}</td>
-                  <td className={styles.titleCell}>{post.title}</td>
-                  <td>{post.viewCount.toLocaleString()}</td>
-                  <td>
+                  <td data-label="ID">{post.id}</td>
+                  <td className={styles.titleCell} data-label="제목">{post.title}</td>
+                  <td data-label="조회수">{post.viewCount.toLocaleString()}</td>
+                  <td data-label="공지">
                     {post.isNotice
                       ? <Badge variant="green">공지</Badge>
                       : <Badge variant="gray">일반</Badge>}
                   </td>
-                  <td>{formatDate(post.createdAt)}</td>
-                  <td>
+                  <td data-label="작성일">{formatDate(post.createdAt)}</td>
+                  <td data-label="상태">
                     {post.deletedAt
                       ? <Badge variant="red">삭제됨</Badge>
                       : <Badge variant="green">활성</Badge>}
                   </td>
-                  <td>
+                  <td data-label="">
                     <div className={styles.actionGroup}>
                       <button
                         className={styles.actionBtnNotice}
@@ -316,20 +316,20 @@ export default function CommunityPage() {
                 <tbody>
                   {reports.map(report => (
                     <tr key={report.id}>
-                      <td>{report.id}</td>
-                      <td>
+                      <td data-label="ID">{report.id}</td>
+                      <td data-label="대상">
                         {report.targetType === 'POST' ? <Badge variant="blue">게시글</Badge> : <Badge variant="gray">댓글</Badge>}
                       </td>
-                      <td>{report.targetId}</td>
-                      <td>{report.reporterId}</td>
-                      <td className={styles.titleCell}>{report.reason}</td>
-                      <td>{formatDate(report.createdAt)}</td>
-                      <td>
+                      <td data-label="대상ID">{report.targetId}</td>
+                      <td data-label="신고자">{report.reporterId}</td>
+                      <td className={styles.titleCell} data-label="사유">{report.reason}</td>
+                      <td data-label="신고일">{formatDate(report.createdAt)}</td>
+                      <td data-label="상태">
                         {report.status === 'PENDING' && <Badge variant="orange">대기중</Badge>}
                         {report.status === 'RESOLVED' && <Badge variant="green">처리완료</Badge>}
                         {report.status === 'DISMISSED' && <Badge variant="gray">반려</Badge>}
                       </td>
-                      <td>
+                      <td data-label="">
                         <div className={styles.actionGroup}>
                           {report.targetType === 'POST' && (
                             <button

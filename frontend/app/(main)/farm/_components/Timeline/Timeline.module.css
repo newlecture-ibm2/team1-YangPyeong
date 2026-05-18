@@ -148,3 +148,43 @@
   white-space: pre-wrap;
 }
 
+@media (max-width: 768px) {
+  .timeline {
+    padding-left: 36px;
+    margin-top: 20px;
+  }
+
+  .timeline::before {
+    left: 15px;
+  }
+
+  .dot {
+    left: -36px;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .actions {
+    align-self: flex-end;
+  }
+
+  .content {
+    font-size: 14px;
+  }
+
+  .filters {
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+}
+

@@ -8,6 +8,7 @@
   grid-template-columns: 220px 1fr;
   gap: var(--space-xl);
   align-items: start;
+  min-width: 0;
 }
 
 /* ── 사이드바 ── */
@@ -74,6 +75,8 @@
 /* ── 컨텐츠 영역 ── */
 .content {
   min-height: 400px;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 /* ── 반응형 (모바일: 사이드바를 위에 펼침) ── */
@@ -85,13 +88,14 @@
 
   .sidebar {
     position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
+    flex-direction: column;
+    gap: 4px;
     padding: var(--space-md);
+    overflow: hidden;
   }
 
   .group {
+    width: 100%;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
@@ -100,16 +104,17 @@
 
   .groupLabel {
     width: 100%;
-    padding: 2px 8px 4px;
+    padding: 4px 8px 2px;
     font-size: 10px;
   }
 
   .item {
-    padding: 8px 12px;
+    padding: 7px 12px;
     border-left: none;
     border-bottom: 2px solid transparent;
     border-radius: var(--radius-sm);
     font-size: 13px;
+    white-space: nowrap;
   }
 
   .itemActive {

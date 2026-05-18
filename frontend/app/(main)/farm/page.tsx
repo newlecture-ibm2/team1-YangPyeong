@@ -288,7 +288,7 @@ function FarmDashboardContent() {
             </Link>
           </div>
         </div>
-        <div className={styles.kpiRow} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }} data-guide="farm-guest-kpi">
+        <div className={styles.kpiRow} data-guide="farm-guest-kpi">
           <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
             <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>농장 전체 면적</p>
             <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>{previewFarm.area.toLocaleString()}㎡</p>
@@ -552,7 +552,7 @@ function FarmDashboardContent() {
       {activeSubTab === 'DASHBOARD' && (
         <>
           {/* KPI 카드 Row (Dashboard 전용) */}
-          <div className={styles.kpiRow} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }} data-guide="farm-farmer-kpi">
+          <div className={styles.kpiRow} data-guide="farm-farmer-kpi">
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
               <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>농장 전체 면적</p>
               <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>
@@ -579,18 +579,18 @@ function FarmDashboardContent() {
 
           {/* AI 예측 수확량 및 인사이트 패널 */}
           {farm && farm.cropNames.length > 0 && (
-            <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)', border: '1px solid var(--color-primary)', padding: '24px', borderRadius: 'var(--radius-lg)', marginBottom: '32px' }} data-guide="farm-farmer-insight">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ background: 'var(--color-primary)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 700 }}>AI 예측 인사이트</span>
-                  <h3 style={{ fontSize: '18px', fontWeight: 700 }}>{farm.cropNames[0]} 수익 분석</h3>
+            <div className={styles.insightPanel} data-guide="farm-farmer-insight">
+              <div className={styles.insightHeader}>
+                <div className={styles.insightHeaderLeft}>
+                  <span style={{ background: 'var(--color-primary)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>AI 예측 인사이트</span>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>{farm.cropNames[0]} 수익 분석</h3>
                 </div>
                 {prediction && (
                   <Badge variant="lime">신뢰도: {prediction.confidence}</Badge>
                 )}
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              <div className={styles.insightGrid}>
                 {/* 좌측: 수확량 및 단가 정보 */}
                 <div style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '20px', borderRadius: '8px' }}>
                   <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -611,13 +611,13 @@ function FarmDashboardContent() {
                     <label style={{ display: 'block', fontSize: '13px', color: 'var(--color-text-light)', marginBottom: '8px' }}>
                       💡 실제 수확량이 다르다면 직접 입력해주세요. 이를 바탕으로 예상 수익이 다시 계산됩니다.
                     </label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input 
-                        type="number" 
-                        placeholder="실제 수확량 (kg)" 
+                    <div className={styles.insightActions}>
+                      <input
+                        type="number"
+                        placeholder="실제 수확량 (kg)"
                         value={actualYield}
                         onChange={(e) => setActualYield(e.target.value ? Number(e.target.value) : '')}
-                        style={{ flex: 1, padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '14px' }}
+                        className={styles.insightInput}
                       />
                       <Button variant="outline" size="sm" onClick={handleResetRevenue} disabled={isRevenueLoading || actualYield === ''}>
                         되돌리기
@@ -720,7 +720,7 @@ function FarmDashboardContent() {
           </div>
 
           {/* 벤토 레이아웃 (Dashboard 전용) */}
-          <div className={styles.grid2} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px', alignItems: 'start' }}>
+          <div className={styles.bento} style={{ alignItems: 'start' }}>
             <div data-guide="farm-farmer-recent">
               <Card>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -819,7 +819,7 @@ function FarmDashboardContent() {
             </div>
           </div>
 
-          <div className={styles.grid2} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px', alignItems: 'start' }}>
+          <div className={styles.bento} style={{ alignItems: 'start' }}>
             <div>
               {/* Sub Navigation (History 전용) */}
               <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '16px', marginBottom: '32px', display: 'flex', gap: '32px' }}>

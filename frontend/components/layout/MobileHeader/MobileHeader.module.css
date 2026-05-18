@@ -42,12 +42,12 @@
   background: var(--color-bg);
 }
 
-/* ── 중앙 로고 ── */
+/* ── 로고 ── */
 .logo {
   flex: 1;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 6px;
   text-decoration: none;
   color: var(--color-text);
@@ -90,7 +90,11 @@
   line-height: 1;
 }
 
-/* ── 아바타 ── */
+/* ── 아바타 + 드롭다운 ── */
+.avatarArea {
+  position: relative;
+}
+
 .avatarBtn {
   width: 40px;
   height: 40px;
@@ -99,7 +103,73 @@
   justify-content: center;
   border-radius: 50%;
   overflow: hidden;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.avatarDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  overflow: hidden;
+}
+
+.dropdownProfile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 16px;
+}
+
+.dropdownName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.dropdownRole {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: var(--color-border);
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.dropdownItem:hover {
+  background: var(--color-bg);
+}
+
+.dropdownLogout {
+  color: var(--color-danger, #ef4444);
 }
 
 .avatarImg {

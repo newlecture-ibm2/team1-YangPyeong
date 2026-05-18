@@ -287,18 +287,18 @@ export default function ShopPage() {
 
                   return (
                     <tr key={product.id}>
-                      <td>#{product.id}</td>
-                      <td className={styles.productName}>
+                      <td data-label="No">#{product.id}</td>
+                      <td className={styles.productName} data-label="상품명">
                         {product.status === 'PENDING' && <span title="신규 요청" style={{ marginRight: '4px' }}>🆕</span>}
                         {product.name}
                       </td>
-                      <td>{product.categoryName || '-'}</td>
-                      <td>{product.sellerName}</td>
-                      <td className={styles.priceCell}>{formatPrice(product.price)}</td>
-                      <td>{product.stock}개</td>
-                      <td><Badge variant={badge.variant as any}>{badge.label}</Badge></td>
-                      <td>{formatDate(product.createdAt)}</td>
-                      <td>{renderActionButtons(product)}</td>
+                      <td data-label="카테고리">{product.categoryName || '-'}</td>
+                      <td data-label="판매자">{product.sellerName}</td>
+                      <td className={styles.priceCell} data-label="판매가">{formatPrice(product.price)}</td>
+                      <td data-label="재고">{product.stock}개</td>
+                      <td data-label="상태"><Badge variant={badge.variant as any}>{badge.label}</Badge></td>
+                      <td data-label="등록일">{formatDate(product.createdAt)}</td>
+                      <td data-label="">{renderActionButtons(product)}</td>
                     </tr>
                   )
                 })

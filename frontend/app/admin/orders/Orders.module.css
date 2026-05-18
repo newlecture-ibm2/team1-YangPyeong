@@ -149,3 +149,146 @@
   color: var(--color-text-secondary);
   margin-top: 4px;
 }
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-lg) var(--space-md) 80px;
+  }
+
+  /* 헤더: 타이틀 + 서치바 세로 배치 */
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .actions > * {
+    width: 100%;
+  }
+
+  /* 테이블 → 카드형 */
+  .tableWrapper {
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
+    margin-top: var(--space-sm);
+  }
+
+  .table {
+    display: block;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "ordernum ordernum"
+      "date     status"
+      "product  product"
+      "price    receiver"
+      "action   action";
+    gap: 6px 12px;
+    padding: 14px 16px;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .table td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0;
+    border-bottom: none;
+    font-size: 14px;
+    text-align: left;
+    vertical-align: unset;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .table td[data-label=""]::before {
+    display: none;
+  }
+
+  /* 주문일시 → date */
+  .table td:nth-child(1) {
+    grid-area: date;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+  }
+
+  /* 주문번호 → ordernum (전체 폭, 굵게) */
+  .table td:nth-child(2) {
+    grid-area: ordernum;
+    font-size: 14px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 10px;
+    margin-bottom: 2px;
+    word-break: break-all;
+  }
+  .table td:nth-child(2)::before { display: none; }
+
+  /* 주문상품 → product (전체 폭) */
+  .table td:nth-child(3) { grid-area: product; }
+
+  /* 결제금액 → price */
+  .table td:nth-child(4) { grid-area: price; }
+
+  /* 수령인 → receiver */
+  .table td:nth-child(5) { grid-area: receiver; }
+
+  /* 현재 상태 → status */
+  .table td:nth-child(6) {
+    grid-area: status;
+    align-items: flex-end;
+  }
+  .table td:nth-child(6)::before { display: none; }
+
+  /* 상태 변경 드롭다운 → action (전체 폭) */
+  .table td:nth-child(7) {
+    grid-area: action;
+    border-top: 1px solid var(--color-border);
+    padding-top: 10px;
+    margin-top: 2px;
+  }
+
+  .table td:nth-child(7) .actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .table td:nth-child(7) .actions > * {
+    width: 100%;
+  }
+}

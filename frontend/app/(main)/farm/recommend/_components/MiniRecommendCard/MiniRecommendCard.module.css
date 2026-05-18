@@ -26,3 +26,16 @@
 .score strong { color: var(--color-primary); }
 
 .rank { font-family: var(--font-serif); font-size: 18px; font-weight: 700; color: var(--color-text-secondary); flex-shrink: 0; }
+
+@media (max-width: 768px) {
+  .card {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .emoji { font-size: 24px; }
+
+  .name { font-size: 13px; }
+  .score { font-size: 11px; }
+  .rank { font-size: 16px; }
+}
