@@ -1,7 +1,11 @@
 import logging
 from fastapi import APIRouter, File, UploadFile, HTTPException
 
-from app.models.recommend import ReasonRequest, ReasonResponse, DiagnoseResponse, WeightsRequest, WeightsResponse
+from app.models.recommend import (
+    ReasonRequest, ReasonResponse, DiagnoseResponse,
+    WeightsRequest, WeightsResponse,
+    BatchReasonRequest, BatchReasonResponse
+)
 from app.services import recommend_service
 
 router = APIRouter(prefix="/api/recommend", tags=["Recommend"])
@@ -15,6 +19,16 @@ async def generate_reason(req: ReasonRequest):
     except Exception as e:
         logger.error(f"추천 사유 생성 실패: {e}")
         raise HTTPException(status_code=500, detail="AI 처리 중 오류가 발생했습니다.")
+
+@router.post("/reason/batch", response_model=BatchReasonResponse)
+async def generate_batch_reasons(req: BatchReasonRequest):
+    """여러 작물의 추천 사유를 한 번의 LLM 호출로 일괄 생성합니다."""
+    logger.info(f"배치 추천 사유 생성 요청: {len(req.items)}건")
+    try:
+        return await recommend_service.generate_batch_reasons(req)
+    except Exception as e:
+        logger.error(f"배치 추천 사유 생성 실패: {e}")
+        raise HTTPException(status_code=500, detail="AI 배치 처리 중 오류가 발생했습니다.")
 
 @router.post("/weights", response_model=WeightsResponse)
 async def tune_weights(req: WeightsRequest):
@@ -44,3 +58,4 @@ async def diagnose_image(image: UploadFile = File(...)):
     except Exception as e:
         logger.error(f"이미지 진단 실패: {e}")
         raise HTTPException(status_code=500, detail="AI 이미지 진단 중 오류가 발생했습니다.")
+
