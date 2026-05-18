@@ -15,7 +15,7 @@ export default function MiniRecommendCard({ rec, farmId }: MiniRecommendCardProp
     farmId != null ? `/farm/recommend/${rec.cropId}?farmId=${farmId}` : `/farm/recommend/${rec.cropId}`;
   return (
     <Link href={href} className={styles.card}>
-      <div className={styles.emoji}>{getCropEmoji(rec.category)}</div>
+      <div className={styles.emoji}>{getCropEmoji(rec.category, rec.cropName)}</div>
       <div className={styles.info}>
         <div className={styles.name}>{rec.cropName}</div>
         <div className={styles.score}>AI 점수: <strong>{rec.score}</strong></div>

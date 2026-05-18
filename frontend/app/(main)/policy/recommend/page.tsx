@@ -88,7 +88,7 @@ export default function PolicyRecommendPage() {
 
         {!isPreviewMode && !isLoading && !error && data && (
           <div className={styles.resultContainer}>
-            {data.farmerProfile.farmCount === 0 ? (
+            {data.farmerProfile.farmCount > 0 ? (
               // 농장이 1개 이상 있을 때 정상적으로 추천 결과 표시
               <>
                 {/* 1. 프로필 요약 카드 */}
@@ -190,6 +190,13 @@ export default function PolicyRecommendPage() {
                   </>
                 )}
               </>
+            ) : (
+              <div className={styles.stateContainer}>
+                <span className={styles.icon}>🌱</span>
+                <h2 className={styles.stateTitle}>등록된 농장이 없습니다</h2>
+                <p className={styles.stateMessage}>농장을 먼저 등록하면 맞춤 정책을 추천받을 수 있습니다.</p>
+                <Link href="/farm/register" className={styles.actionButton}>농장 등록하기</Link>
+              </div>
             )}
           </div>
         )}
