@@ -23,6 +23,20 @@ export default function useRecommend() {
 
   const farm = farms.length > 0 ? farms[selectedFarmIdx] : null;
 
+  // 활성 농장 세션 복원
+  useEffect(() => {
+    try {
+      const savedFarmIdStr = sessionStorage.getItem('selected_farm_id');
+      if (savedFarmIdStr && farms.length > 0) {
+        const savedFarmId = Number(savedFarmIdStr);
+        const idx = farms.findIndex(f => f.id === savedFarmId);
+        if (idx !== -1) {
+          setSelectedFarmIdx(idx);
+        }
+      }
+    } catch (e) {}
+  }, [farms]);
+
   // 농장 선택 변경 시 결과 초기화
   useEffect(() => {
     setResult(null);
