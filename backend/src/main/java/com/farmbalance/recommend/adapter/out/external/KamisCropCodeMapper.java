@@ -56,8 +56,20 @@ public class KamisCropCodeMapper {
         CROP_CODE_MAP.put("표고버섯", "612"); // 표고
     }
 
+    public static boolean hasDirectMapping(String cropName) {
+        return cropName != null && CROP_CODE_MAP.containsKey(cropName.trim());
+    }
+
     public static String getKamisCode(String cropName) {
-        return CROP_CODE_MAP.get(cropName);
+        if (cropName == null || cropName.isBlank()) {
+            return null;
+        }
+        String direct = CROP_CODE_MAP.get(cropName.trim());
+        if (direct != null) {
+            return direct;
+        }
+        String standard = KamisCropNameResolver.resolveStandardName(cropName);
+        return standard != null ? CROP_CODE_MAP.get(standard) : null;
     }
 
     /**
