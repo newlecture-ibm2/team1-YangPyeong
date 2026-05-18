@@ -28,6 +28,7 @@ export interface CultivationRegistration {
   cultivationArea: number;
   farmerEstimatedYield: number;
   yieldUnit: string;
+  sowingDate?: string;
 }
 
 /**

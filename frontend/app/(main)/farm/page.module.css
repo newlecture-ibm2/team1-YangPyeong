@@ -158,6 +158,117 @@
   gap: 24px;
 }
 
+/* ── 작물별 수익 예측 아코디언 ── */
+.revenueCropList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.revenueCropCard {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.revenueCropCardOpen {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.revenueCropHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.revenueCropCardOpen .revenueCropHeader {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.revenueCropTitleBtn {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+}
+
+.revenueCropTitleBtn:disabled {
+  cursor: default;
+}
+
+.revenueCropTitle {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--color-text);
+}
+
+.revenuePrimaryTag {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.revenueCropMeta {
+  font-size: 12px;
+  color: var(--color-text-light);
+  margin-top: 2px;
+}
+
+.revenueCropActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.revenueCropAmount {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.revenueToggleBtn {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--color-text-light);
+  cursor: pointer;
+  padding: 4px 0;
+  white-space: nowrap;
+}
+
+.revenueCropBody {
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-border);
+  background: #fafafa;
+}
+
+.revenueLoadingHint {
+  margin: 0;
+  padding: 12px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-light);
+}
+
+.revenueEmptyState {
+  text-align: center;
+  padding: 12px 0;
+}
+
+.revenueErrorText {
+  color: var(--color-danger);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
 .kpiCard {
   background: var(--color-surface);
   border-radius: var(--radius-md);

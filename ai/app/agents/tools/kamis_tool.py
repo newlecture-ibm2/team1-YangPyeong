@@ -8,6 +8,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional
 
+from app.utils.kamis_resolve import resolve_standard_crop_name
+
 logger = logging.getLogger(__name__)
 
 # ── KAMIS API 설정 ──
@@ -15,27 +17,8 @@ KAMIS_API_URL = "http://www.kamis.or.kr/service/price/xml.do"
 KAMIS_CERT_KEY = "8291e7b2-28a1-469c-93ac-fba3ef05f174"
 KAMIS_CERT_ID = "7941"
 
-# 작물명 → KAMIS 품목코드 매핑
-CROP_CODE_MAP = {
-    # 식량작물
-    "벼": "111", "쌀": "111",
-    "보리": "112", "밀": "114",
-    "콩": "141", "팥": "142", "녹두": "143",
-    "감자": "152", "고구마": "151",
-    # 채소류
-    "배추": "211", "양배추": "212", "시금치": "213", "상추": "214",
-    "수박": "221", "참외": "222", "오이": "223", "호박": "224",
-    "토마토": "225", "딸기": "226", "무": "231", "당근": "232",
-    # 양념채소
-    "고추": "241", "풋고추": "241", "마늘": "242",
-    "양파": "243", "대파": "244", "파": "244", "생강": "245",
-    # 과일류
-    "사과": "411", "배": "412", "복숭아": "413", "포도": "414",
-    "감귤": "415", "감": "416", "블루베리": "424",
-    # 특용/버섯
-    "참깨": "251", "땅콩": "252",
-    "느타리": "611", "표고버섯": "612",
-}
+# 작물명 → KAMIS 품목코드 매핑 (공유 모듈에서 가져옴 — 순환 import 방지)
+from app.utils.crop_codes import CROP_CODE_MAP  # noqa: F401  re-export
 
 # 작물별 최적 파종 시기 (월 범위)
 OPTIMAL_SOWING_PERIODS = {
@@ -71,6 +54,11 @@ AVERAGE_YIELD_PER_SQM = {
 }
 
 
+def _standard_crop_name(crop_name: str) -> str:
+    resolved = resolve_standard_crop_name(crop_name)
+    return resolved.standard_name or crop_name
+
+
 async def fetch_kamis_price(crop_name: str) -> dict:
     """
     KAMIS API에서 특정 작물의 최근 도매 시세를 조회합니다.
@@ -79,7 +67,12 @@ async def fetch_kamis_price(crop_name: str) -> dict:
         dict: { "price": int, "unit": str, "date": str, "crop_name": str }
         또는 에러 시 { "error": str }
     """
-    item_code = CROP_CODE_MAP.get(crop_name)
+    resolved = resolve_standard_crop_name(crop_name)
+    lookup_name = resolved.standard_name
+    if not lookup_name:
+        return {"error": f"'{crop_name}'에 대한 KAMIS 매핑 코드가 없습니다.", "crop_name": crop_name}
+
+    item_code = CROP_CODE_MAP.get(lookup_name)
     if not item_code:
         return {"error": f"'{crop_name}'에 대한 KAMIS 매핑 코드가 없습니다.", "crop_name": crop_name}
 
@@ -122,12 +115,16 @@ async def fetch_kamis_price(crop_name: str) -> dict:
                 if price_str and price_str != "-":
                     try:
                         price = int(price_str.replace(",", ""))
-                        return {
+                        result = {
                             "price": price,
                             "unit": "1kg",
                             "date": item.get("day", end_date),
                             "crop_name": crop_name,
+                            "resolved_crop_name": lookup_name,
                         }
+                        if resolved.mapping_note:
+                            result["mapping_note"] = resolved.mapping_note
+                        return result
                     except ValueError:
                         continue
 
@@ -148,7 +145,8 @@ def get_planting_penalty(crop_name: str, sowing_month: Optional[int] = None) -> 
     if sowing_month is None:
         sowing_month = datetime.now().month
 
-    optimal_range = OPTIMAL_SOWING_PERIODS.get(crop_name)
+    standard = _standard_crop_name(crop_name)
+    optimal_range = OPTIMAL_SOWING_PERIODS.get(standard) or OPTIMAL_SOWING_PERIODS.get(crop_name)
     if not optimal_range:
         return 0.8  # 데이터 없으면 기본 80%
 
@@ -196,4 +194,5 @@ def get_planting_penalty(crop_name: str, sowing_month: Optional[int] = None) -> 
 
 def get_average_yield_per_sqm(crop_name: str) -> float:
     """작물별 평년 단수 (kg/㎡)를 반환합니다."""
-    return AVERAGE_YIELD_PER_SQM.get(crop_name, 1.0)
+    standard = _standard_crop_name(crop_name)
+    return AVERAGE_YIELD_PER_SQM.get(standard, AVERAGE_YIELD_PER_SQM.get(crop_name, 1.0))
