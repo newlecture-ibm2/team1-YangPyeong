@@ -7,8 +7,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
-# kamis_tool.CROP_CODE_MAP 과 키 집합을 맞춤
-from app.agents.tools.kamis_tool import CROP_CODE_MAP
+# 순환 import 방지: kamis_tool 대신 공유 상수 모듈에서 가져옴
+from app.utils.crop_codes import CROP_CODE_MAP
 
 MIN_PARTIAL_MATCH_LENGTH = 2
 
