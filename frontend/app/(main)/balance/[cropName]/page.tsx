@@ -52,9 +52,11 @@ export default function BalanceDetailPage({ params }: PageProps) {
   };
 
   const getNeedleRotation = (ratio: number) => {
-    let degrees = (ratio / 100) * 90;
-    if (degrees > 180) degrees = 180;
-    if (degrees < 0) degrees = 0;
+    // 100%가 수직 위(0deg, 12시 방향)를 향하도록 보정합니다.
+    // 0% -> -90deg (왼쪽), 100% -> 0deg (위쪽), 200% -> 90deg (오른쪽)
+    let degrees = (ratio - 100) * 0.9;
+    if (degrees > 90) degrees = 90;
+    if (degrees < -90) degrees = -90;
     return degrees;
   };
 
@@ -102,6 +104,7 @@ export default function BalanceDetailPage({ params }: PageProps) {
               className={styles.gaugeNeedle} 
               style={{ transform: `translateX(-50%) rotate(${getNeedleRotation(data.supplyRatio)}deg)` }}
             ></div>
+            <div className={styles.gaugeNeedleCenter}></div>
           </div>
           <p className={styles.gaugeStatus}>{data.statusLabel}</p>
         </Card>
@@ -155,13 +158,28 @@ export default function BalanceDetailPage({ params }: PageProps) {
         <Card className={styles.card}>
           <h2 className={styles.cardTitle}>전년 대비 변화</h2>
           <div className={styles.placeholder}>
-             {trendData.length > 1 ? (
-               <p className={styles.yoyText}>
-                 전년({trendData[trendData.length-2].year}년) 대비 
-                 <strong> {((trendData[trendData.length-1].supply / trendData[trendData.length-2].supply - 1) * 100).toFixed(1)}% </strong>
-                 공급량이 변동되었습니다.
-               </p>
-             ) : '데이터가 부족합니다.'}
+             {(() => {
+               const prevYearSupply = trendData[trendData.length - 2]?.supply;
+               const currentYearSupply = trendData[trendData.length - 1]?.supply;
+               const hasValidYoY = trendData.length > 1 && prevYearSupply > 0;
+               
+               if (hasValidYoY) {
+                 const changePct = ((currentYearSupply / prevYearSupply - 1) * 100).toFixed(1);
+                 return (
+                   <p className={styles.yoyText}>
+                     전년({trendData[trendData.length - 2].year}년) 대비 
+                     <strong> {changePct}% </strong>
+                     공급량이 변동되었습니다.
+                   </p>
+                 );
+               } else {
+                 return (
+                   <p className={styles.yoyText} style={{ opacity: 0.7, padding: '16px', fontSize: '14px', wordBreak: 'keep-all' }}>
+                     전년도({trendData[trendData.length - 2]?.year || '이전'}년) 공급량 데이터가 집계되지 않아 전년 대비 변화율을 계산할 수 없습니다.
+                   </p>
+                 );
+               }
+             })()}
           </div>
         </Card>
       </div>
