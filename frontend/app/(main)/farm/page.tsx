@@ -513,8 +513,8 @@ function FarmDashboardContent() {
                 ✕
               </button>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                <div style={{ paddingRight: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', paddingRight: '36px' }}>
+                <div style={{ paddingRight: '12px' }}>
                   <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text)', marginBottom: '4px' }}>{f.name}</div>
                   <div style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>{f.address}</div>
                 </div>

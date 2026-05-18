@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api-fetch';
 
 export interface HeaderUser {
@@ -40,7 +40,6 @@ function getUserFromCookie(): HeaderUser | null {
  * - 알림 목록 lazy fetch (드롭다운 열 때만 호출)
  */
 export function useHeaderData() {
-  const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [cartCount, setCartCount] = useState(0);
@@ -83,7 +82,7 @@ export function useHeaderData() {
       window.removeEventListener('auth-changed', handleAuthChange);
       window.removeEventListener('cart-updated', handleAuthChange);
     };
-  }, [pathname]);
+  }, []);
 
   // ── 장바구니 수량 ──
   useEffect(() => {
@@ -105,7 +104,7 @@ export function useHeaderData() {
     const handleCartUpdate = () => fetchCartCount();
     window.addEventListener('cart-updated', handleCartUpdate);
     return () => window.removeEventListener('cart-updated', handleCartUpdate);
-  }, [user, pathname]);
+  }, [user]);
 
   // ── 알림 unread count ──
   const isLoggedIn = !!user;
