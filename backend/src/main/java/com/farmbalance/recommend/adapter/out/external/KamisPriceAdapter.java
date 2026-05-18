@@ -32,30 +32,32 @@ public class KamisPriceAdapter implements RecommendPricePort {
 
     @Override
     public Integer getRecentPricePerKg(String cropName) {
-        String itemCode = KamisCropCodeMapper.getKamisCode(cropName);
-        if (itemCode == null) {
+        KamisCropNameResolver.ResolveResult resolved = KamisCropNameResolver.resolve(cropName);
+        String cacheKey = resolved.standardName();
+        if (cacheKey == null) {
             log.warn("KAMIS 매핑 코드가 없는 작물입니다: {}", cropName);
             return null;
+        }
+        if (!resolved.exactMatch()) {
+            log.info("KAMIS 시세 조회: {} → 표준 품목 {}", cropName, cacheKey);
         }
 
         LocalDate today = LocalDate.now();
 
-        // 1. 오늘 날짜 캐시 확인
         Optional<CropPriceCacheEntity> todayCache =
-                cacheRepository.findTopByCropNameAndPriceDateOrderByIdDesc(cropName, today);
+                cacheRepository.findTopByCropNameAndPriceDateOrderByIdDesc(cacheKey, today);
         if (todayCache.isPresent()) {
             return todayCache.get().getPrice();
         }
 
-        // 2. 오늘 캐시가 없으면 가장 최근 캐시로 폴백
         Optional<CropPriceCacheEntity> latestCache =
-                cacheRepository.findTopByCropNameOrderByPriceDateDesc(cropName);
+                cacheRepository.findTopByCropNameOrderByPriceDateDesc(cacheKey);
         if (latestCache.isPresent()) {
-            log.debug("오늘 캐시 없음, 최근 캐시 사용: {} (날짜: {})", cropName, latestCache.get().getPriceDate());
+            log.debug("오늘 캐시 없음, 최근 캐시 사용: {} (날짜: {})", cacheKey, latestCache.get().getPriceDate());
             return latestCache.get().getPrice();
         }
 
-        log.warn("KAMIS 캐시 데이터 없음: {} — 배치 스케줄러 실행 전이거나 API 조회에 실패했을 수 있습니다.", cropName);
+        log.warn("KAMIS 캐시 데이터 없음: {} (표준: {})", cropName, cacheKey);
         return null;
     }
 }
