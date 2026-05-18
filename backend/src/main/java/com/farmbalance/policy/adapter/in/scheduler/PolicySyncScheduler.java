@@ -46,30 +46,41 @@ public class PolicySyncScheduler {
         }
 
         log.info("[PolicyScheduler] 일일 정책 동기화 시작");
-        batchLogService.executeWithResult("POLICY_SYNC", () -> {
-            SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies();
-            log.info("[PolicyScheduler] 동기화 종료: fetched={}, analyzed={}, skipped={}, created={}, updated={}, failed={}",
-                    result.fetched(), result.analyzed(), result.skipped(),
-                    result.created(), result.updated(), result.failed());
+        try {
+            batchLogService.executeWithResult("POLICY_SYNC", () -> {
+                SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies();
+                
+                String syncStatus = "SUCCESS";
+                if (result.failed() > 0) {
+                    syncStatus = result.fetched() == 0 ? "FAILED" : "COMPLETED_WITH_WARNINGS";
+                }
+                
+                log.info("[PolicyScheduler] 동기화 종료: fetched={}, analyzed={}, skipped={}, created={}, updated={}, failed={}",
+                        result.fetched(), result.analyzed(), result.skipped(),
+                        result.created(), result.updated(), result.failed());
 
-            eventPublisher.publishEvent(new ApiSyncEvent(
-                    "POLICY_DATA", "SUCCESS", result.fetched(), null));
+                eventPublisher.publishEvent(new ApiSyncEvent(
+                        "POLICY_DATA", syncStatus, result.fetched(), result.failed() > 0 ? "일부 정책 동기화 실패" : null));
 
-            // 상세 통계를 batch_logs에 기록
-            StringBuilder msg = new StringBuilder();
-            msg.append(String.format("fetched=%d, analyzed=%d, skipped=%d, created=%d, updated=%d, failed=%d",
-                    result.fetched(), result.analyzed(), result.skipped(),
-                    result.created(), result.updated(), result.failed()));
+                // 상세 통계를 batch_logs에 기록
+                StringBuilder msg = new StringBuilder();
+                msg.append(String.format("fetched=%d, analyzed=%d, skipped=%d, created=%d, updated=%d, failed=%d",
+                        result.fetched(), result.analyzed(), result.skipped(),
+                        result.created(), result.updated(), result.failed()));
 
-            if (!result.warnings().isEmpty()) {
-                msg.append("\nWarnings: ").append(result.warnings().size()).append("건\n");
-                msg.append(String.join("\n", result.warnings().subList(0, Math.min(10, result.warnings().size()))));
-            }
+                if (!result.warnings().isEmpty()) {
+                    msg.append("\nWarnings: ").append(result.warnings().size()).append("건\n");
+                    msg.append(String.join("\n", result.warnings().subList(0, Math.min(10, result.warnings().size()))));
+                }
 
-            if (result.failed() > 0) {
-                return BatchResult.withWarnings(result.fetched(), result.failed(), msg.toString());
-            }
-            return BatchResult.success(result.fetched(), msg.toString());
-        });
+                if (result.failed() > 0) {
+                    return BatchResult.withWarnings(result.fetched(), result.failed(), msg.toString());
+                }
+                return BatchResult.success(result.fetched(), msg.toString());
+            });
+        } catch (Exception e) {
+            log.error("[PolicyScheduler] 정책 일일 동기화 스케줄러 실패", e);
+            eventPublisher.publishEvent(new ApiSyncEvent("POLICY_DATA", "FAILED", 0, e.getMessage()));
+        }
     }
 }

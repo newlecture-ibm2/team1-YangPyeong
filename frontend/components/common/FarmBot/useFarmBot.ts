@@ -87,7 +87,7 @@ export function useFarmBot() {
       onArrive();
       return;
     }
-    
+
     // 먼저 요소가 화면 중앙에 오도록 부드럽게 스크롤합니다
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
@@ -373,7 +373,7 @@ export function useFarmBot() {
 
   // 가이드 중 스크롤 잠금
   useEffect(() => {
-    if (mode === 'guiding' || mode === 'asking' || mode === 'chatting') {
+    if (mode === 'guiding' || mode === 'chatting') {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';

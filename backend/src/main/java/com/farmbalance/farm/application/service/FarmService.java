@@ -26,16 +26,27 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.farmbalance.farm.application.port.in.AnalyzeFarmDocumentUseCase;
+import com.farmbalance.farm.application.port.out.AnalyzeFarmDocumentPort;
+import com.farmbalance.farm.domain.FarmDocumentData;
+import org.springframework.web.multipart.MultipartFile;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, UpdateFarmUseCase, DeleteFarmUseCase {
+public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, UpdateFarmUseCase, DeleteFarmUseCase, AnalyzeFarmDocumentUseCase {
 
     private final SaveFarmPort saveFarmPort;
     private final LoadFarmPort loadFarmPort;
     private final DeleteFarmPort deleteFarmPort;
     private final SaveCultivationPort saveCultivationPort;
+    private final AnalyzeFarmDocumentPort analyzeFarmDocumentPort;
     private final ApplicationEventPublisher eventPublisher;
+
+    @Override
+    public FarmDocumentData analyzeDocument(MultipartFile file) {
+        return analyzeFarmDocumentPort.analyzeDocument(file);
+    }
 
     @Override
     public Farm registerFarm(RegisterFarmCommand command) {
@@ -61,6 +72,7 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                 .latitude(command.getLatitude())
                 .longitude(command.getLongitude())
                 .documents(command.getDocuments())
+                .documentData(command.getDocumentData())
                 .soilType(command.getSoilType())
                 .ph(command.getPh())
                 .organicMatter(command.getOrganicMatter())
@@ -174,7 +186,23 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
         );
 
         // 5. 저장 (Output Port 호출)
-        return saveFarmPort.saveFarm(farm);
+        Farm savedFarm = saveFarmPort.saveFarm(farm);
+
+        // 6. 재배 등록 정보 갱신 (정보가 넘어온 경우에만)
+        if (command.getCultivations() != null) {
+            List<com.farmbalance.farm.domain.CultivationRegistration> registrations = command.getCultivations().stream()
+                    .map(c -> com.farmbalance.farm.domain.CultivationRegistration.builder()
+                            .farmId(savedFarm.getId())
+                            .cropId(c.getCropId())
+                            .cultivationArea(c.getArea())
+                            .farmerEstimatedYield(c.getExpectedYield())
+                            .yieldUnit("kg")
+                            .build())
+                    .collect(java.util.stream.Collectors.toList());
+            saveCultivationPort.saveCultivationRegistrations(savedFarm.getId(), registrations);
+        }
+
+        return savedFarm;
     }
 
     @Override

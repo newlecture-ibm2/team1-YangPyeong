@@ -24,6 +24,9 @@ public interface FarmJpaRepository extends JpaRepository<FarmJpaEntity, Long> {
     // PNU 코드로 조회 (삭제되지 않은 것만)
     Optional<FarmJpaEntity> findByPnuCodeAndDeletedAtIsNull(String pnuCode);
 
+    // 타 사용자의 PNU 중복 체크 (본인 제외, 삭제되지 않은 농장 중에서)
+    boolean existsByPnuCodeAndUserIdNotAndDeletedAtIsNull(String pnuCode, Long userId);
+
     @Query("SELECT f FROM FarmJpaEntity f WHERE f.user.id = :userId AND f.deletedAt IS NULL")
     List<FarmJpaEntity> findAllActiveFarmsByUserId(@Param("userId") Long userId);
 

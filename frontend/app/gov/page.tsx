@@ -7,6 +7,8 @@ import { useGovUser, getTestHeaders } from './useGovUser';
 import GovTabs from './_components/GovTabs';
 import GovAiPanel from './_components/GovAiPanel/GovAiPanel';
 import Modal from '@/components/common/Modal';
+import Spinner from '@/components/common/Spinner/Spinner';
+import Button from '@/components/common/Button/Button';
 
 interface DashboardData {
   summary: { totalFarms: number; totalCrops: number; surplusCount: number; shortageCount: number };
@@ -28,7 +30,7 @@ export default function GovDashboardPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  if (userLoading || loading) return <div className={styles.page}><p>로딩 중...</p></div>;
+  if (userLoading || loading) return <div className={styles.page}><Spinner /></div>;
   if (!user || user.role !== 'GOV') return <div className={styles.page}><p>지자체 관리자만 접근할 수 있습니다.</p></div>;
   if (!data) return <div className={styles.page}><p>데이터를 불러올 수 없습니다.</p></div>;
 
@@ -49,7 +51,9 @@ export default function GovDashboardPage() {
       <div className={styles.headerWrapper}>
         <div className={styles.pageHeader}>
           <p className={styles.breadcrumb}>지자체 / 대시보드</p>
-          <h1 className={styles.pageTitle}>{region} <em>대시보드</em></h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <h1 className={styles.pageTitle}>{region} <em>대시보드</em></h1>
+          </div>
           <div className={styles.tabsWrapper}>
             <GovTabs />
           </div>
@@ -75,7 +79,7 @@ export default function GovDashboardPage() {
             <LineChart data={monthlySupply}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="label" />
-              <YAxis />
+              <YAxis tickFormatter={(value) => value.toLocaleString()} />
               <Tooltip />
               <Legend />
               <Line type="monotone" dataKey="supply" name="공급" stroke="#2D6A4F" strokeWidth={2} />
@@ -101,7 +105,7 @@ export default function GovDashboardPage() {
       {/* Warning Table */}
       <div className={styles.sectionHeader}>
         <h3>⚠️ 수급 경고 품목</h3>
-        <button className={styles.btnGhost} onClick={() => setIsBoardModalOpen(true)}>전체보기 →</button>
+        <Button variant="ghost" onClick={() => setIsBoardModalOpen(true)}>전체보기 →</Button>
       </div>
       <div className={styles.tableWrap}>
         <table className={styles.table} style={{ tableLayout: 'fixed' }}>

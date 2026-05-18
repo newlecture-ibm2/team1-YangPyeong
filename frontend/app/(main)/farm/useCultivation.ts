@@ -1,22 +1,32 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getCultivations, updateCultivation, deleteCultivation, CultivationRegistration } from './_lib/cultivation.api';
 import { useToast } from '@/components/common/Toast';
 
-export function useCultivation(farmId?: number) {
+export function useCultivation(farmId?: number, skipInitialFetch = false) {
   const [cultivations, setCultivations] = useState<CultivationRegistration[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
+  const farmIdRef = useRef(farmId);
+  useEffect(() => {
+    farmIdRef.current = farmId;
+  }, [farmId]);
 
   const fetchCultivations = useCallback(async () => {
     if (!farmId) return;
+    const targetFarmId = farmId;
     setIsLoading(true);
     try {
       const data = await getCultivations(farmId);
+      if (farmIdRef.current !== targetFarmId) return;
       setCultivations(data);
     } catch (err: any) {
-      console.error(err);
+      if (farmIdRef.current === targetFarmId) {
+        console.error(err);
+      }
     } finally {
-      setIsLoading(false);
+      if (farmIdRef.current === targetFarmId) {
+        setIsLoading(false);
+      }
     }
   }, [farmId]);
 
@@ -52,8 +62,14 @@ export function useCultivation(farmId?: number) {
   };
 
   useEffect(() => {
+    if (!farmId) {
+      setCultivations([]);
+      setIsLoading(false);
+      return;
+    }
+    if (skipInitialFetch) return;
     fetchCultivations();
-  }, [fetchCultivations]);
+  }, [farmId, skipInitialFetch, fetchCultivations]);
 
   return { cultivations, isLoading, modifyCultivation, removeCultivation, refresh: fetchCultivations };
 }

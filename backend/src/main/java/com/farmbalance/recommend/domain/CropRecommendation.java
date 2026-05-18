@@ -50,4 +50,10 @@ public class CropRecommendation {
     private String harvestPeriod;
     private Integer difficulty;
     private List<String> pests;
+
+    /** AI 조언 유형 (신규 추천 / 재배 중 코칭 등) */
+    private AdviceType adviceType;
+
+    /** 토양 최적 작물과의 불일치 설명 */
+    private String mismatchNote;
 }

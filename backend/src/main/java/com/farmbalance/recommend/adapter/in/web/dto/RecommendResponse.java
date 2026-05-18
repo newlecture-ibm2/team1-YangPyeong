@@ -5,6 +5,7 @@ import com.farmbalance.recommend.domain.*;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,10 +18,11 @@ import java.util.stream.Collectors;
 public class RecommendResponse {
 
     private FarmInfo farmInfo;
+    private String recommendMode;
+    private List<CropItem> currentCropAdvices;
     private List<CropItem> recommendations;
     private String generatedAt;
 
-    /** 도메인 → DTO 변환 */
     public static RecommendResponse from(RecommendResult result) {
         FarmInfo farmInfo = FarmInfo.builder()
                 .id(result.getFarmId())
@@ -32,12 +34,17 @@ public class RecommendResponse {
                 .soilType(result.getSoilType())
                 .build();
 
-        List<CropItem> items = result.getRecommendations().stream()
-                .map(CropItem::from)
-                .collect(Collectors.toList());
+        List<CropItem> coaching = result.getCurrentCropAdvices() != null
+                ? result.getCurrentCropAdvices().stream().map(CropItem::from).collect(Collectors.toList())
+                : Collections.emptyList();
+        List<CropItem> items = result.getRecommendations() != null
+                ? result.getRecommendations().stream().map(CropItem::from).collect(Collectors.toList())
+                : Collections.emptyList();
 
         return RecommendResponse.builder()
                 .farmInfo(farmInfo)
+                .recommendMode(result.getRecommendMode() != null ? result.getRecommendMode().name() : "PLAN")
+                .currentCropAdvices(coaching)
                 .recommendations(items)
                 .generatedAt(result.getGeneratedAt() != null ? result.getGeneratedAt().toString() : null)
                 .build();
@@ -77,6 +84,8 @@ public class RecommendResponse {
         private String harvestPeriod;
         private Integer difficulty;
         private List<String> pests;
+        private String adviceType;
+        private String mismatchNote;
 
         public static CropItem from(CropRecommendation rec) {
             return CropItem.builder()
@@ -99,6 +108,8 @@ public class RecommendResponse {
                     .harvestPeriod(rec.getHarvestPeriod())
                     .difficulty(rec.getDifficulty())
                     .pests(rec.getPests())
+                    .adviceType(rec.getAdviceType() != null ? rec.getAdviceType().name() : null)
+                    .mismatchNote(rec.getMismatchNote())
                     .build();
         }
     }

@@ -8,6 +8,8 @@ import { useGovUser, getTestHeaders } from '../useGovUser';
 import GovTabs from '../_components/GovTabs';
 import ModalDialog from '@/components/common/Modal/ModalDialog';
 import { useModalDialog } from '@/components/common/Modal/useModalDialog';
+import Dropdown from '@/components/common/Dropdown';
+import Button from '@/components/common/Button/Button';
 
 /**
  * 데이터 다운로드 (gov-download.html 설계서 기반)
@@ -40,13 +42,7 @@ const TYPE_LABEL_MAP: Record<string, string> = {
 
 
 
-const TABS = [
-  { href: '/gov', label: '대시보드' },
-  { href: '/gov/cultivation', label: '재배 현황' },
-  { href: '/gov/compare', label: '연도 비교' },
-  { href: '/gov/sales', label: '판매 현황' },
-  { href: '/gov/download', label: '데이터 다운로드' },
-];
+
 
 export default function DownloadPage() {
   const { user, loading: userLoading } = useGovUser();
@@ -167,17 +163,7 @@ export default function DownloadPage() {
         </div>
       </div>
 
-      {/* <div className={styles.tabs}>
-        {TABS.map((t) => (
-          <Link
-            key={t.href}
-            href={t.href}
-            className={`${styles.tab} ${pathname === t.href ? styles.tabActive : ''}`}
-          >
-            {t.label}
-          </Link>
-        ))}
-      </div> */}
+
 
       {/* ── Download Settings ── */}
       <div className={styles.card}>
@@ -185,16 +171,12 @@ export default function DownloadPage() {
         <div className={styles.downloadGrid}>
           <div className={styles.formGroup}>
             <label className={styles.formLabel}>데이터 유형</label>
-            <select
-              className={styles.formSelect}
-              style={{ width: '100%' }}
+            <Dropdown
+              fullWidth
+              options={DATA_TYPE_OPTIONS}
               value={dataType}
-              onChange={e => setDataType(e.target.value)}
-            >
-              {DATA_TYPE_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+              onChange={setDataType}
+            />
           </div>
           <div className={styles.formGroup}>
             <label className={styles.formLabel}>기간</label>
@@ -217,44 +199,44 @@ export default function DownloadPage() {
           <div className={styles.formGroup}>
             <label className={styles.formLabel}>파일 형식</label>
             <div className={styles.fileFormatBtns}>
-              <button
-                className={format === 'XLSX' ? `${styles.btnPrimary} ${styles.btnSm}` : styles.btnOutline}
+              <Button
+                size="sm"
+                variant={format === 'XLSX' ? 'primary' : 'outline'}
                 onClick={() => setFormat('XLSX')}
               >
                 Excel (.xlsx)
-              </button>
-              <button
-                className={format === 'CSV' ? `${styles.btnPrimary} ${styles.btnSm}` : styles.btnOutline}
+              </Button>
+              <Button
+                size="sm"
+                variant={format === 'CSV' ? 'primary' : 'outline'}
                 onClick={() => setFormat('CSV')}
               >
                 CSV (.csv)
-              </button>
+              </Button>
             </div>
           </div>
           <div className={styles.formGroup}>
             <label className={styles.formLabel}>읍면 필터</label>
-            <select
-              className={styles.formSelect}
-              style={{ width: '100%' }}
+            <Dropdown
+              fullWidth
+              options={[
+                { label: '전체', value: '' },
+                ...townOptions.map(t => ({ label: t.name, value: t.code }))
+              ]}
               value={town}
-              onChange={e => setTown(e.target.value)}
-            >
-              <option value="">전체</option>
-              {townOptions.map(t => (
-                <option key={t.code} value={t.code}>{t.name}</option>
-              ))}
-            </select>
+              onChange={setTown}
+            />
           </div>
         </div>
         <div className={styles.downloadAction}>
-          <button
-            className={`${styles.btnPrimary} ${styles.btnLg}`}
+          <Button
+            size="lg"
+            variant="primary"
             onClick={handleDownload}
             disabled={downloading}
-            style={downloading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
           >
             {downloading ? '⏳ 다운로드 중...' : '📥 데이터 다운로드'}
-          </button>
+          </Button>
         </div>
       </div>
 

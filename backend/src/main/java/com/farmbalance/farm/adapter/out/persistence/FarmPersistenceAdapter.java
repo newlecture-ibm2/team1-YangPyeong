@@ -31,18 +31,9 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
 
     @Override
     public Farm saveFarm(Farm farm) {
-        // 1. PNU 중복 검증 (수정 시에는 본인 제외, 삭제되지 않은 데이터 중에서)
-        if (farm.getId() == null) {
-            if (farmJpaRepository.existsByPnuCodeAndDeletedAtIsNull(farm.getPnuCode())) {
-                throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
-            }
-        } else {
-            farmJpaRepository.findByPnuCodeAndDeletedAtIsNull(farm.getPnuCode())
-                    .ifPresent(existing -> {
-                        if (!existing.getId().equals(farm.getId())) {
-                            throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
-                        }
-                    });
+        // 1. PNU 중복 검증 (타 사용자가 이미 해당 필지를 등록했는지 확인)
+        if (farmJpaRepository.existsByPnuCodeAndUserIdNotAndDeletedAtIsNull(farm.getPnuCode(), farm.getUserId())) {
+            throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
         }
 
         FarmJpaEntity entity;
@@ -216,6 +207,8 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .cultivationArea(reg.getCultivationArea())
                 .farmerEstimatedYield(reg.getFarmerEstimatedYield())
                 .yieldUnit(reg.getYieldUnit() != null ? reg.getYieldUnit() : "kg")
+                .sowingDate(reg.getSowingDate())
+                .inSeason(reg.isInSeason())
                 .build();
 
         CultivationRegistrationJpaEntity saved = cultivationRepository.save(entity);

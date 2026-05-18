@@ -112,9 +112,10 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
             // 3) 작물 카테고리 매칭
             if (!cropMatched) {
                 for (String category : userCropCategories) {
-                    if (containsKeyword(policy, category)) {
+                    String searchKeyword = "서류".equals(category) ? "서류작물" : category;
+                    if (containsKeyword(policy, searchKeyword)) {
                         score += 15;
-                        reasons.add("재배 중인 작물 분류('" + category + "')와 연관된 혜택이 있습니다.");
+                        reasons.add("재배 중인 '" + getFriendlyCategoryName(category) + "' 관련 지원일 가능성이 있습니다.");
                         break;
                     }
                 }
@@ -199,6 +200,8 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
                     
                     PolicyAiPort.PolicyReason aiReason = aiReasonMap.get(p.getId());
                     String finalReason = (aiReason != null && aiReason.matchReason() != null) ? aiReason.matchReason() : String.join(" ", c.reasons);
+                    
+                    // AI가 더 정교한 점수(예: 80~90점대)를 반환하면 이를 우선 사용
                     int finalScore = (aiReason != null && aiReason.matchScore() > 0) ? aiReason.matchScore() : c.score;
                     
                     return new PolicyRecommendResponse.RecommendedPolicyDto(
@@ -225,5 +228,18 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
         return (policy.getTitle() != null && policy.getTitle().toLowerCase().contains(kw)) ||
                (policy.getTarget() != null && policy.getTarget().toLowerCase().contains(kw)) ||
                (policy.getContent() != null && policy.getContent().toLowerCase().contains(kw));
+    }
+
+    private String getFriendlyCategoryName(String category) {
+        if (category == null) return "기타";
+        return switch (category) {
+            case "서류" -> "감자·고구마류";
+            case "특용" -> "특용작물";
+            case "과수" -> "과수류";
+            case "채소" -> "채소류";
+            case "화훼" -> "화훼류";
+            case "곡물" -> "곡물류";
+            default -> category;
+        };
     }
 }

@@ -72,6 +72,8 @@ class BaseLLM(ABC):
         system_instruction: Optional[str] = None,
         temperature: float = 0.1,
         max_tokens: int = 2048,
+        file_bytes: Optional[bytes] = None,
+        mime_type: Optional[str] = None,
     ) -> str:
         """
         프롬프트를 받아 JSON 형식의 텍스트 응답을 생성합니다.
@@ -83,10 +85,16 @@ class BaseLLM(ABC):
             system_instruction: 시스템 지시문 (선택)
             temperature: 창의성 (0.0 ~ 1.0, JSON의 경우 주로 0.1 사용)
             max_tokens: 최대 토큰 수
+            file_bytes: 파일 바이트 데이터 (이미지/PDF 등, 선택)
+            mime_type: 파일 MIME 타입 (선택)
 
         Returns:
             JSON 형식의 텍스트 응답
         """
+        # BaseLLM의 기본 구현은 파일을 지원하지 않으므로, 파일이 전달되면 예외 발생
+        if file_bytes is not None:
+            raise NotImplementedError("해당 Provider는 파일 첨부를 지원하지 않습니다.")
+        
         return await self.generate(
             prompt,
             system_instruction=system_instruction,

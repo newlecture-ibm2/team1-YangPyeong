@@ -52,7 +52,17 @@ public class AdminPolicyDataController {
         return AdminPolicyDataResponse.builder()
                 .id(dto.getId())
                 .externalId(dto.getExternalId())
-                .data(dto.getData())
+                .title(dto.getTitle())
+                .category(dto.getCategory())
+                .organization(dto.getOrganization())
+                .regionCode(dto.getRegionCode())
+                .regionName(dto.getRegionName())
+                .target(dto.getTarget())
+                .supportAmount(dto.getSupportAmount())
+                .applyStart(dto.getApplyStart())
+                .applyEnd(dto.getApplyEnd())
+                .contentSummary(dto.getContentSummary())
+                .sourceUrl(dto.getSourceUrl())
                 .fetchedAt(dto.getFetchedAt())
                 .createdAt(dto.getCreatedAt())
                 .updatedAt(dto.getUpdatedAt())
@@ -66,7 +76,19 @@ public class AdminPolicyDataController {
      */
     @PostMapping
     public ApiResponse<Map<String, Long>> createPolicy(@Valid @RequestBody PolicyDataRequest request) {
-        Long id = managePolicyDataUseCase.createPolicy(request.getExternalId(), request.getData());
+        Long id = managePolicyDataUseCase.createPolicy(
+                request.getExternalId(),
+                request.getTitle(),
+                request.getCategory(),
+                request.getOrganization(),
+                request.getRegionCode(),
+                request.getTarget(),
+                request.getSupportAmount(),
+                request.getApplyStart(),
+                request.getApplyEnd(),
+                request.getContentSummary(),
+                request.getSourceUrl()
+        );
         return ApiResponse.ok(Map.of("id", id));
     }
 
@@ -77,7 +99,20 @@ public class AdminPolicyDataController {
     @PatchMapping("/{id}")
     public ApiResponse<Void> updatePolicy(@PathVariable Long id,
                                            @Valid @RequestBody PolicyDataRequest request) {
-        managePolicyDataUseCase.updatePolicy(id, request.getExternalId(), request.getData());
+        managePolicyDataUseCase.updatePolicy(
+                id,
+                request.getExternalId(),
+                request.getTitle(),
+                request.getCategory(),
+                request.getOrganization(),
+                request.getRegionCode(),
+                request.getTarget(),
+                request.getSupportAmount(),
+                request.getApplyStart(),
+                request.getApplyEnd(),
+                request.getContentSummary(),
+                request.getSourceUrl()
+        );
         return ApiResponse.ok(null);
     }
 

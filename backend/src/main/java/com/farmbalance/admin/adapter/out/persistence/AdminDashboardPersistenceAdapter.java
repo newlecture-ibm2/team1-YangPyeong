@@ -20,7 +20,7 @@ public class AdminDashboardPersistenceAdapter implements AdminDashboardPort {
             SELECT
                 (SELECT COUNT(*) FROM farms WHERE certification_status = 'PENDING' AND deleted_at IS NULL) AS pending_approvals,
                 (SELECT COUNT(*) FROM reports WHERE status = 'PENDING') AS pending_reports,
-                (SELECT COUNT(*) FROM users WHERE deleted_at IS NULL) AS active_users,
+                (SELECT COUNT(*) FROM users WHERE anonymized_at IS NULL) AS active_users,
                 (SELECT COUNT(*) FROM orders WHERE created_at >= (CURRENT_DATE - INTERVAL '7' DAY)) AS weekly_new_orders
             """;
 

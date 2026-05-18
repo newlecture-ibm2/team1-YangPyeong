@@ -46,7 +46,7 @@ class GovGraphTool:
                     JOIN graph.graph_relation rhc ON rhc.from_entity_id = reg.id AND rhc.relation_type = 'REGION_HAS_CROP'
                     JOIN graph.graph_entity c ON c.id = rhc.to_entity_id
                     WHERE reg.name = :region
-                    ORDER BY CASE WHEN rhc.properties->>'balance_status' IN ('과잉', '부족', '위험') THEN 1 ELSE 2 END
+                    ORDER BY CASE WHEN rhc.properties->>'balance_status' IN ('EXCESS_WARN', 'EXCESS_CAUTION', 'SHORT_WARN', 'SHORT_CAUTION') THEN 1 ELSE 2 END
                     LIMIT 10;
                 """)
                 result = session.execute(query, {"region": region})
@@ -91,7 +91,7 @@ class GovGraphTool:
             JOIN graph.graph_relation rhc ON rhc.from_entity_id = reg.id AND rhc.relation_type = 'REGION_HAS_CROP'
             JOIN graph.graph_entity c ON c.id = rhc.to_entity_id
             WHERE reg.name = :region
-            ORDER BY CASE WHEN rhc.properties->>'balance_status' IN ('과잉', '부족', '위험') THEN 1 ELSE 2 END
+            ORDER BY CASE WHEN rhc.properties->>'balance_status' IN ('EXCESS_WARN', 'EXCESS_CAUTION', 'SHORT_WARN', 'SHORT_CAUTION') THEN 1 ELSE 2 END
             LIMIT 10;
         """)
         
@@ -196,7 +196,7 @@ class GovGraphTool:
                     JOIN graph.graph_entity reg ON reg.id = rhc.from_entity_id
                     WHERE c_origin.name = :crop AND c_alt.name != :crop
                       AND reg.name = :region
-                      AND rhc.properties->>'balance_status' IN ('부족', '적정')
+                      AND rhc.properties->>'balance_status' IN ('SHORT_WARN', 'SHORT_CAUTION', 'BALANCED')
                     LIMIT 3;
                 """)
                 result = session.execute(query, {"crop": crop, "region": region})
