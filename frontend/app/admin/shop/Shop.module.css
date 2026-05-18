@@ -282,6 +282,28 @@
   color: white;
 }
 
+.productCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.productThumbnail {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--color-border, #e2e8f0);
+  flex-shrink: 0;
+}
+
+.productName {
+  font-weight: 500;
+  color: var(--color-text, #111827);
+  display: flex;
+  align-items: center;
+}
+
 /* ── 반응형 ── */
 @media (max-width: 768px) {
   .container {

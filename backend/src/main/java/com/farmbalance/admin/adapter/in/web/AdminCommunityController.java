@@ -136,4 +136,14 @@ public class AdminCommunityController {
         manageCommunityUseCase.updateReportStatus(reportId, status.toUpperCase());
         return ApiResponse.ok(null);
     }
+
+    /**
+     * AI 일괄 스팸 청소 실행
+     * POST /api/admin/community/ai-moderate
+     */
+    @PostMapping("/ai-moderate")
+    public ApiResponse<Map<String, Integer>> aiModerate() {
+        int hiddenCount = manageCommunityUseCase.aiModerateActivePosts();
+        return ApiResponse.ok(Map.of("hiddenCount", hiddenCount));
+    }
 }

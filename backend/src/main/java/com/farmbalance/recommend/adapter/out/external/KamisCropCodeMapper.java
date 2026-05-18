@@ -59,4 +59,12 @@ public class KamisCropCodeMapper {
     public static String getKamisCode(String cropName) {
         return CROP_CODE_MAP.get(cropName);
     }
+
+    /**
+     * KAMIS 매핑이 등록된 전체 작물명 목록을 반환합니다.
+     * 배치 스케줄러에서 일괄 시세 조회 시 사용됩니다.
+     */
+    public static java.util.Set<String> getAllMappedCropNames() {
+        return java.util.Collections.unmodifiableSet(CROP_CODE_MAP.keySet());
+    }
 }
