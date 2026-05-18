@@ -83,7 +83,7 @@ public class AdminReportPersistenceAdapter implements AdminReportPort {
 
     @Override
     public void updateStatusByTarget(String targetType, Long targetId, String status) {
-        String sql = "UPDATE reports SET status = ? WHERE target_type = ? AND target_id = ? AND status = 'PENDING'";
+        String sql = "UPDATE reports SET status = ? WHERE target_type = ? AND target_id = ?";
         jdbcTemplate.update(sql, status, targetType, targetId);
     }
 
