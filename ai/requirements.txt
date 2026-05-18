@@ -11,5 +11,6 @@ pydantic-settings==2.9.1
 langchain-core>=0.3,<0.4
 langchain-google-genai
 langchain-groq
+langchain-chroma
 langgraph
 python-multipart
