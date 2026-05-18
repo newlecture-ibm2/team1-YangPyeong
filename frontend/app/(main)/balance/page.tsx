@@ -27,7 +27,6 @@ export default function BalanceListPage() {
 
   useEffect(() => {
     if (isFarmsLoading) return;
-
     if (isPreviewMode) {
       const dummyData: BalanceAnalysisResponse[] = [
         {
@@ -36,7 +35,7 @@ export default function BalanceListPage() {
           status: 'SHORT_WARN',
           statusLabel: '부족경고',
           baseYear: new Date().getFullYear(),
-          message: '수급이 매우 부족합니다. 주의가 필요합니다.',
+          message: '현재 공급량이 수요 대비 현저히 부족하여 가격 상승세가 예상됩니다.',
         },
         {
           cropName: '양파',
@@ -44,7 +43,7 @@ export default function BalanceListPage() {
           status: 'EXCESS_WARN',
           statusLabel: '과잉경고',
           baseYear: new Date().getFullYear(),
-          message: '수급이 과잉 상태입니다.',
+          message: '지역 내 생산량 증가로 인한 과잉 상태로, 판로 다양화 지원이 필요합니다.',
         },
         {
           cropName: '대파',
@@ -52,7 +51,7 @@ export default function BalanceListPage() {
           status: 'BALANCED',
           statusLabel: '적정',
           baseYear: new Date().getFullYear(),
-          message: '적정한 수급 상태를 유지하고 있습니다.',
+          message: '생산량과 지역 수요가 균형을 이루어 수급 상태가 가장 안정적입니다.',
         }
       ];
       setBalances(dummyData);
@@ -121,25 +120,25 @@ export default function BalanceListPage() {
 
       {isPreviewMode ? (
         <MockupOverlay hasUnapprovedFarms={hasUnapprovedFarms}>
-          <BalanceContent 
-            top3={top3} 
-            filteredBalances={filteredBalances} 
-            statusFilter={statusFilter} 
-            setStatusFilter={setStatusFilter} 
-            searchQuery={searchQuery} 
-            setSearchQuery={setSearchQuery} 
-            getStatusBadgeVariant={getStatusBadgeVariant} 
+          <BalanceContent
+            top3={top3}
+            filteredBalances={filteredBalances}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            getStatusBadgeVariant={getStatusBadgeVariant}
           />
         </MockupOverlay>
       ) : (
-        <BalanceContent 
-          top3={top3} 
-          filteredBalances={filteredBalances} 
-          statusFilter={statusFilter} 
-          setStatusFilter={setStatusFilter} 
-          searchQuery={searchQuery} 
-          setSearchQuery={setSearchQuery} 
-          getStatusBadgeVariant={getStatusBadgeVariant} 
+        <BalanceContent
+          top3={top3}
+          filteredBalances={filteredBalances}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          getStatusBadgeVariant={getStatusBadgeVariant}
         />
       )}
     </div>
@@ -160,8 +159,8 @@ function BalanceContent({ top3, filteredBalances, statusFilter, setStatusFilter,
               <Badge variant={getStatusBadgeVariant(item.status)}>{item.statusLabel}</Badge>
             </div>
             <div className={styles.gaugeBar}>
-              <div 
-                className={`${styles.gaugeFill} ${styles[item.status.toLowerCase()]}`} 
+              <div
+                className={`${styles.gaugeFill} ${styles[item.status.toLowerCase()]}`}
                 style={{ width: `${Math.min(item.supplyRatio, 100)}%` }}
               ></div>
             </div>
@@ -171,7 +170,7 @@ function BalanceContent({ top3, filteredBalances, statusFilter, setStatusFilter,
 
       {/* FILTER BAR */}
       <div className={styles.filterSection}>
-        <select 
+        <select
           className={styles.selectInput}
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -184,8 +183,8 @@ function BalanceContent({ top3, filteredBalances, statusFilter, setStatusFilter,
           <option>부족경고</option>
         </select>
         <div style={{ flex: 1 }}>
-          <SearchInput 
-            placeholder="🔍 작물명 검색..." 
+          <SearchInput
+            placeholder="🔍 작물명 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
