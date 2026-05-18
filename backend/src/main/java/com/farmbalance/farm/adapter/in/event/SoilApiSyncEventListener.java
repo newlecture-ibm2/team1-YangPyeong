@@ -32,8 +32,10 @@ public class SoilApiSyncEventListener {
             var v3Response = soilApiClient.getSoilCharacteristics(pnuCode);
             var v2Response = soilApiClient.getSoilChemicalCharacteristics(pnuCode);
             
-            boolean isV3Success = v3Response != null && v3Response.getHeader() != null && "00".equals(v3Response.getHeader().getResultCode());
-            boolean isV2Success = v2Response != null && v2Response.getHeader() != null && "00".equals(v2Response.getHeader().getResultCode());
+            boolean isV3Success = v3Response != null && v3Response.getHeader() != null && 
+                (java.util.Arrays.asList("00", "200", "301").contains(v3Response.getHeader().getResultCode()));
+            boolean isV2Success = v2Response != null && v2Response.getHeader() != null && 
+                (java.util.Arrays.asList("00", "200", "301").contains(v2Response.getHeader().getResultCode()));
 
             if (isV3Success && isV2Success) {
                 eventPublisher.publishEvent(new ApiSyncEvent("SOIL_ENVIRONMENT", "SUCCESS", 0, null, true));
