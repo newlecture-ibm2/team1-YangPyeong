@@ -35,12 +35,16 @@ public class CultivationService implements RegisterCultivationUseCase, UpdateCul
         Farm farm = validateAvailableArea(command.getFarmId(), null, command.getCultivationArea());
 
         // 2. 도메인 객체 생성
+        boolean inSeason = Boolean.TRUE.equals(command.getAlreadyPlanted())
+                || command.getSowingDate() != null;
         CultivationRegistration registration = CultivationRegistration.builder()
                 .farmId(command.getFarmId())
                 .cropId(command.getCropId())
                 .cultivationArea(command.getCultivationArea())
                 .farmerEstimatedYield(command.getExpectedYield())
                 .yieldUnit(command.getYieldUnit() != null ? command.getYieldUnit() : "kg")
+                .sowingDate(command.getSowingDate())
+                .inSeason(inSeason)
                 .build();
 
         // 3. 저장

@@ -7,18 +7,14 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import styles from '../gov.module.css';
 import { useGovUser, getTestHeaders } from '../useGovUser';
 import GovTabs from '../_components/GovTabs';
+import Spinner from '@/components/common/Spinner/Spinner';
+import Dropdown from '@/components/common/Dropdown';
 
 interface CompareRow {
-  crop: string; prevYearTon: number; currentYearTon: number; diffTon: number; diffRate: number;
+  crop: string; prevYearTon: number | null; currentYearTon: number | null; diffTon: number; diffRate: number | null;
 }
 
-const TABS = [
-  { href: '/gov', label: '대시보드' },
-  { href: '/gov/cultivation', label: '재배 현황' },
-  { href: '/gov/compare', label: '연도 비교' },
-  { href: '/gov/sales', label: '판매 현황' },
-  { href: '/gov/download', label: '데이터 다운로드' },
-];
+
 
 export default function ComparePage() {
   const pathname = usePathname();
@@ -32,7 +28,16 @@ export default function ComparePage() {
     setLoading(true);
     fetch(`/api/gov/compare?baseYear=${baseYear}&compareYear=${compareYear}`)
       .then(r => r.json())
-      .then(res => { setData(res.data || []); setLoading(false); })
+      .then(res => { 
+        const mappedData = (res.data || []).map((row: any) => {
+          if (row.prevYearTon === 0) row.prevYearTon = null;
+          if (row.currentYearTon === 0) row.currentYearTon = null;
+          if (row.prevYearTon == null) row.diffRate = null;
+          return row;
+        });
+        setData(mappedData); 
+        setLoading(false); 
+      })
       .catch(() => setLoading(false));
   }, [baseYear, compareYear]);
 
@@ -50,21 +55,25 @@ export default function ComparePage() {
         </div>
       </div>
 
-      {/* <div className={styles.tabs}>
-        {TABS.map(t => (
-          <Link key={t.href} href={t.href} className={`${styles.tab} ${pathname === t.href ? styles.tabActive : ''}`}>{t.label}</Link>
-        ))}
-      </div> */}
+
 
       <div className={styles.filterBar}>
-        <select className={styles.formSelect} value={baseYear} onChange={e => setBaseYear(e.target.value)}>
-          <option value="2024">기준: 2024</option>
-          <option value="2025">기준: 2025</option>
-        </select>
-        <select className={styles.formSelect} value={compareYear} onChange={e => setCompareYear(e.target.value)}>
-          <option value="2025">비교: 2025</option>
-          <option value="2026">비교: 2026</option>
-        </select>
+        <Dropdown
+          options={[
+            { label: '기준: 2024', value: '2024' },
+            { label: '기준: 2025', value: '2025' }
+          ]}
+          value={baseYear}
+          onChange={setBaseYear}
+        />
+        <Dropdown
+          options={[
+            { label: '비교: 2025', value: '2025' },
+            { label: '비교: 2026', value: '2026' }
+          ]}
+          value={compareYear}
+          onChange={setCompareYear}
+        />
       </div>
 
       <div className={styles.compareGrid}>
@@ -75,12 +84,12 @@ export default function ComparePage() {
               <h2 className={styles.cardTitle}>생산량 비교</h2>
               <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>단위: kg</span>
             </div>
-            {loading ? <p>로딩 중...</p> : (
+            {loading ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '280px' }}><Spinner /></div> : (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="crop" />
-                  <YAxis width={80} />
+                  <YAxis width={80} tickFormatter={(value) => value.toLocaleString()} />
                   <Tooltip formatter={(value) => `${Number(value).toLocaleString()}kg`} />
                   <Legend />
                   <Bar dataKey="prevYearTon" name={`${baseYear}년`} fill="#52B788" radius={[4, 4, 0, 0]} />
@@ -95,13 +104,13 @@ export default function ComparePage() {
               <h2 className={styles.cardTitle}>증감률</h2>
               <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>단위: %</span>
             </div>
-            {loading ? <p>로딩 중...</p> : (
+            {loading ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '280px' }}><Spinner /></div> : (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="crop" />
-                  <YAxis width={60} unit="%" />
-                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toFixed(2)}%` : `${value}%`} />
+                  <YAxis width={60} unit="%" tickFormatter={(value) => value.toLocaleString()} />
+                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toFixed(2)}%` : `계산 불가`} />
                   <Bar dataKey="diffRate" name="증감률(%)" fill="#CCFF33" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -131,15 +140,21 @@ export default function ComparePage() {
                 {data.map((r, i) => (
                   <tr key={i}>
                     <td className={styles.tdBold}>{r.crop}</td>
-                    <td className={styles.numberCell}>{r.prevYearTon.toLocaleString()}</td>
-                    <td className={styles.numberCell}>{r.currentYearTon.toLocaleString()}</td>
-                    <td className={styles.numberCell} style={{ color: r.diffTon >= 0 ? 'var(--color-primary)' : 'var(--color-danger)' }}>
-                      {r.diffTon >= 0 ? '+' : ''}{r.diffTon.toLocaleString()}
+                    <td className={styles.numberCell}>{r.prevYearTon != null ? r.prevYearTon.toLocaleString() : '-'}</td>
+                    <td className={styles.numberCell}>{r.currentYearTon != null ? r.currentYearTon.toLocaleString() : '-'}</td>
+                    <td className={styles.numberCell} style={{ color: r.diffTon > 0 ? 'var(--color-primary)' : (r.diffTon < 0 ? 'var(--color-danger)' : 'var(--color-text)') }}>
+                      {r.diffTon > 0 ? '+' : ''}{r.diffTon.toLocaleString()}
                     </td>
                     <td className={styles.numberCell}>
-                      <span className={`${styles.badge} ${r.diffRate >= 0 ? styles.badgeGreen : styles.badgeRed}`} style={{ minWidth: '48px', padding: '2px 8px' }}>
-                        {r.diffRate >= 0 ? '+' : ''}{r.diffRate.toFixed(1)}%
-                      </span>
+                      {r.diffRate == null ? (
+                        <span className={`${styles.badge} ${styles.badgeGhost}`} style={{ minWidth: '48px', padding: '2px 8px' }}>
+                          {r.diffTon > 0 ? '신규' : '-'}
+                        </span>
+                      ) : (
+                        <span className={`${styles.badge} ${r.diffRate > 0 ? styles.badgeGreen : (r.diffRate < 0 ? styles.badgeRed : styles.badgeGhost)}`} style={{ minWidth: '48px', padding: '2px 8px' }}>
+                          {r.diffRate > 0 ? '+' : ''}{r.diffRate.toFixed(1)}%
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -121,6 +121,21 @@ export default function FarmBot({ children }: FarmBotProps) {
     }
   }, [chatMessages, mode]);
 
+  // 말풍선이 뷰포트 밖으로 나가지 않도록 transform offset 계산 (고정 너비 290px 기반)
+  const computeBubbleShift = (): number => {
+    if (typeof window === 'undefined') return 0;
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) return 0;
+    const charW = 70;
+    const margin = 16;
+    const bubbleW = Math.min(290, window.innerWidth - margin * 2);
+    const charCenterX = position.x + charW / 2;
+    const idealLeft = charCenterX - bubbleW / 2;
+    const maxLeft = window.innerWidth - bubbleW - margin;
+    const safeLeft = Math.max(margin, Math.min(idealLeft, maxLeft));
+    return safeLeft - idealLeft;
+  };
+
   // 클라이언트 마운트 전에는 자식 요소만 렌더링 (Hydration 에러 방지)
   if (!isMounted) {
     return (
@@ -192,27 +207,7 @@ export default function FarmBot({ children }: FarmBotProps) {
             </div>
             {!showBubble && (
               <span className={styles.footerWalkTooltip}>
-                <span className={styles.tooltipTitle}>안녕하세요! 👋</span>
-                <span className={styles.tooltipBtns}>
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    className={styles.tooltipGuideBtn}
-                    onClick={(e) => { e.stopPropagation(); restartGuide(); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); restartGuide(); } }}
-                  >
-                    🌱 가이드 시작
-                  </span>
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    className={styles.tooltipHideBtn}
-                    onClick={(e) => { e.stopPropagation(); hideBot(); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); hideBot(); } }}
-                  >
-                    숨기기
-                  </span>
-                </span>
+                <span className={styles.tooltipTitle}>저 눌러주세요~ 👆</span>
               </span>
             )}
           </button>
@@ -358,7 +353,7 @@ export default function FarmBot({ children }: FarmBotProps) {
                 >
                   💬 질문하기
                 </button>
-                <button className={styles.askBtnNo} onClick={declineGuide}>
+                <button className={styles.askBtnNo} onClick={hideBot}>
                   숨기기
                 </button>
               </div>
@@ -372,7 +367,13 @@ export default function FarmBot({ children }: FarmBotProps) {
 
   // ── 가이드 모드 ──
   const bubbleClass = bubbleAbove ? styles.bubbleAbove : styles.bubbleBelow;
-  
+
+
+  const shift = computeBubbleShift();
+  const bubbleStyle = shift !== 0
+    ? { transform: `translateX(calc(-50% + ${shift}px))` }
+    : undefined;
+
   const { visibleIndex, visibleTotal } = getVisibleStepInfo();
 
   return (
@@ -411,7 +412,7 @@ export default function FarmBot({ children }: FarmBotProps) {
         </div>
 
         {showBubble && (
-          <div className={`${styles.bubble} ${bubbleClass}`}>
+          <div className={`${styles.bubble} ${bubbleClass}`} style={bubbleStyle}>
             <p className={styles.bubbleText}>{bubbleMessage}</p>
             {currentStep >= 0 && (
               <div className={styles.bubbleActions}>

@@ -11,6 +11,14 @@ export type SoilFitness = 'HIGH_SUIT' | 'SUIT' | 'POSSIBLE' | 'LOW_SUIT' | 'NONE
 /** 작물 카테고리 */
 export type CropCategory = '채소류' | '과일류' | '곡물' | '특용작물' | '화훼류';
 
+export type RecommendMode = 'PLAN' | 'PLANNED' | 'MANAGE' | 'MIXED';
+
+export type AdviceType =
+  | 'NEW_RECOMMEND'
+  | 'PLANNED_CROP'
+  | 'IN_SEASON_COACHING'
+  | 'NEXT_SEASON';
+
 /** 개별 추천 작물 */
 export interface CropRecommendation {
   rank: number;
@@ -32,6 +40,8 @@ export interface CropRecommendation {
   harvestPeriod?: string;
   difficulty?: number;
   pests?: string[];
+  adviceType?: AdviceType;
+  mismatchNote?: string;
 }
 
 /** 추천 API 응답 */
@@ -45,9 +55,25 @@ export interface CropRecommendResponse {
     organicMatter?: number;
     soilType?: string;
   };
+  recommendMode?: RecommendMode;
+  currentCropAdvices?: CropRecommendation[];
   recommendations: CropRecommendation[];
   generatedAt: string;
 }
+
+export const RECOMMEND_MODE_LABEL: Record<RecommendMode, string> = {
+  PLAN: '신규 재배 추천',
+  PLANNED: '재배 예정 작물 가이드',
+  MANAGE: '현재 재배 관리',
+  MIXED: '재배 관리 + 참고 추천',
+};
+
+export const ADVICE_TYPE_LABEL: Record<AdviceType, string> = {
+  NEW_RECOMMEND: '신규 추천',
+  PLANNED_CROP: '재배 예정',
+  IN_SEASON_COACHING: '재배 중',
+  NEXT_SEASON: '다음 시즌 참고',
+};
 
 /** 수급 상태 라벨 매핑 */
 export const SUPPLY_STATUS_MAP: Record<SupplyStatus, { label: string; variant: 'green' | 'orange' | 'red' }> = {

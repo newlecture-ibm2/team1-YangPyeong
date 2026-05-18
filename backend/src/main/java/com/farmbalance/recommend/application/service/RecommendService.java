@@ -1,17 +1,15 @@
 package com.farmbalance.recommend.application.service;
 
 import com.farmbalance.recommend.application.port.in.RecommendCropUseCase;
-import com.farmbalance.recommend.application.port.out.CropCandidateData;
-import com.farmbalance.recommend.application.port.out.LoadCropCandidatePort;
-import com.farmbalance.recommend.application.port.out.LoadFarmForRecommendPort;
+import com.farmbalance.recommend.application.port.out.*;
 import com.farmbalance.recommend.application.port.out.LoadFarmForRecommendPort.FarmBasicData;
-import com.farmbalance.recommend.application.port.out.LoadSupplyStatusPort;
-import com.farmbalance.recommend.application.port.out.LoadRecommendHistoryPort;
-import com.farmbalance.recommend.application.port.out.SaveRecommendHistoryPort;
-import com.farmbalance.recommend.application.port.out.RecommendAiPort;
-import com.farmbalance.recommend.application.port.out.RecommendPricePort;
 import com.farmbalance.recommend.application.port.in.GetRecommendHistoryUseCase;
 import com.farmbalance.recommend.application.port.in.DiagnoseCropImageUseCase;
+import com.farmbalance.recommend.adapter.out.persistence.CropCultivationEnvLookup;
+import com.farmbalance.recommend.application.support.FarmRecommendDetailsBuilder;
+import com.farmbalance.recommend.application.support.RecommendCropAnalysisHelper;
+import com.farmbalance.recommend.application.support.RecommendCropAnalysisHelper.MismatchInfo;
+import com.farmbalance.recommend.application.support.RecommendModeResolver;
 import com.farmbalance.notification.application.port.in.NotificationUseCase;
 import com.farmbalance.notification.domain.NotificationType;
 import com.farmbalance.recommend.domain.*;
@@ -23,168 +21,89 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
-/**
- * AI 작물 추천 서비스
- *
- * 1. 농장 정보 조회 (JDBC 경량 포트)
- * 2. 후보 작물 로드 (실 DB 어댑터)
- * 3. 각 작물에 대해 4항목 가중 점수 산출
- * 4. 점수 기준 정렬 → 추천 결과 반환
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class RecommendService implements RecommendCropUseCase, GetRecommendHistoryUseCase, DiagnoseCropImageUseCase {
 
+    private static final int MAX_NEW_RECOMMEND_AI = 5;
+    private static final int MAX_LIST_SIZE = 30;
+
     private final LoadFarmForRecommendPort loadFarmForRecommendPort;
     private final LoadCropCandidatePort loadCropCandidatePort;
-    private final LoadSupplyStatusPort loadSupplyStatusPort;
+    private final LoadFarmCultivationContextPort loadFarmCultivationContextPort;
     private final SaveRecommendHistoryPort saveRecommendHistoryPort;
     private final LoadRecommendHistoryPort loadRecommendHistoryPort;
-    private final com.farmbalance.recommend.application.port.out.RecommendAiPort recommendAiPort;
+    private final RecommendAiPort recommendAiPort;
     private final RecommendPricePort recommendPricePort;
-
     private final NotificationUseCase notificationUseCase;
+    private final CropCultivationEnvLookup cropCultivationEnvLookup;
+    private final RecommendModeResolver recommendModeResolver;
+    private final FarmRecommendDetailsBuilder farmRecommendDetailsBuilder;
+    private final RecommendCropAnalysisHelper cropAnalysisHelper;
 
     @Override
     @Transactional
     public RecommendResult recommend(Long userId, Long farmId) {
-        // 0. 농장 소유자 검증
         validateFarmOwnership(userId, farmId);
 
-        // 1. 농장 정보 조회 (JDBC 직접 조회)
         FarmBasicData farm = loadFarmForRecommendPort.loadFarmBasic(farmId)
                 .orElseThrow(() -> new IllegalArgumentException("농장을 찾을 수 없습니다: " + farmId));
 
-        // 2. 후보 작물 조회 (지역 기반)
         String regionCode = farm.getBjdCode() != null ? farm.getBjdCode() : "";
         List<CropCandidateData> candidates = loadCropCandidatePort.loadCandidates(regionCode);
-
-        // [방어 로직] 해당 지역 데이터가 없으면 전국 단위로 폴백하여 추천 리스트가 비지 않게 함
         if (candidates.isEmpty()) {
             log.warn("지역 기반(region={}) 후보 작물 없음 -> 전국 단위로 폴백 조회", regionCode);
             candidates = loadCropCandidatePort.loadCandidates("");
         }
 
-        log.info("추천 시작: farmId={}, farmName={}, regionCode={}, 후보작물={}건",
-                farmId, farm.getName(), regionCode, candidates.size());
+        FarmCultivationContext cultivationContext = loadFarmCultivationContextPort.loadByFarmId(farmId);
+        RecommendMode mode = recommendModeResolver.resolve(cultivationContext);
 
-        // 3. AI 가중치 튜닝 (농장 상황 기반)
-        String farmDetails = String.format("위치: %s, 면적: %.1f평, 토양pH: %.1f, 유기물: %.1f, 토성: %s",
-                farm.getAddress(), farm.getArea() / 3.3058, farm.getPh(), farm.getOrganicMatter(), farm.getSoilType());
-
-        double[] tunedWeights = recommendAiPort.tuneWeights(farmDetails);
+        double[] tunedWeights = recommendAiPort.tuneWeights(
+                farmRecommendDetailsBuilder.build(farm, cultivationContext, mode, null));
         RecommendScoreCalculator calculator = new RecommendScoreCalculator(
                 tunedWeights[0], tunedWeights[1], tunedWeights[2], tunedWeights[3]);
 
-        // 4. 각 작물에 대해 점수 산출
-        List<CropRecommendation> recommendations = new ArrayList<>();
+        String soilMismatchSummary = cropAnalysisHelper.buildGlobalMismatchSummary(
+                cultivationContext, candidates, farm, calculator);
+        String farmDetails = farmRecommendDetailsBuilder.build(
+                farm, cultivationContext, mode, soilMismatchSummary);
 
-        for (CropCandidateData candidate : candidates) {
-            // 3-1. 토양 적합도
-            int soilPercent = calculator.calculateSoilFitness(
-                    farm.getPh(),
-                    farm.getOrganicMatter(),
-                    farm.getSoilType(),
-                    candidate.getOptimalPhMin(),
-                    candidate.getOptimalPhMax(),
-                    candidate.getOptimalOrganicMatter(),
-                    candidate.getPreferredSoilTypes());
+        Set<Long> registeredCropIds = cultivationContext.getItems().stream()
+                .map(CultivationContextItem::getCropId)
+                .collect(Collectors.toSet());
 
-            // 3-2. 수급 상태 → 수급 안정성 퍼센트
-            SupplyStatus supplyStatus = loadSupplyStatusPort
-                    .loadSupplyStatus(candidate.getCropId(), regionCode);
-            int supplyPercent = supplyStatus != null ? supplyStatus.getStabilityScore() : 50;
+        List<CropRecommendation> currentCropAdvices = buildCurrentCropAdvices(
+                cultivationContext, candidates, farm, regionCode, calculator, mode, farmDetails);
 
-            // 3-3. 시세 전망 및 예상 수익금액 (KAMIS 연동)
-            int pricePercent = candidate.getPriceForecastPercent();
+        AdviceType defaultNewType = mode == RecommendMode.MANAGE || mode == RecommendMode.MIXED
+                ? AdviceType.NEXT_SEASON
+                : AdviceType.NEW_RECOMMEND;
 
-            Integer kamisPrice = recommendPricePort.getRecentPricePerKg(candidate.getCropName());
-            Integer expectedRevenue = kamisPrice != null ? kamisPrice : candidate.getExpectedRevenuePerKg();
+        List<CropRecommendation> recommendations = candidates.stream()
+                .filter(c -> !registeredCropIds.contains(c.getCropId()))
+                .map(c -> cropAnalysisHelper.buildFromCandidate(
+                        c, farm, regionCode, calculator, defaultNewType))
+                .sorted(Comparator.comparingInt(CropRecommendation::getScore).reversed())
+                .limit(MAX_LIST_SIZE)
+                .collect(Collectors.toCollection(ArrayList::new));
 
-            // 3-4. 난이도
-            int difficulty = candidate.getDifficulty() != null ? candidate.getDifficulty() : 3;
+        assignRanks(recommendations, 1);
+        assignRanks(currentCropAdvices, 1);
 
-            // 3-5. 종합 점수 산출
-            int score = calculator.calculate(soilPercent, pricePercent, supplyPercent, difficulty);
+        applyAiReasons(farmDetails, mode, currentCropAdvices, recommendations);
 
-            // 3-6. 카테고리 매핑
-            CropCategory category = CropCategory.fromLabel(candidate.getCategory());
+        recommendations = enrichMissingPests(recommendations);
+        currentCropAdvices = enrichMissingPests(currentCropAdvices);
 
-            // 3-7. 추천 객체 생성
-            CropRecommendation rec = CropRecommendation.builder()
-                    .cropId(candidate.getCropId())
-                    .cropName(candidate.getCropName())
-                    .category(category)
-                    .score(score)
-                    .soilFitness(SoilFitness.fromPercent(soilPercent))
-                    .soilFitnessPercent(soilPercent)
-                    .priceForecastPercent(pricePercent)
-                    .supplyStabilityPercent(supplyPercent)
-                    .supplyStatus(supplyStatus)
-                    .expectedRevenuePerKg(expectedRevenue)
-                    .expectedYield(candidate.getExpectedYield())
-                    .growthDays(candidate.getGrowthDays())
-                    .optimalTemp(candidate.getOptimalTemp())
-                    .sowingPeriod(candidate.getSowingPeriod())
-                    .harvestPeriod(candidate.getHarvestPeriod())
-                    .difficulty(difficulty)
-                    .pests(candidate.getPests() != null ? Arrays.asList(candidate.getPests()) : List.of())
-                    .build();
+        log.info("추천 완료: farmId={}, mode={}, 코칭={}건, 신규/참고={}건",
+                farmId, mode, currentCropAdvices.size(), recommendations.size());
 
-            recommendations.add(rec);
-        }
-
-        // 5. 점수 기준 내림차순 정렬 + 순위 부여
-        recommendations.sort(Comparator.comparingInt(CropRecommendation::getScore).reversed());
-
-        // 6. 상위 5개 항목에 대해 실시간 AI 분석 사유 생성 (병렬 처리)
-        // 병렬 스트림을 사용하여 LLM 호출 시간을 단축합니다.
-        List<java.util.concurrent.CompletableFuture<CropRecommendation>> futures = new ArrayList<>();
-
-        final String finalFarmDetails = farmDetails;
-        for (int i = 0; i < recommendations.size(); i++) {
-            final int rank = i + 1;
-            final CropRecommendation rec = recommendations.get(i);
-
-            if (i < 5) {
-                futures.add(java.util.concurrent.CompletableFuture.supplyAsync(() -> {
-                    String aiReason;
-                    try {
-                        aiReason = recommendAiPort.generateReason(finalFarmDetails, rec.getCropName(),
-                                rec.getCategory().getLabel());
-                    } catch (Exception e) {
-                        log.warn("AI 사유 생성 실패 (crop={}): {}", rec.getCropName(), e.getMessage());
-                        aiReason = "현재 데이터 기반 최적의 작물로 분석되었습니다.";
-                    }
-                    return rec.toBuilder().rank(rank).aiReason(aiReason).build();
-                }));
-            } else {
-                recommendations.set(i, rec.toBuilder().rank(rank).build());
-            }
-        }
-
-        // 결과 대기 및 반영
-        for (int i = 0; i < futures.size(); i++) {
-            try {
-                recommendations.set(i, futures.get(i).get(10, java.util.concurrent.TimeUnit.SECONDS));
-            } catch (Exception e) {
-                log.error("AI 사유 결과 대기 중 오류: {}", e.getMessage());
-            }
-        }
-
-        log.info("추천 완료: {}건 산출, 1위={} ({}점)",
-                recommendations.size(),
-                recommendations.isEmpty() ? "-" : recommendations.get(0).getCropName(),
-                recommendations.isEmpty() ? 0 : recommendations.get(0).getScore());
-
-        // 6. 결과 조합
         RecommendResult result = RecommendResult.builder()
                 .farmId(farm.getId())
                 .farmName(farm.getName())
@@ -193,14 +112,14 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
                 .soilPh(farm.getPh())
                 .organicMatter(farm.getOrganicMatter())
                 .soilType(farm.getSoilType())
+                .recommendMode(mode)
+                .currentCropAdvices(currentCropAdvices)
                 .recommendations(recommendations)
                 .generatedAt(LocalDateTime.now())
                 .build();
 
-        // 7. 추천 결과 이력 저장
         saveRecommendHistoryPort.save(result);
 
-        // 7. AI 추천 결과 완료 알림 발송 (SYSTEM)
         notificationUseCase.createNotification(
                 userId,
                 NotificationType.SYSTEM,
@@ -211,16 +130,134 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
         return result;
     }
 
+    private List<CropRecommendation> buildCurrentCropAdvices(
+            FarmCultivationContext ctx,
+            List<CropCandidateData> candidates,
+            FarmBasicData farm,
+            String regionCode,
+            RecommendScoreCalculator calculator,
+            RecommendMode mode,
+            String farmDetails
+    ) {
+        if (!ctx.hasRegistrations()) {
+            return List.of();
+        }
+
+        List<CropRecommendation> advices = new ArrayList<>();
+        for (CultivationContextItem item : ctx.getItems()) {
+            Optional<CropCandidateData> candidateOpt = cropAnalysisHelper.findCandidate(candidates, item.getCropId());
+            if (candidateOpt.isEmpty()) {
+                log.warn("재배 등록 작물 후보 없음: cropId={}, name={}", item.getCropId(), item.getCropName());
+                continue;
+            }
+            CropCandidateData candidate = candidateOpt.get();
+            AdviceType adviceType = item.isInSeason()
+                    ? AdviceType.IN_SEASON_COACHING
+                    : AdviceType.PLANNED_CROP;
+
+            MismatchInfo mismatch = cropAnalysisHelper.computeMismatch(
+                    item, candidate, candidates, farm, calculator);
+
+            CropRecommendation rec = cropAnalysisHelper.buildFromCandidate(
+                    candidate, farm, regionCode, calculator, adviceType);
+            rec = rec.toBuilder()
+                    .mismatchNote(mismatch.note())
+                    .build();
+            advices.add(rec);
+        }
+        advices.sort(Comparator.comparingInt(CropRecommendation::getScore).reversed());
+        return advices;
+    }
+
+    /**
+     * AI 사유를 배치로 일괄 생성하여 각 추천 항목에 적용합니다.
+     *
+     * <p>기존: 작물 N개 × 개별 CompletableFuture → N번의 LLM 네트워크 호출
+     * <p>개선: 코칭 그룹 + 신규 그룹 → 최대 2번의 배치 LLM 호출
+     */
+    private void applyAiReasons(
+            String farmDetails,
+            RecommendMode mode,
+            List<CropRecommendation> currentCropAdvices,
+            List<CropRecommendation> recommendations
+    ) {
+        // 1. 코칭 작물 배치 사유 생성
+        if (!currentCropAdvices.isEmpty()) {
+            List<RecommendReasonCommand> coachingCommands = currentCropAdvices.stream()
+                    .map(rec -> new RecommendReasonCommand(
+                            farmDetails,
+                            rec.getCropName(),
+                            rec.getCategory() != null ? rec.getCategory().getLabel() : "",
+                            mode,
+                            rec.getAdviceType() != null ? rec.getAdviceType() : AdviceType.IN_SEASON_COACHING,
+                            true,
+                            rec.getMismatchNote()
+                    ))
+                    .toList();
+
+            Map<String, String> coachingReasons = recommendAiPort.generateBatchReasons(
+                    farmDetails, mode, coachingCommands);
+
+            List<CropRecommendation> updatedCurrent = new ArrayList<>();
+            for (CropRecommendation rec : currentCropAdvices) {
+                String reason = coachingReasons.getOrDefault(
+                        rec.getCropName(), "현재 농장 데이터를 바탕으로 분석한 결과입니다.");
+                updatedCurrent.add(rec.toBuilder().aiReason(reason).build());
+            }
+            currentCropAdvices.clear();
+            currentCropAdvices.addAll(updatedCurrent);
+        }
+
+        // 2. 신규/참고 작물 배치 사유 생성 (상위 N개만)
+        int aiLimit = Math.min(MAX_NEW_RECOMMEND_AI, recommendations.size());
+        if (aiLimit > 0) {
+            List<CropRecommendation> targetRecs = recommendations.subList(0, aiLimit);
+            List<RecommendReasonCommand> newCommands = targetRecs.stream()
+                    .map(rec -> new RecommendReasonCommand(
+                            farmDetails,
+                            rec.getCropName(),
+                            rec.getCategory() != null ? rec.getCategory().getLabel() : "",
+                            mode,
+                            rec.getAdviceType() != null ? rec.getAdviceType() : AdviceType.NEW_RECOMMEND,
+                            false,
+                            rec.getMismatchNote()
+                    ))
+                    .toList();
+
+            Map<String, String> newReasons = recommendAiPort.generateBatchReasons(
+                    farmDetails, mode, newCommands);
+
+            for (int i = 0; i < aiLimit; i++) {
+                CropRecommendation rec = recommendations.get(i);
+                String reason = newReasons.getOrDefault(
+                        rec.getCropName(), "현재 농장 데이터를 바탕으로 분석한 결과입니다.");
+                recommendations.set(i, rec.toBuilder().aiReason(reason).build());
+            }
+        }
+    }
+
+
+    private void assignRanks(List<CropRecommendation> list, int startRank) {
+        for (int i = 0; i < list.size(); i++) {
+            CropRecommendation rec = list.get(i);
+            list.set(i, rec.toBuilder().rank(startRank + i).build());
+        }
+    }
+
     @Override
     public List<RecommendResult> getHistory(Long userId, Long farmId) {
         validateFarmOwnership(userId, farmId);
-        return loadRecommendHistoryPort.loadByFarmId(farmId);
+        return loadRecommendHistoryPort.loadByFarmId(farmId).stream()
+                .map(this::enrichResultPests)
+                .toList();
     }
 
     @Override
     public RecommendResult getLatestHistory(Long userId, Long farmId) {
         validateFarmOwnership(userId, farmId);
-        return loadRecommendHistoryPort.loadLatestByFarmId(farmId).orElse(null);
+        return loadRecommendHistoryPort.loadLatestByFarmId(farmId)
+                .map(this::enrichResultPests)
+                .orElse(null);
     }
 
     @Override
@@ -232,7 +269,6 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
         return recommendAiPort.diagnoseImage(image);
     }
 
-    /** 농장 소유자 검증 */
     private void validateFarmOwnership(Long userId, Long farmId) {
         if (userId == null) {
             throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException(
@@ -244,8 +280,33 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
         }
     }
 
-    /** 순위를 부여한 새 객체 생성 (toBuilder로 immutable 유지) */
-    private CropRecommendation withRank(CropRecommendation rec, int rank) {
-        return rec.toBuilder().rank(rank).build();
+    private RecommendResult enrichResultPests(RecommendResult result) {
+        if (result == null) {
+            return null;
+        }
+        return result.toBuilder()
+                .recommendations(enrichMissingPests(
+                        result.getRecommendations() != null ? result.getRecommendations() : List.of()))
+                .currentCropAdvices(enrichMissingPests(
+                        result.getCurrentCropAdvices() != null ? result.getCurrentCropAdvices() : List.of()))
+                .build();
+    }
+
+    private List<CropRecommendation> enrichMissingPests(List<CropRecommendation> recommendations) {
+        Map<String, List<String>> pestsByCropName = new HashMap<>();
+        List<CropRecommendation> enriched = new ArrayList<>(recommendations.size());
+        for (CropRecommendation rec : recommendations) {
+            if (rec.getPests() != null && !rec.getPests().isEmpty()) {
+                enriched.add(rec);
+                continue;
+            }
+            List<String> pests = pestsByCropName.computeIfAbsent(
+                    rec.getCropName(),
+                    cropCultivationEnvLookup::findMajorPests
+            );
+            enriched.add(pests.isEmpty() ? rec : rec.toBuilder().pests(pests).build());
+        }
+        return enriched;
     }
 }
+

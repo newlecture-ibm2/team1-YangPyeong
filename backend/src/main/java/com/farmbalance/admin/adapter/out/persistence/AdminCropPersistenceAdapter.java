@@ -94,9 +94,11 @@ public class AdminCropPersistenceAdapter implements AdminCropPort {
 
     @Override
     public Long save(AdminCrop crop) {
-        String sql = "INSERT INTO crops (category_id, name, external_id, data_source, created_at) VALUES (?, ?, ?, ?, NOW()) RETURNING id";
+        String code = generateCropCode();
+        String sql = "INSERT INTO crops (category_id, code, name, external_id, data_source, created_at) VALUES (?, ?, ?, ?, ?, NOW()) RETURNING id";
         return jdbcTemplate.queryForObject(sql, Long.class, 
                 crop.getCategoryId(), 
+                code,
                 crop.getName(),
                 crop.getExternalId(),
                 crop.getDataSource() != null ? crop.getDataSource() : "MANUAL");
@@ -122,5 +124,12 @@ public class AdminCropPersistenceAdapter implements AdminCropPort {
     public void delete(Long id) {
         String sql = "UPDATE crops SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL";
         jdbcTemplate.update(sql, id);
+    }
+
+    /** 작물 코드 자동 생성: CRP + 6자리 (예: CRP000001) */
+    private String generateCropCode() {
+        String sql = "SELECT COALESCE(MAX(CAST(SUBSTRING(code FROM 4) AS INTEGER)), 0) + 1 FROM crops WHERE code LIKE 'CRP%'";
+        Integer seq = jdbcTemplate.queryForObject(sql, Integer.class);
+        return String.format("CRP%06d", seq != null ? seq : 1);
     }
 }

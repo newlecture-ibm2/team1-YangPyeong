@@ -136,3 +136,42 @@
   background: var(--color-bg);
   border-radius: var(--radius-sm);
 }
+
+@media (max-width: 768px) {
+  .stepper {
+    padding: 0 4px;
+  }
+
+  .stepIcon {
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+  }
+
+  .stepper::before {
+    top: 13px;
+    left: 18px;
+    right: 18px;
+  }
+
+  .stepperProgress {
+    top: 13px;
+    left: 18px;
+  }
+
+  .stepLabel {
+    font-size: 10px;
+  }
+
+  .latestStatus {
+    padding: 12px;
+  }
+
+  .location {
+    font-size: 13px;
+  }
+
+  .description {
+    font-size: 14px;
+  }
+}

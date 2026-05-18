@@ -14,20 +14,14 @@ function formatDate(dateStr: string | null): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-function parsePolicyData(jsonStr: string) {
-  try {
-    return JSON.parse(jsonStr)
-  } catch {
-    return null
-  }
-}
+// parsePolicyData removed as we use explicit fields now
 
 export default function PolicyPage() {
   const [policies, setPolicies] = useState<AdminPolicyData[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingPolicy, setEditingPolicy] = useState<AdminPolicyData | null>(null)
-  const [formData, setFormData] = useState<PolicyDataRequest>({ externalId: '', data: '' })
+  const [formData, setFormData] = useState<PolicyDataRequest>({ externalId: '', title: '', category: '', organization: '', regionCode: '', target: '', supportAmount: '', applyStart: '', applyEnd: '', contentSummary: '', sourceUrl: '' })
   const [parsedData, setParsedData] = useState<Record<string, any>>({})
   const toast = useToast()
 
@@ -46,24 +40,58 @@ export default function PolicyPage() {
 
   const openCreateModal = () => {
     setEditingPolicy(null)
-    setFormData({ externalId: '', data: '' })
-    setParsedData({ title: '', regionName: '', category: '', organization: '', contentSummary: '', sourceUrl: '' })
+    setFormData({ externalId: '', title: '', category: '', organization: '', regionCode: '', target: '', supportAmount: '', applyStart: '', applyEnd: '', contentSummary: '', sourceUrl: '' })
+    setParsedData({ title: '', regionName: '', category: '', organization: '', target: '', supportAmount: '', applyStart: '', applyEnd: '', contentSummary: '', sourceUrl: '' })
     setShowModal(true)
   }
 
   const openEditModal = (policy: AdminPolicyData) => {
     setEditingPolicy(policy)
-    setFormData({ externalId: policy.externalId, data: policy.data })
-    setParsedData(parsePolicyData(policy.data) || {})
+    setFormData({ 
+      externalId: policy.externalId, 
+      title: policy.title,
+      category: policy.category,
+      organization: policy.organization,
+      regionCode: policy.regionCode,
+      target: policy.target || '',
+      supportAmount: policy.supportAmount || '',
+      applyStart: policy.applyStart || '',
+      applyEnd: policy.applyEnd || '',
+      contentSummary: policy.contentSummary,
+      sourceUrl: policy.sourceUrl 
+    })
+    setParsedData({ 
+      title: policy.title || '', 
+      regionName: policy.regionCode || '', 
+      category: policy.category || '', 
+      organization: policy.organization || '',
+      target: policy.target || '',
+      supportAmount: policy.supportAmount || '',
+      applyStart: policy.applyStart || '',
+      applyEnd: policy.applyEnd || '',
+      contentSummary: policy.contentSummary || '', 
+      sourceUrl: policy.sourceUrl || '' 
+    })
     setShowModal(true)
   }
 
   const handleSubmit = async () => {
-    const finalDataStr = JSON.stringify(parsedData)
-    const payload = { ...formData, data: finalDataStr }
+    const payload: PolicyDataRequest = { 
+      externalId: formData.externalId,
+      title: parsedData.title,
+      category: parsedData.category,
+      organization: parsedData.organization,
+      regionCode: parsedData.regionName,
+      target: parsedData.target,
+      supportAmount: parsedData.supportAmount,
+      applyStart: parsedData.applyStart || null,
+      applyEnd: parsedData.applyEnd || null,
+      contentSummary: parsedData.contentSummary,
+      sourceUrl: parsedData.sourceUrl
+    }
 
-    if (!payload.externalId.trim() || !finalDataStr.trim() || finalDataStr === '{}') {
-      toast.error('외부 ID와 정책 정보를 모두 입력해주세요.')
+    if (!payload.externalId.trim()) {
+      toast.error('외부 ID를 입력해주세요.')
       return
     }
 
@@ -122,16 +150,15 @@ export default function PolicyPage() {
             </thead>
             <tbody>
               {policies.map(policy => {
-                const parsedData = parsePolicyData(policy.data)
-                const title = parsedData?.title || '제목 없음'
-                const category = parsedData?.category || '기타'
-                const region = parsedData?.regionName || '전국'
-                const org = parsedData?.organization || '-'
+                const title = policy.title || '제목 없음'
+                const category = policy.category || '기타'
+                const region = policy.regionName || policy.regionCode || '전국'
+                const org = policy.organization || '-'
                 
                 return (
                   <tr key={policy.id}>
-                    <td className={styles.externalId}>{policy.externalId}</td>
-                    <td>
+                    <td className={styles.externalId} data-label="외부 ID">{policy.externalId}</td>
+                    <td data-label="정책 기본정보">
                       <div className={styles.policyPreviewInfo}>
                         <div className={styles.policyPreviewBadges}>
                           <span className={styles.previewBadge}>{region}</span>
@@ -140,15 +167,18 @@ export default function PolicyPage() {
                         <div className={styles.policyPreviewTitle}>{title}</div>
                       </div>
                     </td>
-                    <td>{org}</td>
-                    <td>
+                    <td data-label="지원기관">{org}</td>
+                    <td data-label="수집일 / 등록일">
                       <div className={styles.dateBlock}>
                         <span><small>수집:</small> {formatDate(policy.fetchedAt)}</span>
                         <span><small>등록:</small> {formatDate(policy.createdAt)}</span>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="">
                       <div className={styles.actionGroup}>
+                        {policy.sourceUrl && (
+                          <button className={styles.editBtn} style={{ background: '#3b82f6', color: '#fff', border: 'none' }} onClick={() => window.open(policy.sourceUrl!, '_blank')}>원문 보기</button>
+                        )}
                         <button className={styles.editBtn} onClick={() => openEditModal(policy)}>수정</button>
                         <button className={styles.deleteBtn} onClick={() => handleDelete(policy.id)}>삭제</button>
                       </div>
@@ -186,7 +216,7 @@ export default function PolicyPage() {
               placeholder="예: 양평군 친환경 농업 지원"
             />
           </div>
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div className={styles.formRow3}>
             <div className={styles.formGroup} style={{ flex: 1 }}>
               <label className={styles.formLabel}>지역명</label>
               <input
@@ -212,6 +242,46 @@ export default function PolicyPage() {
                 value={parsedData.organization || ''}
                 onChange={e => setParsedData(prev => ({ ...prev, organization: e.target.value }))}
                 placeholder="예: 농림축산식품부"
+              />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>지원 대상</label>
+              <input
+                className={styles.formInput}
+                value={parsedData.target || ''}
+                onChange={e => setParsedData(prev => ({ ...prev, target: e.target.value }))}
+                placeholder="예: 청년 창업농"
+              />
+            </div>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>지원 금액/규모</label>
+              <input
+                className={styles.formInput}
+                value={parsedData.supportAmount || ''}
+                onChange={e => setParsedData(prev => ({ ...prev, supportAmount: e.target.value }))}
+                placeholder="예: 최대 1,000만원"
+              />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>신청 시작일</label>
+              <input
+                type="date"
+                className={styles.formInput}
+                value={parsedData.applyStart || ''}
+                onChange={e => setParsedData(prev => ({ ...prev, applyStart: e.target.value }))}
+              />
+            </div>
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.formLabel}>신청 마감일</label>
+              <input
+                type="date"
+                className={styles.formInput}
+                value={parsedData.applyEnd || ''}
+                onChange={e => setParsedData(prev => ({ ...prev, applyEnd: e.target.value }))}
               />
             </div>
           </div>

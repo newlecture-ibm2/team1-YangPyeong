@@ -57,3 +57,7 @@ docker-compose.override.yml
 
 # ===== Test Scripts =====
 test_*.py
+
+# Claude Code
+CLAUDE.md
+.claude/

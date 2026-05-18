@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import Script from 'next/script';
 import Link from 'next/link';
 import { useCheckout } from './useCheckout';
@@ -32,8 +32,44 @@ export default function CheckoutPage() {
   );
 }
 
+/** 모바일에서 PortOne 결제 iframe이 viewport를 벗어나지 않도록 강제 조정 */
+function usePortOneMobileFix() {
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.innerWidth > 768) return;
+
+    const applyFix = (el: Element) => {
+      const htmlEl = el as HTMLElement;
+      const style = window.getComputedStyle(htmlEl);
+      if (style.position !== 'fixed') return;
+
+      const iframe = htmlEl.querySelector('iframe');
+      if (!iframe) return;
+
+      htmlEl.style.overflow = 'hidden';
+      htmlEl.style.maxWidth = '100vw';
+      iframe.style.maxWidth = '100vw';
+      iframe.style.width = '100vw';
+      iframe.style.left = '0';
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          applyFix(node as Element);
+        }
+      }
+    });
+
+    observer.observe(document.body, { childList: true });
+    return () => observer.disconnect();
+  }, []);
+}
+
 /** 주문/결제 콘텐츠 */
 function CheckoutContent() {
+  usePortOneMobileFix();
+
   const {
     orderItems,
     shippingForm,

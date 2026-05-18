@@ -94,4 +94,14 @@ public class AdminShopController {
         manageShopUseCase.deleteProduct(productId);
         return ApiResponse.ok(null);
     }
+
+    /**
+     * AI 일괄 자동 심사 실행
+     * POST /api/admin/shop/ai-audit
+     */
+    @PostMapping("/ai-audit")
+    public ApiResponse<Map<String, Integer>> aiAudit() {
+        int approvedCount = manageShopUseCase.aiAuditPendingProducts();
+        return ApiResponse.ok(Map.of("approvedCount", approvedCount));
+    }
 }

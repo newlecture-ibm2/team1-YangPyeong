@@ -28,35 +28,48 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
                 .soilPh(result.getSoilPh())
                 .organicMatter(result.getOrganicMatter())
                 .soilType(result.getSoilType())
+                .recommendMode(result.getRecommendMode() != null ? result.getRecommendMode().name() : null)
                 .generatedAt(result.getGeneratedAt())
                 .build();
 
-        for (CropRecommendation rec : result.getRecommendations()) {
-            RecommendHistoryItemEntity item = RecommendHistoryItemEntity.builder()
-                    .cropId(rec.getCropId())
-                    .cropName(rec.getCropName())
-                    .category(rec.getCategory() != null ? rec.getCategory().getLabel() : null)
-                    .rank(rec.getRank())
-                    .score(rec.getScore())
-                    .soilFitness(rec.getSoilFitness() != null ? rec.getSoilFitness().name() : null)
-                    .soilFitnessPercent(rec.getSoilFitnessPercent())
-                    .priceForecastPercent(rec.getPriceForecastPercent())
-                    .supplyStabilityPercent(rec.getSupplyStabilityPercent())
-                    .supplyStatus(rec.getSupplyStatus() != null ? rec.getSupplyStatus().name() : null)
-                    .expectedRevenuePerKg(rec.getExpectedRevenuePerKg())
-                    .expectedYield(rec.getExpectedYield())
-                    .aiReason(rec.getAiReason())
-                    .difficulty(rec.getDifficulty())
-                    .growthDays(rec.getGrowthDays())
-                    .optimalTemp(rec.getOptimalTemp())
-                    .sowingPeriod(rec.getSowingPeriod())
-                    .harvestPeriod(rec.getHarvestPeriod())
-                    .pests(rec.getPests() != null ? String.join(",", rec.getPests()) : null)
-                    .build();
-            entity.addItem(item);
+        if (result.getCurrentCropAdvices() != null) {
+            for (CropRecommendation rec : result.getCurrentCropAdvices()) {
+                entity.addItem(toItemEntity(rec));
+            }
+        }
+        if (result.getRecommendations() != null) {
+            for (CropRecommendation rec : result.getRecommendations()) {
+                entity.addItem(toItemEntity(rec));
+            }
         }
 
         historyRepository.save(entity);
+    }
+
+    private RecommendHistoryItemEntity toItemEntity(CropRecommendation rec) {
+        return RecommendHistoryItemEntity.builder()
+                .cropId(rec.getCropId())
+                .cropName(rec.getCropName())
+                .category(rec.getCategory() != null ? rec.getCategory().getLabel() : null)
+                .rank(rec.getRank())
+                .score(rec.getScore())
+                .soilFitness(rec.getSoilFitness() != null ? rec.getSoilFitness().name() : null)
+                .soilFitnessPercent(rec.getSoilFitnessPercent())
+                .priceForecastPercent(rec.getPriceForecastPercent())
+                .supplyStabilityPercent(rec.getSupplyStabilityPercent())
+                .supplyStatus(rec.getSupplyStatus() != null ? rec.getSupplyStatus().name() : null)
+                .expectedRevenuePerKg(rec.getExpectedRevenuePerKg())
+                .expectedYield(rec.getExpectedYield())
+                .aiReason(rec.getAiReason())
+                .difficulty(rec.getDifficulty())
+                .growthDays(rec.getGrowthDays())
+                .optimalTemp(rec.getOptimalTemp())
+                .sowingPeriod(rec.getSowingPeriod())
+                .harvestPeriod(rec.getHarvestPeriod())
+                .pests(rec.getPests() != null ? String.join(",", rec.getPests()) : null)
+                .adviceType(rec.getAdviceType() != null ? rec.getAdviceType().name() : null)
+                .mismatchNote(rec.getMismatchNote())
+                .build();
     }
 
     @Override
@@ -73,29 +86,18 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
     }
 
     private RecommendResult mapToDomain(RecommendHistoryEntity entity) {
-        List<CropRecommendation> recommendations = entity.getItems().stream()
-                .map(item -> CropRecommendation.builder()
-                        .rank(item.getRank())
-                        .cropId(item.getCropId())
-                        .cropName(item.getCropName())
-                        .category(CropCategory.fromLabel(item.getCategory()))
-                        .score(item.getScore())
-                        .soilFitness(safeParseEnum(SoilFitness.class, item.getSoilFitness()))
-                        .soilFitnessPercent(item.getSoilFitnessPercent())
-                        .priceForecastPercent(item.getPriceForecastPercent())
-                        .supplyStabilityPercent(item.getSupplyStabilityPercent())
-                        .supplyStatus(safeParseEnum(SupplyStatus.class, item.getSupplyStatus()))
-                        .expectedRevenuePerKg(item.getExpectedRevenuePerKg())
-                        .expectedYield(item.getExpectedYield())
-                        .aiReason(item.getAiReason())
-                        .difficulty(item.getDifficulty())
-                        .growthDays(item.getGrowthDays())
-                        .optimalTemp(item.getOptimalTemp())
-                        .sowingPeriod(item.getSowingPeriod())
-                        .harvestPeriod(item.getHarvestPeriod())
-                        .pests(parsePests(item.getPests()))
-                        .build())
-                .collect(Collectors.toList());
+        List<CropRecommendation> currentCropAdvices = new ArrayList<>();
+        List<CropRecommendation> recommendations = new ArrayList<>();
+
+        for (RecommendHistoryItemEntity item : entity.getItems()) {
+            CropRecommendation rec = mapItemToRecommendation(item);
+            AdviceType type = AdviceType.fromString(item.getAdviceType());
+            if (type == AdviceType.IN_SEASON_COACHING || type == AdviceType.PLANNED_CROP) {
+                currentCropAdvices.add(rec);
+            } else {
+                recommendations.add(rec);
+            }
+        }
 
         return RecommendResult.builder()
                 .farmId(entity.getFarmId())
@@ -105,12 +107,39 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
                 .soilPh(entity.getSoilPh())
                 .organicMatter(entity.getOrganicMatter())
                 .soilType(entity.getSoilType())
-                .generatedAt(entity.getGeneratedAt())
+                .recommendMode(RecommendMode.fromString(entity.getRecommendMode()))
+                .currentCropAdvices(currentCropAdvices)
                 .recommendations(recommendations)
+                .generatedAt(entity.getGeneratedAt())
                 .build();
     }
 
-    /** 쉼표 구분 문자열 → List<String> 변환 */
+    private CropRecommendation mapItemToRecommendation(RecommendHistoryItemEntity item) {
+        return CropRecommendation.builder()
+                .rank(item.getRank())
+                .cropId(item.getCropId())
+                .cropName(item.getCropName())
+                .category(CropCategory.fromLabel(item.getCategory()))
+                .score(item.getScore())
+                .soilFitness(safeParseEnum(SoilFitness.class, item.getSoilFitness()))
+                .soilFitnessPercent(item.getSoilFitnessPercent())
+                .priceForecastPercent(item.getPriceForecastPercent())
+                .supplyStabilityPercent(item.getSupplyStabilityPercent())
+                .supplyStatus(safeParseEnum(SupplyStatus.class, item.getSupplyStatus()))
+                .expectedRevenuePerKg(item.getExpectedRevenuePerKg())
+                .expectedYield(item.getExpectedYield())
+                .aiReason(item.getAiReason())
+                .difficulty(item.getDifficulty())
+                .growthDays(item.getGrowthDays())
+                .optimalTemp(item.getOptimalTemp())
+                .sowingPeriod(item.getSowingPeriod())
+                .harvestPeriod(item.getHarvestPeriod())
+                .pests(parsePests(item.getPests()))
+                .adviceType(AdviceType.fromString(item.getAdviceType()))
+                .mismatchNote(item.getMismatchNote())
+                .build();
+    }
+
     private List<String> parsePests(String pests) {
         if (pests == null || pests.isBlank()) return new ArrayList<>();
         return Arrays.stream(pests.split(","))
@@ -119,7 +148,6 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    /** enum 문자열 → enum 안전 변환 (불일치 시 null 반환) */
     private <E extends Enum<E>> E safeParseEnum(Class<E> enumClass, String value) {
         if (value == null) return null;
         try {

@@ -21,6 +21,11 @@ export default function useSignUp() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [securityQuestion, setSecurityQuestion] = useState('');
   const [securityAnswer, setSecurityAnswer] = useState('');
+  const [agreements, setAgreements] = useState({
+    termsOfService: false,
+    privacyPolicy: false,
+    marketing: false,
+  });
 
   // 유효성 검사 상태
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -119,6 +124,20 @@ export default function useSignUp() {
     }
   }, [name, email, phone]);
 
+  /** 약관 개별 체크 */
+  const toggleAgreement = useCallback((key: keyof typeof agreements) => {
+    setAgreements(prev => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
+  /** 약관 전체 체크 */
+  const toggleAllAgreements = useCallback((checked: boolean) => {
+    setAgreements({
+      termsOfService: checked,
+      privacyPolicy: checked,
+      marketing: checked,
+    });
+  }, []);
+
   // Step 1 유효성 검사
   const validateStep1 = useCallback(() => {
     const errors: Record<string, string> = {};
@@ -139,6 +158,12 @@ export default function useSignUp() {
     const phoneErr = validatePhone(phone);
     if (phoneErr) errors.phone = phoneErr;
 
+    if (!agreements.termsOfService) {
+      errors.agreements = '이용약관에 동의해주세요.';
+    } else if (!agreements.privacyPolicy) {
+      errors.agreements = '개인정보 처리방침에 동의해주세요.';
+    }
+
     setFieldErrors(prev => ({ ...prev, ...errors }));
     setTouched({ name: true, email: true, phone: true });
 
@@ -154,7 +179,7 @@ export default function useSignUp() {
 
     setError('');
     return true;
-  }, [name, email, phone, emailStatus]);
+  }, [name, email, phone, emailStatus, agreements]);
 
   const validateStep2 = useCallback(() => {
     if (password.length < 8) { setError('비밀번호는 8자 이상이어야 합니다.'); return false; }
@@ -218,6 +243,9 @@ export default function useSignUp() {
           phone: phone.replace(/[\s-]/g, '') || null,
           securityQuestion,
           securityAnswer,
+          termsOfServiceAgreed: agreements.termsOfService,
+          privacyPolicyAgreed: agreements.privacyPolicy,
+          marketingAgreed: agreements.marketing,
         },
       });
 
@@ -231,7 +259,7 @@ export default function useSignUp() {
     } finally {
       setLoading(false);
     }
-  }, [email, password, name, phone, securityQuestion, securityAnswer]);
+  }, [email, password, name, phone, securityQuestion, securityAnswer, agreements]);
 
   return {
     step,
@@ -258,5 +286,8 @@ export default function useSignUp() {
     setShowReactivateModal,
     handleReactivate,
     reactivated,
+    agreements,
+    toggleAgreement,
+    toggleAllAgreements,
   };
 }

@@ -87,7 +87,7 @@ export function useFarmBot() {
       onArrive();
       return;
     }
-    
+
     // 먼저 요소가 화면 중앙에 오도록 부드럽게 스크롤합니다
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
@@ -104,20 +104,29 @@ export function useFarmBot() {
 
       setHighlightRect(rect);
 
-      const targetX = rect.left + rect.width / 2 - CHARACTER_SIZE / 2;
+      // 모바일에서는 실제 렌더 크기(70px)로 중앙 계산
+      const isMobile = window.innerWidth <= 768;
+      const charSize = isMobile ? 70 : CHARACTER_SIZE;
+
+      const targetX = rect.left + rect.width / 2 - charSize / 2;
       const targetY = rect.bottom + 12;
 
       // 방향 결정
       setFacingRight(targetX > position.x);
 
       setBotState('walking');
-      const finalY = Math.min(targetY, window.innerHeight - CHARACTER_SIZE - 20);
+      const finalY = Math.min(targetY, window.innerHeight - charSize - 20);
       setPosition({ x: targetX, y: finalY });
       setBubbleAbove(finalY > window.innerHeight / 2);
 
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
         setBotState('idle');
+        // 캐릭터 도착 시점에 rect 재측정 (스크롤 완료 후 정확한 위치)
+        const finalRect = el.getBoundingClientRect();
+        if (finalRect.width > 0 || finalRect.height > 0) {
+          setHighlightRect(finalRect);
+        }
         onArrive();
       }, 1350); // 총 1850ms 중 스크롤 대기 시간 500ms를 뺀 나머지 시간
     }, 500);
@@ -364,7 +373,7 @@ export function useFarmBot() {
 
   // 가이드 중 스크롤 잠금
   useEffect(() => {
-    if (mode === 'guiding' || mode === 'asking' || mode === 'chatting') {
+    if (mode === 'guiding' || mode === 'chatting') {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';

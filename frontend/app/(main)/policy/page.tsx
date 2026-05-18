@@ -12,6 +12,7 @@ import FilterBar from '@/components/common/FilterBar/FilterBar';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import SearchInput from '@/components/common/SearchInput/SearchInput';
 import Badge from '@/components/common/Badge/Badge';
+import Pagination from '@/components/common/Pagination';
 import Link from 'next/link';
 
 import styles from './page.module.css';
@@ -306,63 +307,6 @@ function LoadingSkeleton() {
           <div className={styles.skeletonLine} />
         </div>
       ))}
-    </div>
-  );
-}
-
-// ── 페이지네이션 ──
-
-function Pagination({
-  currentPage,
-  totalPages,
-  onPageChange,
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) {
-  const maxVisible = 5;
-  let startPage = Math.max(0, currentPage - Math.floor(maxVisible / 2));
-  const endPage = Math.min(totalPages, startPage + maxVisible);
-  if (endPage - startPage < maxVisible) {
-    startPage = Math.max(0, endPage - maxVisible);
-  }
-
-  const pages = Array.from(
-    { length: endPage - startPage },
-    (_, i) => startPage + i
-  );
-
-  return (
-    <div className={styles.pagination}>
-      <button
-        className={styles.pageButton}
-        disabled={currentPage === 0}
-        onClick={() => onPageChange(currentPage - 1)}
-        aria-label="이전 페이지"
-      >
-        ‹
-      </button>
-      {pages.map((page) => (
-        <button
-          key={page}
-          className={`${styles.pageButton} ${
-            page === currentPage ? styles.pageButtonActive : ''
-          }`}
-          onClick={() => onPageChange(page)}
-          aria-label={`${page + 1} 페이지`}
-        >
-          {page + 1}
-        </button>
-      ))}
-      <button
-        className={styles.pageButton}
-        disabled={currentPage >= totalPages - 1}
-        onClick={() => onPageChange(currentPage + 1)}
-        aria-label="다음 페이지"
-      >
-        ›
-      </button>
     </div>
   );
 }

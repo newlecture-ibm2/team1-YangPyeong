@@ -11,6 +11,7 @@ import com.farmbalance.farm.adapter.in.web.dto.FarmUpdateRequest;
 import com.farmbalance.farm.application.port.in.LoadFarmUseCase;
 import com.farmbalance.farm.application.port.in.RegisterFarmCommand;
 import com.farmbalance.farm.application.port.in.RegisterFarmUseCase;
+import com.farmbalance.farm.application.port.in.AnalyzeFarmDocumentUseCase;
 import com.farmbalance.farm.domain.Farm;
 import com.farmbalance.global.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -34,27 +35,34 @@ public class FarmController {
     private final UpdateFarmUseCase updateFarmUseCase;
     private final DeleteFarmUseCase deleteFarmUseCase;
 
-    @PostMapping
+    private final AnalyzeFarmDocumentUseCase analyzeFarmDocumentUseCase;
+
+    @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<FarmRegisterResponse>> registerFarm(
             @AuthenticationPrincipal Long userId,
-            @Valid @RequestBody FarmRegisterRequest request) {
+            @RequestPart("request") @Valid FarmRegisterRequest request,
+            @RequestPart(value = "file", required = false) org.springframework.web.multipart.MultipartFile file) {
         
         System.out.println("[DEBUG] 농장 등록 요청 시작");
         System.out.println("[DEBUG] userId: " + userId);
-        System.out.println("[DEBUG] name: " + request.getName());
-        System.out.println("[DEBUG] address: " + request.getAddress());
-        System.out.println("[DEBUG] bjdCode: " + request.getBjdCode());
-        System.out.println("[DEBUG] mainNo: " + request.getMainNo());
-        System.out.println("[DEBUG] subNo: " + request.getSubNo());
-        System.out.println("[DEBUG] area: " + request.getArea());
         
         // TODO: 운영 전 제거 — 개발 환경에서 인증 없이 테스트하기 위한 임시 코드
         if (userId == null) {
             userId = 9001L;
         }
 
+        // 1. 파일이 있으면 OCR 분석 수행
+        com.farmbalance.farm.domain.FarmDocumentData documentData = null;
+        if (file != null && !file.isEmpty()) {
+            documentData = analyzeFarmDocumentUseCase.analyzeDocument(file);
+            
+            // AI 서버가 반려한 경우 (유효하지 않은 문서)
+            if (documentData != null && documentData.getIsValid() != null && !documentData.getIsValid()) {
+                throw new IllegalArgumentException("유효하지 않은 문서입니다: " + documentData.getErrorMessage());
+            }
+        }
+
         // DTO -> Command 매핑
-        // 재배 등록 상세 정보 변환
         List<RegisterFarmCommand.CultivationDetail> cultivationDetails = null;
         if (request.getCultivations() != null && !request.getCultivations().isEmpty()) {
             cultivationDetails = request.getCultivations().stream()
@@ -78,6 +86,7 @@ public class FarmController {
                 .subNo(request.getSubNo())
                 .documents(request.getDocuments() != null ? 
                         request.getDocuments().stream().map(com.farmbalance.farm.adapter.in.web.dto.FarmDocumentDto::toDomain).collect(java.util.stream.Collectors.toList()) : null)
+                .documentData(documentData)
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
                 .soilType(request.getSoilType())
@@ -173,6 +182,14 @@ public class FarmController {
                 .soilType(request.getSoilType())
                 .ph(request.getPh())
                 .organicMatter(request.getOrganicMatter())
+                .cultivations(request.getCultivations() != null ? 
+                        request.getCultivations().stream()
+                                .map(c -> RegisterFarmCommand.CultivationDetail.builder()
+                                        .cropId(c.getCropId())
+                                        .area(c.getArea())
+                                        .expectedYield(c.getExpectedYield())
+                                        .build())
+                                .collect(java.util.stream.Collectors.toList()) : null)
                 .build();
 
         Farm updatedFarm = updateFarmUseCase.updateFarm(command);

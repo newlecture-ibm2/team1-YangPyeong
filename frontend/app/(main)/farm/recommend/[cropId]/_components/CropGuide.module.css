@@ -1,0 +1,46 @@
+/* CropGuide — 상세 가이드 버튼 스타일 */
+
+.detailBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1.5px dashed var(--color-primary);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.detailBtn:hover {
+  background: var(--color-primary);
+  color: #fff;
+  border-style: solid;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.2);
+}
+
+.detailBtnIcon {
+  font-size: 20px;
+  transition: transform 0.3s ease;
+}
+
+.detailBtn:hover .detailBtnIcon {
+  transform: scale(1.15);
+}
+
+.detailBtnArrow {
+  font-size: 18px;
+  transition: transform 0.3s ease;
+}
+
+.detailBtn:hover .detailBtnArrow {
+  transform: translateX(4px);
+}

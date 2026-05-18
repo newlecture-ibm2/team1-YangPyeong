@@ -2,11 +2,19 @@
 
 import Link from 'next/link';
 import { usePolicyRecommend } from '../_lib/usePolicyRecommend';
-import PolicyRecommendGuideBanner from '@/components/common/PolicyRecommendGuideBanner/PolicyRecommendGuideBanner';
+import { useMyFarms } from '../../farm/useFarm';
+import MockupOverlay from '@/components/common/MockupOverlay/MockupOverlay';
+import { DUMMY_POLICIES } from '@/lib/preview-data';
 import styles from './page.module.css';
 
 export default function PolicyRecommendPage() {
-  const { data, isLoading, error, statusCode } = usePolicyRecommend();
+  const { data, isLoading: isRecommendLoading, error, statusCode } = usePolicyRecommend();
+  const { farms: allFarms, isLoading: isFarmsLoading } = useMyFarms();
+
+  const approvedFarms = allFarms.filter(f => f.certificationStatus === 'APPROVED');
+  const hasUnapprovedFarms = allFarms.length > approvedFarms.length;
+  const isPreviewMode = !isFarmsLoading && (!data && (statusCode === 401 || statusCode === 403) || approvedFarms.length === 0);
+  const isLoading = isRecommendLoading || isFarmsLoading;
 
   const getScoreClass = (score: number) => {
     if (score >= 80) return styles.matchBadgeHigh;
@@ -32,36 +40,55 @@ export default function PolicyRecommendPage() {
           </div>
         )}
 
-        {!isLoading && error && (
+        {isPreviewMode && !isLoading && (
+          <MockupOverlay hasUnapprovedFarms={hasUnapprovedFarms}>
+            <div className={styles.resultContainer}>
+              <div className={styles.policyList}>
+                {DUMMY_POLICIES.map((policy) => (
+                  <div key={policy.id} className={styles.policyCard}>
+                    <div className={styles.policyHeader}>
+                      <div className={`${styles.matchBadge} ${getScoreClass(95)}`}>
+                        <span className={styles.scoreText}>95점</span>
+                        <span className={styles.scoreLabel}>매우 적합</span>
+                      </div>
+                      <span className={styles.categoryBadge}>지원금</span>
+                    </div>
+                    <h4 className={styles.policyTitle}>{policy.title}</h4>
+                    <p className={styles.policySummary}>양평군 거주 농업인을 위한 맞춤형 지원 정책(미리보기)입니다.</p>
+                    
+                    <div className={styles.policyMeta}>
+                      <span className={styles.metaItem}>🏢 양평군청</span>
+                      {policy.amount && <span className={styles.metaItem}>💰 {policy.amount}</span>}
+                      {policy.deadline && <span className={styles.metaItem}>🗓 마감일: {policy.deadline}</span>}
+                    </div>
+
+                    <div className={styles.reasonsBox}>
+                      <p className={styles.reasonsTitle}>🤖 AI 추천 분석</p>
+                      <div className={styles.reasonsList} style={{ fontSize: '0.9rem', lineHeight: '1.5', marginTop: '0.5rem', color: 'var(--color-text)' }}>
+                        현재 농장 규모와 재배 작물을 분석한 결과, 이 정책에 지원할 경우 높은 확률로 혜택을 받을 수 있습니다.
+                      </div>
+                    </div>
+
+                    <div className={styles.detailButton}>자세히 보기</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </MockupOverlay>
+        )}
+
+        {!isPreviewMode && !isLoading && error && (
           <div className={styles.stateContainer}>
             <span className={styles.icon}>🔒</span>
-            {statusCode === 401 ? (
-              <>
-                <h2 className={styles.stateTitle}>맞춤 정책 추천은 로그인이 필요합니다</h2>
-                <p className={styles.stateMessage}>등록된 농장과 재배 작물 정보를 기반으로 맞춤 정책을 추천하기 위해 로그인이 필요합니다.</p>
-                <div className={styles.buttonGroup}>
-                  <Link href="/login" className={styles.actionButton}>로그인하러 가기</Link>
-                  <Link href="/policy" className={styles.secondaryButton}>전체 정책 보기</Link>
-                </div>
-              </>
-            ) : statusCode === 403 ? (
-              <PolicyRecommendGuideBanner userRole="GENERAL" farmCount={0} variant="page" />
-            ) : (
-              <>
-                <h2 className={styles.stateTitle}>알 수 없는 오류가 발생했습니다</h2>
-                <p className={styles.stateMessage}>{error}</p>
-                <Link href="/policy" className={styles.actionButton}>정책 목록으로 돌아가기</Link>
-              </>
-            )}
+            <h2 className={styles.stateTitle}>알 수 없는 오류가 발생했습니다</h2>
+            <p className={styles.stateMessage}>{error}</p>
+            <Link href="/policy" className={styles.actionButton}>정책 목록으로 돌아가기</Link>
           </div>
         )}
 
-        {!isLoading && !error && data && (
+        {!isPreviewMode && !isLoading && !error && data && (
           <div className={styles.resultContainer}>
-            {data.farmerProfile.farmCount === 0 ? (
-              // 농장이 하나도 없을 때는 추천 리스트나 프로필을 숨기고 등록 유도 가이드만 표시
-              <PolicyRecommendGuideBanner userRole="FARMER" farmCount={0} variant="page" />
-            ) : (
+            {data.farmerProfile.farmCount > 0 ? (
               // 농장이 1개 이상 있을 때 정상적으로 추천 결과 표시
               <>
                 {/* 1. 프로필 요약 카드 */}
@@ -119,7 +146,7 @@ export default function PolicyRecommendPage() {
                       </div>
                     )}
                     <div className={styles.policyList}>
-                      {data.recommendedPolicies.map((policy) => (
+                      {[...data.recommendedPolicies].sort((a, b) => b.matchScore - a.matchScore).map((policy) => (
                         <div key={policy.policyId} className={styles.policyCard}>
                           <div className={styles.policyHeader}>
                             <div className={`${styles.matchBadge} ${getScoreClass(policy.matchScore)}`}>
@@ -163,6 +190,13 @@ export default function PolicyRecommendPage() {
                   </>
                 )}
               </>
+            ) : (
+              <div className={styles.stateContainer}>
+                <span className={styles.icon}>🌱</span>
+                <h2 className={styles.stateTitle}>등록된 농장이 없습니다</h2>
+                <p className={styles.stateMessage}>농장을 먼저 등록하면 맞춤 정책을 추천받을 수 있습니다.</p>
+                <Link href="/farm/register" className={styles.actionButton}>농장 등록하기</Link>
+              </div>
             )}
           </div>
         )}

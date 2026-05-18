@@ -4,12 +4,19 @@ import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import type useSignUp from '../useSignUp';
 import styles from '../page.module.css';
+import LegalModal from '@/components/common/LegalModal/LegalModal';
+import { useState } from 'react';
 
 interface Step1Props {
   hook: ReturnType<typeof useSignUp>;
 }
 
 export default function Step1BasicInfo({ hook }: Step1Props) {
+  const [legalModal, setLegalModal] = useState<{ open: boolean; type: 'terms' | 'privacy' }>({
+    open: false,
+    type: 'terms',
+  });
+
   return (
     <div className={styles.stepContent}>
       <div className={styles.fieldGroup}>
@@ -53,10 +60,74 @@ export default function Step1BasicInfo({ hook }: Step1Props) {
           <div className={styles.fieldError}>{hook.fieldErrors.phone}</div>
         )}
       </div>
+      
+      <div className={styles.agreementGroup}>
+        <div className={`${styles.agreementItem} ${styles.allAgreement}`}>
+          <input 
+            type="checkbox" 
+            id="all-agree" 
+            checked={hook.agreements.termsOfService && hook.agreements.privacyPolicy && hook.agreements.marketing}
+            onChange={(e) => hook.toggleAllAgreements(e.target.checked)}
+          />
+          <label htmlFor="all-agree" className={styles.agreementLabel}>약관에 모두 동의합니다</label>
+        </div>
+
+        <div className={styles.agreementItem}>
+          <input 
+            type="checkbox" 
+            id="agree-terms" 
+            checked={hook.agreements.termsOfService}
+            onChange={() => hook.toggleAgreement('termsOfService')}
+          />
+          <label htmlFor="agree-terms" className={styles.agreementLabel}>
+            <em>[필수]</em> 이용약관 동의
+          </label>
+          <button type="button" className={styles.viewLink} onClick={() => setLegalModal({ open: true, type: 'terms' })}>
+            보기
+          </button>
+        </div>
+
+        <div className={styles.agreementItem}>
+          <input 
+            type="checkbox" 
+            id="agree-privacy" 
+            checked={hook.agreements.privacyPolicy}
+            onChange={() => hook.toggleAgreement('privacyPolicy')}
+          />
+          <label htmlFor="agree-privacy" className={styles.agreementLabel}>
+            <em>[필수]</em> 개인정보 수집 및 이용 동의
+          </label>
+          <button type="button" className={styles.viewLink} onClick={() => setLegalModal({ open: true, type: 'privacy' })}>
+            보기
+          </button>
+        </div>
+
+        <div className={styles.agreementItem}>
+          <input 
+            type="checkbox" 
+            id="agree-marketing" 
+            checked={hook.agreements.marketing}
+            onChange={() => hook.toggleAgreement('marketing')}
+          />
+          <label htmlFor="agree-marketing" className={styles.agreementLabel}>
+            <span>[선택]</span> 마케팅 정보 수신 동의
+          </label>
+        </div>
+
+        {hook.touched.agreements && hook.fieldErrors.agreements && (
+          <div className={styles.fieldError}>{hook.fieldErrors.agreements}</div>
+        )}
+      </div>
 
       <Button type="button" variant="dark" size="lg" fullWidth onClick={hook.handleNext}>
         다음
       </Button>
+
+      <LegalModal 
+        isOpen={legalModal.open}
+        onClose={() => setLegalModal({ ...legalModal, open: false })}
+        type={legalModal.type}
+      />
     </div>
   );
 }

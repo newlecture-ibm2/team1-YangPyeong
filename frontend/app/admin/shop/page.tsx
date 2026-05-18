@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Badge, Dropdown, SearchInput, Spinner, FilterBar } from '@/components'
 import { useToast } from '@/components'
+import { DEFAULT_PRODUCT_IMAGE } from '@/lib/constants'
 import styles from './Shop.module.css'
 import type { AdminProduct } from '../_lib/shop.types'
-import { fetchProducts, updateProductStatus, deleteAdminProduct } from '../_lib/shop.api'
+import { fetchProducts, updateProductStatus, deleteAdminProduct, aiAuditProducts } from '../_lib/shop.api'
 
 function formatPrice(price: number): string {
   return price.toLocaleString() + '원'
@@ -71,6 +72,7 @@ export default function ShopPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
   const [pendingCount, setPendingCount] = useState(0)
+  const [isAuditing, setIsAuditing] = useState(false)
 
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('ALL')
@@ -143,6 +145,20 @@ export default function ShopPage() {
       loadData()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '상품 삭제 실패')
+    }
+  }
+
+  const handleAiAudit = async () => {
+    if (!confirm('현재 대기 중인 신규 신청 상품들을 AI가 일괄 심사합니다. 진행하시겠습니까?')) return
+    setIsAuditing(true)
+    try {
+      const res = await aiAuditProducts()
+      toast.success(`총 ${res.approvedCount}개의 상품이 정상으로 확인되어 자동 승인되었습니다!`)
+      loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'AI 자동 심사 실패')
+    } finally {
+      setIsAuditing(false)
     }
   }
 
@@ -222,16 +238,28 @@ export default function ShopPage() {
         </button>
       </div>
 
-      <div className={styles.subTabs}>
-        {SUB_TABS[activeTab].map(tab => (
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div className={styles.subTabs} style={{ marginBottom: 0 }}>
+          {SUB_TABS[activeTab].map(tab => (
+            <button
+              key={tab.value}
+              className={`${styles.subTab} ${statusFilter === tab.value ? styles.subTabActive : ''}`}
+              onClick={() => handleStatusFilterChange(tab.value)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {activeTab === 'REVIEW' && (
           <button
-            key={tab.value}
-            className={`${styles.subTab} ${statusFilter === tab.value ? styles.subTabActive : ''}`}
-            onClick={() => handleStatusFilterChange(tab.value)}
+            className={`${styles.actionBtn} ${styles.btnApprove}`}
+            style={{ padding: '8px 16px', fontSize: '14px', background: 'var(--color-primary)', color: 'white' }}
+            onClick={handleAiAudit}
+            disabled={isAuditing}
           >
-            {tab.label}
+            {isAuditing ? 'AI 심사 중...' : '🤖 AI 일괄 자동 심사'}
           </button>
-        ))}
+        )}
       </div>
 
       <FilterBar
@@ -287,18 +315,28 @@ export default function ShopPage() {
 
                   return (
                     <tr key={product.id}>
-                      <td>#{product.id}</td>
-                      <td className={styles.productName}>
-                        {product.status === 'PENDING' && <span title="신규 요청" style={{ marginRight: '4px' }}>🆕</span>}
-                        {product.name}
+                      <td data-label="No">#{product.id}</td>
+                      <td data-label="상품명">
+                        <div className={styles.productCell}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={product.imageUrl || DEFAULT_PRODUCT_IMAGE}
+                            alt={product.name}
+                            className={styles.productThumbnail}
+                          />
+                          <div className={styles.productName}>
+                            {product.status === 'PENDING' && <span title="신규 요청" style={{ marginRight: '4px' }}>🆕</span>}
+                            {product.name}
+                          </div>
+                        </div>
                       </td>
-                      <td>{product.categoryName || '-'}</td>
-                      <td>{product.sellerName}</td>
-                      <td className={styles.priceCell}>{formatPrice(product.price)}</td>
-                      <td>{product.stock}개</td>
-                      <td><Badge variant={badge.variant as any}>{badge.label}</Badge></td>
-                      <td>{formatDate(product.createdAt)}</td>
-                      <td>{renderActionButtons(product)}</td>
+                      <td data-label="카테고리">{product.categoryName || '-'}</td>
+                      <td data-label="판매자">{product.sellerName}</td>
+                      <td className={styles.priceCell} data-label="판매가">{formatPrice(product.price)}</td>
+                      <td data-label="재고">{product.stock}개</td>
+                      <td data-label="상태"><Badge variant={badge.variant as any}>{badge.label}</Badge></td>
+                      <td data-label="등록일">{formatDate(product.createdAt)}</td>
+                      <td data-label="">{renderActionButtons(product)}</td>
                     </tr>
                   )
                 })

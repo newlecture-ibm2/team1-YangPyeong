@@ -14,7 +14,9 @@ export const DUMMY_FARM = {
     organicMatter: "적정",
     nitrogen: "부족",
     moisture: "22%"
-  }
+  },
+  cropNames: ["감자", "양파"],
+  certificationStatus: "APPROVED"
 };
 
 // 2. 작물 등록 더미 데이터

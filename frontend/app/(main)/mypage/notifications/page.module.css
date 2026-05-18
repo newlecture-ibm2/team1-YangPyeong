@@ -4,6 +4,8 @@
   flex-direction: column;
   gap: 16px;
   padding: 8px 0;
+  min-width: 0;
+  width: 100%;
 }
 
 .header {
@@ -28,6 +30,8 @@
   padding: 4px;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  min-width: 0;
+  width: 100%;
 }
 
 .filters::-webkit-scrollbar {
@@ -171,4 +175,45 @@
   margin-top: 32px;
   display: flex;
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .notificationCard {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .iconWrapper {
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+  }
+
+  .cardTitle {
+    font-size: 14px;
+  }
+
+  .message {
+    font-size: 13px;
+  }
+
+  .topRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .paginationWrapper {
+    margin-top: 20px;
+  }
 }

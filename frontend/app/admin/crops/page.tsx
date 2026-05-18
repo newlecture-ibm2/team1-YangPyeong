@@ -67,7 +67,7 @@ export default function CropsPage() {
   const openCreateCropModal = () => { setEditingCrop(null); setShowCropModal(true) }
   const openEditCropModal = async (crop: AdminCrop) => { 
     if (crop.dataSource === 'NONGSARO') {
-      const confirmed = await showConfirm(`"${crop.name}" 작물은 농사로 API 연동 데이터입니다. 정말 수정하시겠습니까?\n(추후 동기화 시 설정에 따라 덮어쓰기될 수 있습니다)`)
+      const confirmed = await showConfirm(`"${crop.name}" 작물은 외부 작물 연동 데이터입니다. 정말 수정하시겠습니까?\n(추후 동기화 시 설정에 따라 덮어쓰기될 수 있습니다)`)
       if (!confirmed) return
     }
     setEditingCrop(crop)
@@ -96,7 +96,7 @@ export default function CropsPage() {
   const handleDeleteCrop = async (crop: AdminCrop) => {
     const isNongsaro = crop.dataSource === 'NONGSARO'
     const warningText = isNongsaro 
-      ? `"${crop.name}" 작물은 농사로 API 연동 데이터입니다. 정말 삭제하시겠습니까?\n(추후 동기화 시 설정에 따라 덮어쓰기될 수 있습니다)`
+      ? `"${crop.name}" 작물은 외부 작물 연동 데이터입니다. 정말 삭제하시겠습니까?\n(추후 동기화 시 설정에 따라 덮어쓰기될 수 있습니다)`
       : `"${crop.name}" 작물을 삭제하시겠습니까?`
       
     const confirmed = await showConfirm(warningText)
@@ -114,7 +114,7 @@ export default function CropsPage() {
   const openCreateCategoryModal = () => { setEditingCategory(null); setShowCategoryModal(true) }
   const openEditCategoryModal = async (cat: AdminCropCategory) => { 
     if (cat.dataSource === 'NONGSARO') {
-      const confirmed = await showConfirm(`"${cat.name}" 카테고리는 농사로 API 연동 데이터입니다. 정말 수정하시겠습니까?\n(추후 동기화 시 설정에 따라 덮어쓰기될 수 있습니다)`)
+      const confirmed = await showConfirm(`"${cat.name}" 카테고리는 외부 작물 연동 데이터입니다. 정말 수정하시겠습니까?\n(추후 동기화 시 설정에 따라 덮어쓰기될 수 있습니다)`)
       if (!confirmed) return
     }
     setEditingCategory(cat)
@@ -143,7 +143,7 @@ export default function CropsPage() {
   const handleDeleteCategory = async (cat: AdminCropCategory) => {
     const isNongsaro = cat.dataSource === 'NONGSARO'
     const warningText = isNongsaro
-      ? `"${cat.name}" 카테고리는 농사로 API 연동 데이터입니다. 정말 삭제하시겠습니까?\n(추후 동기화 시 설정에 따라 덮어쓰기될 수 있습니다)`
+      ? `"${cat.name}" 카테고리는 외부 작물 연동 데이터입니다. 정말 삭제하시겠습니까?\n(추후 동기화 시 설정에 따라 덮어쓰기될 수 있습니다)`
       : `"${cat.name}" 카테고리를 삭제하시겠습니까?`
 
     const confirmed = await showConfirm(warningText)
@@ -174,12 +174,12 @@ export default function CropsPage() {
       }
       
       if (!nongsaroStatus.isActive) {
-        throw new Error('농사로 API 수집이 비활성화되어 있습니다. 관리자 데이터 탭에서 활성화해주세요.')
+        throw new Error('외부 작물 API 수집이 비활성화되어 있습니다. 관리자 데이터 탭에서 활성화해주세요.')
       }
 
       // 2. 동기화 트리거
       await triggerApiSync(nongsaroStatus.id, syncMode)
-      showToast(`농사로 API 동기화가 성공적으로 실행되었습니다. (${syncMode} 모드)`, 'success')
+      showToast(`외부 작물 데이터 동기화가 성공적으로 실행되었습니다. (${syncMode} 모드)`, 'success')
       
       // 3. 완료 후 데이터 재로딩
       loadData()
@@ -194,7 +194,7 @@ export default function CropsPage() {
     <div className={styles.container}>
       {/* 헤더 */}
       <div className={styles.header}>
-        <h1 className={styles.title}>작물 기준정보 관리</h1>
+        <h1 className={styles.title}>작물 정보 관리</h1>
         <div className={styles.headerActions}>
           <Button 
             variant="outline" 
@@ -202,7 +202,7 @@ export default function CropsPage() {
             disabled={syncing}
             style={{ marginRight: '10px' }}
           >
-            {syncing ? '동기화 중...' : '🔄 농사로 API 동기화'}
+            {syncing ? '동기화 중...' : '🔄 외부 작물 데이터 동기화'}
           </Button>
           {activeTab === 'crops' && (
             <Button variant="primary" onClick={openCreateCropModal}>＋ 작물 추가</Button>
@@ -262,7 +262,7 @@ export default function CropsPage() {
             </div>
           ) : (
             <div className={styles.tableWrapper}>
-              <table className={styles.table}>
+              <table className={`${styles.table} ${styles.cropsTable}`}>
                 <thead>
                   <tr>
                     <th>작물명</th>
@@ -274,19 +274,19 @@ export default function CropsPage() {
                 <tbody>
                   {crops.map((crop) => (
                     <tr key={crop.id}>
-                      <td>
+                      <td data-label="작물명">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span className={styles.cropName}>{crop.name}</span>
                           {crop.dataSource === 'NONGSARO' ? (
-                            <Badge variant="blue">농사로 API</Badge>
+                            <Badge variant="blue">외부 작물 데이터</Badge>
                           ) : (
                             <Badge variant="gray">수동</Badge>
                           )}
                         </div>
                       </td>
-                      <td>{getCategoryName(crop.categoryId)}</td>
-                      <td>{crop.createdAt ? new Date(crop.createdAt).toLocaleDateString() : '-'}</td>
-                      <td>
+                      <td data-label="분류">{getCategoryName(crop.categoryId)}</td>
+                      <td data-label="등록일">{crop.createdAt ? new Date(crop.createdAt).toLocaleDateString() : '-'}</td>
+                      <td data-label="">
                         <div className={styles.actions}>
                           <Button variant="outline" size="sm" onClick={() => openEditCropModal(crop)}>수정</Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDeleteCrop(crop)}>삭제</Button>
@@ -313,7 +313,7 @@ export default function CropsPage() {
             </div>
           ) : (
             <div className={styles.tableWrapper}>
-              <table className={styles.table}>
+              <table className={`${styles.table} ${styles.categoriesTable}`}>
                 <thead>
                   <tr>
                     <th>ID</th>
@@ -327,25 +327,25 @@ export default function CropsPage() {
                 <tbody>
                   {categories.map((cat) => (
                     <tr key={cat.id}>
-                      <td>{cat.id}</td>
-                      <td>
+                      <td data-label="ID">{cat.id}</td>
+                      <td data-label="카테고리명">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span className={styles.cropName}>{cat.name}</span>
                           {cat.dataSource === 'NONGSARO' ? (
-                            <Badge variant="blue">농사로 API</Badge>
+                            <Badge variant="blue">외부 작물 데이터</Badge>
                           ) : (
                             <Badge variant="gray">수동</Badge>
                           )}
                         </div>
                       </td>
-                      <td>{cat.description ?? '-'}</td>
-                      <td>{cat.displayOrder}</td>
-                      <td>
+                      <td data-label="설명">{cat.description ?? '-'}</td>
+                      <td data-label="정렬순서">{cat.displayOrder}</td>
+                      <td data-label="상태">
                         <Badge variant={cat.isActive ? 'green' : 'red'}>
                           {cat.isActive ? '활성' : '비활성'}
                         </Badge>
                       </td>
-                      <td>
+                      <td data-label="">
                         <div className={styles.actions}>
                           <Button variant="outline" size="sm" onClick={() => openEditCategoryModal(cat)}>수정</Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDeleteCategory(cat)}>삭제</Button>
@@ -542,7 +542,7 @@ function SyncOptionsModal({ onSubmit, onClose }: SyncOptionsModalProps) {
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <h2 className={styles.modalTitle}>🔄 농사로 API 동기화 옵션</h2>
+        <h2 className={styles.modalTitle}>🔄 외부 작물 데이터 동기화 옵션</h2>
         
         <div className={styles.formGroup}>
           <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', marginBottom: '16px' }}>
