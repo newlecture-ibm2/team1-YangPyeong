@@ -250,14 +250,17 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
     @Override
     public List<CultivationRegistration> loadCultivationsByFarmId(Long farmId) {
         String sql = """
-            SELECT cr.id, cr.farm_id, cr.crop_id, c.name as crop_name, 
-                   cr.cultivation_area, cr.farmer_estimated_yield, cr.yield_unit, cr.status
+            SELECT cr.id, cr.farm_id, cr.crop_id, c.name as crop_name,
+                   cr.cultivation_area, cr.farmer_estimated_yield, cr.yield_unit, cr.status,
+                   cr.sowing_date
             FROM cultivation_registrations cr
             JOIN crops c ON cr.crop_id = c.id
             WHERE cr.farm_id = ? AND cr.status = 'ACTIVE' AND cr.deleted_at IS NULL
             """;
-        
-        return jdbcTemplate.query(sql, (rs, rowNum) -> CultivationRegistration.builder()
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            java.sql.Date sowing = rs.getDate("sowing_date");
+            return CultivationRegistration.builder()
                 .id(rs.getLong("id"))
                 .farmId(rs.getLong("farm_id"))
                 .cropId(rs.getLong("crop_id"))
@@ -266,7 +269,9 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .farmerEstimatedYield(rs.getObject("farmer_estimated_yield") != null ? rs.getDouble("farmer_estimated_yield") : null)
                 .yieldUnit(rs.getString("yield_unit"))
                 .status(com.farmbalance.farm.domain.CultivationStatus.valueOf(rs.getString("status")))
-                .build(), farmId);
+                .sowingDate(sowing != null ? sowing.toLocalDate() : null)
+                .build();
+        }, farmId);
     }
 
     @Override

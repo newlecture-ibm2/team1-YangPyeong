@@ -8,6 +8,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional
 
+from app.utils.kamis_resolve import resolve_standard_crop_name
+
 logger = logging.getLogger(__name__)
 
 # ── KAMIS API 설정 ──
@@ -71,6 +73,11 @@ AVERAGE_YIELD_PER_SQM = {
 }
 
 
+def _standard_crop_name(crop_name: str) -> str:
+    resolved = resolve_standard_crop_name(crop_name)
+    return resolved.standard_name or crop_name
+
+
 async def fetch_kamis_price(crop_name: str) -> dict:
     """
     KAMIS API에서 특정 작물의 최근 도매 시세를 조회합니다.
@@ -79,7 +86,12 @@ async def fetch_kamis_price(crop_name: str) -> dict:
         dict: { "price": int, "unit": str, "date": str, "crop_name": str }
         또는 에러 시 { "error": str }
     """
-    item_code = CROP_CODE_MAP.get(crop_name)
+    resolved = resolve_standard_crop_name(crop_name)
+    lookup_name = resolved.standard_name
+    if not lookup_name:
+        return {"error": f"'{crop_name}'에 대한 KAMIS 매핑 코드가 없습니다.", "crop_name": crop_name}
+
+    item_code = CROP_CODE_MAP.get(lookup_name)
     if not item_code:
         return {"error": f"'{crop_name}'에 대한 KAMIS 매핑 코드가 없습니다.", "crop_name": crop_name}
 
@@ -122,12 +134,16 @@ async def fetch_kamis_price(crop_name: str) -> dict:
                 if price_str and price_str != "-":
                     try:
                         price = int(price_str.replace(",", ""))
-                        return {
+                        result = {
                             "price": price,
                             "unit": "1kg",
                             "date": item.get("day", end_date),
                             "crop_name": crop_name,
+                            "resolved_crop_name": lookup_name,
                         }
+                        if resolved.mapping_note:
+                            result["mapping_note"] = resolved.mapping_note
+                        return result
                     except ValueError:
                         continue
 
@@ -148,7 +164,8 @@ def get_planting_penalty(crop_name: str, sowing_month: Optional[int] = None) -> 
     if sowing_month is None:
         sowing_month = datetime.now().month
 
-    optimal_range = OPTIMAL_SOWING_PERIODS.get(crop_name)
+    standard = _standard_crop_name(crop_name)
+    optimal_range = OPTIMAL_SOWING_PERIODS.get(standard) or OPTIMAL_SOWING_PERIODS.get(crop_name)
     if not optimal_range:
         return 0.8  # 데이터 없으면 기본 80%
 
@@ -196,4 +213,5 @@ def get_planting_penalty(crop_name: str, sowing_month: Optional[int] = None) -> 
 
 def get_average_yield_per_sqm(crop_name: str) -> float:
     """작물별 평년 단수 (kg/㎡)를 반환합니다."""
-    return AVERAGE_YIELD_PER_SQM.get(crop_name, 1.0)
+    standard = _standard_crop_name(crop_name)
+    return AVERAGE_YIELD_PER_SQM.get(standard, AVERAGE_YIELD_PER_SQM.get(crop_name, 1.0))

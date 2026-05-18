@@ -16,17 +16,51 @@ from app.agents.tools.kamis_tool import (
 from app.prompts.revenue_prompt import build_revenue_prediction_prompt
 from app.models.revenue import RevenuePredictionRequest, RevenuePredictionResponse
 from app.utils.json_utils import extract_json
+from app.utils.kamis_resolve import resolve_standard_crop_name
 
 logger = logging.getLogger(__name__)
 
-# LLM JSON 파싱 실패 시 사용자 안내 (실제 계산은 KAMIS·규칙 기반 폴백)
-_PRICE_INSIGHT_PARSE_FALLBACK_WITH_KAMIS = (
-    "AI 응답을 JSON으로 해석하지 못했습니다. "
-    "KAMIS에서 조회한 현재 도매 시가를 가격으로 쓰고, 재배 면적·평년 단수·파종 시기를 반영한 규칙으로 수확량과 수익을 산출했습니다."
-)
-_PRICE_INSIGHT_PARSE_FALLBACK_NO_PRICE = (
-    "AI 응답을 JSON으로 해석하지 못했고, 유효한 시세도 없어 가격·수익 산정에 한계가 있습니다."
-)
+
+def _build_rule_based_insights(
+    *,
+    crop_name: str,
+    standard_crop: Optional[str],
+    mapping_note: Optional[str],
+    area_sqm: float,
+    price: int,
+    final_yield: float,
+    revenue: int,
+    penalty: float,
+    sowing_month: Optional[int],
+    has_price: bool,
+) -> tuple[str, str]:
+    std = standard_crop or crop_name
+    mapping = f" {mapping_note}" if mapping_note else ""
+    if has_price and price > 0:
+        price_insight = (
+            f"KAMIS 도매 기준 {std} 시세는 kg당 {price:,}원 수준입니다.{mapping} "
+            f"최근 2주간 가격 변동을 감안할 때 단기 출하 시세는 보합~약보합으로 보이며, "
+            f"품질·등급에 따라 실거래가는 차이가 날 수 있습니다."
+        )
+        net_hint = int(revenue * 0.75)
+        revenue_insight = (
+            f"재배 면적 {area_sqm:,.0f}㎡, 예상 수확량 {final_yield:,.1f}kg, "
+            f"현재 시세를 적용한 총매출 약 {revenue:,}원입니다(유통비 25% 반영 실수령 약 {net_hint:,}원). "
+            f"파종 시기 보정 {penalty:.0%}·{sowing_month or '현재'}월 기준으로 산출했으며, "
+            f"실제 수확량·출하 시기에 따라 달라질 수 있습니다."
+        )
+        return price_insight, revenue_insight
+
+    price_insight = (
+        f"'{crop_name}'은(는) KAMIS 표준 품목과 직접 연동되지 않아 공식 도매 시세를 붙이지 못했습니다.{mapping} "
+        f"유사 품목·지역 경매가·직거래 단가를 참고해 출하 계획을 세우는 것이 좋습니다."
+    )
+    revenue_insight = (
+        f"재배 면적 {area_sqm:,.0f}㎡, 예상 수확량 {final_yield:,.1f}kg 기준으로 "
+        f"생산 규모는 추정했으나 시세 부재로 금액 추정 신뢰도는 낮습니다. "
+        f"파종 시기 보정 {penalty:.0%}를 반영했으며, 시세 확인 후 다시 예측하세요."
+    )
+    return price_insight, revenue_insight
 
 
 def _build_revenue_json_repair_prompt(
@@ -92,18 +126,26 @@ async def predict_revenue(req: RevenuePredictionRequest) -> RevenuePredictionRes
     sowing_month = req.sowing_month
     actual_yield_kg = req.actual_yield_kg
 
+    resolved = resolve_standard_crop_name(crop_name)
+    standard_crop = resolved.standard_name
+    mapping_note = req.mapping_note or resolved.mapping_note
+
     logger.info(
-        f"수익 예측 시작: crop={crop_name}, area={area_sqm}㎡, "
+        f"수익 예측 시작: crop={crop_name}, standard={standard_crop}, area={area_sqm}㎡, "
         f"sowing_month={sowing_month}, actual_yield={actual_yield_kg}"
     )
 
-    # ── 1. KAMIS 실시간 시세 조회 (Backend 캐시 우선 사용) ──
-    if req.kamis_price:
+    # ── 1. KAMIS 시세 (Backend 캐시 우선, 없을 때만 API) ──
+    if req.kamis_price and req.kamis_price.get("price"):
         kamis_result = req.kamis_price
-        logger.info(f"Backend 캐시 시세 적용: {kamis_result}")
-    else:
+        logger.info("Backend 캐시 시세 적용: %s", kamis_result)
+    elif standard_crop:
         kamis_result = await fetch_kamis_price(crop_name)
-        logger.info(f"KAMIS 실시간 직접 조회 결과: {kamis_result}")
+        logger.info("KAMIS API 조회 결과: %s", kamis_result)
+    else:
+        kamis_result = {"error": f"'{crop_name}' KAMIS 미매핑", "crop_name": crop_name}
+        if mapping_note:
+            kamis_result["mapping_note"] = mapping_note
 
     # ── 2. 파종 시기 페널티 계산 ──
     penalty = get_planting_penalty(crop_name, sowing_month)
@@ -113,12 +155,15 @@ async def predict_revenue(req: RevenuePredictionRequest) -> RevenuePredictionRes
     avg_yield = get_average_yield_per_sqm(crop_name)
 
     # ── 4. 최적 파종 시기 문자열 ──
-    optimal = OPTIMAL_SOWING_PERIODS.get(crop_name)
+    lookup_crop = standard_crop or crop_name
+    optimal = OPTIMAL_SOWING_PERIODS.get(lookup_crop)
     optimal_str = f"{optimal[0]}월 ~ {optimal[1]}월" if optimal else "정보 없음"
 
     # ── 5. Agent 프롬프트 구성 ──
     context = {
         "crop_name": crop_name,
+        "resolved_kamis_crop": standard_crop,
+        "mapping_note": mapping_note,
         "area_sqm": area_sqm,
         "kamis_price": kamis_result,
         "planting_penalty": penalty,
@@ -171,17 +216,24 @@ async def predict_revenue(req: RevenuePredictionRequest) -> RevenuePredictionRes
         final_yield = actual_yield_kg if actual_yield_kg else base_yield
         revenue = int(final_yield * price) if price else 0
 
-        price_insight = (
-            _PRICE_INSIGHT_PARSE_FALLBACK_WITH_KAMIS
-            if price
-            else _PRICE_INSIGHT_PARSE_FALLBACK_NO_PRICE
+        price_insight, revenue_insight = _build_rule_based_insights(
+            crop_name=crop_name,
+            standard_crop=standard_crop,
+            mapping_note=mapping_note,
+            area_sqm=area_sqm,
+            price=price or 0,
+            final_yield=final_yield,
+            revenue=revenue,
+            penalty=penalty,
+            sowing_month=sowing_month,
+            has_price=bool(price),
         )
 
         return RevenuePredictionResponse(
             crop_name=crop_name,
             area_sqm=area_sqm,
             predicted_yield_kg=round(final_yield, 1),
-            predicted_price_per_kg=price,
+            predicted_price_per_kg=price or 0,
             predicted_revenue=revenue,
             yield_factors={
                 "planting_time_impact": f"파종 시기 보정 {penalty:.0%} 적용",
@@ -189,14 +241,35 @@ async def predict_revenue(req: RevenuePredictionRequest) -> RevenuePredictionRes
                 "overall_adjustment": "AI JSON 파싱 실패로 규칙 기반 계산 적용",
             },
             price_insight=price_insight,
-            revenue_insight=f"현재 시세 기준 예상 수익은 {revenue:,}원입니다."
-            if price
-            else "시세가 없어 수익 추정이 불완전합니다.",
-            confidence="낮음",
+            revenue_insight=revenue_insight,
+            confidence="낮음" if not price else "보통",
             kamis_raw=kamis_result,
         )
 
     # ── 8. 응답 조합 ──
+    price_val = parsed.get("predicted_price_per_kg") or kamis_result.get("price") or 0
+    yield_kg = parsed.get("predicted_yield_kg", 0)
+    revenue_val = parsed.get("predicted_revenue", 0)
+    price_insight = (parsed.get("price_insight") or "").strip()
+    revenue_insight = (parsed.get("revenue_insight") or "").strip()
+    if len(price_insight) < 20 or len(revenue_insight) < 20:
+        fb_price, fb_revenue = _build_rule_based_insights(
+            crop_name=crop_name,
+            standard_crop=standard_crop,
+            mapping_note=mapping_note,
+            area_sqm=area_sqm,
+            price=int(price_val) if price_val else 0,
+            final_yield=float(yield_kg) if yield_kg else area_sqm * avg_yield * penalty,
+            revenue=int(revenue_val) if revenue_val else 0,
+            penalty=penalty,
+            sowing_month=sowing_month,
+            has_price=bool(price_val),
+        )
+        if len(price_insight) < 20:
+            price_insight = fb_price
+        if len(revenue_insight) < 20:
+            revenue_insight = fb_revenue
+
     return RevenuePredictionResponse(
         crop_name=crop_name,
         area_sqm=area_sqm,
@@ -204,8 +277,8 @@ async def predict_revenue(req: RevenuePredictionRequest) -> RevenuePredictionRes
         predicted_price_per_kg=parsed.get("predicted_price_per_kg", 0),
         predicted_revenue=parsed.get("predicted_revenue", 0),
         yield_factors=parsed.get("yield_factors", {}),
-        price_insight=parsed.get("price_insight", ""),
-        revenue_insight=parsed.get("revenue_insight", ""),
+        price_insight=price_insight,
+        revenue_insight=revenue_insight,
         confidence=parsed.get("confidence", "보통"),
         kamis_raw=kamis_result,
     )

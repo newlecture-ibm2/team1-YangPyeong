@@ -43,17 +43,24 @@ const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'li
 /** AI 수익 예측 요청용 — 재배 등록이 있으면 작물별 면적 합산, 없으면 농장 작물명 + 면적 분할 */
 function getRevenueCropRows(
   farm: { area: number; cropNames: string[] },
-  cultivations: { cropName: string; cultivationArea?: number | null }[],
-): { cropName: string; areaSqm: number }[] {
+  cultivations: { cropName: string; cultivationArea?: number | null; sowingDate?: string | null }[],
+): { cropName: string; areaSqm: number; sowingMonth?: number }[] {
   if (cultivations.length > 0) {
-    const map = new Map<string, number>();
+    const map = new Map<string, { area: number; sowingMonth?: number }>();
     for (const c of cultivations) {
       const a = Number(c.cultivationArea) || 0;
-      map.set(c.cropName, (map.get(c.cropName) || 0) + a);
+      const prev = map.get(c.cropName) || { area: 0, sowingMonth: undefined };
+      let sowingMonth = prev.sowingMonth;
+      if (c.sowingDate) {
+        const m = new Date(c.sowingDate).getMonth() + 1;
+        if (!Number.isNaN(m)) sowingMonth = m;
+      }
+      map.set(c.cropName, { area: prev.area + a, sowingMonth });
     }
-    return Array.from(map.entries()).map(([cropName, sumArea]) => ({
+    return Array.from(map.entries()).map(([cropName, v]) => ({
       cropName,
-      areaSqm: sumArea > 0 ? sumArea : farm.area,
+      areaSqm: v.area > 0 ? v.area : farm.area,
+      sowingMonth: v.sowingMonth,
     }));
   }
   if (farm.cropNames.length > 0) {
@@ -180,7 +187,9 @@ function FarmDashboardContent() {
     () => (farm ? getRevenueCropRows(farm, cultivations) : []),
     [farm, cultivations],
   );
-  const revenueCropRowsKey = revenueCropRows.map((r) => `${r.cropName}:${r.areaSqm}`).join('|');
+  const revenueCropRowsKey = revenueCropRows
+    .map((r) => `${r.cropName}:${r.areaSqm}:${r.sowingMonth ?? ''}`)
+    .join('|');
 
   const [predictionsByCrop, setPredictionsByCrop] = useState<Record<string, RevenuePredictionResponse>>({});
   const [revenueErrorsByCrop, setRevenueErrorsByCrop] = useState<Record<string, string>>({});
@@ -200,7 +209,7 @@ function FarmDashboardContent() {
   }, [weather]);
 
   const fetchPredictionOne = useCallback(
-    async (cropName: string, areaSqm: number, actualYield?: number) => {
+    async (cropName: string, areaSqm: number, actualYield?: number, sowingMonth?: number) => {
       if (!farm?.id) return null;
       const wc = buildWeatherContext();
       const request: Parameters<typeof predictRevenue>[0] = {
@@ -209,6 +218,9 @@ function FarmDashboardContent() {
         farm_id: farm.id,
         weather_context: wc,
       };
+      if (sowingMonth != null && sowingMonth >= 1 && sowingMonth <= 12) {
+        request.sowing_month = sowingMonth;
+      }
       if (actualYield != null && !Number.isNaN(actualYield)) {
         request.actual_yield_kg = actualYield;
       }
@@ -224,7 +236,8 @@ function FarmDashboardContent() {
       setApplyingCrop(cropName);
       try {
         const y = raw === '' || raw == null ? undefined : Number(raw);
-        const res = await fetchPredictionOne(cropName, areaSqm, y);
+        const row = revenueCropRows.find((r) => r.cropName === cropName);
+        const res = await fetchPredictionOne(cropName, areaSqm, y, row?.sowingMonth);
         if (res) {
           setPredictionsByCrop((prev) => ({ ...prev, [cropName]: res }));
           setRevenueErrorsByCrop((prev) => {
@@ -239,7 +252,7 @@ function FarmDashboardContent() {
         setApplyingCrop(null);
       }
     },
-    [farm?.id, actualYieldByCrop, fetchPredictionOne, toast],
+    [farm?.id, actualYieldByCrop, fetchPredictionOne, revenueCropRows, toast],
   );
 
   const handleResetYieldForCrop = useCallback(
@@ -247,7 +260,8 @@ function FarmDashboardContent() {
       setActualYieldByCrop((prev) => ({ ...prev, [cropName]: '' }));
       setApplyingCrop(cropName);
       try {
-        const res = await fetchPredictionOne(cropName, areaSqm);
+        const row = revenueCropRows.find((r) => r.cropName === cropName);
+        const res = await fetchPredictionOne(cropName, areaSqm, undefined, row?.sowingMonth);
         if (res) {
           setPredictionsByCrop((prev) => ({ ...prev, [cropName]: res }));
           setRevenueErrorsByCrop((prev) => {
@@ -262,7 +276,7 @@ function FarmDashboardContent() {
         setApplyingCrop(null);
       }
     },
-    [fetchPredictionOne, toast],
+    [fetchPredictionOne, revenueCropRows, toast],
   );
 
   // 작물별 AI 수익 예측 (대시보드)
@@ -291,13 +305,14 @@ function FarmDashboardContent() {
 
     (async () => {
       const results = await Promise.all(
-        rows.map(async ({ cropName, areaSqm }) => {
+        rows.map(async ({ cropName, areaSqm, sowingMonth }) => {
           try {
             const data = await predictRevenue({
               crop_name: cropName,
               area_sqm: areaSqm,
               farm_id: fid,
               weather_context: wc,
+              ...(sowingMonth != null ? { sowing_month: sowingMonth } : {}),
             });
             return { cropName, ok: true as const, data };
           } catch {
