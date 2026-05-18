@@ -58,8 +58,8 @@ export function useFarmBot() {
   // ── 채팅창 위치/크기 상태 ──
   const [chatPosition, setChatPosition] = useState({ x: -1, y: -1 }); // -1이면 초기화 필요
   const [chatSize, setChatSize] = useState({ width: 380, height: 520 });
-  const isDraggingRef = useRef(false);
-  const isResizingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const dragStartRef = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
   const resizeStartRef = useRef({ mouseX: 0, mouseY: 0, w: 0, h: 0 });
 
@@ -334,57 +334,62 @@ export function useFarmBot() {
   /** 드래그 시작 (헤더 mousedown) */
   const onChatDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    isDraggingRef.current = true;
+    setIsDragging(true);
     dragStartRef.current = {
-      mouseX: e.clientX, mouseY: e.clientY,
-      posX: chatPosition.x, posY: chatPosition.y,
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      posX: chatPosition.x,
+      posY: chatPosition.y,
     };
-
-    const onMove = (ev: MouseEvent) => {
-      if (!isDraggingRef.current) return;
-      const dx = ev.clientX - dragStartRef.current.mouseX;
-      const dy = ev.clientY - dragStartRef.current.mouseY;
-      setChatPosition({
-        x: Math.max(0, Math.min(window.innerWidth - chatSize.width, dragStartRef.current.posX + dx)),
-        y: Math.max(0, Math.min(window.innerHeight - chatSize.height, dragStartRef.current.posY + dy)),
-      });
-    };
-    const onUp = () => {
-      isDraggingRef.current = false;
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }, [chatPosition, chatSize]);
+  }, [chatPosition]);
 
   /** 리사이즈 시작 (핸들 mousedown) */
   const onChatResizeStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    isResizingRef.current = true;
+    setIsResizing(true);
     resizeStartRef.current = {
-      mouseX: e.clientX, mouseY: e.clientY,
-      w: chatSize.width, h: chatSize.height,
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      w: chatSize.width,
+      h: chatSize.height,
+    };
+  }, [chatSize]);
+
+  // ── 드래그 & 리사이즈 전역 마우스 이벤트 바인딩 ──
+  useEffect(() => {
+    if (!isDragging && !isResizing) return;
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      if (isDragging) {
+        const dx = ev.clientX - dragStartRef.current.mouseX;
+        const dy = ev.clientY - dragStartRef.current.mouseY;
+        setChatPosition({
+          x: Math.max(0, Math.min(window.innerWidth - chatSize.width, dragStartRef.current.posX + dx)),
+          y: Math.max(0, Math.min(window.innerHeight - chatSize.height, dragStartRef.current.posY + dy)),
+        });
+      } else if (isResizing) {
+        const dw = ev.clientX - resizeStartRef.current.mouseX;
+        const dh = ev.clientY - resizeStartRef.current.mouseY;
+        setChatSize({
+          width: Math.max(300, Math.min(600, resizeStartRef.current.w + dw)),
+          height: Math.max(400, Math.min(700, resizeStartRef.current.h + dh)),
+        });
+      }
     };
 
-    const onMove = (ev: MouseEvent) => {
-      if (!isResizingRef.current) return;
-      const dw = ev.clientX - resizeStartRef.current.mouseX;
-      const dh = ev.clientY - resizeStartRef.current.mouseY;
-      setChatSize({
-        width: Math.max(300, Math.min(600, resizeStartRef.current.w + dw)),
-        height: Math.max(400, Math.min(700, resizeStartRef.current.h + dh)),
-      });
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setIsResizing(false);
     };
-    const onUp = () => {
-      isResizingRef.current = false;
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }, [chatSize]);
+  }, [isDragging, isResizing, chatSize]);
 
   /** 메시지 전송 (대화 히스토리 포함) */
   const sendChatMessage = useCallback(async (message: string) => {
