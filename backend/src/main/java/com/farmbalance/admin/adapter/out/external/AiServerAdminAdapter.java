@@ -32,7 +32,7 @@ public class AiServerAdminAdapter implements AdminAiPort {
     public List<ShopAuditResultDto> auditShopBatch(List<ShopAuditItemDto> items) {
         if (items.isEmpty()) return Collections.emptyList();
         
-        String url = aiServerUrl + "/api/v1/admin/audit-shop-batch";
+        String url = aiServerUrl + "/api/admin/audit-shop-batch";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         
@@ -54,7 +54,7 @@ public class AiServerAdminAdapter implements AdminAiPort {
     public List<ModerationResultDto> moderatePostBatch(List<ModerationItemDto> items) {
         if (items.isEmpty()) return Collections.emptyList();
         
-        String url = aiServerUrl + "/api/v1/admin/moderate-post-batch";
+        String url = aiServerUrl + "/api/admin/moderate-post-batch";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         

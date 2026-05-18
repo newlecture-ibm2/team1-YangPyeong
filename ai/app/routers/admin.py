@@ -5,7 +5,7 @@ from app.models.admin import (
 )
 from app.services.admin_service import AdminService
 
-router = APIRouter()
+router = APIRouter(prefix="/api/admin", tags=["admin"])
 admin_service = AdminService()
 
 @router.post("/audit-shop-batch", response_model=ShopAuditBatchResponse)
