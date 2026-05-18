@@ -2,7 +2,6 @@ package com.farmbalance.recommend.adapter.out.external;
 
 import com.farmbalance.recommend.adapter.out.persistence.CropPriceCacheEntity;
 import com.farmbalance.recommend.adapter.out.persistence.CropPriceCacheRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -33,7 +32,6 @@ import java.util.Set;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class KamisPriceBatchScheduler {
 
     private final CropPriceCacheRepository cacheRepository;
