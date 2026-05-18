@@ -66,6 +66,11 @@ public interface ManageCommunityUseCase {
      */
     void updateReportStatus(Long reportId, String status);
 
+    /**
+     * 신고 제재 처리 (게시물 삭제 및 유저 정지)
+     */
+    void sanctionReport(Long reportId, boolean deleteContent, boolean suspendUser);
+
     /** AI를 활용해 최근 작성된 ACTIVE 게시글의 스팸 여부를 일괄 자동 검사 */
     int aiModerateActivePosts();
 }

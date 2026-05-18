@@ -83,6 +83,16 @@ export async function updateReportStatus(reportId: number, status: string): Prom
   if (!json.success) throw new Error(json.error?.message ?? '신고 상태 변경 실패')
 }
 
+export async function sanctionReport(reportId: number, data: { deleteContent: boolean; suspendUser: boolean }): Promise<void> {
+  const res = await fetch(`${BASE}/reports/${reportId}/sanction`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '신고 제재 실패')
+}
+
 export async function aiModeratePosts(): Promise<{ hiddenCount: number }> {
   const res = await fetch('/api/admin/community/ai-moderate', {
     method: 'POST',

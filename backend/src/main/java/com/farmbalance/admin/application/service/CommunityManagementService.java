@@ -9,6 +9,7 @@ import com.farmbalance.admin.application.port.out.AdminAiPort.ModerationResultDt
 import com.farmbalance.admin.domain.AdminPost;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
+import com.farmbalance.user.application.port.out.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class CommunityManagementService implements ManageCommunityUseCase {
     private final com.farmbalance.admin.application.port.out.AdminCommentPort adminCommentPort;
     private final com.farmbalance.admin.application.port.out.AdminReportPort adminReportPort;
     private final AdminAiPort adminAiPort;
+    private final UserRepository userRepository;
 
     @Override
     public List<AdminPost> getPosts(String keyword, String status, int page, int size) {
@@ -103,6 +105,29 @@ public class CommunityManagementService implements ManageCommunityUseCase {
     @Transactional
     public void updateReportStatus(Long reportId, String status) {
         adminReportPort.updateStatus(reportId, status);
+    }
+
+    @Override
+    @Transactional
+    public void sanctionReport(Long reportId, boolean deleteContent, boolean suspendUser) {
+        com.farmbalance.admin.domain.AdminReport report = adminReportPort.findById(reportId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REPORT_NOT_FOUND));
+
+        adminReportPort.updateStatus(reportId, "RESOLVED");
+
+        if ("POST".equals(report.getTargetType())) {
+            AdminPost post = adminPostPort.findById(report.getTargetId()).orElse(null);
+            if (post != null) {
+                if (deleteContent) adminPostPort.delete(post.getId());
+                if (suspendUser) userRepository.updateStatus(post.getAuthorId(), "SUSPENDED");
+            }
+        } else if ("COMMENT".equals(report.getTargetType())) {
+            com.farmbalance.admin.domain.AdminComment comment = adminCommentPort.findById(report.getTargetId()).orElse(null);
+            if (comment != null) {
+                if (deleteContent) adminCommentPort.delete(comment.getId());
+                if (suspendUser) userRepository.updateStatus(comment.getAuthorId(), "SUSPENDED");
+            }
+        }
     }
 
     @Override

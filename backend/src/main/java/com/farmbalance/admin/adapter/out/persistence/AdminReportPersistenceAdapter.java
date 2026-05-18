@@ -50,4 +50,11 @@ public class AdminReportPersistenceAdapter implements AdminReportPort {
         String sql = "UPDATE reports SET status = ? WHERE id = ?";
         jdbcTemplate.update(sql, status, id);
     }
+
+    @Override
+    public java.util.Optional<AdminReport> findById(Long id) {
+        String sql = "SELECT * FROM reports WHERE id = ?";
+        List<AdminReport> results = jdbcTemplate.query(sql, rowMapper, id);
+        return results.isEmpty() ? java.util.Optional.empty() : java.util.Optional.of(results.get(0));
+    }
 }

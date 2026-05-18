@@ -40,4 +40,11 @@ public class AdminCommentPersistenceAdapter implements AdminCommentPort {
         String sql = "UPDATE comments SET deleted_at = NOW(), updated_at = NOW() WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
+
+    @Override
+    public java.util.Optional<AdminComment> findById(Long id) {
+        String sql = "SELECT * FROM comments WHERE id = ?";
+        List<AdminComment> results = jdbcTemplate.query(sql, rowMapper, id);
+        return results.isEmpty() ? java.util.Optional.empty() : java.util.Optional.of(results.get(0));
+    }
 }

@@ -138,6 +138,17 @@ public class AdminCommunityController {
     }
 
     /**
+     * 신고 제재 처리 (게시물 삭제 및 계정 정지)
+     * POST /api/admin/community/reports/{reportId}/sanction
+     */
+    @PostMapping("/reports/{reportId}/sanction")
+    public ApiResponse<Void> sanctionReport(@PathVariable Long reportId,
+                                            @RequestBody com.farmbalance.admin.adapter.in.web.dto.SanctionRequest request) {
+        manageCommunityUseCase.sanctionReport(reportId, request.isDeleteContent(), request.isSuspendUser());
+        return ApiResponse.ok(null);
+    }
+
+    /**
      * AI 일괄 스팸 청소 실행
      * POST /api/admin/community/ai-moderate
      */

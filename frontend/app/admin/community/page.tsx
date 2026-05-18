@@ -13,6 +13,7 @@ import type { AdminPost, AdminReport } from '../_lib/community.types'
 import { fetchPosts, deletePost, toggleNotice, createNotice, fetchReports, updateReportStatus, aiModeratePosts } from '../_lib/community.api'
 import NoticeCreateModal from './_components/NoticeCreateModal'
 import PostDetailModal from './_components/PostDetailModal'
+import SanctionModal from './_components/SanctionModal'
 import Button from '@/components/common/Button/Button'
 
 function formatDate(dateStr: string | null): string {
@@ -49,6 +50,9 @@ export default function CommunityPage() {
   const [postDetailModalOpen, setPostDetailModalOpen] = useState(false)
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null)
   const [isModerating, setIsModerating] = useState(false)
+
+  const [sanctionModalOpen, setSanctionModalOpen] = useState(false)
+  const [selectedReportId, setSelectedReportId] = useState<number | null>(null)
 
   const loadData = useCallback(async () => {
     if (activeTab === 'POSTS') {
@@ -121,6 +125,24 @@ export default function CommunityPage() {
       loadData()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '신고 상태 변경 실패')
+    }
+  }
+
+  const handleOpenSanctionModal = (reportId: number) => {
+    setSelectedReportId(reportId)
+    setSanctionModalOpen(true)
+  }
+
+  const handleSanctionConfirm = async (data: { deleteContent: boolean; suspendUser: boolean }) => {
+    if (!selectedReportId) return
+    try {
+      const { sanctionReport } = await import('../_lib/community.api')
+      await sanctionReport(selectedReportId, data)
+      toast.success('제재 처리가 완료되었습니다.')
+      setSanctionModalOpen(false)
+      loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '제재 처리 실패')
     }
   }
 
@@ -363,9 +385,10 @@ export default function CommunityPage() {
                             <>
                               <button
                                 className={styles.actionBtnNotice}
-                                onClick={() => handleUpdateReportStatus(report.id, 'RESOLVED')}
+                                onClick={() => handleOpenSanctionModal(report.id)}
+                                style={{ backgroundColor: 'var(--color-red)', borderColor: 'var(--color-red)', color: 'white' }}
                               >
-                                처리 완료
+                                🚨 제재 처리
                               </button>
                               <button
                                 className={styles.actionBtnDanger}
@@ -422,6 +445,12 @@ export default function CommunityPage() {
         postId={selectedPostId}
         isOpen={postDetailModalOpen}
         onClose={() => setPostDetailModalOpen(false)}
+      />
+
+      <SanctionModal
+        isOpen={sanctionModalOpen}
+        onClose={() => setSanctionModalOpen(false)}
+        onConfirm={handleSanctionConfirm}
       />
     </div>
   )

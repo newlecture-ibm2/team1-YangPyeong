@@ -11,5 +11,7 @@ public interface AdminCommentPort {
 
     List<AdminComment> findByPostId(Long postId);
 
+    java.util.Optional<AdminComment> findById(Long id);
+
     void delete(Long id);
 }
