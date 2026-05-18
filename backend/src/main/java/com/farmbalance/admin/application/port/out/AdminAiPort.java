@@ -9,6 +9,8 @@ public interface AdminAiPort {
 
     List<ModerationResultDto> moderatePostBatch(List<ModerationItemDto> items);
 
+    boolean syncRagData();
+
     // --- DTOs ---
     record ShopAuditItemDto(@JsonProperty("product_id") Long productId, @JsonProperty("product_name") String productName, String category, int price, String description) {}
     

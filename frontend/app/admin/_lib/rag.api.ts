@@ -101,3 +101,10 @@ export async function deleteDocument(id: number): Promise<void> {
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '문서 삭제 실패')
 }
+
+export async function syncDocuments(): Promise<boolean> {
+  const res = await fetch(`${BASE}/documents/sync`, { method: 'POST' })
+  const json: ApiResponse<boolean> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '동기화 실패')
+  return json.data
+}

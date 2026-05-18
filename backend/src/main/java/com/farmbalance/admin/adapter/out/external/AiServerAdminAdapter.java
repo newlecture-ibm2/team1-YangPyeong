@@ -98,6 +98,30 @@ public class AiServerAdminAdapter implements AdminAiPort {
         return Collections.emptyList();
     }
 
+    @Override
+    public boolean syncRagData() {
+        String url = aiServerUrl + "/api/admin/sync-rag";
+        try {
+            log.info("Sending RAG Sync Request to AI Server");
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(60)) // RAG 인제스천은 오래 걸릴 수 있음
+                    .POST(HttpRequest.BodyPublishers.noBody())
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                log.info("RAG Sync successful: {}", response.body());
+                return true;
+            } else {
+                log.error("AI Server RAG Sync returned status {}: {}", response.statusCode(), response.body());
+            }
+        } catch (Exception e) {
+            log.error("AI Server RAG Sync Error: ", e);
+        }
+        return false;
+    }
+
     public record ShopAuditBatchRequestDto(List<ShopAuditItemDto> items) {}
     public record ShopAuditBatchResponse(List<ShopAuditResultDto> results) {}
 

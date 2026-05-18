@@ -5,6 +5,8 @@ from app.models.admin import (
     ShopAuditBatchRequest, ShopAuditBatchResponse, ShopAuditResult,
     ModerationBatchRequest, ModerationBatchResponse, ModerationResult
 )
+from app.rag.ingestion import load_and_chunk_documents
+from app.rag.vectorstore import get_vectorstore
 
 logger = logging.getLogger(__name__)
 
@@ -132,3 +134,22 @@ class AdminService:
                 for item in request.items
             ]
             return ModerationBatchResponse(results=results)
+
+    async def sync_rag_data(self) -> dict:
+        try:
+            logger.info("=== RAG 데이터 인제스천 시작 (API 요청) ===")
+            documents = load_and_chunk_documents()
+            
+            if not documents:
+                logger.warning("DB에서 처리할 문서가 없습니다.")
+                return {"success": True, "message": "처리할 문서가 없습니다.", "chunk_count": 0}
+
+            logger.info(f"총 {len(documents)}개의 텍스트 청크를 ChromaDB에 적재합니다...")
+            vectorstore = get_vectorstore()
+            vectorstore.add_documents(documents)
+            
+            logger.info("=== RAG 데이터 인제스천 완료 ===")
+            return {"success": True, "message": "RAG 데이터 동기화 완료", "chunk_count": len(documents)}
+        except Exception as e:
+            logger.error(f"RAG 동기화 중 오류 발생: {e}")
+            return {"success": False, "error": str(e)}
