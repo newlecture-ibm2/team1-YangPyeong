@@ -46,10 +46,12 @@ class AdminService:
             )
             
             # Remove markdown backticks if present
+            response_text = response_text.strip()
             if response_text.startswith("```json"):
                 response_text = response_text[7:-3]
             elif response_text.startswith("```"):
                 response_text = response_text[3:-3]
+            response_text = response_text.strip()
                 
             data = json.loads(response_text)
             
@@ -106,10 +108,12 @@ class AdminService:
                 temperature=0.1
             )
             
+            response_text = response_text.strip()
             if response_text.startswith("```json"):
                 response_text = response_text[7:-3]
             elif response_text.startswith("```"):
                 response_text = response_text[3:-3]
+            response_text = response_text.strip()
                 
             data = json.loads(response_text)
             

@@ -27,13 +27,20 @@ public class SoilApiSyncEventListener {
 
         log.info("[SoilApiSync] 헬스체크 지시 수신.");
         try {
-            // 양평군 양평읍 백안리(4183025021) 등 특정 PNU 코드로 V3 호출 헬스체크
-            var response = soilApiClient.getSoilCharacteristics("4183025021");
+            // 양평군 양평읍 백안리(4183025021) 등 특정 PNU 코드로 V3, V2 호출 헬스체크 (반드시 19자리여야 함)
+            String pnuCode = "4183025021100010000";
+            var v3Response = soilApiClient.getSoilCharacteristics(pnuCode);
+            var v2Response = soilApiClient.getSoilChemicalCharacteristics(pnuCode);
             
-            if (response != null && response.getHeader() != null && "00".equals(response.getHeader().getResultCode())) {
+            boolean isV3Success = v3Response != null && v3Response.getHeader() != null && "00".equals(v3Response.getHeader().getResultCode());
+            boolean isV2Success = v2Response != null && v2Response.getHeader() != null && "00".equals(v2Response.getHeader().getResultCode());
+
+            if (isV3Success && isV2Success) {
                 eventPublisher.publishEvent(new ApiSyncEvent("SOIL_ENVIRONMENT", "SUCCESS", 0, null, true));
             } else {
-                eventPublisher.publishEvent(new ApiSyncEvent("SOIL_ENVIRONMENT", "FAILED", 0, "API 응답 오류", true));
+                String errorMsg = String.format("API 응답 오류 (V3: %s, V2: %s)", 
+                    isV3Success ? "OK" : "FAIL", isV2Success ? "OK" : "FAIL");
+                eventPublisher.publishEvent(new ApiSyncEvent("SOIL_ENVIRONMENT", "FAILED", 0, errorMsg, true));
             }
         } catch (Exception e) {
             log.error("[SoilApiSync] 헬스체크 실패: {}", e.getMessage());

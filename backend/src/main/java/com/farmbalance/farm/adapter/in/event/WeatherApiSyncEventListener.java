@@ -27,15 +27,11 @@ public class WeatherApiSyncEventListener {
 
         log.info("[WeatherApiSync] 수동 동기화 지시 수신. 모드={}", event.syncMode());
         try {
-            // 기존 스케줄러 메서드 재사용
+            // 기존 스케줄러 메서드 재사용 (내부에서 자체적으로 ApiSyncEvent를 발행합니다)
             dailyWeatherRecordScheduler.recordDailyWeather();
-            
-            eventPublisher.publishEvent(new ApiSyncEvent(
-                    "WEATHER_RECORD", "SUCCESS", 0, null));
         } catch (Exception e) {
             log.error("[WeatherApiSync] 동기화 실패: {}", e.getMessage());
-            eventPublisher.publishEvent(new ApiSyncEvent(
-                    "WEATHER_RECORD", "FAILED", 0, e.getMessage()));
+            // 에러 이벤트 처리도 recordDailyWeather() 내부에서 수행하므로 여기서 추가 발행 불필요
         }
     }
 }

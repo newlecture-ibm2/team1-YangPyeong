@@ -253,7 +253,7 @@ export default function ShopPage() {
         {activeTab === 'REVIEW' && (
           <button 
             className={`${styles.actionBtn} ${styles.btnApprove}`}
-            style={{ padding: '8px 16px', fontSize: '14px', background: 'var(--color-primary-500)', color: 'white' }}
+            style={{ padding: '8px 16px', fontSize: '14px', background: 'var(--color-primary)', color: 'white' }}
             onClick={handleAiAudit}
             disabled={isAuditing}
           >

@@ -167,7 +167,7 @@ export default function CommunityPage() {
           </div>
           {activeTab === 'POSTS' && (
             <div style={{ display: 'flex', gap: '8px' }}>
-              <Button variant="outline" onClick={handleAiModerate} disabled={isModerating} style={{ borderColor: 'var(--color-red-500)', color: 'var(--color-red-500)' }}>
+              <Button variant="outline" onClick={handleAiModerate} disabled={isModerating} style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}>
                 {isModerating ? '스팸 청소 중...' : '🤖 AI 스팸 자동 청소'}
               </Button>
               <Button variant="primary" onClick={() => setNoticeModalOpen(true)}>
