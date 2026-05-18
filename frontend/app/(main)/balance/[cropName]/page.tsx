@@ -102,7 +102,7 @@ export default function BalanceDetailPage({ params }: PageProps) {
             <div className={styles.gaugeInner}></div>
             <div 
               className={styles.gaugeNeedle} 
-              style={{ transform: `translateX(-50%) rotate(${getNeedleRotation(data.supplyRatio)}deg)` }}
+              style={{ transform: `rotate(${getNeedleRotation(data.supplyRatio)}deg)` }}
             ></div>
             <div className={styles.gaugeNeedleCenter}></div>
           </div>
