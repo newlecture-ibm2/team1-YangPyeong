@@ -26,6 +26,8 @@ public class AiServerAdminAdapter implements AdminAiPort {
     public AiServerAdminAdapter(RestTemplateBuilder builder) {
         this.restTemplate = builder.build();
     }
+    
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
     @Override
     public List<ShopAuditResultDto> auditShopBatch(List<ShopAuditItemDto> items) {
@@ -35,10 +37,12 @@ public class AiServerAdminAdapter implements AdminAiPort {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         
-        ShopAuditBatchRequestDto requestBody = new ShopAuditBatchRequestDto(items);
-        HttpEntity<ShopAuditBatchRequestDto> entity = new HttpEntity<>(requestBody, headers);
-        
         try {
+            ShopAuditBatchRequestDto requestBody = new ShopAuditBatchRequestDto(items);
+            String jsonStr = objectMapper.writeValueAsString(requestBody);
+            log.info("Sending Shop Audit Request: {}", jsonStr);
+            
+            HttpEntity<String> entity = new HttpEntity<>(jsonStr, headers);
             ResponseEntity<ShopAuditBatchResponse> response = restTemplate.postForEntity(url, entity, ShopAuditBatchResponse.class);
             if (response.getBody() != null && response.getBody().results() != null) {
                 return response.getBody().results();
@@ -57,10 +61,12 @@ public class AiServerAdminAdapter implements AdminAiPort {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         
-        ModerationBatchRequestDto requestBody = new ModerationBatchRequestDto(items);
-        HttpEntity<ModerationBatchRequestDto> entity = new HttpEntity<>(requestBody, headers);
-        
         try {
+            ModerationBatchRequestDto requestBody = new ModerationBatchRequestDto(items);
+            String jsonStr = objectMapper.writeValueAsString(requestBody);
+            log.info("Sending Moderation Request: {}", jsonStr);
+            
+            HttpEntity<String> entity = new HttpEntity<>(jsonStr, headers);
             ResponseEntity<ModerationBatchResponse> response = restTemplate.postForEntity(url, entity, ModerationBatchResponse.class);
             if (response.getBody() != null && response.getBody().results() != null) {
                 return response.getBody().results();
@@ -71,9 +77,9 @@ public class AiServerAdminAdapter implements AdminAiPort {
         return Collections.emptyList();
     }
 
-    record ShopAuditBatchRequestDto(List<ShopAuditItemDto> items) {}
-    record ShopAuditBatchResponse(List<ShopAuditResultDto> results) {}
+    public record ShopAuditBatchRequestDto(List<ShopAuditItemDto> items) {}
+    public record ShopAuditBatchResponse(List<ShopAuditResultDto> results) {}
 
-    record ModerationBatchRequestDto(List<ModerationItemDto> items) {}
-    record ModerationBatchResponse(List<ModerationResultDto> results) {}
+    public record ModerationBatchRequestDto(List<ModerationItemDto> items) {}
+    public record ModerationBatchResponse(List<ModerationResultDto> results) {}
 }
