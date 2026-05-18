@@ -1,6 +1,7 @@
 package com.farmbalance.admin.application.port.out;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public interface AdminAiPort {
 
@@ -9,11 +10,11 @@ public interface AdminAiPort {
     List<ModerationResultDto> moderatePostBatch(List<ModerationItemDto> items);
 
     // --- DTOs ---
-    record ShopAuditItemDto(Long productId, String productName, String category, int price, String description) {}
+    record ShopAuditItemDto(@JsonProperty("product_id") Long productId, @JsonProperty("product_name") String productName, String category, int price, String description) {}
     
-    record ShopAuditResultDto(Long productId, boolean valid, String reason) {}
+    record ShopAuditResultDto(@JsonProperty("product_id") Long productId, @JsonProperty("is_valid") boolean valid, String reason) {}
 
-    record ModerationItemDto(Long postId, String title, String content) {}
+    record ModerationItemDto(@JsonProperty("post_id") Long postId, String title, String content) {}
 
-    record ModerationResultDto(Long postId, boolean clean, String reason) {}
+    record ModerationResultDto(@JsonProperty("post_id") Long postId, @JsonProperty("is_clean") boolean clean, String reason) {}
 }
