@@ -1006,28 +1006,32 @@
 /* ── 리사이즈 핸들 ── */
 .resizeHandle {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 16px;
-  height: 16px;
+  bottom: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
   cursor: nwse-resize;
   z-index: 10;
   background: linear-gradient(
     135deg,
-    transparent 50%,
-    #ccc 50%,
-    #ccc 60%,
-    transparent 60%,
-    transparent 70%,
-    #ccc 70%,
-    #ccc 80%,
-    transparent 80%
+    transparent 45%,
+    #999 45%,
+    #999 55%,
+    transparent 55%,
+    transparent 65%,
+    #999 65%,
+    #999 75%,
+    transparent 75%,
+    transparent 85%,
+    #999 85%,
+    #999 95%,
+    transparent 95%
   );
-  border-radius: 0 0 20px 0;
   opacity: 0.6;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.15s ease;
 }
 
 .resizeHandle:hover {
   opacity: 1;
+  transform: scale(1.15);
 }
