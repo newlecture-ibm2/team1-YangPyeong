@@ -3,46 +3,32 @@ package com.farmbalance.recommend.adapter.out.external;
 import com.farmbalance.recommend.adapter.out.persistence.CropPriceCacheEntity;
 import com.farmbalance.recommend.adapter.out.persistence.CropPriceCacheRepository;
 import com.farmbalance.recommend.application.port.out.RecommendPricePort;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
+/**
+ * KAMIS 시세 조회 어댑터 — DB 캐시 전용.
+ *
+ * <p>실시간 KAMIS API 호출은 {@link KamisPriceBatchScheduler}가 새벽 배치로 처리합니다.
+ * 이 어댑터는 오직 DB 캐시만 조회하므로 응답 시간이 1ms 이내로 단축됩니다.</p>
+ *
+ * <p>캐시 조회 우선순위:
+ * <ol>
+ *     <li>오늘 날짜의 캐시 데이터</li>
+ *     <li>가장 최근 날짜의 캐시 데이터 (폴백)</li>
+ *     <li>캐시 없음 → null 반환 (후보 작물 기본값 사용)</li>
+ * </ol></p>
+ */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class KamisPriceAdapter implements RecommendPricePort {
 
-    private final RestTemplate restTemplate;
     private final CropPriceCacheRepository cacheRepository;
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
-
-    public KamisPriceAdapter(RestTemplateBuilder builder, CropPriceCacheRepository cacheRepository, com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
-        org.springframework.http.client.SimpleClientHttpRequestFactory factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(3000);
-        factory.setReadTimeout(5000);
-        this.restTemplate = builder
-                .requestFactory(() -> factory)
-                .build();
-        this.cacheRepository = cacheRepository;
-        this.objectMapper = objectMapper;
-    }
-
-    @Value("${kamis.api.url:https://www.kamis.or.kr/service/price/xml.do}")
-    private String apiUrl;
-
-    @Value("${kamis.api.cert-key}")
-    private String certKey;
-
-    @Value("${kamis.api.cert-id}")
-    private String certId;
 
     @Override
     public Integer getRecentPricePerKg(String cropName) {
@@ -54,127 +40,23 @@ public class KamisPriceAdapter implements RecommendPricePort {
 
         LocalDate today = LocalDate.now();
 
-        // 1. 캐시 테이블 확인 (오늘 날짜)
-        Optional<CropPriceCacheEntity> cachedOpt = cacheRepository.findTopByCropNameAndPriceDateOrderByIdDesc(cropName, today);
-        if (cachedOpt.isPresent()) {
-            log.info("KAMIS 가격 캐시 적중: {} -> {}원", cropName, cachedOpt.get().getPrice());
-            return cachedOpt.get().getPrice();
+        // 1. 오늘 날짜 캐시 확인
+        Optional<CropPriceCacheEntity> todayCache =
+                cacheRepository.findTopByCropNameAndPriceDateOrderByIdDesc(cropName, today);
+        if (todayCache.isPresent()) {
+            return todayCache.get().getPrice();
         }
 
-        // 2. KAMIS API 호출
-        // KAMIS는 주말/공휴일 가격이 없을 수 있으므로 당일 조회가 원칙이되, 
-        // 최신 가격을 응답해주는 기능이 있습니다.
-        try {
-            String startDateStr = today.minusDays(7).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            String endDateStr = today.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            
-            String url = UriComponentsBuilder.fromHttpUrl(apiUrl)
-                    .queryParam("action", "periodProductList")
-                    .queryParam("p_productclscode", "02") // 02: 도매
-                    .queryParam("p_startday", startDateStr)
-                    .queryParam("p_endday", endDateStr)
-                    .queryParam("p_itemcategorycode", itemCode.substring(0, 1) + "00") // 품목부류코드
-                    .queryParam("p_itemcode", itemCode)
-                    .queryParam("p_productrankcode", "04") // 등급: 04 (상품)
-                    .queryParam("p_countrycode", "1101") // 1101: 서울
-                    .queryParam("p_convert_kg_yn", "Y") // 1kg 단위로 환산 여부
-                    .queryParam("p_cert_key", certKey)
-                    .queryParam("p_cert_id", certId)
-                    .queryParam("p_returntype", "json")
-                    .build().toUriString();
-
-            String jsonResponse = restTemplate.getForObject(url, String.class);
-            if (jsonResponse == null || jsonResponse.isBlank()) {
-                log.warn("KAMIS API 빈 응답 (작물: {})", cropName);
-            } else if (!looksLikeJson(jsonResponse)) {
-                // 인증 실패·차단·리다이렉트(HTML)·XML 등 → Jackson 파싱 전에 건너뜀
-                String trimmed = jsonResponse.stripLeading();
-                String head = trimmed.substring(0, Math.min(120, trimmed.length()));
-                log.warn("KAMIS API가 JSON이 아닌 본문을 반환했습니다 (작물: {}). 응답 앞부분: [{}]. cert-key/id·KAMIS_API_URL(https) 확인.",
-                        cropName, head.replaceAll("\\s+", " "));
-            } else {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> response = objectMapper.readValue(jsonResponse, Map.class);
-
-                if (response != null && response.containsKey("data")) {
-                    Object dataObj = response.get("data");
-                    if (dataObj instanceof Map) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> dataMap = (Map<String, Object>) dataObj;
-                        if (dataMap.containsKey("item")) {
-                            Object itemObj = dataMap.get("item");
-                            Integer price = extractPriceFromItem(itemObj, itemCode);
-
-                            if (price != null) {
-                                // 3. DB 캐싱 저장
-                                CropPriceCacheEntity newCache = CropPriceCacheEntity.builder()
-                                        .cropName(cropName)
-                                        .price(price)
-                                        .unit("1kg")
-                                        .priceDate(today)
-                                        .build();
-                                cacheRepository.save(newCache);
-
-                                log.info("KAMIS API 가격 조회 성공 및 캐시 저장: {} -> {}원", cropName, price);
-                                return price;
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error("KAMIS API 통신 중 오류 발생 (작물: {})", cropName, e);
+        // 2. 오늘 캐시가 없으면 가장 최근 캐시로 폴백
+        Optional<CropPriceCacheEntity> latestCache =
+                cacheRepository.findTopByCropNameOrderByPriceDateDesc(cropName);
+        if (latestCache.isPresent()) {
+            log.debug("오늘 캐시 없음, 최근 캐시 사용: {} (날짜: {})", cropName, latestCache.get().getPriceDate());
+            return latestCache.get().getPrice();
         }
 
-        // 4. 오늘 조회가 실패했다면, 기존 캐시에 저장된 가장 최근 가격이라도 반환 (Fallback)
-        return cacheRepository.findTopByCropNameOrderByPriceDateDesc(cropName)
-                .map(CropPriceCacheEntity::getPrice)
-                .orElse(null);
-    }
-
-    private Integer extractPriceFromItem(Object itemObj, String itemCode) {
-        if (itemObj instanceof List) {
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> itemList = (List<Map<String, Object>>) itemObj;
-            
-            // 가장 최근 날짜의 가격을 얻기 위해 리스트의 마지막부터 탐색
-            for (int i = itemList.size() - 1; i >= 0; i--) {
-                Map<String, Object> item = itemList.get(i);
-                String priceStr = String.valueOf(item.get("price"));
-                if (priceStr != null && !priceStr.isEmpty() && !"-".equals(priceStr)) {
-                    try {
-                        return Integer.parseInt(priceStr.replace(",", ""));
-                    } catch (NumberFormatException e) {
-                        log.warn("KAMIS 가격 파싱 오류: {}", priceStr);
-                    }
-                }
-            }
-        } else if (itemObj instanceof Map) {
-            // 결과가 1건일 경우 List가 아니라 Map으로 반환될 수 있음
-            @SuppressWarnings("unchecked")
-            Map<String, Object> itemMap = (Map<String, Object>) itemObj;
-            String priceStr = String.valueOf(itemMap.get("price"));
-            if (priceStr != null && !priceStr.isEmpty() && !"-".equals(priceStr)) {
-                try {
-                    return Integer.parseInt(priceStr.replace(",", ""));
-                } catch (NumberFormatException e) {
-                    log.warn("KAMIS 가격 파싱 오류: {}", priceStr);
-                }
-            }
-        }
+        log.warn("KAMIS 캐시 데이터 없음: {} — 배치 스케줄러 실행 전이거나 API 조회에 실패했을 수 있습니다.", cropName);
         return null;
     }
-
-    /** KAMIS가 HTML/XML/오류 페이지를 줄 때 '<' 로 시작하는 등 JSON이 아님 */
-    private static boolean looksLikeJson(String body) {
-        if (body == null) return false;
-        int i = 0;
-        int n = body.length();
-        while (i < n && (Character.isWhitespace(body.charAt(i)) || body.charAt(i) == '\uFEFF')) {
-            i++;
-        }
-        if (i >= n) return false;
-        char c = body.charAt(i);
-        return c == '{' || c == '[';
-    }
 }
+

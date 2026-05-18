@@ -2,6 +2,7 @@ package com.farmbalance.recommend.adapter.out.external;
 
 import com.farmbalance.recommend.application.port.out.RecommendAiPort;
 import com.farmbalance.recommend.application.port.out.RecommendReasonCommand;
+import com.farmbalance.recommend.domain.RecommendMode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -13,8 +14,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 파이썬 AI 서버로 추천/진단 요청을 위임하는 어댑터
@@ -61,6 +61,63 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
             log.error("AI 서버 통신 중 오류 발생 (사유 생성)", e);
         }
         return "AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+    }
+
+    /**
+     * 여러 작물의 추천 사유를 한 번의 AI 서버 호출로 일괄 생성합니다.
+     * AI 서버의 /api/recommend/reason/batch 엔드포인트를 호출합니다.
+     * 실패 시 인터페이스 기본 구현(개별 호출)으로 폴백합니다.
+     */
+    @Override
+    public Map<String, String> generateBatchReasons(
+            String farmDetails,
+            RecommendMode mode,
+            List<RecommendReasonCommand> commands
+    ) {
+        String url = aiServerUrl + "/api/recommend/reason/batch";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // 배치 요청 본문 구성
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (RecommendReasonCommand cmd : commands) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("crop_name", cmd.cropName());
+            item.put("crop_category", cmd.cropCategory());
+            item.put("advice_type", cmd.adviceType().name());
+            item.put("is_current_crop", cmd.currentCrop());
+            if (cmd.mismatchNote() != null) {
+                item.put("soil_mismatch", cmd.mismatchNote());
+            }
+            items.add(item);
+        }
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("farm_details", farmDetails);
+        requestBody.put("recommend_mode", mode.name());
+        requestBody.put("items", items);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = restTemplate.postForObject(url, entity, Map.class);
+            if (response != null && response.containsKey("reasons")) {
+                Object reasonsObj = response.get("reasons");
+                if (reasonsObj instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> reasons = (Map<String, String>) reasonsObj;
+                    log.info("AI 배치 사유 생성 성공: {}건", reasons.size());
+                    return reasons;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("AI 배치 사유 생성 실패, 개별 호출로 폴백합니다: {}", e.getMessage());
+        }
+
+        // 폴백: 인터페이스 기본 구현 (개별 호출)
+        return RecommendAiPort.super.generateBatchReasons(farmDetails, mode, commands);
     }
 
     @Override
@@ -133,3 +190,4 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
         return new double[]{0.35, 0.25, 0.25, 0.15};
     }
 }
+
