@@ -70,7 +70,7 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
 
     @Override
     public Optional<AdminPost> findById(Long id) {
-        String sql = "SELECT * FROM posts WHERE id = ? AND deleted_at IS NULL";
+        String sql = "SELECT * FROM posts WHERE id = ?";
         List<AdminPost> result = jdbcTemplate.query(sql, rowMapper, id);
         return result.stream().findFirst();
     }
@@ -78,6 +78,12 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
     @Override
     public void delete(Long id) {
         String sql = "UPDATE posts SET deleted_at = NOW(), updated_at = NOW() WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+    }
+
+    @Override
+    public void restore(Long id) {
+        String sql = "UPDATE posts SET deleted_at = NULL, updated_at = NOW() WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
 

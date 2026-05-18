@@ -69,6 +69,15 @@ public class CommunityManagementService implements ManageCommunityUseCase {
 
     @Override
     @Transactional
+    public void restorePost(Long postId) {
+        adminPostPort.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+
+        adminPostPort.restore(postId);
+    }
+
+    @Override
+    @Transactional
     public void toggleNotice(Long postId, boolean isNotice) {
         adminPostPort.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
@@ -124,6 +133,27 @@ public class CommunityManagementService implements ManageCommunityUseCase {
             if (comment != null) {
                 if (deleteContent) adminCommentPort.delete(comment.getId());
                 if (suspendUser) userRepository.updateStatus(comment.getAuthorId(), "SUSPENDED");
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void undoSanctionByTarget(String targetType, Long targetId) {
+        // 일괄 '반려(DISMISSED)' 상태로 업데이트하여 복구
+        adminReportPort.updateStatusByTarget(targetType, targetId, "DISMISSED");
+
+        if ("POST".equals(targetType)) {
+            AdminPost post = adminPostPort.findById(targetId).orElse(null);
+            if (post != null) {
+                adminPostPort.restore(post.getId());
+                userRepository.updateStatus(post.getAuthorId(), "ACTIVE");
+            }
+        } else if ("COMMENT".equals(targetType)) {
+            com.farmbalance.admin.domain.AdminComment comment = adminCommentPort.findById(targetId).orElse(null);
+            if (comment != null) {
+                adminCommentPort.restore(comment.getId());
+                userRepository.updateStatus(comment.getAuthorId(), "ACTIVE");
             }
         }
     }

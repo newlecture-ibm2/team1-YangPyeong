@@ -42,6 +42,11 @@ public interface ManageCommunityUseCase {
     void deletePost(Long postId);
 
     /**
+     * 게시글 복구 (restore soft delete)
+     */
+    void restorePost(Long postId);
+
+    /**
      * 게시글 공지 설정/해제
      */
     void toggleNotice(Long postId, boolean isNotice);
@@ -70,6 +75,11 @@ public interface ManageCommunityUseCase {
      * 특정 타겟(게시글/댓글) 제재 일괄 처리
      */
     void sanctionReportByTarget(String targetType, Long targetId, boolean deleteContent, boolean suspendUser);
+
+    /**
+     * 특정 타겟(게시글/댓글) 제재 일괄 취소 (Undo)
+     */
+    void undoSanctionByTarget(String targetType, Long targetId);
 
     /** AI를 활용해 최근 작성된 ACTIVE 게시글의 스팸 여부를 일괄 자동 검사 */
     int aiModerateActivePosts();

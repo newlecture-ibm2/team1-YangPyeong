@@ -41,6 +41,12 @@ export async function deletePost(postId: number): Promise<void> {
   if (!json.success) throw new Error(json.error?.message ?? '게시글 삭제 실패')
 }
 
+export async function restorePost(postId: number): Promise<void> {
+  const res = await fetch(`${BASE}/${postId}/restore`, { method: 'PATCH' })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '게시글 복구 실패')
+}
+
 export async function toggleNotice(postId: number, isNotice: boolean): Promise<void> {
   const res = await fetch(`${BASE}/${postId}/notice`, {
     method: 'PATCH',
@@ -91,6 +97,16 @@ export async function sanctionReport(targetType: string, targetId: number, data:
   })
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '신고 제재 실패')
+}
+
+export async function undoSanctionReport(targetType: string, targetId: number): Promise<void> {
+  const res = await fetch(`${BASE}/reports/target/sanction/undo`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targetType, targetId })
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '신고 제재 복구 실패')
 }
 
 export async function aiModeratePosts(): Promise<{ hiddenCount: number }> {

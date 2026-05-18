@@ -98,6 +98,19 @@ export default function CommunityPage() {
     }
   }
 
+  const handleRestorePost = async (postId: number) => {
+    const confirmed = await showConfirm('삭제된 게시글을 복구하시겠습니까?')
+    if (!confirmed) return
+    try {
+      const { restorePost } = await import('../_lib/community.api')
+      await restorePost(postId)
+      toast.success('게시글이 복구되었습니다.')
+      loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '게시글 복구 실패')
+    }
+  }
+
   const handleToggleNotice = async (postId: number, currentNotice: boolean) => {
     try {
       await toggleNotice(postId, !currentNotice)
@@ -143,6 +156,18 @@ export default function CommunityPage() {
       loadData()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '제재 처리 실패')
+    }
+  }
+
+  const handleUndoSanction = async (targetType: string, targetId: number) => {
+    if (!confirm('제재를 복구(취소)하시겠습니까? 게시물 복구 및 유저 정지가 해제됩니다.')) return
+    try {
+      const { undoSanctionReport } = await import('../_lib/community.api')
+      await undoSanctionReport(targetType, targetId)
+      toast.success('제재가 복구되었습니다.')
+      loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '제재 복구 실패')
     }
   }
 
@@ -277,13 +302,21 @@ export default function CommunityPage() {
                       >
                         {post.isNotice ? '공지 해제' : '공지 설정'}
                       </button>
-                      <button
-                        className={styles.actionBtnDanger}
-                        onClick={() => handleDelete(post.id)}
-                        disabled={!!post.deletedAt}
-                      >
-                        삭제
-                      </button>
+                      {post.deletedAt ? (
+                        <button
+                          className={styles.actionBtnNotice}
+                          onClick={() => handleRestorePost(post.id)}
+                        >
+                          복구
+                        </button>
+                      ) : (
+                        <button
+                          className={styles.actionBtnDanger}
+                          onClick={() => handleDelete(post.id)}
+                        >
+                          삭제
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -395,6 +428,14 @@ export default function CommunityPage() {
                                 반려
                               </button>
                             </>
+                          )}
+                          {report.status === 'RESOLVED' && (
+                            <button
+                              className={styles.actionBtnNotice}
+                              onClick={() => handleUndoSanction(report.targetType, report.targetId)}
+                            >
+                              제재 복구
+                            </button>
                           )}
                         </div>
                       </td>

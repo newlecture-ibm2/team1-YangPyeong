@@ -46,7 +46,15 @@ public class AdminReportPersistenceAdapter implements AdminReportPort {
             sql.append("AND status = '").append(status.toUpperCase()).append("' ");
         }
         
-        sql.append("GROUP BY target_type, target_id, status ORDER BY recent_report_at DESC LIMIT ? OFFSET ?");
+        sql.append("GROUP BY target_type, target_id, status ");
+        
+        if ("PENDING".equalsIgnoreCase(status)) {
+            sql.append("HAVING COUNT(*) >= CASE " +
+                       "WHEN EXISTS (SELECT 1 FROM reports r2 WHERE r2.target_type = reports.target_type AND r2.target_id = reports.target_id AND r2.status = 'DISMISSED') " +
+                       "THEN 3 ELSE 1 END ");
+        }
+        
+        sql.append("ORDER BY recent_report_at DESC LIMIT ? OFFSET ?");
         return jdbcTemplate.query(sql.toString(), groupedRowMapper, limit, offset);
     }
 
@@ -59,7 +67,15 @@ public class AdminReportPersistenceAdapter implements AdminReportPort {
             sql.append("AND status = '").append(status.toUpperCase()).append("' ");
         }
         
-        sql.append("GROUP BY target_type, target_id, status) AS grouped_reports");
+        sql.append("GROUP BY target_type, target_id, status ");
+        
+        if ("PENDING".equalsIgnoreCase(status)) {
+            sql.append("HAVING COUNT(*) >= CASE " +
+                       "WHEN EXISTS (SELECT 1 FROM reports r2 WHERE r2.target_type = reports.target_type AND r2.target_id = reports.target_id AND r2.status = 'DISMISSED') " +
+                       "THEN 3 ELSE 1 END ");
+        }
+        
+        sql.append(") AS grouped_reports");
         
         Long count = jdbcTemplate.queryForObject(sql.toString(), Long.class);
         return count != null ? count : 0L;

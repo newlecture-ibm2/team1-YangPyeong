@@ -19,6 +19,7 @@ public interface AdminPostPort {
     Optional<AdminPost> findById(Long id);
 
     void delete(Long id);
+    void restore(Long id);
 
     void updateNotice(Long id, Boolean isNotice);
 

@@ -80,6 +80,16 @@ public class AdminCommunityController {
     }
 
     /**
+     * 게시글 복구 (restore soft delete)
+     * PATCH /api/admin/community/{postId}/restore
+     */
+    @PatchMapping("/{postId}/restore")
+    public ApiResponse<Void> restorePost(@PathVariable Long postId) {
+        manageCommunityUseCase.restorePost(postId);
+        return ApiResponse.ok(null);
+    }
+
+    /**
      * 게시글 공지 설정/해제
      * PATCH /api/admin/community/{postId}/notice
      * Body: { "isNotice": true }
@@ -157,6 +167,24 @@ public class AdminCommunityController {
         }
 
         manageCommunityUseCase.sanctionReportByTarget(targetType, targetIdNum.longValue(), deleteContent, suspendUser);
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 특정 타겟(게시물/댓글) 신고 제재 일괄 복구 (Undo)
+     * POST /api/admin/community/reports/target/sanction/undo
+     * Body: { "targetType": "POST", "targetId": 1 }
+     */
+    @PostMapping("/reports/target/sanction/undo")
+    public ApiResponse<Void> undoSanctionByTarget(@RequestBody Map<String, Object> request) {
+        String targetType = (String) request.get("targetType");
+        Number targetIdNum = (Number) request.get("targetId");
+
+        if (targetType == null || targetIdNum == null) {
+            throw new IllegalArgumentException("targetType and targetId are required");
+        }
+
+        manageCommunityUseCase.undoSanctionByTarget(targetType, targetIdNum.longValue());
         return ApiResponse.ok(null);
     }
 
