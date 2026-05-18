@@ -625,7 +625,7 @@ function FarmDashboardContent() {
             <h1 className={styles.title}>
               {isPreviewMode
                 ? (hasUnapprovedFarms ? '내 농장 심사 대기 중' : '내 농장 미리보기')
-                : (activeSubTab === 'DASHBOARD' ? '내 농장 관리' : farm?.name)}
+                : farm?.name}
             </h1>
           </div>
           <p className={styles.subtitle}>
