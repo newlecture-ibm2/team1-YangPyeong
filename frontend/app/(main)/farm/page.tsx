@@ -289,6 +289,9 @@ function FarmDashboardContent() {
     [farm?.id, fetchPredictionOne],
   );
 
+  const loadRevenueForCropRef = useRef(loadRevenueForCrop);
+  loadRevenueForCropRef.current = loadRevenueForCrop;
+
   const handleApplyYieldForCrop = useCallback(
     async (row: RevenueCropRow) => {
       if (!farm?.id) return;
@@ -348,7 +351,7 @@ function FarmDashboardContent() {
     if (primary) {
       setExpandedRevenueCrop(primary.cropName);
       if (!cached[primary.cropName]) {
-        loadRevenueForCrop(primary).then(() => {
+        void loadRevenueForCropRef.current(primary).then(() => {
           if (cancelled) return;
         });
       }
@@ -357,8 +360,6 @@ function FarmDashboardContent() {
     return () => {
       cancelled = true;
     };
-    // loadRevenueForCrop는 의도적으로 제외 (날씨 변경 시 대표 작물 중복 LLM 방지)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSubTab, farm?.id, revenueCropRowsKey]);
 
   // 이력·재배·최근 AI 추천을 한 번에 병렬 로드 (농장 전환 시에만 재요청)
