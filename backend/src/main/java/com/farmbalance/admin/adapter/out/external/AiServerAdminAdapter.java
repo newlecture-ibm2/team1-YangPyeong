@@ -25,6 +25,7 @@ public class AiServerAdminAdapter implements AdminAiPort {
     public AiServerAdminAdapter(com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
     }
