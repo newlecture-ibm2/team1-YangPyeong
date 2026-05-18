@@ -16,8 +16,8 @@ from app.routers import revenue as revenue_router
 from app.routers import farm_agent as farm_agent_router
 from app.routers import general_agent as general_agent_router
 from app.routers import community_agent as community_agent_router
-
 from app.routers import ocr as ocr_router
+from app.routers import admin as admin_router
 
 # 로깅 설정
 logging.basicConfig(
@@ -48,6 +48,7 @@ app.include_router(chat_router.router)
 app.include_router(analysis_router.router)
 app.include_router(product_assist_router.router)
 app.include_router(recommend_router.router)
+app.include_router(admin_router.router)
 app.include_router(gov_router.router)
 app.include_router(revenue_router.router)
 app.include_router(farm_agent_router.router)

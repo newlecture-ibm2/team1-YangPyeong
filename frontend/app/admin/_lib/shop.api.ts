@@ -47,3 +47,12 @@ export async function deleteAdminProduct(productId: number): Promise<void> {
     throw new Error(error.message || '상품 삭제에 실패했습니다.')
   }
 }
+
+export async function aiAuditProducts(): Promise<{ approvedCount: number }> {
+  const res = await fetch('/api/admin/shop/ai-audit', {
+    method: 'POST',
+  })
+  const json = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? 'AI 자동 심사 실패')
+  return json.data
+}

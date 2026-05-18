@@ -13,7 +13,7 @@ import ModalDialog from '@/components/common/Modal/ModalDialog';
 import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import { useToast } from '@/components/common/Toast';
 import { uploadFile } from '@/lib/upload.api';
-import { getMyFarms, useFarmDetail } from '../../useFarm';
+import { useFarmDetail } from '../../useFarm';
 import { updateFarm } from '../../_lib/farm.api';
 import { getCultivations } from '../../_lib/cultivation.api';
 import styles from '../../register/page.module.css';

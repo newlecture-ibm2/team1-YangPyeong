@@ -10,7 +10,7 @@ import FilterBar from '@/components/common/FilterBar/FilterBar'
 import Dropdown from '@/components/common/Dropdown/Dropdown'
 import styles from './Community.module.css'
 import type { AdminPost, AdminReport } from '../_lib/community.types'
-import { fetchPosts, deletePost, toggleNotice, createNotice, fetchReports, updateReportStatus } from '../_lib/community.api'
+import { fetchPosts, deletePost, toggleNotice, createNotice, fetchReports, updateReportStatus, aiModeratePosts } from '../_lib/community.api'
 import NoticeCreateModal from './_components/NoticeCreateModal'
 import PostDetailModal from './_components/PostDetailModal'
 import Button from '@/components/common/Button/Button'
@@ -48,6 +48,7 @@ export default function CommunityPage() {
   
   const [postDetailModalOpen, setPostDetailModalOpen] = useState(false)
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null)
+  const [isModerating, setIsModerating] = useState(false)
 
   const loadData = useCallback(async () => {
     if (activeTab === 'POSTS') {
@@ -128,6 +129,20 @@ export default function CommunityPage() {
     setPostDetailModalOpen(true)
   }
 
+  const handleAiModerate = async () => {
+    if (!confirm('현재 활성화된 최신 게시글들을 AI가 일괄 검사하여 스팸 및 부적절한 게시글을 삭제(차단) 처리합니다. 진행하시겠습니까?')) return
+    setIsModerating(true)
+    try {
+      const res = await aiModeratePosts()
+      toast.success(`총 ${res.hiddenCount}개의 스팸 및 부적절한 게시글이 숨김 처리되었습니다!`)
+      loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'AI 자동 청소 실패')
+    } finally {
+      setIsModerating(false)
+    }
+  }
+
   return (
     <div>
       <div className={styles.pageHeader}>
@@ -151,9 +166,14 @@ export default function CommunityPage() {
             </button>
           </div>
           {activeTab === 'POSTS' && (
-            <Button variant="primary" onClick={() => setNoticeModalOpen(true)}>
-              + 공지사항 작성
-            </Button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button variant="outline" onClick={handleAiModerate} disabled={isModerating} style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}>
+                {isModerating ? '스팸 청소 중...' : '🤖 AI 스팸 자동 청소'}
+              </Button>
+              <Button variant="primary" onClick={() => setNoticeModalOpen(true)}>
+                + 공지사항 작성
+              </Button>
+            </div>
           )}
         </div>
       </div>

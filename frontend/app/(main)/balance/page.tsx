@@ -36,6 +36,7 @@ export default function BalanceListPage() {
           status: 'SHORT_WARN',
           statusLabel: '부족경고',
           baseYear: new Date().getFullYear(),
+          message: '수급이 매우 부족합니다. 주의가 필요합니다.',
         },
         {
           cropName: '양파',
@@ -43,6 +44,7 @@ export default function BalanceListPage() {
           status: 'EXCESS_WARN',
           statusLabel: '과잉경고',
           baseYear: new Date().getFullYear(),
+          message: '수급이 과잉 상태입니다.',
         },
         {
           cropName: '대파',
@@ -50,6 +52,7 @@ export default function BalanceListPage() {
           status: 'BALANCED',
           statusLabel: '적정',
           baseYear: new Date().getFullYear(),
+          message: '적정한 수급 상태를 유지하고 있습니다.',
         }
       ];
       setBalances(dummyData);
