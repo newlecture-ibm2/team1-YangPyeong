@@ -13,7 +13,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -36,8 +35,8 @@ public class AiServerAdminAdapter implements AdminAiPort {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         
-        Map<String, Object> requestBody = Map.of("items", items);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+        ShopAuditBatchRequestDto requestBody = new ShopAuditBatchRequestDto(items);
+        HttpEntity<ShopAuditBatchRequestDto> entity = new HttpEntity<>(requestBody, headers);
         
         try {
             ResponseEntity<ShopAuditBatchResponse> response = restTemplate.postForEntity(url, entity, ShopAuditBatchResponse.class);
@@ -58,8 +57,8 @@ public class AiServerAdminAdapter implements AdminAiPort {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         
-        Map<String, Object> requestBody = Map.of("items", items);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+        ModerationBatchRequestDto requestBody = new ModerationBatchRequestDto(items);
+        HttpEntity<ModerationBatchRequestDto> entity = new HttpEntity<>(requestBody, headers);
         
         try {
             ResponseEntity<ModerationBatchResponse> response = restTemplate.postForEntity(url, entity, ModerationBatchResponse.class);
@@ -72,6 +71,9 @@ public class AiServerAdminAdapter implements AdminAiPort {
         return Collections.emptyList();
     }
 
+    record ShopAuditBatchRequestDto(List<ShopAuditItemDto> items) {}
     record ShopAuditBatchResponse(List<ShopAuditResultDto> results) {}
+
+    record ModerationBatchRequestDto(List<ModerationItemDto> items) {}
     record ModerationBatchResponse(List<ModerationResultDto> results) {}
 }
