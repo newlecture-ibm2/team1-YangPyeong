@@ -1012,21 +1012,6 @@ function FarmDashboardContent() {
 
           <div className={styles.bento} style={{ alignItems: 'start' }}>
             <div>
-              {/* Sub Navigation (History 전용) */}
-              <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '16px', marginBottom: '32px', display: 'flex', gap: '32px' }}>
-                {(['POLICY', 'HISTORY'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    style={{ background: 'none', border: 'none', color: (activeSubTab as string) === tab ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: (activeSubTab as string) === tab ? 700 : 600, borderBottom: (activeSubTab as string) === tab ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-17px', cursor: 'pointer', fontSize: '16px' }}
-                    onClick={() => setActiveSubTab(tab)}
-                  >
-                    {tab === 'POLICY' ? '정책/혜택 안내' : '재배 히스토리'}
-                  </button>
-                ))}
-              </div>
-
-
-
               <Timeline
                 histories={histories}
                 onEditCultivation={(id) => {
