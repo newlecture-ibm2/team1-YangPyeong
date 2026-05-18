@@ -31,18 +31,9 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
 
     @Override
     public Farm saveFarm(Farm farm) {
-        // 1. PNU 중복 검증 (수정 시에는 본인 제외, 삭제되지 않은 데이터 중에서)
-        if (farm.getId() == null) {
-            if (farmJpaRepository.existsByPnuCodeAndDeletedAtIsNull(farm.getPnuCode())) {
-                throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
-            }
-        } else {
-            farmJpaRepository.findByPnuCodeAndDeletedAtIsNull(farm.getPnuCode())
-                    .ifPresent(existing -> {
-                        if (!existing.getId().equals(farm.getId())) {
-                            throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
-                        }
-                    });
+        // 1. PNU 중복 검증 (타 사용자가 이미 해당 필지를 등록했는지 확인)
+        if (farmJpaRepository.existsByPnuCodeAndUserIdNotAndDeletedAtIsNull(farm.getPnuCode(), farm.getUserId())) {
+            throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
         }
 
         FarmJpaEntity entity;
@@ -259,14 +250,17 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
     @Override
     public List<CultivationRegistration> loadCultivationsByFarmId(Long farmId) {
         String sql = """
-            SELECT cr.id, cr.farm_id, cr.crop_id, c.name as crop_name, 
-                   cr.cultivation_area, cr.farmer_estimated_yield, cr.yield_unit, cr.status
+            SELECT cr.id, cr.farm_id, cr.crop_id, c.name as crop_name,
+                   cr.cultivation_area, cr.farmer_estimated_yield, cr.yield_unit, cr.status,
+                   cr.sowing_date
             FROM cultivation_registrations cr
             JOIN crops c ON cr.crop_id = c.id
             WHERE cr.farm_id = ? AND cr.status = 'ACTIVE' AND cr.deleted_at IS NULL
             """;
-        
-        return jdbcTemplate.query(sql, (rs, rowNum) -> CultivationRegistration.builder()
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            java.sql.Date sowing = rs.getDate("sowing_date");
+            return CultivationRegistration.builder()
                 .id(rs.getLong("id"))
                 .farmId(rs.getLong("farm_id"))
                 .cropId(rs.getLong("crop_id"))
@@ -275,7 +269,9 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
                 .farmerEstimatedYield(rs.getObject("farmer_estimated_yield") != null ? rs.getDouble("farmer_estimated_yield") : null)
                 .yieldUnit(rs.getString("yield_unit"))
                 .status(com.farmbalance.farm.domain.CultivationStatus.valueOf(rs.getString("status")))
-                .build(), farmId);
+                .sowingDate(sowing != null ? sowing.toLocalDate() : null)
+                .build();
+        }, farmId);
     }
 
     @Override

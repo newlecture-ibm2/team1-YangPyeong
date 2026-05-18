@@ -36,4 +36,7 @@ public class FarmUpdateRequest {
     private String soilType;
     private Double ph;
     private Double organicMatter;
+    
+    // 재배 상세 내역 추가
+    private List<FarmRegisterRequest.CultivationRequest> cultivations;
 }

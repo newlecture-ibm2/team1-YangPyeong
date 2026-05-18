@@ -6,7 +6,7 @@ import SoilPanel from './_components/SoilPanel/SoilPanel';
 import AnalyzeLoader from './_components/AnalyzeLoader/AnalyzeLoader';
 import RankingCard from './_components/RankingCard/RankingCard';
 import RecommendTable from './_components/RecommendTable/RecommendTable';
-import GuestPreviewBanner from '@/components/common/GuestPreviewBanner/GuestPreviewBanner';
+import MockupOverlay from '@/components/common/MockupOverlay/MockupOverlay';
 import { DUMMY_RECOMMENDATIONS } from '@/lib/preview-data';
 import { RECOMMEND_MODE_LABEL, type CropRecommendation } from './_lib/recommend.types';
 import styles from './page.module.css';
@@ -32,21 +32,22 @@ export default function RecommendListPage() {
 
     return (
       <div className={farmStyles.container}>
-        <GuestPreviewBanner />
         <div className={farmStyles.header}>
           <div>
-            <h1 className={farmStyles.title}>AI 작물 추천 <span className={styles.italic}>미리보기</span></h1>
+            <h1 className={farmStyles.title}>AI 작물 추천 <span className={styles.italic}>{hook.hasUnapprovedFarms ? '심사 대기 중' : '미리보기'}</span></h1>
             <p className={farmStyles.subtitle}>농장 환경에 맞는 최적의 작물을 미리 체험해 보세요.</p>
           </div>
         </div>
-        <div className={styles.content} style={{ opacity: 0.8, pointerEvents: 'none' }}>
-          <div className={styles.rankingGrid}>
-            {previewRecs.slice(0, 3).map((rec, idx) => (
-              <RankingCard key={rec.cropId} rec={rec} index={idx} />
-            ))}
+        <MockupOverlay hasUnapprovedFarms={hook.hasUnapprovedFarms}>
+          <div className={styles.content}>
+            <div className={styles.rankingGrid}>
+              {previewRecs.slice(0, 3).map((rec, idx) => (
+                <RankingCard key={rec.cropId} rec={rec} index={idx} />
+              ))}
+            </div>
+            <RecommendTable recommendations={previewRecs} />
           </div>
-          <RecommendTable recommendations={previewRecs} />
-        </div>
+        </MockupOverlay>
       </div>
     );
   }

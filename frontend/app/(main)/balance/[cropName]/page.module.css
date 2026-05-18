@@ -242,3 +242,49 @@
   font-size: 20px;
 }
 
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 16px;
+  }
+
+  .pageTitle {
+    font-size: 24px;
+  }
+
+  .kpiRow {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .kpiValue {
+    font-size: 22px;
+  }
+
+  .grid2 {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .chartCard {
+    padding: 20px 16px;
+  }
+
+  .gaugeContainer {
+    width: 200px;
+    height: 100px;
+  }
+
+  .gaugeNeedle {
+    height: 85px;
+  }
+
+  .trendChartContainer {
+    height: 180px;
+  }
+
+  .barGroup {
+    height: 140px;
+  }
+}
+

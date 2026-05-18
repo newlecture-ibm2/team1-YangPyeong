@@ -82,3 +82,12 @@ export async function updateReportStatus(reportId: number, status: string): Prom
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '신고 상태 변경 실패')
 }
+
+export async function aiModeratePosts(): Promise<{ hiddenCount: number }> {
+  const res = await fetch('/api/admin/community/ai-moderate', {
+    method: 'POST',
+  })
+  const json = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? 'AI 자동 청소 실패')
+  return json.data
+}

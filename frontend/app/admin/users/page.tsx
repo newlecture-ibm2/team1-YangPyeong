@@ -290,16 +290,16 @@ export default function UserManagementPage() {
             ) : (
               users.map((user) => (
                 <tr key={user.id}>
-                  <td>{user.id}</td>
-                  <td>{user.name}</td>
-                  <td>{user.email}</td>
-                  <td>
+                  <td data-label="ID">{user.id}</td>
+                  <td data-label="이름">{user.name}</td>
+                  <td data-label="이메일">{user.email}</td>
+                  <td data-label="역할">
                     <Badge variant={getRoleBadgeVariant(user.role)}>
                       {ROLE_LABELS[user.role] ?? user.role}
                     </Badge>
                   </td>
-                  <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}</td>
-                  <td>
+                  <td data-label="가입일">{user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}</td>
+                  <td data-label="상태">
                     {user.status === 'WITHDRAWN' ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
                         <Badge variant="gray">[탈퇴 (파기 대기중)]</Badge>
@@ -315,7 +315,7 @@ export default function UserManagementPage() {
                       </Badge>
                     )}
                   </td>
-                  <td>
+                  <td data-label="관리">
                     <div className={styles.actions}>
                       {/* 역할 변경 (ADMIN, GOV는 변경 불가) — Dropdown 공통 컴포넌트 사용 */}
                       {user.role !== 'ADMIN' && user.role !== 'GOV' && user.status !== 'WITHDRAWN' && (

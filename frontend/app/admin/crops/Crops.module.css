@@ -253,4 +253,186 @@
   margin-bottom: var(--space-md);
 }
 
-.headerActions { display: flex; gap: 8px; align-items: center; }
+.headerActions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-lg) var(--space-md) 80px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .headerActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* 필터바 세로 배치 */
+  .filterBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filterBar select,
+  .filterBar input {
+    width: 100%;
+    min-width: unset;
+  }
+
+  /* 모달 */
+  .modal {
+    width: 90vw;
+    padding: var(--space-lg);
+  }
+
+  /* ── 공통 테이블 → 카드형 ── */
+  .tableWrapper {
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .table {
+    display: block;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .table td {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0;
+    border-bottom: none;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .table td[data-label=""]::before {
+    display: none;
+  }
+
+  /* ── 작물 테이블 (4열: 작물명 / 분류 / 등록일 / 관리) ── */
+  .cropsTable tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "cropname cropname"
+      "category date"
+      "action   action";
+    gap: 6px 12px;
+    padding: 14px 16px;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* 작물명 */
+  .cropsTable td:nth-child(1) {
+    grid-area: cropname;
+    font-size: 15px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 10px;
+    margin-bottom: 2px;
+  }
+  .cropsTable td:nth-child(1)::before { display: none; }
+
+  /* 분류 */
+  .cropsTable td:nth-child(2) { grid-area: category; }
+
+  /* 등록일 */
+  .cropsTable td:nth-child(3) { grid-area: date; }
+
+  /* 관리 */
+  .cropsTable td:nth-child(4) {
+    grid-area: action;
+    border-top: 1px solid var(--color-border);
+    padding-top: 10px;
+    margin-top: 2px;
+  }
+
+  .cropsTable td:nth-child(4) .actions {
+    justify-content: flex-start;
+  }
+
+  /* ── 카테고리 테이블 (6열: ID / 카테고리명 / 설명 / 정렬순서 / 상태 / 관리) ── */
+  .categoriesTable tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "catname  catname"
+      "desc     desc"
+      "order    status"
+      "action   action";
+    gap: 6px 12px;
+    padding: 14px 16px;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ID → 숨김 */
+  .categoriesTable td:nth-child(1) { display: none; }
+
+  /* 카테고리명 */
+  .categoriesTable td:nth-child(2) {
+    grid-area: catname;
+    font-size: 15px;
+    font-weight: 700;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 10px;
+    margin-bottom: 2px;
+  }
+  .categoriesTable td:nth-child(2)::before { display: none; }
+
+  /* 설명 */
+  .categoriesTable td:nth-child(3) { grid-area: desc; }
+
+  /* 정렬순서 */
+  .categoriesTable td:nth-child(4) { grid-area: order; }
+
+  /* 상태 */
+  .categoriesTable td:nth-child(5) { grid-area: status; }
+
+  /* 관리 */
+  .categoriesTable td:nth-child(6) {
+    grid-area: action;
+    border-top: 1px solid var(--color-border);
+    padding-top: 10px;
+    margin-top: 2px;
+  }
+
+  .categoriesTable td:nth-child(6) .actions {
+    justify-content: flex-start;
+  }
+}

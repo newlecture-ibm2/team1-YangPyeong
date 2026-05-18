@@ -27,4 +27,7 @@ public interface ManageShopUseCase {
 
     /** 관리자 권한으로 특정 상품 삭제 (Soft Delete) */
     void deleteProduct(Long productId);
+
+    /** AI를 활용해 PENDING 상태의 신규 상품을 일괄 자동 심사 */
+    int aiAuditPendingProducts();
 }

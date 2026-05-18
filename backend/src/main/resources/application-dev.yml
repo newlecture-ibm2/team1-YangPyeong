@@ -28,3 +28,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# ── JWT (로컬 개발용) ──
+jwt:
+  secret: "local-dev-secret-key-at-least-32-characters-long-for-farmbalance"

@@ -2,6 +2,9 @@ package com.farmbalance.admin.application.service;
 
 import com.farmbalance.admin.application.port.in.dto.AdminShopProductDto;
 import com.farmbalance.admin.application.port.in.ManageShopUseCase;
+import com.farmbalance.admin.application.port.out.AdminAiPort;
+import com.farmbalance.admin.application.port.out.AdminAiPort.ShopAuditItemDto;
+import com.farmbalance.admin.application.port.out.AdminAiPort.ShopAuditResultDto;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.shop.application.port.out.ProductRepository;
@@ -26,6 +29,7 @@ public class ShopManagementService implements ManageShopUseCase {
 
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final AdminAiPort adminAiPort;
 
     @Override
     public List<AdminShopProductDto> getProducts(String keyword, String category, String status, String sort, int page, int size) {
@@ -59,5 +63,39 @@ public class ShopManagementService implements ManageShopUseCase {
     @Transactional
     public void deleteProduct(Long productId) {
         productRepository.softDelete(productId);
+    }
+
+    @Override
+    @Transactional
+    public int aiAuditPendingProducts() {
+        // 1. PENDING 상품 모두 조회
+        List<Product> pendingProducts = productRepository.findAdminProducts("", "ALL", List.of("PENDING"), "createdAt", 0, 100);
+        if (pendingProducts.isEmpty()) {
+            return 0;
+        }
+
+        // 2. DTO 변환 (설명은 최대 300자로 자르기)
+        List<ShopAuditItemDto> itemsToAudit = pendingProducts.stream().map(p -> {
+            String desc = p.getDescription() != null ? p.getDescription() : "";
+            if (desc.length() > 300) {
+                desc = desc.substring(0, 300);
+            }
+            return new ShopAuditItemDto(p.getId(), p.getName(), p.getCategoryName(), p.getPrice(), desc);
+        }).toList();
+
+        // 3. AI 서버 일괄 요청
+        List<ShopAuditResultDto> results = adminAiPort.auditShopBatch(itemsToAudit);
+
+        // 4. 결과에 따라 정상인 상품만 ACTIVE로 업데이트
+        int approvedCount = 0;
+        for (ShopAuditResultDto result : results) {
+            if (result.valid()) {
+                productRepository.updateStatus(result.productId(), "ACTIVE");
+                approvedCount++;
+            }
+            // 비정상(false)인 경우는 PENDING 그대로 둡니다.
+        }
+
+        return approvedCount;
     }
 }

@@ -56,7 +56,27 @@ public class KamisCropCodeMapper {
         CROP_CODE_MAP.put("표고버섯", "612"); // 표고
     }
 
+    public static boolean hasDirectMapping(String cropName) {
+        return cropName != null && CROP_CODE_MAP.containsKey(cropName.trim());
+    }
+
     public static String getKamisCode(String cropName) {
-        return CROP_CODE_MAP.get(cropName);
+        if (cropName == null || cropName.isBlank()) {
+            return null;
+        }
+        String direct = CROP_CODE_MAP.get(cropName.trim());
+        if (direct != null) {
+            return direct;
+        }
+        String standard = KamisCropNameResolver.resolveStandardName(cropName);
+        return standard != null ? CROP_CODE_MAP.get(standard) : null;
+    }
+
+    /**
+     * KAMIS 매핑이 등록된 전체 작물명 목록을 반환합니다.
+     * 배치 스케줄러에서 일괄 시세 조회 시 사용됩니다.
+     */
+    public static java.util.Set<String> getAllMappedCropNames() {
+        return java.util.Collections.unmodifiableSet(CROP_CODE_MAP.keySet());
     }
 }

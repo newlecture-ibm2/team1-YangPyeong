@@ -104,6 +104,169 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
+  margin-bottom: 32px;
+}
+
+/* ── AI 인사이트 패널 ── */
+.insightPanel {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  border: 1px solid var(--color-primary);
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 32px;
+  overflow: hidden;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.insightHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.insightHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.insightActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.insightInput {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+/* ── AI 인사이트 2열 그리드 ── */
+.insightGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* ── 작물별 수익 예측 아코디언 ── */
+.revenueCropList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.revenueCropCard {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.revenueCropCardOpen {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.revenueCropHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.revenueCropCardOpen .revenueCropHeader {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.revenueCropTitleBtn {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+}
+
+.revenueCropTitleBtn:disabled {
+  cursor: default;
+}
+
+.revenueCropTitle {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--color-text);
+}
+
+.revenuePrimaryTag {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.revenueCropMeta {
+  font-size: 12px;
+  color: var(--color-text-light);
+  margin-top: 2px;
+}
+
+.revenueCropActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.revenueCropAmount {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.revenueToggleBtn {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--color-text-light);
+  cursor: pointer;
+  padding: 4px 0;
+  white-space: nowrap;
+}
+
+.revenueCropBody {
+  padding: 16px 20px;
+  border-top: 1px solid var(--color-border);
+  background: #fafafa;
+}
+
+.revenueLoadingHint {
+  margin: 0;
+  padding: 12px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-light);
+}
+
+.revenueEmptyState {
+  text-align: center;
+  padding: 12px 0;
+}
+
+.revenueErrorText {
+  color: var(--color-danger);
+  font-size: 14px;
+  margin-bottom: 12px;
 }
 
 .kpiCard {
@@ -345,11 +508,61 @@
     font-size: 28px;
   }
 
+  .bento {
+    grid-template-columns: 1fr;
+  }
+
   .kpiRow {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+  }
+
+  .kpiCard {
+    padding: 20px 16px;
+    min-width: 0;
   }
 
   .kpiValue {
-    font-size: 28px;
+    font-size: 26px;
+  }
+
+  .subTab,
+  .activeSubTab {
+    padding: 0.75rem 1rem;
+    font-size: 14px;
+  }
+
+  .insightGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .insightPanel {
+    padding: 16px;
+  }
+
+  .insightActions {
+    flex-wrap: wrap;
+  }
+
+  .insightInput {
+    width: 100%;
+    flex: unset;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpiRow {
+    grid-template-columns: 1fr;
+  }
+
+  .kpiCard {
+    padding: 16px;
+  }
+
+  .kpiValue {
+    font-size: 24px;
+  }
+
+  .kpiLabel {
+    font-size: 12px;
   }
 }

@@ -198,9 +198,9 @@ export default function DataPage() {
                     <span className={styles.infoLabel}>상태</span>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <Badge variant={badge.variant}>{badge.label}</Badge>
-                      {status.apiName === 'KAKAO_LOCAL' && (
+                      {(status.apiName === 'KAKAO_LOCAL' || status.apiName === 'NONGSARO_CROP' || status.apiName === 'SOIL_ENVIRONMENT') && (
                         <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
-                          *실시간 점검 전용
+                          *단순/실시간 점검 전용
                         </span>
                       )}
                     </div>
@@ -229,7 +229,7 @@ export default function DataPage() {
                   >
                     {isHealthChecking ? '⏳ 헬스체크 중...' : '💓 헬스체크'}
                   </button>
-                  {status.apiName !== 'KAKAO_LOCAL' && (
+                  {status.apiName !== 'KAKAO_LOCAL' && status.apiName !== 'NONGSARO_CROP' && status.apiName !== 'SOIL_ENVIRONMENT' && (
                     <button
                       className={styles.syncBtn}
                       onClick={() => handleSync(status.id, status.displayName)}
