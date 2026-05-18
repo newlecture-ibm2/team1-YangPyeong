@@ -98,8 +98,10 @@ export default function BalanceDetailPage({ params }: PageProps) {
         <Card className={styles.chartCard}>
           <h2 className={styles.cardTitle}>수급 밸런스 미터</h2>
           <div className={styles.gaugeContainer}>
-            <div className={styles.gaugeBackground}></div>
-            <div className={styles.gaugeInner}></div>
+            <div className={styles.gaugeArcWrapper}>
+              <div className={styles.gaugeBackground}></div>
+              <div className={styles.gaugeInner}></div>
+            </div>
             <div 
               className={styles.gaugeNeedle} 
               style={{ transform: `rotate(${getNeedleRotation(data.supplyRatio)}deg)` }}
