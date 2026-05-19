@@ -444,7 +444,6 @@ export default function SellerEditPage({ params }: EditPageProps) {
               value={form.name}
               onChange={(e) => updateField('name', e.target.value)}
               disabled={isPending}
-              style={isPending ? { cursor: 'not-allowed' } : {}}
             />
           </div>
 
