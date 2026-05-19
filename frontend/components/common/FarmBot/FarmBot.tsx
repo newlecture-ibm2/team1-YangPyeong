@@ -119,6 +119,13 @@ export default function FarmBot({ children }: FarmBotProps) {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  /** 봇 응답에서 내부 식별자(id=123 / productId=123) 패턴 제거 — 화면 표시용 */
+  const stripInternalIds = (text: string): string =>
+    text
+      .replace(/\s*[\(\[]?\s*(?:product)?[Ii][Dd]\s*[:=]\s*\d+\s*[\)\]]?/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
   useEffect(() => {
     if (mode === 'chatting') {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -183,7 +190,7 @@ export default function FarmBot({ children }: FarmBotProps) {
         <div className={`${styles.footerWalkWrap} ${prefersReducedMotion ? styles.reducedMotion : ''}`}>
           <button
             className={`${styles.footerWalkBtn} ${showBubble ? styles.footerWalkPaused : ''} ${!shouldAnimate ? styles.footerWalkFrozen : ''}`}
-            onClick={restartGuide}
+            onClick={(e) => restartGuide(e)}
             title="가이드 시작"
             aria-label="가이드 도우미 열기"
           >
@@ -409,7 +416,7 @@ export default function FarmBot({ children }: FarmBotProps) {
       )}
 
       <div
-        className={styles.botContainer}
+        className={`${styles.botContainer} ${botState === 'walking' ? styles.botContainerWalking : ''}`}
         style={{ left: position.x, top: position.y }}
       >
         <div
