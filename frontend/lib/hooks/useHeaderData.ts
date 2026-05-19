@@ -102,8 +102,17 @@ export function useHeaderData() {
     };
     fetchCartCount();
     const handleCartUpdate = () => fetchCartCount();
+    // 챗봇 REFRESH scope=cart 이벤트도 동일하게 처리
+    const handleChatRefresh = (e: Event) => {
+      const detail = (e as CustomEvent<{ scope: string }>).detail;
+      if (detail?.scope === 'cart') fetchCartCount();
+    };
     window.addEventListener('cart-updated', handleCartUpdate);
-    return () => window.removeEventListener('cart-updated', handleCartUpdate);
+    window.addEventListener('chat:refresh', handleChatRefresh);
+    return () => {
+      window.removeEventListener('cart-updated', handleCartUpdate);
+      window.removeEventListener('chat:refresh', handleChatRefresh);
+    };
   }, [user]);
 
   // ── 알림 unread count ──

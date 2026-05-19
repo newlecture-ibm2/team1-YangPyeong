@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getSessionFromCookie } from '@/lib/cookie';
-import type { ChatAction } from '@/lib/chat-types';
+import type { ChatAction, PendingIntent } from '@/lib/chat-types';
 
 const AI_SERVER_URL = process.env.AI_SERVER_URL || 'http://127.0.0.1:8000';
 
@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
         message,
         history: body.history || [],
         metadata,
+        pending_intent: body.pending_intent ?? null,
       }),
       signal: AbortSignal.timeout(30000),
     });
@@ -58,14 +59,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // AI 서버 응답: { reply: string, actions: ChatAction[] }
-    const data: { reply?: string; actions?: ChatAction[] } = await aiResponse.json();
+    // AI 서버 응답: { reply: string, actions: ChatAction[], pending_intent?: PendingIntent }
+    const data: { reply?: string; actions?: ChatAction[]; pending_intent?: PendingIntent | null } =
+      await aiResponse.json();
 
     return NextResponse.json({
       success: true,
       data: {
         reply: data.reply ?? '',
         actions: data.actions ?? [],
+        pending_intent: data.pending_intent ?? null,
       },
       error: null,
     });

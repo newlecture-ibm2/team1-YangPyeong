@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { BuyerOrder, OrderStatus } from '../_lib/mypage.types';
 import { getMyOrders, cancelMyOrder } from '@/app/(main)/shop/_lib/shop.api';
 import { useToast } from '@/components';
+import { CHAT_EVENTS, type ChatRefreshEventDetail } from '@/components/common/FarmBot/useChatActions';
 
 /** useOrderHistory — 구매자 주문내역 관리 훅 */
 export default function useOrderHistory() {
@@ -62,6 +63,16 @@ export default function useOrderHistory() {
 
   useEffect(() => {
     fetchOrders();
+  }, [fetchOrders]);
+
+  // 챗봇 REFRESH scope=orders 이벤트 구독 → 주문 목록 재조회
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { scope } = (e as CustomEvent<ChatRefreshEventDetail>).detail;
+      if (scope === 'orders') fetchOrders();
+    };
+    window.addEventListener(CHAT_EVENTS.refresh, handler);
+    return () => window.removeEventListener(CHAT_EVENTS.refresh, handler);
   }, [fetchOrders]);
 
   /** 필터링된 주문 목록 */

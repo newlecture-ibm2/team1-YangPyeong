@@ -5,8 +5,10 @@ import com.farmbalance.global.email.OrderEmailTemplate;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.shop.application.port.in.OrderUseCase;
+import com.farmbalance.shop.application.port.out.CartRepository;
 import com.farmbalance.shop.application.port.out.OrderRepository;
 import com.farmbalance.shop.application.port.out.ProductRepository;
+import com.farmbalance.shop.domain.CartItem;
 import com.farmbalance.shop.domain.Order;
 import com.farmbalance.shop.domain.OrderItem;
 import com.farmbalance.shop.domain.OrderStatus;
@@ -37,14 +39,17 @@ public class OrderService implements OrderUseCase {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final CartRepository cartRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final NotificationUseCase notificationUseCase;
 
     public OrderService(OrderRepository orderRepository, ProductRepository productRepository,
+            CartRepository cartRepository,
             UserRepository userRepository, EmailService emailService, NotificationUseCase notificationUseCase) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.cartRepository = cartRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.notificationUseCase = notificationUseCase;
@@ -92,6 +97,13 @@ public class OrderService implements OrderUseCase {
                 null, null, orderItems, LocalDateTime.now(), null);
 
         Order savedOrder = orderRepository.save(order);
+
+        // 주문된 상품의 장바구니 항목 자동 삭제
+        for (OrderItemCommand cmd : items) {
+            cartRepository.findByUserIdAndProductId(buyerId, cmd.productId())
+                    .map(CartItem::getId)
+                    .ifPresent(cartRepository::delete);
+        }
 
         // O-1 새 주문 결제 완료 알림 (셀러 대상)
         for (Long sellerId : sellerIds) {

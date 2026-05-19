@@ -13,7 +13,7 @@ import { getScenarioForPath } from './farmBotScenarios';
 import type { FarmBotStep } from './farmBotScenarios';
 import { FARM_BOT_CONSTANTS } from './farmBotConstants';
 import { useChatActions } from './useChatActions';
-import type { ChatAction } from '@/lib/chat-types';
+import type { ChatAction, PendingIntent } from '@/lib/chat-types';
 
 export type BotState = 'idle' | 'walking' | 'pointing' | 'waving';
 
@@ -59,6 +59,7 @@ export function useFarmBot() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [pendingIntent, setPendingIntent] = useState<PendingIntent | null>(null);
 
   // ── 채팅창 위치/크기 상태 ──
   const [chatPosition, setChatPosition] = useState({ x: -1, y: -1 }); // -1이면 초기화 필요
@@ -110,11 +111,19 @@ export function useFarmBot() {
   }, [pathname]);
 
   /** 타겟 요소로 캐릭터를 이동시킵니다 */
-  const moveToElement = useCallback((step: FarmBotStep, onArrive: () => void) => {
+  const moveToElement = useCallback((
+    step: FarmBotStep,
+    onArrive: () => void,
+    onSkip?: () => void,
+  ) => {
     const el = document.querySelector(step.target);
     // 타겟 못 찾거나, 화면에 보이지 않으면 스킵 (모바일에서 숨겨진 요소 등)
     if (!el || (el as HTMLElement).offsetParent === null) {
-      onArrive();
+      if (onSkip) {
+        onSkip();
+      } else {
+        onArrive(); // 기존 호환: onSkip 없으면 onArrive로 fallback
+      }
       return;
     }
 
@@ -178,6 +187,13 @@ export function useFarmBot() {
     if (!el) {
       if (stepIdx + 1 < currentSteps.length) {
         goToStep(stepIdx + 1, visited);
+      } else {
+        // 유효한 타겟을 가진 스텝이 하나도 없음 → guiding mode 강제 종료
+        // (scroll lock만 남아 아무 반응 없이 멈추는 현상 방지)
+        setMode('minimized');
+        setBotState('idle');
+        setShowBubble(false);
+        setHighlightRect(null);
       }
       return;
     }
@@ -186,20 +202,34 @@ export function useFarmBot() {
     moveToElement(step, () => {
       setBubbleMessage(step.message);
       setShowBubble(true);
+    }, () => {
+      // 요소가 숨겨져 있어 이동 불가 → 다음 스텝으로 건너뜀
+      if (stepIdx + 1 < currentSteps.length) {
+        goToStep(stepIdx + 1, visited);
+      } else {
+        setMode('minimized');
+        setBotState('idle');
+        setShowBubble(false);
+        setHighlightRect(null);
+      }
     });
   }, [moveToElement]);
 
-  /** 페이지 진입 시 — 캐릭터가 등장하여 "가이드 해드릴까요?" 질문 */
+  /** 페이지 진입 시 — 캐릭터가 등장하여 말풍선을 보여줍니다 */
   const askUser = useCallback((customPosition?: Position) => {
-    if (stepsRef.current.length === 0) return;
-
-    // 채팅 중이면 가이드 시작 팝업 무시 — 모드/말풍선 변경 없이 바로 리턴
+    // 채팅 중이면 팝업 무시 — 모드/말풍선 변경 없이 바로 리턴
     if (modeRef.current === 'chatting') return;
+
+    const hasGuide = stepsRef.current.length > 0;
 
     setMode('asking');
     setBotState('idle');
     setShowBubble(true);
-    setBubbleMessage('안녕하세요! 👋\n이 페이지를 안내해드릴까요?');
+    setBubbleMessage(
+      hasGuide
+        ? '안녕하세요! 👋\n이 페이지를 안내해드릴까요?'
+        : '안녕하세요! 👋\n궁금한 점이 있으면 질문해 주세요! 😊'
+    );
     setBubbleAbove(true);
 
     if (customPosition) {
@@ -495,6 +525,7 @@ export function useFarmBot() {
           message: payloadMessage,
           history,
           currentPath: pathname,
+          pending_intent: pendingIntent,
         }),
       });
       const data = await res.json();
@@ -505,6 +536,11 @@ export function useFarmBot() {
       const actions: ChatAction[] = data?.success
         ? (data.data?.actions ?? [])
         : [];
+      // 다중 턴 슬롯 채우기 컨텍스트 갱신 (null이면 종료)
+      const nextPending: PendingIntent | null = data?.success
+        ? (data.data?.pending_intent ?? null)
+        : null;
+      setPendingIntent(nextPending);
 
       const botReply: ChatMessage = {
         role: 'bot',
@@ -531,7 +567,7 @@ export function useFarmBot() {
     } finally {
       setChatLoading(false);
     }
-  }, [chatLoading, chatMessages, pathname, dispatchChatActions]);
+  }, [chatLoading, chatMessages, pathname, dispatchChatActions, pendingIntent]);
 
   /** 채팅 종료 */
   const closeChat = useCallback(() => {

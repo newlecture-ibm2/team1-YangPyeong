@@ -7,7 +7,8 @@ import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import ModalDialog from '@/components/common/Modal/ModalDialog';
 import { useModalDialog } from '@/components/common/Modal/useModalDialog';
-import { getProduct, updateProduct, getCategories } from '@/app/(main)/shop/_lib/shop.api';
+import { getProduct, updateProduct, updateInventory, getCategories } from '@/app/(main)/shop/_lib/shop.api';
+import type { ProductStatus } from '@/app/(main)/shop/_lib/shop.types';
 import { uploadFile } from '@/lib/upload.api';
 import { useFarmBotContext } from '@/components/common/FarmBot/FarmBotContext';
 import styles from './page.module.css';
@@ -23,6 +24,10 @@ export default function SellerEditPage({ params }: EditPageProps) {
 
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [productStatus, setProductStatus] = useState<ProductStatus>('ACTIVE');
+
+  // 검수중(PENDING)이면 가격·재고만 수정 가능
+  const isPending = productStatus === 'PENDING';
 
   const [form, setForm] = useState({
     name: '',
@@ -72,6 +77,7 @@ export default function SellerEditPage({ params }: EditPageProps) {
           categoryName: result.data.categoryName || '',
           description: result.data.description || '',
         });
+        setProductStatus(result.data.status);
         // 기존 이미지 URL 로드
         setExistingImages(result.data.imageUrls || []);
       } else {
@@ -143,35 +149,43 @@ export default function SellerEditPage({ params }: EditPageProps) {
     form.description.trim().length >= 10 &&
     form.description.length <= MAX_DESC;
 
-  /** 상품 수정 */
+  /** 폼 유효성 — 검수중이면 가격·재고만 검사 */
+  const isInventoryValid = Number(form.price) > 0 && Number(form.stock) >= 0;
+
+  /** 상품 수정 (검수중: 가격·재고만 / 일반: 전체) */
   const handleSubmit = useCallback(async () => {
-    if (!isValid || isSubmitting) return;
+    if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
-      // 새 이미지 업로드
-      const newImageUrls: string[] = [];
-      for (const img of newImages) {
-        const url = await uploadFile(img);
-        newImageUrls.push(url);
+      if (isPending) {
+        // 검수중: 가격·재고만 즉시 수정 (재검수 없음)
+        await updateInventory(Number(productId), {
+          price: Number(form.price),
+          stock: Number(form.stock),
+        });
+      } else {
+        if (!isValid) { setIsSubmitting(false); return; }
+        // 일반: 전체 수정 (ACTIVE → PENDING 재검수 진입)
+        const newImageUrls: string[] = [];
+        for (const img of newImages) {
+          const url = await uploadFile(img);
+          newImageUrls.push(url);
+        }
+        await updateProduct(Number(productId), {
+          name: form.name,
+          price: Number(form.price),
+          stock: Number(form.stock),
+          description: form.description,
+          categoryName: form.categoryName,
+          imageUrls: [...existingImages, ...newImageUrls],
+        });
       }
-
-      // 기존 이미지 + 새 이미지 합치기
-      const allImageUrls = [...existingImages, ...newImageUrls];
-
-      await updateProduct(Number(productId), {
-        name: form.name,
-        price: Number(form.price),
-        stock: Number(form.stock),
-        description: form.description,
-        categoryName: form.categoryName,
-        imageUrls: allImageUrls,
-      });
       router.push('/mypage/seller');
     } catch {
       setIsSubmitting(false);
     }
-  }, [isValid, isSubmitting, productId, form, existingImages, newImages, router]);
+  }, [isPending, isValid, isInventoryValid, isSubmitting, productId, form, existingImages, newImages, router]);
 
   /** AI 상품 설명 자동 생성 */
   const handleAiDescription = useCallback(async () => {
@@ -321,8 +335,31 @@ export default function SellerEditPage({ params }: EditPageProps) {
   return (
     <div className={styles.container}>
       <div className={styles.formCard}>
+
+        {/* 검수중 안내 배너 */}
+        {isPending && (
+          <div style={{
+            background: '#fff8e1',
+            border: '1px solid #f59e0b',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '20px',
+            display: 'flex',
+            gap: '10px',
+            alignItems: 'flex-start',
+          }}>
+            <span style={{ fontSize: '18px' }}>🔍</span>
+            <div>
+              <strong style={{ color: '#92400e', display: 'block', marginBottom: '2px' }}>검수 진행 중인 상품입니다</strong>
+              <span style={{ fontSize: '0.875rem', color: '#78350f' }}>
+                가격·재고는 지금 바로 수정할 수 있어요. 이름·설명·카테고리·이미지는 검수 완료 후에 변경 가능합니다.
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* 이미지 수정 */}
-        <section className={styles.section}>
+        <section className={styles.section} style={isPending ? { opacity: 0.4, pointerEvents: 'none' } : {}}>
           <h3 className={styles.sectionTitle}>상품 이미지</h3>
           <p className={styles.sectionDesc}>최대 5장까지 등록 가능합니다. 첫 번째 이미지가 대표 이미지입니다.</p>
 
@@ -378,30 +415,38 @@ export default function SellerEditPage({ params }: EditPageProps) {
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h3 className={styles.sectionTitle}>기본 정보 수정</h3>
-            <button
-              type="button"
-              className={styles.aiAutofillButton}
-              onClick={handleAiAutofill}
-              disabled={isAiAutofilling}
-            >
-              {isAiAutofilling ? (
-                <>
-                  <span className={styles.aiSpinner} />
-                  AI가 채우는 중...
-                </>
-              ) : (
-                '✨ AI로 전체 채우기'
-              )}
-            </button>
+            {!isPending && (
+              <button
+                type="button"
+                className={styles.aiAutofillButton}
+                onClick={handleAiAutofill}
+                disabled={isAiAutofilling}
+              >
+                {isAiAutofilling ? (
+                  <>
+                    <span className={styles.aiSpinner} />
+                    AI가 채우는 중...
+                  </>
+                ) : (
+                  '✨ AI로 전체 채우기'
+                )}
+              </button>
+            )}
           </div>
 
-          <Input
-            label="상품명"
-            placeholder="예: 유기농 상추 (500g)"
-            value={form.name}
-            onChange={(e) => updateField('name', e.target.value)}
-            required
-          />
+          <div className={styles.formGroup} style={isPending ? { opacity: 0.5, pointerEvents: 'none' } : {}}>
+            <label className={styles.label}>
+              상품명 <span className={styles.required}>*</span>
+              {isPending && <span style={{ fontSize: '0.75rem', color: '#92400e', marginLeft: '8px' }}>🔒 검수 완료 후 변경 가능</span>}
+            </label>
+            <Input
+              placeholder="예: 유기농 상추 (500g)"
+              value={form.name}
+              onChange={(e) => updateField('name', e.target.value)}
+              disabled={isPending}
+              style={isPending ? { cursor: 'not-allowed' } : {}}
+            />
+          </div>
 
           <div className={styles.formRow}>
             <div>
@@ -436,39 +481,43 @@ export default function SellerEditPage({ params }: EditPageProps) {
             </div>
           </div>
 
-          <div className={styles.formGroup}>
+          <div className={styles.formGroup} style={isPending ? { opacity: 0.5, pointerEvents: 'none' } : {}}>
             <label className={styles.label}>
               카테고리 <span className={styles.required}>*</span>
+              {isPending && <span style={{ fontSize: '0.75rem', color: '#92400e', marginLeft: '8px' }}>🔒 검수 완료 후 변경 가능</span>}
             </label>
             <Dropdown
               options={categoryOptions}
               value={form.categoryName}
-              onChange={(val) => updateField('categoryName', val)}
+              onChange={(val) => !isPending && updateField('categoryName', val)}
               placeholder="카테고리를 선택하세요"
               fullWidth
             />
           </div>
 
-          <div>
+          <div style={isPending ? { opacity: 0.5 } : {}}>
             <div className={styles.descHeader}>
               <label className={styles.label}>
                 상품 설명 <span className={styles.required}>*</span>
+                {isPending && <span style={{ fontSize: '0.75rem', color: '#92400e', marginLeft: '8px' }}>🔒 검수 완료 후 변경 가능</span>}
               </label>
-              <button
-                type="button"
-                className={styles.aiButton}
-                onClick={handleAiDescription}
-                disabled={isAiGenerating}
-              >
-                {isAiGenerating ? (
-                  <>
-                    <span className={styles.aiSpinner} />
-                    AI가 설명을 작성하고 있어요...
-                  </>
-                ) : (
-                  '✨ AI 설명 생성'
-                )}
-              </button>
+              {!isPending && (
+                <button
+                  type="button"
+                  className={styles.aiButton}
+                  onClick={handleAiDescription}
+                  disabled={isAiGenerating}
+                >
+                  {isAiGenerating ? (
+                    <>
+                      <span className={styles.aiSpinner} />
+                      AI가 설명을 작성하고 있어요...
+                    </>
+                  ) : (
+                    '✨ AI 설명 생성'
+                  )}
+                </button>
+              )}
             </div>
             <Input
               as="textarea"
@@ -476,9 +525,10 @@ export default function SellerEditPage({ params }: EditPageProps) {
               placeholder="상품에 대한 상세 설명을 작성해주세요. (최소 10자)"
               value={form.description}
               onChange={(e) => {
-                if (e.target.value.length <= MAX_DESC) updateField('description', e.target.value);
+                if (!isPending && e.target.value.length <= MAX_DESC) updateField('description', e.target.value);
               }}
               required
+              disabled={isPending}
             />
           </div>
           <span className={`${styles.charCount} ${form.description.length >= MAX_DESC ? styles.charCountOver : ''}`}>
@@ -494,9 +544,13 @@ export default function SellerEditPage({ params }: EditPageProps) {
           <Button
             variant="primary"
             onClick={handleSubmit}
-            disabled={!isValid || isSubmitting}
+            disabled={isPending ? (!isInventoryValid || isSubmitting) : (!isValid || isSubmitting)}
           >
-            {isSubmitting ? '수정 중...' : '수정 완료'}
+            {isSubmitting
+              ? '수정 중...'
+              : isPending
+                ? '가격·재고 저장'
+                : '수정 완료'}
           </Button>
         </div>
       </div>
