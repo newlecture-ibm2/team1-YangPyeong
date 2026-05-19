@@ -168,6 +168,17 @@ function BalanceContent({ top3, filteredBalances, statusFilter, setStatusFilter,
         ))}
       </div>
 
+      {/* GUIDE BANNER */}
+      <div className={styles.guideBanner}>
+        <span className={styles.guideIcon}>💡</span>
+        <p className={styles.guideText}>
+          각 작물별 <strong>기준 연도</strong>는 지자체(KOSIS, 농촌진흥청 등)의 최신 공식 통계 데이터 발표 시점을 기준으로 설정되어 실시간 수급 분석의 정합성을 보장합니다.
+          <span style={{ fontSize: '13px', display: 'block', marginTop: '6px', opacity: 0.85, lineHeight: 1.5 }}>
+            ※ 현재 2025년도 공식 생산량 확정 통계는 통계청의 공표 대기 상태로, 시스템이 공인 최신 유효 연도 데이터를 자동으로 매핑 및 분석에 적용하고 있습니다.
+          </span>
+        </p>
+      </div>
+
       {/* FILTER BAR */}
       <div className={styles.filterSection}>
         <select

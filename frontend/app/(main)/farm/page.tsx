@@ -730,7 +730,7 @@ function FarmDashboardContent() {
         {!isPreviewMode && (
           <div className={styles.headerButtons}>
             <UnifiedActionButton onAddHistory={() => setIsHistoryModalOpen(true)} data-guide="farm-register" />
-            {activeSubTab === 'HISTORY' && (
+            {activeSubTab === 'DASHBOARD' && (
               <Link href="/farm/register">
                 <Button variant="outline" style={{ borderRadius: '50px' }}>+ 새 농장 등록</Button>
               </Link>
@@ -783,7 +783,7 @@ function FarmDashboardContent() {
           style={{ background: 'none', border: 'none', color: activeSubTab === 'HISTORY' ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: activeSubTab === 'HISTORY' ? 700 : 600, borderBottom: activeSubTab === 'HISTORY' ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-1px', cursor: 'pointer', fontSize: '16px' }}
           onClick={() => setActiveSubTab('HISTORY')}
         >
-          농장 정보
+          농장 일지
         </button>
       </div>
 
@@ -1164,7 +1164,7 @@ function FarmDashboardContent() {
             </div>
           </div>
 
-          <div className={styles.bento} style={{ alignItems: 'start' }}>
+          <div style={{ marginTop: '32px' }}>
             <div>
               <Timeline
                 histories={histories}
@@ -1185,36 +1185,6 @@ function FarmDashboardContent() {
                 onEdit={handleEditClick}
                 onDelete={handleDeleteHistory}
               />
-            </div>
-
-            {/* 농장 정보 사이드 카드 */}
-            <div>
-              <Card variant="dark">
-                <h3 className={styles.farmInfoTitle} style={{ fontSize: '18px', marginBottom: '16px' }}>농장 정보</h3>
-                <dl className={styles.farmInfoList}>
-                  <dt>위치</dt><dd>{farm?.address}</dd>
-                  <dt>면적</dt><dd>{farm?.area.toLocaleString()} ㎡ ({Math.round((farm?.area || 0) / 3.3058)}평)</dd>
-                  <dt>주요 작물</dt><dd>{farm?.cropNames.join(', ')}</dd>
-                  <dt>상태</dt>
-                  <dd>
-                    <Badge variant={farm?.certificationStatus === 'APPROVED' ? 'green' : 'orange'}>
-                      {farm?.certificationStatus === 'APPROVED' ? '인증됨' : '심사중'}
-                    </Badge>
-                  </dd>
-                </dl>
-                <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-                  <Link href={`/farm/${farm?.id}/edit`} style={{ flex: 2, textDecoration: 'none' }}>
-                    <Button variant="primary" style={{ width: '100%', justifyContent: 'center' }}>정보 수정</Button>
-                  </Link>
-                  <Button 
-                    variant="outline" 
-                    style={{ flex: 1, borderColor: '#ef4444', color: '#ef4444' }}
-                    onClick={() => farm && handleDeleteFarm(farm.id, farm.name)}
-                  >
-                    삭제
-                  </Button>
-                </div>
-              </Card>
             </div>
           </div>
         </>
