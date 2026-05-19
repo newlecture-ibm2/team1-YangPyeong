@@ -14,6 +14,6 @@ public interface PostPort {
     Optional<Post> findActiveById(Long id);
     Map<Long, String> findActiveTitlesByIds(List<Long> ids);
     Page<Post> findByFilters(List<Long> categoryIds, String keyword, String searchType, Pageable pageable);
-    Page<Post> findByAuthorId(Long authorId, Pageable pageable);
+    Page<Post> findByAuthorIdAndStatus(Long authorId, String status, Pageable pageable);
     void deleteById(Long id);
 }

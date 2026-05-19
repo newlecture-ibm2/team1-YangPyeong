@@ -50,6 +50,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
     List<PostEntity> findTop5ByDeletedAtIsNullAndIsHiddenFalseOrderByCreatedAtDesc();
 
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.category " +
-           "WHERE p.authorId = :authorId AND p.deletedAt IS NULL")
-    Page<PostEntity> findByAuthorId(@Param("authorId") Long authorId, Pageable pageable);
+           "WHERE p.authorId = :authorId AND p.deletedAt IS NULL " +
+           "AND (:status = 'ALL' OR (:status = 'ACTIVE' AND p.isHidden = false) OR (:status = 'HIDDEN' AND p.isHidden = true))")
+    Page<PostEntity> findByAuthorIdAndStatus(@Param("authorId") Long authorId, @Param("status") String status, Pageable pageable);
 }

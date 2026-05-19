@@ -19,4 +19,10 @@ public interface AdminAiPort {
     record ModerationItemDto(@JsonProperty("post_id") Long postId, String title, String content) {}
 
     record ModerationResultDto(@JsonProperty("post_id") Long postId, @JsonProperty("is_clean") boolean clean, String reason) {}
+
+    List<CommentModerationResultDto> moderateCommentBatch(List<CommentModerationItemDto> items);
+
+    record CommentModerationItemDto(@JsonProperty("comment_id") Long commentId, String content) {}
+
+    record CommentModerationResultDto(@JsonProperty("comment_id") Long commentId, @JsonProperty("is_clean") boolean clean, String reason) {}
 }

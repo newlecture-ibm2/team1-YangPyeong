@@ -18,4 +18,5 @@ public interface AdminCommentPort {
     void delete(Long id);
 
     void restore(Long id);
+    List<AdminComment> findRecentActiveComments(int limit);
 }

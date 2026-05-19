@@ -16,6 +16,7 @@ public class MyCommentActivityResponse {
     private boolean accepted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    @com.fasterxml.jackson.annotation.JsonProperty("isHidden")
     private boolean isHidden;
     private String statusReason;
     private String hiddenMessage;

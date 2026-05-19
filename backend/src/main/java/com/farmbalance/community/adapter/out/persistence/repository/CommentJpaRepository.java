@@ -28,8 +28,9 @@ public interface CommentJpaRepository extends JpaRepository<CommentEntity, Long>
     List<Object[]> countByPostIds(@Param("postIds") List<Long> postIds);
 
     @Query("SELECT c FROM CommentEntity c JOIN FETCH c.post p " +
-           "WHERE c.authorId = :authorId AND c.deletedAt IS NULL AND p.deletedAt IS NULL")
-    Page<CommentEntity> findByAuthorId(@Param("authorId") Long authorId, Pageable pageable);
+           "WHERE c.authorId = :authorId AND c.deletedAt IS NULL AND p.deletedAt IS NULL " +
+           "AND (:status = 'ALL' OR (:status = 'ACTIVE' AND c.isHidden = false) OR (:status = 'HIDDEN' AND c.isHidden = true))")
+    Page<CommentEntity> findByAuthorIdAndStatus(@Param("authorId") Long authorId, @Param("status") String status, Pageable pageable);
 
     long countByPostIdAndDeletedAtIsNullAndIsHiddenFalse(Long postId);
 

@@ -212,30 +212,47 @@ public class CommunityManagementService implements ManageCommunityUseCase {
     @Override
     @Transactional
     public int aiModerateActivePosts() {
+        int hiddenCount = 0;
+
         // 1. 최신 ACTIVE 게시글 조회 (예: 100개)
         List<AdminPost> activePosts = adminPostPort.findByFilter("", "ACTIVE", 0, 100);
-        if (activePosts.isEmpty()) {
-            return 0;
+        if (!activePosts.isEmpty()) {
+            List<ModerationItemDto> itemsToAudit = activePosts.stream().map(p -> {
+                String content = p.getContent() != null ? p.getContent() : "";
+                if (content.length() > 300) {
+                    content = content.substring(0, 300);
+                }
+                return new ModerationItemDto(p.getId(), p.getTitle(), content);
+            }).toList();
+
+            List<ModerationResultDto> results = adminAiPort.moderatePostBatch(itemsToAudit);
+            for (ModerationResultDto result : results) {
+                if (!result.clean()) {
+                    String reason = result.reason() != null && !result.reason().isBlank() ? result.reason() : "AI 시스템에 의한 자동 유해성 판단";
+                    adminPostPort.hide(result.postId(), reason);
+                    hiddenCount++;
+                }
+            }
         }
 
-        // 2. DTO 변환
-        List<ModerationItemDto> itemsToAudit = activePosts.stream().map(p -> {
-            String content = p.getContent() != null ? p.getContent() : "";
-            if (content.length() > 300) {
-                content = content.substring(0, 300);
-            }
-            return new ModerationItemDto(p.getId(), p.getTitle(), content);
-        }).toList();
+        // 2. 최신 ACTIVE 댓글 조회 (예: 100개)
+        List<com.farmbalance.admin.domain.AdminComment> activeComments = adminCommentPort.findRecentActiveComments(100);
+        if (!activeComments.isEmpty()) {
+            List<AdminAiPort.CommentModerationItemDto> commentItemsToAudit = activeComments.stream().map(c -> {
+                String content = c.getContent() != null ? c.getContent() : "";
+                if (content.length() > 300) {
+                    content = content.substring(0, 300);
+                }
+                return new AdminAiPort.CommentModerationItemDto(c.getId(), content);
+            }).toList();
 
-        // 3. AI 서버 일괄 요청
-        List<ModerationResultDto> results = adminAiPort.moderatePostBatch(itemsToAudit);
-
-        // 4. 비정상(false)인 게시글을 HIDDEN으로 업데이트
-        int hiddenCount = 0;
-        for (ModerationResultDto result : results) {
-            if (!result.clean()) {
-                adminPostPort.hide(result.postId(), "AI 시스템에 의한 자동 유해성 판단");
-                hiddenCount++;
+            List<AdminAiPort.CommentModerationResultDto> commentResults = adminAiPort.moderateCommentBatch(commentItemsToAudit);
+            for (AdminAiPort.CommentModerationResultDto result : commentResults) {
+                if (!result.clean()) {
+                    String reason = result.reason() != null && !result.reason().isBlank() ? result.reason() : "AI 시스템에 의한 자동 유해성 판단";
+                    adminCommentPort.hide(result.commentId(), reason);
+                    hiddenCount++;
+                }
             }
         }
 

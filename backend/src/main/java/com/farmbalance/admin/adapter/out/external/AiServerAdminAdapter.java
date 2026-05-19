@@ -122,9 +122,46 @@ public class AiServerAdminAdapter implements AdminAiPort {
         return false;
     }
 
+    @Override
+    public List<CommentModerationResultDto> moderateCommentBatch(List<CommentModerationItemDto> items) {
+        if (items.isEmpty()) return Collections.emptyList();
+        
+        String url = aiServerUrl + "/api/admin/moderate-comment-batch";
+        
+        try {
+            CommentModerationBatchRequestDto requestBody = new CommentModerationBatchRequestDto(items);
+            String jsonStr = objectMapper.writeValueAsString(requestBody);
+            log.info("Sending Comment Moderation Request: {}", jsonStr);
+            
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Content-Type", "application/json; charset=utf-8")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonStr))
+                    .build();
+                    
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                CommentModerationBatchResponse res = objectMapper.readValue(response.body(), CommentModerationBatchResponse.class);
+                if (res != null && res.results() != null) {
+                    return res.results();
+                }
+            } else {
+                log.error("AI Server Comment Moderation returned status {}: {}", response.statusCode(), response.body());
+            }
+        } catch (Exception e) {
+            log.error("AI Server Comment Moderation Error: ", e);
+        }
+        return Collections.emptyList();
+    }
+
     public record ShopAuditBatchRequestDto(List<ShopAuditItemDto> items) {}
     public record ShopAuditBatchResponse(List<ShopAuditResultDto> results) {}
 
     public record ModerationBatchRequestDto(List<ModerationItemDto> items) {}
     public record ModerationBatchResponse(List<ModerationResultDto> results) {}
+
+    public record CommentModerationBatchRequestDto(List<CommentModerationItemDto> items) {}
+    public record CommentModerationBatchResponse(List<CommentModerationResultDto> results) {}
 }

@@ -75,4 +75,10 @@ public class AdminCommentPersistenceAdapter implements AdminCommentPort {
         List<AdminComment> results = jdbcTemplate.query(sql, rowMapper, id);
         return results.isEmpty() ? java.util.Optional.empty() : java.util.Optional.of(results.get(0));
     }
+
+    @Override
+    public List<AdminComment> findRecentActiveComments(int limit) {
+        String sql = "SELECT * FROM comments WHERE deleted_at IS NULL AND is_hidden = false ORDER BY created_at DESC LIMIT ?";
+        return jdbcTemplate.query(sql, rowMapper, limit);
+    }
 }

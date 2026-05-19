@@ -75,8 +75,8 @@ public class PostPersistenceAdapter implements PostPort, LoadPostCategoryPort {
     }
 
     @Override
-    public Page<Post> findByAuthorId(Long authorId, Pageable pageable) {
-        return postJpaRepository.findByAuthorId(authorId, pageable).map(PostEntity::toDomain);
+    public Page<Post> findByAuthorIdAndStatus(Long authorId, String status, Pageable pageable) {
+        return postJpaRepository.findByAuthorIdAndStatus(authorId, status, pageable).map(PostEntity::toDomain);
     }
 
     @Override

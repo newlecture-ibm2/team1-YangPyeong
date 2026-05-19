@@ -38,3 +38,18 @@ class ModerationResult(BaseModel):
 
 class ModerationBatchResponse(BaseModel):
     results: List[ModerationResult]
+
+class CommentModerationItem(BaseModel):
+    comment_id: int
+    content: str
+
+class CommentModerationBatchRequest(BaseModel):
+    items: List[CommentModerationItem]
+
+class CommentModerationResult(BaseModel):
+    comment_id: int = Field(description="The ID of the comment being moderated")
+    is_clean: bool = Field(description="True if the comment is clean, False if it contains spam, gambling, illegal links, heavy profanity, or hate speech")
+    reason: str = Field(description="Reason for the decision in Korean")
+
+class CommentModerationBatchResponse(BaseModel):
+    results: List[CommentModerationResult]
