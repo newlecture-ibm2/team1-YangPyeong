@@ -40,7 +40,7 @@ public class ApiSyncStatusJpaEntity {
     
     private LocalDateTime lastHealthChecked;
 
-    @Column(length = 20)
+    @Column(length = 100)
     @Builder.Default
     private String syncStatus = "PENDING";
 
