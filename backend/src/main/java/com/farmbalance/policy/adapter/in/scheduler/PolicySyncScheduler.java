@@ -52,7 +52,7 @@ public class PolicySyncScheduler {
                 
                 String syncStatus = "SUCCESS";
                 if (result.failed() > 0) {
-                    syncStatus = result.fetched() == 0 ? "FAILED" : "COMPLETED_WITH_WARNINGS";
+                    syncStatus = result.fetched() == 0 ? "FAILED" : "PARTIAL_SUCCESS";
                 }
                 
                 log.info("[PolicyScheduler] 동기화 종료: fetched={}, analyzed={}, skipped={}, created={}, updated={}, failed={}",
