@@ -41,29 +41,37 @@ class AgentState(TypedDict, total=False):
     current_focus: str
     pending_actions: list[dict]  # Shop Agent 등이 누적하는 프론트 액션
     skip_synthesis: bool          # True이면 Synthesizer 재가공 없이 원본 응답 그대로 반환
+    routed_agents: list[str]      # 라우팅된 에이전트 목록 (Synthesizer 우회 판단용)
 
 # ── 오케스트레이터 노드 (Router) ──
-ROUTER_SYSTEM_PROMPT = """당신은 사용자 질문의 의도를 분석하여 필요한 전문 에이전트들을 선택하는 라우터입니다.
-질문이 복합적이라면 **쉼표(,)로 구분하여 여러 개**를 선택하세요. 영어로만 반환하고 부연 설명은 하지 마세요.
+ROUTER_SYSTEM_PROMPT = """당신은 사용자 질문의 의도를 분석하여 적합한 전문 에이전트를 선택하는 라우터입니다.
 
-카테고리:
+## 규칙
+1. 질문이 여러 도메인에 걸치면 **쉼표(,)로 구분하여 복수 선택**하세요.
+2. 영어 카테고리명만 반환하세요. 부연 설명은 하지 마세요.
+3. 확신이 없으면 general_chat을 포함시키세요.
+
+## 카테고리 판단 기준
 - blocked_guard: 특정 농가 명단, 개인정보, 내부 행정 자료 등 비공개 데이터 요청
-- policy_agent: 보조금, 지원금, 정책, 공문, 신청 관련 질문
-- balance_agent: 농산물 가격, 수익 분석, 시장 경제, 공급/수요 관련 질문
-- farm_agent: 특정 농장 상태, 면적, 재배 이력, 날씨, 토양, 병해충 관련 질문
-- gov_agent: 지역(양평군 등) 수급 현황, 위험도, 과잉/부족 분석, 대체 작물 추천
-- shop_agent: 장터/상점/장바구니/주문/판매 모든 행위 — 페이지 이동, 상품 검색, 장바구니 담기,
-  바로 주문, 상품 등록/관리, 자동 입력, 내 상품/주문/판매주문 조회
-- community_agent: 농사 노하우, Q&A, 다른 농업인 경험담, 커뮤니티 검색 관련 질문
+- policy_agent: 보조금, 지원금, 정책, 공문, 신청, 혜택, 지원 사업
+- balance_agent: 농산물 시세, 가격 동향, 수급 분석, 수익 전망, 도매가
+- farm_agent: 내 농장 상태, 면적, 재배 이력, 날씨, 토양, 병해충, 작물 관리법
+- gov_agent: 지역(양평군 등) 수급 현황, 위험도 분석, 과잉/부족, 대체 작물 추천
+- shop_agent: 장터/상점 관련 모든 행위 — 상품 검색, 장바구니, 주문, 판매, 등록, 목록 조회
+- community_agent: 다른 농업인 경험담, Q&A, 커뮤니티 검색, 농사 노하우 공유
 - general_chat: 위 어디에도 해당하지 않는 일반 농업 상담 또는 비농업 질문
 
-예시:
+## 판단 예시
 "내 농장 면적 알려줘" → farm_agent
 "감자 보조금이랑 요즘 가격 어때?" → policy_agent, balance_agent
 "양평군 배추 위험도 분석해줘" → gov_agent
 "다른 농가에서 감자 탄저병 어떻게 방제해?" → community_agent
-"커뮤니티에 배추 재배 팁 있어?" → community_agent
-"안녕하세요!" → general_chat"""
+"장터에 뭐 팔고 있어?" → shop_agent
+"사과 장바구니에 담아줘" → shop_agent
+"토마토 심는 시기랑 관련 보조금 알려줘" → farm_agent, policy_agent
+"안녕하세요!" → general_chat
+"요즘 배추 심으면 돈 될까?" → balance_agent, farm_agent
+"커뮤니티에 배추 재배 팁 있어?" → community_agent"""
 
 # 유효한 라우팅 대상 목록
 VALID_ROUTES = {
@@ -294,6 +302,16 @@ def _agent_node_response(
     return result
 
 
+def _agent_error_response(domain_label: str) -> dict:
+    """에이전트 호출 실패 시 통일된 에러 응답을 생성합니다."""
+    logger.exception("[Orchestrator] %s 에이전트 호출 실패", domain_label)
+    return {
+        "messages": [AIMessage(
+            content=f"죄송합니다, {domain_label} 처리 중 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+        )]
+    }
+
+
 async def call_balance_agent(state: AgentState):
     """Balance Agent — 가격·수익·시장 분석."""
     try:
@@ -302,8 +320,7 @@ async def call_balance_agent(state: AgentState):
         response = await agent.ainvoke({**state, "current_focus": "economic_analysis"})
         return _agent_node_response(response["messages"], state)
     except Exception:
-        logger.exception("[Orchestrator] BalanceAgent call failed")
-        return {"messages": [AIMessage(content="수급 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")]}
+        return _agent_error_response("수급 분석")
 
 
 async def call_farm_agent(state: AgentState):
@@ -313,8 +330,7 @@ async def call_farm_agent(state: AgentState):
         response = await agent.ainvoke(state)
         return _agent_node_response(response["messages"], state)
     except Exception:
-        logger.exception("[Orchestrator] FarmAgent call failed")
-        return {"messages": [AIMessage(content="농장 데이터 조회 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")]}
+        return _agent_error_response("농장 데이터 조회")
 
 
 async def call_policy_agent(state: AgentState):
@@ -324,8 +340,7 @@ async def call_policy_agent(state: AgentState):
         response = await agent.ainvoke({"messages": state["messages"]})
         return _agent_node_response(response["messages"], state)
     except Exception:
-        logger.exception("[Orchestrator] PolicyAgent call failed")
-        return {"messages": [AIMessage(content="정책 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")]}
+        return _agent_error_response("정책 검색")
 
 # 자연어 attribute 추출(_extract_product_attrs)은 app.agents.shared.nl_extract 로 이동.
 # 도메인 fallback에서 `extract_product_attrs(text)` 함수를 직접 사용한다.
@@ -974,8 +989,7 @@ async def call_community_agent(state: AgentState):
         response = await agent.ainvoke({"messages": state["messages"]})
         return _agent_node_response(response["messages"], state)
     except Exception:
-        logger.exception("[Orchestrator] CommunityAgent call failed")
-        return {"messages": [AIMessage(content="커뮤니티 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")]}
+        return _agent_error_response("커뮤니티 검색")
 
 
 async def call_blocked_guard(state: AgentState):
@@ -993,8 +1007,7 @@ async def call_gov_agent(state: AgentState):
         })
         return _agent_node_response(result["messages"], state)
     except Exception:
-        logger.exception("[Orchestrator] GovAgent call failed")
-        return {"messages": [AIMessage(content="지역 수급 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.")]}
+        return _agent_error_response("지역 수급 분석")
 
 
 async def call_general_agent(state: AgentState):
@@ -1004,29 +1017,28 @@ async def call_general_agent(state: AgentState):
         response = await agent.ainvoke({"messages": state["messages"]})
         return _agent_node_response(response["messages"], state)
     except Exception:
-        logger.exception("[Orchestrator] GeneralAgent call failed")
-        return {"messages": [AIMessage(content="죄송합니다, 일시적인 오류가 발생했습니다. 다시 한번 질문해 주세요.")]}
+        return _agent_error_response("일반 상담")
 
 # ── 답변 합성 노드 (Synthesizer) ──
-SYNTHESIZER_SYSTEM_PROMPT = """당신은 양평군 농업 전문 컨설턴트인 '양평이 할아버지'입니다.
+SYNTHESIZER_SYSTEM_PROMPT = """당신은 양평군 농업 전문 컨설턴트입니다.
 여러 전문 분석 결과를 종합하여, 사용자에게 하나의 명확하고 유용한 답변으로 정리해주세요.
 
 지침:
 1. 각 분석 결과의 핵심 정보를 빠짐없이 포함하되, 중복은 제거하고 논리적으로 구성하세요.
 2. 정보가 서로 겹친다면 자연스럽게 병합하세요.
-3. 전문적이면서도 따뜻한 존댓말로 답변하세요. '양평이 할아버지'라는 이름에 걸맞게 친근하면서도 오랜 베테랑의 신뢰감을 주는 연륜 묻어나는 톤을 사용하세요. (단, 격식 없는 반말이나 '허허', '손주야' 등의 유치한 감탄사는 사용하지 마세요.)
+3. 전문적이면서도 따뜻한 존댓말로 답변하세요.
 4. "에이전트가 말하길..." 같은 내부 표현은 쓰지 말고, 직접 분석한 것처럼 자연스럽게 전달하세요.
-5. **100% 한국어(한글)로만 답변하세요.** 영어를 포함한 어떠한 외국어(영어, 일본어, 중국어 등)도 절대 출력하지 마세요.
-6. **한자(漢字)는 절대로 사용하지 마세요.** (예: 農사 -> 농사)
-7. 부득이하게 외국어나 영문 고유명사를 언급해야 하는 경우에도, 영어 철자를 직접 쓰지 말고 반드시 한글 발음으로만 표기하세요. (예: 'Gemini' -> '제미나이', 'FastAPI' -> '패스트에이피아이')"""
+5. 100% 한국어(한글)로만 답변하세요. 한자(漢字) 사용 금지.
+6. 부득이하게 외국어 고유명사를 언급해야 할 경우, 한글 발음으로 표기하세요."""
 
 async def synthesizer_node(state: AgentState):
     """여러 에이전트의 답변을 취합하여 최종 응답을 생성합니다.
 
-    skip_synthesis=True 이면 마지막 AI 메시지를 그대로 반환합니다.
-    (Shop Agent처럼 이미 완성된 응답을 할아버지 말투로 재가공하면 내용이 왜곡될 때 사용)
+    자동 우회 조건:
+      1. skip_synthesis=True (Shop Agent 등이 명시적 요청)
+      2. 단일 에이전트만 라우팅된 경우 (재가공 불필요)
     """
-    # Shop Agent 등이 합성 건너뛰기를 요청한 경우 — 원본 응답 그대로 반환
+    # ① 명시적 우회 요청
     if state.get("skip_synthesis"):
         last_ai = next(
             (m for m in reversed(state["messages"]) if isinstance(m, AIMessage)), None
@@ -1034,8 +1046,18 @@ async def synthesizer_node(state: AgentState):
         if last_ai:
             return {"messages": [last_ai]}
 
+    # ② 단일 에이전트 라우팅 → 재가공 없이 그대로 반환
+    routed = state.get("routed_agents", [])
+    if len(routed) <= 1:
+        last_ai = next(
+            (m for m in reversed(state["messages"]) if isinstance(m, AIMessage)), None
+        )
+        if last_ai:
+            logger.info("[Synthesizer] 단일 에이전트(%s) → 우회", routed)
+            return {"messages": [last_ai]}
+
     try:
-        llm = get_llm()
+        llm = get_llm("gemini")
         chat_model = llm.get_chat_model(temperature=0.5)
 
         # 시스템 메시지 + 이전 대화 + 에이전트들의 답변들 취합
@@ -1068,9 +1090,19 @@ def get_main_orchestrator():
     workflow.add_node("blocked_guard", call_blocked_guard)
     workflow.add_node("general_agent", call_general_agent)
     workflow.add_node("synthesizer", synthesizer_node)  # 답변 합성 노드
-    
-    # 조건부 라우팅 적용 (복수 선택 가능)
-    workflow.add_conditional_edges(START, router_node, {
+
+    # 라우팅 결과를 state에 기록하는 래퍼 노드
+    async def router_with_tracking(state: AgentState):
+        routes = await router_node(state)
+        return {"routed_agents": routes}
+
+    workflow.add_node("router", router_with_tracking)
+    workflow.add_edge(START, "router")
+
+    def route_dispatch(state: AgentState) -> list[str]:
+        return state.get("routed_agents", ["general_chat"])
+
+    workflow.add_conditional_edges("router", route_dispatch, {
         "blocked_guard": "blocked_guard",
         "balance_agent": "balance_agent",
         "farm_agent": "farm_agent",
