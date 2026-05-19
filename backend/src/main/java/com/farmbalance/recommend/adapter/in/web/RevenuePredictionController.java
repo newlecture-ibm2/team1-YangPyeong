@@ -1,6 +1,8 @@
 package com.farmbalance.recommend.adapter.in.web;
 
 import com.farmbalance.global.response.ApiResponse;
+import com.farmbalance.recommend.adapter.out.external.KamisCropNameResolver;
+import com.farmbalance.recommend.adapter.out.persistence.RevenueCultivationLookup;
 import com.farmbalance.recommend.application.port.out.RecommendPricePort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -15,6 +17,7 @@ import org.springframework.web.client.RestClientResponseException;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 수익 예측 API 컨트롤러
@@ -27,14 +30,17 @@ public class RevenuePredictionController {
 
     private final RestClient aiRestClient;
     private final RecommendPricePort recommendPricePort;
+    private final RevenueCultivationLookup revenueCultivationLookup;
     private final ObjectMapper objectMapper;
 
     public RevenuePredictionController(
             @Qualifier("aiRestClient") RestClient aiRestClient,
             RecommendPricePort recommendPricePort,
+            RevenueCultivationLookup revenueCultivationLookup,
             ObjectMapper objectMapper) {
         this.aiRestClient = aiRestClient;
         this.recommendPricePort = recommendPricePort;
+        this.revenueCultivationLookup = revenueCultivationLookup;
         this.objectMapper = objectMapper;
     }
 
@@ -47,8 +53,15 @@ public class RevenuePredictionController {
         log.info("수익 예측 요청: userId={}, crop={}", userId, cropName);
 
         try {
-            // 1. Backend DB 캐시(또는 KAMIS API)를 이용해 가격 조회
             if (cropName != null) {
+                KamisCropNameResolver.ResolveResult resolved = KamisCropNameResolver.resolve(cropName);
+                if (resolved.standardName() != null) {
+                    request.put("resolved_kamis_crop", resolved.standardName());
+                }
+                if (resolved.mappingNote() != null) {
+                    request.put("mapping_note", resolved.mappingNote());
+                }
+
                 Integer price = recommendPricePort.getRecentPricePerKg(cropName);
                 if (price != null) {
                     Map<String, Object> kamisData = new HashMap<>();
@@ -56,11 +69,18 @@ public class RevenuePredictionController {
                     kamisData.put("unit", "1kg");
                     kamisData.put("date", LocalDate.now().toString());
                     kamisData.put("crop_name", cropName);
-                    
+                    if (resolved.standardName() != null) {
+                        kamisData.put("resolved_crop_name", resolved.standardName());
+                    }
+                    if (resolved.mappingNote() != null) {
+                        kamisData.put("mapping_note", resolved.mappingNote());
+                    }
                     request.put("kamis_price", kamisData);
-                    log.info("캐시된 KAMIS 가격 적용: {}원", price);
+                    log.info("캐시된 KAMIS 가격 적용: {} → {}원", cropName, price);
                 }
             }
+
+            enrichSowingMonth(request);
 
             // 2. AI 서버로 프록시 (aiRestClient 사용, url은 AiClientConfig에 설정됨)
             ResponseEntity<String> responseEntity = aiRestClient.post()
@@ -86,5 +106,28 @@ public class RevenuePredictionController {
             return ResponseEntity.internalServerError()
                     .body(ApiResponse.fail("REVENUE_ERROR", "수익 예측 중 시스템 오류가 발생했습니다: " + e.getMessage()));
         }
+    }
+
+    private void enrichSowingMonth(Map<String, Object> request) {
+        if (request.get("sowing_month") != null) {
+            return;
+        }
+        Object farmIdObj = request.get("farm_id");
+        String cropName = (String) request.get("crop_name");
+        if (farmIdObj == null || cropName == null) {
+            return;
+        }
+        long farmId;
+        if (farmIdObj instanceof Number n) {
+            farmId = n.longValue();
+        } else {
+            try {
+                farmId = Long.parseLong(farmIdObj.toString());
+            } catch (NumberFormatException e) {
+                return;
+            }
+        }
+        Optional<LocalDate> sowingDate = revenueCultivationLookup.findSowingDate(farmId, cropName);
+        sowingDate.ifPresent(date -> request.put("sowing_month", date.getMonthValue()));
     }
 }

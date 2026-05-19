@@ -28,6 +28,9 @@ class GeminiLLM(BaseLLM):
         self._api_key = settings.GEMINI_API_KEY
         logger.info("GeminiLLM 초기화 완료 (모델: %s)", self._model_name)
 
+    def get_provider_name(self) -> str:
+        return "gemini"
+
     def get_chat_model(self, **kwargs: Any) -> ChatGoogleGenerativeAI:
         """LangChain 호환 Gemini ChatModel 반환"""
         return ChatGoogleGenerativeAI(

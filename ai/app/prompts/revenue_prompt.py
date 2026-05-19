@@ -26,6 +26,14 @@ def build_revenue_prediction_prompt(context: dict) -> str:
     actual_yield = context.get("actual_yield_kg")
     weather = context.get("weather_context")
     optimal_period = context.get("optimal_sowing_period", "정보 없음")
+    resolved_crop = context.get("resolved_kamis_crop")
+    mapping_note = context.get("mapping_note")
+
+    mapping_section = ""
+    if resolved_crop and resolved_crop != crop_name:
+        mapping_section = f"\n- KAMIS 표준 품목: {resolved_crop}"
+    if mapping_note:
+        mapping_section += f"\n- {mapping_note}"
 
     # 기본 수확량 산출
     base_yield = area_sqm * avg_yield
@@ -35,7 +43,11 @@ def build_revenue_prediction_prompt(context: dict) -> str:
     if "price" in kamis_price:
         price_info = f"현재 도매 시세: {kamis_price['price']:,}원/kg (기준일: {kamis_price.get('date', '오늘')})"
     else:
-        price_info = f"시세 조회 실패: {kamis_price.get('error', '알 수 없음')}"
+        price_info = (
+            f"시세 조회 실패: {kamis_price.get('error', '알 수 없음')}. "
+            "시세 숫자가 없어도 재배 면적·파종 시기·유사 품목 수급을 바탕으로 "
+            "price_insight·revenue_insight 각각 2~3문장으로 작성하세요."
+        )
 
     yield_section = ""
     if actual_yield is not None:
@@ -64,7 +76,7 @@ def build_revenue_prediction_prompt(context: dict) -> str:
     prompt = f"""당신은 대한민국 농업 경제 전문가입니다. 아래 데이터를 기반으로 농가의 예상 수익을 분석해주세요.
 
 # 분석 대상
-- 작물: {crop_name}
+- 작물: {crop_name}{mapping_section}
 - 재배 면적: {area_sqm:,.1f} ㎡ ({area_sqm / 3.3058:,.0f} 평)
 - {price_info}
 {yield_section}

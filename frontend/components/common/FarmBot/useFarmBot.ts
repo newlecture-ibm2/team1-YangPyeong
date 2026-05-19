@@ -55,6 +55,14 @@ export function useFarmBot() {
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
 
+  // ── 채팅창 위치/크기 상태 ──
+  const [chatPosition, setChatPosition] = useState({ x: -1, y: -1 }); // -1이면 초기화 필요
+  const [chatSize, setChatSize] = useState({ width: 380, height: 520 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const dragStartRef = useRef({ mouseX: 0, mouseY: 0, posX: 0, posY: 0 });
+  const resizeStartRef = useRef({ mouseX: 0, mouseY: 0, w: 0, h: 0 });
+
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const quickMsgRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAsked = useRef(false);
@@ -308,13 +316,80 @@ export function useFarmBot() {
     setShowBubble(false);
     setHighlightRect(null);
     setBotState('idle');
+    // 채팅창 초기 위치: 우하단
+    if (chatPosition.x === -1) {
+      setChatPosition({
+        x: window.innerWidth - chatSize.width - 24,
+        y: window.innerHeight - chatSize.height - 24,
+      });
+    }
     if (chatMessages.length === 0) {
       setChatMessages([{
         role: 'bot',
         content: FARM_BOT_CONSTANTS.WELCOME_MESSAGE,
       }]);
     }
-  }, [chatMessages.length]);
+  }, [chatMessages.length, chatPosition.x, chatSize.width, chatSize.height]);
+
+  /** 드래그 시작 (헤더 mousedown) */
+  const onChatDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartRef.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      posX: chatPosition.x,
+      posY: chatPosition.y,
+    };
+  }, [chatPosition]);
+
+  /** 리사이즈 시작 (핸들 mousedown) */
+  const onChatResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    resizeStartRef.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      w: chatSize.width,
+      h: chatSize.height,
+    };
+  }, [chatSize]);
+
+  // ── 드래그 & 리사이즈 전역 마우스 이벤트 바인딩 ──
+  useEffect(() => {
+    if (!isDragging && !isResizing) return;
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      if (isDragging) {
+        const dx = ev.clientX - dragStartRef.current.mouseX;
+        const dy = ev.clientY - dragStartRef.current.mouseY;
+        setChatPosition({
+          x: Math.max(0, Math.min(window.innerWidth - chatSize.width, dragStartRef.current.posX + dx)),
+          y: Math.max(0, Math.min(window.innerHeight - chatSize.height, dragStartRef.current.posY + dy)),
+        });
+      } else if (isResizing) {
+        const dw = ev.clientX - resizeStartRef.current.mouseX;
+        const dh = ev.clientY - resizeStartRef.current.mouseY;
+        setChatSize({
+          width: Math.max(300, Math.min(600, resizeStartRef.current.w + dw)),
+          height: Math.max(400, Math.min(700, resizeStartRef.current.h + dh)),
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setIsResizing(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, isResizing, chatSize]);
 
   /** 메시지 전송 (대화 히스토리 포함) */
   const sendChatMessage = useCallback(async (message: string) => {
@@ -373,7 +448,7 @@ export function useFarmBot() {
 
   // 가이드 중 스크롤 잠금
   useEffect(() => {
-    if (mode === 'guiding' || mode === 'chatting') {
+    if (mode === 'guiding') {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -439,5 +514,9 @@ export function useFarmBot() {
     chatInput,
     setChatInput,
     chatLoading,
+    chatPosition,
+    chatSize,
+    onChatDragStart,
+    onChatResizeStart,
   };
 }
