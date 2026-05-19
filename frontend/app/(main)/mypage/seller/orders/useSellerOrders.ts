@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { SellerOrder, SellerOrderKpi, OrderStatus } from '../../_lib/mypage.types';
 import { getSellerOrders, updateOrderStatus } from '@/app/(main)/shop/_lib/shop.api';
 import { useToast } from '@/components/common/Toast/ToastContext';
+import { CHAT_EVENTS, type ChatRefreshEventDetail } from '@/components/common/FarmBot/useChatActions';
 
 /** 주문 상태 전환 규칙 */
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
@@ -21,36 +22,46 @@ export default function useSellerOrders() {
   const { success: toastSuccess, error: toastError } = useToast();
 
   // 판매자 주문 목록 로드
-  useEffect(() => {
-    const fetchOrders = async () => {
-      setLoading(true);
-      const result = await getSellerOrders();
-      if (result.success && result.data) {
-        // Order → SellerOrder 변환
-        const mapped: SellerOrder[] = result.data.map((o) => ({
-          id: o.id,
-          orderNumber: o.orderNumber,
-          buyerName: o.receiverName,
-          buyerPhone: o.receiverPhone,
-          shippingAddress: o.shippingAddress,
-          shippingMemo: o.shippingMemo,
-          productName: o.items.map((i) => `${i.productName} x${i.quantity}`).join(', '),
-          productId: o.items[0]?.productId || 0,
-          quantity: o.items.reduce((sum, i) => sum + i.quantity, 0),
-          totalAmount: o.totalAmount,
-          status: o.status as OrderStatus,
-          orderedAt: o.createdAt,
-          acceptedAt: o.updatedAt,
-        }));
-        setOrders(mapped);
-      } else {
-        setOrders([]);
-      }
-      setLoading(false);
-    };
-
-    fetchOrders();
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    const result = await getSellerOrders();
+    if (result.success && result.data) {
+      // Order → SellerOrder 변환
+      const mapped: SellerOrder[] = result.data.map((o) => ({
+        id: o.id,
+        orderNumber: o.orderNumber,
+        buyerName: o.receiverName,
+        buyerPhone: o.receiverPhone,
+        shippingAddress: o.shippingAddress,
+        shippingMemo: o.shippingMemo,
+        productName: o.items.map((i) => `${i.productName} x${i.quantity}`).join(', '),
+        productId: o.items[0]?.productId || 0,
+        quantity: o.items.reduce((sum, i) => sum + i.quantity, 0),
+        totalAmount: o.totalAmount,
+        status: o.status as OrderStatus,
+        orderedAt: o.createdAt,
+        acceptedAt: o.updatedAt,
+      }));
+      setOrders(mapped);
+    } else {
+      setOrders([]);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  // 챗봇 REFRESH scope=seller_orders 이벤트 구독
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { scope } = (e as CustomEvent<ChatRefreshEventDetail>).detail;
+      if (scope === 'seller_orders') fetchOrders();
+    };
+    window.addEventListener(CHAT_EVENTS.refresh, handler);
+    return () => window.removeEventListener(CHAT_EVENTS.refresh, handler);
+  }, [fetchOrders]);
 
   /** 필터링된 주문 목록 */
   const filteredOrders = useMemo(() => {

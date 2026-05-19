@@ -88,11 +88,13 @@ interface ProfileHeaderProps {
   profile: UserProfile;
   isUploading: boolean;
   onImageUpload: (file: File) => Promise<boolean>;
+  /** 가이드봇 타겟 식별자 (data-guide 속성 forwarding) */
+  'data-guide'?: string;
 }
 
-export function ProfileHeader({ profile, isUploading, onImageUpload }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, isUploading, onImageUpload, 'data-guide': dataGuide }: ProfileHeaderProps) {
   return (
-    <div className={styles.header}>
+    <div className={styles.header} data-guide={dataGuide}>
       <ProfileImageUpload
         currentImageUrl={profile.profileImageUrl}
         onUpload={onImageUpload}

@@ -13,9 +13,15 @@ public interface ManageProductUseCase {
     Product registerProduct(Long sellerId, String name, int price, int stock,
                             String description, String categoryName, List<String> imageUrls);
 
-    /** 상품 수정 */
+    /** 상품 전체 수정 (콘텐츠 변경 — ACTIVE 상태일 때만 허용, 재검수 진입) */
     Product updateProduct(Long sellerId, Long productId, String name, int price, int stock,
                           String description, String categoryName, List<String> imageUrls);
+
+    /**
+     * 가격·재고만 수정 (운영 정보 — 검수 상태와 무관하게 즉시 반영).
+     * price, stock 중 null인 항목은 기존 값 유지.
+     */
+    Product updateInventory(Long sellerId, Long productId, Integer price, Integer stock);
 
     /** 상품 상태(판매중/품절/숨김) 변경 */
     Product changeProductStatus(Long sellerId, Long productId, String newStatus);

@@ -5,8 +5,10 @@ import com.farmbalance.global.email.OrderEmailTemplate;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.shop.application.port.in.OrderUseCase;
+import com.farmbalance.shop.application.port.out.CartRepository;
 import com.farmbalance.shop.application.port.out.OrderRepository;
 import com.farmbalance.shop.application.port.out.ProductRepository;
+import com.farmbalance.shop.domain.CartItem;
 import com.farmbalance.shop.domain.Order;
 import com.farmbalance.shop.domain.OrderItem;
 import com.farmbalance.shop.domain.OrderStatus;
@@ -37,14 +39,17 @@ public class OrderService implements OrderUseCase {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final CartRepository cartRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final NotificationUseCase notificationUseCase;
 
     public OrderService(OrderRepository orderRepository, ProductRepository productRepository,
+            CartRepository cartRepository,
             UserRepository userRepository, EmailService emailService, NotificationUseCase notificationUseCase) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.cartRepository = cartRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.notificationUseCase = notificationUseCase;
@@ -87,11 +92,18 @@ public class OrderService implements OrderUseCase {
         String orderNumber = generateOrderNumber();
 
         Order order = new Order(
-                null, buyerId, orderNumber, totalAmount, OrderStatus.ACCEPTED,
+                null, buyerId, orderNumber, totalAmount, OrderStatus.ORDERED,
                 receiverName, receiverPhone, shippingAddress, shippingMemo,
                 null, null, orderItems, LocalDateTime.now(), null);
 
         Order savedOrder = orderRepository.save(order);
+
+        // 주문된 상품의 장바구니 항목 자동 삭제
+        for (OrderItemCommand cmd : items) {
+            cartRepository.findByUserIdAndProductId(buyerId, cmd.productId())
+                    .map(CartItem::getId)
+                    .ifPresent(cartRepository::delete);
+        }
 
         // O-1 새 주문 결제 완료 알림 (셀러 대상)
         for (Long sellerId : sellerIds) {
@@ -188,6 +200,40 @@ public class OrderService implements OrderUseCase {
         return saved;
     }
 
+    @Override
+    @Transactional
+    public Order buyerCancelOrder(Long buyerId, Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+        // 본인 주문인지 검증
+        if (!order.getBuyerId().equals(buyerId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        // ORDERED 상태(판매자 미접수)일 때만 즉시 취소 허용
+        if (order.getStatus() != OrderStatus.ORDERED) {
+            throw new BusinessException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
+        }
+
+        // 재고 복구 + 판매수량 감소
+        for (OrderItem item : order.getItems()) {
+            productRepository.findById(item.getProductId()).ifPresent(product -> {
+                product.increaseStock(item.getQuantity());
+                product.decreaseSalesCount(item.getQuantity());
+                productRepository.save(product);
+            });
+        }
+
+        order.cancel();
+        Order saved = orderRepository.save(order);
+
+        // 취소 이메일 발송 (비동기)
+        sendCancelEmail(saved);
+
+        return saved;
+    }
+
     /** 해당 주문이 판매자의 상품을 포함하는지 검증 */
     private void validateSellerOwnership(Long sellerId, Long orderId) {
         boolean isOwner = orderRepository.findBySellerId(sellerId)
@@ -226,7 +272,7 @@ public class OrderService implements OrderUseCase {
                         NotificationType.ORDER,
                         "주문 접수 완료",
                         "주문하신 상품이 접수되었습니다.",
-                        "/shop/orders"
+                        "/mypage/history"
                 );
             }
             // ACCEPTED → SHIPPED (배송 시작)
@@ -240,7 +286,7 @@ public class OrderService implements OrderUseCase {
                         NotificationType.ORDER,
                         "배송 시작",
                         String.format("주문하신 상품이 배송 시작되었습니다. (송장: %s)", order.getTrackingNumber()),
-                        "/shop/orders"
+                        "/mypage/history"
                 );
             }
         } catch (Exception e) {
@@ -265,7 +311,7 @@ public class OrderService implements OrderUseCase {
                     NotificationType.ORDER,
                     "주문 거절",
                     String.format("주문이 거절되었습니다. (주문번호: %s)", order.getOrderNumber()),
-                    "/shop/orders"
+                    "/mypage/history"
             );
         } catch (Exception e) {
             log.warn("[주문 거절 알림] 발송 실패 (주문: {}): {}", order.getOrderNumber(), e.getMessage());

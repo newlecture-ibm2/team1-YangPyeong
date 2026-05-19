@@ -29,6 +29,9 @@ public interface OrderUseCase {
     /** 주문 취소 (판매자 거절) */
     Order cancelOrder(Long sellerId, Long orderId);
 
+    /** 주문 취소 (구매자 — ORDERED 상태일 때만 허용) */
+    Order buyerCancelOrder(Long buyerId, Long orderId);
+
     /** 주문 항목 커맨드 */
     record OrderItemCommand(Long productId, int quantity) {}
 }

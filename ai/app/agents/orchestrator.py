@@ -100,16 +100,46 @@ VALID_ROUTES = {
 
 DOMAIN_FORCE_KEYWORDS: dict[str, set[str]] = {
     "shop_agent": {
-        # 장바구니 행위 (LLM 오판 시 UX 치명적)
-        "장바구니", "장바구니에", "담아줘", "담아 줘", "담아줄래",
-        "넣어줘", "넣어 줘",
-        # 즉시 구매 행위
-        "바로구매", "바로 구매", "결제하기", "구매하기",
-        # 상품 등록 행위
-        "상품 등록", "상품등록",
-        # 작물 등록 (모호성 해소 필요)
-        "작물 등록", "작물등록",
+        # 장바구니
+        "장바구니", "장바구니에", "장바구니로", "장바구니 보여", "장바구니보여",
+        # 담기/넣기/구매
+        "담아줘", "담아 줘", "담아줄", "담아줄래", "담아봐",
+        "넣어줘", "넣어 줘", "넣어줄", "넣어줄래",
+        "바로구매", "바로 구매", "결제하기", "구매하기", "살래", "살게",
+        # 장터/상점
+        "장터", "장터로", "장터에", "상점", "쇼핑",
+        # 주문
+        "주문할게", "주문해줘", "주문 해줘", "주문하기", "내 주문",
+        "판매주문", "판매 주문",
+        # 상품/작물 등록 관련
+        "상품 등록", "상품등록", "등록한 상품",
+        "판매중인", "판매 중인",
+        "작물 등록", "작물등록", "작물 등록할", "작물등록할",
+        "심을 거 등록", "심을거 등록",
+        # 메뉴/목록
+        "메뉴", "메뉴가", "메뉴는", "메뉴를",
+        "뭐있어", "뭐 있어", "뭐있냐", "뭐 있냐", "뭐있나", "뭐 있나",
+        "뭐팔아", "뭐 팔아", "뭐파냐", "뭐팔고",
+        "어떤 상품", "어떤상품", "어떤 거 팔",
+        "상품 뭐", "상품뭐",
+        # 취소
+        "주문 취소", "주문취소", "취소해줘", "취소해 줘", "취소할래", "취소할게",
+        # 장바구니/상품 상세
+        "내 장바구니", "장바구니 확인", "장바구니 조회",
+        "상품 상세", "상세 보여", "상세보기", "상세 정보", "상품 정보",
+        # 판매자 상품 수정/삭제/상태변경
+        "가격 바꿔", "가격 변경", "가격 수정", "가격을 바꿔", "가격으로 바꿔",
+        "재고 바꿔", "재고 변경", "재고 수정", "재고를 바꿔", "재고로 바꿔",
+        "상품 수정", "상품 삭제", "상품 지워", "상품 지워줘", "숨김 처리", "숨기기",
+        "판매중으로", "다시 판매", "품절 처리", "상태 변경", "상태 바꿔",
+        # 판매자 주문 상태 변경
+        "접수 확인", "접수확인", "주문 접수", "주문접수",
+        "발송 처리", "발송처리", "발송 완료", "배송 시작", "배송시작",
+        "주문 거절", "주문거절", "거절해줘", "거절 처리",
     },
+    # 예시: 팀원이 새 도메인 추가 시
+    # "livestock_agent": {"가축", "축산", "소 등록", "출하", ...},
+    # "farm_agent": {"내 농장", "농장 면적", "가용면적", ...},
 }
 
 DOMAIN_CONTEXT_INDICATORS: dict[str, tuple[str, ...]] = {
@@ -117,9 +147,8 @@ DOMAIN_CONTEXT_INDICATORS: dict[str, tuple[str, ...]] = {
         "id=", "productId=", "장바구니", "담아", "담았", "장터",
         "상품", "주문", "결제", "[ACTION:", "PRODUCT_LIST",
     ),
-    "community_agent": (
-        "커뮤니티", "게시글", "채택", "댓글", "노하우", "경험담",
-    ),
+    # 예시:
+    # "livestock_agent": ("가축", "출하", "사료", "축사", ...),
 }
 
 
@@ -207,13 +236,22 @@ async def router_node(state: AgentState) -> List[str]:
         return [forced]
 
     try:
-        llm = get_llm("gemini")
+        llm = get_llm()
         chat_model = llm.get_chat_model(temperature=0)
 
-        response = await chat_model.ainvoke([
-            SystemMessage(content=ROUTER_SYSTEM_PROMPT),
-            HumanMessage(content=last_message),
-        ])
+        prompt = [SystemMessage(content=ROUTER_SYSTEM_PROMPT)]
+        
+        # 직전 봇 메시지가 있다면 문맥 파악을 위해 추가
+        prev_ai = next(
+            (m.content for m in reversed(state["messages"][:-1]) if isinstance(m, AIMessage)), 
+            None
+        )
+        if prev_ai:
+            prompt.append(AIMessage(content=prev_ai))
+            
+        prompt.append(HumanMessage(content=last_message))
+
+        response = await chat_model.ainvoke(prompt)
 
         # 쉼표로 구분된 결과를 리스트로 변환
         raw_routes = [r.strip().lower() for r in response.content.split(",")]
@@ -311,24 +349,387 @@ async def call_policy_agent(state: AgentState):
 # ── shop_agent LLM 실패 시 키워드 → 도구 직접 호출 fallback ──
 # Gemini가 짧은/복잡한 user 메시지에 종종 빈 AIMessage(tool_calls 없음)를 반환하는
 # 알려진 동작에 대한 안전망. 매칭 안되면 None 반환.
-async def _shop_keyword_fallback(user_message: str) -> tuple[str, list[dict]] | None:
-    from app.agents.tools.shop_tools import (
+async def _shop_keyword_fallback(
+    user_message: str,
+    all_msgs: list | None = None,
+) -> tuple[str, list[dict]] | None:
+    from app.agents.tools.shop_tools import (  # noqa: PLC0415
         list_shop_menu, navigate_to, clarify_crop_register, autofill_product_info,
+        get_my_cart, cancel_order, get_product_detail, buy_selected_from_cart,
+        update_product, delete_product, change_product_status, update_seller_order_status,
+        list_my_products, list_my_orders, get_my_product_status,
+        update_cart_qty, remove_from_cart, track_my_order,
     )
 
     lower = user_message.lower()
 
-    # ── '작물 등록' 모호성 — 항상 가장 먼저 체크 ──
-    # "작물 등록" 키워드는 농장 작물 vs 판매 상품 두 가지 의미가 있으므로
-    # 어떤 등록 키워드보다 먼저 매칭하여 CLARIFY로 분기.
+    # ── 0순위: '작물 등록' 모호성 — 항상 가장 먼저 체크 ──
     crop_register_kws = ("작물 등록", "작물등록", "작물 등록할", "작물등록할",
                          "심을 거 등록", "심을거 등록")
     if any(kw in lower for kw in crop_register_kws):
         result = await clarify_crop_register.ainvoke({})
         return split_actions(result)
 
-    # ── 상품 자동 채우기 — "배추 등록할건데 8800원에 100개" 같은 패턴 ──
-    # "채워줘", "팔건데", "등록할" + 작물명(+가격/재고) 패턴
+    # ── 0.5순위: 내 판매 상품 목록 / 내 주문 내역 조회 ──
+    # "내가 상품 뭐 등록했지?", "내 판매 상품 뭐있어?" 등 — menu_kws(장터 전체) 보다 반드시 앞에.
+    my_products_kws = (
+        "내가 등록한", "내가 올린", "내가 판매", "내가 팔고",
+        "등록했지", "등록했어", "뭐 등록", "뭐등록",
+        "등록한 상품", "등록한상품",
+        "등록한게", "등록한 게", "등록한건", "등록한 건",   # "등록한게 뭐냐고" 패턴
+        "내 판매 상품", "내판매상품", "내 등록 상품", "내등록상품",
+        "내 상품 뭐", "내상품뭐", "내 상품 목록", "내상품목록",
+        "판매중인 상품 뭐", "내가 뭐 팔",
+        # "나 지금 뭐팔고있지?", "내가 뭐팔고있어?" 패턴 — menu_kws "팔고있" 보다 먼저 체크
+        "뭐팔고있지", "뭐 팔고있지", "뭐팔고있어", "뭐 팔고있어",
+        "나 뭐팔", "나 지금 뭐팔", "내가 뭐팔",
+    )
+    # 조합 패턴: ("나"/"내가") + ("팔고"/"팔아"/"팔고있") → 내 판매 상품 목록
+    _is_my_selling = (
+        ("나 " in lower or "내가 " in lower or lower.startswith("나ㅣ") or "나지금" in lower)
+        and any(v in lower for v in ("팔고있", "팔고 있", "팔고있지", "팔아", "팔고있어"))
+    )
+    if any(kw in lower for kw in my_products_kws) or _is_my_selling:
+        logger.info("[ShopFallback] list_my_products: '%s'", user_message[:40])
+        result = await list_my_products.ainvoke({})
+        return split_actions(result)
+
+    my_orders_kws = (
+        "내가 주문한", "내 주문 뭐", "내주문뭐", "주문했지", "주문했어",
+        "뭐 주문했", "뭐주문했", "주문 내역 뭐", "내 주문 목록",
+    )
+    if any(kw in lower for kw in my_orders_kws):
+        logger.info("[ShopFallback] list_my_orders: '%s'", user_message[:40])
+        result = await list_my_orders.ainvoke({})
+        return split_actions(result)
+
+    # ── 0.7순위: 내 상품 상태/정보 조회 ──
+    # "배추 팔수있어?", "딸기 상태 어때?", "딸기 가격이랑 재고 몇에 올렸어?" 등
+    # 본인 등록 상품의 상태·가격·재고·판매량을 묻는 패턴 — 공개 장터 검색 전에 반드시 체크.
+    # (공개 API는 검수중(PENDING) 상품을 반환하지 않아 "못찾았어요" 오류 발생)
+    my_product_status_kws = (
+        "팔수있", "팔 수 있", "판매가능", "판매 가능",
+        "팔아도 돼", "팔아도돼", "팔수있어", "팔수있나", "팔수있는거야",
+        "팔수있는건가", "팔 수있어", "팔 수있나",
+        "검수중인지", "검수 중인지", "검수 완료", "검수됐어", "검수됐나",
+        "상태가 어때", "상태어때", "상태 어때", "상태 알려", "현재 상태",
+        "몇개팔려", "몇 개 팔려", "얼마나 팔려", "팔려써", "팔렸어", "몇개팔렸",
+        "얼마에 올렸", "몇에 올렸", "얼마로 올렸", "몇으로 올렸",
+        "내가 설정한", "설정한 가격", "설정한 재고",
+    )
+    # 비연속 조합 패턴: "올렸고/올렸어" + "가격/재고" → 내 상품 정보 조회
+    _is_my_product_info = (
+        any(v in lower for v in ("올렸고", "올렸어", "올렸는지", "올렸냐", "설정했", "등록했어요"))
+        and any(kw in lower for kw in ("가격", "재고", "상품"))
+    )
+    if any(kw in lower for kw in my_product_status_kws) or _is_my_product_info:
+        attrs = extract_product_attrs(user_message)
+        product_name = attrs.get("product_name")
+        if product_name:
+            logger.info("[ShopFallback] get_my_product_status: name=%s", product_name)
+            result = await get_my_product_status.ainvoke({"product_name": product_name})
+            return split_actions(result)
+        else:
+            # 상품명 없으면 전체 목록 반환
+            logger.info("[ShopFallback] get_my_product_status: 상품명 미지정 → list_my_products")
+            result = await list_my_products.ainvoke({})
+            return split_actions(result)
+
+    # ── 1순위: 장바구니 조회 ──
+    # "뭐있어", "보여줘" 같은 일반 조회 키워드보다 반드시 먼저 체크해야 함.
+    # "장바구니에 뭐있어?" → list_shop_menu 가 아닌 get_my_cart 호출.
+    cart_inquiry_kws = ("장바구니에 뭐", "장바구니 뭐", "장바구니 확인", "장바구니 조회",
+                        "내 장바구니", "장바구니 보여", "장바구니에 있", "장바구니 있")
+    if any(kw in lower for kw in cart_inquiry_kws):
+        result = await get_my_cart.ainvoke({})
+        return split_actions(result)
+
+    # ── 1.2순위: 장바구니 항목 삭제 ──
+    # "장바구니에서 배추 빼줘", "사과 장바구니에서 지워줘" 등.
+    import re as _re_cart
+    # 단순 노이즈 단어 (상품명이 아닌 일반 명사)
+    _CART_NOISE_WORDS = ("장바구니의", "장바구니에서", "장바구니에", "장바구니",
+                          "지금", "그니까", "그러니까", "아 ", " 아", "이제", "좀", "다시",
+                          "물량", "수량", "재고", "개수")
+    # 1글자 상품명 동작 동사
+    _CART_VERBS = ("빼", "지워", "삭제", "바꿔", "수정", "변경", "늘려", "줄여",
+                    "올려", "내려", "담아", "추가", "넣어")
+
+    async def _extract_product_in_cart_context(msg: str) -> str | None:
+        """장바구니 컨텍스트 메시지에서 상품명 추출.
+        1) 노이즈 단어 제거 후 표준 추출 시도
+        2) 실패하면 1글자 한글 단어를 잡되, 실제 장바구니 항목과 매칭 확인"""
+        cleaned = msg
+        for noise in _CART_NOISE_WORDS:
+            cleaned = cleaned.replace(noise, " ")
+        cleaned = _re_cart.sub(r"\s+", " ", cleaned).strip()
+        # 1차: 표준 추출 (2글자 이상)
+        name = extract_product_attrs(cleaned).get("product_name")
+        if name:
+            return name
+        # 2차: 1글자 한글 후보들을 추출하여 실제 장바구니와 매칭
+        candidates = _re_cart.findall(r"[가-힣]+", cleaned)
+        # 동사·숫자·노이즈가 아닌 1-2글자 후보
+        candidates = [c for c in candidates
+                      if c and not any(v in c for v in _CART_VERBS)
+                      and c not in ("개로", "개", "그래", "응", "맞아")]
+        if not candidates:
+            return None
+        # 장바구니에서 실제로 매칭되는 후보 찾기
+        try:
+            from app.utils.backend_client import call_backend as _cb, BackendError as _BE  # noqa: PLC0415
+            cart_data = await _cb("GET", "/api/shop/cart")
+            cart_items = cart_data if isinstance(cart_data, list) else (cart_data.get("data") or [])
+        except Exception:
+            cart_items = []
+        for cand in candidates:
+            for item in cart_items:
+                pname = (item.get("product") or {}).get("name", "") or ""
+                if cand in pname:
+                    return cand
+        # 최후 fallback: 첫 후보 반환 (1글자라도)
+        return candidates[0] if candidates else None
+
+    cart_remove_kws = ("장바구니에서 빼", "장바구니에서 지워", "장바구니에서 삭제",
+                       "장바구니 빼", "장바구니 지워", "장바구니 삭제")
+    _is_cart_remove = (
+        any(kw in lower for kw in cart_remove_kws) or
+        ("장바구니" in lower and any(v in lower for v in ("빼줘", "빼 줘", "지워", "삭제")))
+    )
+    if _is_cart_remove:
+        product_name = await _extract_product_in_cart_context(user_message)
+        if not product_name:
+            return ("어떤 상품을 장바구니에서 빼드릴까요?\n예) '장바구니에서 배추 빼줘'", [])
+        logger.info("[ShopFallback] remove_from_cart: name=%s", product_name)
+        result = await remove_from_cart.ainvoke({"product_name": product_name})
+        return split_actions(result)
+
+    # ── 1.3순위: 장바구니 수량 변경 ──
+    # "배추 장바구니 3개로 바꿔줘", "장바구니에서 사과 5개로 늘려줘" 등.
+    _is_cart_qty_update = (
+        "장바구니" in lower
+        and any(v in lower for v in ("바꿔", "수정", "변경", "늘려", "줄여", "올려", "내려"))
+        and "개" in lower
+    )
+    if _is_cart_qty_update:
+        product_name = await _extract_product_in_cart_context(user_message)
+        # 수량은 원본 메시지에서 추출 (장바구니 제거 후에도 "N개"는 남음)
+        from app.agents.shared.nl_extract import extract_stock as _ext_stock  # noqa: PLC0415
+        stock = _ext_stock(user_message)
+        if not product_name:
+            return ("어떤 상품 수량을 바꿀까요?\n예) '배추 장바구니 3개로 바꿔줘'", [])
+        if stock is None:
+            return (
+                f"'{product_name}' 장바구니 수량을 몇 개로 바꿀까요?\n"
+                f"예) '{product_name} 장바구니 3개로 바꿔줘'",
+                [],
+            )
+        logger.info("[ShopFallback] update_cart_qty: name=%s, qty=%s", product_name, stock)
+        result = await update_cart_qty.ainvoke({"product_name": product_name, "quantity": stock})
+        return split_actions(result)
+
+    # ── 1.5순위: 장바구니에서 선택 상품만 결제 ──
+    # "거기서 쌀이랑 감자만 주문해줘" 처럼 직전 장바구니 조회 후 일부만 선택 결제하는 패턴.
+    # 반드시 cart_inquiry_kws(장바구니 조회)보다 뒤, menu_kws(전체 메뉴)보다 앞에 위치.
+    select_buy_kws = ("거기서", "그중에", "그 중에", "중에서", "거기에서", "그것들 중",
+                      "만 주문", "만 결제", "만 사", "만 구매", "만 담아")
+    select_buy_connectors = ("이랑", "랑", "하고", "그리고", "과", "와")
+    # "~만 주문/결제" + 접속사(이랑·랑·하고 등)가 있거나 "거기서/그중에" 패턴이면 선택 결제
+    has_select_buy = (
+        any(kw in lower for kw in select_buy_kws) or
+        (any(conn in lower for conn in select_buy_connectors) and
+         any(kw in lower for kw in ("주문", "결제", "구매", "사줘")))
+    )
+    if has_select_buy:
+        # 사용자 메시지에서 상품명 부분 추출: "거기서 쌀이랑 감자만 주문해줘" → "쌀이랑 감자"
+        import re as _re
+        # "거기서/그중에 + 상품명들 + 만/을/를 + 동사" 패턴에서 상품명 추출
+        m = _re.search(
+            r"(?:거기서|그중에|그 중에|중에서|거기에서|장바구니에서|장바구니에서)\s*(.+?)(?:만|을|를)?\s*(?:주문|결제|구매|사줘|사줄|주문해|결제해)",
+            lower
+        )
+        if not m:
+            # fallback: 조사/동사 제거 후 전체에서 추출
+            raw = _re.sub(r"(거기서|그중에|그 중에|중에서|거기에서|장바구니에서|만 주문해줘|만 결제해줘|만 사줘|주문해줘|결제해줘|해줘|줘)", "", lower).strip()
+            keywords_for_tool = raw if raw else user_message
+        else:
+            keywords_for_tool = m.group(1).strip()
+        logger.info("[ShopFallback] buy_selected_from_cart: keywords=%r", keywords_for_tool)
+        result = await buy_selected_from_cart.ainvoke({"keywords": keywords_for_tool})
+        return split_actions(result)
+
+    # ── 1.8순위: 판매자 주문 상태 변경 ──
+    seller_order_action_kws = (
+        "접수 확인", "접수확인", "주문 접수", "주문접수",
+        "발송 처리", "발송처리", "발송 완료", "배송 시작", "배송시작",
+        "주문 거절", "주문거절", "거절해줘", "거절 처리",
+    )
+    if any(kw in lower for kw in seller_order_action_kws):
+        import re as _re
+        m = _re.search(r"ord-\d+-[a-z0-9]+", lower)
+        order_num = m.group(0).upper() if m else None
+        if any(kw in lower for kw in ("거절", "거절해", "거절처리", "주문 거절", "주문거절")):
+            api_action = "cancel"
+        elif any(kw in lower for kw in ("발송", "배송 시작", "배송시작")):
+            api_action = "ship"
+        else:
+            api_action = "advance"
+        args: dict = {"action": api_action}
+        if order_num:
+            args["order_number"] = order_num
+        logger.info("[ShopFallback] update_seller_order_status: %s", args)
+        result = await update_seller_order_status.ainvoke(args)
+        return split_actions(result)
+
+    # ── 1.9순위: 판매자 상품 수정/삭제/상태변경 ──
+    # "가격 바꿔", "재고 수정", "숨김 처리" 등 — 반드시 메뉴/목록 체크보다 먼저.
+    product_manage_kws = (
+        "가격 바꿔", "가격 변경", "가격 수정", "가격을 바꿔", "가격으로 바꿔",
+        "재고 바꿔", "재고 변경", "재고 수정", "재고를 바꿔", "재고로 바꿔",
+        "상품 수정", "숨김 처리", "숨기기", "판매중으로", "다시 판매", "품절 처리",
+    )
+    product_delete_kws = ("상품 삭제", "상품 지워", "상품 지워줘", "삭제해줘", "삭제 해줘")
+
+    # 비연속 패턴: "배추 재고 15개로 바꿔줘" — 연속 키워드엔 안 걸리지만 의미는 수정
+    _change_verbs = ("바꿔", "수정해", "변경해", "올려", "내려", "낮춰", "높여", "바꾸", "수정")
+    _has_field_update = (
+        ("재고" in lower and any(v in lower for v in _change_verbs))
+        or ("가격" in lower and any(v in lower for v in _change_verbs))
+        or (("설명" in lower or "상품설명" in lower) and any(v in lower for v in _change_verbs))
+        or any(kw in lower for kw in ("개로 바꿔", "원으로 바꿔", "개로 수정", "원으로 수정",
+                                       "개로 변경", "원으로 변경"))
+    )
+
+    if any(kw in lower for kw in product_delete_kws):
+        attrs = extract_product_attrs(user_message)
+        product_name = attrs.get("product_name") or user_message
+        logger.info("[ShopFallback] delete_product: name=%s", product_name)
+        result = await delete_product.ainvoke({"product_name": product_name})
+        return split_actions(result)
+
+    if any(kw in lower for kw in product_manage_kws) or _has_field_update:
+        attrs = extract_product_attrs(user_message)
+        product_name = attrs.pop("product_name", None)
+
+        # ── 상품명 추출 실패 → 재질문 ──
+        if not product_name:
+            if "재고" in lower:
+                return ("재고를 바꿀 상품명을 알려주세요.\n예) '배추 재고 20개로 바꿔줘'", [])
+            if "가격" in lower:
+                return ("가격을 바꿀 상품명을 알려주세요.\n예) '토마토 가격 8000원으로 바꿔줘'", [])
+            return ("수정할 상품명을 함께 말씀해 주세요.\n예) '배추 가격 5000원으로 바꿔줘'", [])
+
+        # status 변경인지 field 수정인지 판단
+        if any(kw in lower for kw in ("숨김", "숨기기")):
+            result = await change_product_status.ainvoke({"product_name": product_name, "status": "INACTIVE"})
+        elif any(kw in lower for kw in ("판매중으로", "다시 판매", "판매 중으로")):
+            result = await change_product_status.ainvoke({"product_name": product_name, "status": "ACTIVE"})
+        elif "품절" in lower:
+            result = await change_product_status.ainvoke({"product_name": product_name, "status": "SOLDOUT"})
+        else:
+            import re as _re
+            # 설명 변경: 따옴표 또는 "로 바꿔" 앞 텍스트에서 추출
+            _desc_value: str | None = None
+            if "설명" in lower and any(v in lower for v in _change_verbs):
+                _quoted = _re.search(r'["\'""](.+?)["\'""]', user_message)
+                if _quoted:
+                    _desc_value = _quoted.group(1)
+                else:
+                    # 따옴표 없으면 "설명을 X로" / "설명 X로" 패턴 시도
+                    _m = _re.search(r'설명\s*(?:을|을\s+)?\s*(.+?)(?:\s*로\s*바꿔|\s*로\s*수정|\s*로\s*변경|$)', user_message)
+                    if _m:
+                        _desc_value = _m.group(1).strip()
+
+            # 가격/재고 수정 — 값이 누락되면 재질문
+            if "재고" in lower and "stock" not in attrs:
+                return (
+                    f"'{product_name}' 재고를 몇 개로 바꿔드릴까요?\n"
+                    f"예) '{product_name} 재고 20개로 바꿔줘'",
+                    [],
+                )
+            if "가격" in lower and "price" not in attrs:
+                return (
+                    f"'{product_name}' 가격을 얼마로 바꿔드릴까요?\n"
+                    f"예) '{product_name} 가격 8000원으로 바꿔줘'",
+                    [],
+                )
+            if "설명" in lower and any(v in lower for v in _change_verbs) and not _desc_value:
+                return (
+                    f"'{product_name}' 상품 설명을 어떻게 바꿔드릴까요?\n"
+                    f"예) '{product_name} 상품 설명을 \"새로운 설명\"으로 바꿔줘'",
+                    [],
+                )
+            if "stock" not in attrs and "price" not in attrs and not _desc_value:
+                return (
+                    f"'{product_name}' 상품의 어떤 정보를 수정할까요?\n"
+                    "• 가격: '[상품명] 가격 [금액]원으로 바꿔줘'\n"
+                    "• 재고: '[상품명] 재고 [수량]개로 바꿔줘'\n"
+                    "• 설명: '[상품명] 상품 설명을 \"새 설명\"으로 바꿔줘'",
+                    [],
+                )
+            invoke_args: dict = {"product_name": product_name}
+            if "price" in attrs: invoke_args["price"] = attrs["price"]
+            if "stock" in attrs: invoke_args["stock"] = attrs["stock"]
+            if _desc_value: invoke_args["description"] = _desc_value
+            logger.info("[ShopFallback] update_product: %s", invoke_args)
+            result = await update_product.ainvoke(invoke_args)
+        return split_actions(result)
+
+    # ── 1.95순위: 배송 추적 조회 ──
+    # "배송 어디까지 왔어?", "딸기 배송 조회", "ORD-XXX 배송 현황" 등.
+    tracking_kws = ("배송 조회", "배송조회", "배송 추적", "배송추적", "배송 어디",
+                    "배송 현황", "어디까지 왔", "어디까지왔", "택배 어디", "송장 조회")
+    if any(kw in lower for kw in tracking_kws):
+        import re as _re
+        m = _re.search(r"ord-\d+-[a-z0-9]+", lower)
+        order_num = m.group(0).upper() if m else None
+        # 상품명 추출 (주문번호 없을 때만)
+        kw_extract = None
+        if not order_num:
+            attrs = extract_product_attrs(user_message)
+            kw_extract = attrs.get("product_name")
+        args = {}
+        if order_num: args["order_number"] = order_num
+        if kw_extract: args["keyword"] = kw_extract
+        logger.info("[ShopFallback] track_my_order: %s", args)
+        result = await track_my_order.ainvoke(args)
+        return split_actions(result)
+
+    # ── 2순위: 주문 취소 ──
+    cancel_kws = ("주문 취소", "주문취소", "취소해줘", "취소해 줘", "취소할래", "취소할게",
+                  "취소 해줘", "취소하고 싶", "취소해달라고", "취소한다니까")
+    if any(kw in lower for kw in cancel_kws) or (("주문" in lower or "상품" in lower) and "취소" in lower):
+        import re as _re
+        m = _re.search(r"ord-\d+-[a-z0-9]+", lower)
+        order_num = m.group(0).upper() if m else None
+        
+        # 키워드 추출 시도 (취소와 무관한 단어들 제거)
+        kw_extract = lower
+        for k in cancel_kws:
+            kw_extract = kw_extract.replace(k, "")
+        kw_extract = kw_extract.replace("아니", "").replace("주문", "").replace("상품", "").replace("해줘", "").strip()
+        
+        logger.info("[ShopFallback] cancel_order: order_number=%s, keyword=%s", order_num, kw_extract)
+        
+        args = {}
+        if order_num: args["order_number"] = order_num
+        elif kw_extract: args["keyword"] = kw_extract
+            
+        result = await cancel_order.ainvoke(args)
+        return split_actions(result)
+
+    # ── 3순위: 상품 상세 조회 ──
+    detail_kws = ("상세 보여", "상세보여", "상세 정보", "상세정보", "상품 정보", "상품정보",
+                  "상세 알려", "상세알려", "상세 조회", "상세보기")
+    if any(kw in lower for kw in detail_kws):
+        attrs = extract_product_attrs(user_message)
+        product_name = attrs.get("product_name")
+        result = await get_product_detail.ainvoke(
+            {"product_name": product_name} if product_name else {}
+        )
+        return split_actions(result)
+
+    # ── 4순위: 상품 자동 채우기 ──
     autofill_signal_kws = ("채워줘", "채워 줘", "채워주세요", "채워달라",
                            "팔건데", "팔 건데", "팔려고", "팔려구",
                            "등록할", "등록 할", "등록하고", "등록하려")
@@ -343,7 +744,9 @@ async def _shop_keyword_fallback(user_message: str) -> tuple[str, list[dict]] | 
             })
             return split_actions(result)
 
-    # 메뉴/상품 목록 키워드
+    # ── 5순위: 장터 메뉴/상품 목록 ──
+    # ⚠️ 반드시 장바구니 체크(1순위) 이후에 위치해야 함.
+    #    "장바구니에 뭐있어"의 "뭐있어" 가 여기서 걸리면 안 됨.
     menu_kws = ("메뉴", "뭐있어", "뭐 있어", "뭐가 있", "뭐가있", "뭐 있었", "뭐있었",
                 "뭐 팔", "뭐팔", "보여줘", "보여 줘",
                 "어떤 상품", "상품 목록", "상품뭐", "뭐있냐", "뭐 있냐", "뭐가 있냐",
@@ -352,7 +755,7 @@ async def _shop_keyword_fallback(user_message: str) -> tuple[str, list[dict]] | 
         result = await list_shop_menu.ainvoke({})
         return split_actions(result)
 
-    # 페이지 이동 키워드 (작물 등록은 위에서 이미 처리됨)
+    # ── 6순위: 페이지 이동 ──
     nav_map = [
         (("장바구니",), "cart"),
         (("내 주문", "내주문", "주문 내역", "주문내역"), "my_orders"),
@@ -362,17 +765,147 @@ async def _shop_keyword_fallback(user_message: str) -> tuple[str, list[dict]] | 
         (("장터", "쇼핑", "상점"), "shop_home"),
     ]
     for kws, target in nav_map:
+        # "상품 등록"이 nav 키워드이지만, "상품 등록한게 뭐야" 처럼 조회 의도가 있는 경우 제외
+        # (0.5순위에서 my_products_kws로 이미 처리됐어야 하지만 혹시 통과했을 때 방어)
+        if target == "seller_register" and any(
+            exc in lower for exc in ("등록한게", "등록한 게", "등록했지", "등록했어", "등록한거", "등록한 거")
+        ):
+            continue
         if any(kw in lower for kw in kws):
             result = await navigate_to.ainvoke({"target": target})
             return split_actions(result)
 
     # ── CLARIFY 후속 처리 ──
-    # 사용자가 clarify_crop_register의 옵션을 선택해서 들어온 경우
     if "장터에 판매 상품으로 등록" in user_message or "shop_product" in lower:
         result = await navigate_to.ainvoke({"target": "seller_register"})
         return split_actions(result)
     if "내 농장에 작물 등록" in user_message or "farm_crop" in lower:
         return ("내 농장 작물 등록 기능은 곧 준비됩니다. 조금만 기다려주세요!", [])
+
+    # ── 멀티턴 컨텍스트 감지 ──
+    # Gemini가 "진짜 절라게 맛있는 토매로우 말하는거야" 같은 명확화 메시지에 빈 응답을 낼 때,
+    # 이전 AI 메시지에서 pending 의도를 추론해 현재 메시지를 상품명으로 사용한다.
+    if all_msgs:
+        pending_intent = _detect_pending_seller_intent(all_msgs)
+        if pending_intent:
+            # 현재 메시지를 상품명으로 사용 (조사/동사 후처리)
+            import re as _re
+            product_name_guess = _re.sub(
+                r"(말하는거야|말하는 거야|말하는거|거야|이야|이잖아|잖아|인데|말이야|그거야|그걸|그걸로|해줘|삭제|수정|바꿔|변경)$",
+                "", user_message.strip()
+            ).strip()
+            if len(product_name_guess) >= 2:
+                logger.info(
+                    "[ShopFallback] 멀티턴 컨텍스트 감지: intent=%s, product_name=%r",
+                    pending_intent, product_name_guess,
+                )
+                if pending_intent == "product_delete":
+                    result = await delete_product.ainvoke({"product_name": product_name_guess})
+                    return split_actions(result)
+                elif pending_intent == "product_update":
+                    result = await update_product.ainvoke({"product_name": product_name_guess})
+                    return split_actions(result)
+                elif pending_intent == "product_status":
+                    # 상태 변경은 어떤 상태로 바꿀지 모르므로 수정 페이지로 안내
+                    result = await update_product.ainvoke({"product_name": product_name_guess})
+                    return split_actions(result)
+                elif pending_intent == "seller_order":
+                    result = await update_seller_order_status.ainvoke({"order_number": product_name_guess})
+                    return split_actions(result)
+
+    # ── 최종: 완전히 매칭 안 됐을 때 → 의도 추론 기반 안내 반환 ──
+    # None 대신 도움말 문구를 반환해 프론트가 "요청하신 작업을 처리했어요." 를 보이지 않도록 한다.
+    hint = _guess_shop_intent_hint(lower)
+    if hint:
+        logger.info("[ShopFallback] 의도 추론 안내: %r", hint[:60])
+        return (hint, [])
+
+    return None
+
+
+def _guess_shop_intent_hint(lower: str) -> str | None:
+    """키워드 fallback 완전 미매칭 시 사용자 의도를 추론해 재시도 안내 문구 반환.
+
+    Returns:
+        사용자에게 보낼 안내 문자열 or None (완전히 모르는 경우)
+    """
+    change_verbs = ("바꿔", "수정", "변경", "바꿔줘", "수정해줘", "고쳐", "올려", "내려")
+    has_change = any(v in lower for v in change_verbs)
+
+    # 재고 수정 의도 — 수량 누락
+    if has_change and "재고" in lower:
+        return (
+            "재고를 바꾸시려면 상품명과 수량을 함께 알려주세요.\n"
+            "예) '배추 재고 20개로 바꿔줘'"
+        )
+    # 가격 수정 의도 — 금액 누락
+    if has_change and "가격" in lower:
+        return (
+            "가격을 바꾸시려면 상품명과 금액을 함께 알려주세요.\n"
+            "예) '토마토 가격 8000원으로 바꿔줘'"
+        )
+    # 수정 의도이지만 대상 불명
+    if has_change:
+        return (
+            "어떤 상품의 어떤 정보를 바꿀지 알려주세요.\n"
+            "예) '배추 가격 5000원으로 바꿔줘' / '토마토 재고 30개로 바꿔줘'"
+        )
+    # 삭제 의도
+    if any(v in lower for v in ("삭제", "지워", "없애")):
+        return (
+            "삭제하실 상품명을 함께 말씀해 주세요.\n"
+            "예) '배추 상품 삭제해줘'"
+        )
+    # 주문 취소 의도
+    if "취소" in lower:
+        return (
+            "취소하실 상품명 또는 주문번호를 함께 말씀해 주세요.\n"
+            "예) '딸기 주문 취소해줘' / 'ORD-001 취소해줘'"
+        )
+    # 내 판매 상품 조회 의도
+    if any(v in lower for v in ("등록", "팔고", "판매중", "내 상품", "내상품")):
+        return (
+            "내가 등록한 판매 상품 목록을 보시려면 이렇게 말씀해 주세요.\n"
+            "예) '내가 등록한 상품 보여줘' / '내 판매 상품 목록'"
+        )
+    # 검색 의도
+    if any(v in lower for v in ("검색", "찾아", "알려", "있어")):
+        return (
+            "찾으시는 상품명을 말씀해 주세요.\n"
+            "예) '사과 검색해줘' / '채소 상품 뭐있어?'"
+        )
+    return None
+
+
+def _detect_pending_seller_intent(msgs: list) -> str | None:
+    """이전 AI 메시지에서 미완료 판매자 상품/주문 의도를 추론한다.
+
+    Returns:
+        "product_delete" | "product_update" | "product_status" | "seller_order" | None
+    """
+    # 최근 AI 메시지 최대 3개를 역순으로 검사
+    ai_contents = [
+        str(m.content or "")
+        for m in reversed(msgs)
+        if hasattr(m, "type") and m.type == "ai"
+    ][:3]
+
+    for content in ai_contents:
+        lower_c = content.lower()
+        # "못 찾았어요" + 상품 목록 언급 → 직전 조작 의도 추론
+        if "찾지 못했어요" in content or "찾을 수 없어요" in content or "못 찾았어요" in content:
+            if "삭제" in lower_c or "delete" in lower_c:
+                return "product_delete"
+            if "수정" in lower_c or "update" in lower_c or "변경" in lower_c:
+                return "product_update"
+            if "상태" in lower_c:
+                return "product_status"
+            # 키워드 없어도 상품 목록이 언급됐으면 상품 관련 의도 존재
+            if "등록 상품" in content or "상품명" in content:
+                return "product_delete"  # 가장 흔한 케이스를 기본값으로
+        # 주문 관련 미완료
+        if ("못 찾았어요" in content or "찾지 못했어요" in content) and "주문" in lower_c:
+            return "seller_order"
 
     return None
 
@@ -395,14 +928,16 @@ async def call_shop_agent(state: AgentState):
         cleaned = out.text
         merged_actions = list(out.actions)
 
+        # 마지막 사용자 메시지 — fallback 및 최종 안내 문구 생성에 공통 사용
+        last_human = next(
+            (m for m in reversed(all_msgs) if isinstance(m, HumanMessage)), None
+        )
+
         # ② LLM이 본문도 도구도 비웠으면 → 키워드 fallback
         if not cleaned and not merged_actions:
-            last_human = next(
-                (m for m in reversed(all_msgs) if isinstance(m, HumanMessage)), None
-            )
             if last_human and last_human.content:
                 logger.info("[ShopAgent] LLM 빈 응답 → 키워드 fallback: '%s'", last_human.content[:40])
-                fallback = await _shop_keyword_fallback(last_human.content)
+                fallback = await _shop_keyword_fallback(last_human.content, all_msgs=all_msgs)
                 if fallback:
                     cleaned, fb_actions = fallback
                     # 중복 제거 병합
@@ -414,9 +949,23 @@ async def call_shop_agent(state: AgentState):
                             merged_actions.append(a)
                     logger.info("[ShopAgent] fallback 성공: actions=%s", [a.get("type") for a in fb_actions])
 
-        # ③ 최종 fallback 문구
+        # ③ 최종 fallback — 아무것도 매칭/처리 안 됐을 때 의미 있는 안내
         if not cleaned:
-            cleaned = "요청하신 작업을 처리했어요."
+            raw_req = (last_human.content if last_human and last_human.content else "").strip()
+            hint = _guess_shop_intent_hint(raw_req.lower()) if raw_req else None
+            if hint:
+                cleaned = hint
+            else:
+                preview = raw_req[:20] + ("…" if len(raw_req) > 20 else "")
+                cleaned = (
+                    f"'{preview}' 요청을 이해하지 못했어요. 아래처럼 말씀해 주시면 바로 도와드릴게요.\n\n"
+                    "• 상품 재고 수정: '배추 재고 20개로 바꿔줘'\n"
+                    "• 상품 가격 수정: '토마토 가격 8000원으로 바꿔줘'\n"
+                    "• 상품 삭제: '감자 상품 삭제해줘'\n"
+                    "• 장바구니 확인: '내 장바구니 보여줘'\n"
+                    "• 주문 취소: '딸기 주문 취소해줘'"
+                )
+            logger.warning("[ShopAgent] fallback 미매칭 — 안내 응답 반환: '%s'", cleaned[:60])
 
         logger.info("[ShopAgent] 최종 reply='%s', actions=%s",
                     cleaned[:80], [a.get("type") for a in merged_actions])
@@ -541,7 +1090,7 @@ def get_main_orchestrator():
     workflow.add_node("blocked_guard", call_blocked_guard)
     workflow.add_node("general_agent", call_general_agent)
     workflow.add_node("synthesizer", synthesizer_node)  # 답변 합성 노드
-    
+
     # 라우팅 결과를 state에 기록하는 래퍼 노드
     async def router_with_tracking(state: AgentState):
         routes = await router_node(state)

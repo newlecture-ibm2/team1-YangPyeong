@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { SellerProduct, ProductStatus } from '../_lib/mypage.types';
 import { getSellerProducts, deleteProduct } from '@/app/(main)/shop/_lib/shop.api';
 import { useToast } from '@/components/common/Toast/ToastContext';
+import { CHAT_EVENTS, type ChatRefreshEventDetail } from '@/components/common/FarmBot/useChatActions';
 
 /** useSellerProducts — 판매 상품 목록 관리 훅 */
 export default function useSellerProducts() {
@@ -12,35 +13,45 @@ export default function useSellerProducts() {
   const [deleteTarget, setDeleteTarget] = useState<SellerProduct | null>(null);
 
   // 판매자 상품 목록 로드
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      const result = await getSellerProducts();
-      if (result.success && result.data) {
-        // Product → SellerProduct 변환
-        const mapped: SellerProduct[] = result.data.map((p) => ({
-          id: p.id,
-          name: p.name,
-          price: p.price,
-          stock: p.stock,
-          salesCount: p.salesCount,
-          status: (p.status === 'PENDING' || p.status === 'REJECTED')
-            ? p.status as ProductStatus
-            : (p.stock === 0 ? 'SOLDOUT' : p.status as ProductStatus),
-          imageUrls: p.imageUrls,
-          categoryName: p.categoryName,
-          description: p.description,
-          createdAt: p.createdAt,
-        }));
-        setProducts(mapped);
-      } else {
-        setProducts([]);
-      }
-      setLoading(false);
-    };
-
-    fetchProducts();
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    const result = await getSellerProducts();
+    if (result.success && result.data) {
+      // Product → SellerProduct 변환
+      const mapped: SellerProduct[] = result.data.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        stock: p.stock,
+        salesCount: p.salesCount,
+        status: (p.status === 'PENDING' || p.status === 'REJECTED')
+          ? p.status as ProductStatus
+          : (p.stock === 0 ? 'SOLDOUT' : p.status as ProductStatus),
+        imageUrls: p.imageUrls,
+        categoryName: p.categoryName,
+        description: p.description,
+        createdAt: p.createdAt,
+      }));
+      setProducts(mapped);
+    } else {
+      setProducts([]);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  // 챗봇 REFRESH scope=seller_products 이벤트 구독
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { scope } = (e as CustomEvent<ChatRefreshEventDetail>).detail;
+      if (scope === 'seller_products') fetchProducts();
+    };
+    window.addEventListener(CHAT_EVENTS.refresh, handler);
+    return () => window.removeEventListener(CHAT_EVENTS.refresh, handler);
+  }, [fetchProducts]);
 
   /** 상품 삭제 (판매 중단) */
   const handleDelete = useCallback((product: SellerProduct) => {

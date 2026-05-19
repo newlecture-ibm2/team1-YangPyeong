@@ -64,6 +64,7 @@ export function useCart(): UseCartReturn {
   }, [fetchCart]);
 
   // 챗봇이 add_to_cart 등을 실행한 후 REFRESH(scope='cart') 이벤트로 자동 재조회
+  // cart-updated 이벤트도 함께 수신 (manual UI 변경 / 다른 컴포넌트 동기화)
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<ChatRefreshEventDetail>).detail;
@@ -71,8 +72,13 @@ export function useCart(): UseCartReturn {
         fetchCart();
       }
     };
+    const cartUpdatedHandler = () => fetchCart();
     window.addEventListener(CHAT_EVENTS.refresh, handler);
-    return () => window.removeEventListener(CHAT_EVENTS.refresh, handler);
+    window.addEventListener('cart-updated', cartUpdatedHandler);
+    return () => {
+      window.removeEventListener(CHAT_EVENTS.refresh, handler);
+      window.removeEventListener('cart-updated', cartUpdatedHandler);
+    };
   }, [fetchCart]);
 
   /** 전체 선택 여부 */

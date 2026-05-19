@@ -1039,3 +1039,32 @@
   opacity: 1;
   transform: scale(1.15);
 }
+
+/* ── CLARIFY 옵션 버튼 ── */
+.clarifyOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.clarifyOptionBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #d4c9b8;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #2d7d46;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.clarifyOptionBtn:hover {
+  background: #f0f7f2;
+  border-color: #2d7d46;
+  transform: translateY(-1px);
+}

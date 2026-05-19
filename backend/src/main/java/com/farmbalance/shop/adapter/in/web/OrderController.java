@@ -56,6 +56,14 @@ public class OrderController {
         return ApiResponse.ok(orders.stream().map(OrderResponse::from).toList());
     }
 
+    /** 주문 취소 (구매자 — ORDERED 상태일 때만) */
+    @PatchMapping("/order/{id}/cancel")
+    public ApiResponse<OrderResponse> cancelMyOrder(@PathVariable Long id) {
+        Long buyerId = SecurityUtil.getCurrentUserId();
+        Order order = orderUseCase.buyerCancelOrder(buyerId, id);
+        return ApiResponse.ok(OrderResponse.from(order));
+    }
+
     // ── 판매자 ──
 
     /** 판매자 주문 목록 */
