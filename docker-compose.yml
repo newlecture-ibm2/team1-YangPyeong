@@ -48,8 +48,14 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./frontend/src
-          target: /app/src
+          path: ./frontend/app
+          target: /app/app
+        - action: sync
+          path: ./frontend/components
+          target: /app/components
+        - action: sync
+          path: ./frontend/lib
+          target: /app/lib
         - action: rebuild
           path: ./frontend/package.json
 
