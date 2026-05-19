@@ -33,7 +33,7 @@ public class YangpyeongPolicyClient implements PolicyExternalFetchPort {
     private static final String YANGPYEONG_NOTICE_URL =
             BASE_URL + "/www/selectBbsNttList.do?bbsNo=5&key=1119";
 
-    private static final int MAX_PAGES_TO_FETCH = 5;
+    private static final int MAX_PAGES_TO_FETCH = 20;
 
     // ── 농업 관련 키워드 필터 (확장) ──
     private static final List<String> FARM_KEYWORDS = List.of(
