@@ -28,6 +28,9 @@ class GroqLLM(BaseLLM):
         self._model_name = settings.GROQ_MODEL
         logger.info("GroqLLM 초기화 완료 (모델: %s)", self._model_name)
 
+    def get_provider_name(self) -> str:
+        return "groq"
+
     def get_chat_model(self, **kwargs: Any) -> ChatGroq:
         """LangChain 호환 Groq ChatModel 반환"""
         return ChatGroq(
