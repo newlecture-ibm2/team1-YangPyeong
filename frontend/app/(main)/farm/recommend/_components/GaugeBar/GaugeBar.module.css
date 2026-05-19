@@ -25,3 +25,15 @@
 .fillGreen  { background: #2E7D32; }
 .fillOrange { background: #E65100; }
 .fillRed    { background: var(--color-danger); }
+
+@media (max-width: 768px) {
+  .row {
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .track {
+    height: 8px;
+    margin-bottom: 8px;
+  }
+}

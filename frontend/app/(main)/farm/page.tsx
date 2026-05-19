@@ -13,6 +13,14 @@ import { useCultivation } from './useCultivation';
 import { getLatestRecommendHistory } from './recommend/_lib/recommend.api';
 import type { CropRecommendResponse } from './recommend/_lib/recommend.types';
 import { predictRevenue, type RevenuePredictionResponse } from './_lib/revenue.api';
+import {
+  hydrateRevenuePredictionsFromCache,
+  isWeakRevenuePrediction,
+  pickPrimaryRevenueCrop,
+  readRevenuePredictionCache,
+  writeRevenuePredictionCache,
+  type RevenueCropRow,
+} from './_lib/revenuePredictionCache';
 import Timeline from './_components/Timeline/Timeline';
 import HistoryModal from './_components/HistoryModal/HistoryModal';
 import CultivationEditModal from './_components/CultivationEditModal/CultivationEditModal';
@@ -21,6 +29,7 @@ import { useModalDialog } from '@/components/common/Modal/useModalDialog';
 import UnifiedActionButton from './_components/UnifiedActionButton/UnifiedActionButton';
 import PolicyRecommendGuideBanner from '@/components/common/PolicyRecommendGuideBanner/PolicyRecommendGuideBanner';
 import { DUMMY_FARM, DUMMY_CULTIVATIONS, DUMMY_BALANCE } from '@/lib/preview-data';
+import MockupOverlay from '@/components/common/MockupOverlay/MockupOverlay';
 import styles from './page.module.css';
 
 // 임시 KPI 및 활동 데이터 (백엔드 연동 전까지 유지할 데이터 구조)
@@ -42,17 +51,24 @@ const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'li
 /** AI 수익 예측 요청용 — 재배 등록이 있으면 작물별 면적 합산, 없으면 농장 작물명 + 면적 분할 */
 function getRevenueCropRows(
   farm: { area: number; cropNames: string[] },
-  cultivations: { cropName: string; cultivationArea?: number | null }[],
-): { cropName: string; areaSqm: number }[] {
+  cultivations: { cropName: string; cultivationArea?: number | null; sowingDate?: string | null }[],
+): RevenueCropRow[] {
   if (cultivations.length > 0) {
-    const map = new Map<string, number>();
+    const map = new Map<string, { area: number; sowingMonth?: number }>();
     for (const c of cultivations) {
       const a = Number(c.cultivationArea) || 0;
-      map.set(c.cropName, (map.get(c.cropName) || 0) + a);
+      const prev = map.get(c.cropName) || { area: 0, sowingMonth: undefined };
+      let sowingMonth = prev.sowingMonth;
+      if (c.sowingDate) {
+        const m = new Date(c.sowingDate).getMonth() + 1;
+        if (!Number.isNaN(m)) sowingMonth = m;
+      }
+      map.set(c.cropName, { area: prev.area + a, sowingMonth });
     }
-    return Array.from(map.entries()).map(([cropName, sumArea]) => ({
+    return Array.from(map.entries()).map(([cropName, v]) => ({
       cropName,
-      areaSqm: sumArea > 0 ? sumArea : farm.area,
+      areaSqm: v.area > 0 ? v.area : farm.area,
+      sowingMonth: v.sowingMonth,
     }));
   }
   if (farm.cropNames.length > 0) {
@@ -73,10 +89,15 @@ function FarmDashboardContent() {
     () => allFarms.filter((f) => f.certificationStatus === 'APPROVED'),
     [allFarms],
   );
+  const isPreviewMode = !isFarmsLoading && farms.length === 0;
   const hasUnapprovedFarms = useMemo(
     () => allFarms.length > farms.length,
     [allFarms, farms.length],
   );
+  const isPreviewUser = !isFarmsLoading && farms.length === 0;
+
+  // 표시할 농장 목록: 항상 전체 농장 표시
+  const displayFarms = allFarms;
   const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
   // 농장 목록 뷰 여부 상태
   const [isListView, setIsListView] = useState(false);
@@ -86,6 +107,7 @@ function FarmDashboardContent() {
   const [selectedCultivation, setSelectedCultivation] = useState<any>(null);
   const [cropOptions, setCropOptions] = useState<{ id: number, name: string }[]>([]);
   const [weather, setWeather] = useState<{ tmp: number, pty: number, sky: number } | null>(null);
+  const [weatherSettled, setWeatherSettled] = useState(false);
   const [latestAiScore, setLatestAiScore] = useState<number | null>(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState<number>(0);
   /** 농장 단위로만 갱신 — 재배 목록 변경 시 재요청하지 않아 단가 매칭이 안정적 */
@@ -99,18 +121,20 @@ function FarmDashboardContent() {
       try {
         const user = JSON.parse(decodeURIComponent(match[1]));
         setUserRole(user.role);
-      } catch {}
+      } catch { }
     }
   }, []);
 
-  // 기상 정보 조회
+  // 기상 정보 조회 (수익 예측은 로드 완료 후 시작)
   useEffect(() => {
+    setWeatherSettled(false);
     fetch('/api/weather/current')
       .then(res => res.json())
       .then(json => {
         if (json.success) setWeather(json.data);
       })
-      .catch();
+      .catch()
+      .finally(() => setWeatherSettled(true));
   }, []);
 
   // 작물 목록 조회
@@ -124,21 +148,50 @@ function FarmDashboardContent() {
   }, []);
   const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
-  // 농장이 2곳 이상일 때만 목록 뷰 기본값 (farms 참조는 useMemo로 안정화 — 매 렌더마다 effect가 돌면 클릭 직후 목록으로 되돌아가는 버그 방지)
+  const handleBackToList = useCallback(() => {
+    setIsListView(true);
+    try {
+      sessionStorage.removeItem('selected_farm_id');
+    } catch (e) {}
+  }, []);
+
+  // 농장 목록 뷰 여부 초기화 및 복원
   useEffect(() => {
-    if (farms.length > 1) {
+    try {
+      const savedFarmIdStr = sessionStorage.getItem('selected_farm_id');
+      if (savedFarmIdStr && displayFarms.length > 0) {
+        const savedFarmId = Number(savedFarmIdStr);
+        const idx = displayFarms.findIndex((f) => f.id === savedFarmId);
+        if (idx !== -1) {
+          setSelectedFarmIdx(idx);
+          setIsListView(false);
+          return;
+        }
+      }
+    } catch (e) {}
+
+    if (displayFarms.length > 1) {
       setIsListView(true);
     } else {
       setIsListView(false);
     }
-  }, [farms]);
+  }, [displayFarms]);
 
   // 수정을 위한 상태
   const [editingHistoryId, setEditingHistoryId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState('');
 
   // 선택된 농장
-  const farm = farms.length > 0 ? farms[selectedFarmIdx] : null;
+  // 선택된 농장
+  const selectedFarm = displayFarms.length > 0 ? displayFarms[selectedFarmIdx] : null;
+  const isCurrentFarmApproved = selectedFarm?.certificationStatus === 'APPROVED';
+  
+  // 블러(미리보기) 모드 활성화 조건: 
+  // 1. 농장이 하나도 없는 유저(Preview User)이거나
+  // 2. 현재 선택한 농장이 승인되지 않은 상태일 때
+  const isShowPreviewBlur = isPreviewUser || (selectedFarm && !isCurrentFarmApproved);
+
+  const farm = selectedFarm || (isPreviewUser ? { ...DUMMY_FARM, cropNames: DUMMY_FARM.cropNames || [] } : null);
   const farmRef = useRef(farm);
   farmRef.current = farm;
 
@@ -165,19 +218,31 @@ function FarmDashboardContent() {
     () => (farm ? getRevenueCropRows(farm, cultivations) : []),
     [farm, cultivations],
   );
-  const revenueCropRowsKey = revenueCropRows.map((r) => `${r.cropName}:${r.areaSqm}`).join('|');
+  const revenueCropRowsKey = revenueCropRows
+    .map((r) => `${r.cropName}:${r.areaSqm}:${r.sowingMonth ?? ''}`)
+    .join('|');
 
   const [predictionsByCrop, setPredictionsByCrop] = useState<Record<string, RevenuePredictionResponse>>({});
   const [revenueErrorsByCrop, setRevenueErrorsByCrop] = useState<Record<string, string>>({});
-  const [isRevenueLoading, setIsRevenueLoading] = useState(false);
+  const [loadingRevenueCrop, setLoadingRevenueCrop] = useState<string | null>(null);
   const [applyingCrop, setApplyingCrop] = useState<string | null>(null);
   const [actualYieldByCrop, setActualYieldByCrop] = useState<Record<string, number | ''>>({});
   const [expandedRevenueCrop, setExpandedRevenueCrop] = useState<string | null>(null);
+
+  const primaryRevenueCrop = useMemo(
+    () => pickPrimaryRevenueCrop(revenueCropRows),
+    [revenueCropRows],
+  );
+
+  const loadedRevenueCount = Object.keys(predictionsByCrop).length;
 
   const totalPredictedRevenue = useMemo(
     () => Object.values(predictionsByCrop).reduce((sum, p) => sum + (p.predicted_revenue ?? 0), 0),
     [predictionsByCrop],
   );
+
+  const isPrimaryRevenueLoading =
+    primaryRevenueCrop != null && loadingRevenueCrop === primaryRevenueCrop.cropName;
 
   const buildWeatherContext = useCallback(() => {
     if (!weather) return undefined;
@@ -185,130 +250,189 @@ function FarmDashboardContent() {
   }, [weather]);
 
   const fetchPredictionOne = useCallback(
-    async (cropName: string, areaSqm: number, actualYield?: number) => {
+    async (row: RevenueCropRow, actualYield?: number) => {
       if (!farm?.id) return null;
       const wc = buildWeatherContext();
       const request: Parameters<typeof predictRevenue>[0] = {
-        crop_name: cropName,
-        area_sqm: areaSqm,
+        crop_name: row.cropName,
+        area_sqm: row.areaSqm,
         farm_id: farm.id,
         weather_context: wc,
       };
+      if (row.sowingMonth != null && row.sowingMonth >= 1 && row.sowingMonth <= 12) {
+        request.sowing_month = row.sowingMonth;
+      }
       if (actualYield != null && !Number.isNaN(actualYield)) {
         request.actual_yield_kg = actualYield;
       }
-      return predictRevenue(request);
+      const data = await predictRevenue(request);
+      if (!isWeakRevenuePrediction(data)) {
+        writeRevenuePredictionCache(farm.id, row, data, actualYield);
+      }
+      return data;
     },
     [farm?.id, buildWeatherContext],
   );
 
-  const handleApplyYieldForCrop = useCallback(
-    async (cropName: string, areaSqm: number) => {
+  const loadRevenueForCrop = useCallback(
+    async (row: RevenueCropRow, actualYield?: number, options?: { skipCache?: boolean }) => {
       if (!farm?.id) return;
-      const raw = actualYieldByCrop[cropName];
-      setApplyingCrop(cropName);
-      try {
-        const y = raw === '' || raw == null ? undefined : Number(raw);
-        const res = await fetchPredictionOne(cropName, areaSqm, y);
-        if (res) {
-          setPredictionsByCrop((prev) => ({ ...prev, [cropName]: res }));
+      const { cropName } = row;
+
+      if (!options?.skipCache) {
+        const cached = readRevenuePredictionCache(farm.id, row, actualYield);
+        if (cached) {
+          setPredictionsByCrop((prev) => ({ ...prev, [cropName]: cached }));
           setRevenueErrorsByCrop((prev) => {
             const next = { ...prev };
             delete next[cropName];
             return next;
           });
+          return;
         }
-      } catch (err: any) {
-        toast.error(err?.message || '수익 예측에 실패했습니다.');
+      }
+
+      const seq = (revenueFetchSeqRef.current[cropName] ?? 0) + 1;
+      revenueFetchSeqRef.current[cropName] = seq;
+
+      setLoadingRevenueCrop(cropName);
+      try {
+        const data = await fetchPredictionOne(row, actualYield);
+        if (revenueFetchSeqRef.current[cropName] !== seq) return;
+
+        if (data && !isWeakRevenuePrediction(data)) {
+          setPredictionsByCrop((prev) => ({ ...prev, [cropName]: data }));
+          setRevenueErrorsByCrop((prev) => {
+            const next = { ...prev };
+            delete next[cropName];
+            return next;
+          });
+        } else {
+          setPredictionsByCrop((prev) => {
+            const next = { ...prev };
+            delete next[cropName];
+            return next;
+          });
+          setRevenueErrorsByCrop((prev) => ({
+            ...prev,
+            [cropName]:
+              'AI 분석 결과가 불완전합니다. farm-ai 재배포 후 다시 시도해 주세요.',
+          }));
+        }
+      } catch {
+        if (revenueFetchSeqRef.current[cropName] !== seq) return;
+        setPredictionsByCrop((prev) => {
+          const next = { ...prev };
+          delete next[cropName];
+          return next;
+        });
+        setRevenueErrorsByCrop((prev) => ({
+          ...prev,
+          [cropName]: '예측을 불러오지 못했습니다.',
+        }));
+      } finally {
+        if (revenueFetchSeqRef.current[cropName] === seq) {
+          setLoadingRevenueCrop((prev) => (prev === cropName ? null : prev));
+        }
+      }
+    },
+    [farm?.id, fetchPredictionOne],
+  );
+
+  const loadRevenueForCropRef = useRef(loadRevenueForCrop);
+  loadRevenueForCropRef.current = loadRevenueForCrop;
+  const revenueFetchSeqRef = useRef<Record<string, number>>({});
+
+  const handleApplyYieldForCrop = useCallback(
+    async (row: RevenueCropRow) => {
+      if (!farm?.id) return;
+      const raw = actualYieldByCrop[row.cropName];
+      setApplyingCrop(row.cropName);
+      try {
+        const y = raw === '' || raw == null ? undefined : Number(raw);
+        await loadRevenueForCrop(row, y, { skipCache: true });
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : '수익 예측에 실패했습니다.');
       } finally {
         setApplyingCrop(null);
       }
     },
-    [farm?.id, actualYieldByCrop, fetchPredictionOne, toast],
+    [farm?.id, actualYieldByCrop, loadRevenueForCrop, toast],
   );
 
   const handleResetYieldForCrop = useCallback(
-    async (cropName: string, areaSqm: number) => {
-      setActualYieldByCrop((prev) => ({ ...prev, [cropName]: '' }));
-      setApplyingCrop(cropName);
+    async (row: RevenueCropRow) => {
+      setActualYieldByCrop((prev) => ({ ...prev, [row.cropName]: '' }));
+      setApplyingCrop(row.cropName);
       try {
-        const res = await fetchPredictionOne(cropName, areaSqm);
-        if (res) {
-          setPredictionsByCrop((prev) => ({ ...prev, [cropName]: res }));
-          setRevenueErrorsByCrop((prev) => {
-            const next = { ...prev };
-            delete next[cropName];
-            return next;
-          });
-        }
-      } catch (err: any) {
-        toast.error(err?.message || '수익 예측에 실패했습니다.');
+        await loadRevenueForCrop(row, undefined, { skipCache: true });
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : '수익 예측에 실패했습니다.');
       } finally {
         setApplyingCrop(null);
       }
     },
-    [fetchPredictionOne, toast],
+    [loadRevenueForCrop, toast],
   );
 
-  // 작물별 AI 수익 예측 (대시보드)
+  const handleStartRevenueAnalysis = useCallback(
+    (row: RevenueCropRow) => {
+      setExpandedRevenueCrop(row.cropName);
+      const existing = predictionsByCrop[row.cropName];
+      const needsFetch =
+        (!existing || isWeakRevenuePrediction(existing)) &&
+        loadingRevenueCrop !== row.cropName;
+      if (needsFetch) {
+        void loadRevenueForCrop(row, undefined, { skipCache: Boolean(existing) });
+      }
+    },
+    [predictionsByCrop, loadingRevenueCrop, loadRevenueForCrop],
+  );
+
+  // 대표 작물 1종만 LLM 요청, 나머지는 캐시 복원 또는 사용자 선택 시 로드
   useEffect(() => {
+    if (!weatherSettled) return;
+
     if (activeSubTab !== 'DASHBOARD' || !farm?.id) {
       setPredictionsByCrop({});
       setRevenueErrorsByCrop({});
       setExpandedRevenueCrop(null);
+      setLoadingRevenueCrop(null);
       return;
     }
     if (revenueCropRows.length === 0) {
       setPredictionsByCrop({});
       setRevenueErrorsByCrop({});
       setExpandedRevenueCrop(null);
+      setLoadingRevenueCrop(null);
       return;
     }
 
     let cancelled = false;
-    setIsRevenueLoading(true);
-    setPredictionsByCrop({});
+    const fid = farm.id;
+    const cached = hydrateRevenuePredictionsFromCache(fid, revenueCropRows);
+    setPredictionsByCrop(cached);
     setRevenueErrorsByCrop({});
 
-    const wc = buildWeatherContext();
-    const fid = farm.id;
-    const rows = revenueCropRows;
-
-    (async () => {
-      const results = await Promise.all(
-        rows.map(async ({ cropName, areaSqm }) => {
-          try {
-            const data = await predictRevenue({
-              crop_name: cropName,
-              area_sqm: areaSqm,
-              farm_id: fid,
-              weather_context: wc,
-            });
-            return { cropName, ok: true as const, data };
-          } catch {
-            return { cropName, ok: false as const };
-          }
-        }),
-      );
-      if (cancelled) return;
-      const pred: Record<string, RevenuePredictionResponse> = {};
-      const err: Record<string, string> = {};
-      for (const r of results) {
-        if (r.ok) pred[r.cropName] = r.data;
-        else err[r.cropName] = '예측을 불러오지 못했습니다.';
+    const primary = pickPrimaryRevenueCrop(revenueCropRows);
+    if (primary) {
+      setExpandedRevenueCrop(primary.cropName);
+      const primaryCached = cached[primary.cropName];
+      const shouldFetchPrimary =
+        !primaryCached || isWeakRevenuePrediction(primaryCached);
+      if (shouldFetchPrimary) {
+        void loadRevenueForCropRef.current(primary, undefined, {
+          skipCache: Boolean(primaryCached),
+        }).then(() => {
+          if (cancelled) return;
+        });
       }
-      setPredictionsByCrop(pred);
-      setRevenueErrorsByCrop(err);
-      const first = rows[0]?.cropName;
-      setExpandedRevenueCrop((prev) => (prev && pred[prev] ? prev : first ?? null));
-    })().finally(() => {
-      if (!cancelled) setIsRevenueLoading(false);
-    });
+    }
 
     return () => {
       cancelled = true;
     };
-  }, [activeSubTab, farm?.id, revenueCropRowsKey, weather, revenueCropRows, buildWeatherContext]);
+  }, [activeSubTab, farm?.id, revenueCropRowsKey, weatherSettled]);
 
   // 이력·재배·최근 AI 추천을 한 번에 병렬 로드 (농장 전환 시에만 재요청)
   useEffect(() => {
@@ -438,84 +562,10 @@ function FarmDashboardContent() {
     );
   }
 
-  // 농장이 하나도 없는 경우 -> 미리보기 모드 제공
-  if (farms.length === 0) {
-    const previewFarm = DUMMY_FARM;
-    return (
-      <div className={styles.container}>
-        <div data-guide="farm-guest-banner">
-          <PolicyRecommendGuideBanner userRole={userRole} farmCount={farms.length} variant="inline" />
-        </div>
-        <div className={styles.header}>
-          <div data-guide="farm-guest-preview">
-            <h1 className={styles.title}>내 농장 <span className={styles.italic}>미리보기</span></h1>
-            <p className={styles.subtitle}>농업인 인증 시 실제 본인의 농장 데이터를 관리할 수 있습니다.</p>
-          </div>
-          <div className={styles.headerButtons}>
-            <Link href="/signup?type=farmer" data-guide="farm-guest-certify">
-              <Button variant="primary" style={{ borderRadius: '50px' }}>농업인 인증하기</Button>
-            </Link>
-          </div>
-        </div>
-        <div className={styles.kpiRow} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }} data-guide="farm-guest-kpi">
-          <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
-            <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>농장 전체 면적</p>
-            <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>{previewFarm.area.toLocaleString()}㎡</p>
-          </div>
-          <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
-            <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>재배 중인 면적</p>
-            <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-primary)' }}>330㎡</p>
-          </div>
-          <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
-            <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>재배 작물</p>
-            <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>2종</p>
-          </div>
-          <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)', opacity: 0.7 }}>
-            <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>예상 수익 (월)</p>
-            <p style={{ fontSize: '24px', fontWeight: 700, color: '#f59e0b' }}>₩3,500,000</p>
-          </div>
-        </div>
 
-        <div data-guide="farm-guest-interaction">
-          <div style={{ background: 'rgba(255, 255, 255, 0.5)', filter: 'grayscale(0.5)', pointerEvents: 'none', userSelect: 'none' }}>
-           <Card>
-             <h3 style={{ marginBottom: '20px' }}>농장 인터랙션 미리보기</h3>
-             <p>실제 농장 데이터가 등록되면 상세한 분석 리포트와 실시간 날씨 정보를 확인할 수 있습니다.</p>
-             <div style={{ height: '200px', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px' }}>
-               [ 대시보드 차트 및 지도 영역 샘플 ]
-             </div>
-           </Card>
-          </div>
-        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px', marginTop: '32px' }}>
-          <Link href="/farm/register" style={{ textDecoration: 'none' }}>
-            <div style={{ border: '2px dashed var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'var(--color-text-light)', height: '100%', cursor: 'pointer', transition: 'all 0.2s' }}
-              onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary)'; e.currentTarget.style.background = 'rgba(16,185,129,0.02)'; }}
-              onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text-light)'; e.currentTarget.style.background = 'transparent'; }}>
-              <div style={{ fontSize: '32px', marginBottom: '12px' }}>＋</div>
-              <div style={{ fontWeight: 600, fontSize: '16px' }}>새로운 농장 등록하기</div>
-              <p style={{ fontSize: '14px', marginTop: '8px', opacity: 0.8 }}>등록된 농장이 없습니다. 농장을 등록해 주세요.</p>
-            </div>
-          </Link>
-          {hasUnapprovedFarms && (
-            <Link href="/mypage/farm-applications" style={{ textDecoration: 'none' }}>
-              <div style={{ border: '2px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'var(--color-text)', height: '100%', cursor: 'pointer', transition: 'all 0.2s', background: 'var(--color-bg)' }}
-                onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(16,185,129,0.1)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                <div style={{ fontSize: '32px', marginBottom: '12px' }}>📋</div>
-                <div style={{ fontWeight: 600, fontSize: '16px' }}>심사 현황 확인하기</div>
-                <p style={{ fontSize: '14px', marginTop: '8px', opacity: 0.8, color: 'var(--color-text-light)' }}>현재 마이페이지에서 심사 대기 중인 농장이 있습니다.</p>
-              </div>
-            </Link>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // 농장 목록 뷰 (농장이 2개 이상일 때)
-  if (isListView && farms.length > 1) {
+  // 농장 목록 뷰 (표시할 농장이 2개 이상일 때)
+  if (isListView && displayFarms.length > 1) {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
@@ -526,61 +576,67 @@ function FarmDashboardContent() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px', marginTop: '32px' }} data-guide="farm-list">
-          {farms.map((f, idx) => (
+          {displayFarms.map((f, idx) => (
             <div
-                key={f.id}
-                onClick={() => { setSelectedFarmIdx(idx); setIsListView(false); }}
-                style={{ position: 'relative', background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'all 0.2s', minHeight: '200px' }}
-                onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(16,185,129,0.1)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+              key={f.id}
+              onClick={() => {
+                setSelectedFarmIdx(idx);
+                setIsListView(false);
+                try {
+                  sessionStorage.setItem('selected_farm_id', String(f.id));
+                } catch (e) {}
+              }}
+              style={{ position: 'relative', background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'all 0.2s', minHeight: '200px' }}
+              onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(16,185,129,0.1)'; }}
+              onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
+            >
+              {/* 삭제 버튼 (우측 상단 절대 배치) */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteFarm(f.id, f.name);
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  background: '#f1f5f9',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#64748b',
+                  fontSize: '14px',
+                  transition: 'all 0.2s',
+                  zIndex: 10
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = '#fee2e2';
+                  e.currentTarget.style.color = '#ef4444';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = '#f1f5f9';
+                  e.currentTarget.style.color = '#64748b';
+                }}
+                title="농장 삭제"
               >
-                {/* 삭제 버튼 (우측 상단 절대 배치) */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteFarm(f.id, f.name);
-                  }}
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    background: '#f1f5f9',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    color: '#64748b',
-                    fontSize: '14px',
-                    transition: 'all 0.2s',
-                    zIndex: 10
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = '#fee2e2';
-                    e.currentTarget.style.color = '#ef4444';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = '#f1f5f9';
-                    e.currentTarget.style.color = '#64748b';
-                  }}
-                  title="농장 삭제"
-                >
-                  ✕
-                </button>
+                ✕
+              </button>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                  <div style={{ paddingRight: '20px' }}>
-                    <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text)', marginBottom: '4px' }}>{f.name}</div>
-                    <div style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>{f.address}</div>
-                  </div>
-                  <Badge variant={f.certificationStatus === 'APPROVED' ? 'green' : 'orange'}>
-                    {f.certificationStatus === 'APPROVED' ? '승인됨' : '심사중'}
-                  </Badge>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', paddingRight: '36px' }}>
+                <div style={{ paddingRight: '12px' }}>
+                  <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text)', marginBottom: '4px' }}>{f.name}</div>
+                  <div style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>{f.address}</div>
                 </div>
+                <Badge variant={f.certificationStatus === 'APPROVED' ? 'green' : 'orange'}>
+                  {f.certificationStatus === 'APPROVED' ? '승인됨' : '심사중'}
+                </Badge>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: 'auto', borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
                 <div style={{ background: 'var(--color-bg)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
                   <div style={{ fontSize: '12px', color: 'var(--color-text-light)', marginBottom: '4px' }}>재배 면적</div>
@@ -639,40 +695,53 @@ function FarmDashboardContent() {
         <div>
           <p className={styles.breadcrumb}>
             <Link href="/" className={styles.breadcrumbLink}>홈</Link> /
-            {farms.length > 1 ? (
-              <span style={{ cursor: 'pointer', color: 'var(--color-text-light)' }} onClick={() => setIsListView(true)}> 내 농장</span>
+            {displayFarms.length > 1 ? (
+              <span style={{ cursor: 'pointer', color: 'var(--color-text-light)' }} onClick={handleBackToList}> 내 농장</span>
             ) : (
               <span style={{ color: 'var(--color-text-light)' }}> 내 농장</span>
-            )} / {activeSubTab === 'DASHBOARD' ? '관리' : '정보'}
+            )} / {isShowPreviewBlur ? '미리보기' : (activeSubTab === 'DASHBOARD' ? '관리' : '정보')}
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            {farms.length > 1 && (
+            {displayFarms.length > 1 && (
               <button
-                onClick={() => setIsListView(true)}
+                onClick={handleBackToList}
                 style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                 title="목록으로 돌아가기"
               >
                 ←
               </button>
             )}
-            <h1 className={styles.title}>{activeSubTab === 'DASHBOARD' ? '내 농장 관리' : farm?.name}</h1>
+            <h1 className={styles.title}>
+              {isPreviewMode
+                ? (hasUnapprovedFarms ? '내 농장 심사 대기 중' : '내 농장 미리보기')
+                : farm?.name}
+            </h1>
           </div>
           <p className={styles.subtitle}>
-            {activeSubTab === 'DASHBOARD'
-              ? `${farm?.name}의 현황을 한눈에 확인하세요.`
-              : '농장 정보 및 재배 히스토리를 확인하고 기록하세요.'}
+            {isPreviewMode
+              ? (hasUnapprovedFarms
+                ? '현재 농장 등록 심사가 진행 중입니다. 승인 완료 후 실제 데이터를 관리할 수 있습니다.'
+                : '농장을 등록하시면 실제 본인의 재배 면적과 수익 분석을 관리할 수 있습니다.')
+              : (activeSubTab === 'DASHBOARD'
+                ? `${farm?.name}의 현황을 한눈에 확인하세요.`
+                : '농장 정보 및 재배 히스토리를 확인하고 기록하세요.')}
           </p>
         </div>
-        <div className={styles.headerButtons}>
-          <UnifiedActionButton onAddHistory={() => setIsHistoryModalOpen(true)} data-guide="farm-register" />
-          {activeSubTab === 'HISTORY' && (
-            <Link href="/farm/register">
-              <Button variant="outline" style={{ borderRadius: '50px' }}>+ 새 농장 등록</Button>
-            </Link>
-          )}
-        </div>
+        {!isPreviewMode && (
+          <div className={styles.headerButtons}>
+            <UnifiedActionButton onAddHistory={() => setIsHistoryModalOpen(true)} data-guide="farm-register" />
+            {activeSubTab === 'HISTORY' && (
+              <Link href="/farm/register">
+                <Button variant="outline" style={{ borderRadius: '50px' }}>+ 새 농장 등록</Button>
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
+      <div style={{ position: 'relative' }}>
+        {isShowPreviewBlur && <MockupOverlay hasUnapprovedFarms={hasUnapprovedFarms} />}
+        <div style={{ filter: isShowPreviewBlur ? 'blur(8px) grayscale(0.3)' : 'none', pointerEvents: isShowPreviewBlur ? 'none' : 'auto' }}>
       <HistoryModal
         isOpen={isHistoryModalOpen}
         onClose={handleModalClose}
@@ -721,7 +790,7 @@ function FarmDashboardContent() {
       {activeSubTab === 'DASHBOARD' && (
         <>
           {/* KPI 카드 Row (Dashboard 전용) */}
-          <div className={styles.kpiRow} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }} data-guide="farm-farmer-kpi">
+          <div className={styles.kpiRow} data-guide="farm-farmer-kpi">
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
               <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>농장 전체 면적</p>
               <p style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text)' }}>
@@ -741,81 +810,120 @@ function FarmDashboardContent() {
             <div className={styles.kpiCard} style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
               <p style={{ fontSize: '14px', color: 'var(--color-text-light)', marginBottom: '8px' }}>AI 예측 수익 합계</p>
               <p style={{ fontSize: '24px', fontWeight: 700, color: '#f59e0b' }}>
-                {isRevenueLoading ? '계산 중...' : `₩${totalPredictedRevenue.toLocaleString('ko-KR')}`}
+                {isPrimaryRevenueLoading && loadedRevenueCount === 0
+                  ? '계산 중...'
+                  : `₩${totalPredictedRevenue.toLocaleString('ko-KR')}`}
               </p>
-              <p style={{ fontSize: '12px', color: 'var(--color-text-light)', marginTop: '6px' }}>작물별 AI 예측 금액의 합(추정)</p>
+              <p style={{ fontSize: '12px', color: 'var(--color-text-light)', marginTop: '6px' }}>
+                분석 완료 {loadedRevenueCount}/{revenueCropRows.length}종 합계(추정)
+              </p>
             </div>
           </div>
 
           {/* 작물별 AI 수익 · 시세 인사이트 (아코디언) */}
           {farm && revenueCropRows.length > 0 && (
-            <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)', border: '1px solid var(--color-primary)', padding: '24px', borderRadius: 'var(--radius-lg)', marginBottom: '32px' }} data-guide="farm-farmer-insight">
+            <div className={styles.insightPanel} data-guide="farm-farmer-insight">
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <span style={{ background: 'var(--color-primary)', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 700 }}>AI 예측 인사이트</span>
                   <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>작물별 수익 · 시세 분석</h3>
                 </div>
                 <p style={{ fontSize: '13px', color: 'var(--color-text-light)', marginTop: '8px', marginBottom: 0 }}>
-                  재배 작물마다 AI 예측을 불러옵니다. 항목을 펼쳐 시세 전망·수익 분석을 확인하세요.
+                  면적이 가장 큰 대표 작물은 자동 분석합니다. 다른 작물은 「분석받기」를 눌러야 AI 분석이 시작됩니다(당일 캐시).
                 </p>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {revenueCropRows.map(({ cropName, areaSqm }) => {
+              <div className={styles.revenueCropList}>
+                {revenueCropRows.map((row) => {
+                  const { cropName, areaSqm } = row;
                   const open = expandedRevenueCrop === cropName;
                   const prediction = predictionsByCrop[cropName];
                   const errMsg = revenueErrorsByCrop[cropName];
-                  const busy = applyingCrop === cropName || isRevenueLoading;
+                  const isPrimary = primaryRevenueCrop?.cropName === cropName;
+                  const isLoadingThis = loadingRevenueCrop === cropName;
+                  const busy = applyingCrop === cropName || isLoadingThis;
+                  const isAnalyzed = Boolean(prediction);
+                  const canExpand = isPrimary || isAnalyzed || Boolean(errMsg);
+                  const showAnalyzeButton = !isPrimary && !isAnalyzed && !errMsg;
                   return (
                     <div
                       key={cropName}
-                      style={{
-                        border: '1px solid var(--color-border)',
-                        borderRadius: '10px',
-                        overflow: 'hidden',
-                        background: '#fff',
-                      }}
+                      className={`${styles.revenueCropCard} ${open ? styles.revenueCropCardOpen : ''}`}
                     >
-                      <button
-                        type="button"
-                        onClick={() => setExpandedRevenueCrop(open ? null : cropName)}
-                        style={{
-                          width: '100%',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '14px 16px',
-                          border: 'none',
-                          background: open ? 'rgba(16, 185, 129, 0.08)' : '#fff',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: '16px', color: 'var(--color-text)' }}>{cropName}</div>
-                          <div style={{ fontSize: '12px', color: 'var(--color-text-light)', marginTop: '2px' }}>
-                            분석 면적 약 {areaSqm.toLocaleString('ko-KR')}㎡
+                      <div className={styles.revenueCropHeader}>
+                        <button
+                          type="button"
+                          className={styles.revenueCropTitleBtn}
+                          disabled={!canExpand}
+                          onClick={() => {
+                            if (!canExpand) return;
+                            setExpandedRevenueCrop(open ? null : cropName);
+                          }}
+                        >
+                          <div className={styles.revenueCropTitle}>
+                            {cropName}
+                            {isPrimary && <span className={styles.revenuePrimaryTag}>대표</span>}
                           </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div className={styles.revenueCropMeta}>
+                            분석 면적 약 {areaSqm.toLocaleString('ko-KR')}㎡
+                            {isPrimary && !isAnalyzed && isLoadingThis && ' · AI 분석 중...'}
+                          </div>
+                        </button>
+                        <div className={styles.revenueCropActions}>
                           {prediction && (
-                            <span style={{ fontSize: '15px', fontWeight: 700, color: '#f59e0b' }}>
+                            <span className={styles.revenueCropAmount}>
                               ₩{(prediction.predicted_revenue ?? 0).toLocaleString('ko-KR')}
                             </span>
                           )}
+                          {showAnalyzeButton && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              disabled={busy}
+                              onClick={() => handleStartRevenueAnalysis(row)}
+                            >
+                              {isLoadingThis ? '분석 중...' : '분석받기'}
+                            </Button>
+                          )}
+                          {isPrimary && isLoadingThis && !prediction && (
+                            <Badge variant="orange">분석 중</Badge>
+                          )}
                           {errMsg && <Badge variant="red">오류</Badge>}
                           {prediction && <Badge variant="lime">신뢰도 {prediction.confidence}</Badge>}
-                          <span style={{ fontSize: '12px', color: 'var(--color-text-light)' }}>{open ? '접기 ▲' : '펼치기 ▼'}</span>
+                          {canExpand && (
+                            <button
+                              type="button"
+                              className={styles.revenueToggleBtn}
+                              onClick={() => setExpandedRevenueCrop(open ? null : cropName)}
+                            >
+                              {open ? '접기 ▲' : '펼치기 ▼'}
+                            </button>
+                          )}
                         </div>
-                      </button>
+                      </div>
 
                       {open && (
-                        <div style={{ padding: '16px 20px', borderTop: '1px solid var(--color-border)', background: '#fafafa' }}>
+                        <div className={styles.revenueCropBody}>
+                          {isPrimary && isLoadingThis && !prediction && !errMsg && (
+                            <p className={styles.revenueLoadingHint}>
+                              대표 작물 AI 수익·시세 분석을 준비하고 있습니다…
+                            </p>
+                          )}
                           {errMsg && !prediction && (
-                            <p style={{ color: 'var(--color-danger)', fontSize: '14px' }}>{errMsg}</p>
+                            <div className={styles.revenueEmptyState}>
+                              <p className={styles.revenueErrorText}>{errMsg}</p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={busy}
+                                onClick={() => handleStartRevenueAnalysis(row)}
+                              >
+                                다시 시도
+                              </Button>
+                            </div>
                           )}
                           {prediction && (
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                            <div className={styles.insightGrid}>
                               <div style={{ background: '#fff', border: '1px solid var(--color-border)', padding: '20px', borderRadius: '8px' }}>
                                 <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                   <span style={{ fontSize: '14px', color: 'var(--color-text-light)' }}>AI 예측 수확량</span>
@@ -833,7 +941,7 @@ function FarmDashboardContent() {
                                   <label style={{ display: 'block', fontSize: '13px', color: 'var(--color-text-light)', marginBottom: '8px' }}>
                                     💡 이 작물의 실제 수확량(kg)이 다르면 입력 후 적용하세요.
                                   </label>
-                                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                  <div className={styles.insightActions}>
                                     <input
                                       type="number"
                                       placeholder="실제 수확량 (kg)"
@@ -844,17 +952,17 @@ function FarmDashboardContent() {
                                           [cropName]: e.target.value === '' ? '' : Number(e.target.value),
                                         }))
                                       }
-                                      style={{ flex: 1, minWidth: '120px', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '14px' }}
+                                      className={styles.insightInput}
                                     />
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => handleResetYieldForCrop(cropName, areaSqm)}
+                                      onClick={() => handleResetYieldForCrop(row)}
                                       disabled={busy}
                                     >
                                       되돌리기
                                     </Button>
-                                    <Button variant="outline" size="sm" onClick={() => handleApplyYieldForCrop(cropName, areaSqm)} disabled={busy}>
+                                    <Button variant="outline" size="sm" onClick={() => handleApplyYieldForCrop(row)} disabled={busy}>
                                       {busy ? '계산 중...' : '적용'}
                                     </Button>
                                   </div>
@@ -957,7 +1065,7 @@ function FarmDashboardContent() {
           </div>
 
           {/* 벤토 레이아웃 (Dashboard 전용) */}
-          <div className={styles.grid2} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px', alignItems: 'start' }}>
+          <div className={styles.bento} style={{ alignItems: 'start' }}>
             <div data-guide="farm-farmer-recent">
               <Card>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -1056,23 +1164,8 @@ function FarmDashboardContent() {
             </div>
           </div>
 
-          <div className={styles.grid2} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px', alignItems: 'start' }}>
+          <div className={styles.bento} style={{ alignItems: 'start' }}>
             <div>
-              {/* Sub Navigation (History 전용) */}
-              <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '16px', marginBottom: '32px', display: 'flex', gap: '32px' }}>
-                {(['POLICY', 'HISTORY'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    style={{ background: 'none', border: 'none', color: (activeSubTab as string) === tab ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: (activeSubTab as string) === tab ? 700 : 600, borderBottom: (activeSubTab as string) === tab ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-17px', cursor: 'pointer', fontSize: '16px' }}
-                    onClick={() => setActiveSubTab(tab)}
-                  >
-                    {tab === 'POLICY' ? '정책/혜택 안내' : '재배 히스토리'}
-                  </button>
-                ))}
-              </div>
-
-
-
               <Timeline
                 histories={histories}
                 onEditCultivation={(id) => {
@@ -1127,6 +1220,8 @@ function FarmDashboardContent() {
         </>
       )}
 
+        </div>
+      </div>
       <ModalDialog
         {...dialog}
         onConfirm={handleConfirm}
@@ -1143,5 +1238,3 @@ export default function FarmDashboardPage() {
     </Suspense>
   );
 }
-
-

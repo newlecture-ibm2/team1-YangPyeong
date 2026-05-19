@@ -75,4 +75,5 @@ export interface FarmUpdatePayload {
   soilType?: string;
   ph?: number;
   organicMatter?: number;
+  cultivations?: { cropId: number; area: number; expectedYield?: number | null }[];
 }

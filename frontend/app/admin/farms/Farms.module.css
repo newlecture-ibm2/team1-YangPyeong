@@ -166,6 +166,74 @@
   margin-bottom: var(--space-md);
 }
 
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-lg) var(--space-md) 80px;
+  }
+
+  /* 헤더: 타이틀 + 배지를 세로 배치 */
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  /* 카드 패딩 축소 */
+  .approvalCard {
+    padding: var(--space-md);
+  }
+
+  /* 카드 헤더: 농장명 / 날짜 세로 배치 */
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .farmName {
+    font-size: 15px;
+  }
+
+  .applyDate {
+    font-size: 12px;
+  }
+
+  /* 정보 그리드: 단일 컬럼 */
+  .infoGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  /* 각 infoItem: 라벨-값 가로 배치 유지 */
+  .infoItem {
+    align-items: flex-start;
+  }
+
+  .infoLabel {
+    min-width: 52px;
+    flex-shrink: 0;
+  }
+
+  .infoValue {
+    word-break: break-all;
+  }
+
+  /* 액션 버튼: 좌측 정렬 + 전체 너비 균등 */
+  .cardActions {
+    justify-content: flex-start;
+  }
+}
+
 /* ── 반려 사유 모달 ── */
 .rejectModal {
   display: flex;

@@ -126,24 +126,24 @@ export default function AdminOrdersPage() {
 
                   return (
                     <tr key={order.id}>
-                      <td>{formatDate(order.createdAt)}</td>
-                      <td className={styles.orderNumber}>
+                      <td data-label="주문일시">{formatDate(order.createdAt)}</td>
+                      <td className={styles.orderNumber} data-label="주문번호">
                         {order.status === 'ORDERED' && <span title="신규 주문">🆕</span>}
                         {order.orderNumber}
                       </td>
-                      <td>
+                      <td data-label="주문상품">
                         <div>{itemsSummary}</div>
                         {order.items.length === 1 && (
                           <div className={styles.itemsSummary}>({order.items[0].quantity}개)</div>
                         )}
                       </td>
-                      <td className={styles.priceCell}>{formatPrice(order.totalAmount)}</td>
-                      <td>
+                      <td className={styles.priceCell} data-label="결제금액">{formatPrice(order.totalAmount)}</td>
+                      <td data-label="수령인">
                         <div>{order.receiverName}</div>
                         <div className={styles.itemsSummary}>{order.receiverPhone}</div>
                       </td>
-                      <td><Badge variant={badge.variant}>{badge.label}</Badge></td>
-                      <td>
+                      <td data-label="상태"><Badge variant={badge.variant}>{badge.label}</Badge></td>
+                      <td data-label="">
                         <div className={styles.actions}>
                           <Dropdown
                             placeholder="상태 변경"

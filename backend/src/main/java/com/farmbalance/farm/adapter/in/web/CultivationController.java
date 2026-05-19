@@ -125,6 +125,7 @@ public class CultivationController {
         private final Double cultivationArea;
         private final Double farmerEstimatedYield;
         private final String yieldUnit;
+        private final java.time.LocalDate sowingDate;
 
         public static CultivationResponse from(CultivationRegistration domain) {
             return new CultivationResponse(
@@ -134,7 +135,8 @@ public class CultivationController {
                     domain.getCropName(),
                     domain.getCultivationArea(),
                     domain.getFarmerEstimatedYield(),
-                    domain.getYieldUnit()
+                    domain.getYieldUnit(),
+                    domain.getSowingDate()
             );
         }
     }

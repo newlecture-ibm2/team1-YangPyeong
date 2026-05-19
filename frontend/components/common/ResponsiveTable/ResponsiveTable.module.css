@@ -1,0 +1,151 @@
+/* ════════════════════════════════════════════════════════
+   ResponsiveTable
+   ≥769px: 표준 테이블
+   ≤768px: 카드 변환
+   ════════════════════════════════════════════════════════ */
+
+/* ── 데스크탑 테이블 ── */
+.tableWrap {
+  display: block;
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.th {
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.tr {
+  transition: background var(--transition-fast);
+}
+
+.tr:hover {
+  background: var(--color-bg);
+}
+
+.trClickable {
+  cursor: pointer;
+}
+
+.td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  vertical-align: middle;
+}
+
+.tr:last-child .td {
+  border-bottom: none;
+}
+
+/* ── 카드 리스트 (모바일) ── */
+.cardList {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.cardClickable {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.cardClickable:active {
+  background: var(--color-bg);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardActions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+}
+
+.cardFields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.cardField {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.cardFieldLabel {
+  flex-shrink: 0;
+  min-width: 80px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.cardFieldValue {
+  flex: 1;
+  color: var(--color-text);
+  margin: 0;
+  word-break: break-all;
+}
+
+/* ── 빈 상태 ── */
+.empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+/* ── 768px 이하: 테이블 숨기고 카드 표시 ── */
+@media (max-width: 768px) {
+  .tableWrap {
+    display: none;
+  }
+  .cardList {
+    display: flex;
+  }
+}

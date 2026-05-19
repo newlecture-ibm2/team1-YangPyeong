@@ -240,3 +240,33 @@
   color: #ef4444;
   font-weight: 500;
 }
+
+@media (max-width: 480px) {
+  .modal {
+    padding: 24px 16px;
+    border-radius: 12px;
+    margin: 0 12px;
+    max-width: calc(100% - 24px);
+  }
+
+  .title {
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cancelBtn,
+  .submitBtn,
+  .dangerSubmitBtn {
+    width: 100%;
+  }
+
+  .compositionChecks {
+    gap: 6px 10px;
+    font-size: 0.75rem;
+  }
+}

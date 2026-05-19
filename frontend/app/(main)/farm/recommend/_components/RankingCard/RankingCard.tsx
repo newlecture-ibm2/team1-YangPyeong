@@ -24,9 +24,10 @@ export default function RankingCard({ rec, index, farmId }: RankingCardProps) {
     rec.adviceType == null || rec.adviceType === 'NEW_RECOMMEND' || rec.adviceType === 'NEXT_SEASON';
 
   return (
-    <div
+    <Link
+      href={detailHref(rec.cropId, farmId)}
       className={`${styles.card} ${index === 0 && showMedal ? styles.first : ''} ${styles.fadeIn}`}
-      style={{ animationDelay: `${index * 0.15}s` }}
+      style={{ animationDelay: `${index * 0.15}s`, textDecoration: 'none', color: 'inherit' }}
     >
       {showMedal && index < 3 && <div className={styles.medal}>{MEDALS[index]}</div>}
       {rec.adviceType && (
@@ -48,9 +49,9 @@ export default function RankingCard({ rec, index, farmId }: RankingCardProps) {
       <p className={styles.revenue}>
         예상 수익: ₩{rec.expectedRevenuePerKg.toLocaleString('ko-KR')}/kg
       </p>
-      <Link href={detailHref(rec.cropId, farmId)} className={styles.detailLink}>
+      <span className={styles.detailLink}>
         상세 보기 →
-      </Link>
-    </div>
+      </span>
+    </Link>
   );
 }

@@ -10,7 +10,7 @@ import type { CropRecommendResponse } from './_lib/recommend.types';
 import { useToast } from '@/components/common/Toast/ToastContext';
 
 export default function useRecommend() {
-  const { farms, isLoading: isFarmsLoading } = useMyFarms();
+  const { farms: allFarms, isLoading: isFarmsLoading } = useMyFarms();
   const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
   const [result, setResult] = useState<CropRecommendResponse | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -18,7 +18,24 @@ export default function useRecommend() {
   const [isHydrating, setIsHydrating] = useState(false);
   const { success: toastSuccess, error: toastError } = useToast();
 
+  const farms = allFarms.filter(f => f.certificationStatus === 'APPROVED');
+  const hasUnapprovedFarms = allFarms.length > farms.length;
+
   const farm = farms.length > 0 ? farms[selectedFarmIdx] : null;
+
+  // 활성 농장 세션 복원
+  useEffect(() => {
+    try {
+      const savedFarmIdStr = sessionStorage.getItem('selected_farm_id');
+      if (savedFarmIdStr && farms.length > 0) {
+        const savedFarmId = Number(savedFarmIdStr);
+        const idx = farms.findIndex(f => f.id === savedFarmId);
+        if (idx !== -1) {
+          setSelectedFarmIdx(idx);
+        }
+      }
+    } catch (e) {}
+  }, [farms]);
 
   // 농장 선택 변경 시 결과 초기화
   useEffect(() => {
@@ -94,6 +111,7 @@ export default function useRecommend() {
 
   return {
     farms,
+    hasUnapprovedFarms,
     isFarmsLoading,
     selectedFarmIdx,
     setSelectedFarmIdx,

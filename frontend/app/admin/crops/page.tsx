@@ -262,7 +262,7 @@ export default function CropsPage() {
             </div>
           ) : (
             <div className={styles.tableWrapper}>
-              <table className={styles.table}>
+              <table className={`${styles.table} ${styles.cropsTable}`}>
                 <thead>
                   <tr>
                     <th>작물명</th>
@@ -274,7 +274,7 @@ export default function CropsPage() {
                 <tbody>
                   {crops.map((crop) => (
                     <tr key={crop.id}>
-                      <td>
+                      <td data-label="작물명">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span className={styles.cropName}>{crop.name}</span>
                           {crop.dataSource === 'NONGSARO' ? (
@@ -284,9 +284,9 @@ export default function CropsPage() {
                           )}
                         </div>
                       </td>
-                      <td>{getCategoryName(crop.categoryId)}</td>
-                      <td>{crop.createdAt ? new Date(crop.createdAt).toLocaleDateString() : '-'}</td>
-                      <td>
+                      <td data-label="분류">{getCategoryName(crop.categoryId)}</td>
+                      <td data-label="등록일">{crop.createdAt ? new Date(crop.createdAt).toLocaleDateString() : '-'}</td>
+                      <td data-label="">
                         <div className={styles.actions}>
                           <Button variant="outline" size="sm" onClick={() => openEditCropModal(crop)}>수정</Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDeleteCrop(crop)}>삭제</Button>
@@ -313,7 +313,7 @@ export default function CropsPage() {
             </div>
           ) : (
             <div className={styles.tableWrapper}>
-              <table className={styles.table}>
+              <table className={`${styles.table} ${styles.categoriesTable}`}>
                 <thead>
                   <tr>
                     <th>ID</th>
@@ -327,8 +327,8 @@ export default function CropsPage() {
                 <tbody>
                   {categories.map((cat) => (
                     <tr key={cat.id}>
-                      <td>{cat.id}</td>
-                      <td>
+                      <td data-label="ID">{cat.id}</td>
+                      <td data-label="카테고리명">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span className={styles.cropName}>{cat.name}</span>
                           {cat.dataSource === 'NONGSARO' ? (
@@ -338,14 +338,14 @@ export default function CropsPage() {
                           )}
                         </div>
                       </td>
-                      <td>{cat.description ?? '-'}</td>
-                      <td>{cat.displayOrder}</td>
-                      <td>
+                      <td data-label="설명">{cat.description ?? '-'}</td>
+                      <td data-label="정렬순서">{cat.displayOrder}</td>
+                      <td data-label="상태">
                         <Badge variant={cat.isActive ? 'green' : 'red'}>
                           {cat.isActive ? '활성' : '비활성'}
                         </Badge>
                       </td>
-                      <td>
+                      <td data-label="">
                         <div className={styles.actions}>
                           <Button variant="outline" size="sm" onClick={() => openEditCategoryModal(cat)}>수정</Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDeleteCategory(cat)}>삭제</Button>

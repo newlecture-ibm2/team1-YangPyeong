@@ -6,11 +6,14 @@ import Badge from '@/components/common/Badge/Badge';
 import Card from '@/components/common/Card/Card';
 import FilterBar from '@/components/common/FilterBar/FilterBar';
 import SearchInput from '@/components/common/SearchInput/SearchInput';
-import GuestPreviewBanner from '@/components/common/GuestPreviewBanner/GuestPreviewBanner';
+import MockupOverlay from '@/components/common/MockupOverlay/MockupOverlay';
 import { fetchAllBalances, BalanceAnalysisResponse } from './_lib/balance.api';
+import { useMyFarms } from '../farm/useFarm';
+import { DUMMY_BALANCE } from '@/lib/preview-data';
 import styles from './page.module.css';
 
 export default function BalanceListPage() {
+  const { farms: allFarms, isLoading: isFarmsLoading } = useMyFarms();
   const [balances, setBalances] = useState<BalanceAnalysisResponse[]>([]);
   const [filteredBalances, setFilteredBalances] = useState<BalanceAnalysisResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,7 +21,45 @@ export default function BalanceListPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('전체 상태');
 
+  const approvedFarms = allFarms.filter(f => f.certificationStatus === 'APPROVED');
+  const hasUnapprovedFarms = allFarms.length > approvedFarms.length;
+  const isPreviewMode = !isFarmsLoading && approvedFarms.length === 0;
+
   useEffect(() => {
+    if (isFarmsLoading) return;
+    if (isPreviewMode) {
+      const dummyData: BalanceAnalysisResponse[] = [
+        {
+          cropName: DUMMY_BALANCE.cropName,
+          supplyRatio: DUMMY_BALANCE.ratio,
+          status: 'SHORT_WARN',
+          statusLabel: '부족경고',
+          baseYear: new Date().getFullYear(),
+          message: '현재 공급량이 수요 대비 현저히 부족하여 가격 상승세가 예상됩니다.',
+        },
+        {
+          cropName: '양파',
+          supplyRatio: 120,
+          status: 'EXCESS_WARN',
+          statusLabel: '과잉경고',
+          baseYear: new Date().getFullYear(),
+          message: '지역 내 생산량 증가로 인한 과잉 상태로, 판로 다양화 지원이 필요합니다.',
+        },
+        {
+          cropName: '대파',
+          supplyRatio: 100,
+          status: 'BALANCED',
+          statusLabel: '적정',
+          baseYear: new Date().getFullYear(),
+          message: '생산량과 지역 수요가 균형을 이루어 수급 상태가 가장 안정적입니다.',
+        }
+      ];
+      setBalances(dummyData);
+      setFilteredBalances(dummyData);
+      setIsLoading(false);
+      return;
+    }
+
     const loadData = async () => {
       try {
         const data = await fetchAllBalances();
@@ -31,7 +72,7 @@ export default function BalanceListPage() {
       }
     };
     loadData();
-  }, []);
+  }, [isFarmsLoading, isPreviewMode]);
 
   useEffect(() => {
     let filtered = balances;
@@ -57,28 +98,60 @@ export default function BalanceListPage() {
 
   const top3 = balances.slice(0, 3);
 
-  if (isLoading) return <div className={styles.loading}>데이터를 불러오는 중...</div>;
+  if (isLoading || isFarmsLoading) return <div className={styles.loading}>데이터를 불러오는 중...</div>;
   if (error) return <div className={styles.error}>{error}</div>;
 
   return (
     <div className={styles.container}>
-      <GuestPreviewBanner />
       <div className={styles.pageHeader}>
         <p className={styles.breadcrumb}>홈 / 내 농장 / 수급 현황</p>
-        <h1 className={styles.pageTitle}>수급 <span className={styles.italic}>현황</span></h1>
+        <h1 className={styles.pageTitle}>
+          수급 <span className={styles.italic}>{isPreviewMode ? (hasUnapprovedFarms ? '심사 대기 중' : '미리보기') : '현황'}</span>
+        </h1>
         <p className={styles.pageSub}>양평군 주요 작물의 실시간 공급·수요 밸런스를 확인하세요.</p>
       </div>
 
       <div className={styles.tabs}>
         <Link href="/farm">대시보드</Link>
         <Link href="/balance" className={styles.activeTab}>수급 분석</Link>
-        <Link href="/recommend">AI 작물 추천</Link>
+        <Link href="/farm/recommend">AI 작물 추천</Link>
         <Link href="/farm?tab=history">농장 정보</Link>
       </div>
 
+      {isPreviewMode ? (
+        <MockupOverlay hasUnapprovedFarms={hasUnapprovedFarms}>
+          <BalanceContent
+            top3={top3}
+            filteredBalances={filteredBalances}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            getStatusBadgeVariant={getStatusBadgeVariant}
+          />
+        </MockupOverlay>
+      ) : (
+        <BalanceContent
+          top3={top3}
+          filteredBalances={filteredBalances}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          getStatusBadgeVariant={getStatusBadgeVariant}
+        />
+      )}
+    </div>
+  );
+}
+
+// 분리된 콘텐츠 컴포넌트
+function BalanceContent({ top3, filteredBalances, statusFilter, setStatusFilter, searchQuery, setSearchQuery, getStatusBadgeVariant }: any) {
+  return (
+    <>
       {/* TOP 3 SUMMARY */}
       <div className={styles.topSummary} data-guide="balance-summary">
-        {top3.map(item => (
+        {top3.map((item: any) => (
           <Card key={item.cropName} className={styles.summaryCard}>
             <p className={styles.cardLabel}>{item.cropName}</p>
             <div className={styles.summaryInfo}>
@@ -86,8 +159,8 @@ export default function BalanceListPage() {
               <Badge variant={getStatusBadgeVariant(item.status)}>{item.statusLabel}</Badge>
             </div>
             <div className={styles.gaugeBar}>
-              <div 
-                className={`${styles.gaugeFill} ${styles[item.status.toLowerCase()]}`} 
+              <div
+                className={`${styles.gaugeFill} ${styles[item.status.toLowerCase()]}`}
                 style={{ width: `${Math.min(item.supplyRatio, 100)}%` }}
               ></div>
             </div>
@@ -97,7 +170,7 @@ export default function BalanceListPage() {
 
       {/* FILTER BAR */}
       <div className={styles.filterSection}>
-        <select 
+        <select
           className={styles.selectInput}
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -110,8 +183,8 @@ export default function BalanceListPage() {
           <option>부족경고</option>
         </select>
         <div style={{ flex: 1 }}>
-          <SearchInput 
-            placeholder="🔍 작물명 검색..." 
+          <SearchInput
+            placeholder="🔍 작물명 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -131,7 +204,7 @@ export default function BalanceListPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredBalances.map(item => (
+            {filteredBalances.map((item: any) => (
               <tr key={item.cropName}>
                 <td><strong>{item.cropName}</strong></td>
                 <td>{item.supplyRatio}%</td>
@@ -147,6 +220,6 @@ export default function BalanceListPage() {
           </tbody>
         </table>
       </div>
-    </div>
+    </>
   );
 }
