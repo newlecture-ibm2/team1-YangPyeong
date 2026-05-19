@@ -1,6 +1,7 @@
-# 챗봇 도메인 에이전트 추가 가이드
+# 챗봇 에이전트 작업 가이드
 
-> 새로운 도메인(예: `livestock`, `weather_alert` 등)을 챗봇에 추가하는 표준 절차.
+> 챗봇 도메인 에이전트(shop / farm / balance / policy / community / gov / general)
+> 를 **확장하거나 새로 만들 때** 따라야 하는 표준 절차.
 > shop 도메인이 모든 패턴의 참고 템플릿입니다.
 
 ## 처리 흐름 (5초 요약)
@@ -29,6 +30,241 @@ chat.py 응답 가공 — ChatResponse(reply, actions)
 
 ---
 
+## 어떤 작업인가요?
+
+| 하려는 작업 | 가야 할 섹션 |
+|---|---|
+| 기존 에이전트(shop/farm/...)에 새 도구 추가 | **PART 1** (아래 바로) |
+| 기존 에이전트의 응답을 새 UI 카드로 표시 | **PART 1 §3** |
+| 기존 도구 수정 (시그니처/동작 변경) | **PART 1 §7** |
+| 동시 작업 충돌 방지 워크플로우 | **PART 1 §6** |
+| 완전히 새로운 도메인 추가 (예: `livestock`) | **PART 2** (문서 하단) |
+
+대부분 작업은 **PART 1**에 해당합니다. 새 도메인 추가(PART 2)는 가끔 있는 일.
+
+---
+
+# PART 1 — 기존 에이전트 확장하기
+
+새 도메인을 만들지 않고 **기존 에이전트(shop / farm / balance / policy / community / gov / general)에 기능을 추가**하는 경우의 가이드.
+
+## §1. 기존 에이전트 현황표
+
+| 에이전트 | LLM | 구현 패턴 | 도구 추가 난이도 | 액션 출력 가능 | 비고 |
+|---|---|---|---|---|---|
+| `shop_agent` | gemini | ReAct + Tools | ⭐ 쉬움 | ✅ | 모범 참고 |
+| `balance_agent` | gemini | ReAct + Tools | ⭐ 쉬움 | ✅ | shop과 동일 패턴 |
+| `policy_agent` | gemini | ReAct + Tools | ⭐ 쉬움 | ✅ | shop과 동일 패턴 |
+| `community_agent` | 기본 | ReAct + Tools | ⭐ 쉬움 | ✅ | shop과 동일 패턴 |
+| `farm_agent` | 기본 | StateGraph 수동 (bind_tools) | ⭐⭐ 보통 | ✅ | tools 리스트에 추가 |
+| `gov_agent` | 기본 | 클래스 기반 수동 파이프라인 | ⭐⭐⭐ 어려움 | ⚠️ | 도구 시스템 없음, 직접 처리 |
+| `general_agent` | groq | StateGraph 단일 노드 + RAG | ⭐⭐ 보통 | ⚠️ | 도구 없이 LLM 응답만 |
+
+> **모든 에이전트의 `call_xxx_agent` 래퍼는 `extract_agent_output()`을 사용**하므로,
+> 도구가 `[ACTION:{...}]` 토큰을 반환하면 **자동으로 프론트에 전달**됩니다.
+
+## §2. ReAct 기반 에이전트(shop / balance / policy / community)에 도구 추가
+
+가장 흔한 케이스. **5분이면 끝납니다.**
+
+### 절차
+
+**① 도구 파일에 새 `@tool` 함수 추가**
+
+예: `balance_agent`에 "이번 달 사과 수익 계산" 도구 추가
+
+`ai/app/agents/tools/balance_tools.py`:
+```python
+from app.agents.shared import action_token, ensure_logged_in
+
+@tool
+async def get_monthly_revenue(crop_name: str, month: int) -> str:
+    """특정 작물의 월별 수익(매출-비용)을 계산해 반환합니다."""
+    if (msg := ensure_logged_in()):
+        return msg
+    try:
+        data = await call_backend("GET", f"/api/revenue/monthly",
+                                  params={"crop": crop_name, "month": month})
+    except BackendError as e:
+        return f"수익 조회 실패: {e.message}"
+    return (
+        f"{crop_name} {month}월 수익: {data['revenue']:,}원 "
+        + action_token({"type": "NAVIGATE", "url": "/dashboard/revenue"})
+    )
+```
+
+**② 에이전트에 도구 등록**
+
+`ai/app/agents/balance_agent.py`:
+```python
+from app.agents.tools.balance_tools import (
+    get_all_crops_balance,
+    get_crop_balance_detail,
+    get_crop_supply_trend,
+    get_monthly_revenue,   # ← 추가
+)
+
+def get_balance_agent():
+    # ...
+    tools = [
+        get_all_crops_balance,
+        get_crop_balance_detail,
+        get_crop_supply_trend,
+        get_monthly_revenue,   # ← 추가
+    ]
+    # ...
+```
+
+**③ 시스템 프롬프트에 사용 시점 명시** (있으면 추가, 없으면 새로 작성)
+
+```python
+BALANCE_AGENT_PROMPT = """...
+[도구 → 사용 시점]
+- get_monthly_revenue: "사과 5월 수익 알려줘", "이번달 매출"
+"""
+```
+
+**④ (선택) 라우팅 키워드 추가**
+
+`ai/app/agents/orchestrator.py` 의 `DOMAIN_FORCE_KEYWORDS`:
+```python
+DOMAIN_FORCE_KEYWORDS = {
+    "shop_agent": {...},
+    "balance_agent": {       # ← 신규 추가하거나 기존 항목에 키워드 보강
+        "수익", "매출", "이번달 수익", "월별 수익",
+    },
+}
+```
+
+**끝!** 래퍼는 이미 액션 자동 추출하므로 추가 작업 불필요.
+
+### 도구 작성 체크리스트
+
+- [ ] `@tool` 데코레이터 사용 (`langchain_core.tools`)
+- [ ] **async** 함수
+- [ ] docstring 첫 줄에 "언제 호출하는지" — LLM이 보고 선택
+- [ ] 사용자 데이터 접근/수정 도구는 **반드시 `ensure_logged_in()`** 호출
+- [ ] 백엔드 호출은 **`call_backend()`** 사용 (JWT 자동 전파)
+- [ ] 응답 텍스트는 **한글만**, 한자 금지
+- [ ] URL 경로(`/...`)는 **본문에 노출 금지** — `action_token()` 안에만 넣고 본문에는 "장터", "가축 페이지" 같은 한국어 라벨 사용
+- [ ] 성공 메시지 앞에 `[XX 성공]` 같은 명확한 태그 — LLM이 성공/실패 구분하도록
+
+## §3. 기존 에이전트의 응답을 새 UI 카드로 표시
+
+예: balance_agent 응답을 "수익 카드"로 시각화
+
+**① 액션 타입 추가** (PART 2 §5와 동일 절차)
+- `ai/app/models/chat.py`: `"REVENUE_CARD"` 추가, `ChatRevenueCard` 모델
+- `frontend/lib/chat-types.ts`: 미러링
+
+**② 도구에서 액션 토큰 발행**:
+```python
+return (
+    f"{crop_name} {month}월 수익은 {data['revenue']:,}원이에요. "
+    + action_token({
+        "type": "REVENUE_CARD",
+        "revenue": data,
+    })
+)
+```
+
+**③ FarmBot.tsx에 렌더링 분기 추가** (PRODUCT_LIST 옆에):
+```tsx
+if (action.type === 'REVENUE_CARD' && action.revenue) {
+  return <RevenueCard key={ai} data={action.revenue} />;
+}
+```
+
+**④ (중요) balance_agent도 `skip_synthesis` 필요**
+
+기본 동작은 Synthesizer가 응답을 변형합니다. 수익 같은 숫자가 변형되면 안 되므로
+`call_balance_agent` 래퍼에서 `skip_synthesis=True`로 변경:
+
+```python
+async def call_balance_agent(state: AgentState):
+    try:
+        agent = get_balance_agent()
+        response = await agent.ainvoke({**state, "current_focus": "economic_analysis"})
+        return _agent_node_response(response["messages"], state, skip_synthesis=True)
+        #                                                          ^^^^^^^^^^^^^^^^^^^^
+    except Exception:
+        # ...
+```
+
+## §4. StateGraph 패턴(farm_agent)에 도구 추가
+
+`farm_agent`는 `create_react_agent` 대신 `bind_tools()` + 수동 StateGraph입니다.
+도구 추가 자체는 동일하지만 등록 위치가 다릅니다.
+
+```python
+# ai/app/agents/farm_agent.py
+from app.agents.tools.farm_tools import (
+    get_farm_status, get_cultivation_history, get_farm_weather,
+    get_my_pest_report,   # ← 새 도구
+)
+
+def get_farm_agent():
+    llm = get_llm()
+    tools = [
+        get_farm_status, get_cultivation_history, get_farm_weather,
+        get_my_pest_report,   # ← 추가
+    ]
+    llm_with_tools = llm.get_chat_model(temperature=0.1).bind_tools(tools)
+    # ... StateGraph 구성은 그대로 ...
+```
+
+> `ToolNode`가 이미 모든 tools를 받으므로 그래프 수정 불필요.
+
+## §5. general_agent 또는 gov_agent에 도구 추가
+
+이 두 에이전트는 **현재 도구 시스템 없이 LLM 직접 호출**합니다.
+도구를 추가하려면 ReAct 패턴으로 마이그레이션이 필요합니다.
+
+**권장**: 새 도구가 필요하다면 **별도 도메인 에이전트로 분리**하세요.
+예: gov_agent에 "정책 신청" 도구가 필요하다면 → `policy_agent`에 추가하거나 신규 도메인 생성(PART 2 참고).
+
+기존 에이전트의 응답 품질 개선(프롬프트 수정 등)은 자유롭게 가능.
+
+## §6. 충돌 방지 — 같은 파일을 여러 팀원이 수정할 때
+
+`orchestrator.py`는 자주 충돌이 발생할 수 있는 파일입니다. 다음 위치는
+주로 한 줄짜리 추가이므로 머지가 쉽지만, 동시 작업 시 주의:
+
+| 위치 | 충돌 위험 | 해결 |
+|---|---|---|
+| `DOMAIN_FORCE_KEYWORDS` dict | 낮음 | 다른 key 추가는 충돌 없음 |
+| `DOMAIN_CONTEXT_INDICATORS` dict | 낮음 | 동일 |
+| `VALID_ROUTES` set | 낮음 | 라인 단위 머지 |
+| `ROUTER_SYSTEM_PROMPT` | **중간** | 카테고리 추가 시 같은 위치 수정 가능성 |
+| `get_main_orchestrator()` 그래프 노드 | 낮음 | 다른 도메인은 다른 줄 |
+| 새 `call_xxx_agent` 함수 | 없음 | 새 함수 추가는 충돌 없음 |
+
+**권장 워크플로우**:
+1. 작업 전 `git pull origin stage` 으로 최신화
+2. 기능 브랜치에서 작업 (`feature/livestock-agent`)
+3. PR 올리기 전에 `git rebase origin/stage`
+4. 충돌 시 위 표 참고 — 대부분 dict 항목 추가는 양쪽 모두 살리면 됨
+
+## §7. 기존 도구 수정 (예: `add_to_cart` 동작 변경)
+
+기존 도구를 수정할 때 체크할 곳:
+1. **도구 함수 docstring** — 변경된 동작 반영
+2. **에이전트 시스템 프롬프트** — 도구 사용 시점이 바뀌면 업데이트
+3. **키워드 fallback** — `_shop_keyword_fallback` 같은 곳에서 도구를 직접 호출하면 동작 검증
+4. **응답 텍스트 형식** — `[XX 성공]` 같은 태그를 제거하지 말 것 (LLM이 성공/실패 판단)
+
+수정 후 항상 챗봇 시나리오 테스트:
+- 정상 케이스
+- 401 (비로그인) 케이스
+- 백엔드 오류 케이스
+
+---
+
+# PART 2 — 새 도메인 에이전트 추가하기
+
+완전히 새로운 도메인(예: `livestock`, `weather_alert` 등)을 만들 때.
+PART 1보다 작업량이 큽니다 (6단계).
+
 ## 작업할 6개 파일 (체크리스트)
 
 새 도메인 `livestock` 추가 시:
@@ -43,8 +279,6 @@ chat.py 응답 가공 — ChatResponse(reply, actions)
 | 6 | `frontend/components/common/FarmBot/FarmBot.tsx` | (필요 시) 새 액션 UI 렌더링 |
 
 1~3번은 필수, 4~6은 새 UI 액션 타입(예: 가축 카드 목록)이 있을 때만.
-
----
 
 ## 1단계 — 도구 작성
 
@@ -114,18 +348,7 @@ async def register_livestock(
     )
 ```
 
-### 도구 작성 체크리스트
-
-- [ ] `@tool` 데코레이터 사용 (`langchain_core.tools`)
-- [ ] **async** 함수
-- [ ] docstring 첫 줄에 "언제 호출하는지" — LLM이 보고 선택
-- [ ] 사용자 데이터 접근/수정 도구는 **반드시 `ensure_logged_in()`** 호출
-- [ ] 백엔드 호출은 **`call_backend()`** 사용 (JWT 자동 전파)
-- [ ] 응답 텍스트는 **한글만**, 한자 금지
-- [ ] URL 경로(`/...`)는 **본문에 노출 금지** — `action_token()` 안에만 넣고 본문에는 "장터", "가축 페이지" 같은 한국어 라벨 사용
-- [ ] 성공 메시지 앞에 `[XX 성공]` 같은 명확한 태그 — LLM이 성공/실패 구분하도록
-
----
+> 도구 작성 체크리스트는 **PART 1 §2** 참고.
 
 ## 2단계 — 에이전트 작성
 
@@ -189,8 +412,6 @@ def get_livestock_agent():
 
 **액션형(도구 호출 위주) 에이전트는 `groq` 권장.**
 일반 상담형은 `gemini`도 무난.
-
----
 
 ## 3단계 — 오케스트레이터 등록 (가장 중요!)
 
@@ -302,8 +523,6 @@ workflow.add_conditional_edges(START, router_node, {
 workflow.add_edge("livestock_agent", "synthesizer")   # ← 추가
 ```
 
----
-
 ## 4단계 — (선택) 키워드 fallback
 
 LLM이 빈 응답을 내는 경우의 최종 안전망. Gemini를 LLM으로 쓸 때만 강력 권장.
@@ -347,8 +566,6 @@ if not cleaned and not merged_actions:
             cleaned, fb_actions = fallback
             merged_actions.extend(fb_actions)
 ```
-
----
 
 ## 5단계 — (선택) 새 액션 타입 추가
 
@@ -431,8 +648,6 @@ if (action.type === 'LIVESTOCK_LIST' && action.livestocks) {
 }
 ```
 
----
-
 ## 6단계 — 테스트 시나리오
 
 1. **키워드 force routing**: `DOMAIN_FORCE_KEYWORDS["livestock_agent"]`에 등록한 단어로 메시지 → 로그에 `[Router] 키워드 매칭 → livestock_agent` 보임
@@ -442,7 +657,9 @@ if (action.type === 'LIVESTOCK_LIST' && action.livestocks) {
 
 ---
 
-## 공통 인프라 (`app.agents.shared`) 레퍼런스
+# 부록 — 공통 레퍼런스
+
+## 공통 인프라 (`app.agents.shared`) 함수 목록
 
 새 도메인이 무조건 import해야 하는 공용 함수들:
 
@@ -468,19 +685,15 @@ from app.agents.shared import (
 )
 ```
 
----
-
 ## orchestrator.py 레지스트리 위치 (5초 안에 찾기)
 
-| 무엇 | 라인 근처 | 키워드로 검색 |
-|---|---|---|
-| `DOMAIN_FORCE_KEYWORDS` | 약 80줄 | `grep -n "DOMAIN_FORCE_KEYWORDS" orchestrator.py` |
-| `DOMAIN_CONTEXT_INDICATORS` | 약 120줄 | `grep -n "DOMAIN_CONTEXT_INDICATORS"` |
-| `ROUTER_SYSTEM_PROMPT` | 약 45줄 | `grep -n "ROUTER_SYSTEM_PROMPT"` |
-| `VALID_ROUTES` | 약 72줄 | `grep -n "VALID_ROUTES"` |
-| `get_main_orchestrator()` | 마지막 | `grep -n "def get_main_orchestrator"` |
-
----
+| 무엇 | 키워드로 검색 |
+|---|---|
+| `DOMAIN_FORCE_KEYWORDS` | `grep -n "DOMAIN_FORCE_KEYWORDS" orchestrator.py` |
+| `DOMAIN_CONTEXT_INDICATORS` | `grep -n "DOMAIN_CONTEXT_INDICATORS"` |
+| `ROUTER_SYSTEM_PROMPT` | `grep -n "ROUTER_SYSTEM_PROMPT"` |
+| `VALID_ROUTES` | `grep -n "VALID_ROUTES"` |
+| `get_main_orchestrator()` | `grep -n "def get_main_orchestrator"` |
 
 ## 자주 묻는 질문
 
@@ -488,7 +701,7 @@ from app.agents.shared import (
 A. 권장하지 않습니다. LLM이 토큰을 직접 생성하려고 시도해 도구 호출을 안 하게 됩니다. `extract_agent_output()`이 ToolMessage에서 직접 토큰을 추출하므로 LLM은 도구 호출만 잘 하면 됩니다.
 
 **Q. 응답이 자꾸 비어서 옵니다.**
-A. ① Gemini 모델은 짧은 입력에 빈 응답을 종종 반환합니다 — 키워드 fallback(4단계)을 추가하거나 `groq`로 바꾸세요. ② 첫 메시지가 AIMessage이면 Gemini가 혼란스러워합니다 — `chat.py`가 이미 첫 user 메시지부터만 보내도록 처리되어 있습니다.
+A. ① Gemini 모델은 짧은 입력에 빈 응답을 종종 반환합니다 — 키워드 fallback(PART 2 §4)을 추가하거나 `groq`로 바꾸세요. ② 첫 메시지가 AIMessage이면 Gemini가 혼란스러워합니다 — `chat.py`가 이미 첫 user 메시지부터만 보내도록 처리되어 있습니다.
 
 **Q. Synthesizer가 응답을 변형해서 숫자/이름이 바뀝니다.**
 A. `skip_synthesis: True`를 반환하세요. 도구 응답을 정확히 보존해야 하는 도메인은 모두 이걸 쓰는 게 안전합니다.
@@ -508,209 +721,4 @@ A. 백엔드가 게스트 요청을 허용하더라도 도구 자체에서 `ensu
 
 - 2026-05-19: 초안 작성 (라우터 일반화 + shared 모듈 추출 완료 시점)
 - 2026-05-19: 기존 에이전트 활용 챕터 추가 (모든 call_xxx 래퍼 통일)
-
----
-
-# 📚 부록 A — 기존 에이전트 확장하기
-
-새 도메인을 만들지 않고 **기존 에이전트(shop/farm/balance/policy/community/gov/general)에
-기능을 추가**하는 경우의 가이드.
-
-## A-1. 기존 에이전트 현황표
-
-| 에이전트 | LLM | 구현 패턴 | 도구 추가 난이도 | 액션 출력 가능 | 비고 |
-|---|---|---|---|---|---|
-| `shop_agent` | gemini | ReAct + Tools | ⭐ 쉬움 | ✅ | 모범 참고 |
-| `balance_agent` | gemini | ReAct + Tools | ⭐ 쉬움 | ✅ | shop과 동일 패턴 |
-| `policy_agent` | gemini | ReAct + Tools | ⭐ 쉬움 | ✅ | shop과 동일 패턴 |
-| `community_agent` | 기본 | ReAct + Tools | ⭐ 쉬움 | ✅ | shop과 동일 패턴 |
-| `farm_agent` | 기본 | StateGraph 수동 (bind_tools) | ⭐⭐ 보통 | ✅ | tools 리스트에 추가 |
-| `gov_agent` | 기본 | 클래스 기반 수동 파이프라인 | ⭐⭐⭐ 어려움 | ⚠️ | 도구 시스템 없음, 직접 처리 |
-| `general_agent` | groq | StateGraph 단일 노드 + RAG | ⭐⭐ 보통 | ⚠️ | 도구 없이 LLM 응답만 |
-
-> **모든 에이전트의 `call_xxx_agent` 래퍼는 `extract_agent_output()`을 사용**하므로,
-> 도구가 `[ACTION:{...}]` 토큰을 반환하면 **자동으로 프론트에 전달**됩니다.
-
-## A-2. ReAct 기반 에이전트 (shop/balance/policy/community)에 도구 추가
-
-가장 흔한 케이스. 5분이면 끝납니다.
-
-### 절차
-
-**① 도구 파일에 새 `@tool` 함수 추가**
-
-예: `balance_agent`에 "이번 달 사과 수익 계산" 도구 추가
-
-`ai/app/agents/tools/balance_tools.py`:
-```python
-from app.agents.shared import action_token, ensure_logged_in
-
-@tool
-async def get_monthly_revenue(crop_name: str, month: int) -> str:
-    """특정 작물의 월별 수익(매출-비용)을 계산해 반환합니다."""
-    if (msg := ensure_logged_in()):
-        return msg
-    try:
-        data = await call_backend("GET", f"/api/revenue/monthly",
-                                  params={"crop": crop_name, "month": month})
-    except BackendError as e:
-        return f"수익 조회 실패: {e.message}"
-    return (
-        f"{crop_name} {month}월 수익: {data['revenue']:,}원 "
-        + action_token({"type": "NAVIGATE", "url": "/dashboard/revenue"})
-    )
-```
-
-**② 에이전트에 도구 등록**
-
-`ai/app/agents/balance_agent.py`:
-```python
-from app.agents.tools.balance_tools import (
-    get_all_crops_balance,
-    get_crop_balance_detail,
-    get_crop_supply_trend,
-    get_monthly_revenue,   # ← 추가
-)
-
-def get_balance_agent():
-    # ...
-    tools = [
-        get_all_crops_balance,
-        get_crop_balance_detail,
-        get_crop_supply_trend,
-        get_monthly_revenue,   # ← 추가
-    ]
-    # ...
-```
-
-**③ 시스템 프롬프트에 사용 시점 명시** (있으면 추가, 없으면 새로 작성)
-
-```python
-BALANCE_AGENT_PROMPT = """...
-[도구 → 사용 시점]
-- get_monthly_revenue: "사과 5월 수익 알려줘", "이번달 매출"
-"""
-```
-
-**④ (선택) 라우팅 키워드 추가**
-
-`ai/app/agents/orchestrator.py` 의 `DOMAIN_FORCE_KEYWORDS`:
-```python
-DOMAIN_FORCE_KEYWORDS = {
-    "shop_agent": {...},
-    "balance_agent": {       # ← 신규 추가하거나 기존 항목에 키워드 보강
-        "수익", "매출", "이번달 수익", "월별 수익",
-    },
-}
-```
-
-**끝!** 래퍼는 이미 액션 자동 추출하므로 추가 작업 불필요.
-
-## A-3. 기존 에이전트의 응답을 새 UI 카드로 표시
-
-예: balance_agent 응답을 "수익 카드"로 시각화
-
-**① 액션 타입 추가** (5단계와 동일):
-- `ai/app/models/chat.py`: `"REVENUE_CARD"` 추가, `ChatRevenueCard` 모델
-- `frontend/lib/chat-types.ts`: 미러링
-
-**② 도구에서 액션 토큰 발행**:
-```python
-return (
-    f"{crop_name} {month}월 수익은 {data['revenue']:,}원이에요. "
-    + action_token({
-        "type": "REVENUE_CARD",
-        "revenue": data,
-    })
-)
-```
-
-**③ FarmBot.tsx에 렌더링 분기 추가** (PRODUCT_LIST 옆에):
-```tsx
-if (action.type === 'REVENUE_CARD' && action.revenue) {
-  return <RevenueCard key={ai} data={action.revenue} />;
-}
-```
-
-**④ (중요) balance_agent도 skip_synthesis 필요**
-
-기본 동작은 Synthesizer가 응답을 변형합니다. 수익 같은 숫자가 변형되면 안 되므로
-`call_balance_agent` 래퍼에서 `skip_synthesis=True`로 변경:
-
-```python
-async def call_balance_agent(state: AgentState):
-    try:
-        agent = get_balance_agent()
-        response = await agent.ainvoke({**state, "current_focus": "economic_analysis"})
-        return _agent_node_response(response["messages"], state, skip_synthesis=True)
-        #                                                          ^^^^^^^^^^^^^^^^^^^^
-    except Exception:
-        # ...
-```
-
-## A-4. StateGraph 패턴(farm_agent)에 도구 추가
-
-`farm_agent`는 `create_react_agent` 대신 `bind_tools()` + 수동 StateGraph입니다.
-도구 추가 자체는 동일하지만 등록 위치가 다릅니다.
-
-```python
-# ai/app/agents/farm_agent.py
-from app.agents.tools.farm_tools import (
-    get_farm_status, get_cultivation_history, get_farm_weather,
-    get_my_pest_report,   # ← 새 도구
-)
-
-def get_farm_agent():
-    llm = get_llm()
-    tools = [
-        get_farm_status, get_cultivation_history, get_farm_weather,
-        get_my_pest_report,   # ← 추가
-    ]
-    llm_with_tools = llm.get_chat_model(temperature=0.1).bind_tools(tools)
-    # ... StateGraph 구성은 그대로 ...
-```
-
-> ToolNode가 이미 모든 tools를 받으므로 그래프 수정 불필요.
-
-## A-5. general_agent 또는 gov_agent에 도구 추가
-
-이 두 에이전트는 **현재 도구 시스템 없이 LLM 직접 호출**합니다.
-도구를 추가하려면 ReAct 패턴으로 마이그레이션이 필요합니다.
-
-**권장**: 새 도구가 필요하다면 **별도 도메인 에이전트로 분리**하세요.
-예: gov_agent에 "정책 신청" 도구가 필요하다면 → `policy_agent`에 추가하거나 신규 도메인 생성.
-
-기존 에이전트의 응답 품질 개선(프롬프트 수정 등)은 자유롭게 가능.
-
-## A-6. 충돌 방지 — 같은 파일을 여러 팀원이 수정할 때
-
-`orchestrator.py`는 자주 충돌이 발생할 수 있는 파일입니다. 다음 위치는
-주로 한 줄짜리 추가이므로 머지가 쉽지만, 동시 작업 시 주의:
-
-| 위치 | 충돌 위험 | 해결 |
-|---|---|---|
-| `DOMAIN_FORCE_KEYWORDS` dict | 낮음 | 다른 key 추가는 충돌 없음 |
-| `DOMAIN_CONTEXT_INDICATORS` dict | 낮음 | 동일 |
-| `VALID_ROUTES` set | 낮음 | 라인 단위 머지 |
-| `ROUTER_SYSTEM_PROMPT` | **중간** | 카테고리 추가 시 같은 위치 수정 가능성 |
-| `get_main_orchestrator()` 그래프 노드 | 낮음 | 다른 도메인은 다른 줄 |
-| 새 `call_xxx_agent` 함수 | 없음 | 새 함수 추가는 충돌 없음 |
-
-**권장 워크플로우**:
-1. 작업 전 `git pull origin main` 으로 최신화
-2. 기능 브랜치에서 작업 (`feature/livestock-agent`)
-3. PR 올리기 전에 `git rebase origin/main`
-4. 충돌 시 위 표 참고 — 대부분 dict 항목 추가는 양쪽 모두 살리면 됨
-
-## A-7. 기존 도구 수정 (예: `add_to_cart` 동작 변경)
-
-기존 도구를 수정할 때 체크할 곳:
-1. **도구 함수 docstring** — 변경된 동작 반영
-2. **에이전트 시스템 프롬프트** — 도구 사용 시점이 바뀌면 업데이트
-3. **키워드 fallback** — `_shop_keyword_fallback` 같은 곳에서 도구를 직접 호출하면 동작 검증
-4. **응답 텍스트 형식** — `[XX 성공]` 같은 태그를 제거하지 말 것 (LLM이 성공/실패 판단)
-
-수정 후 항상 챗봇 시나리오 테스트:
-- 정상 케이스
-- 401 (비로그인) 케이스
-- 백엔드 오류 케이스
+- 2026-05-19: 구조 재배치 — PART 1(기존 확장)을 상단으로, PART 2(새 도메인)를 하단으로
