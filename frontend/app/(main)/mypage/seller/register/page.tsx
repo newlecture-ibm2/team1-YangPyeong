@@ -11,7 +11,19 @@ import { useToast } from '@/components/common/Toast/ToastContext';
 import { uploadFile } from '@/lib/upload.api';
 import { registerProduct, getCategories } from '@/app/(main)/shop/_lib/shop.api';
 import { useFarmBotContext } from '@/components/common/FarmBot/FarmBotContext';
+import { consumeChatFillPayload, CHAT_EVENTS, type ChatFillEventDetail } from '@/components/common/FarmBot/useChatActions';
 import styles from './page.module.css';
+
+/** 챗봇 autofill_product_info 도구가 보낸 FILL_FORM 페이로드 형태 */
+interface ChatRegisterPayload {
+  name?: string;
+  price?: number | string;
+  stock?: number | string;
+  categoryName?: string;
+  description?: string;
+  isKamisApplied?: boolean;
+  kamisUnit?: string | null;
+}
 
 /** S-35b. 상품 등록 페이지 */
 export default function SellerRegisterPage() {
@@ -46,6 +58,67 @@ export default function SellerRegisterPage() {
       }
     });
   }, []);
+
+  /** 챗봇 FILL_FORM 페이로드를 폼에 적용 (카테고리는 옵션 매칭 후 결정) */
+  const applyChatPayload = useCallback(
+    (payload: ChatRegisterPayload) => {
+      // 카테고리 매칭: AI가 보낸 카테고리명이 옵션에 있는지 확인 (없으면 부분 매칭 → '기타')
+      let matchedCategory = '';
+      if (payload.categoryName && categoryOptions.length > 0) {
+        const exact = categoryOptions.find((opt) => opt.value === payload.categoryName);
+        if (exact) {
+          matchedCategory = exact.value;
+        } else {
+          const partial = categoryOptions.find(
+            (opt) =>
+              opt.value.includes(payload.categoryName!) ||
+              payload.categoryName!.includes(opt.value),
+          );
+          matchedCategory = partial?.value
+            ?? categoryOptions.find((opt) => opt.value === '기타')?.value
+            ?? categoryOptions[0]?.value
+            ?? '';
+        }
+      }
+
+      setForm((prev) => ({
+        name: payload.name ?? prev.name,
+        price: payload.price !== undefined && payload.price !== null ? String(payload.price) : prev.price,
+        stock: payload.stock !== undefined && payload.stock !== null ? String(payload.stock) : prev.stock,
+        categoryName: matchedCategory || prev.categoryName,
+        description: payload.description ?? prev.description,
+      }));
+
+      if (payload.isKamisApplied) {
+        setPriceRecommendationType('KAMIS');
+        if (payload.kamisUnit) setKamisUnit(payload.kamisUnit);
+      } else if (payload.price !== undefined && payload.price !== null) {
+        setPriceRecommendationType('AI');
+      }
+
+      showSuccess('챗봇이 상품 정보를 채워두었어요. 확인 후 등록해 주세요.');
+    },
+    [categoryOptions, showSuccess],
+  );
+
+  /** 카테고리 로드 완료 후 — 진입 시점에 sessionStorage 에 쌓인 페이로드를 1회 소비 */
+  useEffect(() => {
+    if (categoryOptions.length === 0) return;
+    const payload = consumeChatFillPayload<ChatRegisterPayload>('seller_register');
+    if (payload) applyChatPayload(payload);
+  }, [categoryOptions, applyChatPayload]);
+
+  /** 페이지에 머무는 동안 새 FILL_FORM 이벤트 — 사용자가 챗봇 창에서 추가 요청한 경우 */
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<ChatFillEventDetail>).detail;
+      if (detail?.target !== 'seller_register') return;
+      const payload = consumeChatFillPayload<ChatRegisterPayload>('seller_register');
+      if (payload) applyChatPayload(payload);
+    };
+    window.addEventListener(CHAT_EVENTS.fillForm, handler);
+    return () => window.removeEventListener(CHAT_EVENTS.fillForm, handler);
+  }, [applyChatPayload]);
 
   /** 폼 필드 업데이트 */
   const updateField = useCallback((field: string, value: string) => {

@@ -33,12 +33,18 @@ public class YangpyeongPolicyClient implements PolicyExternalFetchPort {
     private static final String YANGPYEONG_NOTICE_URL =
             BASE_URL + "/www/selectBbsNttList.do?bbsNo=5&key=1119";
 
-    // ── 농업 관련 키워드 필터 ──
+    private static final int MAX_PAGES_TO_FETCH = 20;
+    private static final int TARGET_POLICY_COUNT = 15; // 적정 수집 목표 건수
+    private static final int PAGE_CHUNK_SIZE = 5;      // 한 번에 확인할 페이지 단위
+
+    // ── 농업 관련 키워드 필터 (확장) ──
     private static final List<String> FARM_KEYWORDS = List.of(
             "농업", "농가", "농업인", "귀농", "귀촌", "청년농", "후계농",
             "비료", "농기계", "스마트팜", "친환경", "축산", "재배", "작물",
             "농촌", "영농", "농산물", "농림", "원예", "농지", "종자",
-            "유기농", "여성농", "로컬푸드", "판로", "농업기술"
+            "유기농", "여성농", "로컬푸드", "판로", "농업기술",
+            "한우", "양봉", "과수", "채소", "벼", "과일", "비닐하우스",
+            "특용", "산림", "임업", "면세유", "가축", "방역", "농로", "배수로"
     );
 
     // ── 연결 설정 ──
@@ -49,10 +55,30 @@ public class YangpyeongPolicyClient implements PolicyExternalFetchPort {
 
     @Override
     public List<PolicyData> fetchPolicies() {
+        List<PolicyData> allPolicies = new ArrayList<>();
         try {
-            List<PolicyData> policies = fetchFromPage(YANGPYEONG_NOTICE_URL);
-            log.info("[YangpyeongPolicyClient] 양평군 고시/공고 → 농업 관련 {}건 수집", policies.size());
-            return policies;
+            for (int page = 1; page <= MAX_PAGES_TO_FETCH; page++) {
+                String pageUrl = YANGPYEONG_NOTICE_URL + "&pageIndex=" + page;
+                List<PolicyData> policies = fetchFromPage(pageUrl);
+                allPolicies.addAll(policies);
+
+                // 서버 부하 방지를 위한 짧은 딜레이
+                Thread.sleep(500);
+
+                // 5페이지 단위로 적정 수집량을 체크하여 조기 종료
+                if (page % PAGE_CHUNK_SIZE == 0) {
+                    if (allPolicies.size() >= TARGET_POLICY_COUNT) {
+                        log.info("[YangpyeongPolicyClient] {}페이지까지 {}건 수집 완료 (목표치 {}건 달성). 조기 종료.", 
+                                page, allPolicies.size(), TARGET_POLICY_COUNT);
+                        break;
+                    } else if (page < MAX_PAGES_TO_FETCH) {
+                        log.info("[YangpyeongPolicyClient] {}페이지까지 {}건 수집 (목표 미달). 다음 페이지 계속 탐색...", 
+                                page, allPolicies.size());
+                    }
+                }
+            }
+            log.info("[YangpyeongPolicyClient] 양평군 고시/공고 최종 탐색 완료 → 농업 관련 총 {}건 수집", allPolicies.size());
+            return allPolicies;
         } catch (Exception e) {
             // 크롤러 실패가 전체 sync 파이프라인을 중단시키지 않도록 방어
             log.warn("[YangpyeongPolicyClient] 양평군 게시판 수집 실패. 빈 리스트 반환: {}", e.getMessage());

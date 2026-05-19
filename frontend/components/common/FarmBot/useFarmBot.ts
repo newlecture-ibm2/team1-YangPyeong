@@ -12,12 +12,16 @@ import { usePathname } from 'next/navigation';
 import { getScenarioForPath } from './farmBotScenarios';
 import type { FarmBotStep } from './farmBotScenarios';
 import { FARM_BOT_CONSTANTS } from './farmBotConstants';
+import { useChatActions } from './useChatActions';
+import type { ChatAction } from '@/lib/chat-types';
 
 export type BotState = 'idle' | 'walking' | 'pointing' | 'waving';
 
 export interface ChatMessage {
   role: 'user' | 'bot';
   content: string;
+  /** AI 응답에 포함된 액션 목록 (bot 메시지에만 존재) */
+  actions?: ChatAction[];
 }
 
 /** 가이드 진행 모드 */
@@ -34,6 +38,7 @@ const CHARACTER_SIZE = 120;
 
 export function useFarmBot() {
   const pathname = usePathname();
+  const dispatchChatActions = useChatActions();
 
   const [isMounted, setIsMounted] = useState(false);
   const [mode, setMode] = useState<GuideMode>('minimized');
@@ -73,7 +78,12 @@ export function useFarmBot() {
     const isHidden = localStorage.getItem(HIDDEN_KEY) === 'true';
 
     // 페이지 변경 시 진행 중인 가이드 중지 + 리셋
-    setMode(isHidden ? 'hidden' : 'minimized');
+    // - 숨김 상태이면 hidden 유지
+    // - 채팅 중이면 chatting 유지하여 페이지 이동 시에도 대화창 닫히지 않게 조절
+    setMode(prev => {
+      if (isHidden) return 'hidden';
+      return prev === 'chatting' ? 'chatting' : 'minimized';
+    });
     setShowBubble(false);
     setHighlightRect(null);
     setBotState('idle');
@@ -170,6 +180,10 @@ export function useFarmBot() {
   /** 페이지 진입 시 — 캐릭터가 등장하여 "가이드 해드릴까요?" 질문 */
   const askUser = useCallback((customPosition?: Position) => {
     if (steps.length === 0) return;
+
+    // 채팅 중이면 가이드 시작 팝업 무시 — 모드/말풍선 변경 없이 바로 리턴
+    if (mode === 'chatting') return;
+
     setMode('asking');
     setBotState('idle');
     setShowBubble(true);
@@ -189,7 +203,7 @@ export function useFarmBot() {
         y: window.innerHeight - 180,
       });
     }
-  }, [steps]);
+  }, [steps, mode]);
 
   /** 유저가 "네" 선택 → 최상단 이동 후 가이드 시작 */
   const acceptGuide = useCallback(() => {
@@ -317,6 +331,7 @@ export function useFarmBot() {
   }, [askUser]);
 
   // 페이지 로드 시 자동 질문 (첫 방문만)
+  // ⚠️ 채팅 중(chatting)이면 가이드 자동 시작/모드 변경을 하지 않음
   useEffect(() => {
     if (hasAsked.current) return;
     if (steps.length === 0) return;
@@ -330,10 +345,14 @@ export function useFarmBot() {
     const seen = localStorage.getItem(STORAGE_KEY);
     if (!seen) {
       hasAsked.current = true;
-      const timer = setTimeout(() => askUser(), 800);
+      // 채팅 중이면 가이드 질문 팝업 건너뜀 (800ms 뒤 현재 mode 재확인)
+      const timer = setTimeout(() => {
+        askUser(); // askUser 내부에서 setMode('asking') — 채팅 중이면 무시되도록 아래 askUser에서 처리
+      }, 800);
       return () => clearTimeout(timer);
     } else {
-      setMode('minimized');
+      // 채팅 중이면 minimized로 내리지 않음
+      setMode(prev => prev === 'chatting' ? 'chatting' : 'minimized');
     }
   }, [steps, askUser]);
 
@@ -423,8 +442,13 @@ export function useFarmBot() {
     };
   }, [isDragging, isResizing, chatSize]);
 
-  /** 메시지 전송 (대화 히스토리 포함) */
-  const sendChatMessage = useCallback(async (message: string) => {
+  /** 메시지 전송 (대화 히스토리 포함)
+   *
+   * @param message      채팅창에 표시될 사용자 메시지
+   * @param sendAs       (선택) 실제 AI에게 전송할 메시지. 생략 시 message 사용.
+   *                     상품 카드 클릭 등 내부 식별자(id)는 노출하지 않고 AI에만 전달할 때 사용.
+   */
+  const sendChatMessage = useCallback(async (message: string, sendAs?: string) => {
     if (!message.trim() || chatLoading) return;
 
     const userMsg: ChatMessage = { role: 'user', content: message.trim() };
@@ -433,27 +457,51 @@ export function useFarmBot() {
     setChatInput('');
     setChatLoading(true);
 
-    // 최근 설정된 턴수만큼만 히스토리로 전송
-    const history = updatedMessages.slice(-FARM_BOT_CONSTANTS.HISTORY_LIMIT).map(m => ({
+    // 히스토리: 현재 메시지 추가 전(chatMessages)을 기준으로 생성
+    // updatedMessages를 쓰면 현재 user 메시지가 중복 전송됨
+    const history = chatMessages.slice(-FARM_BOT_CONSTANTS.HISTORY_LIMIT).map(m => ({
       role: m.role === 'bot' ? 'assistant' : 'user',
       content: m.content,
     }));
+
+    const payloadMessage = (sendAs ?? message).trim();
 
     try {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: message.trim(), history }),
+        body: JSON.stringify({
+          message: payloadMessage,
+          history,
+          currentPath: pathname,
+        }),
       });
       const data = await res.json();
 
+      const reply: string = data?.success
+        ? (data.data?.reply ?? FARM_BOT_CONSTANTS.ERROR_MESSAGE)
+        : FARM_BOT_CONSTANTS.ERROR_MESSAGE;
+      const actions: ChatAction[] = data?.success
+        ? (data.data?.actions ?? [])
+        : [];
+
       const botReply: ChatMessage = {
         role: 'bot',
-        content: data.success
-          ? data.data.reply
-          : FARM_BOT_CONSTANTS.ERROR_MESSAGE,
+        content: reply,
+        actions,
       };
       setChatMessages(prev => [...prev, botReply]);
+
+      // 즉시 실행형 액션은 디스패처에 위임 (CLARIFY/CONFIRM은 UI에서 렌더)
+      dispatchChatActions(
+        actions.filter(a =>
+          a.type === 'NAVIGATE' ||
+          a.type === 'FILL_FORM' ||
+          a.type === 'TOAST' ||
+          a.type === 'REFRESH' ||
+          a.type === 'OPEN_MODAL',
+        ),
+      );
     } catch {
       setChatMessages(prev => [...prev, {
         role: 'bot',
@@ -462,7 +510,7 @@ export function useFarmBot() {
     } finally {
       setChatLoading(false);
     }
-  }, [chatLoading, chatMessages]);
+  }, [chatLoading, chatMessages, pathname, dispatchChatActions]);
 
   /** 채팅 종료 */
   const closeChat = useCallback(() => {
