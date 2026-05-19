@@ -168,7 +168,7 @@ export default function SellerProductsPage() {
                       <span className={styles.productCategory}>{product.categoryName}</span>
                       {(product.status === 'INACTIVE' || product.status === 'REJECTED') && (
                         <div style={{ marginTop: '8px', padding: '4px 8px', backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '4px', fontSize: '0.75rem', color: '#B91C1C' }}>
-                          [숨김 사유: {product.statusReason || '알 수 없음'}]
+                          [{product.status === 'REJECTED' ? '반려' : '숨김'} 사유: {product.statusReason || '알 수 없음'}]
                         </div>
                       )}
                     </td>
