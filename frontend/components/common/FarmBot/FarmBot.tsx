@@ -9,7 +9,7 @@
 
 import { ReactNode, useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { useFarmBot } from './useFarmBot';
+import { useFarmBot, ChatMessage } from './useFarmBot';
 import { FarmBotContext } from './FarmBotContext';
 import Image from 'next/image';
 import styles from './FarmBot.module.css';
@@ -111,6 +111,10 @@ export default function FarmBot({ children }: FarmBotProps) {
     setChatInput,
     chatLoading,
     getVisibleStepInfo,
+    chatPosition,
+    chatSize,
+    onChatDragStart,
+    onChatResizeStart,
   } = useFarmBot();
 
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -227,91 +231,102 @@ export default function FarmBot({ children }: FarmBotProps) {
     return (
       <FarmBotContext.Provider value={{ showQuickMessage, startChat }}>
         {children}
-        <div className={styles.chatOverlay}>
-          <div className={styles.chatContainer}>
-            {/* 헤더 */}
-            <div className={styles.chatHeader}>
-              <div className={styles.chatHeaderLeft}>
-                <div className={styles.chatHeaderLottie}>
-                  {lottieData && (
-                    <Lottie animationData={lottieData} loop autoplay className={styles.chatHeaderLottieAnim} />
-                  )}
-                </div>
-                <div className={styles.chatHeaderInfo}>
-                  <span className={styles.chatTitle}>{FARM_BOT_CONSTANTS.BOT_NAME}</span>
-                  <span className={styles.chatSubtitle}>{FARM_BOT_CONSTANTS.BOT_SUBTITLE}</span>
-                </div>
+        <div
+          className={styles.chatContainer}
+          style={{
+            position: 'fixed',
+            left: chatPosition.x,
+            top: chatPosition.y,
+            width: chatSize.width,
+            height: chatSize.height,
+            zIndex: 10001,
+          }}
+        >
+          {/* 헤더 — 드래그 핸들 */}
+          <div className={styles.chatHeader} onMouseDown={onChatDragStart}>
+            <div className={styles.chatHeaderLeft}>
+              <div className={styles.chatHeaderLottie}>
+                {lottieData && (
+                  <Lottie animationData={lottieData} loop autoplay className={styles.chatHeaderLottieAnim} />
+                )}
               </div>
-              <div className={styles.chatHeaderBtns}>
-                <button className={styles.chatResetBtn} onClick={resetChat} aria-label="대화 초기화" title="새 대화">🔄</button>
-                <button className={styles.chatCloseBtn} onClick={closeChat} aria-label="채팅 닫기">✕</button>
+              <div className={styles.chatHeaderInfo}>
+                <span className={styles.chatTitle}>{FARM_BOT_CONSTANTS.BOT_NAME}</span>
+                <span className={styles.chatSubtitle}>{FARM_BOT_CONSTANTS.BOT_SUBTITLE}</span>
               </div>
             </div>
-
-            {/* 메시지 목록 */}
-            <div className={styles.chatMessages}>
-              {chatMessages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`${styles.chatMsg} ${msg.role === 'user' ? styles.chatMsgUser : styles.chatMsgBot}`}
-                >
-                  {msg.role === 'bot' && (
-                    <Image src="/icon.png" alt="" width={28} height={28} className={styles.chatMsgAvatar} />
-                  )}
-                  <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleBot}`}>
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
-              {chatLoading && (
-                <div className={`${styles.chatMsg} ${styles.chatMsgBot}`}>
-                  <Image src="/icon.png" alt="" width={28} height={28} className={styles.chatMsgAvatar} />
-                  <div className={`${styles.chatBubble} ${styles.chatBubbleBot}`}>
-                    <span className={styles.chatTyping}>할아버지가 생각 중... 🤔</span>
-                  </div>
-                </div>
-              )}
-              {/* 빠른 질문 버튼 */}
-              {chatMessages.length <= 1 && !chatLoading && (
-                <div className={styles.quickQuestions}>
-                  {FARM_BOT_CONSTANTS.QUICK_QUESTIONS.map((q, idx) => (
-                    <button
-                      key={idx}
-                      className={styles.quickQuestionBtn}
-                      onClick={() => sendChatMessage(`${q.emoji} ${q.text}`)}
-                    >
-                      <span className={styles.quickQuestionEmoji}>{q.emoji}</span>
-                      <span>{q.text}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div ref={chatEndRef} />
+            <div className={styles.chatHeaderBtns}>
+              <button className={styles.chatResetBtn} onClick={resetChat} aria-label="대화 초기화" title="새 대화">🔄</button>
+              <button className={styles.chatCloseBtn} onClick={closeChat} aria-label="채팅 닫기">✕</button>
             </div>
-
-            {/* 입력창 */}
-            <form
-              className={styles.chatInputArea}
-              onSubmit={(e) => { e.preventDefault(); sendChatMessage(chatInput); }}
-            >
-              <input
-                type="text"
-                className={styles.chatInputField}
-                placeholder="궁금한 것을 물어보세요..."
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                disabled={chatLoading}
-                autoFocus
-              />
-              <button
-                type="submit"
-                className={styles.chatSendBtn}
-                disabled={chatLoading || !chatInput.trim()}
-              >
-                전송
-              </button>
-            </form>
           </div>
+
+          {/* 메시지 목록 */}
+          <div className={styles.chatMessages}>
+            {chatMessages.map((msg: ChatMessage, idx: number) => (
+              <div
+                key={idx}
+                className={`${styles.chatMsg} ${msg.role === 'user' ? styles.chatMsgUser : styles.chatMsgBot}`}
+              >
+                {msg.role === 'bot' && (
+                  <Image src="/icon.png" alt="" width={28} height={28} className={styles.chatMsgAvatar} />
+                )}
+                <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleBot}`}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {chatLoading && (
+              <div className={`${styles.chatMsg} ${styles.chatMsgBot}`}>
+                <Image src="/icon.png" alt="" width={28} height={28} className={styles.chatMsgAvatar} />
+                <div className={`${styles.chatBubble} ${styles.chatBubbleBot}`}>
+                  <span className={styles.chatTyping}>답변을 준비하고 있습니다... ⏳</span>
+                </div>
+              </div>
+            )}
+            {/* 빠른 질문 버튼 */}
+            {chatMessages.length <= 1 && !chatLoading && (
+              <div className={styles.quickQuestions}>
+                {FARM_BOT_CONSTANTS.QUICK_QUESTIONS.map((q, idx) => (
+                  <button
+                    key={idx}
+                    className={styles.quickQuestionBtn}
+                    onClick={() => sendChatMessage(`${q.emoji} ${q.text}`)}
+                  >
+                    <span className={styles.quickQuestionEmoji}>{q.emoji}</span>
+                    <span>{q.text}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* 입력창 */}
+          <form
+            className={styles.chatInputArea}
+            onSubmit={(e) => { e.preventDefault(); sendChatMessage(chatInput); }}
+          >
+            <input
+              type="text"
+              className={styles.chatInputField}
+              placeholder="궁금한 것을 물어보세요..."
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              disabled={chatLoading}
+              autoFocus
+            />
+            <button
+              type="submit"
+              className={styles.chatSendBtn}
+              disabled={chatLoading || !chatInput.trim()}
+            >
+              전송
+            </button>
+          </form>
+
+          {/* 리사이즈 핸들 */}
+          <div className={styles.resizeHandle} onMouseDown={onChatResizeStart} />
         </div>
       </FarmBotContext.Provider>
     );

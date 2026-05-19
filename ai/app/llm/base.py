@@ -12,6 +12,11 @@ class BaseLLM(ABC):
     """LLM Provider 공통 인터페이스"""
 
     @abstractmethod
+    def get_provider_name(self) -> str:
+        """Provider 이름을 반환합니다."""
+        ...
+
+    @abstractmethod
     def get_chat_model(self, **kwargs: Any) -> BaseChatModel:
         """
         LangChain 호환 ChatModel 인스턴스를 반환합니다.
