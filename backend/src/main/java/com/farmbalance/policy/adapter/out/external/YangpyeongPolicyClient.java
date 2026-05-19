@@ -34,6 +34,8 @@ public class YangpyeongPolicyClient implements PolicyExternalFetchPort {
             BASE_URL + "/www/selectBbsNttList.do?bbsNo=5&key=1119";
 
     private static final int MAX_PAGES_TO_FETCH = 20;
+    private static final int TARGET_POLICY_COUNT = 15; // 적정 수집 목표 건수
+    private static final int PAGE_CHUNK_SIZE = 5;      // 한 번에 확인할 페이지 단위
 
     // ── 농업 관련 키워드 필터 (확장) ──
     private static final List<String> FARM_KEYWORDS = List.of(
@@ -62,9 +64,20 @@ public class YangpyeongPolicyClient implements PolicyExternalFetchPort {
 
                 // 서버 부하 방지를 위한 짧은 딜레이
                 Thread.sleep(500);
+
+                // 5페이지 단위로 적정 수집량을 체크하여 조기 종료
+                if (page % PAGE_CHUNK_SIZE == 0) {
+                    if (allPolicies.size() >= TARGET_POLICY_COUNT) {
+                        log.info("[YangpyeongPolicyClient] {}페이지까지 {}건 수집 완료 (목표치 {}건 달성). 조기 종료.", 
+                                page, allPolicies.size(), TARGET_POLICY_COUNT);
+                        break;
+                    } else if (page < MAX_PAGES_TO_FETCH) {
+                        log.info("[YangpyeongPolicyClient] {}페이지까지 {}건 수집 (목표 미달). 다음 페이지 계속 탐색...", 
+                                page, allPolicies.size());
+                    }
+                }
             }
-            log.info("[YangpyeongPolicyClient] 양평군 고시/공고 1~{}페이지 탐색 → 농업 관련 총 {}건 수집",
-                    MAX_PAGES_TO_FETCH, allPolicies.size());
+            log.info("[YangpyeongPolicyClient] 양평군 고시/공고 최종 탐색 완료 → 농업 관련 총 {}건 수집", allPolicies.size());
             return allPolicies;
         } catch (Exception e) {
             // 크롤러 실패가 전체 sync 파이프라인을 중단시키지 않도록 방어
