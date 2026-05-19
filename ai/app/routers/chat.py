@@ -75,11 +75,18 @@ async def chat(request: ChatRequest) -> ChatResponse:
         if not (messages and isinstance(messages[-1], HumanMessage) and messages[-1].content == request.message):
             messages.append(HumanMessage(content=request.message))
 
+        meta = request.metadata or {}
+        farm_id = 0
+        try:
+            farm_id = int(meta.get("farmId") or meta.get("farm_id") or 0)
+        except (TypeError, ValueError):
+            farm_id = 0
+
         # ── 오케스트레이터 호출 ──
         result = await orchestrator.ainvoke({
             "messages": messages,
             "user_id": request.userId,
-            "farm_id": 0,
+            "farm_id": farm_id,
             "next_node": "",
             "current_focus": "",
             "pending_actions": [],
