@@ -354,7 +354,9 @@ export default function CommunityPage() {
                     </td>
                   )}
                   <td data-label="ID">{post.id}</td>
-                  <td className={styles.titleCell} data-label="제목">{post.title}</td>
+                  <td className={styles.titleCell} data-label="제목">
+                    {post.title} {post.commentCount > 0 && <span style={{ color: 'var(--color-primary-600)', fontWeight: 600, marginLeft: '4px' }}>[{post.commentCount}]</span>}
+                  </td>
                   <td data-label="조회수">{post.viewCount.toLocaleString()}</td>
                   <td data-label="공지">
                     {post.isNotice

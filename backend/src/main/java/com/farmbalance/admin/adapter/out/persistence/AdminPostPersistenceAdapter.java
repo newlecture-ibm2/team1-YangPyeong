@@ -19,7 +19,14 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private final RowMapper<AdminPost> rowMapper = (rs, rowNum) -> AdminPost.builder()
+    private final RowMapper<AdminPost> rowMapper = (rs, rowNum) -> {
+        int commentCount = 0;
+        try {
+            commentCount = rs.getInt("comment_count");
+        } catch (Exception e) {
+            // Ignore if not present
+        }
+        return AdminPost.builder()
             .id(rs.getLong("id"))
             .authorId(rs.getLong("author_id"))
             .categoryId(rs.getLong("category_id"))
@@ -32,28 +39,30 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
             .deletedAt(rs.getTimestamp("deleted_at") != null ? rs.getTimestamp("deleted_at").toLocalDateTime() : null)
             .isHidden(rs.getBoolean("is_hidden"))
             .statusReason(rs.getString("status_reason"))
+            .commentCount(commentCount)
             .build();
+    };
 
     @Override
     public List<AdminPost> findAll() {
-        String sql = "SELECT * FROM posts ORDER BY created_at DESC";
+        String sql = "SELECT p.*, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) as comment_count FROM posts p ORDER BY p.created_at DESC";
         return jdbcTemplate.query(sql, rowMapper);
     }
 
     @Override
     public List<AdminPost> findByFilter(String keyword, String status, int offset, int limit) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM posts WHERE 1=1 ");
+        StringBuilder sql = new StringBuilder("SELECT p.*, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) as comment_count FROM posts p WHERE 1=1 ");
         if (keyword != null && !keyword.isBlank()) {
-            sql.append("AND title LIKE '%").append(keyword).append("%' ");
+            sql.append("AND p.title LIKE '%").append(keyword).append("%' ");
         }
         if ("ACTIVE".equalsIgnoreCase(status)) {
-            sql.append("AND deleted_at IS NULL AND is_hidden = false ");
+            sql.append("AND p.deleted_at IS NULL AND p.is_hidden = false ");
         } else if ("HIDDEN".equalsIgnoreCase(status)) {
-            sql.append("AND is_hidden = true ");
+            sql.append("AND p.is_hidden = true ");
         } else if ("DELETED".equalsIgnoreCase(status)) {
-            sql.append("AND deleted_at IS NOT NULL ");
+            sql.append("AND p.deleted_at IS NOT NULL ");
         }
-        sql.append("ORDER BY created_at DESC LIMIT ? OFFSET ?");
+        sql.append("ORDER BY p.created_at DESC LIMIT ? OFFSET ?");
         return jdbcTemplate.query(sql.toString(), rowMapper, limit, offset);
     }
 
@@ -76,7 +85,7 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
 
     @Override
     public Optional<AdminPost> findById(Long id) {
-        String sql = "SELECT * FROM posts WHERE id = ?";
+        String sql = "SELECT p.*, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) as comment_count FROM posts p WHERE p.id = ?";
         List<AdminPost> result = jdbcTemplate.query(sql, rowMapper, id);
         return result.stream().findFirst();
     }

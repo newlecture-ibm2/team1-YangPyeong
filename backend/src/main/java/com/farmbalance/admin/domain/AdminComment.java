@@ -21,6 +21,7 @@ public class AdminComment {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
+    @com.fasterxml.jackson.annotation.JsonProperty("isHidden")
     private boolean isHidden;
     private String statusReason;
 }

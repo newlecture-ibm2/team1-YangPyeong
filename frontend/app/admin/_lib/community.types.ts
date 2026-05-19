@@ -18,6 +18,7 @@ export interface AdminPost {
   deletedAt: string | null
   isHidden: boolean
   statusReason: string | null
+  commentCount: number
 }
 
 /** 관리자용 게시글 페이징 응답 */
