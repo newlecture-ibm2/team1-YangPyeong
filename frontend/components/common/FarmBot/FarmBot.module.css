@@ -829,6 +829,7 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
+  flex-wrap: wrap; /* 액션 UI(상품 카드 등)가 말풍선 아래로 줄바꿈되도록 */
 }
 
 .chatMsgUser {
