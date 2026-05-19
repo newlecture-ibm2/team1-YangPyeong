@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import Modal from '@/components/common/Modal/Modal'
 import Button from '@/components/common/Button/Button'
-import styles from './SanctionModal.module.css'
+import styles from './ReasonModal.module.css'
 
 interface ReasonModalProps {
   isOpen: boolean
