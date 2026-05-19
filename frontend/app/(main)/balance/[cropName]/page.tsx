@@ -161,23 +161,37 @@ export default function BalanceDetailPage({ params }: PageProps) {
           <h2 className={styles.cardTitle}>전년 대비 변화</h2>
           <div className={styles.placeholder}>
              {(() => {
-               const prevYearSupply = trendData[trendData.length - 2]?.supply;
-               const currentYearSupply = trendData[trendData.length - 1]?.supply;
+               // 2026년을 제외하고 실제 통계량(supply > 0)이 있는 가장 최신의 과거 연도를 찾습니다.
+               const historicalData = trendData.slice(0, -1).reverse().find(t => t.supply > 0);
+               const prevYearSupply = historicalData?.supply || 0;
+               const prevYear = historicalData?.year;
+               const currentYearSupply = trendData[trendData.length - 1]?.supply || 0;
                const hasValidYoY = trendData.length > 1 && prevYearSupply > 0;
                
                if (hasValidYoY) {
-                 const changePct = ((currentYearSupply / prevYearSupply - 1) * 100).toFixed(1);
+                 const changePctVal = ((currentYearSupply / prevYearSupply - 1) * 100);
+                 const changePct = changePctVal.toFixed(1);
+                 const isIncrease = changePctVal >= 0;
+                 const absChangePct = Math.abs(changePctVal).toFixed(1);
+                 
                  return (
-                   <p className={styles.yoyText}>
-                     전년({trendData[trendData.length - 2].year}년) 대비 
-                     <strong> {changePct}% </strong>
-                     공급량이 변동되었습니다.
-                   </p>
+                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: '0 20px' }}>
+                     <p className={styles.yoyText}>
+                       직전 집계 연도(<strong>{prevYear}년</strong>) 대비 
+                       <strong style={{ color: isIncrease ? 'var(--color-danger)' : 'var(--color-primary)' }}>
+                         {isIncrease ? ` ${absChangePct}% 증가 ` : ` ${absChangePct}% 감소 `}
+                       </strong>
+                       하였습니다.
+                     </p>
+                     <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '16px', opacity: 0.85, textAlign: 'center', wordBreak: 'keep-all', lineHeight: 1.6, maxWidth: '420px' }}>
+                       ※ 2025년도 공식 생산량 통계는 통계청(KOSIS) 최종 공표 대기 중으로, 시스템이 자동으로 검증된 최신 유효 데이터 연도인 {prevYear}년을 역추적해 비교합니다.
+                     </p>
+                   </div>
                  );
                } else {
                  return (
                    <p className={styles.yoyText} style={{ opacity: 0.7, padding: '16px', fontSize: '14px', wordBreak: 'keep-all' }}>
-                     전년도({trendData[trendData.length - 2]?.year || '이전'}년) 공급량 데이터가 집계되지 않아 전년 대비 변화율을 계산할 수 없습니다.
+                     직전 연도 공급량 데이터가 집계되지 않아 전년 대비 변화율을 계산할 수 없습니다.
                    </p>
                  );
                }
