@@ -5,8 +5,6 @@ from app.models.admin import (
     ShopAuditBatchRequest, ShopAuditBatchResponse, ShopAuditResult,
     ModerationBatchRequest, ModerationBatchResponse, ModerationResult
 )
-from app.rag.ingestion import load_and_chunk_documents
-from app.rag.vectorstore import get_vectorstore
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +135,9 @@ class AdminService:
 
     async def sync_rag_data(self) -> dict:
         try:
+            from app.rag.ingestion import load_and_chunk_documents
+            from app.rag.vectorstore import get_vectorstore
+
             logger.info("=== RAG 데이터 인제스천 시작 (API 요청) ===")
             documents = load_and_chunk_documents()
             
