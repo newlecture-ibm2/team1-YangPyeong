@@ -70,9 +70,10 @@ export function useFarmBot() {
   // 페이지 변경 시 시나리오 갱신
   useEffect(() => {
     const scenario = getScenarioForPath(pathname || '/');
+    const isHidden = localStorage.getItem(HIDDEN_KEY) === 'true';
 
     // 페이지 변경 시 진행 중인 가이드 중지 + 리셋
-    setMode('minimized');
+    setMode(isHidden ? 'hidden' : 'minimized');
     setShowBubble(false);
     setHighlightRect(null);
     setBotState('idle');
@@ -167,19 +168,27 @@ export function useFarmBot() {
   }, [steps, moveToElement]);
 
   /** 페이지 진입 시 — 캐릭터가 등장하여 "가이드 해드릴까요?" 질문 */
-  const askUser = useCallback(() => {
+  const askUser = useCallback((customPosition?: Position) => {
     if (steps.length === 0) return;
     setMode('asking');
     setBotState('idle');
-    setFacingRight(true);
     setShowBubble(true);
     setBubbleMessage('안녕하세요! 👋\n이 페이지를 안내해드릴까요?');
     setBubbleAbove(true);
-    // 화면 하단 중앙에 위치
-    setPosition({
-      x: window.innerWidth / 2 - 60,
-      y: window.innerHeight - 180,
-    });
+
+    if (customPosition) {
+      setPosition(customPosition);
+      // 화면 중앙을 기준으로 왼쪽 절반에 있으면 오른쪽을 바라보고, 오른쪽 절반에 있으면 왼쪽을 바라봄
+      const lookRight = customPosition.x < window.innerWidth / 2;
+      setFacingRight(lookRight);
+    } else {
+      setFacingRight(true);
+      // 화면 하단 중앙에 위치
+      setPosition({
+        x: window.innerWidth / 2 - 60,
+        y: window.innerHeight - 180,
+      });
+    }
   }, [steps]);
 
   /** 유저가 "네" 선택 → 최상단 이동 후 가이드 시작 */
@@ -291,14 +300,32 @@ export function useFarmBot() {
   }, [mode]);
 
   /** 축소 모드에서 재시작 */
-  const restartGuide = useCallback(() => {
-    askUser();
+  const restartGuide = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const isMobile = window.innerWidth <= 768;
+      const charSize = isMobile ? 70 : CHARACTER_SIZE;
+
+      const pos = {
+        x: Math.max(16, Math.min(window.innerWidth - charSize - 16, rect.left + rect.width / 2 - charSize / 2)),
+        y: Math.max(16, Math.min(window.innerHeight - charSize - 16, rect.top + rect.height - charSize)),
+      };
+      askUser(pos);
+    } else {
+      askUser();
+    }
   }, [askUser]);
 
   // 페이지 로드 시 자동 질문 (첫 방문만)
   useEffect(() => {
     if (hasAsked.current) return;
     if (steps.length === 0) return;
+
+    const isHidden = localStorage.getItem(HIDDEN_KEY) === 'true';
+    if (isHidden) {
+      setMode('hidden');
+      return;
+    }
 
     const seen = localStorage.getItem(STORAGE_KEY);
     if (!seen) {
@@ -316,20 +343,25 @@ export function useFarmBot() {
     setShowBubble(false);
     setHighlightRect(null);
     setBotState('idle');
-    // 채팅창 초기 위치: 우하단
-    if (chatPosition.x === -1) {
-      setChatPosition({
-        x: window.innerWidth - chatSize.width - 24,
-        y: window.innerHeight - chatSize.height - 24,
-      });
-    }
+
+    // 현재 캐릭터 위치를 기반으로 대화창 위치 소환!
+    const isMobile = window.innerWidth <= 768;
+    const charCenterX = position.x + (isMobile ? 35 : 60);
+    const idealX = charCenterX - chatSize.width / 2;
+    const idealY = position.y - chatSize.height - 16;
+
+    setChatPosition({
+      x: Math.max(16, Math.min(window.innerWidth - chatSize.width - 16, idealX)),
+      y: Math.max(16, Math.min(window.innerHeight - chatSize.height - 16, idealY)),
+    });
+
     if (chatMessages.length === 0) {
       setChatMessages([{
         role: 'bot',
         content: FARM_BOT_CONSTANTS.WELCOME_MESSAGE,
       }]);
     }
-  }, [chatMessages.length, chatPosition.x, chatSize.width, chatSize.height]);
+  }, [chatMessages.length, position, chatSize.width, chatSize.height]);
 
   /** 드래그 시작 (헤더 mousedown) */
   const onChatDragStart = useCallback((e: React.MouseEvent) => {
