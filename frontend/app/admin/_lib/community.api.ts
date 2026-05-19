@@ -41,10 +41,56 @@ export async function deletePost(postId: number): Promise<void> {
   if (!json.success) throw new Error(json.error?.message ?? '게시글 삭제 실패')
 }
 
+export async function hidePost(postId: number, reason: string): Promise<void> {
+  const res = await fetch(`${BASE}/${postId}/hide`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason }),
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '게시글 숨김 실패')
+}
+
+export async function hideComment(commentId: number, reason: string): Promise<void> {
+  const res = await fetch(`${BASE}/comments/${commentId}/hide`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason }),
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '댓글 숨김 실패')
+}
+
+export async function bulkDeletePosts(ids: number[]): Promise<void> {
+  const res = await fetch(`${BASE}/bulk-delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '게시글 일괄 삭제 실패')
+}
+
+export async function bulkDeleteComments(ids: number[]): Promise<void> {
+  const res = await fetch(`${BASE}/comments/bulk-delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '댓글 일괄 삭제 실패')
+}
+
 export async function restorePost(postId: number): Promise<void> {
   const res = await fetch(`${BASE}/${postId}/restore`, { method: 'PATCH' })
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '게시글 복구 실패')
+}
+
+export async function restoreComment(commentId: number): Promise<void> {
+  const res = await fetch(`${BASE}/comments/${commentId}/restore`, { method: 'PATCH' })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '댓글 복구 실패')
 }
 
 export async function toggleNotice(postId: number, isNotice: boolean): Promise<void> {

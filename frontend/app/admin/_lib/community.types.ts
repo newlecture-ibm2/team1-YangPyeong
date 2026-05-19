@@ -16,6 +16,8 @@ export interface AdminPost {
   createdAt: string
   updatedAt: string | null
   deletedAt: string | null
+  isHidden: boolean
+  statusReason: string | null
 }
 
 /** 관리자용 게시글 페이징 응답 */
@@ -35,6 +37,8 @@ export interface AdminComment {
   createdAt: string
   updatedAt: string | null
   deletedAt: string | null
+  isHidden: boolean
+  statusReason: string | null
 }
 
 /** 관리자용 그룹화된 신고 내역 */

@@ -46,12 +46,16 @@ public class ProductJpaEntity extends BaseTimeEntity {
     @Column(name = "status", length = 20)
     private String status;
 
+    @Column(name = "status_reason", length = 500)
+    private String statusReason;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @Builder
-    public ProductJpaEntity(Long sellerId, Long categoryId, String name, int price, int stock,
-                            String description, int salesCount, String status) {
+    public ProductJpaEntity(Long id, Long sellerId, Long categoryId, String name, int price, int stock,
+                            String description, int salesCount, String status, String statusReason) {
+        this.id = id;
         this.sellerId = sellerId;
         this.categoryId = categoryId;
         this.name = name;
@@ -60,6 +64,7 @@ public class ProductJpaEntity extends BaseTimeEntity {
         this.description = description;
         this.salesCount = salesCount;
         this.status = status;
+        this.statusReason = statusReason;
     }
 
     // ── 업데이트 메서드 ──
@@ -82,8 +87,9 @@ public class ProductJpaEntity extends BaseTimeEntity {
         this.salesCount = salesCount;
     }
 
-    public void updateStatus(String status) {
+    public void updateStatus(String status, String statusReason) {
         this.status = status;
+        this.statusReason = statusReason;
     }
 
     public void softDelete() {

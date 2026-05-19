@@ -2,6 +2,7 @@ package com.farmbalance.admin.adapter.in.web;
 
 import com.farmbalance.admin.adapter.in.web.dto.AdminShopProductResponse;
 import com.farmbalance.admin.application.port.in.dto.AdminShopProductDto;
+import com.farmbalance.admin.adapter.in.web.dto.UpdateStatusRequest;
 import com.farmbalance.admin.application.port.in.ManageShopUseCase;
 import com.farmbalance.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -79,9 +80,8 @@ public class AdminShopController {
      */
     @PatchMapping("/{productId}")
     public ApiResponse<Void> updateProductStatus(@PathVariable Long productId,
-                                                  @RequestBody Map<String, String> body) {
-        String status = body.get("status");
-        manageShopUseCase.updateProductStatus(productId, status);
+                                                  @RequestBody UpdateStatusRequest request) {
+        manageShopUseCase.updateProductStatus(productId, request.getStatus(), request.getReason());
         return ApiResponse.ok(null);
     }
 

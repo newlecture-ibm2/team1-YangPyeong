@@ -2,7 +2,10 @@ package com.farmbalance.admin.adapter.in.web;
 
 import com.farmbalance.admin.application.port.in.ManageCommunityUseCase;
 import com.farmbalance.admin.domain.AdminPost;
+import com.farmbalance.admin.adapter.in.web.dto.HideRequest;
+import com.farmbalance.admin.adapter.in.web.dto.BulkDeleteRequest;
 import com.farmbalance.global.response.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,6 +54,26 @@ public class AdminCommunityController {
     }
 
     /**
+     * 댓글 숨김 (관리자 제재/AI 차단)
+     * PATCH /api/admin/community/comments/{commentId}/hide
+     */
+    @PatchMapping("/comments/{commentId}/hide")
+    public ApiResponse<Void> hideComment(@PathVariable Long commentId, @Valid @RequestBody HideRequest request) {
+        manageCommunityUseCase.hideComment(commentId, request.getReason());
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 댓글 일괄 삭제 (격리된 상태에서만 가능)
+     * POST /api/admin/community/comments/bulk-delete
+     */
+    @PostMapping("/comments/bulk-delete")
+    public ApiResponse<Void> bulkDeleteComments(@Valid @RequestBody BulkDeleteRequest request) {
+        manageCommunityUseCase.bulkDeleteComments(request.getIds());
+        return ApiResponse.ok(null);
+    }
+
+    /**
      * 특정 게시글의 댓글 목록 조회
      * GET /api/admin/community/{postId}/comments
      */
@@ -66,6 +89,26 @@ public class AdminCommunityController {
     @DeleteMapping("/comments/{commentId}")
     public ApiResponse<Void> deleteComment(@PathVariable Long commentId) {
         manageCommunityUseCase.deleteComment(commentId);
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 게시글 숨김 (관리자 제재/AI 차단)
+     * PATCH /api/admin/community/{postId}/hide
+     */
+    @PatchMapping("/{postId}/hide")
+    public ApiResponse<Void> hidePost(@PathVariable Long postId, @Valid @RequestBody HideRequest request) {
+        manageCommunityUseCase.hidePost(postId, request.getReason());
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 게시글 일괄 삭제 (격리된 상태에서만 가능)
+     * POST /api/admin/community/bulk-delete
+     */
+    @PostMapping("/bulk-delete")
+    public ApiResponse<Void> bulkDeletePosts(@Valid @RequestBody BulkDeleteRequest request) {
+        manageCommunityUseCase.bulkDeletePosts(request.getIds());
         return ApiResponse.ok(null);
     }
 
@@ -86,6 +129,16 @@ public class AdminCommunityController {
     @PatchMapping("/{postId}/restore")
     public ApiResponse<Void> restorePost(@PathVariable Long postId) {
         manageCommunityUseCase.restorePost(postId);
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 댓글 복구 (restore soft delete)
+     * PATCH /api/admin/community/comments/{commentId}/restore
+     */
+    @PatchMapping("/comments/{commentId}/restore")
+    public ApiResponse<Void> restoreComment(@PathVariable Long commentId) {
+        manageCommunityUseCase.restoreComment(commentId);
         return ApiResponse.ok(null);
     }
 

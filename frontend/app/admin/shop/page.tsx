@@ -7,6 +7,7 @@ import { DEFAULT_PRODUCT_IMAGE } from '@/lib/constants'
 import styles from './Shop.module.css'
 import type { AdminProduct } from '../_lib/shop.types'
 import { fetchProducts, updateProductStatus, deleteAdminProduct, aiAuditProducts } from '../_lib/shop.api'
+import ReasonModal from '../community/_components/ReasonModal'
 
 function formatPrice(price: number): string {
   return price.toLocaleString() + '원'
@@ -74,6 +75,9 @@ export default function ShopPage() {
   const [pendingCount, setPendingCount] = useState(0)
   const [isAuditing, setIsAuditing] = useState(false)
 
+  const [reasonModalOpen, setReasonModalOpen] = useState(false)
+  const [targetProductForReason, setTargetProductForReason] = useState<{ id: number, status: string } | null>(null)
+
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('ALL')
   const [sort, setSort] = useState('createdAt')
@@ -128,10 +132,28 @@ export default function ShopPage() {
   }
 
   const handleStatusChange = async (productId: number, newStatus: string) => {
+    if (newStatus === 'INACTIVE' || newStatus === 'REJECTED') {
+      setTargetProductForReason({ id: productId, status: newStatus })
+      setReasonModalOpen(true)
+      return
+    }
+    
     try {
       await updateProductStatus(productId, newStatus)
       toast.success('상품 상태가 성공적으로 변경되었습니다.')
       loadData() // 갱신
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '상태 변경 실패')
+    }
+  }
+
+  const handleReasonConfirm = async (reason: string) => {
+    if (!targetProductForReason) return
+    try {
+      await updateProductStatus(targetProductForReason.id, targetProductForReason.status, reason)
+      toast.success('상품 상태가 성공적으로 변경되었습니다.')
+      setReasonModalOpen(false)
+      loadData()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '상태 변경 실패')
     }
@@ -380,6 +402,13 @@ export default function ShopPage() {
           </button>
         </div>
       )}
+
+      <ReasonModal
+        isOpen={reasonModalOpen}
+        title="상품 상태 변경 사유 입력"
+        onClose={() => setReasonModalOpen(false)}
+        onConfirm={handleReasonConfirm}
+      />
     </div>
   )
 }

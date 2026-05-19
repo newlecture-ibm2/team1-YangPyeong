@@ -75,7 +75,7 @@ public class AdminUserService implements ManageUserUseCase {
 
     @Override
     @Transactional
-    public void changeStatus(Long id, String status) {
+    public void changeStatus(Long id, String status, String reason) {
         String upperStatus = status.toUpperCase();
         if (!ALLOWED_STATUSES.contains(upperStatus)) {
             throw new BusinessException(ErrorCode.ADMIN_INVALID_STATUS);
@@ -83,26 +83,7 @@ public class AdminUserService implements ManageUserUseCase {
         userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        userRepository.updateStatus(id, upperStatus);
-    }
-
-    @Override
-    @Transactional
-    public void forceWithdrawUser(Long id, String reasonType, String detail) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        // 로그 기록
-        UserSanctionLogJpaEntity logEntity = UserSanctionLogJpaEntity.builder()
-                .targetUserId(id)
-                .actionType("WITHDRAW")
-                .reasonType(reasonType)
-                .reasonDetail(detail)
-                .build();
-        sanctionLogRepository.save(logEntity);
-
-        // 실제 탈퇴 로직 위임 (당일 즉시 WITHDRAWN 처리 및 이벤트 발행)
-        updateProfileUseCase.withdrawAccount(user.getEmail());
+        userRepository.updateStatus(id, upperStatus, reason);
     }
 
     @Override

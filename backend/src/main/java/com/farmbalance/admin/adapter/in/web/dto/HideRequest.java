@@ -3,16 +3,12 @@ package com.farmbalance.admin.adapter.in.web.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-/**
- * 사용자 상태 변경 요청 DTO
- */
 @Getter
+@Setter
 @NoArgsConstructor
-public class ChangeUserStatusRequest {
-
-    @NotBlank(message = "상태는 필수입니다.")
-    private String status;
-
+public class HideRequest {
+    @NotBlank(message = "숨김 사유는 필수입니다.")
     private String reason;
 }

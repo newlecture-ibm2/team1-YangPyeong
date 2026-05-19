@@ -14,6 +14,7 @@ import { fetchPosts, deletePost, toggleNotice, createNotice, fetchReports, updat
 import NoticeCreateModal from './_components/NoticeCreateModal'
 import PostDetailModal from './_components/PostDetailModal'
 import SanctionModal from './_components/SanctionModal'
+import ReasonModal from './_components/ReasonModal'
 import Button from '@/components/common/Button/Button'
 
 function formatDate(dateStr: string | null): string {
@@ -54,6 +55,27 @@ export default function CommunityPage() {
   const [sanctionModalOpen, setSanctionModalOpen] = useState(false)
   const [selectedTarget, setSelectedTarget] = useState<{ type: string, id: number } | null>(null)
 
+  const [reasonModalOpen, setReasonModalOpen] = useState(false)
+  const [targetForReason, setTargetForReason] = useState<{ type: 'POST' | 'COMMENT', id: number } | null>(null)
+  
+  const [selectedPostIds, setSelectedPostIds] = useState<number[]>([])
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedPostIds(posts.map(p => p.id))
+    } else {
+      setSelectedPostIds([])
+    }
+  }
+
+  const handleSelectOne = (id: number) => {
+    if (selectedPostIds.includes(id)) {
+      setSelectedPostIds(prev => prev.filter(v => v !== id))
+    } else {
+      setSelectedPostIds(prev => [...prev, id])
+    }
+  }
+
   const loadData = useCallback(async () => {
     if (activeTab === 'POSTS') {
       setLoading(true)
@@ -84,7 +106,10 @@ export default function CommunityPage() {
     }
   }, [activeTab, keyword, statusFilter, page, reportStatusFilter, reportPage, toast])
 
-  useEffect(() => { loadData() }, [loadData])
+  useEffect(() => { 
+    setSelectedPostIds([])
+    loadData() 
+  }, [loadData])
 
   const handleDelete = async (postId: number) => {
     const confirmed = await showConfirm('이 게시글을 삭제하시겠습니까?')
@@ -99,7 +124,7 @@ export default function CommunityPage() {
   }
 
   const handleRestorePost = async (postId: number) => {
-    const confirmed = await showConfirm('삭제된 게시글을 복구하시겠습니까?')
+    const confirmed = await showConfirm('게시글을 복구하시겠습니까?')
     if (!confirmed) return
     try {
       const { restorePost } = await import('../_lib/community.api')
@@ -108,6 +133,39 @@ export default function CommunityPage() {
       loadData()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '게시글 복구 실패')
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedPostIds.length === 0) {
+      toast.error('삭제할 게시글을 선택해주세요.')
+      return
+    }
+    const confirmed = await showConfirm(`선택한 ${selectedPostIds.length}개의 숨김 처리된 게시글을 완전히 삭제하시겠습니까?`)
+    if (!confirmed) return
+    try {
+      const { bulkDeletePosts } = await import('../_lib/community.api')
+      await bulkDeletePosts(selectedPostIds)
+      toast.success('일괄 삭제가 완료되었습니다.')
+      setSelectedPostIds([])
+      loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '일괄 삭제 실패')
+    }
+  }
+
+  const handleHideConfirm = async (reason: string) => {
+    if (!targetForReason) return
+    try {
+      const { hidePost } = await import('../_lib/community.api')
+      if (targetForReason.type === 'POST') {
+        await hidePost(targetForReason.id, reason)
+        toast.success('게시글이 숨김 처리되었습니다.')
+      }
+      setReasonModalOpen(false)
+      loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '숨김 처리 실패')
     }
   }
 
@@ -220,6 +278,11 @@ export default function CommunityPage() {
               <Button variant="primary" onClick={() => setNoticeModalOpen(true)}>
                 + 공지사항 작성
               </Button>
+              {statusFilter === 'HIDDEN' && (
+                <Button variant="primary" onClick={handleBulkDelete} style={{ backgroundColor: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>
+                  선택 일괄 삭제
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -235,6 +298,7 @@ export default function CommunityPage() {
               options={[
                 { label: '전체 상태', value: 'ALL' },
                 { label: '활성', value: 'ACTIVE' },
+                { label: '숨김(격리)', value: 'HIDDEN' },
                 { label: '삭제됨', value: 'DELETED' }
               ]}
               value={statusFilter}
@@ -252,6 +316,12 @@ export default function CommunityPage() {
         />
       </div>
 
+      {activeTab === 'POSTS' && statusFilter === 'HIDDEN' && (
+        <div style={{ padding: '12px 16px', backgroundColor: 'var(--color-bg-sub)', borderBottom: '1px solid var(--color-border)', fontSize: '0.9rem', color: 'var(--color-text-sub)' }}>
+          💡 숨김 처리된 게시물 및 댓글은 30일 후에 자동 삭제됩니다.
+        </div>
+      )}
+
       {loading && posts.length === 0 ? (
         <div className={styles.loadingWrap}>게시글 로딩 중...</div>
       ) : posts.length === 0 ? (
@@ -261,6 +331,11 @@ export default function CommunityPage() {
           <table className={styles.table}>
             <thead>
               <tr>
+                {statusFilter === 'HIDDEN' && (
+                  <th style={{ width: '40px' }}>
+                    <input type="checkbox" checked={selectedPostIds.length > 0 && selectedPostIds.length === posts.length} onChange={handleSelectAll} />
+                  </th>
+                )}
                 <th>ID</th>
                 <th>제목</th>
                 <th>조회수</th>
@@ -272,7 +347,12 @@ export default function CommunityPage() {
             </thead>
             <tbody>
               {posts.map(post => (
-                <tr key={post.id} className={post.deletedAt ? styles.deletedRow : ''}>
+                <tr key={post.id} className={post.deletedAt ? styles.deletedRow : (post.isHidden ? styles.hiddenRow : '')}>
+                  {statusFilter === 'HIDDEN' && (
+                    <td>
+                      <input type="checkbox" checked={selectedPostIds.includes(post.id)} onChange={() => handleSelectOne(post.id)} />
+                    </td>
+                  )}
                   <td data-label="ID">{post.id}</td>
                   <td className={styles.titleCell} data-label="제목">{post.title}</td>
                   <td data-label="조회수">{post.viewCount.toLocaleString()}</td>
@@ -285,7 +365,9 @@ export default function CommunityPage() {
                   <td data-label="상태">
                     {post.deletedAt
                       ? <Badge variant="red">삭제됨</Badge>
-                      : <Badge variant="green">활성</Badge>}
+                      : post.isHidden 
+                        ? <Badge variant="orange">숨김</Badge> 
+                        : <Badge variant="green">활성</Badge>}
                   </td>
                   <td data-label="">
                     <div className={styles.actionGroup}>
@@ -309,12 +391,30 @@ export default function CommunityPage() {
                         >
                           복구
                         </button>
+                      ) : post.isHidden ? (
+                        <>
+                          <button
+                            className={styles.actionBtnDanger}
+                            onClick={() => handleDelete(post.id)}
+                          >
+                            삭제
+                          </button>
+                          <button
+                            className={styles.actionBtnNotice}
+                            onClick={() => handleRestorePost(post.id)}
+                          >
+                            복구
+                          </button>
+                        </>
                       ) : (
                         <button
                           className={styles.actionBtnDanger}
-                          onClick={() => handleDelete(post.id)}
+                          onClick={() => {
+                            setTargetForReason({ type: 'POST', id: post.id })
+                            setReasonModalOpen(true)
+                          }}
                         >
-                          삭제
+                          숨김
                         </button>
                       )}
                     </div>
@@ -490,6 +590,13 @@ export default function CommunityPage() {
         isOpen={sanctionModalOpen}
         onClose={() => setSanctionModalOpen(false)}
         onConfirm={handleSanctionConfirm}
+      />
+
+      <ReasonModal
+        isOpen={reasonModalOpen}
+        title="게시물 숨김 처리"
+        onClose={() => setReasonModalOpen(false)}
+        onConfirm={handleHideConfirm}
       />
     </div>
   )

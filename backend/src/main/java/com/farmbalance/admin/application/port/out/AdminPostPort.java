@@ -18,6 +18,9 @@ public interface AdminPostPort {
 
     Optional<AdminPost> findById(Long id);
 
+    void hide(Long id, String reason);
+    void bulkDelete(List<Long> ids);
+    int deleteOldHidden(java.time.LocalDateTime threshold);
     void delete(Long id);
     void restore(Long id);
 

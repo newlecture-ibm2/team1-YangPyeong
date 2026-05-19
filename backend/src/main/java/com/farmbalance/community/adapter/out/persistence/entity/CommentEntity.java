@@ -39,6 +39,13 @@ public class CommentEntity extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "is_hidden")
+    @Builder.Default
+    private boolean isHidden = false;
+
+    @Column(name = "status_reason", length = 500)
+    private String statusReason;
+
     public Comment toDomain() {
         return Comment.builder()
                 .id(this.id)
@@ -50,6 +57,8 @@ public class CommentEntity extends BaseTimeEntity {
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getUpdatedAt())
                 .deletedAt(this.deletedAt)
+                .isHidden(this.isHidden)
+                .statusReason(this.statusReason)
                 .build();
     }
 
@@ -62,6 +71,8 @@ public class CommentEntity extends BaseTimeEntity {
                 .accepted(comment.isAccepted())
                 .parentId(comment.getParentId())
                 .deletedAt(comment.getDeletedAt())
+                .isHidden(comment.isHidden())
+                .statusReason(comment.getStatusReason())
                 .build();
     }
 }

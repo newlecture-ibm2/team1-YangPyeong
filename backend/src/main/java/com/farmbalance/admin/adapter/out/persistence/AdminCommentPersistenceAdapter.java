@@ -27,6 +27,8 @@ public class AdminCommentPersistenceAdapter implements AdminCommentPort {
             .createdAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null)
             .updatedAt(rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null)
             .deletedAt(rs.getTimestamp("deleted_at") != null ? rs.getTimestamp("deleted_at").toLocalDateTime() : null)
+            .isHidden(rs.getBoolean("is_hidden"))
+            .statusReason(rs.getString("status_reason"))
             .build();
 
     @Override
@@ -42,8 +44,28 @@ public class AdminCommentPersistenceAdapter implements AdminCommentPort {
     }
 
     @Override
+    public void hide(Long id, String reason) {
+        String sql = "UPDATE comments SET is_hidden = true, status_reason = ?, updated_at = NOW() WHERE id = ?";
+        jdbcTemplate.update(sql, reason, id);
+    }
+
+    @Override
+    public void bulkDelete(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return;
+        String inSql = String.join(",", java.util.Collections.nCopies(ids.size(), "?"));
+        String sql = String.format("UPDATE comments SET deleted_at = NOW(), updated_at = NOW() WHERE is_hidden = true AND id IN (%s)", inSql);
+        jdbcTemplate.update(sql, ids.toArray());
+    }
+
+    @Override
+    public int deleteOldHidden(java.time.LocalDateTime threshold) {
+        String sql = "UPDATE comments SET deleted_at = NOW(), updated_at = NOW() WHERE is_hidden = true AND deleted_at IS NULL AND updated_at < ?";
+        return jdbcTemplate.update(sql, threshold);
+    }
+
+    @Override
     public void restore(Long id) {
-        String sql = "UPDATE comments SET deleted_at = NULL, updated_at = NOW() WHERE id = ?";
+        String sql = "UPDATE comments SET deleted_at = NULL, is_hidden = false, status_reason = NULL, updated_at = NOW() WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
 

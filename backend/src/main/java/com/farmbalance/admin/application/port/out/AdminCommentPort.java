@@ -12,6 +12,9 @@ public interface AdminCommentPort {
     List<AdminComment> findByPostId(Long postId);
 
     java.util.Optional<AdminComment> findById(Long id);
+    void hide(Long id, String reason);
+    void bulkDelete(List<Long> ids);
+    int deleteOldHidden(java.time.LocalDateTime threshold);
     void delete(Long id);
 
     void restore(Long id);

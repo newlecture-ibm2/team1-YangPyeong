@@ -21,4 +21,6 @@ public class AdminComment {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
+    private boolean isHidden;
+    private String statusReason;
 }

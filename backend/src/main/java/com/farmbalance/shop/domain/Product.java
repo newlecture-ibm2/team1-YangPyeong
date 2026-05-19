@@ -20,6 +20,7 @@ public class Product {
     private String description;
     private int salesCount;
     private ProductStatus status;
+    private String statusReason;
     private List<String> imageUrls;
     private LocalDateTime createdAt;
 
@@ -28,7 +29,7 @@ public class Product {
 
     public Product(Long id, Long sellerId, String sellerName, Long categoryId, String categoryName,
                    String name, int price, int stock, String description, int salesCount,
-                   ProductStatus status, List<String> imageUrls, LocalDateTime createdAt) {
+                   ProductStatus status, String statusReason, List<String> imageUrls, LocalDateTime createdAt) {
         this.id = id;
         this.sellerId = sellerId;
         this.sellerName = sellerName;
@@ -40,6 +41,7 @@ public class Product {
         this.description = description;
         this.salesCount = salesCount;
         this.status = status;
+        this.statusReason = statusReason;
         this.imageUrls = imageUrls;
         this.createdAt = createdAt;
     }
@@ -57,6 +59,7 @@ public class Product {
     public String getDescription() { return description; }
     public int getSalesCount() { return salesCount; }
     public ProductStatus getStatus() { return status; }
+    public String getStatusReason() { return statusReason; }
     public List<String> getImageUrls() { return imageUrls; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
@@ -96,8 +99,9 @@ public class Product {
         this.categoryName = categoryName;
     }
 
-    /** 상태 변경 */
-    public void changeStatus(ProductStatus status) {
+    /** 상태 및 사유 변경 */
+    public void changeStatus(ProductStatus status, String statusReason) {
         this.status = status;
+        this.statusReason = statusReason;
     }
 }

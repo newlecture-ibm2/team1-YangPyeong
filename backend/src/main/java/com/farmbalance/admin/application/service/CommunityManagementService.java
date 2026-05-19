@@ -55,16 +55,58 @@ public class CommunityManagementService implements ManageCommunityUseCase {
     @Override
     @Transactional
     public void deleteComment(Long commentId) {
+        com.farmbalance.admin.domain.AdminComment comment = adminCommentPort.findById(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
+
+        if (!comment.isHidden()) {
+            throw new BusinessException(ErrorCode.COMMUNITY_MUST_BE_HIDDEN_BEFORE_DELETE);
+        }
+
         adminCommentPort.delete(commentId);
     }
 
     @Override
     @Transactional
     public void deletePost(Long postId) {
+        AdminPost post = adminPostPort.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+
+        if (!post.isHidden()) {
+            throw new BusinessException(ErrorCode.COMMUNITY_MUST_BE_HIDDEN_BEFORE_DELETE);
+        }
+
+        adminPostPort.delete(postId);
+    }
+
+    @Override
+    @Transactional
+    public void hidePost(Long postId, String reason) {
         adminPostPort.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
-        adminPostPort.delete(postId);
+        adminPostPort.hide(postId, reason);
+    }
+
+    @Override
+    @Transactional
+    public void bulkDeletePosts(List<Long> postIds) {
+        // 실제 구현에서는 hidden 상태인 것들만 삭제되도록 해야 함 (어댑터에서 쿼리 또는 여기서 루프 필터링)
+        adminPostPort.bulkDelete(postIds);
+    }
+
+    @Override
+    @Transactional
+    public void hideComment(Long commentId, String reason) {
+        adminCommentPort.findById(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
+
+        adminCommentPort.hide(commentId, reason);
+    }
+
+    @Override
+    @Transactional
+    public void bulkDeleteComments(List<Long> commentIds) {
+        adminCommentPort.bulkDelete(commentIds);
     }
 
     @Override
@@ -74,6 +116,15 @@ public class CommunityManagementService implements ManageCommunityUseCase {
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         adminPostPort.restore(postId);
+    }
+
+    @Override
+    @Transactional
+    public void restoreComment(Long commentId) {
+        adminCommentPort.findById(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
+
+        adminCommentPort.restore(commentId);
     }
 
     @Override
@@ -125,14 +176,14 @@ public class CommunityManagementService implements ManageCommunityUseCase {
         if ("POST".equals(targetType)) {
             AdminPost post = adminPostPort.findById(targetId).orElse(null);
             if (post != null) {
-                if (deleteContent) adminPostPort.delete(post.getId());
-                if (suspendUser) userRepository.updateStatus(post.getAuthorId(), "SUSPENDED");
+                if (deleteContent) adminPostPort.hide(post.getId(), "신고 누적으로 인한 숨김 처리"); // 다이렉트 삭제 금지, 숨김 처리로 대체
+                if (suspendUser) userRepository.updateStatus(post.getAuthorId(), "SUSPENDED", "신고 누적");
             }
         } else if ("COMMENT".equals(targetType)) {
             com.farmbalance.admin.domain.AdminComment comment = adminCommentPort.findById(targetId).orElse(null);
             if (comment != null) {
-                if (deleteContent) adminCommentPort.delete(comment.getId());
-                if (suspendUser) userRepository.updateStatus(comment.getAuthorId(), "SUSPENDED");
+                if (deleteContent) adminCommentPort.hide(comment.getId(), "신고 누적으로 인한 숨김 처리");
+                if (suspendUser) userRepository.updateStatus(comment.getAuthorId(), "SUSPENDED", "신고 누적");
             }
         }
     }
@@ -147,13 +198,13 @@ public class CommunityManagementService implements ManageCommunityUseCase {
             AdminPost post = adminPostPort.findById(targetId).orElse(null);
             if (post != null) {
                 adminPostPort.restore(post.getId());
-                userRepository.updateStatus(post.getAuthorId(), "ACTIVE");
+                userRepository.updateStatus(post.getAuthorId(), "ACTIVE", "관리자 신고 제재 취소");
             }
         } else if ("COMMENT".equals(targetType)) {
             com.farmbalance.admin.domain.AdminComment comment = adminCommentPort.findById(targetId).orElse(null);
             if (comment != null) {
                 adminCommentPort.restore(comment.getId());
-                userRepository.updateStatus(comment.getAuthorId(), "ACTIVE");
+                userRepository.updateStatus(comment.getAuthorId(), "ACTIVE", "관리자 신고 제재 취소");
             }
         }
     }
@@ -179,11 +230,11 @@ public class CommunityManagementService implements ManageCommunityUseCase {
         // 3. AI 서버 일괄 요청
         List<ModerationResultDto> results = adminAiPort.moderatePostBatch(itemsToAudit);
 
-        // 4. 비정상(false)인 게시글을 HIDDEN으로 업데이트 (delete 처리)
+        // 4. 비정상(false)인 게시글을 HIDDEN으로 업데이트
         int hiddenCount = 0;
         for (ModerationResultDto result : results) {
             if (!result.clean()) {
-                adminPostPort.delete(result.postId());
+                adminPostPort.hide(result.postId(), "AI 시스템에 의한 자동 유해성 판단");
                 hiddenCount++;
             }
         }

@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import Modal from '@/components/common/Modal/Modal'
 import Button from '@/components/common/Button/Button'
 import Badge from '@/components/common/Badge/Badge'
-import { fetchPostDetail, fetchComments, deleteComment } from '../../_lib/community.api'
+import ReasonModal from './ReasonModal'
+import { fetchPostDetail, fetchComments, deleteComment, hideComment, restoreComment } from '../../_lib/community.api'
 import type { AdminPost, AdminComment } from '../../_lib/community.types'
 import styles from './PostDetailModal.module.css'
+import { useToast } from '@/components'
 
 interface PostDetailModalProps {
   postId: number | null
@@ -17,6 +19,11 @@ export default function PostDetailModal({ postId, isOpen, onClose }: PostDetailM
   const [comments, setComments] = useState<AdminComment[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const [reasonModalOpen, setReasonModalOpen] = useState(false)
+  const [targetCommentId, setTargetCommentId] = useState<number | null>(null)
+  
+  const toast = useToast()
 
   useEffect(() => {
     if (isOpen && postId) {
@@ -45,6 +52,12 @@ export default function PostDetailModal({ postId, isOpen, onClose }: PostDetailM
     }
   }
 
+  const loadComments = async () => {
+    if (!postId) return
+    const commentsData = await fetchComments(postId)
+    setComments(commentsData)
+  }
+
   const handleDeleteComment = async (commentId: number) => {
     if (!confirm('이 댓글을 삭제하시겠습니까?')) return
     try {
@@ -52,6 +65,28 @@ export default function PostDetailModal({ postId, isOpen, onClose }: PostDetailM
       setComments(prev => prev.map(c => c.id === commentId ? { ...c, deletedAt: new Date().toISOString() } : c))
     } catch (err) {
       alert(err instanceof Error ? err.message : '댓글 삭제 실패')
+    }
+  }
+
+  const handleRestoreComment = async (commentId: number) => {
+    if (!confirm('숨겨진 댓글을 다시 복구하시겠습니까?')) return
+    try {
+      await restoreComment(commentId)
+      toast.success('댓글이 복구되었습니다.')
+      await loadComments()
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? (e as Error).message : '복구 실패')
+    }
+  }
+
+  const handleHideCommentConfirm = async (reason: string) => {
+    if (!targetCommentId) return
+    try {
+      await hideComment(targetCommentId, reason)
+      setComments(prev => prev.map(c => c.id === targetCommentId ? { ...c, isHidden: true, statusReason: reason } : c))
+      setReasonModalOpen(false)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '댓글 숨김 실패')
     }
   }
 
@@ -97,14 +132,45 @@ export default function PostDetailModal({ postId, isOpen, onClose }: PostDetailM
                     <div className={styles.commentBody}>
                       <div className={styles.commentContent}>{comment.content}</div>
                       <div className={styles.commentAction}>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          disabled={!!comment.deletedAt}
-                          onClick={() => handleDeleteComment(comment.id)}
-                        >
-                          삭제
-                        </Button>
+                        {comment.deletedAt ? (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleRestoreComment(comment.id)}
+                          >
+                            복구
+                          </Button>
+                        ) : comment.isHidden ? (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              style={{ color: 'var(--color-danger)' }}
+                              onClick={() => handleDeleteComment(comment.id)}
+                            >
+                              삭제
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleRestoreComment(comment.id)}
+                            >
+                              복구
+                            </Button>
+                          </>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            style={{ color: 'var(--color-danger)' }}
+                            onClick={() => {
+                              setTargetCommentId(comment.id)
+                              setReasonModalOpen(true)
+                            }}
+                          >
+                            숨김
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -118,6 +184,13 @@ export default function PostDetailModal({ postId, isOpen, onClose }: PostDetailM
           <Button variant="outline" onClick={onClose}>닫기</Button>
         </div>
       </div>
+
+      <ReasonModal
+        isOpen={reasonModalOpen}
+        title="댓글 숨김 처리"
+        onClose={() => setReasonModalOpen(false)}
+        onConfirm={handleHideCommentConfirm}
+      />
     </Modal>
   )
 }

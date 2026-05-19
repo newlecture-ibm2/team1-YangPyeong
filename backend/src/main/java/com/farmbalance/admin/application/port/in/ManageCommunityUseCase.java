@@ -37,6 +37,26 @@ public interface ManageCommunityUseCase {
     void deleteComment(Long commentId);
 
     /**
+     * 댓글 숨김 (관리자 제재/AI 차단)
+     */
+    void hideComment(Long commentId, String reason);
+
+    /**
+     * 게시글 숨김 (관리자 제재/AI 차단)
+     */
+    void hidePost(Long postId, String reason);
+
+    /**
+     * 댓글 일괄 삭제 (격리된 상태에서만 가능)
+     */
+    void bulkDeleteComments(List<Long> commentIds);
+
+    /**
+     * 게시글 일괄 삭제 (격리된 상태에서만 가능)
+     */
+    void bulkDeletePosts(List<Long> postIds);
+
+    /**
      * 게시글 삭제 (soft delete)
      */
     void deletePost(Long postId);
@@ -45,6 +65,11 @@ public interface ManageCommunityUseCase {
      * 게시글 복구 (restore soft delete)
      */
     void restorePost(Long postId);
+
+    /**
+     * 댓글 복구 (restore soft delete)
+     */
+    void restoreComment(Long commentId);
 
     /**
      * 게시글 공지 설정/해제

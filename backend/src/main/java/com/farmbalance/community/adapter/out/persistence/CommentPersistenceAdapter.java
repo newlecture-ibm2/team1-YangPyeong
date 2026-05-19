@@ -76,7 +76,7 @@ public class CommentPersistenceAdapter implements CommentPort {
 
     @Override
     public long countByPostId(Long postId) {
-        return commentJpaRepository.countByPostIdAndDeletedAtIsNull(postId);
+        return commentJpaRepository.countByPostIdAndDeletedAtIsNullAndIsHiddenFalse(postId);
     }
 
     @Override
