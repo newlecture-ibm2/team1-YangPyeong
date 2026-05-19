@@ -50,9 +50,9 @@ function SellerRegisterForm() {
       if (cropName) {
         setForm(prev => ({
           ...prev,
-          name: `[양평] ${farmName ? farmName + ' ' : ''}무농약 ${cropName} (${grade}급, ${yieldAmount}${yieldUnit})`,
+          name: `[양평] ${farmName ? farmName + ' ' : ''}무농약 ${cropName} (1kg)`,
           stock: yieldAmount || '',
-          description: `${farmName ? farmName + '에서 ' : ''}정성껏 재배 및 수확한 소중한 양평산 ${cropName} (${grade}급, ${yieldAmount}${yieldUnit})입니다.`
+          description: `${farmName ? farmName + '에서 ' : ''}정성껏 재배 및 수확한 소중한 양평산 ${cropName} (${grade}급, ${yieldAmount}kg)입니다. 1kg 단위로 정성껏 포장하여 신선하게 직송해 드립니다.`
         }));
       }
     } catch (e) {
