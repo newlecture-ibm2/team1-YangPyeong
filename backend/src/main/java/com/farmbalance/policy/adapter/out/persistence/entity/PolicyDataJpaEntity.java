@@ -37,7 +37,7 @@ public class PolicyDataJpaEntity extends BaseTimeEntity {
     @Column(name = "source", length = 30)
     private String source;
 
-    @Column(name = "title", length = 500)
+    @Column(name = "title", columnDefinition = "TEXT")
     private String title;
 
     @Column(name = "organization", length = 200)
@@ -49,13 +49,13 @@ public class PolicyDataJpaEntity extends BaseTimeEntity {
     @Column(name = "category", length = 50)
     private String category;
 
-    @Column(name = "target", length = 200)
+    @Column(name = "target", columnDefinition = "TEXT")
     private String target;
 
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "support_amount", length = 100)
+    @Column(name = "support_amount", columnDefinition = "TEXT")
     private String supportAmount;
 
     @Column(name = "apply_start")
@@ -64,7 +64,7 @@ public class PolicyDataJpaEntity extends BaseTimeEntity {
     @Column(name = "apply_end")
     private LocalDate applyEnd;
 
-    @Column(name = "source_url", length = 1000)
+    @Column(name = "source_url", columnDefinition = "TEXT")
     private String sourceUrl;
 
     @JdbcTypeCode(SqlTypes.JSON)

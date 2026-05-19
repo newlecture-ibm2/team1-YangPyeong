@@ -7,6 +7,8 @@ import logging
 import re
 from typing import Any
 
+import json_repair
+
 from app.llm import get_llm
 from app.models.policy import PolicyAnalyzeResult
 
@@ -67,6 +69,9 @@ ANALYZE_PROMPT_TEMPLATE = """당신은 한국 농업 정책/혜택 데이터를 
 - JSON만 반환하세요. 설명이나 마크다운을 포함하지 마세요.
 - 알 수 없는 필드는 null로 설정하세요.
 - warnings에 추정한 항목을 반드시 기록하세요.
+- 중요: JSON 문자열 값 내부에 큰따옴표(")가 포함될 경우 반드시 \\"로 이스케이프하세요.
+- 중요: JSON 문자열 값 내부에 줄바꿈이 필요하면 반드시 \\n으로 이스케이프하세요.
+- Key는 반드시 큰따옴표("")로 감싸야 합니다.
 """
 
 
@@ -79,16 +84,68 @@ def _prepare_data_text(raw: dict | None, text: str | None) -> str:
     return "(데이터 없음)"
 
 
-def _repair_json(text: str) -> str:
-    """깨진 JSON 응답을 복구 시도합니다."""
+def _extract_json_block(text: str) -> str:
+    """LLM 응답에서 JSON 블록만 추출합니다.
+
+    1. 마크다운 코드블록 제거
+    2. 첫 번째 '{' ~ 마지막 '}' 사이의 텍스트 추출
+    3. 후행 콤마 제거
+    """
     # 마크다운 코드블록 제거
     text = re.sub(r"^```(?:json)?\s*\n?", "", text.strip())
     text = re.sub(r"\n?```\s*$", "", text.strip())
+
+    # 첫 번째 '{' ~ 마지막 '}' 추출
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if match:
+        text = match.group(0)
 
     # 후행 콤마 제거
     text = re.sub(r",\s*([}\]])", r"\1", text)
 
     return text.strip()
+
+
+def _safe_parse_json(text: str, external_id: str) -> dict:
+    """JSON 문자열을 파싱합니다.
+
+    1차: 표준 json.loads()
+    2차: json_repair.loads() (깨진 JSON 복구)
+
+    Args:
+        text: 파싱할 JSON 문자열
+        external_id: 디버그 로깅용 외부 ID
+
+    Returns:
+        파싱된 dict
+
+    Raises:
+        ValueError: 모든 파싱 전략이 실패한 경우
+    """
+    # 1차: 표준 json.loads
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # 2차: json_repair — 따옴표 누락, trailing comma, 줄바꿈 등 자동 복구
+    try:
+        repaired = json_repair.loads(text)  # type: ignore[attr-defined]
+        if isinstance(repaired, dict):
+            logger.info(f"[Analyzer] json_repair로 복구 성공: {external_id}")
+            return repaired
+        # dict가 아닌 경우 (list, str 등) 실패 처리
+        logger.warning(
+            f"[Analyzer] json_repair 결과가 dict가 아님 (type={type(repaired).__name__}): {external_id}"
+        )
+    except Exception as e:
+        logger.warning(f"[Analyzer] json_repair 실패: {external_id} — {e}")
+
+    # 모든 전략 실패 — 원본 응답의 앞 500자를 로깅
+    snippet = text[:500].replace("\n", "\\n")
+    raise ValueError(
+        f"JSON 파싱 불가 (external_id={external_id}). 응답 앞 500자: {snippet}"
+    )
 
 
 def _validate_and_fix(data: dict) -> dict:
@@ -161,23 +218,23 @@ async def analyze_policy(
     # 1차 시도: generate_json (structured output)
     try:
         response_text = await llm.generate_json(prompt, temperature=0.1)
-        parsed = json.loads(response_text)
-    except json.JSONDecodeError:
-        # JSON 파싱 실패 → repair 시도
-        logger.warning(f"[Analyzer] JSON 파싱 실패, repair 시도: {external_id}")
+        extracted = _extract_json_block(response_text)
+        parsed = _safe_parse_json(extracted, external_id)
+    except (ValueError, Exception) as first_err:
+        # 2차 시도: 일반 generate + 재파싱
+        logger.warning(
+            f"[Analyzer] 1차 파싱 실패, fallback generate 시도: "
+            f"source={source}, externalId={external_id} — {first_err}"
+        )
         try:
-            repaired = _repair_json(response_text)
-            parsed = json.loads(repaired)
-        except json.JSONDecodeError:
-            # 2차 시도: 일반 generate + repair
-            logger.warning(f"[Analyzer] repair 실패, fallback generate 시도: {external_id}")
             response_text2 = await llm.generate(prompt, temperature=0.1)
-            repaired2 = _repair_json(response_text2)
-            try:
-                parsed = json.loads(repaired2)
-            except json.JSONDecodeError as e:
-                logger.error(f"[Analyzer] 최종 JSON 파싱 실패: {external_id} — {e}")
-                raise ValueError(f"AI 응답을 JSON으로 변환할 수 없습니다: {str(e)}")
+            extracted2 = _extract_json_block(response_text2)
+            parsed = _safe_parse_json(extracted2, external_id)
+        except ValueError as e:
+            logger.warning(
+                f"[Analyzer] 최종 파싱 실패: source={source}, externalId={external_id} — {e}"
+            )
+            raise ValueError(f"AI 응답을 JSON으로 변환할 수 없습니다: {str(e)}")
 
     # 검증 및 보정
     validated = _validate_and_fix(parsed)
