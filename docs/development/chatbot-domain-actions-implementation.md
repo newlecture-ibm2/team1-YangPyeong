@@ -4,7 +4,125 @@
 > ① 짧게 답하고 ② 필요 시 **페이지로 이동**하거나 ③ **로그인/등록을 유도**한다.  
 > **구현 전 설계 문서** — 코드 변경은 이 문서의 Phase 순서를 따른다.
 
+> **LLM 정책 (2026-05):** 챗봇 MAS(라우터·합성기·general)는 **Google Gemini 2.5 Flash** (`gemini-2.5-flash`)로 통일한다.  
+> 수익 예측·작물 추천·정책 RAG 등 기존 Gemini 경로와 **동일 Provider**를 쓰며, Groq(`langchain-groq`)는 챗 경로에서 제거한다.
+
 **관련 문서:** `chatbot-implementation-guide.md`, `chatbot-upgrade-guide.md`, `shop-agent-implementation.md`
+
+---
+
+## 0. LLM: Gemini 2.5 Flash (챗봇 전환)
+
+### 0.1 목표 스택
+
+| 구분 | 이전 (현재 코드 일부) | 이후 |
+|------|----------------------|------|
+| 라우터 | `get_llm("groq")` | `get_llm("gemini")` |
+| 합성기 | `get_llm("groq")` | `get_llm("gemini")` |
+| general_agent | `get_llm("groq")` | `get_llm("gemini")` |
+| guidance / account (신규) | — | `get_llm("gemini")` |
+| farm / shop / policy / balance | 이미 Gemini 또는 `LLM_PROVIDER` | **변경 없음** |
+| 모델 ID | `GROQ_MODEL` | `GEMINI_MODEL=gemini-2.5-flash` |
+
+프로젝트 기본값은 이미 `ai/app/config.py`에 맞춰져 있다.
+
+```python
+LLM_PROVIDER: str = "gemini"
+GEMINI_MODEL: str = "gemini-2.5-flash"
+```
+
+### 0.2 환경 변수 (.env / Docker)
+
+```env
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=your-google-ai-studio-key
+GEMINI_MODEL=gemini-2.5-flash
+
+# (선택) 챗만 다른 Flash 변형을 쓸 때
+CHAT_GEMINI_MODEL=gemini-2.5-flash
+```
+
+| 변수 | 필수 | 설명 |
+|------|------|------|
+| `GEMINI_API_KEY` | ✅ | Google AI Studio / Vertex API 키 |
+| `GEMINI_MODEL` | ✅ | 기본 `gemini-2.5-flash` — 수익·추천·챗 공통 |
+| `CHAT_GEMINI_MODEL` | 선택 | 구현 시 `config.py`에 추가; 미설정 시 `GEMINI_MODEL` 사용 |
+
+**배포:** farm-ai 이미지 재빌드 후 `GEMINI_API_KEY` 주입. Groq 키는 챗 경로에서 더 이상 필요하지 않음(다른 용도 없으면 제거 가능).
+
+### 0.3 코드 변경 (Phase 0보다 먼저 또는 병행)
+
+**공통 팩토리:** `ai/app/llm/gemini.py` → `ChatGoogleGenerativeAI(model=gemini-2.5-flash)`
+
+| 파일 | 변경 |
+|------|------|
+| `ai/app/agents/orchestrator.py` | `router_node`, `synthesizer_node`: `get_llm("groq")` → `get_llm("gemini")` |
+| `ai/app/agents/general_agent.py` | 동일 |
+| `ai/app/llm/__init__.py` | docstring: 챗봇도 gemini 기준으로 수정 |
+| `ai/app/config.py` | (선택) `CHAT_GEMINI_MODEL` |
+| `ai/requirements.txt` | `langchain-google-genai` 유지; `langchain-groq`는 챗 전용이면 제거 검토 |
+
+**라우터 호출 예 (orchestrator.py):**
+
+```python
+llm = get_llm("gemini")
+chat_model = llm.get_chat_model(temperature=0, max_output_tokens=256)
+response = await chat_model.ainvoke([
+    SystemMessage(content=ROUTER_SYSTEM_PROMPT),
+    HumanMessage(content=last_message),
+])
+```
+
+**합성기 호출 예:**
+
+```python
+llm = get_llm("gemini")
+chat_model = llm.get_chat_model(temperature=0.5, max_output_tokens=1024)
+# SYNTHESIZER_SYSTEM_PROMPT에 [ACTION:…] 보존 지침 필수 (§9)
+```
+
+### 0.4 노드별 temperature·토큰 권장
+
+| 노드 | temperature | max_output_tokens | 이유 |
+|------|-------------|-------------------|------|
+| Router | `0` | 256 | 라우트 이름만, 변동 최소 |
+| Synthesizer | `0.5` | 1024 | 할아버지 톤 + ACTION 보존 |
+| general_agent | `0.4` | 1024 | RAG + 대화 |
+| guidance_agent | `0.2` | 512 | URL·ACTION 위주, 환각 최소 |
+| account_agent | `0` | 768 | Tool 결과 요약만 |
+
+### 0.5 Gemini 특화 설계 (구멍 방지)
+
+1. **`[ACTION:…]` 유실** — Flash는 합성 시 토큰을 줄이려 할 수 있음. 합성기 시스템 프롬프트에 「조사된 정보에 포함된 `[ACTION:{...}]` 줄은 **한 글자도 바꾸지 말고** 답변 맨 아래에 그대로 붙여라」 명시. 가능하면 **에이전트 단계에서만 ACTION 생성**, 합성기는 본문만 다듬고 ACTION은 후처리로 병합(§Phase 4).
+2. **라우터 출력 형식** — 쉼표 구분 영문 라우트 유지. 분류율이 낮으면 `GeminiLLM.generate_json()` + `response_mime_type: application/json`으로 `{"routes":["farm_agent"]}` 강제(선택).
+3. **한자·기호** — 기존 general/synthesizer 금지 규칙 유지(Gemini도 동일하게 지시).
+4. **재시도** — 429/5xx 시 exponential backoff 2회; 실패 시 §Phase 3 규칙 프리라우터 + static fallback.
+5. **비용·지연** — Flash 2.5는 Groq 대비 라우터+합성 2콜 구조에서도 허용 범위. 복수 에이전트 병렬 시 **합성 1콜**만 Gemini, 서브 에이전트는 Tool 위주면 토큰 절감.
+
+### 0.6 의존성
+
+```text
+# requirements.txt (챗·분석 공통)
+langchain-google-genai
+google-generativeai
+langchain-core>=0.3,<0.4
+
+# 챗 전환 후 제거 검토
+langchain-groq>=0.2.0
+groq==0.25.0
+```
+
+임베딩·RAG는 기존과 같이 `langchain_google_genai` GoogleGenerativeAIEmbeddings 사용 (`ai/app/rag/embeddings.py`).
+
+### 0.7 검증 체크리스트 (Gemini 전환)
+
+| ID | 입력 | 기대 |
+|----|------|------|
+| Gm1 | 안녕 | general → 할아버지 톤, Groq 키 없이 응답 |
+| Gm2 | 작물 추천해줘 | guidance(구현 후) 또는 farm, 5초 내 |
+| Gm3 | 상품 등록 | shop + `[ACTION:NAVIGATE…]` 유지 |
+| Gm4 | 로그 API | `GeminiLLM 초기화 완료 (모델: gemini-2.5-flash)` |
+| Gm5 | GEMINI_API_KEY 미설정 | 503/명확한 에러 (farm-ai health) |
 
 ---
 
@@ -21,8 +139,9 @@
       │  orchestrator.ainvoke({ user_id, farm_id: 0, messages })
       ▼
 [LangGraph]   ai/app/agents/orchestrator.py
-      Router (Groq) → farm | shop | community | policy | balance | gov | general
-      → Synthesizer (Groq) → reply: string
+      Router (Gemini 2.5 Flash) → farm | shop | community | policy | balance | gov | general
+      → Sub-agents (대부분 Gemini) → Tools
+      → Synthesizer (Gemini 2.5 Flash) → reply: string + [ACTION:…]
 ```
 
 **이미 있는 것**
@@ -365,7 +484,7 @@ else → intent별 URL (아래 표)
 
 - 로그인/회원가입/주문/추천 등 **고빈도 패턴**을 정규식으로 먼저 매칭
 - confidence ≥ 0.9 일 때만 LLM 라우터 스킵
-- 애매하면 기존 Groq 라우터
+- 애매하면 Gemini 라우터 (`get_llm("gemini")`, temperature=0)
 
 ```python
 RULES = [
@@ -378,13 +497,16 @@ RULES = [
 
 ---
 
-### Phase 4 — 합성기·품질
+### Phase 4 — Gemini 합성기·품질
 
 | 작업 | 파일 |
 |------|------|
+| `orchestrator` / `general_agent` Groq → **Gemini 2.5 Flash** | `orchestrator.py`, `general_agent.py` |
 | synthesizer에 `messages[-1]`이 아닌 **마지막 HumanMessage** 사용 | `orchestrator.py` |
 | 다중 에이전트 시 ACTION 중복 제거 | synthesizer 후처리 |
-| `langchain-groq` 의존성·Docker 재빌드 | `ai/requirements.txt`, Dockerfile |
+| ACTION은 합성 **전** state에서 추출·합성 **후** 재부착 (Flash가 토큰 삭제 방지) | `orchestrator.py` |
+| (선택) 라우터 JSON 모드 | `gemini.py` `generate_json` + orchestrator |
+| `GEMINI_API_KEY`·`gemini-2.5-flash`·farm-ai **Docker 재빌드** | `.env`, `Dockerfile`, `config.py` |
 
 ---
 
@@ -407,7 +529,10 @@ RULES = [
 
 | 경로 | 신규/수정 | 내용 |
 |------|-----------|------|
-| `app/agents/orchestrator.py` | 수정 | 라우트·state·synthesizer |
+| `app/agents/orchestrator.py` | 수정 | 라우트·state·synthesizer·**Gemini 전환** |
+| `app/agents/general_agent.py` | 수정 | **get_llm("gemini")** |
+| `app/config.py` | 수정 | (선택) `CHAT_GEMINI_MODEL` |
+| `app/llm/gemini.py` | 참고 | `ChatGoogleGenerativeAI`, `generate_json` |
 | `app/agents/guidance_agent.py` | 신규 | |
 | `app/agents/account_agent.py` | 신규 | |
 | `app/agents/tools/guidance_tools.py` | 신규 | |
@@ -647,25 +772,28 @@ RULES = [
 
 ## 9. 에이전트별 시스템 프롬프트 요지
 
-### guidance_agent
+### guidance_agent (Gemini 2.5 Flash)
 
+- `get_llm("gemini")`, `temperature=0.2` — Tool·URL 위주, 환각 최소.
 - Tool 결과의 `message_key`, `recommended_url`을 반드시 따른다.
 - 재배 미등록 시 추천 실행 금지, 등록 페이지만 안내.
 - 본문 2~4문장 + `[ACTION:…]` 1개.
 - URL은 `navigation_urls.py`만 사용.
 
-### account_agent
+### account_agent (Gemini 2.5 Flash)
 
+- `get_llm("gemini")`, `temperature=0` — 이메일·건수는 Tool JSON만 인용.
 - 이메일은 반드시 `check_email_membership` 결과만 말한다.
 - 프로필/주문/커뮤니티는 로그인 필수.
 - summary: ✅/⚠️ 리스트 형식.
 - 「자세히 보기」→ NAVIGATE.
 
-### synthesizer
+### synthesizer (Gemini 2.5 Flash)
 
-- 모든 `[ACTION:…]` 토큰을 **원문 그대로** 포함.
+- 모든 `[ACTION:…]` 토큰을 **원문 그대로** 포함 (Flash가 요약할 때 잘릴 수 있어 §0.5 후처리 병합 권장).
 - 여러 에이전트 답을 할아버지 말투로 1개로 합침.
 - 로그인이 필요하면 먼저 로그인 유도.
+- `temperature=0.5`, `max_output_tokens=1024` — 톤과 ACTION 길이 균형.
 
 ---
 
@@ -707,7 +835,8 @@ RULES = [
 - **check-email:** rate limit (IP/분당 N회).
 - **internal API:** `X-AI-Internal-Key` + 네트워크 격리.
 - **PII 로그:** 이메일·주문 ID 마스킹.
-- **Groq 실패:** 규칙 프리라우터 + static fallback 메시지.
+- **Gemini 실패 (429/5xx/키 오류):** 2회 재시도 후 규칙 프리라우터 + static fallback; API 키는 서버 env만, 클라이언트 노출 금지.
+- **할당량:** Google AI Studio RPM/RPD 모니터링; 피크 시 라우터만 규칙 프리라우터로 단축 가능.
 
 ---
 
@@ -724,20 +853,23 @@ RULES = [
 
 | Phase | 내용 | 규모 |
 |-------|------|------|
+| **0-G** | Groq → **Gemini 2.5 Flash** (orchestrator, general) | 0.5~1일 |
 | 0 | 인프라·ACTION·로그인 복귀 | 2~3일 |
 | 1 | guidance_agent + farm state API | 2~3일 |
 | 2 | account_agent + internal APIs | 3~4일 |
 | 3 | 규칙 프리라우터 + QA | 1~2일 |
+| 4 | ACTION 후처리·라우터 JSON (선택) | 1일 |
 
 ---
 
 ## 15. 다음 단계
 
-1. Phase 0 PR — ACTION 파싱만으로도 shop NAVIGATE 동작 확인  
-2. `InternalUserChatController` API 스펙 팀 합의  
-3. §7 프롬프트 표로 QA 시트 작성 (엑셀/노션)  
-4. 라우터 프롬프트에 §8 few-shot 반영 후 실제 Groq 분류율 측정  
+1. **Phase 0-G** — `orchestrator.py` / `general_agent.py`를 `get_llm("gemini")` + `gemini-2.5-flash`로 전환, farm-ai 재배포, §0.7 Gm1~Gm5 확인  
+2. Phase 0 PR — ACTION 파싱만으로도 shop NAVIGATE 동작 확인  
+3. `InternalUserChatController` API 스펙 팀 합의  
+4. §7 프롬프트 표로 QA 시트 작성 (엑셀/노션)  
+5. 라우터 few-shot(§8) 반영 후 **Gemini 라우터 분류율** 측정 (목표: 단일 의도 ≥90%)  
 
 ---
 
-*문서 버전: 2026-05-18 · 브랜치 기준: `feat/revenue-kamis-resolve-and-speed` 이후 main/stage 병합 전*
+*문서 버전: 2026-05-19 · LLM: **Gemini 2.5 Flash** (`gemini-2.5-flash`) · 챗 Groq 제거 예정*
