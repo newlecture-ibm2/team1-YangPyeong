@@ -15,6 +15,8 @@ class RevenuePredictionRequest(BaseModel):
     weather_context: Optional[str] = Field(None, description="기상 정보 텍스트 (선택)")
     farm_id: Optional[int] = Field(None, description="농장 ID (선택)")
     kamis_price: Optional[dict] = Field(None, description="Backend에서 조회한 KAMIS 캐시 데이터 (선택)")
+    resolved_kamis_crop: Optional[str] = Field(None, description="KAMIS 표준 품목명")
+    mapping_note: Optional[str] = Field(None, description="품목명 매핑 안내")
 
 
 class RevenuePredictionResponse(BaseModel):

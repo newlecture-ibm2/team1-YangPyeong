@@ -123,7 +123,7 @@ export default function PolicyRecommendPage() {
                     <h3 className={styles.emptyStateTitle}>재배 작물 정보가 부족합니다</h3>
                     <p className={styles.emptyStateDesc}>현재 재배 중인 작물을 등록하면 작물별 지원사업과 보조금 정책을 더 정확히 추천할 수 있습니다.</p>
                     <div className={styles.buttonGroup}>
-                      <Link href="/farm/seed" className={styles.actionButton}>재배 정보 등록하기</Link>
+                      <Link href="/farm/cultivation-register" className={styles.actionButton}>재배 정보 등록하기</Link>
                     </div>
                   </div>
                 )}
