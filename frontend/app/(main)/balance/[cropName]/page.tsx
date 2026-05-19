@@ -52,9 +52,11 @@ export default function BalanceDetailPage({ params }: PageProps) {
   };
 
   const getNeedleRotation = (ratio: number) => {
-    let degrees = (ratio / 100) * 90;
-    if (degrees > 180) degrees = 180;
-    if (degrees < 0) degrees = 0;
+    // 100%가 수직 위(0deg, 12시 방향)를 향하도록 보정합니다.
+    // 0% -> -90deg (왼쪽), 100% -> 0deg (위쪽), 200% -> 90deg (오른쪽)
+    let degrees = (ratio - 100) * 0.9;
+    if (degrees > 90) degrees = 90;
+    if (degrees < -90) degrees = -90;
     return degrees;
   };
 
@@ -96,12 +98,15 @@ export default function BalanceDetailPage({ params }: PageProps) {
         <Card className={styles.chartCard}>
           <h2 className={styles.cardTitle}>수급 밸런스 미터</h2>
           <div className={styles.gaugeContainer}>
-            <div className={styles.gaugeBackground}></div>
-            <div className={styles.gaugeInner}></div>
+            <div className={styles.gaugeArcWrapper}>
+              <div className={styles.gaugeBackground}></div>
+              <div className={styles.gaugeInner}></div>
+            </div>
             <div 
               className={styles.gaugeNeedle} 
-              style={{ transform: `translateX(-50%) rotate(${getNeedleRotation(data.supplyRatio)}deg)` }}
+              style={{ transform: `rotate(${getNeedleRotation(data.supplyRatio)}deg)` }}
             ></div>
+            <div className={styles.gaugeNeedleCenter}></div>
           </div>
           <p className={styles.gaugeStatus}>{data.statusLabel}</p>
         </Card>
@@ -155,13 +160,42 @@ export default function BalanceDetailPage({ params }: PageProps) {
         <Card className={styles.card}>
           <h2 className={styles.cardTitle}>전년 대비 변화</h2>
           <div className={styles.placeholder}>
-             {trendData.length > 1 ? (
-               <p className={styles.yoyText}>
-                 전년({trendData[trendData.length-2].year}년) 대비 
-                 <strong> {((trendData[trendData.length-1].supply / trendData[trendData.length-2].supply - 1) * 100).toFixed(1)}% </strong>
-                 공급량이 변동되었습니다.
-               </p>
-             ) : '데이터가 부족합니다.'}
+             {(() => {
+               // 2026년을 제외하고 실제 통계량(supply > 0)이 있는 가장 최신의 과거 연도를 찾습니다.
+               const historicalData = trendData.slice(0, -1).reverse().find(t => t.supply > 0);
+               const prevYearSupply = historicalData?.supply || 0;
+               const prevYear = historicalData?.year;
+               const currentYearSupply = trendData[trendData.length - 1]?.supply || 0;
+               const hasValidYoY = trendData.length > 1 && prevYearSupply > 0;
+               
+               if (hasValidYoY) {
+                 const changePctVal = ((currentYearSupply / prevYearSupply - 1) * 100);
+                 const changePct = changePctVal.toFixed(1);
+                 const isIncrease = changePctVal >= 0;
+                 const absChangePct = Math.abs(changePctVal).toFixed(1);
+                 
+                 return (
+                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: '0 20px' }}>
+                     <p className={styles.yoyText}>
+                       직전 집계 연도(<strong>{prevYear}년</strong>) 대비 
+                       <strong style={{ color: isIncrease ? 'var(--color-danger)' : 'var(--color-primary)' }}>
+                         {isIncrease ? ` ${absChangePct}% 증가 ` : ` ${absChangePct}% 감소 `}
+                       </strong>
+                       하였습니다.
+                     </p>
+                     <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '16px', opacity: 0.85, textAlign: 'center', wordBreak: 'keep-all', lineHeight: 1.6, maxWidth: '420px' }}>
+                       ※ 2025년도 공식 생산량 통계는 통계청(KOSIS) 최종 공표 대기 중으로, 시스템이 자동으로 검증된 최신 유효 데이터 연도인 {prevYear}년을 역추적해 비교합니다.
+                     </p>
+                   </div>
+                 );
+               } else {
+                 return (
+                   <p className={styles.yoyText} style={{ opacity: 0.7, padding: '16px', fontSize: '14px', wordBreak: 'keep-all' }}>
+                     직전 연도 공급량 데이터가 집계되지 않아 전년 대비 변화율을 계산할 수 없습니다.
+                   </p>
+                 );
+               }
+             })()}
           </div>
         </Card>
       </div>

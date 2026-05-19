@@ -148,14 +148,34 @@ function FarmDashboardContent() {
   }, []);
   const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
-  // 농장이 2곳 이상일 때만 목록 뷰 기본값 (farms 참조는 useMemo로 안정화 — 매 렌더마다 effect가 돌면 클릭 직후 목록으로 되돌아가는 버그 방지)
+  const handleBackToList = useCallback(() => {
+    setIsListView(true);
+    try {
+      sessionStorage.removeItem('selected_farm_id');
+    } catch (e) {}
+  }, []);
+
+  // 농장 목록 뷰 여부 초기화 및 복원
   useEffect(() => {
+    try {
+      const savedFarmIdStr = sessionStorage.getItem('selected_farm_id');
+      if (savedFarmIdStr && displayFarms.length > 0) {
+        const savedFarmId = Number(savedFarmIdStr);
+        const idx = displayFarms.findIndex((f) => f.id === savedFarmId);
+        if (idx !== -1) {
+          setSelectedFarmIdx(idx);
+          setIsListView(false);
+          return;
+        }
+      }
+    } catch (e) {}
+
     if (displayFarms.length > 1) {
       setIsListView(true);
     } else {
       setIsListView(false);
     }
-  }, [displayFarms.length]);
+  }, [displayFarms]);
 
   // 수정을 위한 상태
   const [editingHistoryId, setEditingHistoryId] = useState<number | null>(null);
@@ -559,7 +579,13 @@ function FarmDashboardContent() {
           {displayFarms.map((f, idx) => (
             <div
               key={f.id}
-              onClick={() => { setSelectedFarmIdx(idx); setIsListView(false); }}
+              onClick={() => {
+                setSelectedFarmIdx(idx);
+                setIsListView(false);
+                try {
+                  sessionStorage.setItem('selected_farm_id', String(f.id));
+                } catch (e) {}
+              }}
               style={{ position: 'relative', background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'all 0.2s', minHeight: '200px' }}
               onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(16,185,129,0.1)'; }}
               onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
@@ -670,7 +696,7 @@ function FarmDashboardContent() {
           <p className={styles.breadcrumb}>
             <Link href="/" className={styles.breadcrumbLink}>홈</Link> /
             {displayFarms.length > 1 ? (
-              <span style={{ cursor: 'pointer', color: 'var(--color-text-light)' }} onClick={() => setIsListView(true)}> 내 농장</span>
+              <span style={{ cursor: 'pointer', color: 'var(--color-text-light)' }} onClick={handleBackToList}> 내 농장</span>
             ) : (
               <span style={{ color: 'var(--color-text-light)' }}> 내 농장</span>
             )} / {isShowPreviewBlur ? '미리보기' : (activeSubTab === 'DASHBOARD' ? '관리' : '정보')}
@@ -678,7 +704,7 @@ function FarmDashboardContent() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {displayFarms.length > 1 && (
               <button
-                onClick={() => setIsListView(true)}
+                onClick={handleBackToList}
                 style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                 title="목록으로 돌아가기"
               >
@@ -688,7 +714,7 @@ function FarmDashboardContent() {
             <h1 className={styles.title}>
               {isPreviewMode
                 ? (hasUnapprovedFarms ? '내 농장 심사 대기 중' : '내 농장 미리보기')
-                : (activeSubTab === 'DASHBOARD' ? '내 농장 관리' : farm?.name)}
+                : farm?.name}
             </h1>
           </div>
           <p className={styles.subtitle}>
@@ -704,7 +730,7 @@ function FarmDashboardContent() {
         {!isPreviewMode && (
           <div className={styles.headerButtons}>
             <UnifiedActionButton onAddHistory={() => setIsHistoryModalOpen(true)} data-guide="farm-register" />
-            {activeSubTab === 'HISTORY' && (
+            {activeSubTab === 'DASHBOARD' && (
               <Link href="/farm/register">
                 <Button variant="outline" style={{ borderRadius: '50px' }}>+ 새 농장 등록</Button>
               </Link>
@@ -757,7 +783,7 @@ function FarmDashboardContent() {
           style={{ background: 'none', border: 'none', color: activeSubTab === 'HISTORY' ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: activeSubTab === 'HISTORY' ? 700 : 600, borderBottom: activeSubTab === 'HISTORY' ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-1px', cursor: 'pointer', fontSize: '16px' }}
           onClick={() => setActiveSubTab('HISTORY')}
         >
-          농장 정보
+          농장 일지
         </button>
       </div>
 
@@ -1138,23 +1164,8 @@ function FarmDashboardContent() {
             </div>
           </div>
 
-          <div className={styles.bento} style={{ alignItems: 'start' }}>
+          <div style={{ marginTop: '32px' }}>
             <div>
-              {/* Sub Navigation (History 전용) */}
-              <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '16px', marginBottom: '32px', display: 'flex', gap: '32px' }}>
-                {(['POLICY', 'HISTORY'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    style={{ background: 'none', border: 'none', color: (activeSubTab as string) === tab ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: (activeSubTab as string) === tab ? 700 : 600, borderBottom: (activeSubTab as string) === tab ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-17px', cursor: 'pointer', fontSize: '16px' }}
-                    onClick={() => setActiveSubTab(tab)}
-                  >
-                    {tab === 'POLICY' ? '정책/혜택 안내' : '재배 히스토리'}
-                  </button>
-                ))}
-              </div>
-
-
-
               <Timeline
                 histories={histories}
                 onEditCultivation={(id) => {
@@ -1174,36 +1185,6 @@ function FarmDashboardContent() {
                 onEdit={handleEditClick}
                 onDelete={handleDeleteHistory}
               />
-            </div>
-
-            {/* 농장 정보 사이드 카드 */}
-            <div>
-              <Card variant="dark">
-                <h3 className={styles.farmInfoTitle} style={{ fontSize: '18px', marginBottom: '16px' }}>농장 정보</h3>
-                <dl className={styles.farmInfoList}>
-                  <dt>위치</dt><dd>{farm?.address}</dd>
-                  <dt>면적</dt><dd>{farm?.area.toLocaleString()} ㎡ ({Math.round((farm?.area || 0) / 3.3058)}평)</dd>
-                  <dt>주요 작물</dt><dd>{farm?.cropNames.join(', ')}</dd>
-                  <dt>상태</dt>
-                  <dd>
-                    <Badge variant={farm?.certificationStatus === 'APPROVED' ? 'green' : 'orange'}>
-                      {farm?.certificationStatus === 'APPROVED' ? '인증됨' : '심사중'}
-                    </Badge>
-                  </dd>
-                </dl>
-                <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-                  <Link href={`/farm/${farm?.id}/edit`} style={{ flex: 2, textDecoration: 'none' }}>
-                    <Button variant="primary" style={{ width: '100%', justifyContent: 'center' }}>정보 수정</Button>
-                  </Link>
-                  <Button 
-                    variant="outline" 
-                    style={{ flex: 1, borderColor: '#ef4444', color: '#ef4444' }}
-                    onClick={() => farm && handleDeleteFarm(farm.id, farm.name)}
-                  >
-                    삭제
-                  </Button>
-                </div>
-              </Card>
             </div>
           </div>
         </>

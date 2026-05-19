@@ -27,7 +27,6 @@ export default function BalanceListPage() {
 
   useEffect(() => {
     if (isFarmsLoading) return;
-
     if (isPreviewMode) {
       const dummyData: BalanceAnalysisResponse[] = [
         {
@@ -36,7 +35,7 @@ export default function BalanceListPage() {
           status: 'SHORT_WARN',
           statusLabel: '부족경고',
           baseYear: new Date().getFullYear(),
-          message: '수급이 매우 부족합니다. 주의가 필요합니다.',
+          message: '현재 공급량이 수요 대비 현저히 부족하여 가격 상승세가 예상됩니다.',
         },
         {
           cropName: '양파',
@@ -44,7 +43,7 @@ export default function BalanceListPage() {
           status: 'EXCESS_WARN',
           statusLabel: '과잉경고',
           baseYear: new Date().getFullYear(),
-          message: '수급이 과잉 상태입니다.',
+          message: '지역 내 생산량 증가로 인한 과잉 상태로, 판로 다양화 지원이 필요합니다.',
         },
         {
           cropName: '대파',
@@ -52,7 +51,7 @@ export default function BalanceListPage() {
           status: 'BALANCED',
           statusLabel: '적정',
           baseYear: new Date().getFullYear(),
-          message: '적정한 수급 상태를 유지하고 있습니다.',
+          message: '생산량과 지역 수요가 균형을 이루어 수급 상태가 가장 안정적입니다.',
         }
       ];
       setBalances(dummyData);
@@ -121,25 +120,25 @@ export default function BalanceListPage() {
 
       {isPreviewMode ? (
         <MockupOverlay hasUnapprovedFarms={hasUnapprovedFarms}>
-          <BalanceContent 
-            top3={top3} 
-            filteredBalances={filteredBalances} 
-            statusFilter={statusFilter} 
-            setStatusFilter={setStatusFilter} 
-            searchQuery={searchQuery} 
-            setSearchQuery={setSearchQuery} 
-            getStatusBadgeVariant={getStatusBadgeVariant} 
+          <BalanceContent
+            top3={top3}
+            filteredBalances={filteredBalances}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            getStatusBadgeVariant={getStatusBadgeVariant}
           />
         </MockupOverlay>
       ) : (
-        <BalanceContent 
-          top3={top3} 
-          filteredBalances={filteredBalances} 
-          statusFilter={statusFilter} 
-          setStatusFilter={setStatusFilter} 
-          searchQuery={searchQuery} 
-          setSearchQuery={setSearchQuery} 
-          getStatusBadgeVariant={getStatusBadgeVariant} 
+        <BalanceContent
+          top3={top3}
+          filteredBalances={filteredBalances}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          getStatusBadgeVariant={getStatusBadgeVariant}
         />
       )}
     </div>
@@ -160,8 +159,8 @@ function BalanceContent({ top3, filteredBalances, statusFilter, setStatusFilter,
               <Badge variant={getStatusBadgeVariant(item.status)}>{item.statusLabel}</Badge>
             </div>
             <div className={styles.gaugeBar}>
-              <div 
-                className={`${styles.gaugeFill} ${styles[item.status.toLowerCase()]}`} 
+              <div
+                className={`${styles.gaugeFill} ${styles[item.status.toLowerCase()]}`}
                 style={{ width: `${Math.min(item.supplyRatio, 100)}%` }}
               ></div>
             </div>
@@ -169,9 +168,20 @@ function BalanceContent({ top3, filteredBalances, statusFilter, setStatusFilter,
         ))}
       </div>
 
+      {/* GUIDE BANNER */}
+      <div className={styles.guideBanner}>
+        <span className={styles.guideIcon}>💡</span>
+        <p className={styles.guideText}>
+          각 작물별 <strong>기준 연도</strong>는 지자체(KOSIS, 농촌진흥청 등)의 최신 공식 통계 데이터 발표 시점을 기준으로 설정되어 실시간 수급 분석의 정합성을 보장합니다.
+          <span style={{ fontSize: '13px', display: 'block', marginTop: '6px', opacity: 0.85, lineHeight: 1.5 }}>
+            ※ 현재 2025년도 공식 생산량 확정 통계는 통계청의 공표 대기 상태로, 시스템이 공인 최신 유효 연도 데이터를 자동으로 매핑 및 분석에 적용하고 있습니다.
+          </span>
+        </p>
+      </div>
+
       {/* FILTER BAR */}
       <div className={styles.filterSection}>
-        <select 
+        <select
           className={styles.selectInput}
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -184,8 +194,8 @@ function BalanceContent({ top3, filteredBalances, statusFilter, setStatusFilter,
           <option>부족경고</option>
         </select>
         <div style={{ flex: 1 }}>
-          <SearchInput 
-            placeholder="🔍 작물명 검색..." 
+          <SearchInput
+            placeholder="🔍 작물명 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />

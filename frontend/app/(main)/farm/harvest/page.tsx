@@ -83,11 +83,22 @@ export default function HarvestRegisterPage() {
 
       toast.success('수확 등록이 완료되었습니다!');
       
-      // 상점 판매 선택 시 상점 등록 페이지로 이동 (향후 구현 예정)
       if (formData.toShop) {
+        const selectedCult = cultivations.find(c => String(c.id) === formData.cultivationRegistrationId);
+        const cropName = selectedCult ? selectedCult.cropName : '';
+        const selectedFarm = farms.find(f => String(f.id) === selectedFarmId) || farms[0];
+        const farmName = selectedFarm ? selectedFarm.name : '';
+
+        const query = new URLSearchParams({
+          cropName,
+          yieldAmount: String(formData.yieldAmount),
+          yieldUnit: formData.yieldUnit,
+          grade: formData.grade,
+          farmName
+        }).toString();
+
         toast.info('상점 상품 등록 페이지로 이동합니다.');
-        // router.push('/shop/register'); // 임시 주석
-        router.push('/farm');
+        router.push(`/mypage/seller/register?${query}`);
       } else {
         router.push('/farm');
       }

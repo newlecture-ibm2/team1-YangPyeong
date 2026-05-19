@@ -7,10 +7,13 @@
 .botContainer {
   position: fixed;
   z-index: 10001;
-  transition: left 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    top 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: left, top;
   pointer-events: none;
+}
+
+.botContainerWalking {
+  transition: left 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    top 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* ── Lottie 래퍼 ── */
@@ -702,20 +705,10 @@
 }
 
 /* ═══ 채팅 모드 ═══ */
-.chatOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.2);
-}
+/* .chatOverlay removed - chatContainer is standalone fixed now */
 
 .chatContainer {
-  width: 380px;
-  height: 520px;
+  /* width, height are controlled dynamically via inline style */
   background: #fff;
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
@@ -723,6 +716,8 @@
   flex-direction: column;
   overflow: hidden;
   animation: chatSlideUp 0.3s ease-out;
+  min-width: 300px;
+  min-height: 400px;
 }
 
 @keyframes chatSlideUp {
@@ -744,6 +739,12 @@
   padding: 12px 16px;
   background: linear-gradient(135deg, #4a8c5c 0%, #2d6a3e 100%);
   color: #fff;
+  cursor: grab;
+  user-select: none;
+}
+
+.chatHeader:active {
+  cursor: grabbing;
 }
 
 .chatHeaderLeft {
@@ -831,6 +832,7 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
+  flex-wrap: wrap; /* 액션 UI(상품 카드 등)가 말풍선 아래로 줄바꿈되도록 */
 }
 
 .chatMsgUser {
@@ -973,14 +975,18 @@
 }
 
 @media (max-width: 480px) {
-  .chatOverlay {
-    padding: 0;
+  .chatContainer {
+    width: 100% !important;
+    height: 100% !important;
+    left: 0 !important;
+    top: 0 !important;
+    border-radius: 0;
+    min-width: unset;
+    min-height: unset;
   }
 
-  .chatContainer {
-    width: 100%;
-    height: 100%;
-    border-radius: 0;
+  .resizeHandle {
+    display: none;
   }
 }
 
@@ -999,4 +1005,37 @@
 .askBtnChat:hover {
   background: #f0f7f2;
   transform: translateY(-1px);
+}
+
+/* ── 리사이즈 핸들 ── */
+.resizeHandle {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  z-index: 10;
+  background: linear-gradient(
+    135deg,
+    transparent 45%,
+    #999 45%,
+    #999 55%,
+    transparent 55%,
+    transparent 65%,
+    #999 65%,
+    #999 75%,
+    transparent 75%,
+    transparent 85%,
+    #999 85%,
+    #999 95%,
+    transparent 95%
+  );
+  opacity: 0.6;
+  transition: opacity 0.15s, transform 0.15s ease;
+}
+
+.resizeHandle:hover {
+  opacity: 1;
+  transform: scale(1.15);
 }

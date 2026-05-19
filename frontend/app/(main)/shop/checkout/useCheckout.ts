@@ -222,37 +222,53 @@ export function useCheckout(): UseCheckoutReturn {
   // ── 기본 배송지 저장 체크 ──
   const [saveAsDefault, setSaveAsDefault] = useState(false);
 
-  // ── 유저 프로필에서 기본 배송지 로드 ──
+  // ── 로그인 가드 + 유저 프로필에서 기본 배송지 로드 ──
+  // 비로그인 사용자는 결제 페이지 진입 자체를 차단 (직전 사용자 정보 노출 방지)
   useEffect(() => {
+    // ① 빠른 클라이언트 체크: 세션 쿠키가 없으면 즉시 로그인 페이지로
+    const hasSessionCookie =
+      typeof document !== 'undefined' && document.cookie.includes('fb-user=');
+    if (!hasSessionCookie) {
+      router.replace('/login?redirect=/shop/checkout');
+      return;
+    }
+
+    // ② 서버 검증: /api/users/me 401/실패 시에도 차단
     const loadDefaultAddress = async () => {
       const result = await apiFetch<UserProfile>('/api/users/me');
-      if (result.success && result.data) {
-        const { name, phone, address } = result.data;
+      if (!result.success || !result.data) {
+        // 인증 실패 — 만료된 쿠키일 수 있으므로 안전하게 로그인으로
+        router.replace('/login?redirect=/shop/checkout');
+        return;
+      }
 
-        // 주소와 상세주소를 구분자(|||)로 분리
-        let mainAddr = '';
-        let detailAddr = '';
-        if (address) {
-          const parts = address.split('|||');
-          mainAddr = parts[0]?.trim() || '';
-          detailAddr = parts[1]?.trim() || '';
-        }
+      const { name, phone, address } = result.data;
 
-        setShippingForm((prev) => ({
-          ...prev,
-          receiverName: name || prev.receiverName,
-          receiverPhone: phone ? formatPhoneNumber(phone) : prev.receiverPhone,
-          address: mainAddr || prev.address,
-          addressDetail: detailAddr || prev.addressDetail,
-        }));
+      // 주소와 상세주소를 구분자(|||)로 분리
+      let mainAddr = '';
+      let detailAddr = '';
+      if (address) {
+        const parts = address.split('|||');
+        mainAddr = parts[0]?.trim() || '';
+        detailAddr = parts[1]?.trim() || '';
+      }
 
-        // 저장된 주소가 있으면 체크박스 기본 ON
-        if (address) {
-          setSaveAsDefault(true);
-        }
+      setShippingForm((prev) => ({
+        ...prev,
+        receiverName: name || prev.receiverName,
+        receiverPhone: phone ? formatPhoneNumber(phone) : prev.receiverPhone,
+        address: mainAddr || prev.address,
+        addressDetail: detailAddr || prev.addressDetail,
+      }));
+
+      // 저장된 주소가 있으면 체크박스 기본 ON
+      if (address) {
+        setSaveAsDefault(true);
       }
     };
     loadDefaultAddress();
+    // router는 stable하므로 deps 비워둠 (마운트 1회만 실행)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateShipping = (field: keyof ShippingForm, value: string) => {
