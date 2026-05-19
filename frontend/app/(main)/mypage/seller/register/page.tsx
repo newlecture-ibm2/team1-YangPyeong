@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useCallback, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '@/components/common/Button/Button';
 import Input from '@/components/common/Input/Input';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
@@ -27,7 +27,20 @@ interface ChatRegisterPayload {
 
 /** S-35b. 상품 등록 페이지 */
 export default function SellerRegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className={styles.container}>
+        <p style={{ padding: '2rem', textAlign: 'center' }}>상품 등록 양식을 준비 중입니다...</p>
+      </div>
+    }>
+      <SellerRegisterForm />
+    </Suspense>
+  );
+}
+
+function SellerRegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [form, setForm] = useState({
     name: '',
@@ -36,6 +49,28 @@ export default function SellerRegisterPage() {
     categoryName: '',
     description: '',
   });
+
+  // 수확 완료 등록 후 쿼리 파라미터가 유입될 시 자동 바인딩
+  useEffect(() => {
+    try {
+      const cropName = searchParams.get('cropName');
+      const yieldAmount = searchParams.get('yieldAmount');
+      const yieldUnit = searchParams.get('yieldUnit') || 'kg';
+      const grade = searchParams.get('grade') || '특';
+      const farmName = searchParams.get('farmName');
+
+      if (cropName) {
+        setForm(prev => ({
+          ...prev,
+          name: `[양평] ${farmName ? farmName + ' ' : ''}무농약 ${cropName} (1kg)`,
+          stock: yieldAmount || '',
+          description: `${farmName ? farmName + '에서 ' : ''}정성껏 재배 및 수확한 소중한 양평산 ${cropName} (${grade}급, ${yieldAmount}kg)입니다. 1kg 단위로 정성껏 포장하여 신선하게 직송해 드립니다.`
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to parse search params context:', e);
+    }
+  }, [searchParams]);
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
