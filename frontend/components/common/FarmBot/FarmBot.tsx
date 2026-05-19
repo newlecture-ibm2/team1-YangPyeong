@@ -115,6 +115,13 @@ export default function FarmBot({ children }: FarmBotProps) {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  /** 봇 응답에서 내부 식별자(id=123 / productId=123) 패턴 제거 — 화면 표시용 */
+  const stripInternalIds = (text: string): string =>
+    text
+      .replace(/\s*[\(\[]?\s*(?:product)?[Ii][Dd]\s*[:=]\s*\d+\s*[\)\]]?/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
   useEffect(() => {
     if (mode === 'chatting') {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -250,7 +257,9 @@ export default function FarmBot({ children }: FarmBotProps) {
 
             {/* 메시지 목록 */}
             <div className={styles.chatMessages}>
-              {chatMessages.map((msg, idx) => (
+              {chatMessages.map((msg, idx) => {
+                const isLastBotMessage = msg.role === 'bot' && idx === chatMessages.length - 1;
+                return (
                 <div
                   key={idx}
                   className={`${styles.chatMsg} ${msg.role === 'user' ? styles.chatMsgUser : styles.chatMsgBot}`}
@@ -259,10 +268,107 @@ export default function FarmBot({ children }: FarmBotProps) {
                     <Image src="/icon.png" alt="" width={28} height={28} className={styles.chatMsgAvatar} />
                   )}
                   <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleBot}`}>
-                    {msg.content}
+                    {msg.role === 'bot' ? stripInternalIds(msg.content) : msg.content}
                   </div>
+
+                  {/* ACTION UI — CLARIFY 옵션 칩 / CONFIRM 예아니오. 마지막 봇 메시지에서만 활성화 */}
+                  {msg.role === 'bot' && msg.actions && msg.actions.length > 0 && (
+                    <div style={{ width: '100%' }}>
+                      {msg.actions.map((action, ai) => {
+                        if (action.type === 'CLARIFY' && action.options) {
+                          return (
+                            <div key={ai} className={styles.chatOptionChips}>
+                              {action.options.map((opt) => (
+                                <button
+                                  key={String(opt.id)}
+                                  type="button"
+                                  className={styles.chatOptionChip}
+                                  disabled={!isLastBotMessage || chatLoading}
+                                  onClick={() => sendChatMessage(
+                                    opt.label,
+                                    `${opt.label} (id=${opt.id})`,
+                                  )}
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        }
+                        if (action.type === 'CONFIRM') {
+                          return (
+                            <div key={ai} className={styles.chatConfirmRow}>
+                              <button
+                                type="button"
+                                className={styles.chatConfirmYes}
+                                disabled={!isLastBotMessage || chatLoading}
+                                onClick={() => sendChatMessage(`네, 진행해주세요${action.intent ? ` (intent=${action.intent})` : ''}`)}
+                              >
+                                예, 진행
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.chatConfirmNo}
+                                disabled={!isLastBotMessage || chatLoading}
+                                onClick={() => sendChatMessage('아니요, 취소할게요.')}
+                              >
+                                아니오
+                              </button>
+                            </div>
+                          );
+                        }
+                        if (action.type === 'PRODUCT_LIST' && action.products && action.products.length > 0) {
+                          return (
+                            <div key={ai} className={styles.productCardList}>
+                              {action.products.map((product) => (
+                                <div key={product.id} className={styles.productCard}>
+                                  {product.imageUrl ? (
+                                    <Image
+                                      src={product.imageUrl}
+                                      alt={product.name}
+                                      width={60}
+                                      height={60}
+                                      className={styles.productCardImg}
+                                      unoptimized
+                                    />
+                                  ) : (
+                                    <div className={styles.productCardImgPlaceholder}>🌿</div>
+                                  )}
+                                  <div className={styles.productCardInfo}>
+                                    <span className={styles.productCardName}>{product.name}</span>
+                                    {product.categoryName && (
+                                      <span className={styles.productCardCategory}>{product.categoryName}</span>
+                                    )}
+                                    <span className={styles.productCardPrice}>
+                                      {product.price.toLocaleString()}원
+                                    </span>
+                                    {typeof product.salesCount === 'number' && product.salesCount > 0 && (
+                                      <span className={styles.productCardSales}>판매 {product.salesCount}개</span>
+                                    )}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className={styles.productCardCartBtn}
+                                    disabled={chatLoading}
+                                    onClick={() => sendChatMessage(
+                                      `${product.name} 장바구니에 담아줘`,
+                                      `${product.name} 장바구니에 담아줘 (productId=${product.id})`,
+                                    )}
+                                  >
+                                    🛒
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
               {chatLoading && (
                 <div className={`${styles.chatMsg} ${styles.chatMsgBot}`}>
                   <Image src="/icon.png" alt="" width={28} height={28} className={styles.chatMsgAvatar} />

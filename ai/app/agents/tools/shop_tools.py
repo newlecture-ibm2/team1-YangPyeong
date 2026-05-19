@@ -1,47 +1,564 @@
+"""
+Shop Agent Tools — 챗봇이 상점 도메인 기능을 수행하기 위한 LangChain 도구 모음.
+
+도구의 출력 문자열에 포함된 "[ACTION:{...json...}]" 토큰은 오케스트레이터에서 추출되어
+프론트엔드 디스패처가 실행할 ChatAction으로 변환됩니다.
+(see docs/development/chatbot-shop-integration-guide.md §3, §4)
+"""
 import json
 import logging
+from typing import Any, Optional
+from urllib.parse import urlencode
+
 from langchain_core.tools import tool
-from app.services.product_assist_service import autofill_product
+
+from app.agents.shared import action_token as _action, ensure_logged_in, login_required_message
 from app.models.product_assist import AutofillData
+from app.services.product_assist_service import autofill_product
+from app.utils.backend_client import BackendError, call_backend
 
 logger = logging.getLogger(__name__)
 
+
+# ════════════════════════════════════════════════════════
+# 공통 유틸 — app.agents.shared 로 분리됨
+#   _action               → action_token (from shared)
+#   _login_required_message → login_required_message
+#   _ensure_logged_in     → ensure_logged_in
+# 하위 호환을 위해 별칭 유지
+# ════════════════════════════════════════════════════════
+
+_login_required_message = login_required_message
+_ensure_logged_in = ensure_logged_in
+
+
+# 네비게이션 target → 경로 매핑
+_NAV_MAP = {
+    "shop_home": "/shop",
+    "cart": "/shop/cart",
+    "my_orders": "/shop/orders",
+    "seller_register": "/mypage/seller/register",
+    "seller_products": "/mypage/seller",
+    "seller_orders": "/mypage/seller/orders",
+}
+
+# 사용자에게 노출할 한국어 라벨 (URL 경로 노출 금지)
+_NAV_LABELS = {
+    "shop_home": "장터",
+    "cart": "장바구니",
+    "my_orders": "내 주문 내역",
+    "seller_register": "상품 등록 페이지",
+    "seller_products": "내 상품 관리 페이지",
+    "seller_orders": "판매 주문 관리 페이지",
+}
+
+
+# ════════════════════════════════════════════════════════
+# 1. 네비게이션 — 단순 페이지 이동
+# ════════════════════════════════════════════════════════
+
+@tool
+async def navigate_to(target: str) -> str:
+    """사용자가 상점 관련 페이지로 이동을 원할 때 호출합니다.
+
+    Args:
+        target: 이동 대상 (다음 중 하나)
+            - "shop_home"        장터 메인 (/shop)
+            - "cart"             장바구니 (/shop/cart)
+            - "my_orders"        내 주문 내역 (/shop/orders)
+            - "seller_register"  상품 등록 (/mypage/seller/register)
+            - "seller_products"  내가 등록한 상품 관리 (/mypage/seller)
+            - "seller_orders"    판매자 주문 관리 (/mypage/seller/orders)
+    """
+    url = _NAV_MAP.get(target)
+    if not url:
+        return f"'{target}' 경로를 찾지 못했어요. 다시 한번 말씀해 주실래요?"
+
+    # 로그인 필수 페이지는 비로그인 시 차단
+    LOGIN_REQUIRED_TARGETS = {
+        "cart", "my_orders", "seller_register", "seller_products", "seller_orders",
+    }
+    if target in LOGIN_REQUIRED_TARGETS and (msg := _ensure_logged_in()):
+        return msg
+
+    label = _NAV_LABELS.get(target, "해당 페이지")
+    return f"네, {label}(으)로 이동할게요. " + _action({
+        "type": "NAVIGATE", "url": url,
+    })
+
+
 @tool
 async def navigate_to_register_page() -> str:
+    """[하위 호환] 상품 등록 페이지로 이동. 가능하면 navigate_to("seller_register")를 사용하세요."""
+    return await navigate_to.ainvoke({"target": "seller_register"})
+
+
+# ════════════════════════════════════════════════════════
+# 2. 상품 검색 — 모호한 상품명을 ID 후보로 좁히기
+# ════════════════════════════════════════════════════════
+
+@tool
+async def search_products(keyword: str, category: Optional[str] = None, limit: int = 5) -> str:
+    """상품을 키워드로 검색합니다. 사용자가 모호한 상품명을 말했을 때 먼저 호출하여 후보를 좁히세요.
+
+    동작:
+        - 1건: 그 상품 정보를 텍스트로 요약
+        - 2건 이상: CLARIFY 액션을 반환하여 사용자에게 선택지 제시
+        - 0건: 빈 결과 안내
+
+    Args:
+        keyword: 검색어 (예: "사과")
+        category: (선택) 카테고리명 필터
+        limit: 최대 결과 수 (기본 5)
     """
-    상품 등록, 판매 시작, 내 작물 팔기 등 사용자가 상품을 등록하길 원할 때 호출합니다.
-    이 도구를 호출한 후에는 반환값을 참조하여 사용자에게 상품 등록 페이지로 안내하는 액션(Action)을 생성해야 합니다.
+    params = {"keyword": keyword, "page": 0, "size": max(1, min(limit, 20))}
+    if category:
+        params["category"] = category
+
+    try:
+        data = await call_backend("GET", "/api/shop/product", params=params)
+    except BackendError as e:
+        logger.warning("[ShopTool] search_products 실패: %s", e)
+        return f"상품 검색 중 오류가 났어요. ({e.status_code})"
+
+    products = data.get("data") or []
+    if not products:
+        return f"'{keyword}' 와 맞는 상품을 찾지 못했어요. 다른 단어로 한번 더 말씀해 주실래요?"
+
+    # 1건 → 자동 선택 안내
+    if len(products) == 1:
+        p = products[0]
+        return (
+            f"'{p['name']}' 한 가지를 찾았어요. (가격 {p['price']}원, 재고 {p['stock']}개) "
+            f"이 상품으로 진행하면 되겠죠? id={p['id']}"
+        )
+
+    # 다건 → CLARIFY
+    options = [
+        {
+            "id": p["id"],
+            "label": f"{p['name']} ({p['price']}원 / 재고 {p['stock']})",
+            "meta": {
+                "productId": p["id"],
+                "name": p["name"],
+                "price": p["price"],
+                "stock": p["stock"],
+            },
+        }
+        for p in products[: limit]
+    ]
+    summary = ", ".join(p["name"] for p in products[:3])
+    text = f"'{keyword}'(으)로 {len(products)}개를 찾았어요 ({summary} 등). 어느 상품으로 할까요?"
+
+    return text + " " + _action({
+        "type": "CLARIFY",
+        "intent": "PICK_PRODUCT",
+        "question": text,
+        "options": options,
+    })
+
+
+# ════════════════════════════════════════════════════════
+# 3. 장바구니 담기
+# ════════════════════════════════════════════════════════
+
+@tool
+async def add_to_cart(product_id: int, quantity: int = 1) -> str:
+    """특정 상품을 장바구니에 담습니다.
+
+    Args:
+        product_id: 상품 ID (search_products로 먼저 확정하세요)
+        quantity: 담을 수량 (기본 1)
+
+    주의:
+        - product_id를 모르면 먼저 search_products를 호출해 사용자에게 선택받으세요.
+        - 401(미로그인)이면 로그인 페이지로 NAVIGATE 액션을 반환합니다.
     """
-    payload = {
-        "type": "NAVIGATE",
-        "url": "/mypage/seller/register"
-    }
-    return f"[ACTION:{json.dumps(payload, ensure_ascii=False)}]"
+    if (msg := _ensure_logged_in()):
+        return msg
+
+    if not product_id or quantity < 1:
+        return "상품 ID와 1 이상의 수량이 필요해요."
+
+    try:
+        await call_backend(
+            "POST",
+            "/api/shop/cart",
+            json_body={"productId": int(product_id), "quantity": int(quantity)},
+        )
+    except BackendError as e:
+        if e.status_code == 401:
+            return _login_required_message()
+        logger.warning("[ShopTool] add_to_cart 실패: %s", e)
+        return f"장바구니에 담지 못했어요. ({e.message})"
+
+    return (
+        f"[장바구니 담기 성공] {quantity}개 담았어요. " +
+        _action({"type": "TOAST", "level": "success", "message": "장바구니에 담았습니다."}) +
+        _action({"type": "REFRESH", "scope": "cart"})
+    )
+
+
+# ════════════════════════════════════════════════════════
+# 4. 바로 구매 — 체크아웃 페이지로 이동
+# ════════════════════════════════════════════════════════
+
+@tool
+async def buy_now(product_id: int, quantity: int = 1) -> str:
+    """상품을 장바구니를 거치지 않고 바로 결제 페이지로 이동합니다.
+
+    Args:
+        product_id: 상품 ID
+        quantity: 수량 (기본 1)
+    """
+    if (msg := _ensure_logged_in()):
+        return msg
+
+    if not product_id or quantity < 1:
+        return "상품 ID와 1 이상의 수량이 필요해요."
+
+    # 체크아웃 페이지는 ?productId=&quantity= 쿼리를 지원합니다 (useCheckout.ts 참조)
+    query = urlencode({"productId": int(product_id), "quantity": int(quantity)})
+    url = f"/shop/checkout?{query}"
+    return (
+        f"바로 결제 페이지로 안내할게요. ({quantity}개) " +
+        _action({"type": "NAVIGATE", "url": url})
+    )
+
+
+# ════════════════════════════════════════════════════════
+# 5. 내가 등록한 상품 조회 (판매자)
+# ════════════════════════════════════════════════════════
+
+def _summarize_products(products: list[dict[str, Any]], max_items: int = 5) -> str:
+    if not products:
+        return "등록하신 상품이 아직 없어요."
+    head = products[:max_items]
+    lines = [
+        f"- {p['name']} ({p['price']}원, 재고 {p['stock']}개, 상태 {p.get('status','-')})"
+        for p in head
+    ]
+    extra = f"\n…외 {len(products) - max_items}개" if len(products) > max_items else ""
+    return f"등록하신 상품 {len(products)}개 중 일부예요.\n" + "\n".join(lines) + extra
 
 
 @tool
-async def autofill_product_info(product_name: str) -> str:
-    """
-    사용자가 특정 상품(예: 옥수수, 상추)의 정보를 알아서 채워달라고 요청할 때 호출합니다.
-    상품명(product_name)을 입력하면, AI가 카테고리, 추천 가격, 초기 재고, 상세 설명을 자동으로 생성합니다.
-    생성된 데이터는 프론트엔드의 폼을 채우기 위한 액션(Action)으로 변환되어야 합니다.
+async def list_my_products() -> str:
+    """현재 로그인한 판매자가 등록한 상품 목록을 조회합니다."""
+    if (msg := _ensure_logged_in()):
+        return msg
+    try:
+        data = await call_backend("GET", "/api/shop/seller")
+    except BackendError as e:
+        if e.status_code == 401:
+            return _login_required_message()
+        if e.status_code == 403:
+            return "판매자 권한이 필요해요. 농장 인증을 먼저 진행해 주세요."
+        return f"내 상품 목록 조회에 실패했어요. ({e.message})"
+
+    products = data.get("data") or []
+    summary = _summarize_products(products)
+    return summary + " " + _action({"type": "NAVIGATE", "url": "/mypage/seller"})
+
+
+# ════════════════════════════════════════════════════════
+# 6. 판매자 주문 조회
+# ════════════════════════════════════════════════════════
+
+_ORDER_STATUS_LABEL = {
+    "PENDING": "접수대기",
+    "PAID": "결제완료",
+    "CONFIRMED": "주문확정",
+    "REJECTED": "주문거절",
+    "SHIPPED": "배송중",
+    "DELIVERED": "배송완료",
+    "CANCELLED": "취소",
+}
+
+
+def _summarize_orders(orders: list[dict[str, Any]], max_items: int = 5) -> str:
+    if not orders:
+        return "들어온 주문이 아직 없어요."
+    head = orders[:max_items]
+    lines = []
+    for o in head:
+        item_names = ", ".join(i.get("productName", "") for i in (o.get("items") or [])[:2])
+        if len(o.get("items") or []) > 2:
+            item_names += " 외"
+        status = _ORDER_STATUS_LABEL.get(o.get("status"), o.get("status", "-"))
+        lines.append(
+            f"- {o.get('orderNumber','-')} | {item_names} | {o.get('totalAmount',0)}원 | {status}"
+        )
+    extra = f"\n…외 {len(orders) - max_items}건" if len(orders) > max_items else ""
+    return f"총 {len(orders)}건의 주문이 있어요.\n" + "\n".join(lines) + extra
+
+
+@tool
+async def list_seller_orders() -> str:
+    """판매자에게 들어온 주문 목록을 조회합니다."""
+    if (msg := _ensure_logged_in()):
+        return msg
+    try:
+        data = await call_backend("GET", "/api/shop/seller/order")
+    except BackendError as e:
+        if e.status_code == 401:
+            return _login_required_message()
+        if e.status_code == 403:
+            return "판매자 권한이 필요해요."
+        return f"주문 목록 조회에 실패했어요. ({e.message})"
+
+    orders = data.get("data") or []
+    summary = _summarize_orders(orders)
+    return summary + " " + _action({"type": "NAVIGATE", "url": "/mypage/seller/orders"})
+
+
+# ════════════════════════════════════════════════════════
+# 7. 내 주문 조회 (구매자)
+# ════════════════════════════════════════════════════════
+
+@tool
+async def list_my_orders() -> str:
+    """현재 로그인한 사용자(구매자)의 주문 내역을 조회합니다."""
+    if (msg := _ensure_logged_in()):
+        return msg
+    try:
+        data = await call_backend("GET", "/api/shop/order")
+    except BackendError as e:
+        if e.status_code == 401:
+            return _login_required_message()
+        return f"주문 내역 조회에 실패했어요. ({e.message})"
+
+    orders = data.get("data") or []
+    summary = _summarize_orders(orders)
+    return summary + " " + _action({"type": "NAVIGATE", "url": "/shop/orders"})
+
+
+# ════════════════════════════════════════════════════════
+# 8. 명시적 CLARIFY 도구 — LLM이 정보가 부족할 때 직접 호출
+# ════════════════════════════════════════════════════════
+
+@tool
+async def clarify(intent: str, question: str, options_json: str) -> str:
+    """정보가 부족하여 사용자에게 선택지를 제시해야 할 때 사용합니다.
+
+    Args:
+        intent: 후속 처리에 사용할 의도 식별자 (예: "ADD_TO_CART", "BUY_NOW")
+        question: 사용자에게 보여줄 질문
+        options_json: JSON 배열 문자열. 각 요소는 {"id": ..., "label": "..."} 형태.
+            예: '[{"id":1,"label":"부사 사과 1kg"},{"id":2,"label":"홍옥 1kg"}]'
     """
     try:
-        data: AutofillData = await autofill_product(product_name)
-        
-        payload = {
-            "type": "FILL_FORM",
-            "payload": {
-                "name": product_name,
-                "price": data.price,
-                "stock": data.stock,
-                "categoryName": data.category_name,
-                "description": data.description,
-                "isKamisApplied": data.is_kamis_applied,
-                "kamisUnit": data.kamis_unit
-            }
-        }
-        return f"[ACTION:{json.dumps(payload, ensure_ascii=False)}]"
+        options = json.loads(options_json)
+        assert isinstance(options, list)
+    except Exception:
+        return "선택지 형식이 올바르지 않아요."
+
+    return question + " " + _action({
+        "type": "CLARIFY",
+        "intent": intent,
+        "question": question,
+        "options": options,
+    })
+
+
+# ════════════════════════════════════════════════════════
+# 7-b. 판매 전략 제안 — "잘 팔리는 방법" / "판매 노하우" 용
+# ════════════════════════════════════════════════════════
+
+@tool
+async def suggest_sales_strategy() -> str:
+    """판매자가 '잘 팔리는 방법', '어떻게 팔지', '판매 노하우' 같은
+    판매 증대 조언을 요청할 때 호출합니다.
+
+    동작:
+        1) 본인이 등록한 상품 목록을 조회
+        2) AI 인사이트 서비스가 상품 데이터를 분석해 구체적 판매 전략을 생성
+        3) 결과 + 판매자 페이지로 이동 액션 반환
+    """
+    if (msg := _ensure_logged_in()):
+        return msg
+
+    # 1) 본인 상품 조회
+    try:
+        data = await call_backend("GET", "/api/shop/seller")
+    except BackendError as e:
+        if e.status_code == 401:
+            return _login_required_message()
+        if e.status_code == 403:
+            return "판매자 권한이 필요해요. 농장 인증을 먼저 진행해 주세요."
+        return f"상품 목록 조회에 실패했어요. ({e.message})"
+
+    products = data.get("data") or []
+    if not products:
+        return (
+            "아직 등록하신 상품이 없어요. 먼저 상품을 등록하면 맞춤 판매 전략을 알려드릴 수 있어요. " +
+            _action({"type": "NAVIGATE", "url": "/mypage/seller/register"})
+        )
+
+    # 2) AI 인사이트 생성 (이미 마이페이지의 'AI 판매 인사이트'와 동일 로직 재사용)
+    from app.services.product_assist_service import generate_insight
+    from app.models.product_assist import InsightRequest, SellerProductInfo
+
+    seller_products = [
+        SellerProductInfo(
+            name=p.get("name", ""),
+            price=p.get("price", 0),
+            stock=p.get("stock", 0),
+            salesCount=p.get("salesCount", 0),
+            status=p.get("status", ""),
+        )
+        for p in products
+    ]
+    try:
+        insight = await generate_insight(InsightRequest(products=seller_products))
     except Exception as e:
-        logger.error(f"[ShopTool] autofill_product_info 에러: {e}")
-        return f"상품 정보를 자동으로 채우는 중 오류가 발생했습니다: {str(e)}"
+        logger.error("[ShopTool] suggest_sales_strategy 인사이트 생성 실패: %s", e)
+        return "판매 전략을 분석하는 중 오류가 났어요. 잠시 후 다시 시도해 주세요."
+
+    return (
+        insight +
+        "\n\n더 자세한 분석과 상품 관리는 판매자 페이지에서 확인하세요. " +
+        _action({"type": "NAVIGATE", "url": "/mypage/seller"})
+    )
+
+
+# ════════════════════════════════════════════════════════
+# 8-a. "작물 등록" 모호성 해소 — 내 농장 작물 vs 판매 상품
+# ════════════════════════════════════════════════════════
+
+@tool
+async def clarify_crop_register() -> str:
+    """사용자가 '작물 등록', '작물 등록할래' 처럼 모호한 요청을 했을 때 호출합니다.
+
+    '작물 등록'은 두 가지로 해석될 수 있습니다:
+      1) 내 농장에 작물을 등록 (내농장 → 작물 추가)
+      2) 장터에 판매 상품으로 등록 (마이페이지 → 판매 상품 등록)
+
+    어느 쪽인지 사용자에게 직접 선택받기 위한 CLARIFY 액션을 반환합니다.
+    """
+    question = "어느 쪽 등록을 말씀하시는 건가요?"
+    return question + " " + _action({
+        "type": "CLARIFY",
+        "intent": "REGISTER_CROP",
+        "question": question,
+        "options": [
+            {"id": "farm_crop", "label": "내 농장에 작물 등록"},
+            {"id": "shop_product", "label": "장터에 판매 상품으로 등록"},
+        ],
+    })
+
+
+# ════════════════════════════════════════════════════════
+# 8-b. 장터 메뉴 TOP 5 — "메뉴 보여줘" / "뭐 팔아?" 용
+# ════════════════════════════════════════════════════════
+
+@tool
+async def list_shop_menu() -> str:
+    """장터(상점)에 등록된 상품 중 판매량 상위 5개를 카드 형식으로 보여줍니다.
+    사용자가 "메뉴 보여줘", "뭐 팔아?", "어떤 상품 있어?" 처럼
+    전체 상품 목록을 보고 싶을 때 호출하세요.
+    """
+    try:
+        data = await call_backend(
+            "GET", "/api/shop/product",
+            params={"page": 0, "size": 5, "sort": "bestSelling"},
+        )
+    except BackendError as e:
+        logger.warning("[ShopTool] list_shop_menu 실패: %s", e)
+        # 백엔드 접근 불가 시 장터 페이지로 이동 안내
+        return "장터 상품 목록을 불러오지 못했어요. 장터 페이지에서 직접 확인해 보세요! " + _action({
+            "type": "NAVIGATE", "url": "/shop",
+        })
+
+    products: list[dict] = data.get("data") or []
+    if not products:
+        return "현재 등록된 상품이 없어요. 장터 페이지에서 확인해 보세요! " + _action({
+            "type": "NAVIGATE", "url": "/shop",
+        })
+
+    # PRODUCT_LIST 액션 — 프론트가 카드로 렌더링
+    product_items = [
+        {
+            "id": p["id"],
+            "name": p["name"],
+            "price": p["price"],
+            "stock": p["stock"],
+            "salesCount": p.get("salesCount"),
+            "imageUrl": (p.get("imageUrls") or [None])[0],
+            "categoryName": p.get("categoryName"),
+        }
+        for p in products[:5]
+    ]
+
+    return (
+        f"장터에서 인기 있는 상품 {len(product_items)}가지예요. "
+        "더 많은 상품은 장터에서 확인하세요! " +
+        _action({"type": "PRODUCT_LIST", "products": product_items}) +
+        _action({"type": "NAVIGATE", "url": "/shop"})
+    )
+
+
+# ════════════════════════════════════════════════════════
+# 9. 상품 정보 자동 채우기 (기존 + NAVIGATE 보강)
+# ════════════════════════════════════════════════════════
+
+@tool
+async def autofill_product_info(
+    product_name: str,
+    price: Optional[int] = None,
+    stock: Optional[int] = None,
+    category_name: Optional[str] = None,
+    description: Optional[str] = None,
+) -> str:
+    """특정 작물명(예: 옥수수, 배추)으로 상품 등록 폼을 자동 채웁니다.
+
+    사용자가 가격·재고·카테고리·설명 중 일부를 명시했다면 해당 값을 그대로 우선 사용하고,
+    명시하지 않은 항목만 AI가 생성한 값으로 채웁니다. (사용자 입력 > AI 생성)
+
+    Args:
+        product_name: 작물명 (필수, 예: "배추")
+        price: 사용자가 지정한 판매가(원). 미지정 시 AI 추천가 사용.
+        stock: 사용자가 지정한 재고 수량. 미지정 시 AI 추천값 사용.
+        category_name: 사용자가 지정한 카테고리명. 미지정 시 AI 분류 결과 사용.
+        description: 사용자가 직접 작성한 상품 설명. 미지정 시 AI 생성 설명 사용.
+    """
+    if (msg := _ensure_logged_in()):
+        return msg
+    try:
+        data: AutofillData = await autofill_product(product_name)
+    except Exception as e:
+        logger.error("[ShopTool] autofill_product_info 실패: %s", e)
+        return f"상품 정보 자동 채우기 중 오류가 났어요: {e}"
+
+    # 사용자 명시값 우선, 없으면 AI 생성값 사용
+    final_price = price if price is not None else data.price
+    final_stock = stock if stock is not None else data.stock
+    final_category = category_name or data.category_name
+    final_description = description or data.description
+
+    fill_payload = {
+        "name": product_name,
+        "price": final_price,
+        "stock": final_stock,
+        "categoryName": final_category,
+        "description": final_description,
+        "isKamisApplied": data.is_kamis_applied,
+        "kamisUnit": data.kamis_unit,
+    }
+
+    # 사용자 입력 반영 안내 메시지 (어떤 항목을 사용자 값으로 썼는지 표시)
+    user_set = []
+    if price is not None: user_set.append(f"가격 {price}원")
+    if stock is not None: user_set.append(f"재고 {stock}개")
+    if category_name: user_set.append(f"카테고리 {category_name}")
+    if description: user_set.append("설명")
+    user_note = (
+        f" (말씀하신 {', '.join(user_set)}은(는) 그대로 반영했어요.)"
+        if user_set else " 가격/재고는 원하시는 대로 수정하세요."
+    )
+
+    return (
+        f"'{product_name}' 상품 정보를 자동으로 채워드렸어요.{user_note} " +
+        _action({"type": "NAVIGATE", "url": "/mypage/seller/register"}) +
+        _action({"type": "FILL_FORM", "target": "seller_register", "payload": fill_payload})
+    )

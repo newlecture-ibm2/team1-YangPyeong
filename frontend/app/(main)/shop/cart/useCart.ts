@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { CartItem } from '../_lib/shop.types';
 import { getCart, updateCartItem, removeCartItem } from '../_lib/shop.api';
+import { CHAT_EVENTS, type ChatRefreshEventDetail } from '@/components/common/FarmBot/useChatActions';
 
 /* ════════════════════════════════════════════
    useCart Hook
@@ -42,22 +43,37 @@ export function useCart(): UseCartReturn {
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
-  // 장바구니 데이터 로드
-  useEffect(() => {
-    const fetchCart = async () => {
-      setLoading(true);
-      const result = await getCart();
-      if (result.success && result.data) {
-        setItems(result.data);
-        setSelectedIds(new Set(result.data.map((item) => item.id)));
-      } else {
-        setItems([]);
-      }
-      setLoading(false);
-    };
-
-    fetchCart();
+  // 장바구니 데이터 로드 (재조회 가능하도록 별도 콜백)
+  const fetchCart = useCallback(async () => {
+    setLoading(true);
+    const result = await getCart();
+    const data = result.success ? result.data : null;
+    if (data) {
+      setItems(data);
+      setSelectedIds((prev) =>
+        prev.size === 0 ? new Set(data.map((item) => item.id)) : prev,
+      );
+    } else {
+      setItems([]);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  // 챗봇이 add_to_cart 등을 실행한 후 REFRESH(scope='cart') 이벤트로 자동 재조회
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<ChatRefreshEventDetail>).detail;
+      if (detail?.scope === 'cart') {
+        fetchCart();
+      }
+    };
+    window.addEventListener(CHAT_EVENTS.refresh, handler);
+    return () => window.removeEventListener(CHAT_EVENTS.refresh, handler);
+  }, [fetchCart]);
 
   /** 전체 선택 여부 */
   const isAllSelected = useMemo(
