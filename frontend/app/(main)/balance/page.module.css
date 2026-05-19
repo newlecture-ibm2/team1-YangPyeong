@@ -221,3 +221,33 @@
     font-size: 13px;
   }
 }
+
+.guideBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background-color: #f8fafc;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  margin-bottom: 24px;
+}
+
+.guideIcon {
+  font-size: 18px;
+  line-height: 1;
+  padding-top: 2px;
+}
+
+.guideText {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.guideText strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+

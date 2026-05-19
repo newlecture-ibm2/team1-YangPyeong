@@ -7,10 +7,13 @@
 .botContainer {
   position: fixed;
   z-index: 10001;
-  transition: left 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    top 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: left, top;
   pointer-events: none;
+}
+
+.botContainerWalking {
+  transition: left 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    top 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* ── Lottie 래퍼 ── */

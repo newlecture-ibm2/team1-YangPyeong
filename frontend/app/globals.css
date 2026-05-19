@@ -52,7 +52,7 @@
 
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; overflow-x: clip; }
 body {
   font-family: var(--font-sans);
   color: var(--color-text);
@@ -64,7 +64,7 @@ body {
   word-break: keep-all;
   overflow-wrap: break-word;
   /* 가로 스크롤 방지 */
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 img, picture, video, canvas, svg { display: block; max-width: 100%; }
 /* iOS 자동 줌 방지: input font-size ≥ 16px */
