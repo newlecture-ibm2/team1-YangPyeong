@@ -87,7 +87,7 @@ public class OrderService implements OrderUseCase {
         String orderNumber = generateOrderNumber();
 
         Order order = new Order(
-                null, buyerId, orderNumber, totalAmount, OrderStatus.ACCEPTED,
+                null, buyerId, orderNumber, totalAmount, OrderStatus.ORDERED,
                 receiverName, receiverPhone, shippingAddress, shippingMemo,
                 null, null, orderItems, LocalDateTime.now(), null);
 
@@ -188,6 +188,40 @@ public class OrderService implements OrderUseCase {
         return saved;
     }
 
+    @Override
+    @Transactional
+    public Order buyerCancelOrder(Long buyerId, Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+        // 본인 주문인지 검증
+        if (!order.getBuyerId().equals(buyerId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        // ORDERED 상태(판매자 미접수)일 때만 즉시 취소 허용
+        if (order.getStatus() != OrderStatus.ORDERED) {
+            throw new BusinessException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
+        }
+
+        // 재고 복구 + 판매수량 감소
+        for (OrderItem item : order.getItems()) {
+            productRepository.findById(item.getProductId()).ifPresent(product -> {
+                product.increaseStock(item.getQuantity());
+                product.decreaseSalesCount(item.getQuantity());
+                productRepository.save(product);
+            });
+        }
+
+        order.cancel();
+        Order saved = orderRepository.save(order);
+
+        // 취소 이메일 발송 (비동기)
+        sendCancelEmail(saved);
+
+        return saved;
+    }
+
     /** 해당 주문이 판매자의 상품을 포함하는지 검증 */
     private void validateSellerOwnership(Long sellerId, Long orderId) {
         boolean isOwner = orderRepository.findBySellerId(sellerId)
@@ -226,7 +260,7 @@ public class OrderService implements OrderUseCase {
                         NotificationType.ORDER,
                         "주문 접수 완료",
                         "주문하신 상품이 접수되었습니다.",
-                        "/shop/orders"
+                        "/mypage/history"
                 );
             }
             // ACCEPTED → SHIPPED (배송 시작)
@@ -240,7 +274,7 @@ public class OrderService implements OrderUseCase {
                         NotificationType.ORDER,
                         "배송 시작",
                         String.format("주문하신 상품이 배송 시작되었습니다. (송장: %s)", order.getTrackingNumber()),
-                        "/shop/orders"
+                        "/mypage/history"
                 );
             }
         } catch (Exception e) {
@@ -265,7 +299,7 @@ public class OrderService implements OrderUseCase {
                     NotificationType.ORDER,
                     "주문 거절",
                     String.format("주문이 거절되었습니다. (주문번호: %s)", order.getOrderNumber()),
-                    "/shop/orders"
+                    "/mypage/history"
             );
         } catch (Exception e) {
             log.warn("[주문 거절 알림] 발송 실패 (주문: {}): {}", order.getOrderNumber(), e.getMessage());

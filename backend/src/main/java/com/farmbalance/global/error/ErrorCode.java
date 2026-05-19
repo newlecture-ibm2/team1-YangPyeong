@@ -72,6 +72,7 @@ public enum ErrorCode {
     PRODUCT_OUT_OF_STOCK("E-SHOP-002", "재고가 부족합니다.", HttpStatus.BAD_REQUEST),
     ORDER_NOT_FOUND("E-SHOP-003", "주문을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     ORDER_INVALID_STATUS("E-SHOP-004", "주문 상태를 변경할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    ORDER_CANCEL_NOT_ALLOWED("E-SHOP-006", "현재 상태에서는 취소할 수 없습니다. 판매자가 이미 접수한 주문입니다.", HttpStatus.BAD_REQUEST),
     CART_ITEM_NOT_FOUND("E-SHOP-005", "장바구니 항목을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
     // ── 커뮤니티 ──

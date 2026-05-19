@@ -36,7 +36,7 @@ _ensure_logged_in = ensure_logged_in
 _NAV_MAP = {
     "shop_home": "/shop",
     "cart": "/shop/cart",
-    "my_orders": "/shop/orders",
+    "my_orders": "/mypage/history",
     "seller_register": "/mypage/seller/register",
     "seller_products": "/mypage/seller",
     "seller_orders": "/mypage/seller/orders",
@@ -65,7 +65,7 @@ async def navigate_to(target: str) -> str:
         target: 이동 대상 (다음 중 하나)
             - "shop_home"        장터 메인 (/shop)
             - "cart"             장바구니 (/shop/cart)
-            - "my_orders"        내 주문 내역 (/shop/orders)
+            - "my_orders"        내 주문 내역 (/mypage/history)
             - "seller_register"  상품 등록 (/mypage/seller/register)
             - "seller_products"  내가 등록한 상품 관리 (/mypage/seller)
             - "seller_orders"    판매자 주문 관리 (/mypage/seller/orders)
@@ -330,7 +330,7 @@ async def list_my_orders() -> str:
 
     orders = data.get("data") or []
     summary = _summarize_orders(orders)
-    return summary + " " + _action({"type": "NAVIGATE", "url": "/shop/orders"})
+    return summary + " " + _action({"type": "NAVIGATE", "url": "/mypage/history"})
 
 
 # ════════════════════════════════════════════════════════
@@ -499,7 +499,395 @@ async def list_shop_menu() -> str:
 
 
 # ════════════════════════════════════════════════════════
-# 9. 상품 정보 자동 채우기 (기존 + NAVIGATE 보강)
+# 9. 장바구니 조회
+# ════════════════════════════════════════════════════════
+
+@tool
+async def get_my_cart() -> str:
+    """현재 로그인한 사용자의 장바구니 목록을 조회합니다.
+    사용자가 "장바구니 뭐 있어?", "내 장바구니 확인해줘" 처럼 요청할 때 호출하세요.
+    """
+    if (msg := _ensure_logged_in()):
+        return msg
+
+    try:
+        data = await call_backend("GET", "/api/shop/cart")
+    except BackendError as e:
+        if e.status_code == 401:
+            return _login_required_message()
+        logger.warning("[ShopTool] get_my_cart 실패: %s", e)
+        return f"장바구니를 불러오지 못했어요. ({e.message})"
+
+    items: list[dict] = data if isinstance(data, list) else (data.get("data") or [])
+    if not items:
+        return (
+            "장바구니가 비어 있어요. 마음에 드는 상품을 담아보세요! " +
+            _action({"type": "NAVIGATE", "url": "/shop/cart"})
+        )
+
+    total_amount = 0
+    lines = []
+    product_items = []
+    for item in items:
+        product = item.get("product") or {}
+        name = product.get("name") or f"상품 #{item.get('productId', '?')}"
+        price = product.get("price", 0)
+        qty = item.get("quantity", 1)
+        subtotal = price * qty
+        total_amount += subtotal
+        lines.append(f"- {name} {qty}개 ({price:,}원 × {qty} = {subtotal:,}원)")
+        image_urls = product.get("imageUrls") or []
+        product_items.append({
+            "id": item.get("productId"),
+            "name": name,
+            "price": price,
+            "stock": product.get("stock"),
+            "imageUrl": image_urls[0] if image_urls else None,
+            "quantity": qty,
+        })
+
+    summary = "\n".join(lines)
+    return (
+        f"장바구니에 {len(items)}개 상품이 있어요. (합계 {total_amount:,}원)\n{summary}\n"
+        "결제하시겠어요? " +
+        _action({"type": "PRODUCT_LIST", "products": product_items}) +
+        _action({"type": "NAVIGATE", "url": "/shop/cart"})
+    )
+
+
+# ════════════════════════════════════════════════════════
+# 10. 주문 취소 요청
+# ════════════════════════════════════════════════════════
+
+# 취소 가능한 주문 상태 (결제 전/직후)
+_CANCELLABLE_STATUSES = {"PENDING", "PAID"}
+_CANCELLABLE_LABEL = {"PENDING": "접수대기", "PAID": "결제완료"}
+
+
+@tool
+async def cancel_order(order_number: Optional[str] = None, keyword: Optional[str] = None) -> str:
+    """사용자가 주문을 취소하고 싶을 때 호출합니다.
+
+    동작:
+        - order_number 지정 시 → 해당 주문을 찾아 ORDERED 상태면 즉시 API 취소 처리
+        - order_number 미지정 시 → 취소 가능한 주문 목록을 조회하여 CLARIFY 제시
+
+    취소 가능 조건: 판매자가 아직 접수하지 않은 'ORDERED(결제완료)' 상태만 즉시 취소 가능.
+    그 이상(배송준비중·배송중·완료)은 취소 불가.
+
+    Args:
+        order_number: (선택) 취소할 주문번호 (예: "ORD-20240519-001")
+        keyword: (선택) 상품명으로 취소할 때 사용 (예: "딸기", "사과")
+    """
+    if (msg := _ensure_logged_in()):
+        return msg
+
+    # 주문 목록 조회
+    try:
+        data = await call_backend("GET", "/api/shop/order")
+    except BackendError as e:
+        if e.status_code == 401:
+            return _login_required_message()
+        logger.warning("[ShopTool] cancel_order 주문 조회 실패: %s", e)
+        return f"주문 내역을 불러오지 못했어요. ({e.message})"
+
+    orders: list[dict] = data.get("data") or []
+    if not orders:
+        return "취소할 주문이 없어요. 주문 내역이 비어 있습니다."
+
+    # ── 주문번호 지정된 경우: 즉시 API 취소 ──
+    if order_number:
+        target = next(
+            (o for o in orders if o.get("orderNumber", "").lower() == order_number.lower()),
+            None,
+        )
+        if not target:
+            return (
+                f"'{order_number}' 주문을 찾지 못했어요. 주문번호를 다시 확인해 주세요. " +
+                _action({"type": "NAVIGATE", "url": "/mypage/history"})
+            )
+
+        status = target.get("status", "")
+        status_label = _ORDER_STATUS_LABEL.get(status, status)
+
+        if str(status).upper() != "ORDERED":
+            return (
+                f"'{order_number}' 주문은 현재 '{status_label}' 상태라 취소할 수 없어요. "
+                "판매자가 이미 접수한 주문은 취소가 불가합니다. "
+                "자세한 문의는 판매자에게 연락해 주세요. " +
+                _action({"type": "NAVIGATE", "url": "/mypage/history"})
+            )
+
+        # ORDERED → API 취소
+        try:
+            await call_backend("PATCH", f"/api/shop/order/{target['id']}/cancel")
+        except BackendError as e:
+            if e.status_code == 400:
+                return "판매자가 이미 접수하여 취소할 수 없는 상태예요. 판매자에게 직접 문의해 주세요."
+            logger.warning("[ShopTool] cancel_order API 실패: %s", e)
+            return f"취소 처리 중 오류가 났어요. ({e.message})"
+
+        items_summary = ", ".join(
+            i.get("productName", "") for i in (target.get("items") or [])[:2]
+        )
+        more = f" 외 {len(target.get('items', [])) - 2}건" if len(target.get('items', [])) > 2 else ""
+        return (
+            f"'{order_number}' 주문({items_summary}{more})이 취소되었어요. "
+            f"({target.get('totalAmount', 0):,}원) " +
+            _action({"type": "TOAST", "level": "success", "message": "주문이 취소되었습니다."}) +
+            _action({"type": "NAVIGATE", "url": "/mypage/history"})
+        )
+
+    # ── 주문번호 미지정: 취소 가능 목록 조회 후 CLARIFY ──
+    # [디버깅 로직 추가] 백엔드가 반환하는 실제 status 값을 로그로 확인
+    logger.info("[ShopTool] cancel_order - 전체 주문 목록: %s", [{o.get("id"): o.get("status")} for o in orders])
+
+    # 판매자 미접수 상태인 'ORDERED' 주문만 취소 가능 (백엔드 정책)
+    cancellable = [
+        o for o in orders 
+        if str(o.get("status")).upper() == "ORDERED"
+    ]
+    
+    if keyword and not order_number:
+        # 키워드가 있으면 해당 키워드가 포함된 상품이 있는 주문만 필터링
+        filtered = []
+        for o in cancellable:
+            items = o.get("items") or []
+            if any(keyword.lower() in str(i.get("productName", "")).lower() for i in items):
+                filtered.append(o)
+        
+        # 키워드 필터링 후 0건이면 필터링 전의 전체 cancellable을 유지하거나, 없다고 안내
+        if filtered:
+            cancellable = filtered
+
+    if not cancellable:
+        return (
+            "현재 취소 가능한 주문이 없어요. "
+            "취소는 결제완료(주문접수) 상태일 때만 가능합니다. " +
+            _action({"type": "NAVIGATE", "url": "/mypage/history"})
+        )
+
+    if len(cancellable) == 1:
+        # 1건이면 바로 취소
+        o = cancellable[0]
+        items_summary = ", ".join(i.get("productName", "") for i in (o.get("items") or [])[:2])
+        try:
+            await call_backend("PATCH", f"/api/shop/order/{o['id']}/cancel")
+        except BackendError as e:
+            return f"취소 처리 중 오류가 났어요. ({e.message})"
+        return (
+            f"'{o['orderNumber']}' 주문({items_summary}, {o.get('totalAmount', 0):,}원)이 취소되었어요. " +
+            _action({"type": "TOAST", "level": "success", "message": "주문이 취소되었습니다."}) +
+            _action({"type": "NAVIGATE", "url": "/mypage/history"})
+        )
+
+    # 다건 → CLARIFY로 어느 주문 취소할지 선택
+    options = []
+    for o in cancellable[:5]:
+        items_summary = ", ".join(i.get("productName", "") for i in (o.get("items") or [])[:2])
+        more = f" 외 {len(o.get('items', [])) - 2}건" if len(o.get('items', [])) > 2 else ""
+        options.append({
+            "id": o["orderNumber"],
+            "label": f"{o['orderNumber']} | {items_summary}{more} | {o.get('totalAmount', 0):,}원",
+        })
+    question = f"취소 가능한 주문이 {len(cancellable)}건 있어요. 어느 주문을 취소할까요?"
+    return question + " " + _action({
+        "type": "CLARIFY",
+        "intent": "CANCEL_ORDER",
+        "question": question,
+        "options": options,
+    })
+
+
+# ════════════════════════════════════════════════════════
+# 11. 상품 상세 조회
+# ════════════════════════════════════════════════════════
+
+@tool
+async def get_product_detail(product_id: Optional[int] = None, product_name: Optional[str] = None) -> str:
+    """특정 상품의 상세 정보를 조회합니다.
+    사용자가 "토마토 상세 보여줘", "이 상품 정보 알려줘" 처럼 요청할 때 호출하세요.
+
+    Args:
+        product_id: 상품 ID (확정된 경우)
+        product_name: 상품명 (ID를 모를 때. 먼저 search_products로 ID를 확인하는 것을 권장)
+    """
+    # product_id 없으면 이름으로 검색 후 단건이면 자동 진행
+    if not product_id and product_name:
+        try:
+            search_data = await call_backend(
+                "GET", "/api/shop/product",
+                params={"keyword": product_name, "page": 0, "size": 5},
+            )
+        except BackendError as e:
+            return f"상품 검색 중 오류가 났어요. ({e.message})"
+
+        products = search_data.get("data") or []
+        if not products:
+            return f"'{product_name}' 상품을 찾지 못했어요. 다른 이름으로 검색해 보실래요?"
+        if len(products) == 1:
+            product_id = products[0]["id"]
+        else:
+            # 다건 → CLARIFY
+            options = [
+                {"id": p["id"], "label": f"{p['name']} ({p['price']:,}원)"}
+                for p in products[:5]
+            ]
+            question = f"'{product_name}'(으)로 여러 상품을 찾았어요. 어느 상품 상세를 볼까요?"
+            return question + " " + _action({
+                "type": "CLARIFY",
+                "intent": "GET_PRODUCT_DETAIL",
+                "question": question,
+                "options": options,
+            })
+
+    if not product_id:
+        return "어떤 상품의 상세 정보가 필요하신가요? 상품명을 말씀해 주세요."
+
+    try:
+        data = await call_backend("GET", f"/api/shop/product/{int(product_id)}")
+    except BackendError as e:
+        if e.status_code == 404:
+            return "해당 상품을 찾지 못했어요. 이미 삭제되었거나 판매 종료된 상품일 수 있어요."
+        logger.warning("[ShopTool] get_product_detail 실패: %s", e)
+        return f"상품 정보를 불러오지 못했어요. ({e.message})"
+
+    p = data.get("data") or data  # 단건은 data 필드 또는 루트에 위치
+    name = p.get("name", "?")
+    price = p.get("price", 0)
+    stock = p.get("stock", 0)
+    description = p.get("description", "")
+    category = p.get("categoryName", "")
+    seller = p.get("sellerName", "")
+    sales_count = p.get("salesCount", 0)
+    status = p.get("status", "")
+    image_urls: list = p.get("imageUrls") or []
+
+    status_map = {
+        "AVAILABLE": "판매중",
+        "SOLD_OUT": "품절",
+        "SUSPENDED": "판매중지",
+        "PENDING": "검수중",
+    }
+    status_label = status_map.get(status, status)
+
+    detail_lines = [
+        f"📦 **{name}**",
+        f"가격: {price:,}원 | 재고: {stock}개 | 판매량: {sales_count}개",
+        f"카테고리: {category} | 판매자: {seller} | 상태: {status_label}",
+    ]
+    if description:
+        # 너무 길면 앞부분만
+        desc_preview = description[:100] + ("…" if len(description) > 100 else "")
+        detail_lines.append(f"설명: {desc_preview}")
+
+    product_card = {
+        "id": p.get("id"),
+        "name": name,
+        "price": price,
+        "stock": stock,
+        "imageUrl": image_urls[0] if image_urls else None,
+        "salesCount": sales_count,
+        "categoryName": category,
+    }
+
+    return (
+        "\n".join(detail_lines) + " " +
+        _action({"type": "PRODUCT_LIST", "products": [product_card]}) +
+        _action({"type": "NAVIGATE", "url": f"/shop/{p.get('id')}"})
+    )
+
+
+# ════════════════════════════════════════════════════════
+# 12. 장바구니에서 선택 결제
+# ════════════════════════════════════════════════════════
+
+def _split_keywords(text: str) -> list[str]:
+    """'쌀이랑 감자', '쌀, 감자', '쌀하고 감자' 등에서 키워드를 분리."""
+    import re
+    # 조사/접속사로 분리: 이랑, 랑, 과, 와, 하고, 그리고, 및, ','
+    parts = re.split(r"[,\s]*(?:이랑|랑|이랑|과|와|하고|그리고|및)\s*|,\s*", text)
+    # 공백·조사 제거 후 비어있지 않은 것만
+    cleaned = [re.sub(r"[을를은는이가도]$", "", p.strip()) for p in parts]
+    return [k for k in cleaned if k]
+
+
+def _match_cart_items(cart_items: list[dict], keywords: list[str]) -> list[dict]:
+    """키워드 목록과 장바구니 항목 이름을 비교해 매칭되는 항목 반환.
+
+    매칭 기준:
+        - 키워드가 상품명에 포함 (예: "쌀" → "햇쌀 10kg" 매칭)
+        - 또는 상품명이 키워드에 포함 (예: "햇쌀" → "쌀" 키워드로 매칭)
+    """
+    matched = []
+    for item in cart_items:
+        product = item.get("product") or {}
+        name = product.get("name", "")
+        for kw in keywords:
+            if kw in name or name in kw:
+                matched.append(item)
+                break
+    return matched
+
+
+@tool
+async def buy_selected_from_cart(keywords: str) -> str:
+    """장바구니에 담긴 상품 중 사용자가 지정한 것만 골라 결제합니다.
+
+    '거기서 쌀이랑 감자만 주문해줘', '장바구니에서 사과하고 배만 결제할게' 처럼
+    장바구니 내 특정 상품만 선택해서 주문하려 할 때 사용합니다.
+
+    Args:
+        keywords: 주문할 상품명(들). 쉼표·'이랑'·'하고' 등으로 구분 가능.
+            예: "쌀, 감자" / "사과이랑 배" / "햇쌀"
+    """
+    if (msg := _ensure_logged_in()):
+        return msg
+
+    try:
+        data = await call_backend("GET", "/api/shop/cart")
+    except BackendError as e:
+        if e.status_code == 401:
+            return _login_required_message()
+        logger.warning("[ShopTool] buy_selected_from_cart 장바구니 조회 실패: %s", e)
+        return f"장바구니를 불러오지 못했어요. ({e.message})"
+
+    cart_items: list[dict] = data if isinstance(data, list) else (data.get("data") or [])
+    if not cart_items:
+        return "장바구니가 비어 있어요. 먼저 상품을 담아주세요."
+
+    kw_list = _split_keywords(keywords)
+    if not kw_list:
+        return "어떤 상품을 주문할지 말씀해 주세요."
+
+    matched = _match_cart_items(cart_items, kw_list)
+
+    if not matched:
+        available = ", ".join(
+            (item.get("product") or {}).get("name", "?") for item in cart_items[:5]
+        )
+        return (
+            f"장바구니에서 '{keywords}'에 해당하는 상품을 찾지 못했어요. "
+            f"현재 장바구니: {available}"
+        )
+
+    # 매칭된 항목의 cart item id 수집 (checkout은 cartIds 쿼리로 필터링)
+    cart_ids = ",".join(str(item["id"]) for item in matched)
+    url = f"/shop/checkout?cartIds={cart_ids}"
+
+    matched_names = ", ".join((item.get("product") or {}).get("name", "?") for item in matched)
+    total = sum(
+        (item.get("product") or {}).get("price", 0) * item.get("quantity", 1)
+        for item in matched
+    )
+    return (
+        f"{matched_names} ({total:,}원) 결제 페이지로 안내할게요. " +
+        _action({"type": "NAVIGATE", "url": url})
+    )
+
+
+# ════════════════════════════════════════════════════════
+# 13. 상품 정보 자동 채우기 (기존 + NAVIGATE 보강)
 # ════════════════════════════════════════════════════════
 
 @tool

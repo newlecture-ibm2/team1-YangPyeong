@@ -84,6 +84,13 @@ export async function getMyOrders() {
   return apiFetch<Order[]>('/api/shop/order');
 }
 
+/** 구매자 주문 취소 (ORDERED 상태만 허용) */
+export async function cancelMyOrder(orderId: number) {
+  return apiFetch<Order>(`/api/shop/order/${orderId}/cancel`, {
+    method: 'PATCH',
+  });
+}
+
 /** 배송 조회 (더미 택배사) */
 export async function trackOrder(trackingNumber: string) {
   return apiFetch<{ time: string; location: string; description: string; current: boolean }[]>(

@@ -9,8 +9,12 @@ from app.agents.tools.shop_tools import (
     add_to_cart,
     autofill_product_info,
     buy_now,
+    buy_selected_from_cart,
+    cancel_order,
     clarify,
     clarify_crop_register,
+    get_my_cart,
+    get_product_detail,
     list_my_orders,
     list_my_products,
     list_seller_orders,
@@ -33,7 +37,17 @@ SHOP_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 상점(Shop)' 도우미입
 4. 도구를 호출하지 않고 "담았어요", "이동했어요" 같은 답변을 만들어내지 마세요.
 
 [도구 → 사용 시점]
-- list_shop_menu: 전체 상품 / 메뉴 / "뭐 팔아" / "뭐 있어" / 인기 상품 조회
+⚠️ 도구 선택 최우선 규칙: "장바구니"가 메시지에 있으면 list_shop_menu가 아닌 get_my_cart를 호출하세요.
+
+- get_my_cart: "장바구니에 뭐있어", "내 장바구니", "장바구니 확인", "장바구니 조회"
+  ← "장바구니" 단어가 포함된 조회 요청은 반드시 이 도구. list_shop_menu 절대 사용 금지.
+- buy_selected_from_cart: 장바구니 내 특정 상품만 골라 결제
+  · "거기서 쌀이랑 감자만 주문해줘", "장바구니에서 사과하고 배만 결제할게"
+  · 직전 대화에서 get_my_cart 결과가 있고, 사용자가 그 중 일부만 주문하려 할 때 사용
+  · keywords 에 선택 상품명(들) 전달. 예: keywords="쌀, 감자"
+  · 전체 결제는 navigate_to("cart") 또는 buy_now 사용
+- list_shop_menu: 장터 전체 상품/메뉴 조회. "뭐 팔아", "어떤 상품 있어", "인기 상품", "메뉴 보여줘"
+  ← "장바구니" 단어가 없는 경우에만 사용.
 - search_products: 특정 상품명/키워드 검색 (예: "사과", "배추")
 - add_to_cart: 장바구니에 담기 (product_id 필요)
 - buy_now: 바로 결제
@@ -41,6 +55,12 @@ SHOP_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 상점(Shop)' 도우미입
 - list_my_products: 판매자 본인이 등록한 상품
 - list_seller_orders: 판매자에게 들어온 주문
 - list_my_orders: 구매자 본인 주문 내역
+- cancel_order: 주문 취소 요청 ("주문 취소해줘", "딸기 주문 취소")
+  · order_number 알면 전달. 
+  · 특정 상품명("딸기", "사과")을 취소하고 싶다면 keyword 인자로 전달.
+  · 둘 다 모르면 인자 없이 호출 → 취소 가능 목록 자동 조회
+- get_product_detail: 상품 상세 조회 ("토마토 상세 보여줘", "이 상품 정보")
+  · product_id 알면 우선 사용. 모르면 product_name 으로 검색
 - autofill_product_info: 상품 등록 폼 자동완성
   · 사용자가 가격/재고/카테고리/설명을 명시한 경우 반드시 해당 값을 인자로 전달.
     예) "배추 8800원에 100개로 채워줘" → autofill_product_info(product_name="배추", price=8800, stock=100)
@@ -56,6 +76,19 @@ SHOP_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 상점(Shop)' 도우미입
   → 사용자가 "장터에 판매 상품으로 등록"을 선택하면 그 후에 navigate_to("seller_register")
   → 사용자가 "내 농장에 작물 등록"을 선택하면 "해당 기능은 곧 준비됩니다" 라고만 답하기
     (현재 농장 작물 등록 페이지는 다른 팀에서 개발 중)
+
+[도구 선택 예시 — 반드시 따를 것]
+"장바구니에 뭐있어?" → get_my_cart()
+"내 장바구니 확인해줘" → get_my_cart()
+"장바구니 보여줘" → get_my_cart()
+"뭐 팔아?" → list_shop_menu()
+"어떤 상품 있어?" → list_shop_menu()
+"메뉴 보여줘" → list_shop_menu()
+"사과 상세 보여줘" → get_product_detail(product_name="사과")
+"주문 취소해줘" → cancel_order()
+"ORD-001 취소" → cancel_order(order_number="ORD-001")
+"거기서 쌀이랑 감자만 주문해줘" → buy_selected_from_cart(keywords="쌀, 감자")
+"장바구니에서 사과만 결제할게" → buy_selected_from_cart(keywords="사과")
 
 [다중 턴 처리]
 직전 대화에서 "담아드릴까요?" 질문이 있었고 사용자가 "응/네/웅/ㅇ/yes/ok" 등 긍정 답변을 했다면:
@@ -81,6 +114,10 @@ def get_shop_agent():
         search_products,
         add_to_cart,
         buy_now,
+        get_my_cart,             # 장바구니 조회
+        buy_selected_from_cart,  # 장바구니에서 선택 상품만 결제
+        cancel_order,            # 주문 취소 요청
+        get_product_detail,      # 상품 상세 조회
         list_my_products,
         list_seller_orders,
         list_my_orders,

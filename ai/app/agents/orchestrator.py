@@ -113,6 +113,11 @@ DOMAIN_FORCE_KEYWORDS: dict[str, set[str]] = {
         "뭐팔아", "뭐 팔아", "뭐파냐", "뭐팔고",
         "어떤 상품", "어떤상품", "어떤 거 팔",
         "상품 뭐", "상품뭐",
+        # 취소
+        "주문 취소", "주문취소", "취소해줘", "취소해 줘", "취소할래", "취소할게",
+        # 장바구니/상품 상세
+        "내 장바구니", "장바구니 확인", "장바구니 조회",
+        "상품 상세", "상세 보여", "상세보기", "상세 정보", "상품 정보",
     },
     # 예시: 팀원이 새 도메인 추가 시
     # "livestock_agent": {"가축", "축산", "소 등록", "출하", ...},
@@ -216,10 +221,19 @@ async def router_node(state: AgentState) -> List[str]:
         llm = get_llm()
         chat_model = llm.get_chat_model(temperature=0)
 
-        response = await chat_model.ainvoke([
-            SystemMessage(content=ROUTER_SYSTEM_PROMPT),
-            HumanMessage(content=last_message),
-        ])
+        prompt = [SystemMessage(content=ROUTER_SYSTEM_PROMPT)]
+        
+        # 직전 봇 메시지가 있다면 문맥 파악을 위해 추가
+        prev_ai = next(
+            (m.content for m in reversed(state["messages"][:-1]) if isinstance(m, AIMessage)), 
+            None
+        )
+        if prev_ai:
+            prompt.append(AIMessage(content=prev_ai))
+            
+        prompt.append(HumanMessage(content=last_message))
+
+        response = await chat_model.ainvoke(prompt)
 
         # 쉼표로 구분된 결과를 리스트로 변환
         raw_routes = [r.strip().lower() for r in response.content.split(",")]
@@ -313,21 +327,92 @@ async def call_policy_agent(state: AgentState):
 async def _shop_keyword_fallback(user_message: str) -> tuple[str, list[dict]] | None:
     from app.agents.tools.shop_tools import (
         list_shop_menu, navigate_to, clarify_crop_register, autofill_product_info,
+        get_my_cart, cancel_order, get_product_detail, buy_selected_from_cart,
     )
 
     lower = user_message.lower()
 
-    # ── '작물 등록' 모호성 — 항상 가장 먼저 체크 ──
-    # "작물 등록" 키워드는 농장 작물 vs 판매 상품 두 가지 의미가 있으므로
-    # 어떤 등록 키워드보다 먼저 매칭하여 CLARIFY로 분기.
+    # ── 0순위: '작물 등록' 모호성 — 항상 가장 먼저 체크 ──
     crop_register_kws = ("작물 등록", "작물등록", "작물 등록할", "작물등록할",
                          "심을 거 등록", "심을거 등록")
     if any(kw in lower for kw in crop_register_kws):
         result = await clarify_crop_register.ainvoke({})
         return split_actions(result)
 
-    # ── 상품 자동 채우기 — "배추 등록할건데 8800원에 100개" 같은 패턴 ──
-    # "채워줘", "팔건데", "등록할" + 작물명(+가격/재고) 패턴
+    # ── 1순위: 장바구니 조회 ──
+    # "뭐있어", "보여줘" 같은 일반 조회 키워드보다 반드시 먼저 체크해야 함.
+    # "장바구니에 뭐있어?" → list_shop_menu 가 아닌 get_my_cart 호출.
+    cart_inquiry_kws = ("장바구니에 뭐", "장바구니 뭐", "장바구니 확인", "장바구니 조회",
+                        "내 장바구니", "장바구니 보여", "장바구니에 있", "장바구니 있")
+    if any(kw in lower for kw in cart_inquiry_kws):
+        result = await get_my_cart.ainvoke({})
+        return split_actions(result)
+
+    # ── 1.5순위: 장바구니에서 선택 상품만 결제 ──
+    # "거기서 쌀이랑 감자만 주문해줘" 처럼 직전 장바구니 조회 후 일부만 선택 결제하는 패턴.
+    # 반드시 cart_inquiry_kws(장바구니 조회)보다 뒤, menu_kws(전체 메뉴)보다 앞에 위치.
+    select_buy_kws = ("거기서", "그중에", "그 중에", "중에서", "거기에서", "그것들 중",
+                      "만 주문", "만 결제", "만 사", "만 구매", "만 담아")
+    select_buy_connectors = ("이랑", "랑", "하고", "그리고", "과", "와")
+    # "~만 주문/결제" + 접속사(이랑·랑·하고 등)가 있거나 "거기서/그중에" 패턴이면 선택 결제
+    has_select_buy = (
+        any(kw in lower for kw in select_buy_kws) or
+        (any(conn in lower for conn in select_buy_connectors) and
+         any(kw in lower for kw in ("주문", "결제", "구매", "사줘")))
+    )
+    if has_select_buy:
+        # 사용자 메시지에서 상품명 부분 추출: "거기서 쌀이랑 감자만 주문해줘" → "쌀이랑 감자"
+        import re as _re
+        # "거기서/그중에 + 상품명들 + 만/을/를 + 동사" 패턴에서 상품명 추출
+        m = _re.search(
+            r"(?:거기서|그중에|그 중에|중에서|거기에서|장바구니에서|장바구니에서)\s*(.+?)(?:만|을|를)?\s*(?:주문|결제|구매|사줘|사줄|주문해|결제해)",
+            lower
+        )
+        if not m:
+            # fallback: 조사/동사 제거 후 전체에서 추출
+            raw = _re.sub(r"(거기서|그중에|그 중에|중에서|거기에서|장바구니에서|만 주문해줘|만 결제해줘|만 사줘|주문해줘|결제해줘|해줘|줘)", "", lower).strip()
+            keywords_for_tool = raw if raw else user_message
+        else:
+            keywords_for_tool = m.group(1).strip()
+        logger.info("[ShopFallback] buy_selected_from_cart: keywords=%r", keywords_for_tool)
+        result = await buy_selected_from_cart.ainvoke({"keywords": keywords_for_tool})
+        return split_actions(result)
+
+    # ── 2순위: 주문 취소 ──
+    cancel_kws = ("주문 취소", "주문취소", "취소해줘", "취소해 줘", "취소할래", "취소할게",
+                  "취소 해줘", "취소하고 싶", "취소해달라고", "취소한다니까")
+    if any(kw in lower for kw in cancel_kws) or (("주문" in lower or "상품" in lower) and "취소" in lower):
+        import re as _re
+        m = _re.search(r"ord-\d+-[a-z0-9]+", lower)
+        order_num = m.group(0).upper() if m else None
+        
+        # 키워드 추출 시도 (취소와 무관한 단어들 제거)
+        kw_extract = lower
+        for k in cancel_kws:
+            kw_extract = kw_extract.replace(k, "")
+        kw_extract = kw_extract.replace("아니", "").replace("주문", "").replace("상품", "").replace("해줘", "").strip()
+        
+        logger.info("[ShopFallback] cancel_order: order_number=%s, keyword=%s", order_num, kw_extract)
+        
+        args = {}
+        if order_num: args["order_number"] = order_num
+        elif kw_extract: args["keyword"] = kw_extract
+            
+        result = await cancel_order.ainvoke(args)
+        return split_actions(result)
+
+    # ── 3순위: 상품 상세 조회 ──
+    detail_kws = ("상세 보여", "상세보여", "상세 정보", "상세정보", "상품 정보", "상품정보",
+                  "상세 알려", "상세알려", "상세 조회", "상세보기")
+    if any(kw in lower for kw in detail_kws):
+        attrs = extract_product_attrs(user_message)
+        product_name = attrs.get("product_name")
+        result = await get_product_detail.ainvoke(
+            {"product_name": product_name} if product_name else {}
+        )
+        return split_actions(result)
+
+    # ── 4순위: 상품 자동 채우기 ──
     autofill_signal_kws = ("채워줘", "채워 줘", "채워주세요", "채워달라",
                            "팔건데", "팔 건데", "팔려고", "팔려구",
                            "등록할", "등록 할", "등록하고", "등록하려")
@@ -342,7 +427,9 @@ async def _shop_keyword_fallback(user_message: str) -> tuple[str, list[dict]] | 
             })
             return split_actions(result)
 
-    # 메뉴/상품 목록 키워드
+    # ── 5순위: 장터 메뉴/상품 목록 ──
+    # ⚠️ 반드시 장바구니 체크(1순위) 이후에 위치해야 함.
+    #    "장바구니에 뭐있어"의 "뭐있어" 가 여기서 걸리면 안 됨.
     menu_kws = ("메뉴", "뭐있어", "뭐 있어", "뭐가 있", "뭐가있", "뭐 있었", "뭐있었",
                 "뭐 팔", "뭐팔", "보여줘", "보여 줘",
                 "어떤 상품", "상품 목록", "상품뭐", "뭐있냐", "뭐 있냐", "뭐가 있냐",
@@ -351,7 +438,7 @@ async def _shop_keyword_fallback(user_message: str) -> tuple[str, list[dict]] | 
         result = await list_shop_menu.ainvoke({})
         return split_actions(result)
 
-    # 페이지 이동 키워드 (작물 등록은 위에서 이미 처리됨)
+    # ── 6순위: 페이지 이동 ──
     nav_map = [
         (("장바구니",), "cart"),
         (("내 주문", "내주문", "주문 내역", "주문내역"), "my_orders"),
@@ -366,7 +453,6 @@ async def _shop_keyword_fallback(user_message: str) -> tuple[str, list[dict]] | 
             return split_actions(result)
 
     # ── CLARIFY 후속 처리 ──
-    # 사용자가 clarify_crop_register의 옵션을 선택해서 들어온 경우
     if "장터에 판매 상품으로 등록" in user_message or "shop_product" in lower:
         result = await navigate_to.ainvoke({"target": "seller_register"})
         return split_actions(result)

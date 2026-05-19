@@ -280,6 +280,24 @@ export default function FarmBot({ children }: FarmBotProps) {
                 )}
                 <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleBot}`}>
                   {msg.content}
+                  {msg.role === 'bot' && msg.actions?.filter(a => a.type === 'CLARIFY').map((action, actionIdx) => (
+                    <div key={`clarify-${actionIdx}`} className={styles.clarifyOptions}>
+                      {action.options?.map((opt, optIdx) => (
+                        <button
+                          key={`opt-${optIdx}`}
+                          className={styles.clarifyOptionBtn}
+                          onClick={() => sendChatMessage(
+                            opt.label, 
+                            action.intent === 'CANCEL_ORDER' 
+                              ? `주문번호 ${opt.id} 취소해줘` 
+                              : `${opt.id} 선택할게`
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
