@@ -81,6 +81,11 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
+        // 관리자에 의해 제재된 상품은 수정 불가 (고객센터 문의 필요)
+        if (product.getStatusReason() != null) {
+            throw new BusinessException(ErrorCode.PRODUCT_ADMIN_LOCKED);
+        }
+
         product.update(name, price, stock, description, null, categoryName);
 
         // 상품 내용 수정 시 재검수를 위해 PENDING 상태로 전환
@@ -105,6 +110,11 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
+        // 관리자에 의해 제재된 상품은 임의 상태 변경 불가
+        if (product.getStatusReason() != null) {
+            throw new BusinessException(ErrorCode.PRODUCT_ADMIN_LOCKED);
+        }
+
         try {
             ProductStatus status = ProductStatus.valueOf(newStatus.toUpperCase());
             // Product 도메인 엔티티의 상태 변경 로직 (Setter가 없으므로 update 메서드 혹은 별도 메서드 사용)
@@ -124,6 +134,11 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
 
         if (!product.getSellerId().equals(sellerId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        // 관리자에 의해 제재된 상품은 임의 삭제 불가
+        if (product.getStatusReason() != null) {
+            throw new BusinessException(ErrorCode.PRODUCT_ADMIN_LOCKED);
         }
 
         productRepository.softDelete(productId);

@@ -73,6 +73,7 @@ public enum ErrorCode {
     ORDER_NOT_FOUND("E-SHOP-003", "주문을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     ORDER_INVALID_STATUS("E-SHOP-004", "주문 상태를 변경할 수 없습니다.", HttpStatus.BAD_REQUEST),
     CART_ITEM_NOT_FOUND("E-SHOP-005", "장바구니 항목을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    PRODUCT_ADMIN_LOCKED("E-SHOP-006", "관리자에 의해 제재된 상품은 상태를 변경할 수 없습니다. 고객센터에 문의해주세요.", HttpStatus.FORBIDDEN),
 
     // ── 커뮤니티 ──
     POST_NOT_FOUND("E-COMMUNITY-001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
