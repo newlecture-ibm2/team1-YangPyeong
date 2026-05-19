@@ -7,6 +7,7 @@ const INSIGHT_CACHE_KEY = 'seller-insight-cache';
 
 interface InsightCache {
   date: string;
+  fingerprint: string; // 상품 상태/재고/판매량 등을 포함 — 변경되면 캐시 무효
   insight: string;
 }
 
@@ -40,14 +41,18 @@ export default function useSellerInsight(products: SellerProduct[]) {
 
     const today = new Date().toISOString().split('T')[0];
 
-    // 캐시 확인 로직
+    // 캐시 확인 로직 — 날짜 + 핑거프린트 모두 일치할 때만 사용
+    // (상품 상태가 검수중→판매중 변경되면 핑거프린트가 달라져 자동으로 새 인사이트 생성)
     if (!forceRefresh) {
       try {
         const cached = localStorage.getItem(INSIGHT_CACHE_KEY);
         if (cached) {
           const parsed = JSON.parse(cached) as InsightCache;
-          // 같은 날짜이면 캐시된 인사이트 반환
-          if (parsed.date === today && parsed.insight) {
+          if (
+            parsed.date === today &&
+            parsed.fingerprint === productsFingerprint &&
+            parsed.insight
+          ) {
             setInsight(parsed.insight);
             return;
           }
@@ -78,10 +83,14 @@ export default function useSellerInsight(products: SellerProduct[]) {
 
       if (data.success && data.data?.insight) {
         setInsight(data.data.insight);
-        // 캐시 업데이트
+        // 캐시 업데이트 — 핑거프린트 함께 저장 (상품 변경 시 자동 무효화)
         localStorage.setItem(
           INSIGHT_CACHE_KEY,
-          JSON.stringify({ date: today, insight: data.data.insight })
+          JSON.stringify({
+            date: today,
+            fingerprint: productsFingerprint,
+            insight: data.data.insight,
+          })
         );
       } else {
         setError(data.error?.message || '인사이트를 생성하지 못했습니다.');
@@ -102,7 +111,8 @@ export default function useSellerInsight(products: SellerProduct[]) {
     }
   }, [productsFingerprint, fetchInsight]);
 
-  // 데이터 변경 감지: 핑거프린트가 초기 시점과 달라졌을 때만 stale 처리
+  // 데이터 변경 감지: 핑거프린트가 달라지면 stale 표시 + 자동 새 인사이트 fetch
+  // 예: 관리자가 상품을 '판매중'으로 승인하면 자동으로 인사이트도 갱신됨
   useEffect(() => {
     if (
       initialLoaded.current &&
@@ -111,7 +121,12 @@ export default function useSellerInsight(products: SellerProduct[]) {
       productsFingerprint !== initialFingerprint.current
     ) {
       setIsStale(true);
+      // 사용자 수동 클릭을 기다리지 않고 즉시 새 인사이트 요청
+      fetchInsight(true);
     }
+    // fetchInsight는 productsFingerprint에 의존하므로 deps에 포함하면 무한 갱신 가능
+    // → productsFingerprint만 deps에 두고 fetchInsight 호출은 최신 클로저로 처리
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productsFingerprint]);
 
   const refreshInsight = () => fetchInsight(true);
