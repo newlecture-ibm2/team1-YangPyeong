@@ -129,11 +129,10 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
                 }
             }
         } catch (Exception e) {
-            log.warn("AI 배치 사유 생성 실패, 개별 호출로 폴백합니다: {}", e.getMessage());
+            log.warn("AI 배치 사유 생성 실패 (개별 폴백 생략, {}건): {}", commands.size(), e.getMessage());
         }
 
-        // 폴백: 인터페이스 기본 구현 (개별 호출)
-        return RecommendAiPort.super.generateBatchReasons(farmDetails, mode, commands);
+        return Collections.emptyMap();
     }
 
     @Override

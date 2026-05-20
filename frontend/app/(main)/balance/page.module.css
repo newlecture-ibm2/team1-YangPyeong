@@ -2,6 +2,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
+  letter-spacing: -0.02em;
 }
 
 .pageHeader {
@@ -65,6 +66,170 @@
   background: var(--color-primary);
 }
 
+/* ========== 읍면동 대시보드 ========== */
+
+.dashboardSection {
+  margin-bottom: 48px;
+}
+
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dashboardTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboardIcon {
+  font-size: 28px;
+}
+
+.dashboardTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.townSelect {
+  padding: 10px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: white;
+  font-size: 16px;
+  min-width: 160px;
+  min-height: var(--touch-target-min);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.townSelect:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.dashboardLoading {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-secondary);
+  font-size: 16px;
+}
+
+/* 신규 가입자 폴백 배너 */
+.fallbackBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background-color: var(--color-primary-pale);
+  border: 1px solid var(--color-primary-light);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.fallbackIcon {
+  font-size: 22px;
+  line-height: 1;
+  padding-top: 2px;
+}
+
+.fallbackText {
+  font-size: 16px;
+  color: var(--color-text);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.fallbackLink {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* 대조 카드 (우리 동네 vs 양평군) */
+.dashboardCards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.dashboardCard {
+  padding: 24px;
+}
+
+.cardHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.cardTitleLg {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.farmCountBadge {
+  font-size: 13px;
+  color: var(--color-primary);
+  background: var(--color-primary-pale);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+}
+
+/* 작물별 수급 행 */
+.cropGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cropRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: var(--radius-sm);
+  min-height: var(--touch-target-min);
+}
+
+.cropEmoji {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.cropNameText {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  flex: 1;
+}
+
+.cropRatio {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-right: 4px;
+}
+
+.noCropText {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: 24px 0;
+}
+
+/* ========== TOP 3 요약 카드 ========== */
+
 .topSummary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -112,10 +277,11 @@
 
 .gaugeFill.balanced { background-color: var(--color-primary); }
 .gaugeFill.short_caution { background-color: #10b981; }
-.gaugeFill.balanced { background-color: #10b981; }
 .gaugeFill.short_warn { background-color: #3b82f6; }
 .gaugeFill.excess_caution { background-color: var(--color-warning); }
 .gaugeFill.excess_warn { background-color: var(--color-danger); }
+
+/* ========== 필터 & 테이블 ========== */
 
 .filterSection {
   display: flex;
@@ -130,6 +296,8 @@
   border-radius: var(--radius-sm);
   background: white;
   min-width: 160px;
+  font-size: 16px;
+  min-height: var(--touch-target-min);
 }
 
 .tableWrap {
@@ -157,7 +325,7 @@
 
 .table td {
   padding: 16px;
-  font-size: 15px;
+  font-size: 16px;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -169,6 +337,9 @@
   color: var(--color-primary);
   font-weight: 600;
   text-decoration: none;
+  min-height: var(--touch-target-min);
+  display: inline-flex;
+  align-items: center;
 }
 
 .detailLink:hover {
@@ -178,49 +349,14 @@
 .loading, .error {
   text-align: center;
   padding: 100px 20px;
+  font-size: 16px;
 }
 
 .error {
   color: var(--color-danger);
 }
 
-@media (max-width: 768px) {
-  .container {
-    padding: 24px 16px;
-  }
-
-  .pageTitle {
-    font-size: 28px;
-  }
-
-  .tabs {
-    gap: 20px;
-    overflow-x: auto;
-  }
-
-  .topSummary {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-
-  .filterSection {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .selectInput {
-    min-width: unset;
-    width: 100%;
-  }
-
-  .table th,
-  .table td {
-    padding: 12px;
-    font-size: 13px;
-  }
-}
+/* ========== 가이드 배너 ========== */
 
 .guideBanner {
   display: flex;
@@ -251,3 +387,56 @@
   font-weight: 600;
 }
 
+/* ========== 반응형 (모바일) ========== */
+
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 16px;
+  }
+
+  .pageTitle {
+    font-size: 28px;
+  }
+
+  .tabs {
+    gap: 20px;
+    overflow-x: auto;
+  }
+
+  .dashboardCards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dashboardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .townSelect {
+    width: 100%;
+  }
+
+  .topSummary {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .filterSection {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .selectInput {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px;
+    font-size: 14px;
+  }
+}

@@ -9,6 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -47,6 +51,24 @@ public class NotificationPreferenceService implements NotificationPreferenceUseC
     public boolean isEnabled(Long userId, NotificationCategory category) {
         return preferencePort.findByUserId(userId)
                 .map(p -> p.isEnabled(category))
-                .orElse(true); // 설정이 없으면 기본 활성화로 간주
+                .orElse(true);
+    }
+
+    @Override
+    public List<Long> filterEnabledUserIds(List<Long> userIds, NotificationCategory category) {
+        if (userIds.isEmpty()) return List.of();
+
+        // 1번의 SELECT IN으로 설정이 있는 유저만 조회
+        Map<Long, NotificationPreference> prefMap = preferencePort.findAllByUserIdIn(userIds)
+                .stream()
+                .collect(Collectors.toMap(NotificationPreference::getUserId, p -> p));
+
+        // 설정이 없는 유저는 기본값(활성화)으로 간주
+        return userIds.stream()
+                .filter(userId -> {
+                    NotificationPreference pref = prefMap.get(userId);
+                    return pref == null || pref.isEnabled(category);
+                })
+                .toList();
     }
 }

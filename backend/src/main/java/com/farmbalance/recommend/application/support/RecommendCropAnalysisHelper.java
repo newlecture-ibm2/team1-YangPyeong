@@ -133,5 +133,20 @@ public class RecommendCropAnalysisHelper {
                 candidate.getPreferredSoilTypes());
     }
 
+    /**
+     * 수급·KAMIS DB 조회 없이 후보 작물 순위 선정용 빠른 점수 (토양·시세전망·난이도만 반영).
+     */
+    public int estimateQuickScore(
+            CropCandidateData candidate,
+            FarmBasicData farm,
+            RecommendScoreCalculator calculator
+    ) {
+        int soilPercent = soilPercent(candidate, farm, calculator);
+        int supplyPercent = 50;
+        int pricePercent = candidate.getPriceForecastPercent();
+        int difficulty = candidate.getDifficulty() != null ? candidate.getDifficulty() : 3;
+        return calculator.calculate(soilPercent, pricePercent, supplyPercent, difficulty);
+    }
+
     public record MismatchInfo(String note, String bestCropName, int bestSoilPercent, int currentSoilPercent) {}
 }

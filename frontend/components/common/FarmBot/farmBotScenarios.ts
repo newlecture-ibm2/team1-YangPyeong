@@ -62,7 +62,7 @@ const scenarios: FarmBotScenario[] = [
       { target: '[data-guide="farm-guest-interaction"]', message: '인증하시면 대시보드 차트, 날씨 정보, AI 분석 리포트 등 다양한 기능을 실제로 사용할 수 있어요! 🌤️', position: 'top' },
       { target: '[data-guide="farm-guest-certify"]', message: '여기를 눌러 농업인 인증을 시작해보세요! 인증 후 모든 기능을 자유롭게 사용할 수 있답니다 ✅', position: 'bottom' },
       // ── 농업인 전용 ──
-      { target: '[data-guide="farm-farmer-tabs"]', message: '대시보드, 수급 분석, AI 작물 추천, 농장 정보 탭을 이용할 수 있어요! 📑', position: 'bottom' },
+      { target: '[data-guide="farm-farmer-tabs"]', message: '대시보드, 수급 분석, AI 작물 추천, 농장 일지 탭을 이용할 수 있어요! 📑', position: 'bottom' },
       { target: '[data-guide="farm-farmer-kpi"]', message: '농장 면적, 재배 현황, 예상 수익 등 핵심 지표를 한눈에 확인하세요 📈', position: 'bottom' },
       { target: '[data-guide="farm-farmer-insight"]', message: 'AI가 작물별 수확량을 예측하고 수익을 분석해 드려요! KAMIS 도매 시세도 확인 가능해요 🤖', position: 'top' },
       { target: '[data-guide="farm-farmer-recent"]', message: '최근 활동 내역을 기록하고 농장 작업을 체계적으로 관리해보세요 📅', position: 'top' },

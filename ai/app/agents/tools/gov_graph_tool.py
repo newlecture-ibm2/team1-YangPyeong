@@ -257,4 +257,41 @@ class GovGraphTool:
             session.close()
 
     async def get_general_analysis(self, entities: ExtractedEntities) -> dict:
-        return {}
+        session = get_db_session()
+        if not session:
+            return {}
+        try:
+            if entities.region:
+                query = text("""
+                    SELECT count(f.id) as farm_count
+                    FROM graph.graph_entity f
+                    JOIN graph.graph_relation r ON r.from_entity_id = f.id AND r.relation_type = 'LOCATED_IN'
+                    JOIN graph.graph_entity reg ON reg.id = r.to_entity_id
+                    WHERE f.entity_type = 'FARM' AND reg.name = :region
+                """)
+                result = session.execute(query, {"region": entities.region})
+                row = result.fetchone()
+                if row and row.farm_count is not None:
+                    return {
+                        "region_farm_count": row.farm_count,
+                        "sources": [{"type": "GRAPH_DB", "description": f"{entities.region} 농장 개수 = {row.farm_count}개"}]
+                    }
+            else:
+                query = text("""
+                    SELECT reg.name as region, count(f.id) as farm_count
+                    FROM graph.graph_entity f
+                    JOIN graph.graph_relation r ON r.from_entity_id = f.id AND r.relation_type = 'LOCATED_IN'
+                    JOIN graph.graph_entity reg ON reg.id = r.to_entity_id
+                    WHERE f.entity_type = 'FARM'
+                    GROUP BY reg.name
+                    ORDER BY farm_count DESC
+                """)
+                result = session.execute(query)
+                distribution = [f"{row.region} {row.farm_count}개" for row in result.fetchall()]
+                if distribution:
+                    return {
+                        "sources": [{"type": "GRAPH_DB", "description": f"양평군 지역별 농가 분포: {', '.join(distribution)}"}]
+                    }
+            return {}
+        finally:
+            session.close()
