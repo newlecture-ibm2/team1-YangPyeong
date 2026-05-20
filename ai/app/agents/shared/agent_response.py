@@ -15,6 +15,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
+# pyrefly: ignore [missing-import]
 from langchain_core.messages import AIMessage, ToolMessage
 
 from app.agents.shared.action_token import split_actions, sanitize_action_leakage
@@ -50,6 +51,24 @@ def _dedupe_actions(actions: list[dict]) -> list[dict]:
     return out
 
 
+def _normalize_content(content: Any) -> str:
+    """AIMessage나 ToolMessage의 content가 str 또는 복합 list[dict] 형태일 때 안전하게 문자열로 변환합니다."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        text_parts = []
+        for part in content:
+            if isinstance(part, str):
+                text_parts.append(part)
+            elif isinstance(part, dict):
+                if part.get("type") == "text":
+                    text_parts.append(part.get("text", ""))
+                elif "text" in part:
+                    text_parts.append(str(part["text"]))
+        return "".join(text_parts)
+    return str(content or "")
+
+
 def extract_agent_output(
     messages: list[Any],
     default_text: str = "요청하신 작업을 처리했어요.",
@@ -70,9 +89,10 @@ def extract_agent_output(
         AgentOutput
     """
     # ① 마지막 AIMessage
-    last_ai_content = next(
+    raw_ai_content = next(
         (m.content for m in reversed(messages) if isinstance(m, AIMessage)), ""
     ) or ""
+    last_ai_content = _normalize_content(raw_ai_content)
     ai_text, ai_actions = split_actions(last_ai_content)
 
     # ② ToolMessage 순회 — 액션 수집 + 마지막 tool 텍스트를 fallback으로 보관
@@ -82,7 +102,8 @@ def extract_agent_output(
     for msg in messages:
         if isinstance(msg, ToolMessage):
             had_tool_call = True
-            t_text, t_acts = split_actions(str(msg.content or ""))
+            normalized_tool_content = _normalize_content(msg.content)
+            t_text, t_acts = split_actions(normalized_tool_content)
             tool_actions.extend(t_acts)
             if t_text.strip():
                 tool_text_fallback = t_text.strip()

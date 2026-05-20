@@ -9,7 +9,7 @@
 
 import { ReactNode, useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { useFarmBot, ChatMessage } from './useFarmBot';
+import { useFarmBot, ChatMessage, NodeStatus } from './useFarmBot';
 import { FarmBotContext } from './FarmBotContext';
 import Image from 'next/image';
 import styles from './FarmBot.module.css';
@@ -115,6 +115,7 @@ export default function FarmBot({ children }: FarmBotProps) {
     chatSize,
     onChatDragStart,
     onChatResizeStart,
+    activeNodes,
   } = useFarmBot();
 
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -272,7 +273,7 @@ export default function FarmBot({ children }: FarmBotProps) {
                   <Image src="/icon.png" alt="" width={28} height={28} className={styles.chatMsgAvatar} />
                 )}
                 <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleBot}`}>
-                  {msg.content}
+                  <span className={styles.chatMsgContent} style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>
                   {msg.role === 'bot' && msg.actions?.filter(a => a.type === 'CLARIFY').map((action, actionIdx) => (
                     <div key={`clarify-${actionIdx}`} className={styles.clarifyOptions}>
                       {action.options?.map((opt, optIdx) => (
@@ -298,7 +299,28 @@ export default function FarmBot({ children }: FarmBotProps) {
               <div className={`${styles.chatMsg} ${styles.chatMsgBot}`}>
                 <Image src="/icon.png" alt="" width={28} height={28} className={styles.chatMsgAvatar} />
                 <div className={`${styles.chatBubble} ${styles.chatBubbleBot}`}>
-                  <span className={styles.chatTyping}>답변을 준비하고 있습니다... ⏳</span>
+                  {activeNodes.length > 0 ? (
+                    <div key="tracker" className={styles.nodeTracker}>
+                      <span className={styles.nodeTrackerTitle}>👨‍🌾 양평이 할아버지가 꼼꼼히 고민 중이에요...</span>
+                      <div className={styles.nodeTrackerList}>
+                        {activeNodes.map((node: NodeStatus) => (
+                          <div key={node.node} className={styles.nodeTrackerItem}>
+                            <span className={styles.nodeTrackerIcon}>
+                              {node.status === 'completed' ? '🟢' : '🔄'}
+                            </span>
+                            <span className={styles.nodeTrackerLabel}>
+                              {node.label}
+                            </span>
+                            <span className={styles.nodeTrackerStatus}>
+                              {node.status === 'completed' ? '완료' : '확인 중...'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <span key="typing" className={styles.chatTyping}>할아버지가 답변을 적고 있어요... ⏳</span>
+                  )}
                 </div>
               </div>
             )}
