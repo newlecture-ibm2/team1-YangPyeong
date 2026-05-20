@@ -57,9 +57,18 @@ export default function MypageNotificationsPage() {
       <div className={styles.container}>
         <div className={styles.header}>
           <h2 className={styles.title}>알림 내역</h2>
-          <Button variant="ghost" size="sm" onClick={markAllAsRead}>
-            모두 읽음 처리
-          </Button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/mypage/notifications/settings')}
+            >
+              ⚙️ 설정
+            </Button>
+            <Button variant="ghost" size="sm" onClick={markAllAsRead}>
+              모두 읽음 처리
+            </Button>
+          </div>
         </div>
 
         {/* 필터 칩 — 공통 Button의 variant와 맞지 않으므로 도메인 전용 스타일 사용 */}

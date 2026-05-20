@@ -3,6 +3,7 @@ package com.farmbalance.balance.adapter.in.event;
 import com.farmbalance.farm.domain.event.CultivationChangedEvent;
 import com.farmbalance.farm.domain.event.HarvestRecordedEvent;
 import com.farmbalance.notification.application.port.in.NotificationUseCase;
+import com.farmbalance.notification.domain.NotificationCategory;
 import com.farmbalance.notification.domain.NotificationType;
 import com.farmbalance.balance.domain.SupplyRatioResult;
 import lombok.RequiredArgsConstructor;
@@ -118,6 +119,7 @@ public class BalanceEventListener {
             notificationUseCase.createBulkNotifications(
                     uniqueIds,
                     NotificationType.BALANCE_WARN,
+                    NotificationCategory.BALANCE_WARN,
                     "수급 임계값 안내",
                     message,
                     "/balance"

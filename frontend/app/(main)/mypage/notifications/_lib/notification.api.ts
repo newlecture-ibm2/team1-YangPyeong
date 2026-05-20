@@ -1,4 +1,10 @@
-import { NotificationResponse, UnreadCountResponse } from './notification.types';
+import {
+  NotificationPreference,
+  NotificationPreferenceResponse,
+  NotificationPreferenceUpdateRequest,
+  NotificationResponse,
+  UnreadCountResponse,
+} from './notification.types';
 
 export const notificationApi = {
   getNotifications: async (
@@ -36,5 +42,25 @@ export const notificationApi = {
       method: 'PATCH',
     });
     if (!res.ok) throw new Error('Failed to mark all as read');
+  },
+
+  getPreferences: async (): Promise<NotificationPreference> => {
+    const res = await fetch('/api/notifications/preferences');
+    if (!res.ok) throw new Error('Failed to fetch notification preferences');
+    const body: NotificationPreferenceResponse = await res.json();
+    return body.data;
+  },
+
+  updatePreferences: async (
+    request: NotificationPreferenceUpdateRequest
+  ): Promise<NotificationPreference> => {
+    const res = await fetch('/api/notifications/preferences', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    if (!res.ok) throw new Error('Failed to update notification preferences');
+    const body: NotificationPreferenceResponse = await res.json();
+    return body.data;
   },
 };
