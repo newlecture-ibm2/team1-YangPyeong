@@ -14,6 +14,7 @@ import com.farmbalance.shop.domain.OrderItem;
 import com.farmbalance.shop.domain.OrderStatus;
 import com.farmbalance.shop.domain.Product;
 import com.farmbalance.notification.application.port.in.NotificationUseCase;
+import com.farmbalance.notification.domain.NotificationCategory;
 import com.farmbalance.notification.domain.NotificationType;
 import com.farmbalance.user.application.port.out.UserRepository;
 import com.farmbalance.user.domain.User;
@@ -110,6 +111,7 @@ public class OrderService implements OrderUseCase {
             notificationUseCase.createNotification(
                     sellerId,
                     NotificationType.ORDER,
+                    NotificationCategory.ORDER,
                     "새 결제/주문 완료",
                     String.format("새 결제 및 주문이 확정되었습니다. 배송을 준비해주세요. (주문번호: %s)", savedOrder.getOrderNumber()),
                     "/shop/seller/orders"
@@ -270,6 +272,7 @@ public class OrderService implements OrderUseCase {
                 notificationUseCase.createNotification(
                         order.getBuyerId(),
                         NotificationType.ORDER,
+                    NotificationCategory.ORDER,
                         "주문 접수 완료",
                         "주문하신 상품이 접수되었습니다.",
                         "/mypage/history"
@@ -284,6 +287,7 @@ public class OrderService implements OrderUseCase {
                 notificationUseCase.createNotification(
                         order.getBuyerId(),
                         NotificationType.ORDER,
+                    NotificationCategory.ORDER,
                         "배송 시작",
                         String.format("주문하신 상품이 배송 시작되었습니다. (송장: %s)", order.getTrackingNumber()),
                         "/mypage/history"
@@ -309,6 +313,7 @@ public class OrderService implements OrderUseCase {
             notificationUseCase.createNotification(
                     order.getBuyerId(),
                     NotificationType.ORDER,
+                    NotificationCategory.ORDER,
                     "주문 거절",
                     String.format("주문이 거절되었습니다. (주문번호: %s)", order.getOrderNumber()),
                     "/mypage/history"

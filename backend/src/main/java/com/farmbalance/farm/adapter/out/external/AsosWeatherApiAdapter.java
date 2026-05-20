@@ -98,12 +98,18 @@ public class AsosWeatherApiAdapter implements WeatherRecordPort {
             }
 
             double avgTa = itemNode.path("avgTa").asDouble(0.0);
+            double minTa = itemNode.path("minTa").asDouble(avgTa);
+            double maxTa = itemNode.path("maxTa").asDouble(avgTa);
             String sumRnStr = itemNode.path("sumRn").asText("");
             double sumRn = sumRnStr.isEmpty() ? 0.0 : Double.parseDouble(sumRnStr);
+            double avgRhm = itemNode.path("avgRhm").asDouble(0.0);
 
             return WeatherData.builder()
                     .avgTa(avgTa)
+                    .minTa(minTa)
+                    .maxTa(maxTa)
                     .sumRn(sumRn)
+                    .avgRhm(avgRhm)
                     .build();
 
         } catch (ExternalApiException e) {

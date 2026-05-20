@@ -11,6 +11,7 @@ import com.farmbalance.recommend.application.support.RecommendCropAnalysisHelper
 import com.farmbalance.recommend.application.support.RecommendCropAnalysisHelper.MismatchInfo;
 import com.farmbalance.recommend.application.support.RecommendModeResolver;
 import com.farmbalance.notification.application.port.in.NotificationUseCase;
+import com.farmbalance.notification.domain.NotificationCategory;
 import com.farmbalance.notification.domain.NotificationType;
 import com.farmbalance.recommend.domain.*;
 
@@ -126,6 +127,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
         notificationUseCase.createNotification(
                 userId,
                 NotificationType.SYSTEM,
+                NotificationCategory.SYSTEM,
                 "AI 추천 완료",
                 String.format("'%s' 농장의 작물 추천이 완료되었습니다.", farm.getName()),
                 "/farm/recommend");
@@ -387,4 +389,3 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
         return enriched;
     }
 }
-
