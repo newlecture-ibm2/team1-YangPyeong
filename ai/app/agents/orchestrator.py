@@ -39,7 +39,6 @@ class AgentState(TypedDict, total=False):
     next_node: str
     farm_id: int
     user_id: int
-    user_role: str
     current_focus: str
     pending_actions: list[dict]  # Shop Agent 등이 누적하는 프론트 액션
     skip_synthesis: bool          # True이면 Synthesizer 재가공 없이 원본 응답 그대로 반환
@@ -487,10 +486,7 @@ async def call_blocked_guard(state: AgentState):
 async def call_gov_agent(state: AgentState):
     """Gov Agent — 지역 수급·위험도 분석."""
     try:
-        result = await gov_agent_ainvoke({
-            "messages": state["messages"],
-            "user_role": state.get("user_role")
-        })
+        result = await gov_agent_ainvoke({"messages": state["messages"]})
         return _agent_node_response(result["messages"], state)
     except Exception:
         logger.exception("[Orchestrator] GovAgent call failed")

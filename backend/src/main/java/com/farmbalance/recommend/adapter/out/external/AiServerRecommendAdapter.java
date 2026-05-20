@@ -8,12 +8,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
 import java.util.*;
 
 /**
@@ -26,7 +28,13 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
     private final RestTemplate restTemplate;
 
     public AiServerRecommendAdapter(RestTemplateBuilder builder) {
-        this.restTemplate = builder.build();
+        // SimpleClientHttpRequestFactory(HttpURLConnection)를 명시적으로 사용하여
+        // JDK HttpClient의 HTTP/2 upgrade 헤더 전송을 방지합니다.
+        // AI LLM 호출은 시간이 걸리므로 read timeout을 60초로 설정합니다.
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(10));
+        factory.setReadTimeout(Duration.ofSeconds(60));
+        this.restTemplate = builder.requestFactory(() -> factory).build();
     }
 
     @Value("${ai.server-url:http://ai-server:8000}")
