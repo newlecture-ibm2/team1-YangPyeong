@@ -124,12 +124,14 @@ class GovAgent:
     # 4. Entity 추출
     # ──────────────────────────────────────────────
     async def _extract_entities(self, message: str) -> ExtractedEntities:
-        """정규화된 메시지에서 Entity를 Greedy 매칭으로 추출합니다."""
+        """정규화된 메시지에서 Entity를 Greedy 매칭으로 추출합니다.
+        DB 사전 매칭 실패 시 LLM NER을 2차 백업으로 시도합니다.
+        """
         self._ensure_dict_cache()
 
         entities = ExtractedEntities()
 
-        # Greedy 매칭 (길이 내림차순이므로 안정적)
+        # 1차: Greedy 매칭 (길이 내림차순이므로 안정적)
         for region in self._dict_cache["REGION"]:
             if region in message:
                 entities.region = region
@@ -143,11 +145,49 @@ class GovAgent:
                 entities.farm = farm
                 break
 
+        # 2차: DB 사전에서 추출 실패 시 LLM NER 백업 시도
+        if not entities.region or not entities.crop:
+            llm_entities = await self._llm_ner_fallback(message)
+            if not entities.region and llm_entities.get("region"):
+                entities.region = llm_entities["region"]
+                logger.info("[GovAgent] LLM NER 백업으로 지역 추출: %s", entities.region)
+            if not entities.crop and llm_entities.get("crop"):
+                entities.crop = llm_entities["crop"]
+                logger.info("[GovAgent] LLM NER 백업으로 작물 추출: %s", entities.crop)
+
         logger.info(
             "[GovAgent] Entity 추출: region=%s, crop=%s, farm=%s",
             entities.region, entities.crop, entities.farm,
         )
         return entities
+
+    async def _llm_ner_fallback(self, message: str) -> dict[str, str | None]:
+        """DB 사전 매칭 실패 시 LLM을 활용해 지역명과 작물명을 추론합니다."""
+        try:
+            ner_prompt = (
+                "아래 문장에서 한국의 지역명(시/군/구)과 농작물명을 추출해주세요.\n"
+                "반드시 아래 JSON 형식으로만 답하세요. 없으면 null로 답하세요.\n"
+                '{"region": "양평군", "crop": "쌀"}\n\n'
+                f"문장: {message}"
+            )
+            result_text = await self.llm.generate(ner_prompt, temperature=0)
+            # JSON 파싱 시도
+            import json as _json
+            # LLM 응답에서 JSON 블록 추출
+            text = result_text.strip()
+            if "```" in text:
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+                text = text.strip()
+            parsed = _json.loads(text)
+            return {
+                "region": parsed.get("region"),
+                "crop": parsed.get("crop"),
+            }
+        except Exception as e:
+            logger.warning("[GovAgent] LLM NER 백업 실패: %s", e)
+            return {"region": None, "crop": None}
 
     # ──────────────────────────────────────────────
     # 5. 필수 Entity 검증
@@ -156,17 +196,18 @@ class GovAgent:
         self, intent: IntentType, entities: ExtractedEntities
     ) -> str | None:
         """Intent에 필요한 Entity가 존재하는지 검증합니다.
+        누락 시에도 기본값(양평군)을 자동 적용하여 분석을 시도합니다.
         검증 실패 시 fallback 안내 메시지를 반환합니다.
         검증 통과 시 None을 반환합니다.
         """
-        if intent == IntentType.REGION_SUMMARY and not entities.region:
-            return "어느 지역의 현황을 요약해 드릴까요? (예: 양평군 현황 알려줘)"
-
-        if intent == IntentType.RISK_ANALYSIS and not entities.region and not entities.crop:
-            return "어느 지역이나 작물의 위험도를 조회할까요? (예: 양평군 배추 위험도)"
-
-        if intent == IntentType.POLICY_RECOMMEND and not entities.region and not entities.crop:
-            return "어떤 지역이나 작물의 정책을 찾으시나요? (예: 양평군 배추 지원 정책)"
+        # 지역이 필요한 Intent에서 지역이 없으면 기본값 '양평군' 적용
+        needs_region = intent in (
+            IntentType.REGION_SUMMARY, IntentType.RISK_ANALYSIS,
+            IntentType.POLICY_RECOMMEND, IntentType.GENERAL_ANALYSIS,
+        )
+        if needs_region and not entities.region:
+            entities.region = "양평군"
+            logger.info("[GovAgent] 지역 미지정 → 기본값 '양평군' 자동 적용")
 
         if intent == IntentType.ALTERNATIVE_CROP and not entities.crop:
             return "어떤 작물을 대체하고 싶으신가요? (예: 배추 대체 작물 알려줘)"

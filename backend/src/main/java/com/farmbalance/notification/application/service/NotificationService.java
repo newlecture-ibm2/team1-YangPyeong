@@ -2,9 +2,11 @@ package com.farmbalance.notification.application.service;
 
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
+import com.farmbalance.notification.application.port.in.NotificationPreferenceUseCase;
 import com.farmbalance.notification.application.port.in.NotificationUseCase;
 import com.farmbalance.notification.application.port.out.NotificationPort;
 import com.farmbalance.notification.domain.Notification;
+import com.farmbalance.notification.domain.NotificationCategory;
 import com.farmbalance.notification.domain.NotificationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ public class NotificationService implements NotificationUseCase {
 
     private final NotificationPort notificationPort;
     private final FcmNotificationService fcmNotificationService;
+    private final NotificationPreferenceUseCase preferenceUseCase;
 
     @Override
     public Page<Notification> getNotifications(Long userId, String type, Boolean isRead, Pageable pageable) {
@@ -61,32 +64,41 @@ public class NotificationService implements NotificationUseCase {
 
     @Override
     @Transactional
-    public Notification createNotification(Long userId, NotificationType type,
+    public Notification createNotification(Long userId, NotificationType type, NotificationCategory category,
                                             String title, String message, String link) {
+        // DB 이력은 설정과 무관하게 항상 저장
         Notification notification = Notification.create(userId, type, title, message, link);
         Notification saved = notificationPort.save(notification);
-        
-        // FCM 푸시 알림 발송 (비동기)
-        fcmNotificationService.sendToUser(userId, title, message, link);
-        
-        log.info("[알림 생성] userId={}, type={}, title={}", userId, type, title);
+
+        // FCM 푸시는 사용자 설정이 활성화된 경우에만 발송
+        if (preferenceUseCase.isEnabled(userId, category)) {
+            fcmNotificationService.sendToUser(userId, title, message, link);
+        } else {
+            log.debug("[알림 푸시 스킵] userId={}, category={} (사용자 설정 비활성화)", userId, category);
+        }
+
+        log.info("[알림 생성] userId={}, type={}, category={}, title={}", userId, type, category, title);
         return saved;
     }
 
     @Override
     @Transactional
-    public void createBulkNotifications(List<Long> userIds, NotificationType type,
+    public void createBulkNotifications(List<Long> userIds, NotificationType type, NotificationCategory category,
                                          String title, String message, String link) {
-        // DB 배치 INSERT (N+1 방지)
+        // DB 이력은 모두 저장 (배치 INSERT)
         List<Notification> notifications = userIds.stream()
                 .map(userId -> Notification.create(userId, type, title, message, link))
                 .toList();
         notificationPort.saveAll(notifications);
 
-        // FCM 발송 (비동기 — 유저별 개별 발송)
+        // FCM은 사용자별 설정 확인 후 발송
+        int pushSent = 0;
         for (Long userId : userIds) {
-            fcmNotificationService.sendToUser(userId, title, message, link);
+            if (preferenceUseCase.isEnabled(userId, category)) {
+                fcmNotificationService.sendToUser(userId, title, message, link);
+                pushSent++;
+            }
         }
-        log.info("[알림 벌크 생성] {}명에게 {} 타입 알림 발송 완료", userIds.size(), type);
+        log.info("[알림 벌크 생성] type={}, category={}, DB={}명, FCM={}명", type, category, userIds.size(), pushSent);
     }
 }

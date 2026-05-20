@@ -191,3 +191,180 @@ async def chat(request: ChatRequest) -> ChatResponse:
     finally:
         # ContextVar 정리 (다음 요청에 누수되지 않도록)
         user_jwt_ctx.reset(token)
+
+
+# ════════════════════════════════════════════════════════════════════
+# SSE 스트리밍 엔드포인트 — 에이전트 진행 상황 실시간 전달
+# ════════════════════════════════════════════════════════════════════
+from fastapi.responses import StreamingResponse
+
+
+# 에이전트 노드 이름 → 사용자 친화적 한국어 레이블 매핑
+_NODE_LABELS: dict[str, str] = {
+    "router": "질문 분석",
+    "farm_agent": "농장 분석",
+    "balance_agent": "시세·수익 분석",
+    "policy_agent": "정책·보조금 탐색",
+    "gov_agent": "수급 현황 분석",
+    "shop_agent": "장터 처리",
+    "community_agent": "커뮤니티 검색",
+    "general_agent": "일반 상담",
+    "blocked_guard": "접근 권한 확인",
+    "synthesizer": "종합 보고서 작성",
+}
+
+# 스트리밍 이벤트로 추적할 노드 목록
+_TRACKABLE_NODES = set(_NODE_LABELS.keys())
+
+
+@router.post("/chat/stream")
+async def chat_stream(request: ChatRequest) -> StreamingResponse:
+    """SSE 스트리밍 챗봇 엔드포인트.
+
+    에이전트 노드별 진행 상황을 실시간으로 전달하고,
+    최종 결과를 'result' 이벤트로 전송합니다.
+    """
+    logger.info("챗봇 스트리밍 요청 수신 [userId=%s, category=%s]", request.userId, request.category)
+
+    jwt = (request.metadata or {}).get("jwt") if request.metadata else None
+
+    async def event_generator():
+        token = user_jwt_ctx.set(jwt)
+        try:
+            # PendingIntent 처리 (스트리밍에서는 즉시 결과 반환)
+            if request.pending_intent:
+                result = await _handle_pending_intent(request.pending_intent, request.message)
+                yield f"event: result\ndata: {json.dumps(result.model_dump(), ensure_ascii=False)}\n\n"
+                return
+
+            orchestrator = _get_orchestrator()
+
+            # 히스토리 변환 (기존 로직 재활용)
+            messages: list = []
+            history = request.history or []
+            first_user_idx = next(
+                (i for i, h in enumerate(history) if h.role == "user"), None
+            )
+            if first_user_idx is not None:
+                for h in history[first_user_idx:][-10:]:
+                    if h.role == "user":
+                        messages.append(HumanMessage(content=h.content))
+                    else:
+                        messages.append(AIMessage(content=h.content))
+
+            if not (messages and isinstance(messages[-1], HumanMessage)
+                    and messages[-1].content == request.message):
+                messages.append(HumanMessage(content=request.message))
+
+            # JWT에서 role 추출
+            user_role = "USER"
+            if jwt:
+                try:
+                    payload_b64 = jwt.split(".")[1]
+                    payload_b64 += "=" * ((4 - len(payload_b64) % 4) % 4)
+                    payload_json = base64.b64decode(payload_b64).decode("utf-8")
+                    user_role = json.loads(payload_json).get("role", "USER")
+                except Exception as e:
+                    logger.warning("[ChatStream] JWT role 파싱 실패: %s", e)
+
+            input_state = {
+                "messages": messages,
+                "user_id": request.userId,
+                "user_role": user_role,
+                "farm_id": 0,
+                "next_node": "",
+                "current_focus": "",
+                "pending_actions": [],
+                "analysis_context": {},
+            }
+
+            # 진행 중인 노드 추적
+            active_nodes: set[str] = set()
+            final_state: dict = {}
+
+            async for event in orchestrator.astream_events(
+                input_state, version="v2"
+            ):
+                kind = event.get("event", "")
+                node_name = event.get("name", "")
+
+                # 관심 노드의 시작/종료만 추적
+                if node_name in _TRACKABLE_NODES:
+                    if kind == "on_chain_start" and node_name not in active_nodes:
+                        active_nodes.add(node_name)
+                        label = _NODE_LABELS.get(node_name, node_name)
+                        data = json.dumps(
+                            {"node": node_name, "label": label, "status": "started"},
+                            ensure_ascii=False,
+                        )
+                        yield f"event: node_status\ndata: {data}\n\n"
+
+                    elif kind == "on_chain_end" and node_name in active_nodes:
+                        active_nodes.discard(node_name)
+                        label = _NODE_LABELS.get(node_name, node_name)
+                        data = json.dumps(
+                            {"node": node_name, "label": label, "status": "completed"},
+                            ensure_ascii=False,
+                        )
+                        yield f"event: node_status\ndata: {data}\n\n"
+
+                # 최종 상태 캡처 (synthesizer 또는 마지막 노드 종료 시)
+                if kind == "on_chain_end" and event.get("data", {}).get("output"):
+                    output = event["data"]["output"]
+                    if isinstance(output, dict) and "messages" in output:
+                        final_state = output
+
+            # 최종 결과 조립 (기존 로직과 동일)
+            if not final_state:
+                # astream_events에서 final_state를 못 받은 경우 ainvoke로 폴백
+                final_state = await orchestrator.ainvoke(input_state)
+
+            final_text = final_state["messages"][-1].content or ""
+            final_text, pending_intent_obj = split_pending_intent(final_text)
+            cleaned_reply, inline_actions = split_actions(final_text)
+
+            pending = final_state.get("pending_actions") or []
+            all_actions = [*pending, *inline_actions]
+
+            validated_actions: list[dict] = []
+            for a in all_actions:
+                try:
+                    validated_actions.append(ChatAction(**a).model_dump())
+                except Exception:
+                    pass
+
+            validated_pending: dict | None = None
+            if pending_intent_obj:
+                try:
+                    validated_pending = PendingIntent(**pending_intent_obj).model_dump()
+                except Exception:
+                    pass
+
+            result_data = {
+                "reply": cleaned_reply or "요청을 처리했어요.",
+                "actions": validated_actions,
+                "pending_intent": validated_pending,
+            }
+            yield f"event: result\ndata: {json.dumps(result_data, ensure_ascii=False)}\n\n"
+
+        except Exception as e:
+            logger.error("챗봇 스트리밍 응답 생성 실패: %s", e, exc_info=True)
+            error_data = {
+                "reply": "죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+                "actions": [],
+                "pending_intent": None,
+            }
+            yield f"event: result\ndata: {json.dumps(error_data, ensure_ascii=False)}\n\n"
+        finally:
+            user_jwt_ctx.reset(token)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+

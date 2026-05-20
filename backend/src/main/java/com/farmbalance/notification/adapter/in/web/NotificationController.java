@@ -2,8 +2,11 @@ package com.farmbalance.notification.adapter.in.web;
 
 import com.farmbalance.global.response.ApiResponse;
 import com.farmbalance.global.security.SecurityUtil;
+import com.farmbalance.notification.adapter.in.web.dto.NotificationPreferenceResponse;
+import com.farmbalance.notification.adapter.in.web.dto.NotificationPreferenceUpdateRequest;
 import com.farmbalance.notification.adapter.in.web.dto.NotificationResponse;
 import com.farmbalance.notification.adapter.in.web.dto.UnreadCountResponse;
+import com.farmbalance.notification.application.port.in.NotificationPreferenceUseCase;
 import com.farmbalance.notification.application.port.in.NotificationUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,6 +29,7 @@ import java.util.List;
 public class NotificationController {
 
     private final NotificationUseCase notificationUseCase;
+    private final NotificationPreferenceUseCase preferenceUseCase;
 
     @Operation(summary = "내 알림 목록 조회", description = "type, isRead 필터 + 페이징 지원")
     @GetMapping
@@ -66,5 +70,24 @@ public class NotificationController {
         Long userId = SecurityUtil.getCurrentUserId();
         notificationUseCase.markAllAsRead(userId);
         return ApiResponse.ok(null);
+    }
+
+    @Operation(summary = "내 알림 수신 설정 조회",
+            description = "카테고리별 on/off 설정을 반환합니다. 설정이 없으면 모두 활성화된 기본값을 반환합니다.")
+    @GetMapping("/preferences")
+    public ApiResponse<NotificationPreferenceResponse> getPreferences() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        return ApiResponse.ok(NotificationPreferenceResponse.fromDomain(preferenceUseCase.getPreference(userId)));
+    }
+
+    @Operation(summary = "내 알림 수신 설정 업데이트",
+            description = "전송한 필드만 부분 업데이트됩니다. null 필드는 기존 값 유지.")
+    @PatchMapping("/preferences")
+    public ApiResponse<NotificationPreferenceResponse> updatePreferences(
+            @RequestBody NotificationPreferenceUpdateRequest request) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        return ApiResponse.ok(NotificationPreferenceResponse.fromDomain(
+                preferenceUseCase.updatePreference(userId, request.toCommand())
+        ));
     }
 }

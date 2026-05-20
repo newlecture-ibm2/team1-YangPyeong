@@ -1068,3 +1068,69 @@
   border-color: #2d7d46;
   transform: translateY(-1px);
 }
+
+/* ═══ 에이전트 진행 상황 트래커 (SSE 스트리밍 연출) ═══ */
+.nodeTracker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nodeTrackerTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d6a4f;
+  margin-bottom: 4px;
+}
+
+.nodeTrackerList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nodeTrackerItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f8faf9;
+  animation: nodeItemIn 0.3s ease-out;
+  transition: background 0.2s ease;
+}
+
+.nodeTrackerItem:last-child {
+  background: #eef7f0;
+}
+
+.nodeTrackerIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.nodeTrackerLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+}
+
+.nodeTrackerStatus {
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+@keyframes nodeItemIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
