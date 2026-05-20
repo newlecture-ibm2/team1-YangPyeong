@@ -31,8 +31,11 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class RecommendService implements RecommendCropUseCase, GetRecommendHistoryUseCase, DiagnoseCropImageUseCase {
 
-    private static final int MAX_NEW_RECOMMEND_AI = 5;
+    private static final int MAX_NEW_RECOMMEND_AI = 3;
+    private static final int MAX_COACHING_AI = 3;
     private static final int MAX_LIST_SIZE = 30;
+    /** true 시 배치 실패 작물에 대한 개별 LLM 호출 비활성 (504·지연 방지) */
+    private static final boolean ALLOW_INDIVIDUAL_AI_REASON_FALLBACK = false;
     private static final String GENERIC_AI_REASON_FALLBACK = "현재 농장 데이터를 바탕으로 분석한 결과입니다.";
     private static final String FAILED_AI_REASON_SNIPPET = "AI 분석 중 오류가 발생했습니다";
     private static final int MIN_AI_REASON_LEN = 12;
@@ -68,10 +71,8 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
         FarmCultivationContext cultivationContext = loadFarmCultivationContextPort.loadByFarmId(farmId);
         RecommendMode mode = recommendModeResolver.resolve(cultivationContext);
 
-        double[] tunedWeights = recommendAiPort.tuneWeights(
-                farmRecommendDetailsBuilder.build(farm, cultivationContext, mode, null));
-        RecommendScoreCalculator calculator = new RecommendScoreCalculator(
-                tunedWeights[0], tunedWeights[1], tunedWeights[2], tunedWeights[3]);
+        // 가중치 LLM 튜닝은 응답 지연·504 유발 → 기본 가중치 사용 (RecommendScoreCalculator 기본값)
+        RecommendScoreCalculator calculator = new RecommendScoreCalculator();
 
         String soilMismatchSummary = cropAnalysisHelper.buildGlobalMismatchSummary(
                 cultivationContext, candidates, farm, calculator);
@@ -89,12 +90,17 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
                 ? AdviceType.NEXT_SEASON
                 : AdviceType.NEW_RECOMMEND;
 
-        List<CropRecommendation> recommendations = candidates.stream()
+        List<CropCandidateData> topCandidates = candidates.stream()
                 .filter(c -> !registeredCropIds.contains(c.getCropId()))
+                .sorted(Comparator.comparingInt((CropCandidateData c) ->
+                        cropAnalysisHelper.estimateQuickScore(c, farm, calculator)).reversed())
+                .limit(MAX_LIST_SIZE)
+                .toList();
+
+        List<CropRecommendation> recommendations = topCandidates.stream()
                 .map(c -> cropAnalysisHelper.buildFromCandidate(
                         c, farm, regionCode, calculator, defaultNewType))
                 .sorted(Comparator.comparingInt(CropRecommendation::getScore).reversed())
-                .limit(MAX_LIST_SIZE)
                 .collect(Collectors.toCollection(ArrayList::new));
 
         assignRanks(recommendations, 1);
@@ -186,9 +192,11 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
             List<CropRecommendation> currentCropAdvices,
             List<CropRecommendation> recommendations
     ) {
-        // 1. 코칭 작물 배치 사유 생성
+        // 1. 코칭 작물 배치 사유 생성 (상위 N건만)
         if (!currentCropAdvices.isEmpty()) {
+            int coachingLimit = Math.min(MAX_COACHING_AI, currentCropAdvices.size());
             List<RecommendReasonCommand> coachingCommands = currentCropAdvices.stream()
+                    .limit(coachingLimit)
                     .map(rec -> {
                         AdviceType advice = rec.getAdviceType() != null
                                 ? rec.getAdviceType()
@@ -212,8 +220,11 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
             List<CropRecommendation> updatedCurrent = new ArrayList<>();
             for (int i = 0; i < currentCropAdvices.size(); i++) {
                 CropRecommendation rec = currentCropAdvices.get(i);
-                String reason = sanitizeStoredAiReason(
-                        resolveAiReason(coachingReasons, rec, coachingCommands.get(i)));
+                String reason = null;
+                if (i < coachingLimit) {
+                    reason = sanitizeStoredAiReason(
+                            resolveAiReason(coachingReasons, rec, coachingCommands.get(i)));
+                }
                 updatedCurrent.add(rec.toBuilder().aiReason(reason).build());
             }
             currentCropAdvices.clear();
@@ -293,14 +304,16 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
         if (!isWeakAiReason(fromBatch)) {
             return fromBatch.trim();
         }
-        try {
-            String individual = recommendAiPort.generateReason(command);
-            if (!isWeakAiReason(individual)) {
-                log.info("배치 사유 미매칭 → 개별 사유 사용: {}", rec.getCropName());
-                return individual.trim();
+        if (ALLOW_INDIVIDUAL_AI_REASON_FALLBACK) {
+            try {
+                String individual = recommendAiPort.generateReason(command);
+                if (!isWeakAiReason(individual)) {
+                    log.info("배치 사유 미매칭 → 개별 사유 사용: {}", rec.getCropName());
+                    return individual.trim();
+                }
+            } catch (Exception e) {
+                log.warn("개별 AI 사유 생성 실패 crop={}: {}", rec.getCropName(), e.getMessage());
             }
-        } catch (Exception e) {
-            log.warn("개별 AI 사유 생성 실패 crop={}: {}", rec.getCropName(), e.getMessage());
         }
         if (!isWeakAiReason(fromBatch)) {
             return fromBatch.trim();

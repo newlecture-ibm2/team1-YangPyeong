@@ -100,29 +100,122 @@
   box-shadow: none;
 }
 
-.overlay {
+.analyzingBlock {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  text-align: center;
+  gap: 28px;
+  margin-bottom: 32px;
+  animation: fadeInUp 0.35s ease-out both;
+}
+
+.progressCard {
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid #bbf7d0;
+  background: linear-gradient(180deg, #f0fdf4 0%, #fff 100%);
+  box-shadow: 0 4px 20px rgba(45, 106, 79, 0.08);
+}
+
+.progressHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .spinner {
-  width: 56px;
-  height: 56px;
-  border: 4px solid var(--color-border);
-  border-top: 4px solid var(--color-primary);
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 3px solid #d1fae5;
+  border-top: 3px solid var(--color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 20px;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.text { font-size: 18px; font-weight: 600; color: var(--color-text); margin-bottom: 8px; }
-.sub  { font-size: 14px; color: var(--color-text-secondary); }
+.text { font-size: 18px; font-weight: 700; color: var(--color-text); margin: 0 0 6px; }
+.sub  { font-size: 14px; color: var(--color-text-secondary); margin: 0; line-height: 1.5; }
+
+.progressTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), #52b788);
+  transition: width 0.6s ease;
+}
+
+.stepList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stepItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  transition: opacity 0.3s ease;
+}
+
+.stepItem.pending {
+  opacity: 0.45;
+}
+
+.stepItem.active {
+  opacity: 1;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.stepItem.done {
+  opacity: 0.85;
+  color: var(--color-text-secondary);
+}
+
+.stepIcon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 14px;
+  background: #f3f4f6;
+}
+
+.stepItem.active .stepIcon {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.stepItem.done .stepIcon {
+  background: #d1fae5;
+  color: var(--color-primary);
+}
+
+.stepLabel {
+  flex: 1;
+}
+
+.eta {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
 
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(16px); }
@@ -151,13 +244,13 @@
     justify-content: center;
   }
 
-  .overlay {
-    padding: 48px 16px;
+  .progressCard {
+    padding: 18px 16px;
   }
 
   .spinner {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
   }
 
   .text { font-size: 16px; }

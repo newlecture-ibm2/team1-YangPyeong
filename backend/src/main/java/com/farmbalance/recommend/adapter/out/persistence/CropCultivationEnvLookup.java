@@ -1,5 +1,6 @@
 package com.farmbalance.recommend.adapter.out.persistence;
 
+import com.farmbalance.recommend.application.support.CropCultivationEnvMatcher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -24,16 +25,13 @@ public class CropCultivationEnvLookup {
             WHERE e.deleted_at IS NULL
               AND e.major_pests IS NOT NULL
               AND TRIM(e.major_pests) <> ''
-              AND (
-                  e.crop_name = ?
-                  OR ? LIKE '%' || e.crop_name || '%'
-                  OR e.crop_name LIKE '%' || ? || '%'
-              )
+              AND %s
             ORDER BY
                 CASE WHEN e.crop_name = ? THEN 0 ELSE 1 END,
                 LENGTH(e.crop_name) DESC
             LIMIT 1
-            """;
+            """
+            .formatted(CropCultivationEnvMatcher.sqlEnvCropNameMatch("?", "e.crop_name"));
 
     public List<String> findMajorPests(String cropName) {
         if (cropName == null || cropName.isBlank()) {
@@ -43,7 +41,7 @@ public class CropCultivationEnvLookup {
         List<String> rows = jdbcTemplate.query(
                 PESTS_SQL,
                 (rs, rowNum) -> rs.getString("major_pests"),
-                trimmed, trimmed, trimmed, trimmed
+                trimmed, trimmed, trimmed, trimmed, trimmed, trimmed
         );
         if (rows.isEmpty() || rows.get(0) == null || rows.get(0).isBlank()) {
             return Collections.emptyList();

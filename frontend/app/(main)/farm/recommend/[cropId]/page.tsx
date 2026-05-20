@@ -7,8 +7,11 @@ import { SUPPLY_STATUS_MAP, SOIL_FITNESS_MAP, ADVICE_TYPE_LABEL } from '../_lib/
 import type { CropRecommendation, CropRecommendResponse } from '../_lib/recommend.types';
 import { getLatestRecommendHistory } from '../_lib/recommend.api';
 import { findCropInRecommendResult, sanitizeRecommendResponse } from '../_lib/recommend.utils';
-import { getCropEmoji, getCropCalendar, generatePriceData } from '../_lib/recommend.constants';
-import { getCropDetailedPlan } from '../_lib/calendarPlanData';
+import { enrichCropGuideCardFields } from '../_lib/cropGuideCardFallback';
+import { getCropEmoji, getCropCalendarForRecommendation, generatePriceData } from '../_lib/recommend.constants';
+import { getCropDetailedPlanForRecommendation } from '../_lib/calendarPlanData';
+import { buildCalendarSubtitle } from '../_lib/cropCalendarSync';
+import type { CalendarPhase } from '../_lib/recommend.types';
 import PriceChart from '../_components/PriceChart/PriceChart';
 import CropCalendar from '../_components/CropCalendar/CropCalendar';
 import CalendarPlanModal from '../_components/CalendarPlanModal/CalendarPlanModal';
@@ -103,7 +106,8 @@ function RecommendDetailInner() {
 
   const rec = useMemo(() => {
     if (!result) return null;
-    return findCropInRecommendResult(result, cropId) ?? null;
+    const found = findCropInRecommendResult(result, cropId);
+    return found ? enrichCropGuideCardFields(found) : null;
   }, [result, cropId]);
 
   const otherRecs = useMemo(() => {
@@ -148,7 +152,7 @@ function RecommendDetailInner() {
   const supplyInfo = SUPPLY_STATUS_MAP[rec.supplyStatus];
   const fitnessLabel = SOIL_FITNESS_MAP[rec.soilFitness];
   const priceData = generatePriceData(rec.expectedRevenuePerKg);
-  const calendar = getCropCalendar(rec.cropName);
+  const calendar = getCropCalendarForRecommendation(rec);
   const farmIdForLinks = result.farmInfo?.id;
 
   return (
@@ -184,7 +188,7 @@ function RecommendDetailInner() {
       <CropGuide rec={rec} recommendResult={result} />
 
       {/* ── 재배 캘린더 (클릭 시 세부 계획서 모달) ── */}
-      <CalendarSection cropName={rec.cropName} calendar={calendar} />
+      <CalendarSection rec={rec} calendar={calendar} />
 
       {/* ── 가격 추이 ── */}
       <div className={`${styles.card} ${styles.fadeIn}`} style={{ animationDelay: '0.4s' }}>
@@ -209,9 +213,10 @@ function RecommendDetailInner() {
 }
 
 /** 재배 캘린더 + 세부 계획서 모달을 관리하는 서브 컴포넌트 */
-function CalendarSection({ cropName, calendar }: { cropName: string; calendar: import('../_lib/recommend.constants').CalendarPhase[] }) {
+function CalendarSection({ rec, calendar }: { rec: CropRecommendation; calendar: CalendarPhase[] }) {
   const [isPlanOpen, setIsPlanOpen] = useState(false);
-  const plan = getCropDetailedPlan(cropName);
+  const plan = getCropDetailedPlanForRecommendation(rec.cropName, rec, calendar);
+  const calendarSub = buildCalendarSubtitle(rec, calendar);
 
   return (
     <>
@@ -229,7 +234,7 @@ function CalendarSection({ cropName, calendar }: { cropName: string; calendar: i
             📅 클릭하여 주별 세부 계획서 보기 →
           </span>
         </div>
-        <p className={styles.cardSub}>월별 주요 작업 일정을 한눈에 확인하세요.</p>
+        <p className={styles.cardSub}>{calendarSub || '월별 주요 작업 일정을 한눈에 확인하세요.'}</p>
         <CropCalendar phases={calendar} />
       </div>
       <CalendarPlanModal
