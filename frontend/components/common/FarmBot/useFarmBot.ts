@@ -24,6 +24,13 @@ export interface ChatMessage {
   actions?: ChatAction[];
 }
 
+/** 에이전트 노드 진행 상황 — SSE 스트리밍 시 실시간 갱신 */
+export interface NodeStatus {
+  node: string;
+  label: string;
+  status: 'started' | 'completed';
+}
+
 /** 가이드 진행 모드 */
 export type GuideMode = 'minimized' | 'asking' | 'guiding' | 'hidden' | 'chatting';
 
@@ -60,6 +67,8 @@ export function useFarmBot() {
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [pendingIntent, setPendingIntent] = useState<PendingIntent | null>(null);
+  /** 실시간 에이전트 진행 상황 목록 */
+  const [activeNodes, setActiveNodes] = useState<NodeStatus[]>([]);
 
   // ── 채팅창 위치/크기 상태 ──
   const [chatPosition, setChatPosition] = useState({ x: -1, y: -1 }); // -1이면 초기화 필요
@@ -507,9 +516,9 @@ export function useFarmBot() {
     setChatMessages(updatedMessages);
     setChatInput('');
     setChatLoading(true);
+    setActiveNodes([]);
 
     // 히스토리: 현재 메시지 추가 전(chatMessages)을 기준으로 생성
-    // updatedMessages를 쓰면 현재 user 메시지가 중복 전송됨
     const history = chatMessages.slice(-FARM_BOT_CONSTANTS.HISTORY_LIMIT).map(m => ({
       role: m.role === 'bot' ? 'assistant' : 'user',
       content: m.content,
@@ -518,7 +527,8 @@ export function useFarmBot() {
     const payloadMessage = (sendAs ?? message).trim();
 
     try {
-      const res = await fetch('/api/ai/chat', {
+      // SSE 스트리밍 엔드포인트 호출
+      const res = await fetch('/api/ai/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -528,37 +538,91 @@ export function useFarmBot() {
           pending_intent: pendingIntent,
         }),
       });
-      const data = await res.json();
 
-      const reply: string = data?.success
-        ? (data.data?.reply ?? FARM_BOT_CONSTANTS.ERROR_MESSAGE)
-        : FARM_BOT_CONSTANTS.ERROR_MESSAGE;
-      const actions: ChatAction[] = data?.success
-        ? (data.data?.actions ?? [])
-        : [];
-      // 다중 턴 슬롯 채우기 컨텍스트 갱신 (null이면 종료)
-      const nextPending: PendingIntent | null = data?.success
-        ? (data.data?.pending_intent ?? null)
-        : null;
-      setPendingIntent(nextPending);
+      // SSE가 아닌 경우 (에러 응답 등) 기존 방식으로 폴백
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('text/event-stream')) {
+        const data = await res.json();
+        const reply: string = data?.success
+          ? (data.data?.reply ?? FARM_BOT_CONSTANTS.ERROR_MESSAGE)
+          : FARM_BOT_CONSTANTS.ERROR_MESSAGE;
+        const actions: ChatAction[] = data?.success
+          ? (data.data?.actions ?? [])
+          : [];
+        const nextPending: PendingIntent | null = data?.success
+          ? (data.data?.pending_intent ?? null)
+          : null;
+        setPendingIntent(nextPending);
+        setChatMessages(prev => [...prev, { role: 'bot', content: reply, actions }]);
+        dispatchChatActions(
+          actions.filter(a =>
+            a.type === 'NAVIGATE' || a.type === 'FILL_FORM' ||
+            a.type === 'TOAST' || a.type === 'REFRESH' || a.type === 'OPEN_MODAL',
+          ),
+        );
+        return;
+      }
 
-      const botReply: ChatMessage = {
-        role: 'bot',
-        content: reply,
-        actions,
-      };
-      setChatMessages(prev => [...prev, botReply]);
+      // SSE 스트림 파싱
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('ReadableStream not available');
 
-      // 즉시 실행형 액션은 디스패처에 위임 (CLARIFY/CONFIRM은 UI에서 렌더)
-      dispatchChatActions(
-        actions.filter(a =>
-          a.type === 'NAVIGATE' ||
-          a.type === 'FILL_FORM' ||
-          a.type === 'TOAST' ||
-          a.type === 'REFRESH' ||
-          a.type === 'OPEN_MODAL',
-        ),
-      );
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        let currentEvent = '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim();
+          } else if (line.startsWith('data: ') && currentEvent) {
+            const jsonStr = line.slice(6);
+            try {
+              const parsed = JSON.parse(jsonStr);
+
+              if (currentEvent === 'node_status') {
+                // 에이전트 노드 진행 상황 실시간 업데이트
+                const nodeStatus: NodeStatus = parsed;
+                setActiveNodes(prev => {
+                  const existing = prev.findIndex(n => n.node === nodeStatus.node);
+                  if (existing >= 0) {
+                    const updated = [...prev];
+                    updated[existing] = nodeStatus;
+                    return updated;
+                  }
+                  return [...prev, nodeStatus];
+                });
+              } else if (currentEvent === 'result') {
+                // 최종 결과 수신
+                const reply: string = parsed.reply ?? FARM_BOT_CONSTANTS.ERROR_MESSAGE;
+                const actions: ChatAction[] = parsed.actions ?? [];
+                const nextPending: PendingIntent | null = parsed.pending_intent ?? null;
+                setPendingIntent(nextPending);
+
+                const botReply: ChatMessage = { role: 'bot', content: reply, actions };
+                setChatMessages(prev => [...prev, botReply]);
+
+                dispatchChatActions(
+                  actions.filter(a =>
+                    a.type === 'NAVIGATE' || a.type === 'FILL_FORM' ||
+                    a.type === 'TOAST' || a.type === 'REFRESH' || a.type === 'OPEN_MODAL',
+                  ),
+                );
+              }
+            } catch {
+              // JSON 파싱 실패 시 무시
+            }
+            currentEvent = '';
+          }
+        }
+      }
     } catch {
       setChatMessages(prev => [...prev, {
         role: 'bot',
@@ -566,6 +630,7 @@ export function useFarmBot() {
       }]);
     } finally {
       setChatLoading(false);
+      // 노드 상태는 유지 (결과와 함께 표시)
     }
   }, [chatLoading, chatMessages, pathname, dispatchChatActions, pendingIntent]);
 
@@ -655,5 +720,6 @@ export function useFarmBot() {
     chatSize,
     onChatDragStart,
     onChatResizeStart,
+    activeNodes,
   };
 }

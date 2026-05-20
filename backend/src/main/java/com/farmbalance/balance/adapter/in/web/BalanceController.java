@@ -1,6 +1,7 @@
 package com.farmbalance.balance.adapter.in.web;
 
 import com.farmbalance.balance.adapter.in.web.dto.BalanceAnalysisResponse;
+import com.farmbalance.balance.adapter.in.web.dto.BalanceDashboardResponse;
 import com.farmbalance.balance.application.port.in.CalculateSupplyRatioUseCase;
 import com.farmbalance.balance.domain.SupplyRatioResult;
 import com.farmbalance.global.response.ApiResponse;
@@ -8,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +22,18 @@ import java.util.stream.Collectors;
 public class BalanceController {
 
     private final CalculateSupplyRatioUseCase calculateSupplyRatioUseCase;
+
+    @Operation(summary = "읍면동 수급 대시보드 조회",
+               description = "로그인 유저의 농장 위치 기반으로 읍면동별 실시간 수급 현황과 양평군 전체 현황을 대조하여 반환합니다.")
+    @GetMapping("/dashboard")
+    public ApiResponse<BalanceDashboardResponse> getDashboard(
+            @AuthenticationPrincipal Long userId,
+            @Parameter(description = "조회할 읍면동 코드 (7자리, 미입력 시 첫 번째 농장의 읍면동 자동 선택)", required = false)
+            @RequestParam(required = false) String townCode) {
+
+        BalanceDashboardResponse response = calculateSupplyRatioUseCase.getDashboard(userId, townCode);
+        return ApiResponse.ok(response);
+    }
 
     @Operation(summary = "전체 작물의 수급 분석 결과 조회", description = "양평군 내 모든 주요 작물의 수급 비율을 한꺼번에 분석합니다.")
     @GetMapping
@@ -53,3 +67,4 @@ public class BalanceController {
         return ApiResponse.ok(calculateSupplyRatioUseCase.getSupplyTrend(cropName));
     }
 }
+

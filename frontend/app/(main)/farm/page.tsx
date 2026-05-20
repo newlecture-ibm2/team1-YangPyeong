@@ -102,6 +102,7 @@ function FarmDashboardContent() {
   // 농장 목록 뷰 여부 상태
   const [isListView, setIsListView] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'DASHBOARD' | 'HISTORY' | 'POLICY' | 'REPORT'>(initialTab);
+  const [isWeatherExpanded, setIsWeatherExpanded] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isCultivationModalOpen, setIsCultivationModalOpen] = useState(false);
   const [selectedCultivation, setSelectedCultivation] = useState<any>(null);
@@ -757,7 +758,7 @@ function FarmDashboardContent() {
         {!isPreviewMode && (
           <div className={styles.headerButtons}>
             <UnifiedActionButton onAddHistory={() => setIsHistoryModalOpen(true)} data-guide="farm-register" />
-            {activeSubTab === 'HISTORY' && (
+            {(activeSubTab === 'HISTORY' || activeSubTab === 'DASHBOARD') && (
               <Link href="/farm/register">
                 <Button variant="outline" style={{ borderRadius: '50px' }}>+ 새 농장 등록</Button>
               </Link>
@@ -810,7 +811,7 @@ function FarmDashboardContent() {
           style={{ background: 'none', border: 'none', color: activeSubTab === 'HISTORY' ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: activeSubTab === 'HISTORY' ? 700 : 600, borderBottom: activeSubTab === 'HISTORY' ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-1px', cursor: 'pointer', fontSize: '16px' }}
           onClick={() => setActiveSubTab('HISTORY')}
         >
-          농장 정보
+          농장 일지
         </button>
       </div>
 
@@ -1240,67 +1241,35 @@ function FarmDashboardContent() {
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 <span style={{ background: 'var(--color-accent)', color: '#1a1a1a', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 700 }}>AI SMART INSIGHT</span>
-                <span style={{ fontSize: '14px', color: 'var(--color-text)', fontWeight: 600 }}>&quot;{farm?.cropNames.length ? farm.cropNames.join(' · ') : '작물'} 생육 최적기입니다&quot;</span>
+                <span style={{ fontSize: '14px', color: 'var(--color-text)', fontWeight: 600 }}>&quot;{farm?.cropNames.length ? farm.cropNames.join(' · ') : '작물'} 생육 가이드&quot;</span>
               </div>
-              <p style={{ fontSize: '15px', color: 'var(--color-text)', lineHeight: 1.5 }}>
+              <p style={{ fontSize: '15px', color: 'var(--color-text)', lineHeight: 1.5, margin: 0 }}>
                 기온 상승과 최근 관수 기록을 분석할 때 작물의 생육이 매우 활발합니다.
-                <strong>내일 오전 추가 시비</strong>를 권장하며, 기온이 높으니 <strong>병해충 방제</strong>에 유의하세요.
+                <strong> 내일 오전 추가 시비</strong>를 권장하며, 기온이 높으니 <strong>병해충 방제</strong>에 유의하세요.
               </p>
             </div>
           </div>
 
-          <div className={styles.bento} style={{ alignItems: 'start' }}>
-            <div>
-              <Timeline
-                histories={histories}
-                onEditCultivation={(id) => {
-                  const cult = cultivations.find(c => c.id === id);
-                  if (cult) {
-                    setSelectedCultivation(cult);
-                    setIsCultivationModalOpen(true);
-                  } else {
-                    toast.error('해당 재배 정보를 찾을 수 없습니다. (이미 삭제되었을 수 있습니다)');
-                    refreshAll();
-                  }
-                }}
-                onDeleteCultivation={async (id) => {
-                  const success = await removeCultivation(id);
-                  if (success) refreshAll();
-                }}
-                onEdit={handleEditClick}
-                onDelete={handleDeleteHistory}
-              />
-            </div>
-
-            {/* 농장 정보 사이드 카드 */}
-            <div>
-              <Card variant="dark">
-                <h3 className={styles.farmInfoTitle} style={{ fontSize: '18px', marginBottom: '16px' }}>농장 정보</h3>
-                <dl className={styles.farmInfoList}>
-                  <dt>위치</dt><dd>{farm?.address}</dd>
-                  <dt>면적</dt><dd>{farm?.area.toLocaleString()} ㎡ ({Math.round((farm?.area || 0) / 3.3058)}평)</dd>
-                  <dt>주요 작물</dt><dd>{farm?.cropNames.join(', ')}</dd>
-                  <dt>상태</dt>
-                  <dd>
-                    <Badge variant={farm?.certificationStatus === 'APPROVED' ? 'green' : 'orange'}>
-                      {farm?.certificationStatus === 'APPROVED' ? '인증됨' : '심사중'}
-                    </Badge>
-                  </dd>
-                </dl>
-                <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-                  <Link href={`/farm/${farm?.id}/edit`} style={{ flex: 2, textDecoration: 'none' }}>
-                    <Button variant="primary" style={{ width: '100%', justifyContent: 'center' }}>정보 수정</Button>
-                  </Link>
-                  <Button 
-                    variant="outline" 
-                    style={{ flex: 1, borderColor: '#ef4444', color: '#ef4444' }}
-                    onClick={() => farm && handleDeleteFarm(farm.id, farm.name)}
-                  >
-                    삭제
-                  </Button>
-                </div>
-              </Card>
-            </div>
+          <div style={{ width: '100%' }}>
+            <Timeline
+              histories={histories}
+              onEditCultivation={(id) => {
+                const cult = cultivations.find(c => c.id === id);
+                if (cult) {
+                  setSelectedCultivation(cult);
+                  setIsCultivationModalOpen(true);
+                } else {
+                  toast.error('해당 재배 정보를 찾을 수 없습니다. (이미 삭제되었을 수 있습니다)');
+                  refreshAll();
+                }
+              }}
+              onDeleteCultivation={async (id) => {
+                const success = await removeCultivation(id);
+                if (success) refreshAll();
+              }}
+              onEdit={handleEditClick}
+              onDelete={handleDeleteHistory}
+            />
           </div>
         </>
       )}
