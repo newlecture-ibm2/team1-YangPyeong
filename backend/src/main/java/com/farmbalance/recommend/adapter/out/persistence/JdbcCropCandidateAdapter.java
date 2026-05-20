@@ -2,6 +2,7 @@ package com.farmbalance.recommend.adapter.out.persistence;
 
 import com.farmbalance.recommend.application.port.out.CropCandidateData;
 import com.farmbalance.recommend.application.port.out.LoadCropCandidatePort;
+import com.farmbalance.recommend.application.support.CropCultivationEnvMatcher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,10 +44,15 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
                 ? regionCode.substring(0, 5)
                 : regionCode != null ? regionCode : "";
 
+        String envNameMatch = CropCultivationEnvMatcher.sqlEnvCropNameMatch("c.name", "e.crop_name");
+        String nongsaroWorkMatch = CropCultivationEnvMatcher.sqlNongsaroFarmWorkMatch("c.name", "sowing_sch.farm_work_type");
+        String nongsaroHarvestMatch = CropCultivationEnvMatcher.sqlNongsaroFarmWorkMatch("c.name", "harvest_sch.farm_work_type");
+
         String sql = """
             SELECT
                 c.id            AS crop_id,
                 c.name          AS crop_name,
+                c.growth_days   AS crop_growth_days,
                 cc.name         AS category_name,
                 -- soil_fitness_data: 해당 시군구의 적합도 면적 합산
                 COALESCE(sf.high_suit_area, 0) AS high_suit,
@@ -98,11 +104,7 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
                     major_pests
                 FROM crop_cultivation_env e
                 WHERE e.deleted_at IS NULL
-                  AND (
-                      e.crop_name = c.name
-                      OR c.name LIKE '%' || e.crop_name || '%'
-                      OR e.crop_name LIKE '%' || c.name || '%'
-                  )
+                  AND %s
                 ORDER BY
                     CASE WHEN e.crop_name = c.name THEN 0 ELSE 1 END,
                     LENGTH(e.crop_name) DESC
@@ -122,7 +124,7 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
                   AND (operation_name LIKE '%파종%' OR operation_name LIKE '%정식%'
                        OR operation_name LIKE '%이식%' OR operation_name LIKE '%모내기%')
                 GROUP BY farm_work_type
-            ) sowing_sch ON sowing_sch.farm_work_type = c.name
+            ) sowing_sch ON %s
             LEFT JOIN (
                 SELECT
                     farm_work_type,
@@ -137,10 +139,11 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
                   AND (operation_name LIKE '%수확%' OR operation_name LIKE '%수확기%'
                        OR operation_name LIKE '%성숙기%')
                 GROUP BY farm_work_type
-            ) harvest_sch ON harvest_sch.farm_work_type = c.name
+            ) harvest_sch ON %s
             WHERE c.deleted_at IS NULL
             ORDER BY c.name
-            """;
+            """
+                .formatted(envNameMatch, nongsaroWorkMatch, nongsaroHarvestMatch);
 
         String likeCode = sigunguCode.isEmpty() ? "%" : sigunguCode + "%";
 
@@ -229,8 +232,10 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
                         ? envHarvest
                         : fallbackHarvestPeriod(category);
 
-        // 재배 기간: DB 값 우선
-        Integer dbGrowthDays = rs.getObject("env_growth_days") != null ? rs.getInt("env_growth_days") : null;
+        // 재배 기간: crop_cultivation_env 우선, 없으면 crops.growth_days
+        Integer envGrowthDays = rs.getObject("env_growth_days") != null ? rs.getInt("env_growth_days") : null;
+        Integer cropGrowthDays = rs.getObject("crop_growth_days") != null ? rs.getInt("crop_growth_days") : null;
+        Integer growthDays = envGrowthDays != null ? envGrowthDays : cropGrowthDays;
 
         String[] pests = parseMajorPests(rs.getString("env_major_pests"));
 
@@ -240,7 +245,7 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
                 organicMatter,
                 soilTypes,
                 priceForecast, revenuePerKg, expectedYield,
-                dbGrowthDays,
+                growthDays,
                 optimalTemp,
                 sowingPeriod,
                 harvestPeriod,

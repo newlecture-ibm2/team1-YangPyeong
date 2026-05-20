@@ -11,6 +11,14 @@ export type SoilFitness = 'HIGH_SUIT' | 'SUIT' | 'POSSIBLE' | 'LOW_SUIT' | 'NONE
 /** 작물 카테고리 */
 export type CropCategory = '채소류' | '과일류' | '곡물' | '특용작물' | '화훼류';
 
+/** 재배 캘린더 월별 단계 */
+export interface CalendarPhase {
+  label: string;
+  startMonth: number;
+  endMonth: number;
+  color: string;
+}
+
 export type RecommendMode = 'PLAN' | 'PLANNED' | 'MANAGE' | 'MIXED';
 
 export type AdviceType =

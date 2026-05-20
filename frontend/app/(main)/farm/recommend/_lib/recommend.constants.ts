@@ -2,6 +2,9 @@
    AI 추천 도메인 — 상수
    ════════════════════════════════════════════════════════ */
 
+import type { CalendarPhase, CropRecommendation } from './recommend.types';
+import { buildCalendarPhasesFromRecommendation } from './cropCalendarSync';
+
 /** TOP3 메달 이모지 */
 export const MEDALS = ['🥇', '🥈', '🥉'] as const;
 
@@ -76,13 +79,6 @@ export function getCropEmoji(category: string, cropName?: string): string {
 
 
 /** 재배 캘린더 데이터 */
-export interface CalendarPhase {
-  label: string;
-  startMonth: number;
-  endMonth: number;
-  color: string;
-}
-
 const CALENDAR_MAP: Record<string, CalendarPhase[]> = {
   '유기농 배추': [
     { label: '파종', startMonth: 3, endMonth: 4, color: '#52B788' },
@@ -111,8 +107,16 @@ const DEFAULT_CALENDAR: CalendarPhase[] = [
   { label: '수확', startMonth: 7, endMonth: 9, color: '#CCFF33' },
 ];
 
+/** @deprecated 정적 맵만 필요할 때 — 상세 페이지는 getCropCalendarForRecommendation 사용 */
 export function getCropCalendar(cropName: string): CalendarPhase[] {
   return CALENDAR_MAP[cropName] || DEFAULT_CALENDAR;
+}
+
+/** 추천 작물 데이터 기준 캘린더 (가이드 생육기간·파종/수확과 동기화) */
+export function getCropCalendarForRecommendation(rec: CropRecommendation): CalendarPhase[] {
+  const fromRec = buildCalendarPhasesFromRecommendation(rec);
+  if (fromRec && fromRec.length > 0) return fromRec;
+  return CALENDAR_MAP[rec.cropName] || DEFAULT_CALENDAR;
 }
 
 /** 가격 추이 모의 데이터 생성 */

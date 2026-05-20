@@ -34,7 +34,7 @@ function resolveCropTemplate(rec: CropRecommendation): CropTemplate {
     return 'root';
   }
   if (n.includes('콩') || n.includes('팥') || n.includes('감')) return 'legume';
-  if (n.includes('벼') || n.includes('보리') || n.includes('밀')) return 'grain';
+  if (n.includes('쌀') || n.includes('벼') || n.includes('보리') || n.includes('밀')) return 'grain';
   if (n.includes('딸기') || n.includes('포도') || n.includes('사과') || n.includes('배')) return 'fruit';
 
   switch (rec.category) {
