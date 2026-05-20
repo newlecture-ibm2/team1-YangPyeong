@@ -67,6 +67,8 @@ services:
     restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - TZ=Asia/Seoul
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=Asia/Seoul
       - DB_URL=jdbc:postgresql://db:5432/farm_db
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}

@@ -10,21 +10,23 @@ interface CropGuideModalProps {
   isOpen: boolean;
   onClose: () => void;
   guide: CropDetailedGuide;
+  loading?: boolean;
 }
 
-export default function CropGuideModal({ isOpen, onClose, guide }: CropGuideModalProps) {
+export default function CropGuideModal({ isOpen, onClose, guide, loading }: CropGuideModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`📖 ${guide.cropName} 전문 재배 가이드북`} size="lg">
       <div className={styles.container}>
-        {/* 상단 소개 */}
+        {loading && (
+          <p className={styles.loadingBanner}>AI 맞춤 가이드를 생성하고 있습니다…</p>
+        )}
         <div className={styles.intro}>
           <p>
             <strong>{guide.cropName}</strong>를 성공적으로 재배하기 위한 전문 가이드입니다.
-            토양 관리부터 병해충 대책, 초보 농부를 위한 실패 방지 팁까지 상세하게 안내합니다.
+            토양·수분 관리, 병해충 대책, 실패 방지 팁을 안내합니다.
           </p>
         </div>
 
-        {/* 토픽별 섹션 */}
         <div className={styles.topics}>
           {guide.topics.map((topic, idx) => (
             <div key={idx} className={styles.topicCard}>
@@ -33,19 +35,34 @@ export default function CropGuideModal({ isOpen, onClose, guide }: CropGuideModa
                 <h3 className={styles.topicTitle}>{topic.title}</h3>
               </div>
               <ul className={styles.topicList}>
-                {topic.content.map((line, lIdx) => (
-                  <li key={lIdx} className={styles.topicItem}>
-                    {line}
-                  </li>
-                ))}
+                {topic.content.map((line, lIdx) =>
+                  line === '' ? (
+                    <li key={lIdx} className={styles.topicSpacer} aria-hidden />
+                  ) : (
+                    <li
+                      key={lIdx}
+                      className={
+                        line.startsWith('【')
+                          ? styles.topicItemPest
+                          : line.startsWith('—')
+                            ? styles.topicItemSub
+                            : styles.topicItem
+                      }
+                    >
+                      {line}
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
           ))}
         </div>
 
-        {/* 하단 안내 */}
         <div className={styles.footer}>
-          <p>📚 이 가이드는 농촌진흥청 및 양평군 농업기술센터 자료를 참고하여 작성되었습니다. 작물별 세부 사항은 지역 기후와 토양에 따라 달라질 수 있습니다.</p>
+          <p>
+            📚 농촌진흥청·지역 농업기술센터 자료를 참고했습니다. 병해충명은 작물·지역에 따라
+            달라질 수 있으니 현장 예찰과 병해충 전문 상담을 병행하세요.
+          </p>
         </div>
       </div>
     </Modal>

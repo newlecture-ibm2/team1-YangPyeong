@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
 import java.util.*;
 
 /**
@@ -25,7 +27,10 @@ public class PolicyAiAnalyzeClient implements PolicyAiAnalyzePort {
 
     public PolicyAiAnalyzeClient(
             @Value("${ai.server-url:http://ai-server:8000}") String aiServerUrl) {
-        this.restTemplate = new RestTemplate();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(10));
+        factory.setReadTimeout(Duration.ofSeconds(30));
+        this.restTemplate = new RestTemplate(factory);
         this.objectMapper = new ObjectMapper();
         this.aiServerUrl = aiServerUrl;
     }
