@@ -210,14 +210,25 @@ export default function SellerProductsPage() {
                     </td>
                     <td>
                       <div className={styles.actionBtns}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => router.push(`/mypage/seller/${product.id}/edit`)}
-                          disabled={product.status === 'PENDING' || !!product.statusReason}
+                        <span
+                          title={
+                            product.statusReason ? '제재된 상품은 수정할 수 없습니다.' :
+                            product.status === 'PENDING' ? '검수중: 가격·재고만 수정 가능합니다.' : undefined
+                          }
+                          style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}
                         >
-                          수정
-                        </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(`/mypage/seller/${product.id}/edit`)}
+                            disabled={!!product.statusReason}
+                          >
+                            수정
+                          </Button>
+                          {product.status === 'PENDING' && (
+                            <span style={{ fontSize: '0.65rem', color: '#92400e', whiteSpace: 'nowrap' }}>가격·재고만</span>
+                          )}
+                        </span>
                         <Button
                           variant="ghost"
                           size="sm"

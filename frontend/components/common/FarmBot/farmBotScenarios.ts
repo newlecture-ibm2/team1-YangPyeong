@@ -173,15 +173,9 @@ const scenarios: FarmBotScenario[] = [
 
 /** 현재 경로에 맞는 시나리오를 반환합니다 */
 export function getScenarioForPath(pathname: string): FarmBotScenario | null {
-  // 정확히 '/'인 경우 먼저 체크
-  if (pathname === '/') {
-    return scenarios.find((s) => s.path === '/') || null;
-  }
-  // 가장 긴(구체적인) 경로가 먼저 매칭되도록 내림차순 정렬
-  const sorted = [...scenarios]
-    .filter((s) => s.path !== '/')
-    .sort((a, b) => b.path.length - a.path.length);
-  return sorted.find((s) => pathname.startsWith(s.path)) || null;
+  // 정확한 경로 일치만 허용
+  // startsWith는 /mypage/history가 /mypage 시나리오에 잘못 매칭되는 문제 유발
+  return scenarios.find((s) => pathname === s.path) || null;
 }
 
 export default scenarios;

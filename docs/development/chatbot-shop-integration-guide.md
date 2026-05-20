@@ -36,15 +36,15 @@
 
 ### 1.2 이미 구현되어 있는 자산
 
-| 영역 | 파일 | 역할 |
-|------|------|------|
-| Orchestrator | `ai/app/agents/orchestrator.py` | LLM 기반 의도 라우터 + 8개 에이전트 + Synthesizer |
-| Shop Agent | `ai/app/agents/shop_agent.py` | ReAct 에이전트 (Gemini), 2개 도구 보유 |
-| Shop Tools | `ai/app/agents/tools/shop_tools.py` | `navigate_to_register_page`, `autofill_product_info` |
-| AI 자동채우기 | `ai/app/services/product_assist_service.py` + `routers/product_assist.py` | `/api/ai/product-assist/autofill` |
-| Chat BFF | `frontend/app/api/ai/chat/route.ts` | AI 서버 프록시 |
-| 챗봇 UI | `frontend/components/common/FarmBot/useFarmBot.ts:320~358` | 채팅 메시지 송수신 |
-| Shop API | `backend .../shop/adapter/in/web/{Product,Cart,Order}Controller.java` | 상점 도메인 REST API |
+| 영역          | 파일                                                                      | 역할                                                 |
+| ------------- | ------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Orchestrator  | `ai/app/agents/orchestrator.py`                                           | LLM 기반 의도 라우터 + 8개 에이전트 + Synthesizer    |
+| Shop Agent    | `ai/app/agents/shop_agent.py`                                             | ReAct 에이전트 (Gemini), 2개 도구 보유               |
+| Shop Tools    | `ai/app/agents/tools/shop_tools.py`                                       | `navigate_to_register_page`, `autofill_product_info` |
+| AI 자동채우기 | `ai/app/services/product_assist_service.py` + `routers/product_assist.py` | `/api/ai/product-assist/autofill`                    |
+| Chat BFF      | `frontend/app/api/ai/chat/route.ts`                                       | AI 서버 프록시                                       |
+| 챗봇 UI       | `frontend/components/common/FarmBot/useFarmBot.ts:320~358`                | 채팅 메시지 송수신                                   |
+| Shop API      | `backend .../shop/adapter/in/web/{Product,Cart,Order}Controller.java`     | 상점 도메인 REST API                                 |
 
 ### 1.3 ⚠️ 핵심 갭(Gap)
 
@@ -104,13 +104,13 @@
 
 ### 2.2 책임 분담
 
-| Layer | 책임 |
-|-------|------|
+| Layer                   | 책임                                                                                           |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
 | **Shop Agent (Python)** | 자연어 → 의도 + 인자 추출, 부족하면 CLARIFY 액션 반환, 충분하면 실제 백엔드 API 호출 도구 사용 |
-| **AI Server** | `chat.py` 응답 스키마를 `{ reply, actions: Action[] }`로 확장 |
-| **BFF (Next)** | 응답을 그대로 통과시키고, 인증 토큰을 AI 서버에 헤더로 전달 |
-| **Frontend Dispatcher** | `actions[]` 을 순차 처리 (NAVIGATE / FILL_FORM / TOAST / CLARIFY / CONFIRM / REFRESH) |
-| **FarmBot UI** | CLARIFY는 칩 버튼, CONFIRM은 예/아니오 버튼으로 인라인 렌더 |
+| **AI Server**           | `chat.py` 응답 스키마를 `{ reply, actions: Action[] }`로 확장                                  |
+| **BFF (Next)**          | 응답을 그대로 통과시키고, 인증 토큰을 AI 서버에 헤더로 전달                                    |
+| **Frontend Dispatcher** | `actions[]` 을 순차 처리 (NAVIGATE / FILL_FORM / TOAST / CLARIFY / CONFIRM / REFRESH)          |
+| **FarmBot UI**          | CLARIFY는 칩 버튼, CONFIRM은 예/아니오 버튼으로 인라인 렌더                                    |
 
 ---
 
@@ -192,16 +192,16 @@ def split_actions(text: str) -> tuple[str, list[dict]]:
 
 기존 `navigate_to_register_page`, `autofill_product_info` 외에 아래 도구들을 `ai/app/agents/tools/shop_tools.py`에 추가한다.
 
-| Tool | 자연어 트리거 예 | 동작 |
-|------|---------------|------|
-| `navigate_to(target)` | "장터로 가줘", "장바구니 보여줘", "주문내역 보여줘" | NAVIGATE 액션 반환. target ∈ `shop_home`, `cart`, `my_orders`, `seller_register`, `seller_products`, `seller_orders` |
-| `search_products(keyword, category?)` | "사과 보여줘" | 백엔드 `GET /api/shop/product?keyword=` 호출. 1건이면 자동 선택, 다건이면 CLARIFY 액션 |
-| `add_to_cart(product_id, quantity=1)` | "사과 장바구니에 담아줘" | `POST /api/shop/cart`. 성공 시 TOAST + REFRESH(cart) |
-| `buy_now(product_id, quantity)` | "사과 바로 주문해줘" | 체크아웃 페이지로 NAVIGATE + 쿼리로 productId,qty 전달 |
-| `list_my_products()` | "내가 등록한 상품 뭐 있어?" | `GET /api/shop/seller`. 텍스트 요약 |
-| `list_seller_orders(status?)` | "들어온 주문 보여줘" | `GET /api/shop/seller/order`. 텍스트 요약 |
-| `autofill_product_info(name)` | "배추 정보 채워줘" | (기존) NAVIGATE → FILL_FORM 액션 2개 |
-| `clarify(intent, question, options)` | 도구 내부에서 후보가 모호할 때 직접 호출 | CLARIFY 액션 반환 |
+| Tool                                  | 자연어 트리거 예                                    | 동작                                                                                                                 |
+| ------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `navigate_to(target)`                 | "장터로 가줘", "장바구니 보여줘", "주문내역 보여줘" | NAVIGATE 액션 반환. target ∈ `shop_home`, `cart`, `my_orders`, `seller_register`, `seller_products`, `seller_orders` |
+| `search_products(keyword, category?)` | "사과 보여줘"                                       | 백엔드 `GET /api/shop/product?keyword=` 호출. 1건이면 자동 선택, 다건이면 CLARIFY 액션                               |
+| `add_to_cart(product_id, quantity=1)` | "사과 장바구니에 담아줘"                            | `POST /api/shop/cart`. 성공 시 TOAST + REFRESH(cart)                                                                 |
+| `buy_now(product_id, quantity)`       | "사과 바로 주문해줘"                                | 체크아웃 페이지로 NAVIGATE + 쿼리로 productId,qty 전달                                                               |
+| `list_my_products()`                  | "내가 등록한 상품 뭐 있어?"                         | `GET /api/shop/seller`. 텍스트 요약                                                                                  |
+| `list_seller_orders(status?)`         | "들어온 주문 보여줘"                                | `GET /api/shop/seller/order`. 텍스트 요약                                                                            |
+| `autofill_product_info(name)`         | "배추 정보 채워줘"                                  | (기존) NAVIGATE → FILL_FORM 액션 2개                                                                                 |
+| `clarify(intent, question, options)`  | 도구 내부에서 후보가 모호할 때 직접 호출            | CLARIFY 액션 반환                                                                                                    |
 
 ### 4.1 백엔드 호출 도구의 인증 처리
 
@@ -256,26 +256,26 @@ async def add_to_cart(product_id: int, quantity: int = 1) -> str:
 
 ### 4.3 시나리오 — "사과 장바구니에 넣어줘"
 
-| 턴 | 사용자 | Shop Agent 내부 동작 | 반환 액션 |
-|----|------|--------------------|----------|
-| 1 | "사과 장바구니에 넣어줘" | `search_products("사과")` → 3건 | `CLARIFY(intent="ADD_TO_CART", options=[{id:11,label:"부사 사과 1kg"}, ...])` |
-| 2 | "부사 사과 1kg" (또는 옵션 클릭 → id=11 메타로 자동 전송) | `add_to_cart(product_id=11, quantity=1)` 성공 | `TOAST`, `REFRESH(cart)` |
+| 턴  | 사용자                                                    | Shop Agent 내부 동작                          | 반환 액션                                                                     |
+| --- | --------------------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------- |
+| 1   | "사과 장바구니에 넣어줘"                                  | `search_products("사과")` → 3건               | `CLARIFY(intent="ADD_TO_CART", options=[{id:11,label:"부사 사과 1kg"}, ...])` |
+| 2   | "부사 사과 1kg" (또는 옵션 클릭 → id=11 메타로 자동 전송) | `add_to_cart(product_id=11, quantity=1)` 성공 | `TOAST`, `REFRESH(cart)`                                                      |
 
 ### 4.4 시나리오 — "사과 바로 주문해줘"
 
-| 턴 | 사용자 | 동작 | 액션 |
-|----|------|------|------|
-| 1 | "사과 바로 주문해줘" | search → 1건이면 즉시, 다건이면 CLARIFY | CLARIFY 또는 다음 단계 |
-| 2 | "부사 사과 1kg" | "몇 개 주문할까?" | CLARIFY(options=[1,2,3,5,10]) 또는 자유 입력 |
-| 3 | "3개" | `buy_now(11, 3)` | `NAVIGATE(/shop/checkout?productId=11&qty=3)` |
+| 턴  | 사용자               | 동작                                    | 액션                                          |
+| --- | -------------------- | --------------------------------------- | --------------------------------------------- |
+| 1   | "사과 바로 주문해줘" | search → 1건이면 즉시, 다건이면 CLARIFY | CLARIFY 또는 다음 단계                        |
+| 2   | "부사 사과 1kg"      | "몇 개 주문할까?"                       | CLARIFY(options=[1,2,3,5,10]) 또는 자유 입력  |
+| 3   | "3개"                | `buy_now(11, 3)`                        | `NAVIGATE(/shop/checkout?productId=11&qty=3)` |
 
 > **체크아웃 페이지 수정 필요**: 현재 `useCheckout.ts`는 `?items=...` 형식의 장바구니 기반이다. `productId/qty` 쿼리도 받을 수 있도록 초기화 로직을 확장한다.
 
 ### 4.5 시나리오 — "배추 등록할래"
 
-| 턴 | 사용자 | 동작 | 액션 |
-|----|------|------|------|
-| 1 | "배추 등록할래" | navigate + autofill 결합 | `NAVIGATE(/mypage/seller/register)`, `FILL_FORM(target="seller_register", payload={...})` |
+| 턴  | 사용자          | 동작                     | 액션                                                                                      |
+| --- | --------------- | ------------------------ | ----------------------------------------------------------------------------------------- |
+| 1   | "배추 등록할래" | navigate + autofill 결합 | `NAVIGATE(/mypage/seller/register)`, `FILL_FORM(target="seller_register", payload={...})` |
 
 프론트엔드는 페이지 이동 후 sessionStorage에 payload를 보관해두고, register 페이지가 마운트 시 sessionStorage를 읽어 폼을 자동 채운다. 기존 `/api/ai/product-assist/autofill` 호출 흐름을 재사용한다.
 
@@ -499,18 +499,17 @@ LLM이 직접 자연어로 되묻는 대신 `CLARIFY` 액션을 사용하면 프
 
 ## 8. 인텐트 → 도구 매핑표 (요청 예시 모음)
 
-| 사용자 발화 예 | 호출 도구 | 결과 액션 |
-|--------------|---------|----------|
-| "장터로 이동해줘" / "상점 보여줘" | `navigate_to("shop_home")` | NAVIGATE `/shop` |
-| "장바구니 보여줘" | `navigate_to("cart")` | NAVIGATE `/shop/cart` |
-| "내 주문내역 알려줘" | `navigate_to("my_orders")` + `list_my_orders()` (요약) | NAVIGATE `/shop/orders` + 텍스트 요약 |
-| "사과 장바구니에 넣어줘" | `search_products` → `add_to_cart` | (CLARIFY) → TOAST + REFRESH |
-| "사과 바로 주문해줘" | `search_products` → `buy_now` | (CLARIFY 수량) → NAVIGATE `/shop/checkout?...` |
-| "상품 등록할래" | `navigate_to("seller_register")` | NAVIGATE `/mypage/seller/register` |
-| "배추 등록할래 내용 채워줘" | `navigate_to("seller_register")` + `autofill_product_info("배추")` | NAVIGATE + FILL_FORM |
-| "내가 등록한 상품 뭐 있어?" | `list_my_products()` | 텍스트 요약 (+선택적 NAVIGATE `/mypage/seller`) |
-| "주문 들어온 거 뭐 있어?" | `list_seller_orders()` | 텍스트 요약 (+선택적 NAVIGATE `/mypage/seller/orders`) |
-| "배추 주문 거절해줘" | (확장) `update_order_status(orderId, REJECTED)` | CONFIRM → PATCH `/api/shop/seller/order/{id}` |
+| 사용자 발화 예                    | 호출 도구                                                          | 결과 액션                                              |
+| --------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------ |
+| "장터로 이동해줘" / "상점 보여줘" | `navigate_to("shop_home")`                                         | NAVIGATE `/shop`                                       |
+| "장바구니 보여줘"                 | `navigate_to("cart")`                                              | NAVIGATE `/shop/cart`                                  |
+| "사과 장바구니에 넣어줘"          | `search_products` → `add_to_cart`                                  | (CLARIFY) → TOAST + REFRESH                            |
+| "사과 바로 주문해줘"              | `search_products` → `buy_now`                                      | (CLARIFY 수량) → NAVIGATE `/shop/checkout?...`         |
+| "상품 등록할래"                   | `navigate_to("seller_register")`                                   | NAVIGATE `/mypage/seller/register`                     |
+| "배추 등록할래 내용 채워줘"       | `navigate_to("seller_register")` + `autofill_product_info("배추")` | NAVIGATE + FILL_FORM                                   |
+| "내가 등록한 상품 뭐 있어?"       | `list_my_products()`                                               | 텍스트 요약 (+선택적 NAVIGATE `/mypage/seller`)        |
+| "주문 들어온 거 뭐 있어?"         | `list_seller_orders()`                                             | 텍스트 요약 (+선택적 NAVIGATE `/mypage/seller/orders`) |
+| "배추 주문 거절해줘"              | (확장) `update_order_status(orderId, REJECTED)`                    | CONFIRM → PATCH `/api/shop/seller/order/{id}`          |
 
 ---
 

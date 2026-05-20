@@ -156,14 +156,7 @@ export default function FarmBot({ children }: FarmBotProps) {
     );
   }
 
-  // 시나리오 없으면 Provider만 제공
-  if (!hasScenario && mode === 'minimized') {
-    return (
-      <FarmBotContext.Provider value={{ showQuickMessage, startChat }}>
-        {children}
-      </FarmBotContext.Provider>
-    );
-  }
+  // 시나리오 없어도 챗봇 버튼은 항상 표시 (가이드 없는 페이지에서도 질문 가능)
 
   // ── 숨김 모드: 하단 구석에 복원 아이콘 ──
   if (mode === 'hidden') {
@@ -280,6 +273,24 @@ export default function FarmBot({ children }: FarmBotProps) {
                 )}
                 <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleBot}`}>
                   {msg.content}
+                  {msg.role === 'bot' && msg.actions?.filter(a => a.type === 'CLARIFY').map((action, actionIdx) => (
+                    <div key={`clarify-${actionIdx}`} className={styles.clarifyOptions}>
+                      {action.options?.map((opt, optIdx) => (
+                        <button
+                          key={`opt-${optIdx}`}
+                          className={styles.clarifyOptionBtn}
+                          onClick={() => sendChatMessage(
+                            opt.label, 
+                            action.intent === 'CANCEL_ORDER' 
+                              ? `주문번호 ${opt.id} 취소해줘` 
+                              : `${opt.id} 선택할게`
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
@@ -366,9 +377,11 @@ export default function FarmBot({ children }: FarmBotProps) {
             <div className={`${styles.bubble} ${styles.bubbleAbove}`}>
               <p className={styles.bubbleText}>{bubbleMessage}</p>
               <div className={styles.askBtns}>
-                <button className={styles.askBtnYes} onClick={acceptGuide}>
-                  🌱 가이드 시작
-                </button>
+                {hasScenario && (
+                  <button className={styles.askBtnYes} onClick={acceptGuide}>
+                    🌱 가이드 시작
+                  </button>
+                )}
                 <button
                   className={styles.askBtnChat}
                   onClick={(e) => { e.stopPropagation(); startChat(); }}

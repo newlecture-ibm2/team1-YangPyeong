@@ -69,8 +69,28 @@ class ChatAction(BaseModel):
     )
 
 
+class PendingIntent(BaseModel):
+    """다중 턴 슬롯 채우기를 위한 보류 의도.
+
+    도구가 필수 인자를 누락한 상태로 호출되면 이 객체를 반환하여
+    프론트가 다음 사용자 입력 때 함께 보내도록 한다.
+    """
+
+    tool: str = Field(..., description="실행할 도구 이름 (예: 'update_cart_qty')")
+    filled: dict[str, Any] = Field(default_factory=dict, description="이미 받은 슬롯 값")
+    missing: list[str] = Field(default_factory=list, description="아직 필요한 슬롯 이름")
+    prompts: dict[str, str] = Field(
+        default_factory=dict,
+        description="슬롯별 사용자 질문 문구 (예: {'quantity': '몇 개로 바꿔드릴까요?'})",
+    )
+    domain: Optional[str] = Field(None, description="도메인 식별자 (예: 'shop'). 슬롯 추출기 선택용")
+
+
 class ChatResponse(BaseModel):
-    """챗봇 응답 - reply(텍스트) + actions(실행 액션 목록)."""
+    """챗봇 응답 - reply(텍스트) + actions(실행 액션 목록) + pending_intent(슬롯 채우기 컨텍스트)."""
 
     reply: str = Field(..., description="사용자에게 보여줄 자연어 답변")
     actions: list[ChatAction] = Field(default_factory=list, description="프론트가 실행할 액션들")
+    pending_intent: Optional[PendingIntent] = Field(
+        None, description="슬롯이 부족한 경우 클라이언트가 다음 요청에 동봉할 컨텍스트"
+    )

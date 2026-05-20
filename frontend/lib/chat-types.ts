@@ -71,8 +71,18 @@ export interface ChatAction {
   products?: ChatProductItem[];
 }
 
+/** 다중 턴 슬롯 채우기 — 도구가 누락된 인자를 다음 턴에서 받을 수 있게 함 */
+export interface PendingIntent {
+  tool: string;
+  filled: Record<string, unknown>;
+  missing: string[];
+  prompts: Record<string, string>;
+  domain?: string;
+}
+
 /** AI 서버 응답 본체 */
 export interface ChatReply {
   reply: string;
   actions: ChatAction[];
+  pending_intent?: PendingIntent | null;
 }

@@ -76,7 +76,6 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        // 판매자 본인 확인
         if (!product.getSellerId().equals(sellerId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
@@ -86,9 +85,14 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
             throw new BusinessException(ErrorCode.PRODUCT_ADMIN_LOCKED);
         }
 
+        // 검수중 상품은 콘텐츠(이름·설명·카테고리·이미지) 변경 불가 — 가격·재고만 허용
+        if (product.getStatus() == ProductStatus.PENDING) {
+            throw new BusinessException(ErrorCode.PRODUCT_PENDING_CONTENT_LOCKED);
+        }
+
         product.update(name, price, stock, description, null, categoryName);
 
-        // 상품 내용 수정 시 재검수를 위해 PENDING 상태로 전환
+        // 콘텐츠 수정 시 재검수를 위해 PENDING 상태로 전환
         product.changeStatus(ProductStatus.PENDING, "정보 수정으로 인한 재검수 대기");
 
         // 이미지 교체: 기존 삭제 후 재등록
@@ -97,6 +101,28 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
             uploadRepository.saveAll("PRODUCT", productId, imageUrls);
         }
 
+        return productRepository.save(product);
+    }
+
+    @Override
+    @Transactional
+    public Product updateInventory(Long sellerId, Long productId, Integer price, Integer stock) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        if (!product.getSellerId().equals(sellerId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        // price/stock 중 null이면 기존 값 유지
+        int newPrice = price != null ? price : product.getPrice();
+        int newStock = stock != null ? stock : product.getStock();
+
+        if (newPrice <= 0) throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+        if (newStock < 0)  throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+
+        // 가격·재고만 변경 — 상태(status) 는 그대로 유지 (PENDING이어도 통과)
+        product.updateInventory(newPrice, newStock);
         return productRepository.save(product);
     }
 
