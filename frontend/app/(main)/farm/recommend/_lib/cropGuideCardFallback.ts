@@ -3,23 +3,7 @@
  */
 
 import type { CropRecommendation } from './recommend.types';
-
-function norm(name: string): string {
-  return name.replace(/\s+/g, '').toLowerCase();
-}
-
-const DEFAULT_PERIODS: { match: (n: string) => boolean; sowing: string; harvest: string }[] = [
-  { match: (n) => n.includes('쌀') || n.includes('벼'), sowing: '4월순 ~ 5월순', harvest: '9월순 ~ 10월중순' },
-  { match: (n) => n.includes('보리'), sowing: '10월순 ~ 10월순', harvest: '5월순 ~ 6월중순' },
-  { match: (n) => n.includes('콩'), sowing: '6월중순 ~ 7월순', harvest: '9월순 ~ 10월중순' },
-  { match: (n) => n.includes('감자'), sowing: '3월순 ~ 4월순', harvest: '6월중순 ~ 7월순' },
-  { match: (n) => n.includes('고구마'), sowing: '4월순 ~ 5월중순', harvest: '9월순 ~ 10월중순' },
-  { match: (n) => n.includes('방울'), sowing: '3월 ~ 4월(정식)', harvest: '5월 ~ 11월' },
-  { match: (n) => n.includes('토마토'), sowing: '3월 ~ 4월(정식)', harvest: '5월 ~ 9월' },
-  { match: (n) => n.includes('고추') || n.includes('피망'), sowing: '2월(정식) ~ 5월(정식)', harvest: '7월 ~ 10월' },
-  { match: (n) => n.includes('배추') || n.includes('양배추'), sowing: '3월 ~ 5월', harvest: '7월 ~ 8월' },
-  { match: (n) => n.includes('인삼'), sowing: '8월 ~ 9월(정식)', harvest: '12월 ~ 5월' },
-];
+import { normCropName, resolveCropPeriodFallback } from './cropPeriodFallback';
 
 const DEFAULT_GROWTH_DAYS: { match: (n: string) => boolean; days: number }[] = [
   { match: (n) => n.includes('쌀') || n.includes('벼'), days: 150 },
@@ -48,23 +32,15 @@ const DEFAULT_PESTS: { match: (n: string) => boolean; pests: string[] }[] = [
 ];
 
 function fallbackGrowthDays(cropName: string): number | undefined {
-  const n = norm(cropName);
+  const n = normCropName(cropName);
   for (const row of DEFAULT_GROWTH_DAYS) {
     if (row.match(n)) return row.days;
   }
   return undefined;
 }
 
-function fallbackPeriods(cropName: string): { sowing?: string; harvest?: string } {
-  const n = norm(cropName);
-  for (const row of DEFAULT_PERIODS) {
-    if (row.match(n)) return { sowing: row.sowing, harvest: row.harvest };
-  }
-  return {};
-}
-
 function fallbackPests(cropName: string): string[] {
-  const n = norm(cropName);
+  const n = normCropName(cropName);
   for (const row of DEFAULT_PESTS) {
     if (row.match(n)) return [...row.pests];
   }
@@ -76,7 +52,7 @@ export function enrichCropGuideCardFields(rec: CropRecommendation): CropRecommen
   const growthDays = rec.growthDays ?? fallbackGrowthDays(rec.cropName);
   const pests =
     rec.pests && rec.pests.length > 0 ? rec.pests : fallbackPests(rec.cropName);
-  const periods = fallbackPeriods(rec.cropName);
+  const periods = resolveCropPeriodFallback(rec.cropName);
   const sowingPeriod = rec.sowingPeriod?.trim() || periods.sowing;
   const harvestPeriod = rec.harvestPeriod?.trim() || periods.harvest;
 
