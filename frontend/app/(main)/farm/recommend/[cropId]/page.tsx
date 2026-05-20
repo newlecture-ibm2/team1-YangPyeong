@@ -7,7 +7,6 @@ import { SUPPLY_STATUS_MAP, SOIL_FITNESS_MAP, ADVICE_TYPE_LABEL } from '../_lib/
 import type { CropRecommendation, CropRecommendResponse } from '../_lib/recommend.types';
 import { getLatestRecommendHistory } from '../_lib/recommend.api';
 import { findCropInRecommendResult, sanitizeRecommendResponse } from '../_lib/recommend.utils';
-import { enrichCropGuideCardFields } from '../_lib/cropGuideCardFallback';
 import { getCropEmoji, getCropCalendarForRecommendation, generatePriceData } from '../_lib/recommend.constants';
 import { getCropDetailedPlanForRecommendation } from '../_lib/calendarPlanData';
 import { buildCalendarSubtitle } from '../_lib/cropCalendarSync';
@@ -106,8 +105,7 @@ function RecommendDetailInner() {
 
   const rec = useMemo(() => {
     if (!result) return null;
-    const found = findCropInRecommendResult(result, cropId);
-    return found ? enrichCropGuideCardFields(found) : null;
+    return findCropInRecommendResult(result, cropId) ?? null;
   }, [result, cropId]);
 
   const otherRecs = useMemo(() => {

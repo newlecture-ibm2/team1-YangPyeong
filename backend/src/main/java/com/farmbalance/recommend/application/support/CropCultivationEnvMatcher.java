@@ -1,38 +1,12 @@
 package com.farmbalance.recommend.application.support;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * crops.name ↔ crop_cultivation_env.crop_name 매칭 보조.
  * 통계·마스터는 '쌀', 재배환경 시드는 '벼' 등 명칭 불일치를 SQL·조회에서 흡수합니다.
  */
 public final class CropCultivationEnvMatcher {
 
-    private static final Map<String, List<String>> ALIASES = Map.of(
-            "쌀", List.of("벼"),
-            "벼", List.of("쌀")
-    );
-
     private CropCultivationEnvMatcher() {
-    }
-
-    /** env·병해충 조회에 사용할 작물명 후보 (원본 + 별칭, 순서 유지) */
-    public static List<String> lookupNames(String cropName) {
-        if (cropName == null || cropName.isBlank()) {
-            return List.of();
-        }
-        Set<String> names = new LinkedHashSet<>();
-        String trimmed = cropName.trim();
-        names.add(trimmed);
-        List<String> extra = ALIASES.get(trimmed);
-        if (extra != null) {
-            names.addAll(extra);
-        }
-        return new ArrayList<>(names);
     }
 
     /**
