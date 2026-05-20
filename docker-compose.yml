@@ -48,8 +48,14 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./frontend/src
-          target: /app/src
+          path: ./frontend/app
+          target: /app/app
+        - action: sync
+          path: ./frontend/components
+          target: /app/components
+        - action: sync
+          path: ./frontend/lib
+          target: /app/lib
         - action: rebuild
           path: ./frontend/package.json
 
@@ -61,6 +67,8 @@ services:
     restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - TZ=Asia/Seoul
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=Asia/Seoul
       - DB_URL=jdbc:postgresql://db:5432/farm_db
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}

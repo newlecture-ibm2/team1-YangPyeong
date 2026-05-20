@@ -43,10 +43,34 @@ class FarmContext(BaseModel):
 
 # ── 전체 자동 채우기 ──
 
+class ExistingValues(BaseModel):
+    """클라이언트가 이미 채워둔 값들. AI는 이 값을 절대 덮어쓰지 않고 빈 칸만 채움.
+
+    예: 사용자가 작물 등록 데이터로부터 stock=100, unitKg=1 을 이미 채웠다면
+        AI는 price, category, description 만 생성.
+    """
+    price: int | None = None
+    stock: int | None = None
+    unit_kg: int | None = Field(None, alias="unitKg")
+    category_name: str | None = Field(None, alias="categoryName")
+    description: str | None = None
+
+    class Config:
+        populate_by_name = True
+
+
 class AutofillRequest(BaseModel):
     """상품 전체 필드 자동 채우기 요청."""
     product_name: str = Field(..., description="상품명 (예: 유기농 상추 500g)")
     farm_context: FarmContext | None = Field(None, description="농장 재배 이력 컨텍스트 (없으면 추론 모드)")
+    existing_values: ExistingValues | None = Field(
+        None,
+        description="이미 채워진 필드 값. AI는 이 값을 덮어쓰지 않고 빈 칸만 채움.",
+        alias="existingValues",
+    )
+
+    class Config:
+        populate_by_name = True
 
 
 class AutofillData(BaseModel):
@@ -54,6 +78,7 @@ class AutofillData(BaseModel):
     category_name: str = Field(..., description="DB에서 매칭된 카테고리명")
     price: int = Field(..., description="추천 가격 (원)")
     stock: int = Field(..., description="추천 초기 재고")
+    unit_kg: int = Field(1, description="1개당 판매 단위(kg). 기본 1.")
     description: str = Field(..., description="AI가 생성한 상품 설명")
     is_kamis_applied: bool = Field(False, description="KAMIS 시세 반영 여부")
     kamis_unit: str | None = Field(None, description="KAMIS 단위 (예: 1kg)")

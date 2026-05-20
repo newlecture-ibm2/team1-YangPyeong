@@ -70,7 +70,7 @@ export default function CultivationPage() {
                     <BarChart data={data}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="region" />
-                      <YAxis width={80} tickFormatter={(value) => value.toLocaleString()} />
+                      <YAxis width={80} tickFormatter={(val) => val >= 10000 ? (val / 10000).toFixed(0) + '만' : val.toLocaleString()} />
                       <Tooltip formatter={(value) => `${Number(value).toLocaleString()}㎡`} />
                       <Bar dataKey="areaM2" name="재배 면적(㎡)" fill="#2D6A4F" radius={[4, 4, 0, 0]} />
                     </BarChart>
@@ -90,7 +90,7 @@ export default function CultivationPage() {
                     <tr>
                       <th className={styles.col100}>읍면</th>
                       <th className={`${styles.numberCell} ${styles.col100}`}>농가 수</th>
-                      <th className={`${styles.numberCell} ${styles.col120}`}>재배 면적</th>
+                      <th className={`${styles.numberCell} ${styles.col150}`}>재배 면적</th>
                       <th className={styles.colAuto}>주요 작물</th>
                     </tr>
                   </thead>

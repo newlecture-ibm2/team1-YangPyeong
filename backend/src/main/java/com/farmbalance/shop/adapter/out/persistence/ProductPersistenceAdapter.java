@@ -52,7 +52,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
             // 수정
             entity = productJpaRepository.findById(product.getId()).orElseThrow();
             entity.update(product.getName(), product.getPrice(), product.getStock(),
-                    product.getDescription(), categoryId);
+                    product.getUnitKg(), product.getDescription(), categoryId);
             entity.updateSalesCount(product.getSalesCount());
             entity.updateStatus(product.getStatus().name());
         } else {
@@ -63,6 +63,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
                     .name(product.getName())
                     .price(product.getPrice())
                     .stock(product.getStock())
+                    .unitKg(product.getUnitKg())
                     .description(product.getDescription())
                     .salesCount(product.getSalesCount())
                     .status(product.getStatus().name())
@@ -134,6 +135,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
                 entity.getName(),
                 entity.getPrice(),
                 entity.getStock(),
+                entity.getUnitKg(),
                 entity.getDescription(),
                 entity.getSalesCount(),
                 ProductStatus.valueOf(entity.getStatus()),

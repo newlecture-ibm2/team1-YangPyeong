@@ -52,11 +52,12 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
 
     @Override
     @Transactional
-    public Product registerProduct(Long sellerId, String name, int price, int stock,
+    public Product registerProduct(Long sellerId, String name, int price, int stock, int unitKg,
             String description, String categoryName, List<String> imageUrls) {
+        int safeUnitKg = unitKg < 1 ? 1 : unitKg;
         Product product = new Product(
                 null, sellerId, null, null, categoryName,
-                name, price, stock, description, 0,
+                name, price, stock, safeUnitKg, description, 0,
                 ProductStatus.PENDING, imageUrls, LocalDateTime.now());
 
         Product saved = productRepository.save(product);
@@ -72,18 +73,23 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
     @Override
     @Transactional
     public Product updateProduct(Long sellerId, Long productId, String name, int price, int stock,
-            String description, String categoryName, List<String> imageUrls) {
+            Integer unitKg, String description, String categoryName, List<String> imageUrls) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        // 판매자 본인 확인
         if (!product.getSellerId().equals(sellerId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
-        product.update(name, price, stock, description, null, categoryName);
+        // 검수중 상품은 콘텐츠(이름·설명·카테고리·이미지) 변경 불가 — 가격·재고만 허용
+        if (product.getStatus() == ProductStatus.PENDING) {
+            throw new BusinessException(ErrorCode.PRODUCT_PENDING_CONTENT_LOCKED);
+        }
 
-        // 상품 내용 수정 시 재검수를 위해 PENDING 상태로 전환
+        int newUnitKg = (unitKg != null && unitKg >= 1) ? unitKg : product.getUnitKg();
+        product.update(name, price, stock, newUnitKg, description, null, categoryName);
+
+        // 콘텐츠 수정 시 재검수를 위해 PENDING 상태로 전환
         product.changeStatus(ProductStatus.PENDING);
 
         // 이미지 교체: 기존 삭제 후 재등록
@@ -92,6 +98,28 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
             uploadRepository.saveAll("PRODUCT", productId, imageUrls);
         }
 
+        return productRepository.save(product);
+    }
+
+    @Override
+    @Transactional
+    public Product updateInventory(Long sellerId, Long productId, Integer price, Integer stock) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        if (!product.getSellerId().equals(sellerId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        // price/stock 중 null이면 기존 값 유지
+        int newPrice = price != null ? price : product.getPrice();
+        int newStock = stock != null ? stock : product.getStock();
+
+        if (newPrice <= 0) throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+        if (newStock < 0)  throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+
+        // 가격·재고만 변경 — 상태(status) 는 그대로 유지 (PENDING이어도 통과)
+        product.updateInventory(newPrice, newStock);
         return productRepository.save(product);
     }
 

@@ -82,7 +82,7 @@ public class ProductController {
     public ApiResponse<ProductResponse> registerProduct(@RequestBody ProductRegisterRequest request) {
         Long sellerId = SecurityUtil.getCurrentUserId();
         Product product = manageProductUseCase.registerProduct(
-                sellerId, request.name(), request.price(), request.stock(),
+                sellerId, request.name(), request.price(), request.stock(), request.unitKgOrDefault(),
                 request.description(), request.categoryName(), request.imageUrls()
         );
         return ApiResponse.ok(ProductResponse.from(product));
@@ -95,7 +95,7 @@ public class ProductController {
         Long sellerId = SecurityUtil.getCurrentUserId();
         Product product = manageProductUseCase.updateProduct(
                 sellerId, id, request.name(), request.price(), request.stock(),
-                request.description(), request.categoryName(), request.imageUrls()
+                request.unitKg(), request.description(), request.categoryName(), request.imageUrls()
         );
         return ApiResponse.ok(ProductResponse.from(product));
     }
@@ -106,6 +106,21 @@ public class ProductController {
         Long sellerId = SecurityUtil.getCurrentUserId();
         manageProductUseCase.deleteProduct(sellerId, id);
         return ApiResponse.ok(null);
+    }
+
+    /**
+     * 가격·재고만 수정 (운영 정보 — 검수중 포함 모든 상태에서 즉시 반영).
+     * 콘텐츠(이름·설명·이미지·카테고리) 변경 없이 재고·가격만 바꿀 때 사용.
+     */
+    @PatchMapping("/seller/{id}/inventory")
+    public ApiResponse<ProductResponse> updateInventory(@PathVariable Long id,
+                                                         @RequestBody InventoryUpdateRequest request) {
+        if (request.price() == null && request.stock() == null) {
+            return ApiResponse.fail("E-COMMON-002", "price 또는 stock 중 하나 이상 입력해야 합니다.");
+        }
+        Long sellerId = SecurityUtil.getCurrentUserId();
+        Product product = manageProductUseCase.updateInventory(sellerId, id, request.price(), request.stock());
+        return ApiResponse.ok(ProductResponse.from(product));
     }
 
     /** 판매자 상품 상태 변경 */

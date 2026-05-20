@@ -11,10 +11,11 @@ interface OrderListProps {
   orders: BuyerOrder[];
   statusFilter: OrderStatus | 'ALL';
   onOpenDetail: (order: BuyerOrder) => void;
+  onOpenCancel: (order: BuyerOrder) => void;
 }
 
 /** 주문 카드 리스트 (빈 상태 포함) */
-export default function OrderList({ orders, statusFilter, onOpenDetail }: OrderListProps) {
+export default function OrderList({ orders, statusFilter, onOpenDetail, onOpenCancel }: OrderListProps) {
   const router = useRouter();
 
   if (orders.length === 0) {
@@ -61,12 +62,23 @@ export default function OrderList({ orders, statusFilter, onOpenDetail }: OrderL
                 </p>
               </div>
               <span className={styles.orderAmount}>{formatPrice(order.totalAmount)}</span>
-              <button
-                className={styles.orderDetailBtn}
-                onClick={(e) => { e.stopPropagation(); onOpenDetail(order); }}
-              >
-                상세보기
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {order.status === 'ORDERED' && (
+                  <button
+                    className={styles.orderDetailBtn}
+                    onClick={(e) => { e.stopPropagation(); onOpenCancel(order); }}
+                    style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
+                  >
+                    주문 취소
+                  </button>
+                )}
+                <button
+                  className={styles.orderDetailBtn}
+                  onClick={(e) => { e.stopPropagation(); onOpenDetail(order); }}
+                >
+                  상세보기
+                </button>
+              </div>
             </div>
           </div>
         );

@@ -19,6 +19,7 @@ interface ChatRegisterPayload {
   name?: string;
   price?: number | string;
   stock?: number | string;
+  unitKg?: number | string;
   categoryName?: string;
   description?: string;
   isKamisApplied?: boolean;
@@ -46,30 +47,96 @@ function SellerRegisterForm() {
     name: '',
     price: '',
     stock: '',
+    unitKg: '1',
     categoryName: '',
     description: '',
   });
 
-  // 수확 완료 등록 후 쿼리 파라미터가 유입될 시 자동 바인딩
-  useEffect(() => {
-    try {
-      const cropName = searchParams.get('cropName');
-      const yieldAmount = searchParams.get('yieldAmount');
-      const yieldUnit = searchParams.get('yieldUnit') || 'kg';
-      const grade = searchParams.get('grade') || '특';
-      const farmName = searchParams.get('farmName');
+  // 수확량 기반 자동 재계산을 위한 기준값
+  //   totalKg: 사용자가 등록한 전체 수확량(kg) — 단위 변경 시 stock 재계산용
+  //   pricePer1kg: 1kg당 가격 — 단위 변경 시 price 재계산용 (KAMIS/AI 추정가 기준)
+  const [totalKg, setTotalKg] = useState<number | null>(null);
+  const [pricePer1kg, setPricePer1kg] = useState<number | null>(null);
 
-      if (cropName) {
-        setForm(prev => ({
-          ...prev,
-          name: `[양평] ${farmName ? farmName + ' ' : ''}무농약 ${cropName} (1kg)`,
-          stock: yieldAmount || '',
-          description: `${farmName ? farmName + '에서 ' : ''}정성껏 재배 및 수확한 소중한 양평산 ${cropName} (${grade}급, ${yieldAmount}kg)입니다. 1kg 단위로 정성껏 포장하여 신선하게 직송해 드립니다.`
-        }));
+  // 수확 완료 등록 후 쿼리 파라미터가 유입될 시 자동 바인딩
+  // + KAMIS 1kg 단가 조회하여 가격 자동 채움 (LLM 호출 없음)
+  useEffect(() => {
+    const cropName = searchParams.get('cropName');
+    const yieldAmount = searchParams.get('yieldAmount');
+    const grade = searchParams.get('grade') || '특';
+    const farmName = searchParams.get('farmName');
+
+    if (!cropName) return;
+
+    const yieldNum = Number(yieldAmount || 0);
+    setTotalKg(yieldNum > 0 ? yieldNum : null);
+    setForm(prev => ({
+      ...prev,
+      name: `[양평] ${farmName ? farmName + ' ' : ''}무농약 ${cropName} (1kg)`,
+      stock: yieldNum > 0 ? String(yieldNum) : '',
+      unitKg: '1',
+      description: `${farmName ? farmName + '에서 ' : ''}정성껏 재배 및 수확한 소중한 양평산 ${cropName} (${grade}급, ${yieldAmount}kg)입니다. 1kg 단위로 정성껏 포장하여 신선하게 직송해 드립니다.`
+    }));
+
+    // 1차: KAMIS 1kg 단가 + 카테고리 자동 조회 (LLM 호출 없음, DB 캐시 직조회)
+    // 2차: KAMIS 가격 매칭 실패 시 → AI Autofill 으로 fallback (시장가 추정)
+    (async () => {
+      let priceFilled = false;
+      let categoryFilled = false;
+      try {
+        const res = await fetch(`/api/ai/product-assist/kamis-price?cropName=${encodeURIComponent(cropName)}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          if (json.data.price) {
+            const kamis1kgPrice: number = json.data.price;
+            setPricePer1kg(kamis1kgPrice);
+            const computed = Math.round((kamis1kgPrice * 1) / 100) * 100;
+            setForm(prev => { priceFilled = !!prev.price; return prev.price ? prev : { ...prev, price: String(computed) }; });
+            if (!priceFilled) priceFilled = true;
+            setPriceRecommendationType('KAMIS');
+            setKamisUnit(json.data.unit || '1kg');
+          }
+          if (json.data.categoryName) {
+            setForm(prev => { categoryFilled = !!prev.categoryName; return prev.categoryName ? prev : { ...prev, categoryName: json.data.categoryName }; });
+            if (!categoryFilled) categoryFilled = true;
+          }
+        }
+      } catch {
+        // 무시 — 다음 단계에서 AI fallback
       }
-    } catch (e) {
-      console.error('Failed to parse search params context:', e);
-    }
+
+      // 가격이 채워지지 않았으면 AI Autofill 으로 시장가 추정
+      if (!priceFilled) {
+        try {
+          const aiRes = await fetch('/api/ai/product-assist/autofill', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              productName: cropName,
+              existingValues: {
+                stock: yieldNum > 0 ? yieldNum : undefined,
+                unitKg: 1,
+                ...(categoryFilled ? {} : {}),
+              },
+            }),
+          });
+          const aiJson = await aiRes.json();
+          if (aiJson.success && aiJson.data) {
+            setForm(prev => ({
+              ...prev,
+              price: prev.price || (aiJson.data.price ? String(aiJson.data.price) : ''),
+              categoryName: prev.categoryName || aiJson.data.categoryName || '',
+            }));
+            if (aiJson.data.price) {
+              setPricePer1kg(aiJson.data.price);
+              setPriceRecommendationType('AI');
+            }
+          }
+        } catch {
+          // AI 호출 실패는 조용히 무시 — 사용자가 수동으로 채우면 됨
+        }
+      }
+    })();
   }, [searchParams]);
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -120,6 +187,7 @@ function SellerRegisterForm() {
         name: payload.name ?? prev.name,
         price: payload.price !== undefined && payload.price !== null ? String(payload.price) : prev.price,
         stock: payload.stock !== undefined && payload.stock !== null ? String(payload.stock) : prev.stock,
+        unitKg: payload.unitKg !== undefined && payload.unitKg !== null ? String(payload.unitKg) : prev.unitKg,
         categoryName: matchedCategory || prev.categoryName,
         description: payload.description ?? prev.description,
       }));
@@ -127,8 +195,15 @@ function SellerRegisterForm() {
       if (payload.isKamisApplied) {
         setPriceRecommendationType('KAMIS');
         if (payload.kamisUnit) setKamisUnit(payload.kamisUnit);
+        // KAMIS는 1kg 단가 기준 → pricePer1kg 추정
+        const unit = Math.max(1, Number(payload.unitKg ?? 1));
+        if (payload.price !== undefined && payload.price !== null) {
+          setPricePer1kg(Number(payload.price) / unit);
+        }
       } else if (payload.price !== undefined && payload.price !== null) {
         setPriceRecommendationType('AI');
+        const unit = Math.max(1, Number(payload.unitKg ?? 1));
+        setPricePer1kg(Number(payload.price) / unit);
       }
 
       showSuccess('챗봇이 상품 정보를 채워두었어요. 확인 후 등록해 주세요.');
@@ -174,13 +249,51 @@ function SellerRegisterForm() {
       // 앞자리 0 제거 (예: "007" → "7")
       const cleaned = String(Number(numericOnly));
       updateField(field, cleaned);
-      
+
       if (field === 'price') {
         setPriceRecommendationType(null); // 사용자가 직접 수정하면 안내문구 제거
         setKamisUnit(null);
+        // 사용자가 직접 가격을 바꾸면 1kg 단가 기준점도 함께 갱신
+        const unit = Math.max(1, Number(form.unitKg) || 1);
+        const next = Number(cleaned);
+        if (next > 0 && unit > 0) setPricePer1kg(next / unit);
+      }
+      if (field === 'stock') {
+        // 사용자가 직접 재고를 바꾸면 totalKg 기준점 갱신
+        const unit = Math.max(1, Number(form.unitKg) || 1);
+        const next = Number(cleaned);
+        if (next >= 0) setTotalKg(next * unit);
       }
     },
-    [updateField],
+    [updateField, form.unitKg],
+  );
+
+  /** 단위(unit) 변경 — 가격·재고 자동 재계산 */
+  const handleUnitChange = useCallback(
+    (value: string) => {
+      // 빈 값은 임시 허용 (사용자가 지우는 중)
+      if (value === '') {
+        updateField('unitKg', '');
+        return;
+      }
+      const numericOnly = value.replace(/[^0-9]/g, '');
+      if (numericOnly === '') return;
+      const cleaned = String(Number(numericOnly));
+      const newUnit = Math.max(1, Number(cleaned));
+
+      // 가격 재계산: pricePer1kg × newUnit
+      if (pricePer1kg !== null && pricePer1kg > 0) {
+        const newPrice = Math.round(pricePer1kg * newUnit);
+        updateField('price', String(newPrice));
+      }
+      // 재고 재계산: floor(totalKg / newUnit)
+      if (totalKg !== null && totalKg > 0) {
+        const newStock = Math.floor(totalKg / newUnit);
+        updateField('stock', String(newStock));
+      }
+      updateField('unitKg', cleaned);
+    },
+    [updateField, pricePer1kg, totalKg],
   );
 
   /** 이미지 추가 (최대 5장) */
@@ -221,6 +334,7 @@ function SellerRegisterForm() {
     Number(form.price) > 0 &&
     form.stock !== '' &&
     Number(form.stock) >= 0 &&
+    form.unitKg !== '' && Number(form.unitKg) >= 1 &&
     form.categoryName !== '' &&
     form.description.trim().length >= 10 &&
     form.description.length <= MAX_DESC;
@@ -272,6 +386,7 @@ function SellerRegisterForm() {
         name: form.name,
         price: Number(form.price),
         stock: Number(form.stock),
+        unitKg: Math.max(1, Number(form.unitKg) || 1),
         description: form.description,
         categoryName: form.categoryName,
         imageUrls,
@@ -334,20 +449,13 @@ function SellerRegisterForm() {
     }
   }, [form.name, form.categoryName, form.description, updateField]);
 
-  /** AI로 전체 채우기 (카테고리, 가격, 재고, 설명) */
+  /** AI로 전체 채우기 (카테고리, 가격, 재고, 설명).
+   *  Hybrid: 기존에 채워진 값은 그대로 두고 빈 값만 AI가 채움.
+   */
   const handleAiAutofill = useCallback(async () => {
     if (!form.name.trim()) {
       showAlert('상품명을 먼저 입력해주세요.');
       return;
-    }
-
-    // 기존 데이터가 있으면 확인
-    const hasExisting = form.price || form.stock || form.categoryName || form.description.trim();
-    if (hasExisting) {
-      const confirmed = await showConfirm(
-        '기존에 입력된 정보가 있습니다. AI가 새로 채운 내용으로 덮어쓸까요?',
-      );
-      if (!confirmed) return;
     }
 
     setIsAiAutofilling(true);
@@ -399,13 +507,22 @@ function SellerRegisterForm() {
         // 농장 조회 실패 시 무시하고 기존 추론 모드로 진행
       }
 
-      // AI 자동 채우기 호출 (farmContext 포함)
+      // 이미 채워진 값(빈 칸만 AI가 채우도록 백엔드에 알려줌)
+      const existingValues: Record<string, unknown> = {};
+      if (form.price && Number(form.price) > 0) existingValues.price = Number(form.price);
+      if (form.stock !== '' && Number(form.stock) >= 0) existingValues.stock = Number(form.stock);
+      if (form.unitKg && Number(form.unitKg) >= 1) existingValues.unitKg = Number(form.unitKg);
+      if (form.categoryName) existingValues.categoryName = form.categoryName;
+      if (form.description.trim()) existingValues.description = form.description.trim();
+
+      // AI 자동 채우기 호출 (farmContext + existingValues 포함)
       const res = await fetch('/api/ai/product-assist/autofill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productName: form.name.trim(),
           farmContext,
+          existingValues,
         }),
       });
       const data = await res.json();
@@ -415,36 +532,45 @@ function SellerRegisterForm() {
       }
 
       // AI가 반환한 카테고리가 Dropdown 옵션에 있는지 확인 후 매칭
-      let aiCategory = data.data.categoryName;
+      const aiCategory: string = data.data.categoryName ?? '';
       let matchedCategory = '';
-      
-      if (categoryOptions.length > 0) {
+      if (aiCategory && categoryOptions.length > 0) {
         const exactMatch = categoryOptions.find((opt) => opt.value === aiCategory);
         if (exactMatch) {
           matchedCategory = exactMatch.value;
         } else {
-          // 비슷한 이름 찾기 (예: "채소류" -> "채소")
           const partialMatch = categoryOptions.find(opt => opt.value.includes(aiCategory) || aiCategory.includes(opt.value));
           if (partialMatch) {
             matchedCategory = partialMatch.value;
           } else {
-            // 매칭 실패시 기타 카테고리 또는 첫번째 옵션 사용
             const etcMatch = categoryOptions.find(opt => opt.value === '기타');
             matchedCategory = etcMatch ? etcMatch.value : categoryOptions[0].value;
           }
         }
       }
 
+      // Hybrid: 이미 채워진 값은 유지, 빈 값만 AI가 채운 값으로 보강
       setForm((prev) => ({
         ...prev,
-        categoryName: matchedCategory || aiCategory,
-        price: String(data.data.price),
-        stock: String(data.data.stock),
-        description: data.data.description,
+        categoryName: prev.categoryName || matchedCategory || aiCategory,
+        price: prev.price || (data.data.price ? String(data.data.price) : ''),
+        stock: prev.stock || (data.data.stock !== undefined ? String(data.data.stock) : ''),
+        unitKg: prev.unitKg || (data.data.unitKg ? String(data.data.unitKg) : '1'),
+        description: prev.description.trim() ? prev.description : (data.data.description ?? ''),
       }));
 
-      setPriceRecommendationType(data.data.isKamisApplied ? 'KAMIS' : 'AI');
-      setKamisUnit(data.data.kamisUnit || null);
+      // 가격이 새로 채워진 경우 단가 기준 갱신
+      if (!form.price && data.data.price) {
+        const unit = Math.max(1, Number(form.unitKg || data.data.unitKg || 1));
+        setPricePer1kg(data.data.price / unit);
+      }
+
+      if (data.data.isKamisApplied && !form.price) {
+        setPriceRecommendationType('KAMIS');
+        setKamisUnit(data.data.kamisUnit || null);
+      } else if (data.data.price && !form.price) {
+        setPriceRecommendationType('AI');
+      }
 
       // 가이드봇 안내 메시지 — 재배 이력 사용 여부에 따라 분기
       showQuickMessage(
@@ -545,10 +671,23 @@ function SellerRegisterForm() {
             </span>
           </div>
 
+          <div className={styles.formGroup}>
+            <Input
+              label="판매 단위 (kg)"
+              placeholder="1"
+              value={form.unitKg}
+              onChange={(e) => handleUnitChange(e.target.value)}
+              required
+            />
+            <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginTop: '-12px', marginBottom: '16px', marginLeft: '4px' }}>
+              💡 1개당 판매할 단위(kg)를 입력하세요. 기본 1kg. 단위를 바꾸면 가격·재고가 자동으로 재계산됩니다.
+            </div>
+          </div>
+
           <div className={styles.formRow}>
             <div>
               <Input
-                label="가격 (원)"
+                label={`가격 (원${Number(form.unitKg) > 1 ? ` / ${form.unitKg}kg` : ''})`}
                 placeholder="예: 8000"
                 value={form.price}
                 onChange={(e) => handleNumberInput('price', e.target.value)}

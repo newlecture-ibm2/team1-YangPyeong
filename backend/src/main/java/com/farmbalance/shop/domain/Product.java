@@ -17,6 +17,7 @@ public class Product {
     private String name;
     private int price;
     private int stock;
+    private int unitKg;
     private String description;
     private int salesCount;
     private ProductStatus status;
@@ -27,7 +28,7 @@ public class Product {
     }
 
     public Product(Long id, Long sellerId, String sellerName, Long categoryId, String categoryName,
-                   String name, int price, int stock, String description, int salesCount,
+                   String name, int price, int stock, int unitKg, String description, int salesCount,
                    ProductStatus status, List<String> imageUrls, LocalDateTime createdAt) {
         this.id = id;
         this.sellerId = sellerId;
@@ -37,6 +38,7 @@ public class Product {
         this.name = name;
         this.price = price;
         this.stock = stock;
+        this.unitKg = unitKg < 1 ? 1 : unitKg;
         this.description = description;
         this.salesCount = salesCount;
         this.status = status;
@@ -54,6 +56,7 @@ public class Product {
     public String getName() { return name; }
     public int getPrice() { return price; }
     public int getStock() { return stock; }
+    public int getUnitKg() { return unitKg; }
     public String getDescription() { return description; }
     public int getSalesCount() { return salesCount; }
     public ProductStatus getStatus() { return status; }
@@ -85,15 +88,25 @@ public class Product {
         this.salesCount = Math.max(0, this.salesCount - quantity);
     }
 
-    /** 상품 수정 */
-    public void update(String name, int price, int stock, String description,
+    /** 상품 전체 수정 (이름·설명·카테고리·이미지·단위 포함) */
+    public void update(String name, int price, int stock, int unitKg, String description,
                        Long categoryId, String categoryName) {
         this.name = name;
         this.price = price;
         this.stock = stock;
+        this.unitKg = unitKg < 1 ? 1 : unitKg;
         this.description = description;
         this.categoryId = categoryId;
         this.categoryName = categoryName;
+    }
+
+    /**
+     * 가격·재고만 수정 (운영 정보 — 검수 상태와 무관하게 즉시 반영).
+     * 이름·설명·카테고리·이미지 등 콘텐츠 필드는 변경하지 않으므로 재검수 불필요.
+     */
+    public void updateInventory(int price, int stock) {
+        this.price = price;
+        this.stock = stock;
     }
 
     /** 상태 변경 */

@@ -7,8 +7,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { backendFetch } from '@/lib/api-client';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
-  const result = await backendFetch('/api/shop/cart', { withAuth: true });
+  const result = await backendFetch('/api/shop/cart', { withAuth: true, revalidate: false });
   return NextResponse.json(result);
 }
 

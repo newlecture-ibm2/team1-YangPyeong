@@ -2,7 +2,9 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { BuyerOrder, OrderStatus } from '../_lib/mypage.types';
-import { getMyOrders } from '@/app/(main)/shop/_lib/shop.api';
+import { getMyOrders, cancelMyOrder } from '@/app/(main)/shop/_lib/shop.api';
+import { useToast } from '@/components';
+import { CHAT_EVENTS, type ChatRefreshEventDetail } from '@/components/common/FarmBot/useChatActions';
 
 /** useOrderHistory — 구매자 주문내역 관리 훅 */
 export default function useOrderHistory() {
@@ -11,6 +13,11 @@ export default function useOrderHistory() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
   const [detailOrder, setDetailOrder] = useState<BuyerOrder | null>(null);
+
+  // 주문 취소 상태
+  const [cancelTarget, setCancelTarget] = useState<BuyerOrder | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const { success: toastSuccess, error: toastError } = useToast();
 
   // 구매자 주문 목록 로드
   const fetchOrders = useCallback(async () => {
@@ -58,6 +65,16 @@ export default function useOrderHistory() {
     fetchOrders();
   }, [fetchOrders]);
 
+  // 챗봇 REFRESH scope=orders 이벤트 구독 → 주문 목록 재조회
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { scope } = (e as CustomEvent<ChatRefreshEventDetail>).detail;
+      if (scope === 'orders') fetchOrders();
+    };
+    window.addEventListener(CHAT_EVENTS.refresh, handler);
+    return () => window.removeEventListener(CHAT_EVENTS.refresh, handler);
+  }, [fetchOrders]);
+
   /** 필터링된 주문 목록 */
   const filteredOrders = useMemo(() => {
     if (statusFilter === 'ALL') return orders;
@@ -83,6 +100,36 @@ export default function useOrderHistory() {
     setDetailOrder(null);
   }, []);
 
+  /** 주문 취소 핸들러 */
+  const openCancelDialog = useCallback((order: BuyerOrder) => {
+    setCancelTarget(order);
+  }, []);
+
+  const closeCancelDialog = useCallback(() => {
+    setCancelTarget(null);
+  }, []);
+
+  const handleCancelConfirm = useCallback(async () => {
+    if (!cancelTarget) return;
+    setIsCancelling(true);
+
+    const result = await cancelMyOrder(cancelTarget.id);
+    if (result.success) {
+      toastSuccess('주문이 취소되었습니다.');
+      // 목록 갱신 (취소된 주문 상태 반영)
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === cancelTarget.id ? { ...o, status: 'CANCELLED' as OrderStatus } : o
+        )
+      );
+    } else {
+      toastError(result.error?.message || '취소에 실패했어요. 잠시 후 다시 시도해주세요.');
+    }
+
+    setIsCancelling(false);
+    setCancelTarget(null);
+  }, [cancelTarget, toastSuccess, toastError]);
+
   return {
     orders: filteredOrders,
     loading,
@@ -94,5 +141,10 @@ export default function useOrderHistory() {
     openDetail,
     closeDetail,
     retry: fetchOrders,
+    cancelTarget,
+    isCancelling,
+    openCancelDialog,
+    closeCancelDialog,
+    handleCancelConfirm,
   };
 }

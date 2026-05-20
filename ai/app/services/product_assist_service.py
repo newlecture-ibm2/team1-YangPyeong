@@ -12,7 +12,7 @@ from sqlalchemy import text
 
 from app.db import get_db_session
 from app.llm import get_llm
-from app.models.product_assist import AutofillData, FarmContext, InsightRequest
+from app.models.product_assist import AutofillData, ExistingValues, FarmContext, InsightRequest
 
 logger = logging.getLogger(__name__)
 
@@ -253,15 +253,54 @@ def _build_farm_context_block(ctx: FarmContext) -> str:
 
 # ── KAMIS 가격 조회 (Phase 7) ──
 
+_CROP_TO_PRODUCT_CATEGORY = {
+    # 채소
+    "배추": "채소", "양배추": "채소", "시금치": "채소", "상추": "채소", "오이": "채소",
+    "호박": "채소", "토마토": "채소", "무": "채소", "당근": "채소", "고추": "채소",
+    "마늘": "채소", "양파": "채소", "대파": "채소", "파": "채소", "생강": "채소",
+    "감자": "채소", "고구마": "채소", "케일": "채소", "브로콜리": "채소",
+    "쑥갓": "채소", "깻잎": "채소", "부추": "채소", "가지": "채소",
+    # 과일
+    "사과": "과일", "배": "과일", "복숭아": "과일", "포도": "과일", "감귤": "과일",
+    "감": "과일", "블루베리": "과일", "수박": "과일", "참외": "과일", "딸기": "과일",
+    "자두": "과일", "체리": "과일", "키위": "과일", "매실": "과일",
+    # 곡물
+    "쌀": "곡물", "벼": "곡물", "보리": "곡물", "밀": "곡물", "콩": "곡물", "팥": "곡물",
+    "녹두": "곡물", "참깨": "곡물", "들깨": "곡물", "땅콩": "곡물",
+    "옥수수": "곡물", "수수": "곡물", "조": "곡물", "기장": "곡물",
+    "잡곡": "곡물", "현미": "곡물", "찹쌀": "곡물",
+    # 기타 (버섯·약초)
+    "느타리": "기타", "표고버섯": "기타", "표고": "기타", "팽이버섯": "기타",
+    "새송이": "기타", "양송이": "기타", "버섯": "기타",
+    "인삼": "기타", "도라지": "기타", "더덕": "기타",
+}
+
+
+def infer_product_category(crop_or_product_name: str) -> Optional[str]:
+    """작물명(또는 상품명)에서 product_categories 카테고리명을 추론.
+
+    매칭 실패 시 None 반환. _CROP_TO_PRODUCT_CATEGORY 매핑 기반.
+    """
+    if not crop_or_product_name:
+        return None
+    # 긴 키워드부터 매칭 (예: '양배추'가 '배추'보다 우선)
+    for crop in sorted(_CROP_TO_PRODUCT_CATEGORY.keys(), key=len, reverse=True):
+        if crop in crop_or_product_name:
+            return _CROP_TO_PRODUCT_CATEGORY[crop]
+    return None
+
+
 def _fetch_kamis_price(product_name: str, farm_context: Optional[FarmContext] = None) -> Optional[dict]:
     """상품명 또는 재배 이력을 통해 매칭되는 작물의 최신 KAMIS 시세를 DB에서 조회합니다."""
     # 알려진 KAMIS 작물명 (긴 이름부터 매칭되도록 정렬)
     KNOWN_CROPS = sorted([
-        "벼", "보리", "밀", "콩", "팥", "녹두", "감자", "고구마",
+        "쌀", "현미", "찹쌀", "벼", "보리", "밀", "콩", "팥", "녹두",
+        "옥수수", "감자", "고구마",
         "배추", "양배추", "시금치", "상추", "수박", "참외", "오이", "호박", "토마토", "딸기", "무", "당근",
-        "고추", "마늘", "양파", "대파", "생강",
-        "사과", "배", "복숭아", "포도", "감귤", "감", "블루베리",
-        "참깨", "땅콩", "느타리", "표고버섯", "표고"
+        "고추", "마늘", "양파", "대파", "생강", "케일", "브로콜리", "깻잎", "부추", "가지",
+        "사과", "배", "복숭아", "포도", "감귤", "감", "블루베리", "자두", "키위", "매실",
+        "참깨", "들깨", "땅콩",
+        "느타리", "표고버섯", "표고", "팽이버섯", "새송이", "양송이",
     ], key=len, reverse=True)
     
     target_crop = None
@@ -315,17 +354,21 @@ def _fetch_kamis_price(product_name: str, farm_context: Optional[FarmContext] = 
 async def autofill_product(
     product_name: str,
     farm_context: Optional[FarmContext] = None,
+    existing_values: Optional[ExistingValues] = None,
 ) -> AutofillData:
     """
     상품명(+ 선택적 농장 재배 이력)으로 카테고리, 가격, 재고, 설명을 AI가 자동 생성합니다.
     카테고리는 DB의 product_categories 테이블에서 조회하여 정확하게 매칭합니다.
 
+    Hybrid 모드: existing_values 가 있으면 해당 필드는 AI가 생성한 값 대신 사용자/DB 값을 유지.
+
     Args:
         product_name: 상품명
         farm_context: 농장 재배 이력 컨텍스트 (None이면 추론 모드)
+        existing_values: 이미 채워진 필드 (덮어쓰지 않음)
 
     Returns:
-        AutofillData: AI가 생성한 전체 상품 정보
+        AutofillData: AI가 생성한 전체 상품 정보 (existing_values 우선)
 
     Raises:
         ValueError: AI 응답 파싱 실패 시
@@ -333,22 +376,25 @@ async def autofill_product(
     # DB에서 카테고리 목록 조회
     categories = _fetch_category_names()
     category_list_str = "\n".join(f"- {cat}" for cat in categories)
-    
+
     # KAMIS 시세 데이터 조회
     kamis_data = _fetch_kamis_price(product_name, farm_context)
-    
+
+    # 사용자가 지정한 단위 (기본 1kg)
+    unit_kg = (existing_values.unit_kg if existing_values and existing_values.unit_kg else 1)
+
     if kamis_data:
         price_rule = (
             f"- 💰 최신 KAMIS 도매 시세 데이터: 작물 [{kamis_data['crop_name']}], {kamis_data['price']}원 / {kamis_data['unit']} (기준일: {kamis_data['price_date']})\n"
-            f"- 위 시세(보통 1kg 기준)를 참고하여, 사용자가 입력한 상품명({product_name})의 포장 단위(예: 500g, 2kg 등)를 추론해 적절한 소매가를 계산하세요.\n"
-            "- 포장 단위가 명시되어 있지 않다면 1kg 기준으로 판매가를 책정하세요.\n"
+            f"- 판매 단위는 {unit_kg}kg 입니다. 위 도매 시세(1kg 기준)에 단위({unit_kg}kg)를 곱한 뒤 소매 마진을 더해 가격을 책정하세요.\n"
             "- 유기농/친환경 인증 제품 등 상품명의 뉘앙스나 소매 마진을 고려해 도매 시세 대비 20~50% 높게 책정하세요.\n"
             "- 100원 단위로 반올림하세요."
         )
     else:
         price_rule = (
-            "- 양평군 로컬푸드 직거래 장터의 일반적인 시세를 참고하세요.\n"
-            "- 소포장(500g~1kg)은 3,000~15,000원, 대용량(3kg~5kg)은 15,000~40,000원 수준.\n"
+            f"- 판매 단위는 {unit_kg}kg 입니다.\n"
+            "- 양평군 로컬푸드 직거래 장터의 일반적인 시세를 참고해 시장가를 추정하세요.\n"
+            "- 1kg 기준 일반 채소 3,000~10,000원, 과일 5,000~15,000원 수준. 단위에 비례하여 계산.\n"
             "- 유기농/친환경 인증 제품은 일반 제품 대비 20~50% 높게 책정.\n"
             "- 100원 단위로 반올림하세요."
         )
@@ -403,6 +449,7 @@ async def autofill_product(
         # 100원 단위로 반올림
         parsed["price"] = round(parsed["price"] / 100) * 100
         parsed["stock"] = max(1, int(parsed.get("stock", 30)))
+        parsed["unit_kg"] = unit_kg
 
         # 설명 후처리: 리터럴 \n을 실제 줄바꿈으로 변환 + 길이 보정
         desc = parsed.get("description", "")
@@ -413,6 +460,18 @@ async def autofill_product(
 
         if not parsed["description"]:
             raise ValueError("AI가 설명을 생성하지 못했습니다.")
+
+        # ── Hybrid Overlay: existing_values 가 있는 필드는 사용자/DB 값 우선 ──
+        if existing_values:
+            if existing_values.category_name:
+                parsed["category_name"] = existing_values.category_name
+            if existing_values.price is not None and existing_values.price > 0:
+                parsed["price"] = existing_values.price
+                parsed["is_kamis_applied"] = False  # 사용자 값이므로 KAMIS 마크 해제
+            if existing_values.stock is not None and existing_values.stock >= 0:
+                parsed["stock"] = existing_values.stock
+            if existing_values.description and existing_values.description.strip():
+                parsed["description"] = existing_values.description
 
         result = AutofillData(**parsed)
 

@@ -1,10 +1,21 @@
-/* CropGuide — 재배 가이드 카드 (파종/수확/온도/병해충/난이도) + 상세 가이드 모달 연동 */
+/* CropGuide — 재배 가이드 카드 + AI 상세 가이드북 모달 */
 
 'use client';
 
-import { useState, useMemo } from 'react';
-import type { CropRecommendation } from '../../_lib/recommend.types';
-import { getCropDetailedGuide } from '../../_lib/cropGuideData';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import type { CropRecommendation, CropRecommendResponse } from '../../_lib/recommend.types';
+import {
+  buildCropDetailedGuide,
+  mapServerGuideToDetailedGuide,
+  mergeGuideWithStructuredPests,
+} from '../../_lib/cropGuideData';
+import {
+  buildCropGuideGenerateRequest,
+  generateCropDetailedGuide,
+  getCachedCropDetailedGuide,
+  resolveExperienceForGuide,
+  CropGuideApiError,
+} from '../../_lib/cropGuide.api';
 import CropGuideModal from '../../_components/CropGuideModal/CropGuideModal';
 import styles from '../detail.module.css';
 import guide from './CropGuide.module.css';
@@ -21,13 +32,84 @@ function DifficultyStars({ level }: { level: number }) {
 
 interface CropGuideProps {
   rec: CropRecommendation;
+  recommendResult?: CropRecommendResponse | null;
 }
 
-export default function CropGuide({ rec }: CropGuideProps) {
+export default function CropGuide({ rec, recommendResult }: CropGuideProps) {
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
+  const [guideLoading, setGuideLoading] = useState(false);
+  const loadInFlightRef = useRef(false);
+
   const diffLevel = rec.difficulty || 0;
   const diffText = diffLevel <= 2 ? '(초보 가능)' : diffLevel <= 3 ? '(보통)' : '(숙련 필요)';
-  const detailedGuide = useMemo(() => getCropDetailedGuide(rec.cropName), [rec.cropName]);
+
+  const experienceLevel = useMemo(
+    () => resolveExperienceForGuide(rec, recommendResult),
+    [rec, recommendResult],
+  );
+
+  const fallbackGuide = useMemo(
+    () => buildCropDetailedGuide(rec, { recommendResult }),
+    [rec, recommendResult],
+  );
+
+  const [displayGuide, setDisplayGuide] = useState(fallbackGuide);
+
+  useEffect(() => {
+    setDisplayGuide(fallbackGuide);
+  }, [fallbackGuide]);
+
+  const openDetailedGuide = useCallback(async () => {
+    if (loadInFlightRef.current) return;
+
+    setIsGuideModalOpen(true);
+    setDisplayGuide(fallbackGuide);
+
+    const farmId = recommendResult?.farmInfo?.id;
+    if (farmId == null) return;
+
+    loadInFlightRef.current = true;
+    setGuideLoading(true);
+
+    try {
+      const cached = await getCachedCropDetailedGuide(
+        farmId,
+        rec.cropId,
+        rec,
+        recommendResult,
+        experienceLevel,
+      );
+
+      if (cached?.topics?.length) {
+        const mapped = mapServerGuideToDetailedGuide(cached);
+        if (mapped.topics.length > 0) {
+          setDisplayGuide(mergeGuideWithStructuredPests(mapped, rec));
+          return;
+        }
+      }
+
+      const generated = await generateCropDetailedGuide(
+        farmId,
+        rec.cropId,
+        buildCropGuideGenerateRequest(rec, recommendResult, experienceLevel),
+      );
+
+      const mapped = mapServerGuideToDetailedGuide(generated);
+      if (mapped.topics.length > 0) {
+        setDisplayGuide(mergeGuideWithStructuredPests(mapped, rec));
+      }
+    } catch (e) {
+      if (e instanceof CropGuideApiError && e.isUnauthorized) {
+        console.warn('재배 가이드: 로그인 필요, 로컬 가이드 사용');
+      } else {
+        console.warn('AI 재배 가이드 로드 실패, 로컬 가이드 사용:', e);
+      }
+      setDisplayGuide(fallbackGuide);
+    } finally {
+      loadInFlightRef.current = false;
+      setGuideLoading(false);
+    }
+  }, [rec, recommendResult, experienceLevel, fallbackGuide]);
 
   return (
     <>
@@ -62,23 +144,23 @@ export default function CropGuide({ rec }: CropGuideProps) {
           </table>
         </div>
 
-        {/* 상세 가이드 보기 버튼 */}
         <button
           type="button"
           className={guide.detailBtn}
-          onClick={() => setIsGuideModalOpen(true)}
+          onClick={() => void openDetailedGuide()}
+          disabled={guideLoading}
         >
           <span className={guide.detailBtnIcon}>📖</span>
-          더 자세한 재배 전문 가이드북 보기
+          {guideLoading ? 'AI 가이드 생성 중…' : '더 자세한 재배 전문 가이드북 보기'}
           <span className={guide.detailBtnArrow}>→</span>
         </button>
       </div>
 
-      {/* 상세 가이드 모달 */}
       <CropGuideModal
         isOpen={isGuideModalOpen}
         onClose={() => setIsGuideModalOpen(false)}
-        guide={detailedGuide}
+        guide={displayGuide}
+        loading={guideLoading}
       />
     </>
   );

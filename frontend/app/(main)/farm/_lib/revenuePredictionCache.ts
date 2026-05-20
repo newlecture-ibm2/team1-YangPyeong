@@ -11,7 +11,7 @@ export type RevenueCropRow = {
 };
 
 /** 캐시 스키마 변경 시 증가 → 구버전(빈약한 폴백) 자동 무효화 */
-export const REVENUE_CACHE_VERSION = 3;
+export const REVENUE_CACHE_VERSION = 4;
 
 type CachePayload = {
   v: number;
@@ -38,6 +38,16 @@ export function isWeakRevenuePrediction(prediction: RevenuePredictionResponse): 
   if (WEAK_INSIGHT_MARKERS.some((m) => priceInsight.includes(m) || revenueInsight.includes(m))) {
     return true;
   }
+  const hasNumbers =
+    (prediction.predicted_price_per_kg ?? 0) > 0 ||
+    (prediction.predicted_revenue ?? 0) > 0 ||
+    (prediction.predicted_yield_kg ?? 0) > 0;
+  if (hasNumbers) {
+    const hasAnyInsight = priceInsight.length > 0 || revenueInsight.length > 0;
+    if (hasAnyInsight) {
+      return false;
+    }
+  }
   if (priceInsight.length < INSIGHT_MIN_LEN || revenueInsight.length < INSIGHT_MIN_LEN) {
     return true;
   }
@@ -54,7 +64,8 @@ export function isWeakRevenuePrediction(prediction: RevenuePredictionResponse): 
   return false;
 }
 
-function buildRowKey(row: RevenueCropRow, actualYieldKg?: number): string {
+/** 백엔드 farm_revenue_prediction.cache_row_key 와 동일 */
+export function buildRevenueRowKey(row: RevenueCropRow, actualYieldKg?: number): string {
   const y =
     actualYieldKg != null && !Number.isNaN(actualYieldKg) ? `:y${actualYieldKg}` : '';
   return `${row.cropName}:${row.areaSqm}:${row.sowingMonth ?? ''}${y}`;
@@ -71,7 +82,7 @@ export function readRevenuePredictionCache(
   actualYieldKg?: number,
 ): RevenuePredictionResponse | null {
   if (typeof sessionStorage === 'undefined') return null;
-  const key = buildRowKey(row, actualYieldKg);
+  const key = buildRevenueRowKey(row, actualYieldKg);
   try {
     const raw = sessionStorage.getItem(buildStorageKey(farmId, key));
     if (!raw) return null;
@@ -93,7 +104,7 @@ export function writeRevenuePredictionCache(
   if (typeof sessionStorage === 'undefined') return;
   if (isWeakRevenuePrediction(prediction)) return;
 
-  const rowKey = buildRowKey(row, actualYieldKg);
+  const rowKey = buildRevenueRowKey(row, actualYieldKg);
   const payload: CachePayload = {
     v: REVENUE_CACHE_VERSION,
     rowKey,
@@ -119,8 +130,64 @@ export function hydrateRevenuePredictionsFromCache(
   return out;
 }
 
+/**
+ * @deprecated 대시보드는 hydrateRevenuePredictionsFromCache(전체 복원) 사용.
+ * 대표 작물만 복원할 때 사용합니다.
+ */
+export function hydratePrimaryRevenuePredictionFromCache(
+  farmId: number,
+  rows: RevenueCropRow[],
+): Record<string, RevenuePredictionResponse> {
+  const primary = pickPrimaryRevenueCrop(rows);
+  if (!primary) return {};
+  const cached = readRevenuePredictionCache(farmId, primary);
+  if (!cached) return {};
+  return { [primary.cropName]: cached };
+}
+
 /** 대표 작물: 재배 면적이 가장 큰 작물 */
 export function pickPrimaryRevenueCrop(rows: RevenueCropRow[]): RevenueCropRow | null {
   if (rows.length === 0) return null;
   return rows.reduce((best, row) => (row.areaSqm > best.areaSqm ? row : best), rows[0]);
+}
+
+/** 서버 DB 스냅샷 → 현재 재배 행에 맞게 cropName 키 맵으로 변환 */
+export function mapServerRevenuePredictions(
+  rows: RevenueCropRow[],
+  serverItems: RevenuePredictionResponse[],
+): Record<string, RevenuePredictionResponse> {
+  const out: Record<string, RevenuePredictionResponse> = {};
+  for (const row of rows) {
+    const rowKey = buildRevenueRowKey(row);
+    const match = serverItems.find((item) => {
+      const itemKey = buildRevenueRowKey({
+        cropName: item.crop_name,
+        areaSqm: item.area_sqm,
+        sowingMonth: row.sowingMonth,
+      });
+      return itemKey === rowKey || (item.crop_name === row.cropName && item.area_sqm === row.areaSqm);
+    });
+    if (match && !isWeakRevenuePrediction(match)) {
+      out[row.cropName] = match;
+    }
+  }
+  return out;
+}
+
+/** sessionStorage + 서버 이력 병합 (서버 우선) */
+export function mergeRevenuePredictionSources(
+  farmId: number,
+  rows: RevenueCropRow[],
+  serverItems: RevenuePredictionResponse[],
+): Record<string, RevenuePredictionResponse> {
+  const session = hydrateRevenuePredictionsFromCache(farmId, rows);
+  const server = mapServerRevenuePredictions(rows, serverItems);
+  const merged = { ...session, ...server };
+  for (const row of rows) {
+    const p = merged[row.cropName];
+    if (p) {
+      writeRevenuePredictionCache(farmId, row, p);
+    }
+  }
+  return merged;
 }

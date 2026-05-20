@@ -13,7 +13,7 @@ import { getScenarioForPath } from './farmBotScenarios';
 import type { FarmBotStep } from './farmBotScenarios';
 import { FARM_BOT_CONSTANTS } from './farmBotConstants';
 import { useChatActions } from './useChatActions';
-import type { ChatAction } from '@/lib/chat-types';
+import type { ChatAction, PendingIntent } from '@/lib/chat-types';
 
 export type BotState = 'idle' | 'walking' | 'pointing' | 'waving';
 
@@ -59,6 +59,7 @@ export function useFarmBot() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [pendingIntent, setPendingIntent] = useState<PendingIntent | null>(null);
 
   // ── 채팅창 위치/크기 상태 ──
   const [chatPosition, setChatPosition] = useState({ x: -1, y: -1 }); // -1이면 초기화 필요
@@ -71,6 +72,17 @@ export function useFarmBot() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const quickMsgRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAsked = useRef(false);
+
+  // ── 최신 상태를 안전하게 조회하기 위한 Ref 바인딩 ──
+  const modeRef = useRef<GuideMode>(mode);
+  const positionRef = useRef<Position>(position);
+  const stepsRef = useRef<FarmBotStep[]>(steps);
+  const currentStepRef = useRef<number>(currentStep);
+
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+  useEffect(() => { positionRef.current = position; }, [position]);
+  useEffect(() => { stepsRef.current = steps; }, [steps]);
+  useEffect(() => { currentStepRef.current = currentStep; }, [currentStep]);
 
   // 페이지 변경 시 시나리오 갱신
   useEffect(() => {
@@ -99,11 +111,19 @@ export function useFarmBot() {
   }, [pathname]);
 
   /** 타겟 요소로 캐릭터를 이동시킵니다 */
-  const moveToElement = useCallback((step: FarmBotStep, onArrive: () => void) => {
+  const moveToElement = useCallback((
+    step: FarmBotStep,
+    onArrive: () => void,
+    onSkip?: () => void,
+  ) => {
     const el = document.querySelector(step.target);
     // 타겟 못 찾거나, 화면에 보이지 않으면 스킵 (모바일에서 숨겨진 요소 등)
     if (!el || (el as HTMLElement).offsetParent === null) {
-      onArrive();
+      if (onSkip) {
+        onSkip();
+      } else {
+        onArrive(); // 기존 호환: onSkip 없으면 onArrive로 fallback
+      }
       return;
     }
 
@@ -130,8 +150,8 @@ export function useFarmBot() {
       const targetX = rect.left + rect.width / 2 - charSize / 2;
       const targetY = rect.bottom + 12;
 
-      // 방향 결정
-      setFacingRight(targetX > position.x);
+      // positionRef.current를 사용해 의존성 최소화
+      setFacingRight(targetX > positionRef.current.x);
 
       setBotState('walking');
       const finalY = Math.min(targetY, window.innerHeight - charSize - 20);
@@ -149,23 +169,31 @@ export function useFarmBot() {
         onArrive();
       }, 1350); // 총 1850ms 중 스크롤 대기 시간 500ms를 뺀 나머지 시간
     }, 500);
-  }, [position.x]);
+  }, []); // 의존성 제거로 불필요한 재생성 방지
 
   /** 특정 스텝으로 이동 — 타겟이 DOM에 없으면 자동으로 다음 스텝으로 건너뜀 */
   const goToStep = useCallback((stepIdx: number, _visited?: Set<number>) => {
-    if (stepIdx < 0 || stepIdx >= steps.length) return;
+    const currentSteps = stepsRef.current;
+    if (stepIdx < 0 || stepIdx >= currentSteps.length) return;
 
     const visited = _visited || new Set<number>();
     if (visited.has(stepIdx)) return; // 무한루프 방지
     visited.add(stepIdx);
 
-    const step = steps[stepIdx];
+    const step = currentSteps[stepIdx];
     const el = document.querySelector(step.target);
 
     // 타겟이 DOM에 존재하지 않으면 다음 스텝으로 건너뛰기
     if (!el) {
-      if (stepIdx + 1 < steps.length) {
+      if (stepIdx + 1 < currentSteps.length) {
         goToStep(stepIdx + 1, visited);
+      } else {
+        // 유효한 타겟을 가진 스텝이 하나도 없음 → guiding mode 강제 종료
+        // (scroll lock만 남아 아무 반응 없이 멈추는 현상 방지)
+        setMode('minimized');
+        setBotState('idle');
+        setShowBubble(false);
+        setHighlightRect(null);
       }
       return;
     }
@@ -174,20 +202,34 @@ export function useFarmBot() {
     moveToElement(step, () => {
       setBubbleMessage(step.message);
       setShowBubble(true);
+    }, () => {
+      // 요소가 숨겨져 있어 이동 불가 → 다음 스텝으로 건너뜀
+      if (stepIdx + 1 < currentSteps.length) {
+        goToStep(stepIdx + 1, visited);
+      } else {
+        setMode('minimized');
+        setBotState('idle');
+        setShowBubble(false);
+        setHighlightRect(null);
+      }
     });
-  }, [steps, moveToElement]);
+  }, [moveToElement]);
 
-  /** 페이지 진입 시 — 캐릭터가 등장하여 "가이드 해드릴까요?" 질문 */
+  /** 페이지 진입 시 — 캐릭터가 등장하여 말풍선을 보여줍니다 */
   const askUser = useCallback((customPosition?: Position) => {
-    if (steps.length === 0) return;
+    // 채팅 중이면 팝업 무시 — 모드/말풍선 변경 없이 바로 리턴
+    if (modeRef.current === 'chatting') return;
 
-    // 채팅 중이면 가이드 시작 팝업 무시 — 모드/말풍선 변경 없이 바로 리턴
-    if (mode === 'chatting') return;
+    const hasGuide = stepsRef.current.length > 0;
 
     setMode('asking');
     setBotState('idle');
     setShowBubble(true);
-    setBubbleMessage('안녕하세요! 👋\n이 페이지를 안내해드릴까요?');
+    setBubbleMessage(
+      hasGuide
+        ? '안녕하세요! 👋\n이 페이지를 안내해드릴까요?'
+        : '안녕하세요! 👋\n궁금한 점이 있으면 질문해 주세요! 😊'
+    );
     setBubbleAbove(true);
 
     if (customPosition) {
@@ -203,19 +245,19 @@ export function useFarmBot() {
         y: window.innerHeight - 180,
       });
     }
-  }, [steps, mode]);
+  }, []);
 
   /** 유저가 "네" 선택 → 최상단 이동 후 가이드 시작 */
   const acceptGuide = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'auto' }); // 스크롤 충돌 방지를 위해 auto로 즉시 이동
     setMode('guiding');
     setShowBubble(false);
     localStorage.setItem(STORAGE_KEY, 'true');
-    if (steps.length > 0) {
-      // 스크롤 완료 후 가이드 시작
-      setTimeout(() => goToStep(0), 500);
+    if (stepsRef.current.length > 0) {
+      // 스크롤 순간 이동 완료 후 가이드 시작
+      setTimeout(() => goToStep(0), 100);
     }
-  }, [steps, goToStep]);
+  }, [goToStep]);
 
   /** 유저가 "아니요" 선택 → 축소 모드 */
   const declineGuide = useCallback(() => {
@@ -228,8 +270,9 @@ export function useFarmBot() {
 
   /** 다음 스텝 */
   const nextStep = useCallback(() => {
-    const next = currentStep + 1;
-    if (next < steps.length) {
+    const next = currentStepRef.current + 1;
+    const currentSteps = stepsRef.current;
+    if (next < currentSteps.length) {
       goToStep(next);
     } else {
       setBotState('idle');
@@ -244,18 +287,20 @@ export function useFarmBot() {
         setBotState('idle');
       }, 2500);
     }
-  }, [currentStep, steps, goToStep]);
+  }, [goToStep]);
 
   /** 이전 스텝 (타겟 없는 스텝은 건너뜀) */
   const prevStep = useCallback(() => {
-    for (let i = currentStep - 1; i >= 0; i--) {
-      const el = document.querySelector(steps[i].target);
+    const activeStep = currentStepRef.current;
+    const currentSteps = stepsRef.current;
+    for (let i = activeStep - 1; i >= 0; i--) {
+      const el = document.querySelector(currentSteps[i].target);
       if (el) {
         goToStep(i);
         return;
       }
     }
-  }, [currentStep, steps, goToStep]);
+  }, [goToStep]);
 
   /** 가이드 중지 */
   const stopGuide = useCallback(() => {
@@ -285,7 +330,8 @@ export function useFarmBot() {
   /** 외부 이벤트에서 가이드봇이 잠시 말풍선을 보여줍니다 (예: AI 자동 채우기 완료) */
   const showQuickMessage = useCallback((message: string, durationMs: number = 4000) => {
     // 가이드 진행 중이면 무시
-    if (mode === 'guiding' || mode === 'asking') return;
+    const currentMode = modeRef.current;
+    if (currentMode === 'guiding' || currentMode === 'asking') return;
 
     // 기존 퀵 메시지 타이머 정리
     if (quickMsgRef.current) clearTimeout(quickMsgRef.current);
@@ -311,7 +357,7 @@ export function useFarmBot() {
       setShowBubble(false);
       setMode('minimized');
     }, durationMs);
-  }, [mode]);
+  }, []);
 
   /** 축소 모드에서 재시작 */
   const restartGuide = useCallback((e?: React.MouseEvent) => {
@@ -345,16 +391,21 @@ export function useFarmBot() {
     const seen = localStorage.getItem(STORAGE_KEY);
     if (!seen) {
       hasAsked.current = true;
+      // 기존 타이머 취소
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       // 채팅 중이면 가이드 질문 팝업 건너뜀 (800ms 뒤 현재 mode 재확인)
-      const timer = setTimeout(() => {
-        askUser(); // askUser 내부에서 setMode('asking') — 채팅 중이면 무시되도록 아래 askUser에서 처리
+      timeoutRef.current = setTimeout(() => {
+        if (modeRef.current === 'chatting') return;
+        askUser(); // askUser는 이제 재생성되지 않는 고정 함수
       }, 800);
-      return () => clearTimeout(timer);
+      return () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      };
     } else {
       // 채팅 중이면 minimized로 내리지 않음
       setMode(prev => prev === 'chatting' ? 'chatting' : 'minimized');
     }
-  }, [steps, askUser]);
+  }, [pathname, steps.length, askUser]);
 
   /** 채팅 모드 시작 */
   const startChat = useCallback(() => {
@@ -365,9 +416,9 @@ export function useFarmBot() {
 
     // 현재 캐릭터 위치를 기반으로 대화창 위치 소환!
     const isMobile = window.innerWidth <= 768;
-    const charCenterX = position.x + (isMobile ? 35 : 60);
+    const charCenterX = positionRef.current.x + (isMobile ? 35 : 60);
     const idealX = charCenterX - chatSize.width / 2;
-    const idealY = position.y - chatSize.height - 16;
+    const idealY = positionRef.current.y - chatSize.height - 16;
 
     setChatPosition({
       x: Math.max(16, Math.min(window.innerWidth - chatSize.width - 16, idealX)),
@@ -380,7 +431,7 @@ export function useFarmBot() {
         content: FARM_BOT_CONSTANTS.WELCOME_MESSAGE,
       }]);
     }
-  }, [chatMessages.length, position, chatSize.width, chatSize.height]);
+  }, [chatMessages.length, chatSize.width, chatSize.height]);
 
   /** 드래그 시작 (헤더 mousedown) */
   const onChatDragStart = useCallback((e: React.MouseEvent) => {
@@ -423,8 +474,8 @@ export function useFarmBot() {
         const dw = ev.clientX - resizeStartRef.current.mouseX;
         const dh = ev.clientY - resizeStartRef.current.mouseY;
         setChatSize({
-          width: Math.max(300, Math.min(600, resizeStartRef.current.w + dw)),
-          height: Math.max(400, Math.min(700, resizeStartRef.current.h + dh)),
+          width: Math.max(300, Math.min(1400, resizeStartRef.current.w + dw)),
+          height: Math.max(400, Math.min(1300, resizeStartRef.current.h + dh)),
         });
       }
     };
@@ -474,6 +525,7 @@ export function useFarmBot() {
           message: payloadMessage,
           history,
           currentPath: pathname,
+          pending_intent: pendingIntent,
         }),
       });
       const data = await res.json();
@@ -484,6 +536,11 @@ export function useFarmBot() {
       const actions: ChatAction[] = data?.success
         ? (data.data?.actions ?? [])
         : [];
+      // 다중 턴 슬롯 채우기 컨텍스트 갱신 (null이면 종료)
+      const nextPending: PendingIntent | null = data?.success
+        ? (data.data?.pending_intent ?? null)
+        : null;
+      setPendingIntent(nextPending);
 
       const botReply: ChatMessage = {
         role: 'bot',
@@ -510,7 +567,7 @@ export function useFarmBot() {
     } finally {
       setChatLoading(false);
     }
-  }, [chatLoading, chatMessages, pathname, dispatchChatActions]);
+  }, [chatLoading, chatMessages, pathname, dispatchChatActions, pendingIntent]);
 
   /** 채팅 종료 */
   const closeChat = useCallback(() => {
