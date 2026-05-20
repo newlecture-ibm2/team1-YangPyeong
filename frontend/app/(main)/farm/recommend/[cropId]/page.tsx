@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { SUPPLY_STATUS_MAP, SOIL_FITNESS_MAP, ADVICE_TYPE_LABEL } from '../_lib/recommend.types';
 import type { CropRecommendation, CropRecommendResponse } from '../_lib/recommend.types';
 import { getLatestRecommendHistory } from '../_lib/recommend.api';
+import { findCropInRecommendResult, sanitizeRecommendResponse } from '../_lib/recommend.utils';
 import { getCropEmoji, getCropCalendar, generatePriceData } from '../_lib/recommend.constants';
 import { getCropDetailedPlan } from '../_lib/calendarPlanData';
 import PriceChart from '../_components/PriceChart/PriceChart';
@@ -31,10 +32,9 @@ function useRecommendDetailResult(cropId: number, farmIdQuery: number | null) {
       try {
         const stored = sessionStorage.getItem('recommend_result');
         if (stored) {
-          const parsed = JSON.parse(stored) as CropRecommendResponse;
-          const cachedRec = parsed.recommendations?.find((r) => r.cropId === cropId);
-          const hasPests = (cachedRec?.pests?.length ?? 0) > 0;
-          if (hasPests && !cancelled) {
+          const parsed = sanitizeRecommendResponse(JSON.parse(stored) as CropRecommendResponse);
+          const cachedRec = findCropInRecommendResult(parsed, cropId);
+          if (cachedRec && !cancelled) {
             setResult(parsed);
             setPhase('ready');
             return;
@@ -103,9 +103,7 @@ function RecommendDetailInner() {
 
   const rec = useMemo(() => {
     if (!result) return null;
-    const fromNew = result.recommendations.find((r) => r.cropId === cropId);
-    if (fromNew) return fromNew;
-    return result.currentCropAdvices?.find((r) => r.cropId === cropId) || null;
+    return findCropInRecommendResult(result, cropId) ?? null;
   }, [result, cropId]);
 
   const otherRecs = useMemo(() => {
@@ -183,7 +181,7 @@ function RecommendDetailInner() {
 
       <ScoreAnalysis rec={rec} fitnessLabel={fitnessLabel} supplyLabel={supplyInfo.label} />
 
-      <CropGuide rec={rec} />
+      <CropGuide rec={rec} recommendResult={result} />
 
       {/* ── 재배 캘린더 (클릭 시 세부 계획서 모달) ── */}
       <CalendarSection cropName={rec.cropName} calendar={calendar} />

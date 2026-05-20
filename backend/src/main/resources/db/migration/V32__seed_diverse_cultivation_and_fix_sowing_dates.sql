@@ -12,6 +12,16 @@
 -- 위험도: 낮음
 -- =============================================
 
+-- 고구마·보리 crop_id는 DB마다 다름(V19 시드 기준 9~10, 구 환경 19~20).
+-- 하드코딩 id 대신 code 조회 + 미존재 시 보충.
+INSERT INTO crops (category_id, code, name)
+SELECT (SELECT id FROM crop_categories WHERE name = '채소' LIMIT 1), 'SWEET_POTATO', '고구마'
+WHERE NOT EXISTS (SELECT 1 FROM crops WHERE code = 'SWEET_POTATO');
+
+INSERT INTO crops (category_id, code, name)
+SELECT (SELECT id FROM crop_categories WHERE name = '곡물' LIMIT 1), 'BARLEY', '보리'
+WHERE NOT EXISTS (SELECT 1 FROM crops WHERE code = 'BARLEY');
+
 -- ========================================
 -- Part A: sowing_date NULL 보정
 -- ========================================
@@ -44,10 +54,12 @@ UPDATE cultivation_registrations SET sowing_date = '2026-03-10'
 WHERE crop_id = 9 AND sowing_date IS NULL AND deleted_at IS NULL;
 
 UPDATE cultivation_registrations SET sowing_date = '2026-04-25'
-WHERE crop_id = 19 AND sowing_date IS NULL AND deleted_at IS NULL;
+WHERE crop_id = (SELECT id FROM crops WHERE code = 'SWEET_POTATO' LIMIT 1)
+  AND sowing_date IS NULL AND deleted_at IS NULL;
 
 UPDATE cultivation_registrations SET sowing_date = '2025-10-15'
-WHERE crop_id = 20 AND sowing_date IS NULL AND deleted_at IS NULL;
+WHERE crop_id = (SELECT id FROM crops WHERE code = 'BARLEY' LIMIT 1)
+  AND sowing_date IS NULL AND deleted_at IS NULL;
 
 -- ========================================
 -- Part B: yield_unit 통일
@@ -82,9 +94,9 @@ VALUES (12, 2, 2000, 360, 'kg', 'ACTIVE', '2025-04-01');
 
 -- 강상면 (farm 1, 13): 고구마 2025 + 보리 2026
 INSERT INTO cultivation_registrations (farm_id, crop_id, cultivation_area, farmer_estimated_yield, yield_unit, status, sowing_date)
-VALUES (1, 19, 4000, 3920, 'kg', 'ACTIVE', '2025-04-25');
+VALUES (1, (SELECT id FROM crops WHERE code = 'SWEET_POTATO' LIMIT 1), 4000, 3920, 'kg', 'ACTIVE', '2025-04-25');
 INSERT INTO cultivation_registrations (farm_id, crop_id, cultivation_area, farmer_estimated_yield, yield_unit, status, sowing_date)
-VALUES (13, 20, 5000, 1150, 'kg', 'ACTIVE', '2025-10-15');
+VALUES (13, (SELECT id FROM crops WHERE code = 'BARLEY' LIMIT 1), 5000, 1150, 'kg', 'ACTIVE', '2025-10-15');
 
 -- 강하면 (farm 2, 14): 콩 2025 + 감자 2026
 INSERT INTO cultivation_registrations (farm_id, crop_id, cultivation_area, farmer_estimated_yield, yield_unit, status, sowing_date)
@@ -102,11 +114,11 @@ VALUES (15, 2, 3000, 540, 'kg', 'ACTIVE', '2025-04-01');
 INSERT INTO cultivation_registrations (farm_id, crop_id, cultivation_area, farmer_estimated_yield, yield_unit, status, sowing_date)
 VALUES (4, 3, 5000, 7500, 'kg', 'ACTIVE', '2025-03-15');
 INSERT INTO cultivation_registrations (farm_id, crop_id, cultivation_area, farmer_estimated_yield, yield_unit, status, sowing_date)
-VALUES (16, 20, 6000, 1380, 'kg', 'ACTIVE', '2025-10-15');
+VALUES (16, (SELECT id FROM crops WHERE code = 'BARLEY' LIMIT 1), 6000, 1380, 'kg', 'ACTIVE', '2025-10-15');
 
 -- 서종면 (farm 17, 5): 고구마 2025 + 콩 2026
 INSERT INTO cultivation_registrations (farm_id, crop_id, cultivation_area, farmer_estimated_yield, yield_unit, status, sowing_date)
-VALUES (17, 19, 5000, 4900, 'kg', 'ACTIVE', '2025-04-25');
+VALUES (17, (SELECT id FROM crops WHERE code = 'SWEET_POTATO' LIMIT 1), 5000, 4900, 'kg', 'ACTIVE', '2025-04-25');
 INSERT INTO cultivation_registrations (farm_id, crop_id, cultivation_area, farmer_estimated_yield, yield_unit, status, sowing_date)
 VALUES (5, 7, 2000, 280, 'kg', 'ACTIVE', '2026-06-15');
 
@@ -126,7 +138,7 @@ VALUES (19, 2, 2500, 450, 'kg', 'ACTIVE', '2025-04-01');
 INSERT INTO cultivation_registrations (farm_id, crop_id, cultivation_area, farmer_estimated_yield, yield_unit, status, sowing_date)
 VALUES (8, 7, 4000, 560, 'kg', 'ACTIVE', '2025-06-15');
 INSERT INTO cultivation_registrations (farm_id, crop_id, cultivation_area, farmer_estimated_yield, yield_unit, status, sowing_date)
-VALUES (20, 19, 3000, 2940, 'kg', 'ACTIVE', '2026-04-25');
+VALUES (20, (SELECT id FROM crops WHERE code = 'SWEET_POTATO' LIMIT 1), 3000, 2940, 'kg', 'ACTIVE', '2026-04-25');
 
 -- 지평면 (farm 9): 쌀 2026 + 토마토 2025
 INSERT INTO cultivation_registrations (farm_id, crop_id, cultivation_area, farmer_estimated_yield, yield_unit, status, sowing_date)
@@ -142,6 +154,6 @@ VALUES (10, 4, 2500, 3625, 'kg', 'ACTIVE', '2026-03-20');
 
 -- 개군면 (farm 11): 고구마 2026 + 콩 2025
 INSERT INTO cultivation_registrations (farm_id, crop_id, cultivation_area, farmer_estimated_yield, yield_unit, status, sowing_date)
-VALUES (11, 19, 6000, 5880, 'kg', 'ACTIVE', '2026-04-25');
+VALUES (11, (SELECT id FROM crops WHERE code = 'SWEET_POTATO' LIMIT 1), 6000, 5880, 'kg', 'ACTIVE', '2026-04-25');
 INSERT INTO cultivation_registrations (farm_id, crop_id, cultivation_area, farmer_estimated_yield, yield_unit, status, sowing_date)
 VALUES (11, 7, 3000, 420, 'kg', 'ACTIVE', '2025-06-15');

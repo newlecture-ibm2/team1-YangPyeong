@@ -13,10 +13,16 @@ from app.agents.tools.kamis_tool import (
 )
 from app.prompts.revenue_prompt import build_revenue_prediction_prompt
 from app.models.revenue import RevenuePredictionRequest, RevenuePredictionResponse
-from app.utils.revenue_parse import extract_revenue_json, is_revenue_parse_incomplete
+from app.utils.revenue_parse import (
+    extract_revenue_json,
+    is_revenue_parse_incomplete,
+    salvage_revenue_fields,
+)
 from app.utils.kamis_resolve import resolve_standard_crop_name
+
 logger = logging.getLogger(__name__)
 _INSIGHT_MIN_LEN = 20
+_REVENUE_LLM_MAX_TOKENS = 4096
 
 def _build_rule_based_insights(
     *,
@@ -175,41 +181,55 @@ def _build_revenue_json_repair_prompt(
     sowing_month: Optional[int],
     actual_yield_kg: Optional[float],
     weather_context: Optional[str],
-    raw_snippet: str,
 ) -> str:
     price = kamis_result.get("price")
     price_note = f"{price:,}원/kg" if price is not None else "조회 실패"
     weather_line = (weather_context or "").strip()[:800]
     weather_block = f"\n기상(발췌): {weather_line}\n" if weather_line else ""
-    snippet = (raw_snippet or "")[:2000]
-    return f"""이전 응답이 JSON 파서에 맞지 않았습니다. 아래 스키마의 유효한 JSON **객체 하나만** 출력하세요.
-마크다운·코드펜스·설명 문장은 넣지 마세요.
-스키마:
+    default_yield = round(area_sqm * avg_yield * penalty, 1)
+    default_revenue = int(default_yield * (price or 0)) if price else 0
+    return f"""수익 예측 JSON만 출력하세요. 마크다운·코드펜스 금지.
+각 문자열 필드는 120자 이내로 짧게 작성하세요.
+
 {{
-  "predicted_yield_kg": <number, 소수 1자리>,
-  "predicted_price_per_kg": <integer>,
-  "predicted_revenue": <integer>,
+  "predicted_yield_kg": {default_yield},
+  "predicted_price_per_kg": {int(price or 0)},
+  "predicted_revenue": {default_revenue},
   "yield_factors": {{
-    "planting_time_impact": "<string>",
-    "weather_impact": "<string>",
-    "overall_adjustment": "<string>"
+    "planting_time_impact": "<80자 이내>",
+    "weather_impact": "<80자 이내>",
+    "overall_adjustment": "<50자 이내>"
   }},
-  "price_insight": "<string>",
-  "revenue_insight": "<string>",
-  "confidence": "높음" | "보통" | "낮음"
+  "price_insight": "<시세 2문장>",
+  "revenue_insight": "<수익 2문장>",
+  "confidence": "보통"
 }}
-고정 컨텍스트:
-- 작물: {crop_name}
-- 면적(㎡): {area_sqm}
-- KAMIS 시세(원/kg 또는 없음): {price_note}
-- 파종 시기 페널티: {penalty:.4f}
-- 평년 단수(kg/㎡): {avg_yield}
-- 파종 월: {sowing_month}
-- 사용자 실제 수확량(kg, 없으면 null): {actual_yield_kg}
+
+컨텍스트: 작물={crop_name}, 면적={area_sqm}㎡, KAMIS={price_note}, 페널티={penalty:.0%}, 파종월={sowing_month}, 실수확={actual_yield_kg}
 {weather_block}
-실패한 이전 응답(참고용, 그대로 복사하지 마세요):
-{snippet}
+숫자는 위 기본값을 기준으로 합리적으로 조정하되 predicted_revenue = yield × price를 맞추세요.
 """
+
+async def _generate_revenue_llm(
+    llm: Any, prompt: str, *, temperature: float
+) -> str:
+    return await llm.generate_json(
+        prompt,
+        temperature=temperature,
+        max_tokens=_REVENUE_LLM_MAX_TOKENS,
+    )
+
+def _merge_parsed_best(
+    current: dict, candidate: dict, *, kamis_price: int
+) -> dict:
+    if not candidate:
+        return current
+    if is_revenue_parse_incomplete(current, kamis_price=kamis_price):
+        return candidate
+    if is_revenue_parse_incomplete(candidate, kamis_price=kamis_price):
+        return current
+    return candidate if _score(candidate) >= _score(current) else current
+
 
 async def _parse_llm_revenue(
     *,
@@ -227,29 +247,45 @@ async def _parse_llm_revenue(
     kamis_price = _kamis_price_int(kamis_result)
     parsed = extract_revenue_json(raw_response)
     logger.info("수익 예측 1차 파싱 키: %s", list(parsed.keys()) if parsed else [])
-    if is_revenue_parse_incomplete(parsed, kamis_price=kamis_price):
-        repair_prompt = _build_revenue_json_repair_prompt(
-            crop_name=crop_name,
-            area_sqm=area_sqm,
-            kamis_result=kamis_result,
-            penalty=penalty,
-            avg_yield=avg_yield,
-            sowing_month=sowing_month,
-            actual_yield_kg=actual_yield_kg,
-            weather_context=weather_context,
-            raw_snippet=raw_response,
+
+    if not is_revenue_parse_incomplete(parsed, kamis_price=kamis_price):
+        return parsed
+
+    salvaged = salvage_revenue_fields(raw_response)
+    parsed = _merge_parsed_best(parsed, salvaged, kamis_price=kamis_price)
+    if not is_revenue_parse_incomplete(parsed, kamis_price=kamis_price):
+        logger.info("수익 예측 잘린 응답 필드 복구 성공")
+        return parsed
+
+    repair_prompt = _build_revenue_json_repair_prompt(
+        crop_name=crop_name,
+        area_sqm=area_sqm,
+        kamis_result=kamis_result,
+        penalty=penalty,
+        avg_yield=avg_yield,
+        sowing_month=sowing_month,
+        actual_yield_kg=actual_yield_kg,
+        weather_context=weather_context,
+    )
+    raw_retry = ""
+    try:
+        raw_retry = await _generate_revenue_llm(
+            llm, repair_prompt, temperature=0.0
         )
-        try:
-            raw_retry = await llm.generate(
-                repair_prompt, temperature=0.0, max_tokens=2048
-            )
-            logger.info("수익 예측 LLM JSON 재시도 응답 길이: %s", len(raw_retry))
-            retry_parsed = extract_revenue_json(raw_retry)
-            logger.info("수익 예측 재시도 파싱 키: %s", list(retry_parsed.keys()) if retry_parsed else [])
-            if _score(retry_parsed) >= _score(parsed):
-                parsed = retry_parsed
-        except Exception as e:
-            logger.warning("수익 예측 LLM JSON 재시도 실패: %s", e)
+        logger.info("수익 예측 LLM JSON 재시도 응답 길이: %s", len(raw_retry))
+        retry_parsed = extract_revenue_json(raw_retry)
+        logger.info(
+            "수익 예측 재시도 파싱 키: %s",
+            list(retry_parsed.keys()) if retry_parsed else [],
+        )
+        parsed = _merge_parsed_best(parsed, retry_parsed, kamis_price=kamis_price)
+        if not is_revenue_parse_incomplete(parsed, kamis_price=kamis_price):
+            return parsed
+        retry_salvaged = salvage_revenue_fields(raw_retry)
+        parsed = _merge_parsed_best(parsed, retry_salvaged, kamis_price=kamis_price)
+    except Exception as e:
+        logger.warning("수익 예측 LLM JSON 재시도 실패: %s", e)
+
     return parsed
 
 def _score(parsed: dict) -> int:
@@ -322,7 +358,7 @@ async def predict_revenue(req: RevenuePredictionRequest) -> RevenuePredictionRes
     prompt = build_revenue_prediction_prompt(context)
     # ── 6. LLM 호출 ──
     llm = get_llm("gemini")
-    raw_response = await llm.generate(prompt, temperature=0.2)
+    raw_response = await _generate_revenue_llm(llm, prompt, temperature=0.2)
     logger.info(f"LLM 원본 응답 길이: {len(raw_response)}")
     # ── 7. JSON 파싱 (불완전 시 1회 재생성) ──
     parsed = await _parse_llm_revenue(
@@ -343,10 +379,11 @@ async def predict_revenue(req: RevenuePredictionRequest) -> RevenuePredictionRes
             "LLM JSON 파싱 불완전(재시도 포함). 응답 앞부분: %s",
             raw_response[:500],
         )
+        # 숫자·인사이트는 KAMIS·규칙 기반으로 보강 (빈 parsed로도 화면에 표시 가능)
         return _assemble_response(
             crop_name=crop_name,
             area_sqm=area_sqm,
-            parsed={},
+            parsed=parsed,
             kamis_result=kamis_result,
             standard_crop=standard_crop,
             mapping_note=mapping_note,

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { CropRecommendation } from '../../_lib/recommend.types';
+import { formatDisplayAiReason } from '../../_lib/recommend.utils';
 import { ADVICE_TYPE_LABEL } from '../../_lib/recommend.types';
 import { MEDALS } from '../../_lib/recommend.constants';
 import GaugeBar from '../GaugeBar/GaugeBar';
@@ -22,6 +23,7 @@ function detailHref(cropId: number, farmId?: number) {
 export default function RankingCard({ rec, index, farmId }: RankingCardProps) {
   const showMedal =
     rec.adviceType == null || rec.adviceType === 'NEW_RECOMMEND' || rec.adviceType === 'NEXT_SEASON';
+  const aiReason = formatDisplayAiReason(rec.aiReason);
 
   return (
     <Link
@@ -38,7 +40,11 @@ export default function RankingCard({ rec, index, farmId }: RankingCardProps) {
         {rec.category} · 토양 적합도 {rec.soilFitnessPercent}%
       </p>
       {rec.mismatchNote && <p className={styles.mismatch}>{rec.mismatchNote}</p>}
-      {rec.aiReason && <p className={styles.aiSnippet}>{rec.aiReason}</p>}
+      {aiReason && (
+        <p className={styles.aiSnippet}>
+          {aiReason.length > 160 ? aiReason.slice(0, 160) + '…' : aiReason}
+        </p>
+      )}
       <p className={styles.score}>{rec.score}</p>
       <p className={styles.scoreLabel}>AI 분석 점수</p>
       <div className={styles.gauges}>

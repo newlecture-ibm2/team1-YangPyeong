@@ -44,7 +44,7 @@ public interface RecommendAiPort {
             try {
                 results.put(cmd.cropName(), generateReason(cmd));
             } catch (Exception e) {
-                results.put(cmd.cropName(), "현재 농장 데이터를 바탕으로 분석한 결과입니다.");
+                // 실패 시 플레이스홀더 대신 누락 — 상위에서 개별 재시도·null 처리
             }
         }
         return results;

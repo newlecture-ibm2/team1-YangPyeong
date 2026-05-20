@@ -91,19 +91,19 @@ def build_revenue_prediction_prompt(context: dict) -> str:
   "predicted_price_per_kg": <예측 시세 (원/kg, 정수)>,
   "predicted_revenue": <예상 수익 (원, 정수)>,
   "yield_factors": {{
-    "planting_time_impact": "<파종 시기가 수확량에 미치는 영향 설명 (1~2문장)>",
-    "weather_impact": "<기상 조건이 수확량에 미치는 영향 설명 (1~2문장)>",
-    "overall_adjustment": "<총체적 보정 설명 (1문장)>"
+    "planting_time_impact": "<파종 시기 영향, 80자 이내>",
+    "weather_impact": "<기상 영향, 80자 이내>",
+    "overall_adjustment": "<보정 요약, 50자 이내>"
   }},
-  "price_insight": "<시세 전망 인사이트 (2~3문장, 현재 시세 동향과 향후 전망 포함)>",
-  "revenue_insight": "<수익 종합 인사이트 (2~3문장, 핵심 수익 전망과 농가에 도움이 되는 조언)>",
+  "price_insight": "<시세 전망, 2문장·200자 이내>",
+  "revenue_insight": "<수익 전망, 2문장·200자 이내>",
   "confidence": "<예측 신뢰도: '높음' | '보통' | '낮음'>"
 }}
 
-중요: 
+중요:
 1. 실제 수확량이 입력된 경우 그 값을 predicted_yield_kg에 그대로 사용하세요.
-2. 수익 = 수확량(kg) × 시세(원/kg) 공식을 기본으로 하되, 유통 비용(약 20~30%)을 고려한 실수령액도 revenue_insight에 언급해주세요.
-3. 파종 시기가 최적기가 아니면 구체적으로 어떤 영향이 있는지 설명해주세요.
-4. 한국 농업 현실을 반영하여 실용적인 조언을 포함해주세요.
+2. predicted_revenue = predicted_yield_kg × predicted_price_per_kg (정수)로 맞추세요.
+3. yield_factors·인사이트는 위 글자 수를 넘기지 마세요. 길게 쓰면 JSON이 잘립니다.
+4. 마크다운·코드펜스·설명 문장 없이 JSON만 출력하세요.
 """
     return prompt
