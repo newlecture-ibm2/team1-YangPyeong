@@ -15,6 +15,7 @@ import NoticeCreateModal from './_components/NoticeCreateModal'
 import PostDetailModal from './_components/PostDetailModal'
 import SanctionModal from './_components/SanctionModal'
 import ReasonModal from './_components/ReasonModal'
+import CommentTable from './_components/CommentTable'
 import Button from '@/components/common/Button/Button'
 
 function formatDate(dateStr: string | null): string {
@@ -24,7 +25,7 @@ function formatDate(dateStr: string | null): string {
 }
 
 export default function CommunityPage() {
-  const [activeTab, setActiveTab] = useState<'POSTS' | 'REPORTS'>('POSTS')
+  const [activeTab, setActiveTab] = useState<'POSTS' | 'COMMENTS' | 'REPORTS'>('POSTS')
 
   // Posts State
   const [posts, setPosts] = useState<AdminPost[]>([])
@@ -264,21 +265,29 @@ export default function CommunityPage() {
               게시글 관리
             </button>
             <button 
+              className={`${styles.tabBtn} ${activeTab === 'COMMENTS' ? styles.activeTab : ''}`}
+              onClick={() => { setActiveTab('COMMENTS') }}
+            >
+              댓글 관리
+            </button>
+            <button 
               className={`${styles.tabBtn} ${activeTab === 'REPORTS' ? styles.activeTab : ''}`}
               onClick={() => { setActiveTab('REPORTS'); setReportPage(0); }}
             >
               신고 관리
             </button>
           </div>
-          {activeTab === 'POSTS' && (
+          {(activeTab === 'POSTS' || activeTab === 'COMMENTS') && (
             <div style={{ display: 'flex', gap: '8px' }}>
               <Button variant="outline" onClick={handleAiModerate} disabled={isModerating} style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}>
                 {isModerating ? '스팸 청소 중...' : '🤖 AI 스팸 자동 청소'}
               </Button>
-              <Button variant="primary" onClick={() => setNoticeModalOpen(true)}>
-                + 공지사항 작성
-              </Button>
-              {statusFilter === 'HIDDEN' && (
+              {activeTab === 'POSTS' && (
+                <Button variant="primary" onClick={() => setNoticeModalOpen(true)}>
+                  + 공지사항 작성
+                </Button>
+              )}
+              {activeTab === 'POSTS' && statusFilter === 'HIDDEN' && (
                 <Button variant="primary" onClick={handleBulkDelete} style={{ backgroundColor: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>
                   선택 일괄 삭제
                 </Button>
@@ -448,6 +457,10 @@ export default function CommunityPage() {
         </div>
       )}
       </>
+      )}
+
+      {activeTab === 'COMMENTS' && (
+        <CommentTable />
       )}
 
       {activeTab === 'REPORTS' && (

@@ -28,6 +28,12 @@ export interface PaginatedAdminPosts {
   totalPages: number
 }
 
+export interface PaginatedAdminComments {
+  comments: AdminComment[]
+  totalElements: number
+  totalPages: number
+}
+
 /** 관리자용 댓글 */
 export interface AdminComment {
   id: number

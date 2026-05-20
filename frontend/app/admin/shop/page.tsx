@@ -438,6 +438,14 @@ export default function ShopPage() {
         title="상품 상태 변경 사유 입력"
         onClose={() => setReasonModalOpen(false)}
         onConfirm={handleReasonConfirm}
+        presets={[
+          '상품 정보 및 이미지 불충분 (재등록 요망)',
+          '양평군 관내 생산 농산물 인증 불가',
+          '허위 매물 또는 과장된 상품 설명',
+          '온라인 거래 금지 품목 취급',
+          '농가(판매자) 필수 증빙 서류 누락 또는 식별 불가',
+          '재고 부족 또는 잦은 배송 지연으로 인한 판매 중지'
+        ]}
       />
 
       <ProductDetailModal

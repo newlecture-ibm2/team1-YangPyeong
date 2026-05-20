@@ -15,6 +15,19 @@ export async function fetchPosts(params: { keyword?: string; status?: string; pa
   return json.data
 }
 
+export async function fetchAllComments(params: { keyword?: string; status?: string; page?: number; size?: number } = {}): Promise<import('./community.types').PaginatedAdminComments> {
+  const qs = new URLSearchParams()
+  if (params.keyword) qs.append('keyword', params.keyword)
+  if (params.status) qs.append('status', params.status)
+  if (params.page !== undefined) qs.append('page', String(params.page))
+  if (params.size !== undefined) qs.append('size', String(params.size))
+
+  const res = await fetch(`${BASE}/comments?${qs.toString()}`)
+  const json: ApiResponse<import('./community.types').PaginatedAdminComments> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '전체 댓글 조회 실패')
+  return json.data
+}
+
 export async function fetchPostDetail(postId: number): Promise<AdminPost> {
   const res = await fetch(`${BASE}/${postId}`)
   const json: ApiResponse<AdminPost> = await res.json()

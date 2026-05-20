@@ -45,6 +45,27 @@ public class AdminCommunityController {
     }
 
     /**
+     * 전체 댓글 목록 조회 (검색 + 필터 + 페이징)
+     * GET /api/admin/community/comments
+     */
+    @GetMapping("/comments")
+    public ApiResponse<Map<String, Object>> getAllComments(
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false, defaultValue = "ALL") String status,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "20") int size) {
+
+        List<com.farmbalance.admin.domain.AdminComment> comments = manageCommunityUseCase.getComments(keyword, status, page, size);
+        long total = manageCommunityUseCase.countComments(keyword, status);
+
+        return ApiResponse.ok(Map.of(
+                "comments", comments,
+                "totalElements", total,
+                "totalPages", (int) Math.ceil((double) total / size)
+        ));
+    }
+
+    /**
      * 특정 게시글 상세 조회
      * GET /api/admin/community/{postId}
      */

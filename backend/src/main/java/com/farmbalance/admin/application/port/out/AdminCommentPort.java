@@ -19,4 +19,6 @@ public interface AdminCommentPort {
 
     void restore(Long id);
     List<AdminComment> findRecentActiveComments(int limit);
+    List<AdminComment> findByFilter(String keyword, String status, int offset, int limit);
+    long countByFilter(String keyword, String status);
 }

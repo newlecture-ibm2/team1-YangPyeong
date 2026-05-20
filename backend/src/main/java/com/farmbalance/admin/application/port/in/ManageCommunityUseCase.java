@@ -2,6 +2,7 @@ package com.farmbalance.admin.application.port.in;
 
 import com.farmbalance.admin.adapter.in.web.dto.CreateNoticeRequest;
 import com.farmbalance.admin.domain.AdminPost;
+import com.farmbalance.admin.domain.AdminComment;
 
 import java.util.List;
 
@@ -26,10 +27,14 @@ public interface ManageCommunityUseCase {
      */
     AdminPost getPost(Long postId);
 
+    // 댓글 관리
+    List<AdminComment> getComments(String keyword, String status, int page, int size);
+    long countComments(String keyword, String status);
+
     /**
      * 특정 게시글의 댓글 목록 조회
      */
-    List<com.farmbalance.admin.domain.AdminComment> getComments(Long postId);
+    List<AdminComment> getComments(Long postId);
 
     /**
      * 댓글 삭제 (soft delete)

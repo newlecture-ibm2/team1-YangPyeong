@@ -81,4 +81,51 @@ public class AdminCommentPersistenceAdapter implements AdminCommentPort {
         String sql = "SELECT * FROM comments WHERE deleted_at IS NULL AND is_hidden = false ORDER BY created_at DESC LIMIT ?";
         return jdbcTemplate.query(sql, rowMapper, limit);
     }
+
+    @Override
+    public List<AdminComment> findByFilter(String keyword, String status, int offset, int limit) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM comments WHERE deleted_at IS NULL");
+        java.util.List<Object> params = new java.util.ArrayList<>();
+
+        if (status != null && !status.isEmpty() && !status.equals("ALL")) {
+            if (status.equals("ACTIVE")) {
+                sql.append(" AND is_hidden = false");
+            } else if (status.equals("HIDDEN")) {
+                sql.append(" AND is_hidden = true");
+            }
+        }
+
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append(" AND content LIKE ?");
+            params.add("%" + keyword + "%");
+        }
+
+        sql.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?");
+        params.add(limit);
+        params.add(offset);
+
+        return jdbcTemplate.query(sql.toString(), params.toArray(), rowMapper);
+    }
+
+    @Override
+    public long countByFilter(String keyword, String status) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM comments WHERE deleted_at IS NULL");
+        java.util.List<Object> params = new java.util.ArrayList<>();
+
+        if (status != null && !status.isEmpty() && !status.equals("ALL")) {
+            if (status.equals("ACTIVE")) {
+                sql.append(" AND is_hidden = false");
+            } else if (status.equals("HIDDEN")) {
+                sql.append(" AND is_hidden = true");
+            }
+        }
+
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append(" AND content LIKE ?");
+            params.add("%" + keyword + "%");
+        }
+
+        Long count = jdbcTemplate.queryForObject(sql.toString(), Long.class, params.toArray());
+        return count != null ? count : 0L;
+    }
 }

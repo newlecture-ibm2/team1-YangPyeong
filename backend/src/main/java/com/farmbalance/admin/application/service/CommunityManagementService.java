@@ -48,6 +48,17 @@ public class CommunityManagementService implements ManageCommunityUseCase {
     }
 
     @Override
+    public List<com.farmbalance.admin.domain.AdminComment> getComments(String keyword, String status, int page, int size) {
+        int offset = page * size;
+        return adminCommentPort.findByFilter(keyword, status, offset, size);
+    }
+
+    @Override
+    public long countComments(String keyword, String status) {
+        return adminCommentPort.countByFilter(keyword, status);
+    }
+
+    @Override
     public List<com.farmbalance.admin.domain.AdminComment> getComments(Long postId) {
         return adminCommentPort.findByPostId(postId);
     }

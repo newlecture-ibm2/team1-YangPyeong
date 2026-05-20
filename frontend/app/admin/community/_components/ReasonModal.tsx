@@ -10,9 +10,10 @@ interface ReasonModalProps {
   placeholder?: string
   onClose: () => void
   onConfirm: (reason: string) => void
+  presets?: string[]
 }
 
-export default function ReasonModal({ isOpen, title, label = '사유', placeholder = '사유를 입력해주세요', onClose, onConfirm }: ReasonModalProps) {
+export default function ReasonModal({ isOpen, title, label = '사유', placeholder = '사유를 입력해주세요', onClose, onConfirm, presets }: ReasonModalProps) {
   const [reason, setReason] = useState('')
 
   const handleConfirm = () => {
@@ -29,13 +30,15 @@ export default function ReasonModal({ isOpen, title, label = '사유', placehold
     onClose()
   }
 
-  const PRESETS = [
+  const fallbackPresets = [
     '스팸 / 홍보성 글',
     '욕설 / 비방 / 혐오 발언',
     '농산물과 무관한 글',
     '부적절한 내용',
     'AI 시스템에 의한 자동 유해성 판단'
   ]
+
+  const displayPresets = presets || fallbackPresets
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title={title}>
@@ -53,7 +56,7 @@ export default function ReasonModal({ isOpen, title, label = '사유', placehold
         <div className={styles.formGroup}>
           <label className={styles.label}>빠른 입력</label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {PRESETS.map((preset, idx) => (
+            {displayPresets.map((preset, idx) => (
               <button 
                 key={idx} 
                 className={styles.presetBtn} 
