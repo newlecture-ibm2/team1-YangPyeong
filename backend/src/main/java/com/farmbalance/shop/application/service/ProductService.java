@@ -52,11 +52,12 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
 
     @Override
     @Transactional
-    public Product registerProduct(Long sellerId, String name, int price, int stock,
+    public Product registerProduct(Long sellerId, String name, int price, int stock, int unitKg,
             String description, String categoryName, List<String> imageUrls) {
+        int safeUnitKg = unitKg < 1 ? 1 : unitKg;
         Product product = new Product(
                 null, sellerId, null, null, categoryName,
-                name, price, stock, description, 0,
+                name, price, stock, safeUnitKg, description, 0,
                 ProductStatus.PENDING, imageUrls, LocalDateTime.now());
 
         Product saved = productRepository.save(product);
@@ -72,7 +73,7 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
     @Override
     @Transactional
     public Product updateProduct(Long sellerId, Long productId, String name, int price, int stock,
-            String description, String categoryName, List<String> imageUrls) {
+            Integer unitKg, String description, String categoryName, List<String> imageUrls) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
 
@@ -85,7 +86,8 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
             throw new BusinessException(ErrorCode.PRODUCT_PENDING_CONTENT_LOCKED);
         }
 
-        product.update(name, price, stock, description, null, categoryName);
+        int newUnitKg = (unitKg != null && unitKg >= 1) ? unitKg : product.getUnitKg();
+        product.update(name, price, stock, newUnitKg, description, null, categoryName);
 
         // 콘텐츠 수정 시 재검수를 위해 PENDING 상태로 전환
         product.changeStatus(ProductStatus.PENDING);
