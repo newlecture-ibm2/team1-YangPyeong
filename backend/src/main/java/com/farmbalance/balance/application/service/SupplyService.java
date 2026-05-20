@@ -1,5 +1,6 @@
 package com.farmbalance.balance.application.service;
 
+import com.farmbalance.balance.adapter.in.web.dto.BalanceDashboardResponse;
 import com.farmbalance.balance.application.port.in.CalculateSupplyRatioUseCase;
 import com.farmbalance.balance.application.port.out.LoadCropStatsPort;
 import com.farmbalance.balance.application.port.out.LoadFarmSupplyPort;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +61,7 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
                 thresholds.getShortCaution(), 
                 thresholds.getShortWarn());
         
-        System.out.printf("[Balance-Analysis] 작물: %s, 공급량: %.1fkg, 기준량: %.1fkg, 비율: %.1f%% (%s)\n", 
+        System.out.printf("[Balance-Analysis] 작물: %s, 공급량: %.1fkg, 기준량: %.1fkg, 비율: %.1f%% (%s)%n", 
                 cropName, actualSupply, standardYieldKg, ratio, status.getDescription());
         
         return new SupplyRatioResult(ratio, status, baseYear);
@@ -105,7 +107,7 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
         }
         
         long endTime = System.currentTimeMillis();
-        System.out.printf("[Balance-Optimization] 전체 수급 분석 완료 (작물 수: %d, 소요시간: %dms)\n", 
+        System.out.printf("[Balance-Optimization] 전체 수급 분석 완료 (작물 수: %d, 소요시간: %dms)%n", 
                 results.size(), (endTime - startTime));
         
         return results;
@@ -201,4 +203,140 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
         return trend;
     }
 
+    // ========== 읍면동 대시보드 ==========
+
+    @Override
+    @Transactional(readOnly = true)
+    public BalanceDashboardResponse getDashboard(Long userId, String townCode) {
+        String regionCode = balanceProperties.getRegion().getDefaultCode();
+        BalanceProperties.Thresholds thresholds = balanceProperties.getThresholds();
+
+        // 1. 유저가 소유한 농장들의 읍면동 목록 조회
+        List<String[]> rawTowns = loadFarmSupplyPort.findTownsByUserId(userId);
+        List<BalanceDashboardResponse.TownInfo> userTowns = rawTowns.stream()
+                .map(t -> BalanceDashboardResponse.TownInfo.builder()
+                        .code(t[0])
+                        .name(t[1])
+                        .build())
+                .toList();
+
+        // 2. 선택된 읍면동 결정 (폴백 로직)
+        String selectedCode;
+        String selectedName;
+
+        if (townCode != null && !townCode.isBlank()) {
+            // 클라이언트가 명시적으로 지정한 경우
+            selectedCode = townCode;
+            selectedName = userTowns.stream()
+                    .filter(t -> t.getCode().equals(townCode))
+                    .map(BalanceDashboardResponse.TownInfo::getName)
+                    .findFirst()
+                    .orElse("선택된 지역");
+        } else if (!userTowns.isEmpty()) {
+            // 농장이 있는 경우 → 첫 번째 읍면동 자동 선택
+            selectedCode = userTowns.get(0).getCode();
+            selectedName = userTowns.get(0).getName();
+        } else {
+            // 농장 미등록 신규 가입자 → 양평군 전체로 폴백
+            selectedCode = null;
+            selectedName = "양평군 전체";
+        }
+
+        // 3. 양평군 전체 수급 현황 계산
+        BalanceDashboardResponse.SupplySummary totalSummary = buildSupplySummary(
+                "양평군 전체", null, regionCode, thresholds);
+
+        // 4. 읍면동(우리 동네) 수급 현황 계산
+        BalanceDashboardResponse.SupplySummary townSummary;
+        if (selectedCode != null) {
+            townSummary = buildSupplySummary(selectedName, selectedCode, regionCode, thresholds);
+        } else {
+            // 농장 미등록 → 전체와 동일하게 표시
+            townSummary = totalSummary;
+        }
+
+        return BalanceDashboardResponse.builder()
+                .userTowns(userTowns)
+                .selectedTownCode(selectedCode)
+                .selectedTownName(selectedName)
+                .townSummary(townSummary)
+                .totalSummary(totalSummary)
+                .build();
+    }
+
+    /**
+     * 수급 요약 정보를 빌드합니다.
+     *
+     * @param label 표시 라벨 (예: "용문면", "양평군 전체")
+     * @param townCode 읍면동 코드 (null이면 양평군 전체)
+     * @param regionCode 양평군 지역코드
+     * @param thresholds 수급 판정 기준치
+     */
+    private BalanceDashboardResponse.SupplySummary buildSupplySummary(
+            String label, String townCode, String regionCode,
+            BalanceProperties.Thresholds thresholds) {
+
+        // 1. 공급량 데이터: 읍면동 vs 전체
+        Map<String, Double> supplies;
+        int farmCount;
+        if (townCode != null) {
+            supplies = loadFarmSupplyPort.sumEstimatedYieldsByTownCode(townCode);
+            farmCount = loadFarmSupplyPort.countFarmsByTownCode(townCode);
+        } else {
+            supplies = loadFarmSupplyPort.sumAllEstimatedYields();
+            farmCount = 0; // 전체 농가 수는 별도 카운트하지 않음
+        }
+
+        // 2. KOSIS 기준 통계 (양평군 전체 기준)
+        List<CropProductionStats> allStats = loadCropStatsPort.loadAllLatestCropStats(regionCode);
+        Map<String, CropProductionStats> statsMap = new HashMap<>();
+        for (CropProductionStats s : allStats) {
+            statsMap.put(s.getItmNm(), s);
+        }
+
+        // 3. 작물별 수급 아이템 빌드
+        List<BalanceDashboardResponse.CropSupplyItem> cropItems = new ArrayList<>();
+
+        for (CropProductionStats stats : allStats) {
+            String cropName = stats.getItmNm();
+
+            double standardYieldKg = stats.getTotalProduction().doubleValue();
+            if (YieldUnit.TON.getLabel().equals(stats.getUnitNm())) {
+                standardYieldKg *= YieldUnit.TON.getFactorToKg();
+            }
+            if (standardYieldKg <= 0) continue;
+
+            double currentSupplyKg = supplies.getOrDefault(cropName, 0.0);
+
+            // 소수점 2째 자리 부동소수점 오차 보정 (Math.round)
+            currentSupplyKg = Math.round(currentSupplyKg * 100.0) / 100.0;
+            standardYieldKg = Math.round(standardYieldKg * 100.0) / 100.0;
+
+            double ratio = (standardYieldKg > 0) ? (currentSupplyKg / standardYieldKg) * 100.0 : 0.0;
+            ratio = Math.round(ratio * 10.0) / 10.0;
+
+            BalanceStatus status = BalanceStatus.calculateFromRatio(ratio,
+                    thresholds.getExcessWarn(),
+                    thresholds.getExcessCaution(),
+                    thresholds.getShortCaution(),
+                    thresholds.getShortWarn());
+
+            cropItems.add(BalanceDashboardResponse.CropSupplyItem.builder()
+                    .cropName(cropName)
+                    .currentSupplyKg(currentSupplyKg)
+                    .standardYieldKg(standardYieldKg)
+                    .supplyRatio(ratio)
+                    .status(status.name())
+                    .statusLabel(status.getLabel())
+                    .build());
+        }
+
+        return BalanceDashboardResponse.SupplySummary.builder()
+                .label(label)
+                .farmCount(farmCount)
+                .crops(cropItems)
+                .build();
+    }
+
 }
+

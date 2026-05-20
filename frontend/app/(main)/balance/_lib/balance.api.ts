@@ -50,3 +50,48 @@ export async function fetchSupplyTrend(cropName: string): Promise<SupplyTrendRes
 
   return result.data;
 }
+
+// ========== 읍면동 대시보드 ==========
+
+export interface TownInfo {
+  code: string;
+  name: string;
+}
+
+export interface CropSupplyItem {
+  cropName: string;
+  currentSupplyKg: number;
+  standardYieldKg: number;
+  supplyRatio: number;
+  status: string;
+  statusLabel: string;
+}
+
+export interface SupplySummary {
+  label: string;
+  farmCount: number;
+  crops: CropSupplyItem[];
+}
+
+export interface BalanceDashboardData {
+  userTowns: TownInfo[];
+  selectedTownCode: string | null;
+  selectedTownName: string;
+  townSummary: SupplySummary;
+  totalSummary: SupplySummary;
+}
+
+export async function fetchBalanceDashboard(townCode?: string): Promise<BalanceDashboardData> {
+  const url = townCode
+    ? `/api/balance/dashboard?townCode=${encodeURIComponent(townCode)}`
+    : `/api/balance/dashboard`;
+  const response = await fetch(url);
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error?.message || '대시보드 데이터를 불러오는데 실패했습니다.');
+  }
+
+  return result.data;
+}
+

@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 사용자 알림 수신 설정 도메인.
@@ -61,5 +63,22 @@ public class NotificationPreference {
             case GUIDE_PEST -> guidePestEnabled;
             case GUIDE_SOIL -> guideSoilEnabled;
         };
+    }
+
+    /**
+     * 비활성화된 카테고리 목록을 문자열로 반환.
+     * 알림 목록 조회 시 해당 카테고리를 제외하는 데 사용됩니다.
+     */
+    public List<String> getDisabledCategories() {
+        List<String> disabled = new ArrayList<>();
+        if (!balanceWarnEnabled) disabled.add(NotificationCategory.BALANCE_WARN.name());
+        if (!policyEnabled)      disabled.add(NotificationCategory.POLICY.name());
+        if (!orderEnabled)       disabled.add(NotificationCategory.ORDER.name());
+        if (!systemEnabled)      disabled.add(NotificationCategory.SYSTEM.name());
+        if (!guideWeatherEnabled)  disabled.add(NotificationCategory.GUIDE_WEATHER.name());
+        if (!guideScheduleEnabled) disabled.add(NotificationCategory.GUIDE_SCHEDULE.name());
+        if (!guidePestEnabled)     disabled.add(NotificationCategory.GUIDE_PEST.name());
+        if (!guideSoilEnabled)     disabled.add(NotificationCategory.GUIDE_SOIL.name());
+        return disabled;
     }
 }

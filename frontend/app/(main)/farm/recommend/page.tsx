@@ -71,7 +71,7 @@ export default function RecommendListPage() {
         <Link href="/farm" style={{ textDecoration: 'none', color: 'var(--color-text-light)', fontWeight: 600, paddingBottom: '16px' }}>대시보드</Link>
         <Link href="/balance" style={{ textDecoration: 'none', color: 'var(--color-text-light)', fontWeight: 600, paddingBottom: '16px' }}>수급 분석</Link>
         <button type="button" style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontWeight: 700, borderBottom: '2px solid var(--color-primary)', paddingBottom: '16px', marginBottom: '-1px', cursor: 'pointer' }}>AI 작물 추천</button>
-        <Link href="/farm" style={{ textDecoration: 'none', color: 'var(--color-text-light)', fontWeight: 600, paddingBottom: '16px' }}>농장 정보</Link>
+        <Link href="/farm" style={{ textDecoration: 'none', color: 'var(--color-text-light)', fontWeight: 600, paddingBottom: '16px' }}>농장 일지</Link>
       </div>
 
       <div className={styles.content}>

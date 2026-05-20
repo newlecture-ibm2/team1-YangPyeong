@@ -179,7 +179,7 @@ export default function NotificationSettingsPage() {
         </div>
 
         <p className={styles.description}>
-          알림을 끄면 푸시(브라우저 알림)만 차단되고, 알림 내역은 마이페이지에 계속 표시됩니다.
+          알림을 끄면 해당 카테고리 알림은 알림 내역과 푸시 알림 모두 수신되지 않습니다.
         </p>
 
         <h3 className={styles.sectionTitle}>일반 알림</h3>

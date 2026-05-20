@@ -8,6 +8,8 @@ import logging
 import re
 from typing import Optional
 
+import json_repair
+
 from sqlalchemy import text
 
 from app.db import get_db_session
@@ -420,7 +422,7 @@ async def autofill_product(
         response_text = await llm.generate(
             prompt,
             temperature=0.5,  # 정확한 매칭을 위해 낮은 온도
-            max_tokens=8192,  # 2.5-flash는 thinking 토큰도 이 예산에서 소비하므로 넉넉히
+            max_tokens=16384,  # 2.5-flash thinking 토큰 소비 + KAMIS 데이터 포함 프롬프트 대비 여유있게
         )
 
         logger.debug("[ProductAssist] Gemini raw response: %s", repr(response_text[:500]))
@@ -431,7 +433,11 @@ async def autofill_product(
         except json.JSONDecodeError:
             repaired = _repair_json(response_text)
             logger.debug("[ProductAssist] Repaired JSON: %s", repr(repaired[:500]))
-            parsed = json.loads(repaired)
+            try:
+                parsed = json.loads(repaired)
+            except json.JSONDecodeError:
+                # 잘린 JSON(Unterminated string 등) → json_repair로 복구
+                parsed = json_repair.loads(repaired)
 
         # 카테고리 검증: DB 목록에 없으면 가장 유사한 것 또는 첫 번째로 대체
         if parsed.get("category_name") not in categories:
