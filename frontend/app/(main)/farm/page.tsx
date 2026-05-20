@@ -758,7 +758,7 @@ function FarmDashboardContent() {
         {!isPreviewMode && (
           <div className={styles.headerButtons}>
             <UnifiedActionButton onAddHistory={() => setIsHistoryModalOpen(true)} data-guide="farm-register" />
-            {(activeSubTab === 'HISTORY' || activeSubTab === 'DASHBOARD') && (
+            {activeSubTab === 'DASHBOARD' && (
               <Link href="/farm/register">
                 <Button variant="outline" style={{ borderRadius: '50px' }}>+ 새 농장 등록</Button>
               </Link>
