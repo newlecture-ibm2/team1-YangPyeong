@@ -5,7 +5,9 @@
 import { useState } from 'react';
 import type { CropRecommendation } from '../../_lib/recommend.types';
 import { formatDisplayAiReason } from '../../_lib/recommend.utils';
+import { summarizeAiReason } from '../../_lib/formatAiReason';
 import GaugeBar from '../../_components/GaugeBar/GaugeBar';
+import AiReasonDisplay from './AiReasonDisplay';
 import styles from '../detail.module.css';
 import acc from './ScoreAnalysis.module.css';
 
@@ -20,9 +22,7 @@ export default function ScoreAnalysis({ rec, fitnessLabel, supplyLabel }: ScoreA
 
   const aiReason = formatDisplayAiReason(rec.aiReason);
   const summaryText = aiReason
-    ? aiReason.length > 140
-      ? aiReason.slice(0, 140) + '…'
-      : aiReason
+    ? summarizeAiReason(aiReason, 140)
     : '토양·시세·수급 점수를 바탕으로 한 추천입니다.';
 
   const priceLevel =
@@ -122,7 +122,7 @@ export default function ScoreAnalysis({ rec, fitnessLabel, supplyLabel }: ScoreA
             <div className={`${acc.section} ${acc.opinionSection}`}>
               <h3 className={acc.sectionTitle}>🤖 AI 분석 의견</h3>
               {aiReason ? (
-                <p className={acc.opinionText}>{aiReason}</p>
+                <AiReasonDisplay text={aiReason} />
               ) : (
                 <p className={acc.opinionEmpty}>
                   이 작물에 대한 AI 코멘트가 아직 없습니다. 추천 목록에서 「다시 분석」을 실행하면
