@@ -347,6 +347,7 @@ export default function CommunityPage() {
                 )}
                 <th>ID</th>
                 <th>제목</th>
+                <th>작성자</th>
                 <th>조회수</th>
                 <th>공지</th>
                 <th>작성일</th>
@@ -365,6 +366,12 @@ export default function CommunityPage() {
                   <td data-label="ID">{post.id}</td>
                   <td className={styles.titleCell} data-label="제목">
                     {post.title} {post.commentCount > 0 && <span style={{ color: 'var(--color-primary-600)', fontWeight: 600, marginLeft: '4px' }}>[{post.commentCount}]</span>}
+                  </td>
+                  <td data-label="작성자">
+                    <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
+                      <span style={{ fontWeight: 500 }}>{post.authorNickname || `User ${post.authorId}`}</span>
+                      <span style={{ color: 'var(--color-text-tertiary)' }}>{post.authorEmail || '이메일 없음'}</span>
+                    </div>
                   </td>
                   <td data-label="조회수">{post.viewCount.toLocaleString()}</td>
                   <td data-label="공지">

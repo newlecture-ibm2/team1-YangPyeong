@@ -21,7 +21,10 @@ public class AdminCommentPersistenceAdapter implements AdminCommentPort {
     private final RowMapper<AdminComment> rowMapper = (rs, rowNum) -> AdminComment.builder()
             .id(rs.getLong("id"))
             .postId(rs.getLong("post_id"))
+            .postTitle(rs.getString("post_title"))
             .authorId(rs.getLong("author_id"))
+            .authorNickname(rs.getString("author_nickname"))
+            .authorEmail(rs.getString("author_email"))
             .content(rs.getString("content"))
             .accepted(rs.getBoolean("accepted"))
             .createdAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null)
@@ -33,7 +36,7 @@ public class AdminCommentPersistenceAdapter implements AdminCommentPort {
 
     @Override
     public List<AdminComment> findByPostId(Long postId) {
-        String sql = "SELECT * FROM comments WHERE post_id = ? AND deleted_at IS NULL ORDER BY created_at";
+        String sql = "SELECT c.*, p.title as post_title, u.nickname as author_nickname, u.email as author_email FROM comments c LEFT JOIN posts p ON c.post_id = p.id LEFT JOIN users u ON c.author_id = u.id WHERE c.post_id = ? AND c.deleted_at IS NULL ORDER BY c.created_at";
         return jdbcTemplate.query(sql, rowMapper, postId);
     }
 
@@ -71,36 +74,36 @@ public class AdminCommentPersistenceAdapter implements AdminCommentPort {
 
     @Override
     public java.util.Optional<AdminComment> findById(Long id) {
-        String sql = "SELECT * FROM comments WHERE id = ?";
+        String sql = "SELECT c.*, p.title as post_title, u.nickname as author_nickname, u.email as author_email FROM comments c LEFT JOIN posts p ON c.post_id = p.id LEFT JOIN users u ON c.author_id = u.id WHERE c.id = ?";
         List<AdminComment> results = jdbcTemplate.query(sql, rowMapper, id);
         return results.isEmpty() ? java.util.Optional.empty() : java.util.Optional.of(results.get(0));
     }
 
     @Override
     public List<AdminComment> findRecentActiveComments(int limit) {
-        String sql = "SELECT * FROM comments WHERE deleted_at IS NULL AND is_hidden = false ORDER BY created_at DESC LIMIT ?";
+        String sql = "SELECT c.*, p.title as post_title, u.nickname as author_nickname, u.email as author_email FROM comments c LEFT JOIN posts p ON c.post_id = p.id LEFT JOIN users u ON c.author_id = u.id WHERE c.deleted_at IS NULL AND c.is_hidden = false ORDER BY c.created_at DESC LIMIT ?";
         return jdbcTemplate.query(sql, rowMapper, limit);
     }
 
     @Override
     public List<AdminComment> findByFilter(String keyword, String status, int offset, int limit) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM comments WHERE deleted_at IS NULL");
+        StringBuilder sql = new StringBuilder("SELECT c.*, p.title as post_title, u.nickname as author_nickname, u.email as author_email FROM comments c LEFT JOIN posts p ON c.post_id = p.id LEFT JOIN users u ON c.author_id = u.id WHERE c.deleted_at IS NULL");
         java.util.List<Object> params = new java.util.ArrayList<>();
 
         if (status != null && !status.isEmpty() && !status.equals("ALL")) {
             if (status.equals("ACTIVE")) {
-                sql.append(" AND is_hidden = false");
+                sql.append(" AND c.is_hidden = false");
             } else if (status.equals("HIDDEN")) {
-                sql.append(" AND is_hidden = true");
+                sql.append(" AND c.is_hidden = true");
             }
         }
 
         if (keyword != null && !keyword.isEmpty()) {
-            sql.append(" AND content LIKE ?");
+            sql.append(" AND c.content LIKE ?");
             params.add("%" + keyword + "%");
         }
 
-        sql.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?");
+        sql.append(" ORDER BY c.created_at DESC LIMIT ? OFFSET ?");
         params.add(limit);
         params.add(offset);
 

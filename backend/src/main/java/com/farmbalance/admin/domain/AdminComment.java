@@ -15,7 +15,10 @@ public class AdminComment {
 
     private Long id;
     private Long postId;
+    private String postTitle;
     private Long authorId;
+    private String authorNickname;
+    private String authorEmail;
     private String content;
     private Boolean accepted;
     private LocalDateTime createdAt;

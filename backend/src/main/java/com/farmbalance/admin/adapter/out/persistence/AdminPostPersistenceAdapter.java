@@ -29,6 +29,8 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
         return AdminPost.builder()
             .id(rs.getLong("id"))
             .authorId(rs.getLong("author_id"))
+            .authorNickname(rs.getString("author_nickname"))
+            .authorEmail(rs.getString("author_email"))
             .categoryId(rs.getLong("category_id"))
             .title(rs.getString("title"))
             .content(rs.getString("content"))
@@ -45,13 +47,13 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
 
     @Override
     public List<AdminPost> findAll() {
-        String sql = "SELECT p.*, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) as comment_count FROM posts p ORDER BY p.created_at DESC";
+        String sql = "SELECT p.*, u.nickname as author_nickname, u.email as author_email, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) as comment_count FROM posts p LEFT JOIN users u ON p.author_id = u.id ORDER BY p.created_at DESC";
         return jdbcTemplate.query(sql, rowMapper);
     }
 
     @Override
     public List<AdminPost> findByFilter(String keyword, String status, int offset, int limit) {
-        StringBuilder sql = new StringBuilder("SELECT p.*, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) as comment_count FROM posts p WHERE 1=1 ");
+        StringBuilder sql = new StringBuilder("SELECT p.*, u.nickname as author_nickname, u.email as author_email, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) as comment_count FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE 1=1 ");
         if (keyword != null && !keyword.isBlank()) {
             sql.append("AND p.title LIKE '%").append(keyword).append("%' ");
         }
@@ -85,7 +87,7 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
 
     @Override
     public Optional<AdminPost> findById(Long id) {
-        String sql = "SELECT p.*, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) as comment_count FROM posts p WHERE p.id = ?";
+        String sql = "SELECT p.*, u.nickname as author_nickname, u.email as author_email, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) as comment_count FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE p.id = ?";
         List<AdminPost> result = jdbcTemplate.query(sql, rowMapper, id);
         return result.stream().findFirst();
     }

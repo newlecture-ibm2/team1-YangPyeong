@@ -8,6 +8,8 @@ export interface ApiResponse<T> {
 export interface AdminPost {
   id: number
   authorId: number
+  authorNickname?: string
+  authorEmail?: string
   categoryId: number
   title: string
   content: string
@@ -38,7 +40,10 @@ export interface PaginatedAdminComments {
 export interface AdminComment {
   id: number
   postId: number
+  postTitle?: string
   authorId: number
+  authorNickname?: string
+  authorEmail?: string
   content: string
   accepted: boolean
   createdAt: string

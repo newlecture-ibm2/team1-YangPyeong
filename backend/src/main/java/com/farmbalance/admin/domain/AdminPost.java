@@ -16,6 +16,8 @@ public class AdminPost {
     private Long id;
     private Long authorId;
     private Long categoryId;
+    private String authorNickname;
+    private String authorEmail;
     private String title;
     private String content;
     private Integer viewCount;

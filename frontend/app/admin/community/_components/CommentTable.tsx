@@ -150,7 +150,8 @@ export default function CommentTable() {
                   </th>
                 )}
                 <th>ID</th>
-                <th>게시글ID</th>
+                <th>원본 게시글</th>
+                <th>작성자</th>
                 <th>내용</th>
                 <th>작성일</th>
                 <th>상태</th>
@@ -166,7 +167,18 @@ export default function CommentTable() {
                     </td>
                   )}
                   <td data-label="ID">{comment.id}</td>
-                  <td data-label="게시글ID">{comment.postId}</td>
+                  <td data-label="원본 게시글">
+                    <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
+                      <span style={{ fontWeight: 500, maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{comment.postTitle || '알 수 없는 게시글'}</span>
+                      <span style={{ color: 'var(--color-text-tertiary)' }}>ID: {comment.postId}</span>
+                    </div>
+                  </td>
+                  <td data-label="작성자">
+                    <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
+                      <span style={{ fontWeight: 500 }}>{comment.authorNickname || `User ${comment.authorId}`}</span>
+                      <span style={{ color: 'var(--color-text-tertiary)' }}>{comment.authorEmail || '이메일 없음'}</span>
+                    </div>
+                  </td>
                   <td className={styles.titleCell} data-label="내용" style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {comment.content}
                   </td>
