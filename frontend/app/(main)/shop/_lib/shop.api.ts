@@ -110,6 +110,7 @@ export async function registerProduct(data: {
   name: string;
   price: number;
   stock: number;
+  unitKg: number;
   description: string;
   categoryName: string;
   imageUrls: string[];
@@ -125,6 +126,7 @@ export async function updateProduct(id: number, data: {
   name: string;
   price: number;
   stock: number;
+  unitKg?: number;
   description: string;
   categoryName: string;
   imageUrls: string[];

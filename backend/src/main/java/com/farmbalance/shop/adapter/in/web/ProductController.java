@@ -82,7 +82,7 @@ public class ProductController {
     public ApiResponse<ProductResponse> registerProduct(@RequestBody ProductRegisterRequest request) {
         Long sellerId = SecurityUtil.getCurrentUserId();
         Product product = manageProductUseCase.registerProduct(
-                sellerId, request.name(), request.price(), request.stock(),
+                sellerId, request.name(), request.price(), request.stock(), request.unitKgOrDefault(),
                 request.description(), request.categoryName(), request.imageUrls()
         );
         return ApiResponse.ok(ProductResponse.from(product));
@@ -95,7 +95,7 @@ public class ProductController {
         Long sellerId = SecurityUtil.getCurrentUserId();
         Product product = manageProductUseCase.updateProduct(
                 sellerId, id, request.name(), request.price(), request.stock(),
-                request.description(), request.categoryName(), request.imageUrls()
+                request.unitKg(), request.description(), request.categoryName(), request.imageUrls()
         );
         return ApiResponse.ok(ProductResponse.from(product));
     }
