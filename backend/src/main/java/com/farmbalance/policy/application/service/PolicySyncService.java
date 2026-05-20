@@ -5,7 +5,7 @@ import com.farmbalance.policy.application.port.out.PolicyAiAnalyzePort;
 import com.farmbalance.policy.application.port.out.PolicyAiAnalyzePort.AiAnalyzeResult;
 import com.farmbalance.policy.application.port.out.PolicyExternalFetchPort;
 import com.farmbalance.policy.application.port.out.PolicySavePort;
-import com.farmbalance.policy.application.port.out.RegionCodeResolvePort;
+import com.farmbalance.global.service.RegionCodeResolver;
 import com.farmbalance.policy.domain.model.PolicyData;
 import com.farmbalance.policy.domain.model.SyncWarningType;
 import com.farmbalance.global.event.ApiSyncEvent;
@@ -52,7 +52,7 @@ public class PolicySyncService implements SyncPolicyUseCase {
     private final List<PolicyExternalFetchPort> fetchPorts;
     private final PolicySavePort policySavePort;
     private final PolicyAiAnalyzePort aiAnalyzePort;
-    private final RegionCodeResolvePort regionCodeResolvePort;
+    private final RegionCodeResolver regionCodeResolver;
     private final ApplicationEventPublisher eventPublisher;
 
     private static final List<String> VALID_CATEGORIES =
@@ -480,7 +480,7 @@ public class PolicySyncService implements SyncPolicyUseCase {
         if (codeOrName == null || codeOrName.isBlank()) return null;
 
         return regionCodeCache
-                .computeIfAbsent(codeOrName, key -> regionCodeResolvePort.resolveToCode(key))
+                .computeIfAbsent(codeOrName, key -> regionCodeResolver.resolveToCode(key))
                 .orElse(null);
     }
 
