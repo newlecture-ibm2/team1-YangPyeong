@@ -6,10 +6,23 @@ from app.models.recommend import (
     WeightsRequest, WeightsResponse,
     BatchReasonRequest, BatchReasonResponse
 )
+from app.models.crop_guide import CropGuideRequest, CropGuideResponse
 from app.services import recommend_service
+from app.services import crop_guide_service
 
 router = APIRouter(prefix="/api/recommend", tags=["Recommend"])
 logger = logging.getLogger(__name__)
+
+@router.post("/crop-guide/generate", response_model=CropGuideResponse)
+async def generate_crop_guide(req: CropGuideRequest):
+    logger.info("재배 가이드 생성: crop=%s, exp=%s", req.crop_name, req.experience_level)
+    try:
+        return await crop_guide_service.generate_crop_detailed_guide(req)
+    except ValueError as ve:
+        raise HTTPException(status_code=422, detail=str(ve))
+    except Exception as e:
+        logger.error("재배 가이드 생성 실패: %s", e)
+        raise HTTPException(status_code=500, detail="AI 재배 가이드 생성 중 오류가 발생했습니다.")
 
 @router.post("/reason", response_model=ReasonResponse)
 async def generate_reason(req: ReasonRequest):

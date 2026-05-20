@@ -12,6 +12,30 @@ from app.utils.json_utils import extract_json
 
 _INSIGHT_MIN_LEN = 20
 
+_NUMERIC_FIELD_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("predicted_yield_kg", re.compile(r'"predicted_yield_kg"\s*:\s*([\d.]+)', re.I)),
+    ("predicted_price_per_kg", re.compile(r'"predicted_price_per_kg"\s*:\s*([\d.]+)', re.I)),
+    ("predicted_revenue", re.compile(r'"predicted_revenue"\s*:\s*([\d.]+)', re.I)),
+)
+
+_STRING_FIELD_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("price_insight", re.compile(r'"price_insight"\s*:\s*"((?:[^"\\]|\\.)*)', re.I)),
+    ("revenue_insight", re.compile(r'"revenue_insight"\s*:\s*"((?:[^"\\]|\\.)*)', re.I)),
+    ("confidence", re.compile(r'"confidence"\s*:\s*"([^"]*)"', re.I)),
+)
+
+_YIELD_FACTOR_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    (
+        "planting_time_impact",
+        re.compile(r'"planting_time_impact"\s*:\s*"((?:[^"\\]|\\.)*)', re.I),
+    ),
+    ("weather_impact", re.compile(r'"weather_impact"\s*:\s*"((?:[^"\\]|\\.)*)', re.I)),
+    (
+        "overall_adjustment",
+        re.compile(r'"overall_adjustment"\s*:\s*"((?:[^"\\]|\\.)*)', re.I),
+    ),
+)
+
 
 def _to_snake(name: str) -> str:
     s = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name.strip())
@@ -128,6 +152,54 @@ def _score_revenue_dict(norm: dict) -> int:
     return score
 
 
+def _try_close_truncated_json(text: str) -> dict:
+    """잘린 JSON 끝에 닫는 괄호·따옴표를 보수해 파싱을 시도합니다."""
+    start = text.find("{")
+    if start == -1:
+        return {}
+    fragment = text[start:].strip()
+    fragment = re.sub(r',?\s*"[^"]*"\s*:\s*"[^"]*$', "", fragment)
+    fragment = re.sub(r',?\s*"[^"]*"\s*:\s*$', "", fragment)
+    fragment = fragment.rstrip().rstrip(",")
+    for suffix in ('"}', '"}}', '"}]}', "}}", "}", '"]}'):
+        try:
+            obj, _ = json.JSONDecoder().raw_decode(fragment + suffix)
+            if isinstance(obj, dict):
+                return obj
+        except json.JSONDecodeError:
+            continue
+    return {}
+
+
+def salvage_revenue_fields(text: str) -> dict:
+    """유효 JSON 파싱이 실패했을 때 잘린 응답에서 핵심 필드를 추출합니다."""
+    if not text or not isinstance(text, str):
+        return {}
+
+    raw: dict[str, Any] = {}
+    for key, pattern in _NUMERIC_FIELD_PATTERNS:
+        match = pattern.search(text)
+        if match:
+            raw[key] = match.group(1)
+
+    for key, pattern in _STRING_FIELD_PATTERNS:
+        match = pattern.search(text)
+        if match:
+            raw[key] = match.group(1).replace("\\n", " ").replace('\\"', '"').strip()
+
+    yield_factors: dict[str, str] = {}
+    for key, pattern in _YIELD_FACTOR_PATTERNS:
+        match = pattern.search(text)
+        if match:
+            yield_factors[key] = (
+                match.group(1).replace("\\n", " ").replace('\\"', '"').strip()
+            )
+    if yield_factors:
+        raw["yield_factors"] = yield_factors
+
+    return normalize_revenue_dict(raw)
+
+
 def iter_json_dicts(text: str) -> Iterator[dict]:
     if not text or not isinstance(text, str):
         return
@@ -163,7 +235,25 @@ def extract_revenue_json(text: str) -> dict:
         return best_norm
 
     fallback = normalize_revenue_dict(extract_json(text))
-    return fallback if _score_revenue_dict(fallback) > 0 else {}
+    fallback_score = _score_revenue_dict(fallback)
+    if fallback_score > best_score:
+        best_norm = fallback
+        best_score = fallback_score
+
+    repaired = normalize_revenue_dict(_try_close_truncated_json(text))
+    repaired_score = _score_revenue_dict(repaired)
+    if repaired_score > best_score:
+        best_norm = repaired
+        best_score = repaired_score
+
+    if best_score > 0:
+        return best_norm
+
+    salvaged = salvage_revenue_fields(text)
+    if _score_revenue_dict(salvaged) > 0:
+        return salvaged
+
+    return {}
 
 
 def is_revenue_parse_incomplete(parsed: dict, kamis_price: int = 0) -> bool:

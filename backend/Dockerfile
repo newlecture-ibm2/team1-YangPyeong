@@ -6,6 +6,7 @@ RUN gradle build --no-daemon -x test
 
 # Run stage - JRE 21
 FROM eclipse-temurin:21-jre-alpine
+RUN apk add --no-cache tzdata
 WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080

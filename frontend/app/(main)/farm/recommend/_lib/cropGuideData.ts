@@ -1,12 +1,20 @@
 /* ════════════════════════════════════════════════════════
-   재배 가이드 — 상세 전문 가이드북 데이터
-   작물 이름으로 매핑된 전문 재배 가이드
+   재배 가이드 — 상세 전문 가이드북 (작물·농장·경험 맞춤)
    ════════════════════════════════════════════════════════ */
+
+import type { CropRecommendation, CropRecommendResponse } from './recommend.types';
+import { buildPestDetailLines } from './pestGuideEntries';
+import {
+  buildSoilWaterContent,
+  buildHarvestContent,
+  buildTipsContent,
+  resolveGrowerExperience,
+} from './cropGuideBuilders';
 
 export interface GuideTopic {
   icon: string;
   title: string;
-  content: string[];       // 여러 줄의 안내 내용
+  content: string[];
 }
 
 export interface CropDetailedGuide {
@@ -14,198 +22,138 @@ export interface CropDetailedGuide {
   topics: GuideTopic[];
 }
 
-const DETAILED_GUIDES: Record<string, CropDetailedGuide> = {
-  '유기농 배추': {
-    cropName: '유기농 배추',
-    topics: [
-      {
-        icon: '🌍',
-        title: '토양·수분 정밀 관리',
-        content: [
-          '최적 토양 pH: 6.0~6.5 (약산성). pH가 5.5 이하이면 석회(소석회 또는 고토석회)를 10a당 100~200kg 시용합니다.',
-          '유기물 함량 3% 이상 유지를 목표로 합니다. 완숙퇴비를 매 작기 10a당 2,000~3,000kg 투입하세요.',
-          '배추는 수분 요구량이 많지만 과습에 약합니다. 토양 수분을 60~70%로 유지하되, 이랑을 20cm 이상 높여 배수를 확보하세요.',
-          '점적관수를 사용하면 수분 균일도가 높아지고 물 사용량을 40% 절감할 수 있습니다.',
-        ],
-      },
-      {
-        icon: '🐛',
-        title: '주요 병해충 정밀 대책',
-        content: [
-          '【무름병】 고온다습(30°C 이상)에서 발생. 이병주 즉시 제거하고 석회를 부려 소독합니다. 연작을 피하세요.',
-          '【검은썩음병】 종자 전염이 원인. 반드시 건전 종자를 사용하고, 온탕 소독(50°C, 25분)을 실시합니다.',
-          '【배추좀나방/배추벌레】 BT제(바실러스 투링지엔시스)로 유기 방제가 가능합니다. 초기 유충 시기에 살포가 효과적입니다.',
-          '【진딧물】 은색 반사 멀칭이 효과적. 다발 시 님 오일(Neem Oil) 500배액 엽면 살포를 3~5일 간격으로 실시합니다.',
-          '【달팽이/민달팽이】 장마철 다발. 맥주 트랩이나 규조토 뿌리기로 유인 포살합니다.',
-        ],
-      },
-      {
-        icon: '🚫',
-        title: '초보 농부 실패 방지 꿀팁',
-        content: [
-          '❌ 이것만은 피하세요: 질소 비료 과다 투입 → 잎만 무성하고 결구가 안 되는 "벌어진 배추"가 됩니다.',
-          '❌ 정식 후 물 주기를 게을리하면 → 뿌리 활착 실패로 초기 생존율이 50% 이하로 떨어질 수 있습니다.',
-          '✅ 정식은 반드시 흐린 날 또는 오후 늦게 하세요. 한낮에 정식하면 일사 스트레스로 묘가 죽습니다.',
-          '✅ 배추가 결구를 시작하면 절대로 질소를 추비하지 마세요. 내부 썩음의 원인이 됩니다.',
-          '✅ 수확 적기를 놓치면 꽃대가 올라와 상품성이 0이 됩니다. 결구 상단이 단단해지면 바로 수확하세요.',
-        ],
-      },
-      {
-        icon: '📦',
-        title: '수확 후 관리·출하 전략',
-        content: [
-          '수확 직후 0~2°C에서 예냉 처리하면 저장 기간이 2~3주 연장됩니다.',
-          '포기 단위로 신문지에 싸서 세로로 세워 보관하면 상품성이 오래 유지됩니다.',
-          '김장철(11월) 출하를 목표로 역산하여 8~9월 가을 배추를 파종하면 높은 시세를 기대할 수 있습니다.',
-        ],
-      },
-    ],
-  },
+export interface CropGuideBuildOptions {
+  recommendResult?: CropRecommendResponse | null;
+}
 
-  '청양고추': {
-    cropName: '청양고추',
-    topics: [
-      {
-        icon: '🌍',
-        title: '토양·수분 정밀 관리',
-        content: [
-          '최적 토양 pH: 6.0~6.5. 고추는 연작 장해가 심하므로 3~4년 윤작을 권장합니다.',
-          '점적관수를 설치하고 토양 수분을 65~75% 수준으로 유지합니다. 과습 시 역병 발생이 급증합니다.',
-          '멀칭은 흑색 비닐을 기본으로 하되, 고온기(7~8월)에는 볏짚 멀칭으로 지온 상승을 억제합니다.',
-          '칼슘 결핍(배꼽썩음)을 예방하기 위해 개화기부터 칼슘제 엽면시비를 2주 간격으로 실시하세요.',
-        ],
-      },
-      {
-        icon: '🐛',
-        title: '주요 병해충 정밀 대책',
-        content: [
-          '【탄저병】 장마철 급속 확산. 비 오기 전 예방 방제 필수. 이병과는 발견 즉시 제거하여 밭 밖으로 반출합니다.',
-          '【역병】 뿌리 침수 시 감염 급증. 배수 관리가 최우선. 고랑에 물이 고이지 않도록 경사 관리합니다.',
-          '【담배나방】 과실에 구멍을 내어 상품성을 파괴합니다. 페로몬 트랩으로 예찰하고, 발생 초기에 BT제 살포합니다.',
-          '【총채벌레】 TSWV(토마토반점시들음바이러스)를 매개합니다. 황색 끈끈이 트랩 설치로 밀도 관리합니다.',
-          '【진딧물】 CMV(오이모자이크바이러스) 매개. 은색 멀칭 + 주기적 님 오일 살포로 관리합니다.',
-        ],
-      },
-      {
-        icon: '🚫',
-        title: '초보 농부 실패 방지 꿀팁',
-        content: [
-          '❌ 정식 직후 비를 맞으면 → 역병으로 전멸할 수 있습니다. 비 예보가 있으면 정식을 미루세요.',
-          '❌ 방아다리(1번 분지) 아래 곁순을 방치하면 → 영양 분산으로 과실이 작아지고 수량이 30% 감소합니다.',
-          '✅ 첫 열매(1번과)는 일찍 따주세요. 나무의 영양 생장을 촉진하여 이후 수량이 증가합니다.',
-          '✅ 고추는 "과실 수확이 곧 추비"입니다. 수확 후 반드시 추비를 실시하세요.',
-          '✅ 장마가 끝나면 즉시 탄저병 방제를 실시해야 합니다. 하루만 늦어도 피해가 급증합니다.',
-        ],
-      },
-      {
-        icon: '📦',
-        title: '수확 후 관리·건조·출하',
-        content: [
-          '홍고추 건조 시 직사광선에 3~5일 건조 후, 그늘에서 마무리 건조합니다. 비닐하우스 건조가 가장 효율적입니다.',
-          '건고추 수분 함량 14% 이하가 장기 저장 기준입니다. 밀봉 후 냉동 보관(-18°C)하면 1년 이상 보관 가능합니다.',
-          '풋고추는 8~10°C, 습도 90~95%에서 최대 2주 저장할 수 있습니다.',
-        ],
-      },
-    ],
-  },
+function normalizeTopicContent(content: unknown): string[] {
+  if (Array.isArray(content)) {
+    return content
+      .map((line) => (line != null ? String(line).trim() : ''))
+      .filter((line) => line.length > 0);
+  }
+  if (typeof content === 'string' && content.trim()) {
+    return [content.trim()];
+  }
+  return [];
+}
 
-  '방울토마토': {
-    cropName: '방울토마토',
-    topics: [
-      {
-        icon: '🌍',
-        title: '토양·수분 정밀 관리',
-        content: [
-          '최적 토양 pH: 6.0~6.5. EC(전기전도도) 2.0~3.0 dS/m을 유지합니다.',
-          '방울토마토는 수분 관리가 맛과 당도를 결정합니다. 과실 비대기에는 약간의 수분 스트레스가 당도를 높여줍니다.',
-          '1일 관수량은 생육 단계별로 조절: 정식 초기 500mL/주 → 착과기 1.5L/주 → 성숙기 1L/주(조금 줄이기).',
-          '칼슘 결핍(배꼽썩음)은 방울토마토 재배 최대 문제입니다. 관수 시 질산칼슘 200ppm을 혼합하여 관주합니다.',
-        ],
-      },
-      {
-        icon: '🐛',
-        title: '주요 병해충 정밀 대책',
-        content: [
-          '【잿빛곰팡이병】 다습 환경에서 급발생. 환기를 철저히 하고, 하엽을 제거하여 통풍을 확보합니다.',
-          '【역병·풋마름병】 토양 전염병. 접목묘(저항성 대목)를 사용하면 발생을 80% 이상 줄일 수 있습니다.',
-          '【잎곰팡이병】 시설 재배에서 빈발. 약간의 난방으로 야간 습도를 낮추면 예방 효과가 큽니다.',
-          '【온실가루이】 황색 끈끈이 트랩 + 천적(온실가루이좀벌) 방사가 유기 재배에 효과적입니다.',
-          '【열과(裂果)】 급격한 관수 변동이 원인. 관수량을 일정하게 유지하고, 장마 전후 차광 자재를 활용합니다.',
-        ],
-      },
-      {
-        icon: '🚫',
-        title: '초보 농부 실패 방지 꿀팁',
-        content: [
-          '❌ 곁순(측지)을 제거하지 않으면 → 정글처럼 무성해져 과실이 작아지고 수확이 불가능해집니다.',
-          '❌ 질소 비료를 많이 주면 → "나무토마토"가 됩니다. 잎만 크고 열매가 달리지 않습니다.',
-          '✅ 곁순은 5cm 이내일 때 손으로 제거하세요. 커지면 상처가 커서 병원균 침입 통로가 됩니다.',
-          '✅ 수분(꽃가루받이)이 잘 안 되면 꽃을 가볍게 흔들어주세요. 전동 진동기를 사용하면 더 효과적입니다.',
-          '✅ 완전 착색(빨간색) 후 수확한 과실이 당도가 가장 높습니다. 분홍색 단계에서 수확하면 당도가 30% 낮습니다.',
-        ],
-      },
-      {
-        icon: '📦',
-        title: '수확 후 관리·출하',
-        content: [
-          '수확 후 5~10°C에서 저장하면 최대 2주 보관 가능. 냉장고에 넣을 때는 꼭지를 아래로 향하게 보관합니다.',
-          '방울토마토는 소포장(300g~500g 팩)으로 직거래 판매 시 수익성이 높습니다.',
-          '당도 8 Brix 이상이면 프리미엄 가격(일반 대비 1.5~2배)을 받을 수 있습니다. 당도계(굴절계)를 구비하세요.',
-        ],
-      },
-    ],
-  },
-};
+/** 서버/AI 응답 → 모달용 가이드 */
+export function mapServerGuideToDetailedGuide(dto: {
+  crop_name: string;
+  topics: Array<{ icon?: string; title?: string; content?: unknown }>;
+}): CropDetailedGuide {
+  return {
+    cropName: dto.crop_name,
+    topics: (dto.topics ?? [])
+      .map((t) => ({
+        icon: t.icon || '📌',
+        title: t.title?.trim() || '재배 안내',
+        content: normalizeTopicContent(t.content),
+      }))
+      .filter((t) => t.content.length > 0),
+  };
+}
 
-/** 기본 가이드 (매핑되지 않은 작물) */
-const DEFAULT_GUIDE: CropDetailedGuide = {
-  cropName: '작물',
-  topics: [
+/** 카드 병해충과 모달 본문 일치 — AI 병해충 섹션을 정적 상세로 교체 */
+export function mergeGuideWithStructuredPests(
+  guide: CropDetailedGuide,
+  rec: CropRecommendation,
+): CropDetailedGuide {
+  const pests = rec.pests ?? [];
+  if (pests.length === 0) {
+    return guide;
+  }
+  const pestContent = buildPestTopicFromCard(pests, rec.cropName);
+  const topics = guide.topics.map((topic) => {
+    if (!topic.title.includes('병해충')) {
+      return topic;
+    }
+    return {
+      icon: '🐛',
+      title: PEST_TOPIC_TITLE,
+      content: pestContent,
+    };
+  });
+  return { ...guide, topics };
+}
+
+const PEST_TOPIC_TITLE = '주요 병해충 정밀 대책';
+
+function buildPestTopicFromCard(pests: string[], cropName: string): string[] {
+  const unique = [...new Set(pests.map((p) => p.trim()).filter(Boolean))];
+  if (unique.length === 0) return [];
+
+  const lines: string[] = [];
+  unique.forEach((pest, idx) => {
+    buildPestDetailLines(pest, cropName).forEach((line) => lines.push(line));
+    if (idx < unique.length - 1) lines.push('');
+  });
+  return lines;
+}
+
+function buildGenericPestContent(cropName: string): string[] {
+  return [
+    `${cropName} 재배 시 지역·작기별 다빈 병해충은 농업기술센터·병해충 예찰표를 참고하세요.`,
+    '건전 종자·윤작·적정 밀도·통풍이 기본이며, 이병주는 발견 즉시 제거합니다.',
+    '화학 방제 시 안전사용 기준(희석 배수, 살포 횟수, 수확 전 안전일)을 준수하세요.',
+  ];
+}
+
+/** 작물·농장·재배 경험에 맞춘 상세 가이드 생성 */
+export function buildCropDetailedGuide(
+  rec: CropRecommendation,
+  options?: CropGuideBuildOptions,
+): CropDetailedGuide {
+  const cropName = rec.cropName;
+  const farm = options?.recommendResult?.farmInfo;
+  const experience = resolveGrowerExperience(rec, options?.recommendResult);
+  const pests = rec.pests ?? [];
+
+  const tipsTitle =
+    experience === 'experienced' ? '재배 경험자·전문가 꿀팁' : '초보 농부 실패 방지 꿀팁';
+  const tipsIcon = experience === 'experienced' ? '🎯' : '🚫';
+
+  const topics: GuideTopic[] = [
     {
       icon: '🌍',
-      title: '토양·수분 관리 기본',
-      content: [
-        '토양 검정을 통해 pH, 유기물 함량, 질소·인산·칼리 수준을 파악합니다.',
-        '대부분의 작물은 pH 6.0~6.5의 약산성 토양에서 잘 자랍니다.',
-        '점적관수 시스템을 설치하면 물 사용량을 30~40% 절감하면서 균일한 수분 공급이 가능합니다.',
-        '과습은 뿌리 부패의 주원인입니다. 이랑을 높이고 배수로를 정비하세요.',
-      ],
+      title: '토양·수분 정밀 관리',
+      content: buildSoilWaterContent(rec, farm),
     },
     {
       icon: '🐛',
-      title: '병해충 관리 기본',
-      content: [
-        '예방이 치료보다 중요합니다. 건전 종자·묘 사용, 연작 회피, 적정 재식 밀도가 기본입니다.',
-        '병해충 예찰을 주 2~3회 실시하여 초기에 발견·대응합니다.',
-        '이병주·이충주는 발견 즉시 제거하여 확산을 막습니다.',
-        '화학 방제 시 안전사용 기준(희석 배수, 살포 횟수, 수확 전 마지막 살포일)을 반드시 준수합니다.',
-      ],
+      title: pests.length > 0 ? PEST_TOPIC_TITLE : '병해충 관리',
+      content: pests.length > 0 ? buildPestTopicFromCard(pests, cropName) : buildGenericPestContent(cropName),
     },
     {
-      icon: '🚫',
-      title: '초보 농부 실패 방지 꿀팁',
-      content: [
-        '❌ 비료를 "많이 줄수록 좋다"는 생각은 금물. 비료 과다는 오히려 생육 장해와 환경 오염을 유발합니다.',
-        '❌ 날씨 예보를 무시하고 작업하면 → 서리 피해, 침수 피해 등 예방 가능한 손실을 입습니다.',
-        '✅ 재배 일지(기록장)를 쓰세요. 매년 쌓이는 기록이 최고의 교과서가 됩니다.',
-        '✅ 지역 농업기술센터의 무료 교육과 현장 컨설팅을 적극 활용하세요.',
-        '✅ 소규모로 시작하여 경험을 쌓은 후 재배 면적을 늘리는 것이 안전합니다.',
-      ],
+      icon: tipsIcon,
+      title: tipsTitle,
+      content: buildTipsContent(rec, experience),
     },
     {
       icon: '📦',
-      title: '수확 후 관리 기본',
-      content: [
-        '수확 직후 예냉(산물의 체온을 빠르게 낮추기)은 신선도 유지의 핵심입니다.',
-        '품질 등급별 선별 후 출하하면 평균 단가가 20~30% 높아집니다.',
-        '직거래(직판장, 온라인) 채널을 개척하면 중간 유통 마진을 확보할 수 있습니다.',
-      ],
+      title: '수확 후 관리·출하',
+      content: buildHarvestContent(rec, experience),
     },
-  ],
-};
+  ];
 
+  return { cropName, topics };
+}
+
+/** @deprecated buildCropDetailedGuide(rec, options) 사용 */
 export function getCropDetailedGuide(cropName: string): CropDetailedGuide {
-  const guide = DETAILED_GUIDES[cropName];
-  if (guide) return guide;
-  return { ...DEFAULT_GUIDE, cropName };
+  const stub: CropRecommendation = {
+    rank: 1,
+    cropId: 0,
+    cropName,
+    category: '채소류',
+    score: 0,
+    soilFitness: 'SUIT',
+    soilFitnessPercent: 70,
+    priceForecastPercent: 0,
+    supplyStabilityPercent: 0,
+    supplyStatus: 'BALANCED',
+    expectedRevenuePerKg: 0,
+  };
+  return buildCropDetailedGuide(stub);
 }
