@@ -78,13 +78,14 @@ export default function RecommendListPage() {
         {hook.farm && <SoilPanel farm={hook.farm} result={hook.result} />}
         <AnalyzeLoader
           isAnalyzing={hook.isAnalyzing}
+          analyzeStepIndex={hook.analyzeStepIndex}
           isHydrating={hook.isHydrating}
           hasResult={hook.hasResult}
           disabled={!hook.farm}
           onAnalyze={hook.handleAnalyze}
         />
 
-        {hook.result && (
+        {hook.result && !hook.isAnalyzing && (
           <>
             {hook.recommendMode && (
               <p className={styles.modeBanner}>
