@@ -15,9 +15,16 @@ async function authHeaders() {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { farmId, cropId } = await params;
-    const experienceLevel = request.nextUrl.searchParams.get('experienceLevel') ?? 'novice';
+    const search = request.nextUrl.searchParams;
+    const query = new URLSearchParams();
+    query.set('experienceLevel', search.get('experienceLevel') ?? 'novice');
+    const adviceType = search.get('adviceType');
+    const recommendMode = search.get('recommendMode');
+    if (adviceType) query.set('adviceType', adviceType);
+    if (recommendMode) query.set('recommendMode', recommendMode);
+
     const backendResponse = await fetch(
-      `${BACKEND_URL}/api/recommend/farms/${farmId}/crops/${cropId}/detailed-guide?experienceLevel=${encodeURIComponent(experienceLevel)}`,
+      `${BACKEND_URL}/api/recommend/farms/${farmId}/crops/${cropId}/detailed-guide?${query}`,
       { method: 'GET', headers: await authHeaders(), cache: 'no-store' },
     );
     const data = await backendResponse.json();

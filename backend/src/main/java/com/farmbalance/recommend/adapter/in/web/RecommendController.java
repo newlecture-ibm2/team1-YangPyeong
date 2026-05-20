@@ -109,12 +109,18 @@ public class RecommendController {
      * GET /api/recommend/farms/{farmId}/crops/{cropId}/detailed-guide
      */
     @GetMapping("/farms/{farmId}/crops/{cropId}/detailed-guide")
-    public ApiResponse<Map<String, Object>> getCropDetailedGuide(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCropDetailedGuide(
             @AuthenticationPrincipal Long userId,
             @PathVariable Long farmId,
             @PathVariable Long cropId,
-            @RequestParam(name = "experienceLevel", defaultValue = "novice") String experienceLevel) {
-        return cropDetailedGuideHandler.getCached(userId, farmId, cropId, experienceLevel);
+            @RequestParam(name = "experienceLevel", defaultValue = "novice") String experienceLevel,
+            @RequestParam(name = "adviceType", required = false) String adviceType,
+            @RequestParam(name = "recommendMode", required = false) String recommendMode) {
+        return cropDetailedGuideHandler.getCached(
+                userId,
+                farmId,
+                cropId,
+                CropDetailedGuideHandler.buildRequestHints(experienceLevel, adviceType, recommendMode));
     }
 
     /**

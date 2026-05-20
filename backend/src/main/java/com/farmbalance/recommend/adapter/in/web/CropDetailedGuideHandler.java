@@ -3,14 +3,17 @@ package com.farmbalance.recommend.adapter.in.web;
 import com.farmbalance.global.response.ApiResponse;
 import com.farmbalance.recommend.application.service.FarmCropDetailedGuideService;
 import com.farmbalance.recommend.application.support.CropGuideCacheKey;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -31,16 +34,19 @@ public class CropDetailedGuideHandler {
         this.objectMapper = objectMapper;
     }
 
-    public ApiResponse<Map<String, Object>> getCached(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCached(
             Long userId,
             Long farmId,
             Long cropId,
-            String experienceLevel) {
-        String level = CropGuideCacheKey.normalizeExperience(experienceLevel);
-        log.info("재배 가이드 캐시 조회: userId={}, farmId={}, cropId={}, exp={}", userId, farmId, cropId, level);
+            Map<String, Object> requestHints) {
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("UNAUTHORIZED", "로그인이 필요합니다."));
+        }
+        log.info("재배 가이드 캐시 조회: userId={}, farmId={}, cropId={}", userId, farmId, cropId);
         Optional<Map<String, Object>> cached =
-                farmCropDetailedGuideService.getCached(userId, farmId, cropId, level);
-        return ApiResponse.ok(cached.orElse(null));
+                farmCropDetailedGuideService.getCached(userId, farmId, cropId, requestHints);
+        return ResponseEntity.ok(ApiResponse.ok(cached.orElse(null)));
     }
 
     public ResponseEntity<ApiResponse<Map<String, Object>>> generate(
@@ -48,11 +54,11 @@ public class CropDetailedGuideHandler {
             Long farmId,
             Long cropId,
             Map<String, Object> request) {
-        String level = CropGuideCacheKey.normalizeExperience(
-                request.get("experience_level") != null
-                        ? request.get("experience_level").toString()
-                        : "novice");
-        request.put("experience_level", level);
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("UNAUTHORIZED", "로그인이 필요합니다."));
+        }
+
         request.put("crop_id", cropId);
         request.put("farm_id", farmId);
 
@@ -60,7 +66,7 @@ public class CropDetailedGuideHandler {
                 userId, farmId, cropId, request.get("crop_name"));
 
         try {
-            farmCropDetailedGuideService.enrichRequestForAi(farmId, request);
+            farmCropDetailedGuideService.enrichRequestForAi(farmId, cropId, request);
 
             ResponseEntity<String> responseEntity = aiRestClient.post()
                     .uri("/api/recommend/crop-guide/generate")
@@ -68,8 +74,14 @@ public class CropDetailedGuideHandler {
                     .retrieve()
                     .toEntity(String.class);
 
-            @SuppressWarnings("unchecked")
-            Map<String, Object> aiResponse = objectMapper.readValue(responseEntity.getBody(), Map.class);
+            String body = responseEntity.getBody();
+            if (body == null || body.isBlank()) {
+                return ResponseEntity.internalServerError()
+                        .body(ApiResponse.fail("GUIDE_AI_ERROR", "AI 서버 응답이 비어 있습니다."));
+            }
+
+            Map<String, Object> aiResponse = objectMapper.readValue(
+                    body, new TypeReference<Map<String, Object>>() {});
 
             Map<String, Object> saved =
                     farmCropDetailedGuideService.saveFromAi(userId, farmId, cropId, request, aiResponse);
@@ -88,5 +100,20 @@ public class CropDetailedGuideHandler {
             return ResponseEntity.internalServerError()
                     .body(ApiResponse.fail("GUIDE_ERROR", "재배 가이드 생성 중 오류: " + e.getMessage()));
         }
+    }
+
+    public static Map<String, Object> buildRequestHints(
+            String experienceLevel,
+            String adviceType,
+            String recommendMode) {
+        Map<String, Object> hints = new LinkedHashMap<>();
+        hints.put("experience_level", CropGuideCacheKey.normalizeExperience(experienceLevel));
+        if (adviceType != null && !adviceType.isBlank()) {
+            hints.put("advice_type", adviceType.trim());
+        }
+        if (recommendMode != null && !recommendMode.isBlank()) {
+            hints.put("recommend_mode", recommendMode.trim());
+        }
+        return hints;
     }
 }

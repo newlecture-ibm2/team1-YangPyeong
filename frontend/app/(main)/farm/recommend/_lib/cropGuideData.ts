@@ -26,18 +26,32 @@ export interface CropGuideBuildOptions {
   recommendResult?: CropRecommendResponse | null;
 }
 
+function normalizeTopicContent(content: unknown): string[] {
+  if (Array.isArray(content)) {
+    return content
+      .map((line) => (line != null ? String(line).trim() : ''))
+      .filter((line) => line.length > 0);
+  }
+  if (typeof content === 'string' && content.trim()) {
+    return [content.trim()];
+  }
+  return [];
+}
+
 /** 서버/AI 응답 → 모달용 가이드 */
 export function mapServerGuideToDetailedGuide(dto: {
   crop_name: string;
-  topics: GuideTopic[];
+  topics: Array<{ icon?: string; title?: string; content?: unknown }>;
 }): CropDetailedGuide {
   return {
     cropName: dto.crop_name,
-    topics: dto.topics.map((t) => ({
-      icon: t.icon || '📌',
-      title: t.title,
-      content: [...t.content],
-    })),
+    topics: (dto.topics ?? [])
+      .map((t) => ({
+        icon: t.icon || '📌',
+        title: t.title?.trim() || '재배 안내',
+        content: normalizeTopicContent(t.content),
+      }))
+      .filter((t) => t.content.length > 0),
   };
 }
 

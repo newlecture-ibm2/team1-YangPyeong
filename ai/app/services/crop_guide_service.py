@@ -28,12 +28,12 @@ def _build_prompt(req: CropGuideRequest) -> str:
         level = "novice"
     tips_title = default_tips_title(level)
 
-    pests_block = ""
+    pests_note = ""
     if req.pests:
-        pests_block = (
-            "\n[카드에 표시된 주요 병해충 — 병해충 섹션에서 반드시 각 항목을 【이름】 형식으로 다루세요]\n"
-            + ", ".join(req.pests)
-            + "\n"
+        pests_note = (
+            f"\n[참고 병해충명: {', '.join(req.pests)} — "
+            "병해충 토픽은 예찰·윤작·통풍 등 일반 예방 원칙 4~5문장으로 작성. "
+            "항목별 상세 방제문은 클라이언트에서 별도 표시함]\n"
         )
 
     farm_block = req.farm_details or ""
@@ -65,7 +65,7 @@ def _build_prompt(req: CropGuideRequest) -> str:
 [조언 유형] {req.advice_type}
 [독자 수준] {level} — {_experience_instruction(level)}
 [작물 재배 요약] {", ".join(crop_facts) if crop_facts else "정보 제한적"}
-{pests_block}
+{pests_note}
 [농장 정보]
 {farm_block}
 
@@ -80,8 +80,8 @@ def _build_prompt(req: CropGuideRequest) -> str:
     }},
     {{
       "icon": "🐛",
-      "title": "주요 병해충 정밀 대책",
-      "content": ["【병해충명】 증상·예방·방제 ...", "..."]
+      "title": "병해충 예방·관리",
+      "content": ["예찰·윤작·통풍 원칙 문장1", "문장2", "문장3", "문장4"]
     }},
     {{
       "icon": "{'🎯' if level == 'experienced' else '🚫'}",
@@ -100,7 +100,7 @@ def _build_prompt(req: CropGuideRequest) -> str:
 - topics는 정확히 4개, 각 content는 4~6개의 짧은 한국어 문장(배열 요소).
 - 농장 pH·토성·재배 현황을 1회 이상 구체적으로 인용하세요.
 - 농약은 구체 농약명·희석배수 대신 예방·예찰·안전사용 기준·기술센터 상담을 권장하세요.
-- 병해충이 목록에 있으면 각각 【이름】으로 시작하는 항목을 포함하세요.
+- 병해충 토픽은 【이름】 형식 나열 없이 일반 예방·예찰 중심으로 작성하세요.
 - JSON 이외의 설명, 마크다운 코드블록 없이 순수 JSON만 출력하세요.
 """
 

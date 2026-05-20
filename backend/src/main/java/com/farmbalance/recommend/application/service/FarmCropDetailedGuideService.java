@@ -6,8 +6,10 @@ import com.farmbalance.recommend.application.port.out.LoadFarmCultivationContext
 import com.farmbalance.recommend.application.port.out.LoadFarmForRecommendPort;
 import com.farmbalance.recommend.application.port.out.LoadFarmForRecommendPort.FarmBasicData;
 import com.farmbalance.recommend.application.support.CropGuideCacheKey;
+import com.farmbalance.recommend.application.support.CropGuideExperienceResolver;
 import com.farmbalance.recommend.application.support.CropGuideQuality;
 import com.farmbalance.recommend.application.support.FarmRecommendDetailsBuilder;
+import com.farmbalance.recommend.domain.FarmCultivationContext;
 import com.farmbalance.recommend.domain.RecommendMode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,9 +37,11 @@ public class FarmCropDetailedGuideService {
             Long userId,
             Long farmId,
             long cropId,
-            String experienceLevel
+            Map<String, Object> requestHints
     ) {
         validateFarmOwnership(userId, farmId);
+        FarmCultivationContext ctx = loadFarmCultivationContextPort.loadByFarmId(farmId);
+        String experienceLevel = CropGuideExperienceResolver.resolve(cropId, requestHints, ctx);
         String cacheKey = CropGuideCacheKey.build(cropId, experienceLevel);
         return repository.findByFarmIdAndCacheKey(farmId, cacheKey)
                 .filter(e -> e.getGuideVersion() == CropGuideCacheKey.GUIDE_VERSION)
@@ -57,7 +61,9 @@ public class FarmCropDetailedGuideService {
             throw new IllegalArgumentException("AI 재배 가이드 응답이 유효하지 않습니다.");
         }
 
-        String experienceLevel = CropGuideCacheKey.normalizeExperience(stringVal(request.get("experience_level")));
+        FarmCultivationContext ctx = loadFarmCultivationContextPort.loadByFarmId(farmId);
+        String experienceLevel = CropGuideExperienceResolver.resolve(cropId, request, ctx);
+        request.put("experience_level", experienceLevel);
         String cropName = stringVal(aiResponse.get("crop_name"));
         if (cropName.isEmpty()) {
             cropName = stringVal(request.get("crop_name"));
@@ -89,7 +95,12 @@ public class FarmCropDetailedGuideService {
         return out;
     }
 
-    public void enrichRequestForAi(Long farmId, Map<String, Object> request) {
+    public void enrichRequestForAi(Long farmId, long cropId, Map<String, Object> request) {
+        FarmCultivationContext ctx = loadFarmCultivationContextPort.loadByFarmId(farmId);
+        String experienceLevel = CropGuideExperienceResolver.resolve(cropId, request, ctx);
+        request.put("experience_level", experienceLevel);
+        RecommendMode mode = CropGuideExperienceResolver.resolveRecommendMode(request, ctx);
+
         loadFarmForRecommendPort.loadFarmBasic(farmId).ifPresent(farm -> {
             putIfAbsent(request, "farm_name", farm.getName());
             putIfAbsent(request, "farm_address", farm.getAddress());
@@ -105,11 +116,7 @@ public class FarmCropDetailedGuideService {
             if (!request.containsKey("farm_details") || stringVal(request.get("farm_details")).isEmpty()) {
                 request.put(
                         "farm_details",
-                        farmRecommendDetailsBuilder.build(
-                                farm,
-                                loadFarmCultivationContextPort.loadByFarmId(farmId),
-                                RecommendMode.PLAN,
-                                null));
+                        farmRecommendDetailsBuilder.build(farm, ctx, mode, null));
             }
         });
         request.putIfAbsent("farm_id", farmId);

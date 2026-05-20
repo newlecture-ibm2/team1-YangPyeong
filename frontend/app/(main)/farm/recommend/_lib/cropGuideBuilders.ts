@@ -51,7 +51,10 @@ function resolveCropTemplate(rec: CropRecommendation): CropTemplate {
   }
 }
 
-/** 재배 이력: 재배 중·동일 작물 코칭 = 경험자, 예정·신규·다음시즌 = 초보 */
+/**
+ * 재배 경험 수준 (캐시 키·UI용).
+ * 수확 이력은 백엔드 CultivationContext에서 보정하므로, 프론트는 adviceType·recommendMode 기준.
+ */
 export function resolveGrowerExperience(
   rec: CropRecommendation,
   result?: CropRecommendResponse | null,
@@ -61,7 +64,11 @@ export function resolveGrowerExperience(
   const sameCrop = result?.currentCropAdvices?.find((c) => c.cropId === rec.cropId);
   if (sameCrop?.adviceType === 'IN_SEASON_COACHING') return 'experienced';
 
-  if (rec.adviceType === 'PLANNED_CROP' || rec.adviceType === 'NEW_RECOMMEND' || rec.adviceType === 'NEXT_SEASON') {
+  if (
+    rec.adviceType === 'PLANNED_CROP' ||
+    rec.adviceType === 'NEW_RECOMMEND' ||
+    rec.adviceType === 'NEXT_SEASON'
+  ) {
     return 'novice';
   }
 
