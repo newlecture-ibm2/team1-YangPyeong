@@ -66,24 +66,31 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
     @Override
     public List<Map<String, Object>> queryCultivation(LocalDate startDate, LocalDate endDate, String govRegion, String town) {
         String townFilter = buildTownFilter(town);
-        String regionFilter = buildRegionFilter(govRegion);
+        boolean hasRegion = govRegion != null && !govRegion.isBlank();
+        String regionFilter = hasRegion ? " AND SUBSTRING(f.bjd_code, 1, 4) = ? " : "";
         String sql = """
             SELECT %s AS "읍면",
                    f.name AS "농가명",
                    c.name AS "작물명",
                    COALESCE(cr.cultivation_area, 0) AS "재배면적㎡",
                    COALESCE(cr.farmer_estimated_yield, 0) AS "예상생산량kg",
-                   TO_CHAR(cr.created_at, 'YYYY-MM-DD') AS "등록일"
+                   TO_CHAR(cr.created_at, 'YYYY-MM-DD') AS "등록일",
+                   cr.sowing_date AS "파종일"
             FROM cultivation_registrations cr
             JOIN farms f ON f.id = cr.farm_id
             JOIN crops c ON c.id = cr.crop_id
-            WHERE cr.created_at BETWEEN ? AND ?
+            WHERE COALESCE(cr.sowing_date, cr.created_at::date) BETWEEN ?::date AND ?::date
               AND cr.deleted_at IS NULL AND f.deleted_at IS NULL
               %s
               %s
-            ORDER BY cr.created_at DESC
+            ORDER BY COALESCE(cr.sowing_date, cr.created_at::date) DESC
             """.formatted(TOWN_EXPR, townFilter, regionFilter);
-        return jdbc.queryForList(sql, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
+            
+        if (hasRegion) {
+            return jdbc.queryForList(sql, startDate, endDate, govRegion);
+        } else {
+            return jdbc.queryForList(sql, startDate, endDate);
+        }
     }
 
     @Override
@@ -111,7 +118,7 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
             JOIN crops c ON c.id = bd.crop_id
             WHERE bd.year BETWEEN EXTRACT(YEAR FROM ?::date)::int AND EXTRACT(YEAR FROM ?::date)::int
               AND bd.deleted_at IS NULL
-              AND bd.region_code = ?
+              AND SUBSTRING(bd.region_code, 1, 4) = ?
             ORDER BY ABS(bd.supply_ratio - 100) DESC
             """;
         return jdbc.queryForList(sql, startDate, endDate, regionCode);
@@ -119,7 +126,9 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
 
     @Override
     public List<Map<String, Object>> querySales(LocalDate startDate, LocalDate endDate, String govRegion, String town) {
-        String regionFilter = buildRegionFilter(govRegion);
+        // TODO: querySales는 농장(farms)이 없는 단순 판매자 누락 위험이 있어 1차 전환에서 제외.
+        // 추후 COALESCE(SUBSTRING(f.bjd_code, 1, 4), u.region_code) 기반 변경 또는 기획 확인 후 수정 요망.
+        String regionFilter = buildLegacyUserRegionFilter(govRegion);
         String sql = """
             SELECT TO_CHAR(o.created_at, 'YYYY-MM-DD') AS "주문일",
                    p.name AS "상품명",
@@ -144,7 +153,8 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
     @Override
     public List<Map<String, Object>> queryFarms(LocalDate startDate, LocalDate endDate, String govRegion, String town) {
         String townFilter = buildTownFilter(town);
-        String regionFilter = buildRegionFilter(govRegion);
+        boolean hasRegion = govRegion != null && !govRegion.isBlank();
+        String regionFilter = hasRegion ? " AND SUBSTRING(f.bjd_code, 1, 4) = ? " : "";
         String sql = """
             SELECT f.name AS "농가명",
                    u.name AS "대표자",
@@ -163,13 +173,19 @@ public class GovDataPersistenceAdapter implements GovDataQueryPort {
             GROUP BY f.id, f.name, u.name, f.address, f.area, f.certification_status
             ORDER BY f.name
             """.formatted(TOWN_EXPR, townFilter, regionFilter);
-        return jdbc.queryForList(sql, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
+            
+        if (hasRegion) {
+            return jdbc.queryForList(sql, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay(), govRegion);
+        } else {
+            return jdbc.queryForList(sql, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
+        }
     }
 
     /**
-     * 지역 필터 SQL — govRegion(코드)으로 users.region_code를 조회하여 필터링
+     * 레거시 지역 필터 SQL — govRegion(코드)으로 users.region_code를 조회하여 필터링
+     * (querySales 등 농장 위치 기준 조회가 모호한 곳에 임시 유지)
      */
-    private String buildRegionFilter(String govRegionCode) {
+    private String buildLegacyUserRegionFilter(String govRegionCode) {
         if (govRegionCode == null || govRegionCode.isBlank()) return "";
         return " AND f.user_id IN (SELECT u2.id FROM users u2 WHERE u2.region_code = '" + govRegionCode + "') ";
     }

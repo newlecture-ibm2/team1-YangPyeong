@@ -1,7 +1,6 @@
-package com.farmbalance.policy.adapter.out.persistence.adapter;
+package com.farmbalance.global.service;
 
-import com.farmbalance.policy.application.port.out.RegionCodeResolvePort;
-import com.farmbalance.policy.domain.model.RegionCodeNormalizer;
+import com.farmbalance.global.util.RegionCodeUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -11,19 +10,18 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * AI 분석 결과의 region_code/region_name을 regions 테이블 기준으로 보정하는 Adapter.
+ * AI 분석 결과의 region_code/region_name을 regions 테이블 기준으로 보정하는 공통 Resolver.
  *
- * 순수 보정 로직은 {@link RegionCodeNormalizer}에 위임하고,
+ * 순수 보정 로직은 {@link RegionCodeUtils}에 위임하고,
  * 이 클래스는 regions DB 조회만 담당합니다.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RegionCodeResolveAdapter implements RegionCodeResolvePort {
+public class RegionCodeResolver {
 
     private final JdbcTemplate jdbcTemplate;
 
-    @Override
     public Optional<String> resolveToCode(String codeOrName) {
         if (codeOrName == null || codeOrName.isBlank()) {
             return Optional.empty();
@@ -32,13 +30,13 @@ public class RegionCodeResolveAdapter implements RegionCodeResolvePort {
         String input = codeOrName.trim();
 
         // 1. 전국/공통 특수 매핑 (DB 불필요)
-        Optional<String> special = RegionCodeNormalizer.resolveSpecial(input);
+        Optional<String> special = RegionCodeUtils.resolveSpecial(input);
         if (special.isPresent()) {
             return special;
         }
 
         // 2. 숫자 코드 → 후보 목록 생성 후 DB 매칭
-        if (RegionCodeNormalizer.isNumericCode(input)) {
+        if (RegionCodeUtils.isNumericCode(input)) {
             return resolveByCodeCandidates(input);
         }
 
@@ -47,10 +45,24 @@ public class RegionCodeResolveAdapter implements RegionCodeResolvePort {
     }
 
     /**
+     * 입력된 지역명, 10자리 법정동코드, 4자리 시군구 코드를
+     * DB 매칭 및 정규화를 거쳐 무조건 4자리 시군구 코드로 최종 반환합니다.
+     */
+    public String resolveToSigunguCode(String codeOrName) {
+        if (codeOrName == null || codeOrName.isBlank()) {
+            return null;
+        }
+
+        String resolved = resolveToCode(codeOrName).orElse(codeOrName);
+        String sigungu = RegionCodeUtils.extractSigunguFromBjd(resolved);
+        return sigungu != null ? sigungu : RegionCodeUtils.normalizeCode(resolved);
+    }
+
+    /**
      * 숫자 코드 후보 목록을 생성하고 DB에서 매칭합니다.
      */
     private Optional<String> resolveByCodeCandidates(String code) {
-        List<String> candidates = RegionCodeNormalizer.normalizeCandidates(code);
+        List<String> candidates = RegionCodeUtils.normalizeCandidates(code);
 
         for (String candidate : candidates) {
             if (existsCode(candidate)) {
