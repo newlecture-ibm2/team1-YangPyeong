@@ -13,6 +13,7 @@ import com.farmbalance.community.application.port.in.ReportCommentUseCase;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.notification.application.port.in.NotificationUseCase;
+import com.farmbalance.notification.domain.NotificationCategory;
 import com.farmbalance.notification.domain.NotificationType;
 import com.farmbalance.global.report.domain.Report;
 import com.farmbalance.global.report.port.ReportPort;
@@ -71,6 +72,7 @@ public class CommentService implements CreateCommentUseCase, LoadCommentUseCase,
             notificationUseCase.createNotification(
                     post.getAuthorId(),
                     NotificationType.SYSTEM,
+                    NotificationCategory.SYSTEM,
                     "새 댓글 등록",
                     String.format("'%s' 게시글에 새 댓글이 달렸습니다.", post.getTitle()),
                     "/community/" + postId
@@ -84,6 +86,7 @@ public class CommentService implements CreateCommentUseCase, LoadCommentUseCase,
                     notificationUseCase.createNotification(
                             parentComment.getAuthorId(),
                             NotificationType.SYSTEM,
+                    NotificationCategory.SYSTEM,
                             "새 답글 등록",
                             "내 댓글에 새로운 답글이 달렸습니다.",
                             "/community/" + postId
@@ -134,6 +137,7 @@ public class CommentService implements CreateCommentUseCase, LoadCommentUseCase,
             notificationUseCase.createNotification(
                     comment.getAuthorId(),
                     NotificationType.SYSTEM,
+                    NotificationCategory.SYSTEM,
                     "답변 채택",
                     String.format("'%s' 질문에 작성하신 답변이 채택되었습니다! 🎉", post.getTitle()),
                     "/community/" + post.getId()

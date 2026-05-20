@@ -9,6 +9,7 @@ import com.farmbalance.farm.domain.Farm;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
 import com.farmbalance.notification.application.port.in.NotificationUseCase;
+import com.farmbalance.notification.domain.NotificationCategory;
 import com.farmbalance.notification.domain.NotificationType;
 import com.farmbalance.user.application.port.out.UserRepository;
 import com.farmbalance.user.domain.User;
@@ -68,6 +69,7 @@ public class FarmApprovalService implements ManageFarmApprovalUseCase {
         notificationUseCase.createNotification(
                 farm.getUserId(),
                 NotificationType.SYSTEM,
+                NotificationCategory.SYSTEM,
                 "농장 승인 완료",
                 String.format("축하합니다! [%s] 농장이 승인되었습니다. 이제 작물을 등록할 수 있습니다.", farm.getName()),
                 "/farm"
@@ -92,6 +94,7 @@ public class FarmApprovalService implements ManageFarmApprovalUseCase {
         notificationUseCase.createNotification(
                 farm.getUserId(),
                 NotificationType.SYSTEM,
+                NotificationCategory.SYSTEM,
                 "농장 등록 반려",
                 String.format("[%s] 농장 등록이 반려되었습니다. 사유: %s", farm.getName(), reason),
                 "/farm/register"
