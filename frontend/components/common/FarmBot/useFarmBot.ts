@@ -527,8 +527,8 @@ export function useFarmBot() {
     const payloadMessage = (sendAs ?? message).trim();
 
     try {
-      // SSE 스트리밍 엔드포인트 호출
-      const res = await fetch('/api/ai/chat/stream', {
+      // AI 채팅 엔드포인트 호출
+      const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
