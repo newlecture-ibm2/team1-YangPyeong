@@ -33,6 +33,7 @@ export default function SellerEditPage({ params }: EditPageProps) {
     name: '',
     price: '',
     stock: '',
+    unitKg: '1',
     categoryName: '',
     description: '',
   });
@@ -74,6 +75,7 @@ export default function SellerEditPage({ params }: EditPageProps) {
           name: result.data.name,
           price: String(result.data.price),
           stock: String(result.data.stock),
+          unitKg: String(result.data.unitKg ?? 1),
           categoryName: result.data.categoryName || '',
           description: result.data.description || '',
         });
@@ -176,6 +178,7 @@ export default function SellerEditPage({ params }: EditPageProps) {
           name: form.name,
           price: Number(form.price),
           stock: Number(form.stock),
+          unitKg: Math.max(1, Number(form.unitKg) || 1),
           description: form.description,
           categoryName: form.categoryName,
           imageUrls: [...existingImages, ...newImageUrls],
@@ -447,10 +450,24 @@ export default function SellerEditPage({ params }: EditPageProps) {
             />
           </div>
 
+          <div className={styles.formGroup}>
+            <Input
+              label="판매 단위 (kg)"
+              placeholder="1"
+              value={form.unitKg}
+              onChange={(e) => handleNumberInput('unitKg', e.target.value)}
+              disabled={isPending}
+              required
+            />
+            <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginTop: '-12px', marginBottom: '16px', marginLeft: '4px' }}>
+              💡 1개당 판매할 단위(kg). 검수중에는 단위 변경 불가.
+            </div>
+          </div>
+
           <div className={styles.formRow}>
             <div>
               <Input
-                label="가격 (원)"
+                label={`가격 (원${Number(form.unitKg) > 1 ? ` / ${form.unitKg}kg` : ''})`}
                 placeholder="예: 8000"
                 value={form.price}
                 onChange={(e) => handleNumberInput('price', e.target.value)}

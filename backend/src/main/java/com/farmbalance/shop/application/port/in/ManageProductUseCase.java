@@ -9,13 +9,16 @@ import java.util.List;
  */
 public interface ManageProductUseCase {
 
-    /** 상품 등록 */
-    Product registerProduct(Long sellerId, String name, int price, int stock,
+    /** 상품 등록 (unitKg: 1개당 판매 단위 kg) */
+    Product registerProduct(Long sellerId, String name, int price, int stock, int unitKg,
                             String description, String categoryName, List<String> imageUrls);
 
-    /** 상품 전체 수정 (콘텐츠 변경 — ACTIVE 상태일 때만 허용, 재검수 진입) */
+    /**
+     * 상품 전체 수정 (콘텐츠 변경 — ACTIVE 상태일 때만 허용, 재검수 진입).
+     * unitKg: null 이면 기존 값 유지.
+     */
     Product updateProduct(Long sellerId, Long productId, String name, int price, int stock,
-                          String description, String categoryName, List<String> imageUrls);
+                          Integer unitKg, String description, String categoryName, List<String> imageUrls);
 
     /**
      * 가격·재고만 수정 (운영 정보 — 검수 상태와 무관하게 즉시 반영).

@@ -16,6 +16,7 @@ interface AutofillApiResponse {
     category_name: string;
     price: number;
     stock: number;
+    unit_kg?: number;
     description: string;
     is_kamis_applied?: boolean;
     kamis_unit?: string;
@@ -61,6 +62,18 @@ export async function POST(request: NextRequest) {
       };
     }
 
+    // Hybrid 모드: 이미 채워진 값은 AI가 덮어쓰지 않음
+    if (body.existingValues && typeof body.existingValues === 'object') {
+      const ev = body.existingValues as Record<string, unknown>;
+      const existing: Record<string, unknown> = {};
+      if (typeof ev.price === 'number') existing.price = ev.price;
+      if (typeof ev.stock === 'number') existing.stock = ev.stock;
+      if (typeof ev.unitKg === 'number') existing.unit_kg = ev.unitKg;
+      if (typeof ev.categoryName === 'string' && ev.categoryName) existing.category_name = ev.categoryName;
+      if (typeof ev.description === 'string' && ev.description) existing.description = ev.description;
+      if (Object.keys(existing).length > 0) aiPayload.existing_values = existing;
+    }
+
     const aiResponse = await fetch(`${AI_SERVER_URL}/api/product-assist/autofill`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -93,6 +106,7 @@ export async function POST(request: NextRequest) {
         categoryName: data.data.category_name,
         price: data.data.price,
         stock: data.data.stock,
+        unitKg: data.data.unit_kg ?? 1,
         description: data.data.description,
         isKamisApplied: data.data.is_kamis_applied || false,
         kamisUnit: data.data.kamis_unit || null,

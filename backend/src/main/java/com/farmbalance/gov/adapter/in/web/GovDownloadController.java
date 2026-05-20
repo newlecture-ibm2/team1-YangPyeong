@@ -4,6 +4,7 @@ import com.farmbalance.global.response.ApiResponse;
 import com.farmbalance.gov.application.port.in.DownloadGovDataUseCase;
 import com.farmbalance.gov.application.port.in.GetDownloadHistoryUseCase;
 import com.farmbalance.gov.application.port.in.GetGovUserInfoUseCase;
+import com.farmbalance.global.service.RegionCodeResolver;
 import com.farmbalance.gov.domain.model.DownloadHistory;
 import com.farmbalance.gov.domain.model.GovDownloadFormat;
 import com.farmbalance.gov.domain.model.GovDownloadType;
@@ -29,6 +30,7 @@ public class GovDownloadController {
     private final DownloadGovDataUseCase downloadUseCase;
     private final GetDownloadHistoryUseCase historyUseCase;
     private final GetGovUserInfoUseCase userInfoUseCase;
+    private final RegionCodeResolver regionCodeResolver;
 
     private GovUserInfo checkGovUser(Long userId) {
         if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "사용자 인증이 필요합니다.");
@@ -46,7 +48,8 @@ public class GovDownloadController {
             @RequestParam GovDownloadFormat format) {
         
         GovUserInfo user = checkGovUser(userId);
-        byte[] data = downloadUseCase.download(type, format, userId, user.regionCode());
+        String region = regionCodeResolver.resolveToSigunguCode(user.regionCode());
+        byte[] data = downloadUseCase.download(type, format, userId, region);
         String fileName = downloadUseCase.getFileName(type, format);
         
         String contentType = format == GovDownloadFormat.CSV ? "text/csv" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";

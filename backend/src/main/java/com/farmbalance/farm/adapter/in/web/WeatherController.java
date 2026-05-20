@@ -21,6 +21,7 @@ public class WeatherController {
      * GET /api/weather/current
      */
     @GetMapping("/current")
+    @org.springframework.cache.annotation.Cacheable(value = "weatherCache", key = "#nx + '_' + #ny")
     public ApiResponse<ShortTermForecast> getCurrentWeather(
             @RequestParam(defaultValue = "69") int nx,  // 양평군 중심 nx
             @RequestParam(defaultValue = "125") int ny  // 양평군 중심 ny

@@ -24,6 +24,8 @@ export interface Product {
   name: string;
   price: number;
   stock: number;
+  /** 1개당 판매 단위 (kg). 기본 1. 예: 5 → 5kg 단위로 판매 */
+  unitKg: number;
   description: string;
   /** 상품 이미지 URL 배열 (최대 5장, 첫 번째가 대표 이미지) */
   imageUrls: string[];

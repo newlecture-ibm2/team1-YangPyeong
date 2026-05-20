@@ -61,3 +61,10 @@ test_*.py
 # Claude Code
 CLAUDE.md
 .claude/
+
+# ===== Local Scripts & AI Temp =====
+*.jsh
+backend/scratch.java
+.gemini/
+test_env/
+node_modules/

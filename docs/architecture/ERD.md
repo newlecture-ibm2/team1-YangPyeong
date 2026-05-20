@@ -174,6 +174,7 @@ erDiagram
         varchar name
         decimal price
         int stock
+        int unit_kg "단위 무게(kg), DEFAULT 1"
         text description
         int sales_count "누적 판매 수량"
         varchar status "PENDING | ACTIVE | INACTIVE | REJECTED"
@@ -905,6 +906,7 @@ erDiagram
 | name | VARCHAR(200) | NOT NULL | 상품명 |
 | price | DECIMAL(10,2) | NOT NULL | 가격 (원) |
 | stock | INT | NOT NULL, DEFAULT 0 | 재고 |
+| unit_kg | INT | NOT NULL, DEFAULT 1, CHECK ≥ 1 | 단위 무게 (kg) — 가격 기준 단위 |
 | description | TEXT | | 상품 설명 |
 | sales_count | INT | NOT NULL, DEFAULT 0 | 누적 판매 수량 |
 | status | VARCHAR(20) | DEFAULT 'PENDING' | PENDING / ACTIVE / INACTIVE / REJECTED |
