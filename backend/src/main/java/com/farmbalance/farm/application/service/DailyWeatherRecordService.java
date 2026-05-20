@@ -5,6 +5,7 @@ import com.farmbalance.farm.application.port.out.WeatherRecordPort;
 import com.farmbalance.farm.domain.Farm;
 import com.farmbalance.farm.domain.WeatherData;
 import com.farmbalance.global.event.ApiSyncEvent;
+import com.farmbalance.global.event.WeatherAlertEvent;
 import com.farmbalance.history.application.port.out.SaveHistoryPort;
 import com.farmbalance.history.domain.CultivationHistory;
 import lombok.RequiredArgsConstructor;
@@ -69,5 +70,6 @@ public class DailyWeatherRecordService {
 
         log.info("[DailyWeatherRecordService] 총 {}개의 농장에 날씨 기록 배치를 성공적으로 완료했습니다.", historyList.size());
         eventPublisher.publishEvent(new ApiSyncEvent("WEATHER_RECORD", "SUCCESS", historyList.size(), null));
+        eventPublisher.publishEvent(new WeatherAlertEvent(weatherData, yesterday));
     }
 }

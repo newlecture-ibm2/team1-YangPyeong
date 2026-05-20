@@ -7,6 +7,7 @@ import com.farmbalance.farm.domain.event.CultivationChangedEvent;
 import com.farmbalance.farm.domain.event.CultivationRegisteredEvent;
 import com.farmbalance.farm.domain.event.HarvestCanceledEvent;
 import com.farmbalance.notification.application.port.in.NotificationUseCase;
+import com.farmbalance.notification.domain.NotificationCategory;
 import com.farmbalance.notification.domain.NotificationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +56,7 @@ public class CultivationEventListener {
                 notificationUseCase.createNotification(
                         event.getUserId(),
                         NotificationType.POLICY,
+                        NotificationCategory.POLICY,
                         "정책 추천 알림",
                         message,
                         "/policy"
