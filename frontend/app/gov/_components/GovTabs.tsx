@@ -7,6 +7,7 @@ const TABS = [
   { href: '/gov', label: '대시보드' },
   { href: '/gov/cultivation', label: '재배 현황' },
   { href: '/gov/compare', label: '연도 비교' },
+  { href: '/gov/balance', label: '수급 분석' },
   { href: '/gov/sales', label: '판매 현황' },
   { href: '/gov/download', label: '데이터 다운로드' },
 ];

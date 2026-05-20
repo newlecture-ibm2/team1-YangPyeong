@@ -6,6 +6,7 @@ import java.util.List;
 
 /**
  * 상품 응답 DTO.
+ * unitKg: 1개당 판매 단위(kg).
  */
 public record ProductResponse(
         Long id,
@@ -16,6 +17,7 @@ public record ProductResponse(
         String name,
         int price,
         int stock,
+        int unitKg,
         String description,
         int salesCount,
         String status,
@@ -33,6 +35,7 @@ public record ProductResponse(
                 product.getName(),
                 product.getPrice(),
                 product.getStock(),
+                product.getUnitKg(),
                 product.getDescription(),
                 product.getSalesCount(),
                 product.getStatus().name(),

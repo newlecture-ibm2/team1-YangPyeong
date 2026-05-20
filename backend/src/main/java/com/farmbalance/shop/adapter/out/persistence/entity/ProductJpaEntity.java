@@ -37,6 +37,9 @@ public class ProductJpaEntity extends BaseTimeEntity {
     @Column(name = "stock", nullable = false)
     private int stock;
 
+    @Column(name = "unit_kg", nullable = false, columnDefinition = "INT DEFAULT 1")
+    private int unitKg;
+
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
@@ -54,13 +57,14 @@ public class ProductJpaEntity extends BaseTimeEntity {
 
     @Builder
     public ProductJpaEntity(Long id, Long sellerId, Long categoryId, String name, int price, int stock,
-                            String description, int salesCount, String status, String statusReason) {
+                            int unitKg, String description, int salesCount, String status, String statusReason) {
         this.id = id;
         this.sellerId = sellerId;
         this.categoryId = categoryId;
         this.name = name;
         this.price = price;
         this.stock = stock;
+        this.unitKg = unitKg < 1 ? 1 : unitKg;
         this.description = description;
         this.salesCount = salesCount;
         this.status = status;
@@ -69,10 +73,11 @@ public class ProductJpaEntity extends BaseTimeEntity {
 
     // ── 업데이트 메서드 ──
 
-    public void update(String name, int price, int stock, String description, Long categoryId) {
+    public void update(String name, int price, int stock, int unitKg, String description, Long categoryId) {
         this.name = name;
         this.price = price;
         this.stock = stock;
+        this.unitKg = unitKg < 1 ? 1 : unitKg;
         this.description = description;
         if (categoryId != null) {
             this.categoryId = categoryId;

@@ -3,6 +3,7 @@ package com.farmbalance.gov.adapter.in.web;
 import com.farmbalance.global.response.ApiResponse;
 import com.farmbalance.gov.application.port.in.*;
 import com.farmbalance.gov.application.port.out.RegionQueryPort;
+import com.farmbalance.global.service.RegionCodeResolver;
 import com.farmbalance.gov.application.result.*;
 import com.farmbalance.gov.domain.model.GovUserInfo;
 import com.farmbalance.gov.domain.model.Region;
@@ -26,6 +27,7 @@ public class GovController {
     private final GetYearCompareUseCase yearCompareUseCase;
     private final GetSalesStatusUseCase salesUseCase;
     private final RegionQueryPort regionQueryPort;
+    private final RegionCodeResolver regionCodeResolver;
 
     private GovUserInfo checkGovUser(Long userId) {
         if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "사용자 인증이 필요합니다.");
@@ -38,10 +40,10 @@ public class GovController {
 
     /**
      * 로그인한 GOV 사용자의 관할 지역 코드를 반환합니다.
-     * users.region_code → regions 마스터 테이블 기반
+     * users.region_code → regions 마스터 테이블 기반 4자리 시군구 코드로 정규화
      */
     private String resolveRegion(GovUserInfo user) {
-        return user.regionCode();
+        return regionCodeResolver.resolveToSigunguCode(user.regionCode());
     }
 
     @GetMapping("/me")

@@ -112,6 +112,67 @@
   color: var(--color-danger);
 }
 
+/* ── New KPI Cards (Balance Dashboard) ── */
+.kpiCard {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpiCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.kpiCardIcon {
+  font-size: 16px;
+}
+
+.kpiCardLabel {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.kpiCardValue {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+/* 색상 테마 (status/severity) */
+.kpiThemeNeutral .kpiCardIcon,
+.kpiThemeNeutral .kpiCardValue { color: #E4A11B; } /* 관심 (Yellow/Neutral) */
+
+.kpiThemeOrange .kpiCardIcon,
+.kpiThemeOrange .kpiCardValue { color: #E65100; } /* 과잉 (Orange) */
+
+.kpiThemeBlue .kpiCardIcon,
+.kpiThemeBlue .kpiCardValue { color: #1565C0; } /* 부족 (Blue) */
+
+/* 긴급 (경고 카드 전용 스타일) */
+.kpiThemeDanger {
+  background: rgba(198, 40, 40, 0.06);
+  border-color: rgba(198, 40, 40, 0.15);
+}
+.kpiThemeDanger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(198, 40, 40, 0.08);
+  background: rgba(198, 40, 40, 0.08);
+}
+.kpiThemeDanger .kpiCardLabel { color: var(--color-danger); opacity: 0.85; }
+.kpiThemeDanger .kpiCardIcon,
+.kpiThemeDanger .kpiCardValue { color: var(--color-danger); }
+
 /* ── Card ── */
 .card {
   background: var(--color-surface);
