@@ -31,7 +31,9 @@ public class AdminReportPersistenceAdapter implements AdminReportPort {
             .targetId(rs.getLong("target_id"))
             .reportCount(rs.getLong("report_count"))
             .recentReason(rs.getString("recent_reason"))
+            .allReasons(rs.getString("all_reasons"))
             .status(rs.getString("status"))
+            .actionTaken(rs.getString("action_taken"))
             .recentReportAt(rs.getTimestamp("recent_report_at") != null ? rs.getTimestamp("recent_report_at").toLocalDateTime() : null)
             .build();
 
@@ -39,7 +41,8 @@ public class AdminReportPersistenceAdapter implements AdminReportPort {
     public List<AdminGroupedReport> findGroupedByFilter(String status, int offset, int limit) {
         StringBuilder sql = new StringBuilder(
                 "SELECT target_type, target_id, COUNT(*) as report_count, " +
-                "MAX(reason) as recent_reason, MAX(created_at) as recent_report_at, status " +
+                "MAX(reason) as recent_reason, STRING_AGG(DISTINCT reason, '||') as all_reasons, " +
+                "MAX(action_taken) as action_taken, MAX(created_at) as recent_report_at, status " +
                 "FROM reports WHERE 1=1 ");
         
         if (!"ALL".equalsIgnoreCase(status)) {
@@ -85,6 +88,12 @@ public class AdminReportPersistenceAdapter implements AdminReportPort {
     public void updateStatusByTarget(String targetType, Long targetId, String status) {
         String sql = "UPDATE reports SET status = ? WHERE target_type = ? AND target_id = ?";
         jdbcTemplate.update(sql, status, targetType, targetId);
+    }
+
+    @Override
+    public void updateStatusAndActionByTarget(String targetType, Long targetId, String status, String actionTaken) {
+        String sql = "UPDATE reports SET status = ?, action_taken = ? WHERE target_type = ? AND target_id = ?";
+        jdbcTemplate.update(sql, status, actionTaken, targetType, targetId);
     }
 
     @Override

@@ -22,6 +22,7 @@ public class PostResponse {
     private String authorNickname;
     private String authorStatus;
     private boolean hasAcceptedComment;
+    private boolean isHidden;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -39,6 +40,7 @@ public class PostResponse {
                 .commentCount(commentCount)
                 .categoryName(categoryName)
                 .isNotice(post.isNotice())
+                .isHidden(post.isHidden())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .build();

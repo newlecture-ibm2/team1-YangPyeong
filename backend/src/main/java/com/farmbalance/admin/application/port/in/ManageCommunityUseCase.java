@@ -104,7 +104,7 @@ public interface ManageCommunityUseCase {
     /**
      * 특정 타겟(게시글/댓글) 제재 일괄 처리
      */
-    void sanctionReportByTarget(String targetType, Long targetId, boolean deleteContent, boolean suspendUser);
+    void sanctionReportByTarget(String targetType, Long targetId, boolean hideContent, boolean deleteContent, boolean suspendUser);
 
     /**
      * 특정 타겟(게시글/댓글) 제재 일괄 취소 (Undo)

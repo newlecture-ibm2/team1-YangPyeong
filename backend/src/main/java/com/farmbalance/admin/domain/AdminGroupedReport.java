@@ -16,6 +16,8 @@ public class AdminGroupedReport {
     private Long targetId;
     private long reportCount;
     private String recentReason;
+    private String allReasons;
     private String status;
+    private String actionTaken;
     private LocalDateTime recentReportAt;
 }

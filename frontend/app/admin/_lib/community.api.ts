@@ -148,7 +148,7 @@ export async function updateReportStatus(targetType: string, targetId: number, s
   if (!json.success) throw new Error(json.error?.message ?? '신고 상태 변경 실패')
 }
 
-export async function sanctionReport(targetType: string, targetId: number, data: { deleteContent: boolean; suspendUser: boolean }): Promise<void> {
+export async function sanctionReport(targetType: string, targetId: number, data: { hideContent: boolean; deleteContent: boolean; suspendUser: boolean }): Promise<void> {
   const res = await fetch(`${BASE}/reports/target/sanction`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

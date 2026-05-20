@@ -54,7 +54,9 @@ export interface AdminGroupedReport {
   targetId: number
   reportCount: number
   recentReason: string
+  allReasons?: string
   status: string // "PENDING" | "RESOLVED" | "DISMISSED"
+  actionTaken?: string
   recentReportAt: string
 }
 

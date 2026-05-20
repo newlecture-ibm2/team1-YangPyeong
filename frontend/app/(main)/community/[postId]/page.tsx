@@ -33,6 +33,23 @@ export default async function PostDetailPage({
 
   return (
     <article className={styles.container}>
+      {post.isHidden && (
+        <div style={{
+          backgroundColor: '#fff1f0',
+          border: '1px solid #ffa39e',
+          padding: '16px',
+          borderRadius: '8px',
+          marginBottom: '24px',
+          color: '#cf1322',
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span>⚠️</span>
+          <span>관리자에 의해 숨김 처리된 게시글입니다. (작성자 본인 및 관리자만 열람 가능)</span>
+        </div>
+      )}
       <header className={styles.header}>
         <div className={styles.meta}>
           <Badge variant={post.isNotice ? 'dark' : 'green'}>

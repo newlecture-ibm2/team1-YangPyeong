@@ -233,6 +233,7 @@ public class AdminCommunityController {
     public ApiResponse<Void> sanctionReportByTarget(@RequestBody Map<String, Object> request) {
         String targetType = (String) request.get("targetType");
         Number targetIdNum = (Number) request.get("targetId");
+        Boolean hideContent = (Boolean) request.getOrDefault("hideContent", false);
         Boolean deleteContent = (Boolean) request.getOrDefault("deleteContent", false);
         Boolean suspendUser = (Boolean) request.getOrDefault("suspendUser", false);
 
@@ -240,7 +241,7 @@ public class AdminCommunityController {
             throw new IllegalArgumentException("targetType and targetId are required");
         }
 
-        manageCommunityUseCase.sanctionReportByTarget(targetType, targetIdNum.longValue(), deleteContent, suspendUser);
+        manageCommunityUseCase.sanctionReportByTarget(targetType, targetIdNum.longValue(), hideContent, deleteContent, suspendUser);
         return ApiResponse.ok(null);
     }
 

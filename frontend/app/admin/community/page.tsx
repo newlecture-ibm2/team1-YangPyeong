@@ -205,7 +205,7 @@ export default function CommunityPage() {
     setSanctionModalOpen(true)
   }
 
-  const handleSanctionConfirm = async (data: { deleteContent: boolean; suspendUser: boolean }) => {
+  const handleSanctionConfirm = async (data: { hideContent: boolean; deleteContent: boolean; suspendUser: boolean }) => {
     if (!selectedTarget) return
     try {
       const { sanctionReport } = await import('../_lib/community.api')
@@ -510,12 +510,27 @@ export default function CommunityPage() {
                       </td>
                       <td data-label="대상ID">{report.targetId}</td>
                       <td data-label="누적 신고 수">{report.reportCount}건</td>
-                      <td className={styles.titleCell} data-label="최근 사유">{report.recentReason}</td>
+                      <td data-label="사유 요약">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <span>{report.recentReason}</span>
+                          {report.reportCount > 1 && (
+                            <span onClick={() => alert(report.allReasons?.replace(/\|\|/g, '\n'))} style={{ cursor: 'pointer', display: 'inline-block', width: 'fit-content' }}>
+                              <Badge variant="gray">[외 {report.reportCount - 1}건] 전체보기</Badge>
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td data-label="최근 신고일">{formatDate(report.recentReportAt)}</td>
-                      <td data-label="상태">
+                      <td data-label="상태 및 제재">
                         {report.status === 'PENDING' && <Badge variant="orange">대기중</Badge>}
-                        {report.status === 'RESOLVED' && <Badge variant="green">처리완료</Badge>}
                         {report.status === 'DISMISSED' && <Badge variant="gray">반려</Badge>}
+                        {report.status === 'RESOLVED' && (
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            {report.actionTaken ? report.actionTaken.split(', ').map((act, i) => (
+                              <Badge key={i} variant="dark">{act}</Badge>
+                            )) : <Badge variant="green">처리완료</Badge>}
+                          </div>
+                        )}
                       </td>
                       <td data-label="">
                         <div className={styles.actionGroup}>

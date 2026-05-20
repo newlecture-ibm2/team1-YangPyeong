@@ -8,25 +8,28 @@ import styles from './PostDetailModal.module.css'
 interface SanctionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (data: { deleteContent: boolean; suspendUser: boolean }) => void;
+  onConfirm: (data: { hideContent: boolean; deleteContent: boolean; suspendUser: boolean }) => void;
 }
 
 export default function SanctionModal({ isOpen, onClose, onConfirm }: SanctionModalProps) {
-  const [deleteContent, setDeleteContent] = useState(true)
+  const [hideContent, setHideContent] = useState(true)
+  const [deleteContent, setDeleteContent] = useState(false)
   const [suspendUser, setSuspendUser] = useState(false)
 
   if (!isOpen) return null
 
   const handleConfirm = () => {
-    onConfirm({ deleteContent, suspendUser })
+    onConfirm({ hideContent, deleteContent, suspendUser })
     // 초기화
-    setDeleteContent(true)
+    setHideContent(true)
+    setDeleteContent(false)
     setSuspendUser(false)
   }
 
   const handleClose = () => {
     onClose()
-    setDeleteContent(true)
+    setHideContent(true)
+    setDeleteContent(false)
     setSuspendUser(false)
   }
 
@@ -40,14 +43,30 @@ export default function SanctionModal({ isOpen, onClose, onConfirm }: SanctionMo
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
           <input 
             type="checkbox" 
-            checked={deleteContent} 
-            onChange={(e) => setDeleteContent(e.target.checked)} 
+            checked={hideContent} 
+            onChange={(e) => {
+              setHideContent(e.target.checked)
+              if (e.target.checked) setDeleteContent(false)
+            }} 
             style={{ width: '18px', height: '18px' }}
           />
-          <span style={{ fontSize: '1rem', color: 'var(--color-text)' }}>해당 악성 게시글/댓글 삭제 처리</span>
+          <span style={{ fontSize: '1rem', color: 'var(--color-text)' }}>해당 악성 게시글/댓글 숨김 처리 (권장)</span>
         </label>
 
         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <input 
+            type="checkbox" 
+            checked={deleteContent} 
+            onChange={(e) => {
+              setDeleteContent(e.target.checked)
+              if (e.target.checked) setHideContent(false)
+            }} 
+            style={{ width: '18px', height: '18px' }}
+          />
+          <span style={{ fontSize: '1rem', color: 'var(--color-text)' }}>해당 악성 게시글/댓글 완전 삭제 처리</span>
+        </label>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '8px' }}>
           <input 
             type="checkbox" 
             checked={suspendUser} 

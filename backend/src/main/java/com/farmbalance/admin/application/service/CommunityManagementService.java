@@ -180,30 +180,53 @@ public class CommunityManagementService implements ManageCommunityUseCase {
 
     @Override
     @Transactional
-    public void sanctionReportByTarget(String targetType, Long targetId, boolean deleteContent, boolean suspendUser) {
-        // 일괄 '처리완료' 상태로 업데이트
-        adminReportPort.updateStatusByTarget(targetType, targetId, "RESOLVED");
+    public void sanctionReportByTarget(String targetType, Long targetId, boolean hideContent, boolean deleteContent, boolean suspendUser) {
+        
+        java.util.List<String> actions = new java.util.ArrayList<>();
 
         if ("POST".equals(targetType)) {
             AdminPost post = adminPostPort.findById(targetId).orElse(null);
             if (post != null) {
-                if (deleteContent) adminPostPort.hide(post.getId(), "신고 누적으로 인한 숨김 처리"); // 다이렉트 삭제 금지, 숨김 처리로 대체
-                if (suspendUser) userRepository.updateStatus(post.getAuthorId(), "SUSPENDED", "신고 누적");
+                if (hideContent) {
+                    adminPostPort.hide(post.getId(), "신고 누적으로 인한 숨김 처리");
+                    actions.add("게시글 숨김");
+                }
+                if (deleteContent) {
+                    adminPostPort.delete(post.getId());
+                    actions.add("게시글 삭제");
+                }
+                if (suspendUser) {
+                    userRepository.updateStatus(post.getAuthorId(), "SUSPENDED", "신고 누적");
+                    actions.add("작성자 정지");
+                }
             }
         } else if ("COMMENT".equals(targetType)) {
             com.farmbalance.admin.domain.AdminComment comment = adminCommentPort.findById(targetId).orElse(null);
             if (comment != null) {
-                if (deleteContent) adminCommentPort.hide(comment.getId(), "신고 누적으로 인한 숨김 처리");
-                if (suspendUser) userRepository.updateStatus(comment.getAuthorId(), "SUSPENDED", "신고 누적");
+                if (hideContent) {
+                    adminCommentPort.hide(comment.getId(), "신고 누적으로 인한 숨김 처리");
+                    actions.add("댓글 숨김");
+                }
+                if (deleteContent) {
+                    adminCommentPort.delete(comment.getId());
+                    actions.add("댓글 삭제");
+                }
+                if (suspendUser) {
+                    userRepository.updateStatus(comment.getAuthorId(), "SUSPENDED", "신고 누적");
+                    actions.add("작성자 정지");
+                }
             }
         }
+
+        String actionTakenStr = String.join(", ", actions);
+        adminReportPort.updateStatusAndActionByTarget(targetType, targetId, "RESOLVED", actionTakenStr);
     }
 
     @Override
     @Transactional
     public void undoSanctionByTarget(String targetType, Long targetId) {
-        // 일괄 '반려(DISMISSED)' 상태로 업데이트하여 복구
-        adminReportPort.updateStatusByTarget(targetType, targetId, "DISMISSED");
+        // 일괄 '대기중(PENDING)' 상태로 업데이트하여 복구
+        adminReportPort.updateStatusByTarget(targetType, targetId, "PENDING");
 
         if ("POST".equals(targetType)) {
             AdminPost post = adminPostPort.findById(targetId).orElse(null);
