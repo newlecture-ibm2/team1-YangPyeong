@@ -4,17 +4,46 @@ import { sanitizeRecommendResponse } from './recommend.utils';
 
 const BASE_URL = '/api/recommend';
 
-export async function requestCropRecommendation(farmId: number): Promise<CropRecommendResponse> {
-  const res = await fetch(`${BASE_URL}/${farmId}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.error?.message || 'AI 작물 추천에 실패했습니다.');
+/** 백엔드 AI 배치 2회 호출 시 120초를 넘길 수 있음 (로그 기준 ~150초) */
+const RECOMMEND_TIMEOUT_MS = 180_000;
+
+async function parseErrorMessage(res: Response): Promise<string> {
+  const contentType = res.headers.get('content-type') ?? '';
+  if (contentType.includes('application/json')) {
+    try {
+      const body = (await res.json()) as ApiResponse<unknown>;
+      return body.error?.message || `요청 실패 (${res.status})`;
+    } catch {
+      return `요청 실패 (${res.status})`;
+    }
   }
-  
+  if (res.status === 504) {
+    return '분석 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.';
+  }
+  return `AI 작물 추천에 실패했습니다. (${res.status})`;
+}
+
+export async function requestCropRecommendation(farmId: number): Promise<CropRecommendResponse> {
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}/${farmId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(RECOMMEND_TIMEOUT_MS),
+    });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'TimeoutError') {
+      throw new Error(
+        '분석 시간이 초과되었습니다. 잠시 후 다시 시도하거나, 이력에서 이전 결과를 확인해 주세요.',
+      );
+    }
+    throw e;
+  }
+
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res));
+  }
+
   const response: ApiResponse<CropRecommendResponse> = await res.json();
   if (!response.data) throw new Error('추천 결과 데이터가 없습니다.');
   return sanitizeRecommendResponse(response.data);

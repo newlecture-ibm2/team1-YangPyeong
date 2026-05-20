@@ -3,6 +3,9 @@
    작물 이름으로 매핑된 월-주 단위 실행 가이드
    ════════════════════════════════════════════════════════ */
 
+import type { CalendarPhase, CropRecommendation } from './recommend.types';
+import { buildDetailedPlanFromRecommendation } from './cropDetailedPlanBuilder';
+
 export interface WeeklyTask {
   week: string;           // 예: "1주차", "2주차"
   task: string;           // 핵심 작업명
@@ -292,4 +295,13 @@ export function getCropDetailedPlan(cropName: string): CropDetailedPlan {
 
   // 매핑이 없는 경우 기본 계획에 작물명만 교체
   return { ...DEFAULT_DETAILED_PLAN, cropName };
+}
+
+/** 상세 페이지 — rec·캘린더 phases와 동기화된 세부 계획서 */
+export function getCropDetailedPlanForRecommendation(
+  _cropName: string,
+  rec: CropRecommendation,
+  phases: CalendarPhase[],
+): CropDetailedPlan {
+  return buildDetailedPlanFromRecommendation(rec, phases);
 }

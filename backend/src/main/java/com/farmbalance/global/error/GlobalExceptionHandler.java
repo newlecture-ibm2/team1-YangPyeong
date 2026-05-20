@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import java.util.stream.Collectors;
 
@@ -48,10 +49,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException e) {
-        log.warn("[IllegalArgument] {}", e.getMessage());
+        log.warn("[IllegalArgument] {}", e.getMessage(), e);
         return ResponseEntity
                 .badRequest()
                 .body(ApiResponse.fail(ErrorCode.VALIDATION_ERROR.getCode(), e.getMessage()));
+    }
+
+    /** 클라이언트(브라우저/BFF)가 응답 전에 연결을 끊은 경우 — 분석 지연·타임아웃 시 흔함 */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleClientDisconnect(AsyncRequestNotUsableException e) {
+        log.warn("[ClientDisconnect] 응답 전송 중 연결 종료: {}", e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

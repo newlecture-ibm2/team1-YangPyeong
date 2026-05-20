@@ -1,6 +1,6 @@
 /* CropCalendar — 재배 캘린더 시각화 */
 
-import type { CalendarPhase } from '../../_lib/recommend.constants';
+import type { CalendarPhase } from '../../_lib/recommend.types';
 import styles from './CropCalendar.module.css';
 
 const ALL_MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
