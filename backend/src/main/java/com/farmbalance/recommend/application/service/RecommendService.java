@@ -32,6 +32,9 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
 
     private static final int MAX_NEW_RECOMMEND_AI = 5;
     private static final int MAX_LIST_SIZE = 30;
+    private static final String GENERIC_AI_REASON_FALLBACK = "현재 농장 데이터를 바탕으로 분석한 결과입니다.";
+    private static final String FAILED_AI_REASON_SNIPPET = "AI 분석 중 오류가 발생했습니다";
+    private static final int MIN_AI_REASON_LEN = 12;
 
     private final LoadFarmForRecommendPort loadFarmForRecommendPort;
     private final LoadCropCandidatePort loadCropCandidatePort;
@@ -184,24 +187,31 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
         // 1. 코칭 작물 배치 사유 생성
         if (!currentCropAdvices.isEmpty()) {
             List<RecommendReasonCommand> coachingCommands = currentCropAdvices.stream()
-                    .map(rec -> new RecommendReasonCommand(
-                            farmDetails,
-                            rec.getCropName(),
-                            rec.getCategory() != null ? rec.getCategory().getLabel() : "",
-                            mode,
-                            rec.getAdviceType() != null ? rec.getAdviceType() : AdviceType.IN_SEASON_COACHING,
-                            true,
-                            rec.getMismatchNote()
-                    ))
+                    .map(rec -> {
+                        AdviceType advice = rec.getAdviceType() != null
+                                ? rec.getAdviceType()
+                                : AdviceType.IN_SEASON_COACHING;
+                        boolean inSeasonCrop = advice == AdviceType.IN_SEASON_COACHING;
+                        return new RecommendReasonCommand(
+                                farmDetails,
+                                rec.getCropName(),
+                                rec.getCategory() != null ? rec.getCategory().getLabel() : "",
+                                mode,
+                                advice,
+                                inSeasonCrop,
+                                rec.getMismatchNote()
+                        );
+                    })
                     .toList();
 
             Map<String, String> coachingReasons = recommendAiPort.generateBatchReasons(
                     farmDetails, mode, coachingCommands);
 
             List<CropRecommendation> updatedCurrent = new ArrayList<>();
-            for (CropRecommendation rec : currentCropAdvices) {
-                String reason = coachingReasons.getOrDefault(
-                        rec.getCropName(), "현재 농장 데이터를 바탕으로 분석한 결과입니다.");
+            for (int i = 0; i < currentCropAdvices.size(); i++) {
+                CropRecommendation rec = currentCropAdvices.get(i);
+                String reason = sanitizeStoredAiReason(
+                        resolveAiReason(coachingReasons, rec, coachingCommands.get(i)));
                 updatedCurrent.add(rec.toBuilder().aiReason(reason).build());
             }
             currentCropAdvices.clear();
@@ -229,11 +239,79 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
 
             for (int i = 0; i < aiLimit; i++) {
                 CropRecommendation rec = recommendations.get(i);
-                String reason = newReasons.getOrDefault(
-                        rec.getCropName(), "현재 농장 데이터를 바탕으로 분석한 결과입니다.");
+                String reason = sanitizeStoredAiReason(
+                        resolveAiReason(newReasons, rec, newCommands.get(i)));
                 recommendations.set(i, rec.toBuilder().aiReason(reason).build());
             }
         }
+    }
+
+    private boolean isWeakAiReason(String reason) {
+        if (reason == null || reason.isBlank()) {
+            return true;
+        }
+        String trimmed = reason.trim();
+        if (trimmed.length() < MIN_AI_REASON_LEN) {
+            return true;
+        }
+        if (GENERIC_AI_REASON_FALLBACK.equals(trimmed)) {
+            return true;
+        }
+        return trimmed.contains(FAILED_AI_REASON_SNIPPET);
+    }
+
+    /**
+     * 배치 결과가 비었거나 플레이스홀더면 작물별 단건 LLM 호출로 보완합니다.
+     */
+    private String findBatchReason(Map<String, String> batchReasons, String cropName) {
+        if (cropName == null || batchReasons == null || batchReasons.isEmpty()) {
+            return null;
+        }
+        String direct = batchReasons.get(cropName);
+        if (direct != null) {
+            return direct;
+        }
+        String norm = cropName.replaceAll("\\s+", "");
+        for (Map.Entry<String, String> entry : batchReasons.entrySet()) {
+            if (entry.getKey() != null
+                    && entry.getKey().replaceAll("\\s+", "").equals(norm)
+                    && entry.getValue() != null) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    private String resolveAiReason(
+            Map<String, String> batchReasons,
+            CropRecommendation rec,
+            RecommendReasonCommand command
+    ) {
+        String fromBatch = findBatchReason(batchReasons, rec.getCropName());
+        if (!isWeakAiReason(fromBatch)) {
+            return fromBatch.trim();
+        }
+        try {
+            String individual = recommendAiPort.generateReason(command);
+            if (!isWeakAiReason(individual)) {
+                log.info("배치 사유 미매칭 → 개별 사유 사용: {}", rec.getCropName());
+                return individual.trim();
+            }
+        } catch (Exception e) {
+            log.warn("개별 AI 사유 생성 실패 crop={}: {}", rec.getCropName(), e.getMessage());
+        }
+        if (!isWeakAiReason(fromBatch)) {
+            return fromBatch.trim();
+        }
+        log.warn("AI 추천 사유 미생성(플레이스홀더 저장 안 함): crop={}", rec.getCropName());
+        return null;
+    }
+
+    private String sanitizeStoredAiReason(String reason) {
+        if (isWeakAiReason(reason)) {
+            return null;
+        }
+        return reason != null ? reason.trim() : null;
     }
 
 

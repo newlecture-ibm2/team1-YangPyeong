@@ -33,7 +33,7 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
         // AI LLM 호출은 시간이 걸리므로 read timeout을 60초로 설정합니다.
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(10));
-        factory.setReadTimeout(Duration.ofSeconds(60));
+        factory.setReadTimeout(Duration.ofSeconds(120));
         this.restTemplate = builder.requestFactory(() -> factory).build();
     }
 
@@ -113,9 +113,17 @@ public class AiServerRecommendAdapter implements RecommendAiPort {
             Map<String, Object> response = restTemplate.postForObject(url, entity, Map.class);
             if (response != null && response.containsKey("reasons")) {
                 Object reasonsObj = response.get("reasons");
-                if (reasonsObj instanceof Map) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, String> reasons = (Map<String, String>) reasonsObj;
+                if (reasonsObj instanceof Map<?, ?> rawMap) {
+                    Map<String, String> reasons = new LinkedHashMap<>();
+                    for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+                        if (entry.getKey() == null || entry.getValue() == null) {
+                            continue;
+                        }
+                        String value = entry.getValue().toString().trim();
+                        if (!value.isEmpty()) {
+                            reasons.put(entry.getKey().toString(), value);
+                        }
+                    }
                     log.info("AI 배치 사유 생성 성공: {}건", reasons.size());
                     return reasons;
                 }

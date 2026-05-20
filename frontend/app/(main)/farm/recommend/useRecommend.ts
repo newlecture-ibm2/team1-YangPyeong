@@ -3,10 +3,11 @@
    농장 선택, 분석 요청, 결과 상태 관리
    ════════════════════════════════════════════════════════ */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useMyFarms } from '../useFarm';
 import { getLatestRecommendHistory, requestCropRecommendation } from './_lib/recommend.api';
 import type { CropRecommendResponse } from './_lib/recommend.types';
+import { sanitizeRecommendResponse } from './_lib/recommend.utils';
 import { useToast } from '@/components/common/Toast/ToastContext';
 
 export default function useRecommend() {
@@ -14,36 +15,34 @@ export default function useRecommend() {
   const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
   const [result, setResult] = useState<CropRecommendResponse | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [hasAnalyzed, setHasAnalyzed] = useState(false);
   const [isHydrating, setIsHydrating] = useState(false);
   const { success: toastSuccess, error: toastError } = useToast();
 
-  const farms = allFarms.filter(f => f.certificationStatus === 'APPROVED');
+  const farms = allFarms.filter((f) => f.certificationStatus === 'APPROVED');
   const hasUnapprovedFarms = allFarms.length > farms.length;
 
   const farm = farms.length > 0 ? farms[selectedFarmIdx] : null;
+  const hasResult = result != null;
 
-  // 활성 농장 세션 복원
   useEffect(() => {
     try {
       const savedFarmIdStr = sessionStorage.getItem('selected_farm_id');
       if (savedFarmIdStr && farms.length > 0) {
         const savedFarmId = Number(savedFarmIdStr);
-        const idx = farms.findIndex(f => f.id === savedFarmId);
+        const idx = farms.findIndex((f) => f.id === savedFarmId);
         if (idx !== -1) {
           setSelectedFarmIdx(idx);
         }
       }
-    } catch (e) {}
+    } catch {
+      // ignore
+    }
   }, [farms]);
 
-  // 농장 선택 변경 시 결과 초기화
   useEffect(() => {
     setResult(null);
-    setHasAnalyzed(false);
   }, [selectedFarmIdx]);
 
-  // 서버에 저장된 최근 추천 1건으로 목록 복원 (상세에서 돌아올 때 재분석 불필요)
   useEffect(() => {
     const farmId = farm?.id;
     if (farmId == null) {
@@ -59,10 +58,10 @@ export default function useRecommend() {
         if (cancelled) return;
         if (data?.farmInfo?.id != null && data.farmInfo.id !== farmId) return;
         if (data) {
-          setResult(data);
-          setHasAnalyzed(true);
+          const sanitized = sanitizeRecommendResponse(data);
+          setResult(sanitized);
           try {
-            sessionStorage.setItem('recommend_result', JSON.stringify(data));
+            sessionStorage.setItem('recommend_result', JSON.stringify(sanitized));
           } catch {
             // ignore
           }
@@ -80,20 +79,18 @@ export default function useRecommend() {
   }, [farm?.id]);
 
   const handleAnalyze = async () => {
-    if (!farm || !farm.id) return;
+    if (!farm?.id) return;
     setIsAnalyzing(true);
 
     try {
-      const data = await requestCropRecommendation(farm.id);
+      const data = sanitizeRecommendResponse(await requestCropRecommendation(farm.id));
 
       setResult(data);
-      setHasAnalyzed(true);
 
-      // 상세 페이지에서 접근할 수 있도록 sessionStorage에 저장
       try {
         sessionStorage.setItem('recommend_result', JSON.stringify(data));
       } catch {
-        // sessionStorage 접근 불가 시 무시
+        // ignore
       }
       toastSuccess('AI 작물 추천이 완료되었습니다.');
     } catch (err) {
@@ -117,9 +114,9 @@ export default function useRecommend() {
     setSelectedFarmIdx,
     farm,
     result,
+    hasResult,
     isAnalyzing,
     isHydrating,
-    hasAnalyzed,
     handleAnalyze,
     top3,
     allRecs,

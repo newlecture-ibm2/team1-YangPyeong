@@ -7,7 +7,10 @@ import com.farmbalance.recommend.application.port.in.GetRecommendHistoryUseCase;
 import com.farmbalance.recommend.application.port.in.DiagnoseCropImageUseCase;
 import com.farmbalance.recommend.domain.RecommendResult;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.springframework.http.ResponseEntity;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +30,7 @@ public class RecommendController {
     private final RecommendCropUseCase recommendCropUseCase;
     private final GetRecommendHistoryUseCase getRecommendHistoryUseCase;
     private final DiagnoseCropImageUseCase diagnoseCropImageUseCase;
+    private final CropDetailedGuideHandler cropDetailedGuideHandler;
 
     /**
      * 지정 농장에 대해 AI 작물 추천 실행
@@ -98,5 +102,31 @@ public class RecommendController {
         log.info("작물 이미지 진단 요청: userId={}", userId);
         String diagnosis = diagnoseCropImageUseCase.diagnose(userId, image);
         return ApiResponse.ok(diagnosis);
+    }
+
+    /**
+     * 작물별 AI 재배 가이드북 — DB 캐시 조회
+     * GET /api/recommend/farms/{farmId}/crops/{cropId}/detailed-guide
+     */
+    @GetMapping("/farms/{farmId}/crops/{cropId}/detailed-guide")
+    public ApiResponse<Map<String, Object>> getCropDetailedGuide(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long farmId,
+            @PathVariable Long cropId,
+            @RequestParam(name = "experienceLevel", defaultValue = "novice") String experienceLevel) {
+        return cropDetailedGuideHandler.getCached(userId, farmId, cropId, experienceLevel);
+    }
+
+    /**
+     * 작물별 AI 재배 가이드북 — AI 생성 후 DB 저장
+     * POST /api/recommend/farms/{farmId}/crops/{cropId}/detailed-guide
+     */
+    @PostMapping("/farms/{farmId}/crops/{cropId}/detailed-guide")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> generateCropDetailedGuide(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long farmId,
+            @PathVariable Long cropId,
+            @RequestBody Map<String, Object> request) {
+        return cropDetailedGuideHandler.generate(userId, farmId, cropId, request);
     }
 }

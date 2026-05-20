@@ -79,12 +79,12 @@ export default function RecommendListPage() {
         <AnalyzeLoader
           isAnalyzing={hook.isAnalyzing}
           isHydrating={hook.isHydrating}
-          hasAnalyzed={hook.hasAnalyzed}
+          hasResult={hook.hasResult}
           disabled={!hook.farm}
           onAnalyze={hook.handleAnalyze}
         />
 
-        {hook.hasAnalyzed && hook.result && (
+        {hook.result && (
           <>
             {hook.recommendMode && (
               <p className={styles.modeBanner}>

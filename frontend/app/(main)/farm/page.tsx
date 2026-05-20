@@ -12,9 +12,9 @@ import { useHistory } from './useHistory';
 import { useCultivation } from './useCultivation';
 import { getLatestRecommendHistory } from './recommend/_lib/recommend.api';
 import type { CropRecommendResponse } from './recommend/_lib/recommend.types';
-import { predictRevenue, type RevenuePredictionResponse } from './_lib/revenue.api';
+import { getFarmRevenuePredictions, predictRevenue, type RevenuePredictionResponse } from './_lib/revenue.api';
 import {
-  hydrateRevenuePredictionsFromCache,
+  mergeRevenuePredictionSources,
   isWeakRevenuePrediction,
   pickPrimaryRevenueCrop,
   readRevenuePredictionCache,
@@ -342,6 +342,7 @@ function FarmDashboardContent() {
   const loadRevenueForCropRef = useRef(loadRevenueForCrop);
   loadRevenueForCropRef.current = loadRevenueForCrop;
   const revenueFetchSeqRef = useRef<Record<string, number>>({});
+  const revenueBootstrapKeyRef = useRef<string | null>(null);
 
   const handleApplyYieldForCrop = useCallback(
     async (row: RevenueCropRow) => {
@@ -389,50 +390,76 @@ function FarmDashboardContent() {
     [predictionsByCrop, loadingRevenueCrop, loadRevenueForCrop],
   );
 
-  // 대표 작물 1종만 LLM 요청, 나머지는 캐시 복원 또는 사용자 선택 시 로드
+  // 농장 전환 시에만 수익 예측 상태 초기화 (농장 정보 탭 이동 시에는 유지)
   useEffect(() => {
-    if (!weatherSettled) return;
+    setPredictionsByCrop({});
+    setRevenueErrorsByCrop({});
+    setExpandedRevenueCrop(null);
+    setLoadingRevenueCrop(null);
+    revenueBootstrapKeyRef.current = null;
+  }, [farm?.id]);
 
-    if (activeSubTab !== 'DASHBOARD' || !farm?.id) {
-      setPredictionsByCrop({});
-      setRevenueErrorsByCrop({});
-      setExpandedRevenueCrop(null);
-      setLoadingRevenueCrop(null);
+  /**
+   * 대시보드: sessionStorage에 있는 작물은 모두 즉시 복원(LLM 없음).
+   * API 자동 호출은 대표 작물 1종·캐시 없을 때만.
+   * 재배 목록 로딩이 끝난 뒤 1회만 부트스트랩(중복 요청 방지).
+   */
+  useEffect(() => {
+    if (activeSubTab !== 'DASHBOARD' || !farm?.id || isCultivationLoading) {
       return;
     }
     if (revenueCropRows.length === 0) {
       setPredictionsByCrop({});
       setRevenueErrorsByCrop({});
       setExpandedRevenueCrop(null);
-      setLoadingRevenueCrop(null);
       return;
     }
 
+    const bootstrapKey = `${farm.id}:${revenueCropRowsKey}`;
+    if (revenueBootstrapKeyRef.current === bootstrapKey) {
+      return;
+    }
+    revenueBootstrapKeyRef.current = bootstrapKey;
+
     let cancelled = false;
     const fid = farm.id;
-    const cached = hydrateRevenuePredictionsFromCache(fid, revenueCropRows);
-    setPredictionsByCrop(cached);
-    setRevenueErrorsByCrop({});
 
-    const primary = pickPrimaryRevenueCrop(revenueCropRows);
-    if (primary) {
-      setExpandedRevenueCrop(primary.cropName);
-      const primaryCached = cached[primary.cropName];
+    const applyMerged = (merged: Record<string, RevenuePredictionResponse>) => {
+      if (cancelled) return;
+      setPredictionsByCrop((prev) => ({ ...prev, ...merged }));
+      setRevenueErrorsByCrop({});
+
+      const primary = pickPrimaryRevenueCrop(revenueCropRows);
+      if (!primary) return;
+
+      setExpandedRevenueCrop((prev) => prev ?? primary.cropName);
+      const primaryCached = merged[primary.cropName];
       const shouldFetchPrimary =
         !primaryCached || isWeakRevenuePrediction(primaryCached);
       if (shouldFetchPrimary) {
         void loadRevenueForCropRef.current(primary, undefined, {
           skipCache: Boolean(primaryCached),
-        }).then(() => {
-          if (cancelled) return;
         });
       }
-    }
+    };
+
+    void (async () => {
+      try {
+        const serverItems = await getFarmRevenuePredictions(fid);
+        if (cancelled) return;
+        applyMerged(mergeRevenuePredictionSources(fid, revenueCropRows, serverItems));
+      } catch (e) {
+        console.warn('서버 수익 예측 이력 복원 실패, sessionStorage만 사용:', e);
+        if (!cancelled) {
+          applyMerged(mergeRevenuePredictionSources(fid, revenueCropRows, []));
+        }
+      }
+    })();
 
     return () => {
       cancelled = true;
     };
-  }, [activeSubTab, farm?.id, revenueCropRowsKey, weatherSettled]);
+  }, [activeSubTab, farm?.id, revenueCropRowsKey, isCultivationLoading]);
 
   // 이력·재배·최근 AI 추천을 한 번에 병렬 로드 (농장 전환 시에만 재요청)
   useEffect(() => {
@@ -909,6 +936,21 @@ function FarmDashboardContent() {
                               대표 작물 AI 수익·시세 분석을 준비하고 있습니다…
                             </p>
                           )}
+                          {isPrimary && !isLoadingThis && !prediction && !errMsg && (
+                            <div className={styles.revenueEmptyState}>
+                              <p className={styles.revenueErrorText}>
+                                대표 작물 수익·시세 분석이 아직 없습니다. 아래 버튼으로 분석을 시작하세요.
+                              </p>
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                disabled={busy}
+                                onClick={() => handleStartRevenueAnalysis(row)}
+                              >
+                                분석받기
+                              </Button>
+                            </div>
+                          )}
                           {errMsg && !prediction && (
                             <div className={styles.revenueEmptyState}>
                               <p className={styles.revenueErrorText}>{errMsg}</p>
@@ -981,6 +1023,49 @@ function FarmDashboardContent() {
                                     {prediction.revenue_insight || '—'}
                                   </p>
                                 </div>
+                                {prediction.yield_factors &&
+                                  (prediction.yield_factors.planting_time_impact ||
+                                    prediction.yield_factors.weather_impact ||
+                                    prediction.yield_factors.overall_adjustment) && (
+                                    <div
+                                      style={{
+                                        background: '#f0fdf4',
+                                        padding: '16px',
+                                        borderRadius: '8px',
+                                        borderLeft: '4px solid #22c55e',
+                                      }}
+                                    >
+                                      <h4
+                                        style={{
+                                          fontSize: '14px',
+                                          fontWeight: 700,
+                                          marginBottom: '8px',
+                                          color: '#166534',
+                                        }}
+                                      >
+                                        🌱 수확량 산정 근거
+                                      </h4>
+                                      <ul
+                                        style={{
+                                          margin: 0,
+                                          paddingLeft: '18px',
+                                          fontSize: '13px',
+                                          color: '#15803d',
+                                          lineHeight: 1.6,
+                                        }}
+                                      >
+                                        {prediction.yield_factors.planting_time_impact && (
+                                          <li>{prediction.yield_factors.planting_time_impact}</li>
+                                        )}
+                                        {prediction.yield_factors.weather_impact && (
+                                          <li>{prediction.yield_factors.weather_impact}</li>
+                                        )}
+                                        {prediction.yield_factors.overall_adjustment && (
+                                          <li>{prediction.yield_factors.overall_adjustment}</li>
+                                        )}
+                                      </ul>
+                                    </div>
+                                  )}
                               </div>
                             </div>
                           )}

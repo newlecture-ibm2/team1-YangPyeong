@@ -1,5 +1,6 @@
 import { ApiResponse } from '@/lib/constants';
 import { CropRecommendResponse } from './recommend.types';
+import { sanitizeRecommendResponse } from './recommend.utils';
 
 const BASE_URL = '/api/recommend';
 
@@ -16,7 +17,7 @@ export async function requestCropRecommendation(farmId: number): Promise<CropRec
   
   const response: ApiResponse<CropRecommendResponse> = await res.json();
   if (!response.data) throw new Error('추천 결과 데이터가 없습니다.');
-  return response.data;
+  return sanitizeRecommendResponse(response.data);
 }
 
 export async function getLatestRecommendHistory(farmId: number): Promise<CropRecommendResponse | null> {
@@ -37,5 +38,5 @@ export async function getLatestRecommendHistory(farmId: number): Promise<CropRec
     throw new Error(msg || '최근 AI 추천 이력 조회에 실패했습니다.');
   }
 
-  return response.data ?? null;
+  return response.data ? sanitizeRecommendResponse(response.data) : null;
 }
