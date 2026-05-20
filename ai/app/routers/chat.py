@@ -16,6 +16,8 @@ from app.agents.shared.action_token import split_pending_intent
 from app.agents.shared import slot_resolver, tool_dispatcher
 from app.models.chat import ChatAction, ChatResponse, PendingIntent
 from app.utils.backend_client import user_jwt_ctx
+import base64
+import json
 
 # 도메인 슬롯 추출기 등록 (서버 시작 시 1회)
 def _register_domain_extractors():
@@ -126,6 +128,17 @@ async def chat(request: ChatRequest) -> ChatResponse:
         if not (messages and isinstance(messages[-1], HumanMessage) and messages[-1].content == request.message):
             messages.append(HumanMessage(content=request.message))
 
+        # ── JWT에서 role 추출 (서명 검증은 Spring Security가 이미 수행) ──
+        user_role = "USER"
+        if jwt:
+            try:
+                payload_b64 = jwt.split(".")[1]
+                payload_b64 += "=" * ((4 - len(payload_b64) % 4) % 4)
+                payload_json = base64.b64decode(payload_b64).decode("utf-8")
+                user_role = json.loads(payload_json).get("role", "USER")
+            except Exception as e:
+                logger.warning("[Chat] JWT role 파싱 실패: %s", e)
+
         meta = request.metadata or {}
         farm_id = 0
         try:
@@ -137,6 +150,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         result = await orchestrator.ainvoke({
             "messages": messages,
             "user_id": request.userId,
+            "user_role": user_role,
             "farm_id": farm_id,
             "next_node": "",
             "current_focus": "",
