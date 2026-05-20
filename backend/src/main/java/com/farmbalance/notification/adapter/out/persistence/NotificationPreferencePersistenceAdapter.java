@@ -7,6 +7,7 @@ import com.farmbalance.notification.domain.NotificationPreference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -19,6 +20,13 @@ public class NotificationPreferencePersistenceAdapter implements NotificationPre
     public Optional<NotificationPreference> findByUserId(Long userId) {
         return repository.findByUserId(userId)
                 .map(NotificationPreferenceJpaEntity::toDomain);
+    }
+
+    @Override
+    public List<NotificationPreference> findAllByUserIdIn(List<Long> userIds) {
+        return repository.findAllByUserIdIn(userIds).stream()
+                .map(NotificationPreferenceJpaEntity::toDomain)
+                .toList();
     }
 
     @Override
