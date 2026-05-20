@@ -3,31 +3,13 @@
  */
 
 import type { CalendarPhase, CropRecommendation } from './recommend.types';
-import type { CropDetailedPlan } from './calendarPlanData';
+import { resolveCropPeriodFallback } from './cropPeriodFallback';
 
 const COLORS = {
   sow: '#52B788',
   growth: '#2D6A4F',
   harvest: '#CCFF33',
 } as const;
-
-function norm(name: string): string {
-  return name.replace(/\s+/g, '').toLowerCase();
-}
-
-/** crop_cultivation_env 시드와 동일한 파종·수확 fallback */
-const PERIOD_FALLBACK: { match: (n: string) => boolean; sowing: string; harvest: string }[] = [
-  { match: (n) => n.includes('쌀') || n.includes('벼'), sowing: '4월순 ~ 5월순', harvest: '9월순 ~ 10월중순' },
-  { match: (n) => n.includes('보리'), sowing: '10월순 ~ 10월순', harvest: '5월순 ~ 6월중순' },
-  { match: (n) => n.includes('콩'), sowing: '6월중순 ~ 7월순', harvest: '9월순 ~ 10월중순' },
-  { match: (n) => n.includes('감자'), sowing: '3월순 ~ 4월순', harvest: '6월중순 ~ 7월순' },
-  { match: (n) => n.includes('고구마'), sowing: '4월순 ~ 5월중순', harvest: '9월순 ~ 10월중순' },
-  { match: (n) => n.includes('방울'), sowing: '3월 ~ 4월(정식)', harvest: '5월 ~ 11월' },
-  { match: (n) => n.includes('토마토'), sowing: '3월 ~ 4월(정식)', harvest: '5월 ~ 9월' },
-  { match: (n) => n.includes('고추') || n.includes('피망'), sowing: '2월(정식) ~ 5월(정식)', harvest: '7월 ~ 10월' },
-  { match: (n) => n.includes('배추') || n.includes('양배추'), sowing: '3월 ~ 5월', harvest: '7월 ~ 8월' },
-  { match: (n) => n.includes('인삼'), sowing: '8월 ~ 9월(정식)', harvest: '12월 ~ 5월' },
-];
 
 export function parseMonthsFromPeriod(text?: string | null): { start: number; end: number } | null {
   if (!text?.trim()) return null;
@@ -48,13 +30,9 @@ export function resolveSowingHarvestPeriods(rec: CropRecommendation): {
   let harvest = rec.harvestPeriod?.trim() || undefined;
 
   if (!sowing || !harvest) {
-    const n = norm(rec.cropName);
-    for (const row of PERIOD_FALLBACK) {
-      if (!row.match(n)) continue;
-      if (!sowing) sowing = row.sowing;
-      if (!harvest) harvest = row.harvest;
-      break;
-    }
+    const fallback = resolveCropPeriodFallback(rec.cropName);
+    if (!sowing) sowing = fallback.sowing;
+    if (!harvest) harvest = fallback.harvest;
   }
 
   const sowParsed = parseMonthsFromPeriod(sowing);
@@ -107,6 +85,23 @@ export function buildCalendarPhasesFromRecommendation(rec: CropRecommendation): 
   return phases;
 }
 
+/** fallback·API 모두 월 파싱 실패 시 growthDays 기준 generic 3-phase 캘린더 */
+export function buildGenericCalendarPhases(rec: CropRecommendation): CalendarPhase[] {
+  const days = rec.growthDays ?? 120;
+  const spanMonths = Math.min(9, Math.max(3, Math.ceil(days / 30)));
+  const sowStart = 3;
+  const sowEnd = Math.min(4, sowStart + 1);
+  const harvEnd = Math.min(12, sowStart + spanMonths - 1);
+  const harvStart = Math.max(sowEnd + 1, harvEnd - 1);
+  const growthEnd = Math.max(sowEnd, harvStart - 1);
+
+  return [
+    { label: '파종·육묘', startMonth: sowStart, endMonth: sowEnd, color: COLORS.sow },
+    { label: '생육', startMonth: sowEnd + 1, endMonth: growthEnd, color: COLORS.growth },
+    { label: '수확', startMonth: harvStart, endMonth: harvEnd, color: COLORS.harvest },
+  ];
+}
+
 function monthLabel(m: number): string {
   return `${m}월`;
 }
@@ -153,15 +148,6 @@ function estimateActiveMonths(phases: CalendarPhase[]): number {
   return active.size || 4;
 }
 
-function monthInPhases(month: number, phases: CalendarPhase[]): boolean {
-  return phases.some((p) => {
-    if (p.startMonth <= p.endMonth) {
-      return month >= p.startMonth && month <= p.endMonth;
-    }
-    return month >= p.startMonth || month <= p.endMonth;
-  });
-}
-
 /**
  * 세부 계획서용 월 목록 — 파종 → 생육 → 수확 phase 순서로 나열 (연도 넘김 포함)
  */
@@ -194,24 +180,6 @@ export function enumerateMonthsInCultivationOrder(phases: CalendarPhase[]): numb
     appendRange(phase.startMonth, phase.endMonth);
   }
   return ordered;
-}
-
-/** 주별 계획서 — 총 기간 문구 동기화 + 캘린더에 해당하는 월만 유지 */
-export function alignDetailedPlanWithRecommendation(
-  base: CropDetailedPlan,
-  rec: CropRecommendation,
-  phases: CalendarPhase[],
-): CropDetailedPlan {
-  const totalDuration = buildTotalDurationLabel(rec, phases);
-  const filtered = base.plans.filter((p) => monthInPhases(p.month, phases));
-  const plans = filtered.length >= 2 ? filtered : base.plans;
-
-  return {
-    ...base,
-    cropName: rec.cropName,
-    totalDuration,
-    plans,
-  };
 }
 
 /** 캘린더 카드 부제 (가이드 생육기간·파종/수확과 동일 출처) */

@@ -39,6 +39,10 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
     private static final String SOWING_JOIN_PLACEHOLDER = "/*SOWING_WORK_MATCH*/";
     private static final String HARVEST_JOIN_PLACEHOLDER = "/*HARVEST_WORK_MATCH*/";
 
+    static {
+        assertCandidatesSqlTemplate();
+    }
+
     /**
      * SQL LIKE '%파종%' 등과 동적 JOIN 조건을 함께 쓰므로 String.formatted()를 사용하지 않습니다.
      * (formatted 시 '%파'가 포맷 지정자로 해석되어 Conversion = '파' 발생)
@@ -150,6 +154,32 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
                 .replace(ENV_MATCH_PLACEHOLDER, envNameMatch)
                 .replace(SOWING_JOIN_PLACEHOLDER, nongsaroWorkMatch)
                 .replace(HARVEST_JOIN_PLACEHOLDER, nongsaroHarvestMatch);
+    }
+
+    /**
+     * 클래스 로드 시 SQL 템플릿이 LIKE 패턴·플레이스홀더 치환 후 정상 조립되는지 검증합니다.
+     * (기존 단위 테스트 역할을 런타임 초기화로 대체)
+     */
+    private static void assertCandidatesSqlTemplate() {
+        String envNameMatch = CropCultivationEnvMatcher.sqlEnvCropNameMatch("c.name", "e.crop_name");
+        String nongsaroWorkMatch = CropCultivationEnvMatcher.sqlNongsaroFarmWorkMatch(
+                "c.name", "sowing_sch.farm_work_type");
+        String nongsaroHarvestMatch = CropCultivationEnvMatcher.sqlNongsaroFarmWorkMatch(
+                "c.name", "harvest_sch.farm_work_type");
+
+        String sql = buildCandidatesSql(envNameMatch, nongsaroWorkMatch, nongsaroHarvestMatch);
+
+        if (sql.contains(ENV_MATCH_PLACEHOLDER)
+                || sql.contains(SOWING_JOIN_PLACEHOLDER)
+                || sql.contains(HARVEST_JOIN_PLACEHOLDER)) {
+            throw new IllegalStateException("Candidate SQL template placeholders were not replaced");
+        }
+        if (!sql.contains("LIKE '%파종%'")) {
+            throw new IllegalStateException("Candidate SQL missing sowing LIKE patterns");
+        }
+        if (!sql.contains("NULL::integer   AS crop_growth_days")) {
+            throw new IllegalStateException("Candidate SQL missing V16-safe crop_growth_days projection");
+        }
     }
 
     @Override

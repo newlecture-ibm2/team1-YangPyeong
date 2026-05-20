@@ -134,7 +134,6 @@ DOMAIN_FORCE_KEYWORDS: dict[str, set[str]] = {
         "작물 추천", "작물추천", "뭐 키울", "키울 만한", "ai 추천", "추천받",
         "재배 작물", "재배작물", "재배 등록", "재배등록",
         "농장 등록", "농장등록", "농장 등록할",
-        "예상 수익", "수확량", "수익 분석", "수익분석",
         "내 농장 대시보드", "농장 대시보드",
     },
     "shop_agent": {
@@ -173,9 +172,22 @@ DOMAIN_FORCE_KEYWORDS: dict[str, set[str]] = {
         "발송 처리", "발송처리", "발송 완료", "배송 시작", "배송시작",
         "주문 거절", "주문거절", "거절해줘", "거절 처리",
     },
-    # 예시: 팀원이 새 도메인 추가 시
-    # "livestock_agent": {"가축", "축산", "소 등록", "출하", ...},
-    # "farm_agent": {"내 농장", "농장 면적", "가용면적", ...},
+    "policy_agent": {
+        "보조금", "지원금", "정책", "지원 사업", "혜택", "신청", "공고",
+    },
+    "balance_agent": {
+        "시세", "가격", "수익", "수급", "공급", "수요", "전망", "돈 될까",
+        "도매가", "시장", "예상 수익", "수확량", "수익 분석", "수익분석",
+    },
+    "farm_agent": {
+        "내 농장", "토양", "흙", "면적", "재배 이력", "날씨", "병해충", "작물 관리",
+        "농장 면적", "가용면적", "작물 심",
+    },
+    "gov_agent": {
+        "양평군", "읍면별", "지역별", "농가 분포", "위험도", "과잉", "부족",
+        "단월면", "양동면", "강하면", "용문면", "양서면", "지평면",
+        "개군면", "청운면", "양평읍",
+    },
 }
 
 DOMAIN_CONTEXT_INDICATORS: dict[str, tuple[str, ...]] = {
@@ -194,16 +206,21 @@ DOMAIN_CONTEXT_INDICATORS: dict[str, tuple[str, ...]] = {
 }
 
 
-def force_route(message: str) -> str | None:
-    """메시지에 도메인 키워드가 있으면 해당 라우트 이름 반환. 없으면 None.
+def force_routes(message: str) -> list[str]:
+    """메시지에 매칭되는 모든 도메인 키워드를 찾아 복수 라우트 목록을 반환.
 
-    여러 도메인 키워드가 매칭되면 dict 등록 순서대로 첫 번째 도메인 반환.
+    중복 제거하며 VALID_ROUTES에 포함된 것만 반환.
+    매칭 없으면 빈 리스트.
     """
     lower = message.lower()
+    matched: list[str] = []
+    seen: set[str] = set()
     for route_name, kws in DOMAIN_FORCE_KEYWORDS.items():
-        if any(kw in lower for kw in kws):
-            return route_name
-    return None
+        if route_name not in seen and any(kw in lower for kw in kws):
+            if route_name in VALID_ROUTES:
+                matched.append(route_name)
+                seen.add(route_name)
+    return matched
 
 
 # ── 멀티턴 컨텍스트 라우팅 ──
@@ -272,10 +289,11 @@ async def router_node(state: AgentState) -> List[str]:
             logger.info("[Router] 멀티턴 컨텍스트 → %s ('%s')", prev_domain, last_message[:30])
             return [prev_domain]
 
-    # 2. 키워드 선제 라우팅 (LLM 오판 방지)
-    if (forced := force_route(last_message)):
+    # 2. 키워드 선제 라우팅 (LLM 오판 방지) — 복수 매칭 지원
+    forced = force_routes(last_message)
+    if forced:
         logger.info("[Router] 키워드 매칭 → %s ('%s')", forced, last_message[:40])
-        return [forced]
+        return forced
 
     try:
         llm = get_llm()
@@ -1135,26 +1153,32 @@ async def synthesizer_node(state: AgentState):
     """여러 에이전트의 답변을 취합하여 최종 응답을 생성합니다.
 
     자동 우회 조건:
-      1. skip_synthesis=True (Shop Agent 등이 명시적 요청)
+      1. skip_synthesis=True 이면서 단일 에이전트인 경우만 우회
+         (복수 에이전트 라우팅 시에는 반드시 종합)
       2. 단일 에이전트만 라우팅된 경우 (재가공 불필요)
     """
-    # ① 명시적 우회 요청
-    if state.get("skip_synthesis"):
+    routed = state.get("routed_agents", [])
+    is_multi = len(routed) >= 2
+
+    # ① 명시적 우회 요청 — 단일 에이전트일 때만 허용
+    if state.get("skip_synthesis") and not is_multi:
         last_ai = next(
             (m for m in reversed(state["messages"]) if isinstance(m, AIMessage)), None
         )
         if last_ai:
+            logger.info("[Synthesizer] skip_synthesis 단일(%s) → 우회", routed)
             return {"messages": [last_ai]}
 
     # ② 단일 에이전트 라우팅 → 재가공 없이 그대로 반환
-    routed = state.get("routed_agents", [])
-    if len(routed) <= 1:
+    if not is_multi:
         last_ai = next(
             (m for m in reversed(state["messages"]) if isinstance(m, AIMessage)), None
         )
         if last_ai:
             logger.info("[Synthesizer] 단일 에이전트(%s) → 우회", routed)
             return {"messages": [last_ai]}
+
+    logger.info("[Synthesizer] 복수 에이전트 종합 시작: %s", routed)
 
     try:
         llm = get_llm("gemini")
