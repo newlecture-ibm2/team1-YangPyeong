@@ -28,12 +28,12 @@ logger = logging.getLogger(__name__)
 # ── Intent 분류 패턴 (우선순위 순서) ──
 # 새로운 Intent 추가 시 이 리스트에 튜플 한 줄만 추가합니다.
 INTENT_PATTERNS: list[tuple[IntentType, re.Pattern]] = [
-    (IntentType.GENERAL_ANALYSIS, re.compile(r"개수|목록|주소|이름 알려|몇 개|몇개")),
+    (IntentType.RISK_ANALYSIS,    re.compile(r"위험|과잉|부족|수급|추이|계절|비교|문제")),
     (IntentType.POLICY_RECOMMEND, re.compile(r"정책|지원|지원금|사업")),
     (IntentType.ALTERNATIVE_CROP, re.compile(r"작물 추천|대신|대체|뭐 심")),
-    (IntentType.FARM_ANALYSIS,    re.compile(r"농장|이 농가")),
-    (IntentType.RISK_ANALYSIS,    re.compile(r"위험|과잉|부족|위험도")),
-    (IntentType.REGION_SUMMARY,   re.compile(r"요약|상황|현황")),
+    (IntentType.FARM_ANALYSIS,    re.compile(r"AI 추천|이 농가|특정 농장|농가 분석")),
+    (IntentType.REGION_SUMMARY,   re.compile(r"현황|상황|요약|지표|보고")),
+    (IntentType.GENERAL_ANALYSIS, re.compile(r"지역별|읍면별|읍/면|분포|개수|농가 수|몇 개|몇개|많은|적은|목록|전체")),
 ]
 
 # ── 동의어 사전 (정규화용) ──
@@ -259,6 +259,7 @@ class GovAgent:
 
         ctx.supply_status = graph_data.get("supply_status")
         ctx.supply_ratio = graph_data.get("supply_ratio")
+        ctx.region_farm_count = graph_data.get("region_farm_count")
 
         for p in graph_data.get("related_policies", []):
             ctx.related_policies.append(PolicySummary(**p))
