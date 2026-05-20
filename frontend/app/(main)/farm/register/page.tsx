@@ -262,12 +262,6 @@ export default function FarmRegisterPage() {
       toast.error('유효한 면적(숫자)을 입력해주세요.');
       return;
     }
-
-    if (!selectedFile) {
-      toast.error('증빙 서류를 업로드해주세요.');
-      return;
-    }
-
     const totalFarmArea = Number(String(formData.area).replace(/,/g, ''));
     const totalCultivationArea = formData.cultivations.reduce((sum, c) => sum + (Number(c.area) || 0), 0);
     
@@ -277,11 +271,18 @@ export default function FarmRegisterPage() {
     }
 
     setIsAnalyzing(true);
-    toast.info('농장 정보를 등록하고 서류를 분석 중입니다. 잠시만 기다려주세요...', 8000);
+    if (selectedFile) {
+      toast.info('농장 정보를 등록하고 서류를 분석 중입니다. 잠시만 기다려주세요...', 8000);
+    } else {
+      toast.info('농장 정보를 등록 중입니다. 잠시만 기다려주세요...', 3000);
+    }
 
     try {
-      // 1. 파일 스토리지 업로드하여 URL 획득 (화면 표시용)
-      const fileUrl = await uploadFile(selectedFile);
+      // 1. 파일 스토리지 업로드하여 URL 획득 (화면 표시용) - 파일이 있을 때만
+      let fileUrl = '';
+      if (selectedFile) {
+        fileUrl = await uploadFile(selectedFile);
+      }
 
       // 백엔드 API로 전송 (좌표는 프론트엔드 카카오 Maps JS SDK에서 변환)
       const payload = {
@@ -302,9 +303,9 @@ export default function FarmRegisterPage() {
         soilType: formData.soilType || null,
         ph: formData.ph ? Number(formData.ph) : null,
         organicMatter: formData.organicMatter ? Number(formData.organicMatter) : null,
-        documents: [
+        documents: selectedFile ? [
           { type: '농업경영체 등록 확인서', name: selectedFile.name, url: fileUrl }
-        ],
+        ] : [],
         // PNU 생성용 필드
         bjdCode: formData.bjdCode,
         isMountain: formData.isMountain,
@@ -317,7 +318,9 @@ export default function FarmRegisterPage() {
 
       const formDataObj = new FormData();
       formDataObj.append('request', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-      formDataObj.append('file', selectedFile);
+      if (selectedFile) {
+        formDataObj.append('file', selectedFile);
+      }
 
       const res = await fetch('/api/farm', {
         method: 'POST',
