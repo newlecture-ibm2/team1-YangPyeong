@@ -66,17 +66,14 @@ public class NotificationService implements NotificationUseCase {
     @Transactional
     public Notification createNotification(Long userId, NotificationType type, NotificationCategory category,
                                             String title, String message, String link) {
-        // DB 이력은 설정과 무관하게 항상 저장
-        Notification notification = Notification.create(userId, type, title, message, link);
-        Notification saved = notificationPort.save(notification);
-
-        // FCM 푸시는 사용자 설정이 활성화된 경우에만 발송
-        if (preferenceUseCase.isEnabled(userId, category)) {
-            fcmNotificationService.sendToUser(userId, title, message, link);
-        } else {
-            log.debug("[알림 푸시 스킵] userId={}, category={} (사용자 설정 비활성화)", userId, category);
+        // 설정이 비활성화된 경우 DB 저장 및 FCM 모두 스킵
+        if (!preferenceUseCase.isEnabled(userId, category)) {
+            log.debug("[알림 스킵] userId={}, category={} (사용자 설정 비활성화)", userId, category);
+            return Notification.create(userId, type, category, title, message, link);
         }
 
+        Notification saved = notificationPort.save(Notification.create(userId, type, category, title, message, link));
+        fcmNotificationService.sendToUser(userId, title, message, link);
         log.info("[알림 생성] userId={}, type={}, category={}, title={}", userId, type, category, title);
         return saved;
     }
@@ -85,20 +82,21 @@ public class NotificationService implements NotificationUseCase {
     @Transactional
     public void createBulkNotifications(List<Long> userIds, NotificationType type, NotificationCategory category,
                                          String title, String message, String link) {
-        // DB 이력은 모두 저장 (배치 INSERT)
-        List<Notification> notifications = userIds.stream()
-                .map(userId -> Notification.create(userId, type, title, message, link))
+        // 1번의 배치 조회로 활성화된 사용자만 필터링 (N+1 방지)
+        List<Long> enabledUserIds = preferenceUseCase.filterEnabledUserIds(userIds, category);
+
+        if (enabledUserIds.isEmpty()) {
+            log.info("[알림 벌크 스킵] type={}, category={}, 전체={}명 (모두 수신 거부)", type, category, userIds.size());
+            return;
+        }
+
+        List<Notification> notifications = enabledUserIds.stream()
+                .map(userId -> Notification.create(userId, type, category, title, message, link))
                 .toList();
         notificationPort.saveAll(notifications);
+        enabledUserIds.forEach(userId -> fcmNotificationService.sendToUser(userId, title, message, link));
 
-        // FCM은 사용자별 설정 확인 후 발송
-        int pushSent = 0;
-        for (Long userId : userIds) {
-            if (preferenceUseCase.isEnabled(userId, category)) {
-                fcmNotificationService.sendToUser(userId, title, message, link);
-                pushSent++;
-            }
-        }
-        log.info("[알림 벌크 생성] type={}, category={}, DB={}명, FCM={}명", type, category, userIds.size(), pushSent);
+        log.info("[알림 벌크 생성] type={}, category={}, 전체={}명 → 발송={}명 ({}명 스킵)",
+                type, category, userIds.size(), enabledUserIds.size(), userIds.size() - enabledUserIds.size());
     }
 }
