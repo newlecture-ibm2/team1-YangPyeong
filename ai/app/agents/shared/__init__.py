@@ -11,6 +11,9 @@
 from app.agents.shared.action_token import (
     action_token,
     split_actions,
+    sanitize_action_leakage,
+    pending_intent_token,
+    split_pending_intent,
 )
 from app.agents.shared.auth_guard import (
     ensure_logged_in,
@@ -30,6 +33,9 @@ from app.agents.shared.agent_response import (
 __all__ = [
     "action_token",
     "split_actions",
+    "sanitize_action_leakage",
+    "pending_intent_token",
+    "split_pending_intent",
     "ensure_logged_in",
     "login_required_message",
     "extract_price",

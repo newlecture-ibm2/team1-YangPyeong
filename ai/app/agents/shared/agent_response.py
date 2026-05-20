@@ -17,7 +17,7 @@ from typing import Any
 
 from langchain_core.messages import AIMessage, ToolMessage
 
-from app.agents.shared.action_token import split_actions
+from app.agents.shared.action_token import split_actions, sanitize_action_leakage
 
 logger = logging.getLogger(__name__)
 
@@ -89,10 +89,15 @@ def extract_agent_output(
 
     # ③ 본문 결정 우선순위: AI 텍스트 > tool 텍스트 > default
     had_ai_text = bool(ai_text)
-    final_text = ai_text or tool_text_fallback or default_text
+    raw_text = ai_text or tool_text_fallback or default_text
 
-    # ④ 액션 병합 (AI 우선, tool 보강) + 중복 제거
-    merged_actions = _dedupe_actions(ai_actions + tool_actions)
+    # ③-b 보안: Gemini가 [ACTION:...] 프리픽스 없이 JSON body만 복사한 경우 탐지·제거
+    #   split_actions()가 처리하지 못한 유출 JSON을 후처리로 제거한다.
+    sanitized_text, sanitized_actions = sanitize_action_leakage(raw_text)
+    final_text = sanitized_text or default_text
+
+    # ④ 액션 병합 (AI 우선, tool 보강, sanitize 추가) + 중복 제거
+    merged_actions = _dedupe_actions(ai_actions + tool_actions + sanitized_actions)
 
     return AgentOutput(
         text=final_text,

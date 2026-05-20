@@ -70,8 +70,10 @@ public enum ErrorCode {
     // ── 상점 ──
     PRODUCT_NOT_FOUND("E-SHOP-001", "상품을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     PRODUCT_OUT_OF_STOCK("E-SHOP-002", "재고가 부족합니다.", HttpStatus.BAD_REQUEST),
+    PRODUCT_PENDING_CONTENT_LOCKED("E-SHOP-007", "검수중인 상품의 이름·설명·이미지·카테고리는 수정할 수 없습니다. 가격·재고는 수정 가능합니다.", HttpStatus.BAD_REQUEST),
     ORDER_NOT_FOUND("E-SHOP-003", "주문을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     ORDER_INVALID_STATUS("E-SHOP-004", "주문 상태를 변경할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    ORDER_CANCEL_NOT_ALLOWED("E-SHOP-006", "현재 상태에서는 취소할 수 없습니다. 판매자가 이미 접수한 주문입니다.", HttpStatus.BAD_REQUEST),
     CART_ITEM_NOT_FOUND("E-SHOP-005", "장바구니 항목을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
     // ── 커뮤니티 ──

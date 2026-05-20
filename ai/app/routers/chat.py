@@ -12,8 +12,19 @@ from pydantic import BaseModel
 from langchain_core.messages import HumanMessage, AIMessage
 
 from app.agents.orchestrator import split_actions
-from app.models.chat import ChatAction, ChatResponse
+from app.agents.shared.action_token import split_pending_intent
+from app.agents.shared import slot_resolver, tool_dispatcher
+from app.models.chat import ChatAction, ChatResponse, PendingIntent
 from app.utils.backend_client import user_jwt_ctx
+
+# 도메인 슬롯 추출기 등록 (서버 시작 시 1회)
+def _register_domain_extractors():
+    from app.agents.tools import shop_slot_extractors
+    shop_slot_extractors.register()
+    # 다른 도메인은 가이드 참고 후 여기에 추가
+    # from app.agents.tools import farm_slot_extractors; farm_slot_extractors.register()
+
+_register_domain_extractors()
 
 router = APIRouter(prefix="/api", tags=["chat"])
 logger = logging.getLogger(__name__)
@@ -31,10 +42,46 @@ class ChatRequest(BaseModel):
     message: str
     metadata: Optional[dict] = None
     history: Optional[list[HistoryItem]] = None
+    pending_intent: Optional[PendingIntent] = None  # 다중 턴 슬롯 채우기 컨텍스트
 
 
 # 오케스트레이터 싱글톤 (서버 시작 후 첫 요청 시 1회 컴파일)
 _orchestrator = None
+
+
+async def _handle_pending_intent(pending: PendingIntent, user_message: str) -> ChatResponse:
+    """다중 턴 슬롯 채우기 처리.
+
+    1) 사용자 메시지에서 부족한 슬롯 추출 시도
+    2) 모두 채워졌으면 도구 호출
+    3) 아직 부족하면 다음 슬롯 질문
+    """
+    # 슬롯 추출 시도
+    updated = await slot_resolver.resolve_pending(pending, user_message)
+
+    if slot_resolver.is_complete(updated):
+        # 모든 슬롯 완성 → 도구 호출
+        logger.info("[PendingIntent] %s 슬롯 완성 → 도구 호출: %s",
+                    updated.tool, updated.filled)
+        result_text = await tool_dispatcher.invoke(updated.tool, **updated.filled)
+        # 결과에서 PendingIntent / 액션 토큰 추출
+        result_text, _ = split_pending_intent(result_text)
+        cleaned, actions = split_actions(result_text)
+        validated_actions: list[ChatAction] = []
+        for a in actions:
+            try:
+                validated_actions.append(ChatAction(**a))
+            except Exception:
+                pass
+        return ChatResponse(
+            reply=cleaned or "요청을 처리했어요.",
+            actions=validated_actions,
+            pending_intent=None,
+        )
+
+    # 아직 부족 → 다음 슬롯 질문
+    prompt = slot_resolver.next_prompt(updated)
+    return ChatResponse(reply=prompt, actions=[], pending_intent=updated)
 
 
 def _get_orchestrator():
@@ -54,6 +101,10 @@ async def chat(request: ChatRequest) -> ChatResponse:
     token = user_jwt_ctx.set(jwt)
 
     try:
+        # ── PendingIntent 처리 (다중 턴 슬롯 채우기) ──
+        if request.pending_intent:
+            return await _handle_pending_intent(request.pending_intent, request.message)
+
         orchestrator = _get_orchestrator()
 
         # ── 프론트 히스토리 → LangChain 메시지 변환 ──
@@ -92,8 +143,10 @@ async def chat(request: ChatRequest) -> ChatResponse:
             "pending_actions": [],
         })
 
-        # ── 응답 가공: 텍스트 + 액션 분리 ──
+        # ── 응답 가공: 텍스트 + 액션 + PendingIntent 분리 ──
         final_text = result["messages"][-1].content or ""
+        # PendingIntent 토큰 먼저 추출 (액션 토큰과 형식 다름)
+        final_text, pending_intent_obj = split_pending_intent(final_text)
         cleaned_reply, inline_actions = split_actions(final_text)
 
         # state["pending_actions"]에 누적된 액션 + Synthesizer 통과 후 남은 인라인 액션
@@ -108,7 +161,19 @@ async def chat(request: ChatRequest) -> ChatResponse:
             except Exception as e:
                 logger.warning("[Chat] 잘못된 액션 페이로드 무시: %s — %s", a, e)
 
-        return ChatResponse(reply=cleaned_reply or "요청을 처리했어요.", actions=validated_actions)
+        # PendingIntent 검증
+        validated_pending: Optional[PendingIntent] = None
+        if pending_intent_obj:
+            try:
+                validated_pending = PendingIntent(**pending_intent_obj)
+            except Exception as e:
+                logger.warning("[Chat] 잘못된 PendingIntent 무시: %s — %s", pending_intent_obj, e)
+
+        return ChatResponse(
+            reply=cleaned_reply or "요청을 처리했어요.",
+            actions=validated_actions,
+            pending_intent=validated_pending,
+        )
 
     except Exception as e:
         logger.error("챗봇 응답 생성 실패: %s", e, exc_info=True)
