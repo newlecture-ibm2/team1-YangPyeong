@@ -16,8 +16,8 @@ export default function PolicyRecommendPage() {
 
   const approvedFarms = allFarms.filter(f => f.certificationStatus === 'APPROVED');
   const hasUnapprovedFarms = allFarms.length > approvedFarms.length;
-  // 미리보기: 비회원(401) 또는 일반회원(403)만 — 농업인은 농장 없어도 정상 흐름
-  const isPreviewMode = !isFarmsLoading && !data && (statusCode === 401 || statusCode === 403);
+  // 미리보기: 비로그인 사용자만 — 로그인한 사용자는 절대 미리보기 안 뜸
+  const isPreviewMode = !isFarmsLoading && !isLoggedIn;
   const isLoading = isRecommendLoading || isFarmsLoading;
 
   const getScoreClass = (score: number) => {
