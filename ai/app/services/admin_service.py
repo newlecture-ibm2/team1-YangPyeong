@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from app.llm import get_llm
 from app.models.admin import (
     ShopAuditBatchRequest, ShopAuditBatchResponse, ShopAuditResult,
@@ -53,15 +54,20 @@ class AdminService:
                 temperature=0.1
             )
             
-            # Remove markdown backticks if present
-            response_text = response_text.strip()
-            if response_text.startswith("```json"):
-                response_text = response_text[7:-3]
-            elif response_text.startswith("```"):
-                response_text = response_text[3:-3]
-            response_text = response_text.strip()
+            # Extract JSON block using string indexing to handle nested structures safely
+            start_idx = response_text.find('{')
+            end_idx = response_text.rfind('}')
+            
+            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
+                # Try array if object fails
+                start_idx = response_text.find('[')
+                end_idx = response_text.rfind(']')
                 
-            data = json.loads(response_text)
+            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
+                raise ValueError(f"Could not find JSON object/array in response: {response_text[:100]}...")
+                
+            json_str = response_text[start_idx:end_idx+1]
+            data = json.loads(json_str)
             
             # Validate output matches Pydantic model
             if "results" not in data:
@@ -110,14 +116,18 @@ class AdminService:
                 temperature=0.1
             )
             
-            response_text = response_text.strip()
-            if response_text.startswith("```json"):
-                response_text = response_text[7:-3]
-            elif response_text.startswith("```"):
-                response_text = response_text[3:-3]
-            response_text = response_text.strip()
+            start_idx = response_text.find('{')
+            end_idx = response_text.rfind('}')
+            
+            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
+                start_idx = response_text.find('[')
+                end_idx = response_text.rfind(']')
                 
-            data = json.loads(response_text)
+            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
+                raise ValueError(f"Could not find JSON object/array in response: {response_text[:100]}...")
+                
+            json_str = response_text[start_idx:end_idx+1]
+            data = json.loads(json_str)
             
             if "results" not in data:
                 if isinstance(data, list):
@@ -164,14 +174,18 @@ class AdminService:
                 temperature=0.1
             )
             
-            response_text = response_text.strip()
-            if response_text.startswith("```json"):
-                response_text = response_text[7:-3]
-            elif response_text.startswith("```"):
-                response_text = response_text[3:-3]
-            response_text = response_text.strip()
+            start_idx = response_text.find('{')
+            end_idx = response_text.rfind('}')
+            
+            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
+                start_idx = response_text.find('[')
+                end_idx = response_text.rfind(']')
                 
-            data = json.loads(response_text)
+            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
+                raise ValueError(f"Could not find JSON object/array in response: {response_text[:100]}...")
+                
+            json_str = response_text[start_idx:end_idx+1]
+            data = json.loads(json_str)
             
             if "results" not in data:
                 if isinstance(data, list):
