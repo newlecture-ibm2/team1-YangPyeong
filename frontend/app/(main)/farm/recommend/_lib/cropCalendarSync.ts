@@ -106,6 +106,71 @@ function monthLabel(m: number): string {
   return `${m}월`;
 }
 
+/** phase 구간에 month가 포함되는지 (연말 넘김 포함) */
+export function isMonthInPhase(month: number, phase: CalendarPhase): boolean {
+  if (phase.startMonth <= phase.endMonth) {
+    return month >= phase.startMonth && month <= phase.endMonth;
+  }
+  return month >= phase.startMonth || month <= phase.endMonth;
+}
+
+function phaseSpanMonths(phase: CalendarPhase): number {
+  if (phase.startMonth <= phase.endMonth) {
+    return phase.endMonth - phase.startMonth + 1;
+  }
+  return 12 - phase.startMonth + 1 + phase.endMonth;
+}
+
+/** 겹치는 phase가 있을 때 해당 월의 대표 phase (좁은 구간 우선) */
+export function resolvePrimaryPhaseForMonth(month: number, phases: CalendarPhase[]): CalendarPhase {
+  const matching = phases.filter((p) => isMonthInPhase(month, p));
+  if (matching.length === 0) {
+    return phases[0];
+  }
+  if (matching.length === 1) {
+    return matching[0];
+  }
+  return [...matching].sort((a, b) => phaseSpanMonths(a) - phaseSpanMonths(b))[0];
+}
+
+export interface MonthPhaseSlot {
+  month: number;
+  phase: CalendarPhase;
+  indexInPhase: number;
+  totalInPhase: number;
+  cycleIndex: number;
+  totalCycleMonths: number;
+}
+
+/** 세부 계획서용 — 재배 순서대로 월·phase·phase 내 순번 */
+export function buildMonthPhaseSchedule(phases: CalendarPhase[]): MonthPhaseSlot[] {
+  const months = enumerateMonthsInCultivationOrder(phases);
+  const phaseToMonths = new Map<string, number[]>();
+
+  for (const month of months) {
+    const phase = resolvePrimaryPhaseForMonth(month, phases);
+    const list = phaseToMonths.get(phase.label) ?? [];
+    if (!list.includes(month)) {
+      list.push(month);
+      phaseToMonths.set(phase.label, list);
+    }
+  }
+
+  return months.map((month, cycleIndex) => {
+    const phase = resolvePrimaryPhaseForMonth(month, phases);
+    const phaseMonths = phaseToMonths.get(phase.label) ?? [month];
+    const indexInPhase = Math.max(0, phaseMonths.indexOf(month));
+    return {
+      month,
+      phase,
+      indexInPhase,
+      totalInPhase: phaseMonths.length,
+      cycleIndex,
+      totalCycleMonths: months.length,
+    };
+  });
+}
+
 function calendarMonthSpan(phases: CalendarPhase[]): string {
   const wrap = phases.some((p) => p.startMonth > p.endMonth);
   if (wrap) {

@@ -12,9 +12,9 @@ import { useToast } from '@/components/common/Toast'
 import styles from './UserManagement.module.css'
 import type { AdminUser, UserRole, ChangeableRole } from '../_lib/user.types'
 import { ROLE_LABELS, STATUS_LABELS } from '../_lib/user.types'
-import { fetchUsers, changeUserRole, changeUserStatus, forceWithdrawUser, reactivateUser, createUser } from '../_lib/user.api'
-import ForceWithdrawModal from './_components/ForceWithdrawModal'
+import { fetchUsers, changeUserRole, changeUserStatus, createUser } from '../_lib/user.api'
 import CreateAccountModal from './_components/CreateAccountModal'
+import ReasonModal from '../community/_components/ReasonModal'
 import type { CreateUserRequest } from '../_lib/user.types'
 
 export default function UserManagementPage() {
@@ -32,8 +32,8 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState(true)
   const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
-  const [forceWithdrawModalOpen, setForceWithdrawModalOpen] = useState(false)
-  const [targetUserForWithdraw, setTargetUserForWithdraw] = useState<AdminUser | null>(null)
+  const [reasonModalOpen, setReasonModalOpen] = useState(false)
+  const [targetUserForReason, setTargetUserForReason] = useState<AdminUser | null>(null)
   
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
@@ -89,16 +89,21 @@ export default function UserManagementPage() {
     }
   }
 
-  // 정지 / 재활성화
   const handleStatusToggle = async (user: AdminUser) => {
     const isActive = user.status === 'ACTIVE'
-    const action = isActive ? '정지' : '재활성화'
+    if (isActive) {
+      // 정지(SUSPENDED) 처리 시 사유 입력 모달 띄우기
+      setTargetUserForReason(user)
+      setReasonModalOpen(true)
+      return
+    }
+
+    const action = '재활성화'
     const confirmed = await showConfirm(`${user.name} 사용자를 ${action}하시겠습니까?`)
     if (!confirmed) return
 
     try {
-      const newStatus = isActive ? 'SUSPENDED' : 'ACTIVE'
-      await changeUserStatus(user.id, { status: newStatus })
+      await changeUserStatus(user.id, { status: 'ACTIVE' })
       toast.success(`${user.name} 사용자가 ${action}되었습니다.`)
       await loadUsers()
     } catch (e: unknown) {
@@ -107,40 +112,20 @@ export default function UserManagementPage() {
     }
   }
 
-  // 관리자 강제 탈퇴 오픈
-  const openForceWithdrawModal = (user: AdminUser) => {
-    setTargetUserForWithdraw(user)
-    setForceWithdrawModalOpen(true)
-  }
-
-  // 관리자 강제 탈퇴 실행
-  const handleForceWithdraw = async (reasonType: string, reasonDetail: string) => {
-    if (!targetUserForWithdraw) return
+  const handleSuspendConfirm = async (reason: string) => {
+    if (!targetUserForReason) return
     try {
-      await forceWithdrawUser(targetUserForWithdraw.id, reasonType, reasonDetail)
-      toast.success(`${targetUserForWithdraw.name} 사용자가 강제 탈퇴되었습니다.`)
-      setForceWithdrawModalOpen(false)
+      await changeUserStatus(targetUserForReason.id, { status: 'SUSPENDED', reason })
+      toast.success(`${targetUserForReason.name} 사용자가 정지되었습니다.`)
+      setReasonModalOpen(false)
       await loadUsers()
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : '강제 탈퇴 처리에 실패했습니다.'
+      const msg = e instanceof Error ? e.message : '사용자 정지에 실패했습니다.'
       toast.error(msg)
     }
   }
 
-  // 관리자 수동 복구
-  const handleReactivate = async (user: AdminUser) => {
-    const confirmed = await showConfirm(`${user.name} 사용자의 탈퇴를 취소하고 원상 복구하시겠습니까?`)
-    if (!confirmed) return
 
-    try {
-      await reactivateUser(user.id)
-      toast.success(`${user.name} 사용자가 복구되었습니다.`)
-      await loadUsers()
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : '사용자 복구에 실패했습니다.'
-      toast.error(msg)
-    }
-  }
 
   // 특수 계정(지자체/관리자) 발급
   const handleCreateUser = async (data: CreateUserRequest) => {
@@ -338,27 +323,7 @@ export default function UserManagementPage() {
                         </Button>
                       )}
 
-                      {/* 강제 탈퇴 / 수동 복구 */}
-                      {user.role !== 'ADMIN' && user.status !== 'WITHDRAWN' && (
-                        <Button
-                          variant="outline"
-                          style={{ borderColor: '#ef4444', color: '#ef4444' }}
-                          size="sm"
-                          onClick={() => openForceWithdrawModal(user)}
-                        >
-                          강제 탈퇴
-                        </Button>
-                      )}
-                      
-                      {user.status === 'WITHDRAWN' && (
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleReactivate(user)}
-                        >
-                          수동 복구
-                        </Button>
-                      )}
+
                     </div>
                   </td>
                 </tr>
@@ -377,11 +342,11 @@ export default function UserManagementPage() {
         onClose={handleClose}
       />
 
-      <ForceWithdrawModal
-        isOpen={forceWithdrawModalOpen}
-        userName={targetUserForWithdraw?.name || ''}
-        onClose={() => setForceWithdrawModalOpen(false)}
-        onConfirm={handleForceWithdraw}
+      <ReasonModal
+        isOpen={reasonModalOpen}
+        title="이용자 정지 처리"
+        onClose={() => setReasonModalOpen(false)}
+        onConfirm={handleSuspendConfirm}
       />
 
       <CreateAccountModal

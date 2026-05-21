@@ -58,6 +58,10 @@ public class UserJpaEntity {
     @Builder.Default
     private AuthProvider provider = AuthProvider.LOCAL;
 
+    @Column(length = 500)
+    private String statusReason;
+
+
     @Column(length = 100)
     private String providerId;
 
@@ -98,6 +102,7 @@ public class UserJpaEntity {
                 .role(role)
 
                 .status(status)
+                .statusReason(statusReason)
                 .provider(provider)
                 .providerId(providerId)
                 .profileImageUrl(profileImageUrl)
@@ -121,6 +126,7 @@ public class UserJpaEntity {
                 .role(user.getRole())
 
                 .status(user.getStatus())
+                .statusReason(user.getStatusReason())
                 .provider(user.getProvider())
                 .providerId(user.getProviderId())
                 .profileImageUrl(user.getProfileImageUrl())
@@ -139,7 +145,8 @@ public class UserJpaEntity {
     }
 
     /** 상태 변경 */
-    public void updateStatus(UserStatus status) {
+    public void updateStatus(UserStatus status, String statusReason) {
         this.status = status;
+        this.statusReason = statusReason;
     }
 }

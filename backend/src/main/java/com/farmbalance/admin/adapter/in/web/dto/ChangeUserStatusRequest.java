@@ -13,4 +13,6 @@ public class ChangeUserStatusRequest {
 
     @NotBlank(message = "상태는 필수입니다.")
     private String status;
+
+    private String reason;
 }

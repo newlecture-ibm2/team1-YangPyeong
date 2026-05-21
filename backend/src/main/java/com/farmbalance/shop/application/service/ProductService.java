@@ -58,7 +58,7 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
         Product product = new Product(
                 null, sellerId, null, null, categoryName,
                 name, price, stock, safeUnitKg, description, 0,
-                ProductStatus.PENDING, imageUrls, LocalDateTime.now());
+                ProductStatus.PENDING, null, imageUrls, LocalDateTime.now());
 
         Product saved = productRepository.save(product);
 
@@ -81,6 +81,11 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
+        // 관리자에 의해 제재된 상품은 수정 불가 (고객센터 문의 필요)
+        if (product.getStatusReason() != null) {
+            throw new BusinessException(ErrorCode.PRODUCT_ADMIN_LOCKED);
+        }
+
         // 검수중 상품은 콘텐츠(이름·설명·카테고리·이미지) 변경 불가 — 가격·재고만 허용
         if (product.getStatus() == ProductStatus.PENDING) {
             throw new BusinessException(ErrorCode.PRODUCT_PENDING_CONTENT_LOCKED);
@@ -90,7 +95,7 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
         product.update(name, price, stock, newUnitKg, description, null, categoryName);
 
         // 콘텐츠 수정 시 재검수를 위해 PENDING 상태로 전환
-        product.changeStatus(ProductStatus.PENDING);
+        product.changeStatus(ProductStatus.PENDING, "정보 수정으로 인한 재검수 대기");
 
         // 이미지 교체: 기존 삭제 후 재등록
         uploadRepository.deleteByEntity("PRODUCT", productId);
@@ -133,11 +138,16 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
+        // 관리자에 의해 제재된 상품은 임의 상태 변경 불가
+        if (product.getStatusReason() != null) {
+            throw new BusinessException(ErrorCode.PRODUCT_ADMIN_LOCKED);
+        }
+
         try {
             ProductStatus status = ProductStatus.valueOf(newStatus.toUpperCase());
             // Product 도메인 엔티티의 상태 변경 로직 (Setter가 없으므로 update 메서드 혹은 별도 메서드 사용)
             // 여기서는 Product 에 별도로 changeStatus() 메서드를 만들어야 함
-            product.changeStatus(status);
+            product.changeStatus(status, "상태 변경");
             return productRepository.save(product);
         } catch (IllegalArgumentException e) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR);
@@ -152,6 +162,11 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
 
         if (!product.getSellerId().equals(sellerId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        // 관리자에 의해 제재된 상품은 임의 삭제 불가
+        if (product.getStatusReason() != null) {
+            throw new BusinessException(ErrorCode.PRODUCT_ADMIN_LOCKED);
         }
 
         productRepository.softDelete(productId);

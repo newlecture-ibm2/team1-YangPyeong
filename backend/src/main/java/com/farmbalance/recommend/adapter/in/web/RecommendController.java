@@ -1,6 +1,7 @@
 package com.farmbalance.recommend.adapter.in.web;
 
 import com.farmbalance.global.response.ApiResponse;
+import com.farmbalance.recommend.adapter.in.web.dto.AiCoachingRequest;
 import com.farmbalance.recommend.adapter.in.web.dto.RecommendResponse;
 import com.farmbalance.recommend.application.port.in.RecommendCropUseCase;
 import com.farmbalance.recommend.application.port.in.GetRecommendHistoryUseCase;
@@ -48,6 +49,24 @@ public class RecommendController {
         RecommendResponse response = RecommendResponse.from(result);
 
         return ApiResponse.ok(response);
+    }
+
+    /**
+     * 선택 작물 AI 코칭(aiReason) 생성 — 사용자 요청 시에만.
+     *
+     * POST /api/recommend/{farmId}/coaching
+     */
+    @PostMapping("/{farmId}/coaching")
+    public ApiResponse<RecommendResponse> requestAiCoaching(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long farmId,
+            @RequestBody AiCoachingRequest request) {
+
+        List<Long> cropIds = request.getCropIds() != null ? request.getCropIds() : List.of();
+        log.info("AI 코칭 요청: userId={}, farmId={}, crops={}", userId, farmId, cropIds);
+
+        RecommendResult result = recommendCropUseCase.requestAiCoaching(userId, farmId, cropIds);
+        return ApiResponse.ok(RecommendResponse.from(result));
     }
 
     /**

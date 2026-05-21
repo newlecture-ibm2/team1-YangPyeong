@@ -26,8 +26,8 @@ export default function CalendarPlanModal({ isOpen, onClose, plan }: CalendarPla
 
         {/* 월별 토픽 카드 */}
         <div className={styles.topics}>
-          {plan.plans.map((monthly, mIdx) => (
-            <div key={mIdx} className={styles.topicCard}>
+          {plan.plans.map((monthly) => (
+            <div key={`${monthly.month}-${monthly.phase}`} className={styles.topicCard}>
               <div className={styles.topicHeader}>
                 <span
                   className={styles.topicIcon}

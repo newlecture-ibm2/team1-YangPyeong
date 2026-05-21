@@ -54,7 +54,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
             entity.update(product.getName(), product.getPrice(), product.getStock(),
                     product.getUnitKg(), product.getDescription(), categoryId);
             entity.updateSalesCount(product.getSalesCount());
-            entity.updateStatus(product.getStatus().name());
+            entity.updateStatus(product.getStatus().name(), product.getStatusReason());
         } else {
             // 신규
             entity = ProductJpaEntity.builder()
@@ -67,6 +67,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
                     .description(product.getDescription())
                     .salesCount(product.getSalesCount())
                     .status(product.getStatus().name())
+                    .statusReason(product.getStatusReason())
                     .build();
         }
 
@@ -139,6 +140,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
                 entity.getDescription(),
                 entity.getSalesCount(),
                 ProductStatus.valueOf(entity.getStatus()),
+                entity.getStatusReason(),
                 imageUrls,
                 entity.getCreatedAt()
         );
@@ -183,9 +185,9 @@ public class ProductPersistenceAdapter implements ProductRepository {
     }
 
     @Override
-    public void updateStatus(Long id, String status) {
+    public void updateStatus(Long id, String status, String reason) {
         productJpaRepository.findById(id).ifPresent(entity -> {
-            entity.updateStatus(status);
+            entity.updateStatus(status, reason);
             productJpaRepository.save(entity);
         });
     }

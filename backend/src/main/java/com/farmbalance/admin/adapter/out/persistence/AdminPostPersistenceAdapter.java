@@ -19,9 +19,18 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private final RowMapper<AdminPost> rowMapper = (rs, rowNum) -> AdminPost.builder()
+    private final RowMapper<AdminPost> rowMapper = (rs, rowNum) -> {
+        int commentCount = 0;
+        try {
+            commentCount = rs.getInt("comment_count");
+        } catch (Exception e) {
+            // Ignore if not present
+        }
+        return AdminPost.builder()
             .id(rs.getLong("id"))
             .authorId(rs.getLong("author_id"))
+            .authorNickname(rs.getString("author_nickname"))
+            .authorEmail(rs.getString("author_email"))
             .categoryId(rs.getLong("category_id"))
             .title(rs.getString("title"))
             .content(rs.getString("content"))
@@ -30,26 +39,32 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
             .createdAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null)
             .updatedAt(rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null)
             .deletedAt(rs.getTimestamp("deleted_at") != null ? rs.getTimestamp("deleted_at").toLocalDateTime() : null)
+            .isHidden(rs.getBoolean("is_hidden"))
+            .statusReason(rs.getString("status_reason"))
+            .commentCount(commentCount)
             .build();
+    };
 
     @Override
     public List<AdminPost> findAll() {
-        String sql = "SELECT * FROM posts ORDER BY created_at DESC";
+        String sql = "SELECT p.*, u.name as author_nickname, u.email as author_email, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) as comment_count FROM posts p LEFT JOIN users u ON p.author_id = u.id ORDER BY p.created_at DESC";
         return jdbcTemplate.query(sql, rowMapper);
     }
 
     @Override
     public List<AdminPost> findByFilter(String keyword, String status, int offset, int limit) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM posts WHERE 1=1 ");
+        StringBuilder sql = new StringBuilder("SELECT p.*, u.name as author_nickname, u.email as author_email, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) as comment_count FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE 1=1 ");
         if (keyword != null && !keyword.isBlank()) {
-            sql.append("AND title LIKE '%").append(keyword).append("%' ");
+            sql.append("AND p.title LIKE '%").append(keyword).append("%' ");
         }
         if ("ACTIVE".equalsIgnoreCase(status)) {
-            sql.append("AND deleted_at IS NULL ");
+            sql.append("AND p.deleted_at IS NULL AND p.is_hidden = false ");
+        } else if ("HIDDEN".equalsIgnoreCase(status)) {
+            sql.append("AND p.is_hidden = true ");
         } else if ("DELETED".equalsIgnoreCase(status)) {
-            sql.append("AND deleted_at IS NOT NULL ");
+            sql.append("AND p.deleted_at IS NOT NULL ");
         }
-        sql.append("ORDER BY created_at DESC LIMIT ? OFFSET ?");
+        sql.append("ORDER BY p.created_at DESC LIMIT ? OFFSET ?");
         return jdbcTemplate.query(sql.toString(), rowMapper, limit, offset);
     }
 
@@ -60,7 +75,9 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
             sql.append("AND title LIKE '%").append(keyword).append("%' ");
         }
         if ("ACTIVE".equalsIgnoreCase(status)) {
-            sql.append("AND deleted_at IS NULL ");
+            sql.append("AND deleted_at IS NULL AND is_hidden = false ");
+        } else if ("HIDDEN".equalsIgnoreCase(status)) {
+            sql.append("AND is_hidden = true ");
         } else if ("DELETED".equalsIgnoreCase(status)) {
             sql.append("AND deleted_at IS NOT NULL ");
         }
@@ -70,14 +87,40 @@ public class AdminPostPersistenceAdapter implements AdminPostPort {
 
     @Override
     public Optional<AdminPost> findById(Long id) {
-        String sql = "SELECT * FROM posts WHERE id = ? AND deleted_at IS NULL";
+        String sql = "SELECT p.*, u.name as author_nickname, u.email as author_email, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) as comment_count FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE p.id = ?";
         List<AdminPost> result = jdbcTemplate.query(sql, rowMapper, id);
         return result.stream().findFirst();
     }
 
     @Override
+    public void hide(Long id, String reason) {
+        String sql = "UPDATE posts SET is_hidden = true, status_reason = ?, updated_at = NOW() WHERE id = ?";
+        jdbcTemplate.update(sql, reason, id);
+    }
+
+    @Override
+    public void bulkDelete(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return;
+        String inSql = String.join(",", java.util.Collections.nCopies(ids.size(), "?"));
+        String sql = String.format("UPDATE posts SET deleted_at = NOW(), updated_at = NOW() WHERE is_hidden = true AND id IN (%s)", inSql);
+        jdbcTemplate.update(sql, ids.toArray());
+    }
+
+    @Override
+    public int deleteOldHidden(java.time.LocalDateTime threshold) {
+        String sql = "UPDATE posts SET deleted_at = NOW(), updated_at = NOW() WHERE is_hidden = true AND deleted_at IS NULL AND updated_at < ?";
+        return jdbcTemplate.update(sql, threshold);
+    }
+
+    @Override
     public void delete(Long id) {
         String sql = "UPDATE posts SET deleted_at = NOW(), updated_at = NOW() WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+    }
+
+    @Override
+    public void restore(Long id) {
+        String sql = "UPDATE posts SET deleted_at = NULL, is_hidden = false, status_reason = NULL, updated_at = NOW() WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
 

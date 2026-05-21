@@ -43,6 +43,13 @@ public class PostEntity extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "is_hidden")
+    @Builder.Default
+    private boolean isHidden = false;
+
+    @Column(name = "status_reason", length = 500)
+    private String statusReason;
+
     public Post toDomain() {
         return Post.builder()
                 .id(this.id)
@@ -55,6 +62,8 @@ public class PostEntity extends BaseTimeEntity {
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getUpdatedAt())
                 .deletedAt(this.deletedAt)
+                .isHidden(this.isHidden)
+                .statusReason(this.statusReason)
                 .build();
     }
 
@@ -68,6 +77,8 @@ public class PostEntity extends BaseTimeEntity {
                 .viewCount(post.getViewCount())
                 .isNotice(post.isNotice())
                 .deletedAt(post.getDeletedAt())
+                .isHidden(post.isHidden())
+                .statusReason(post.getStatusReason())
                 .build();
         
         if (post.getCreatedAt() != null) {

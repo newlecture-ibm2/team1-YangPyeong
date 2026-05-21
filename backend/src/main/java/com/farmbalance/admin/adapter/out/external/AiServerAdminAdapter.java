@@ -3,34 +3,31 @@ package com.farmbalance.admin.adapter.out.external;
 import com.farmbalance.admin.application.port.out.AdminAiPort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Component
 public class AiServerAdminAdapter implements AdminAiPort {
 
-    private final RestTemplate restTemplate;
+    private final HttpClient httpClient;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @Value("${ai.server.url:http://ai-server:8000}")
     private String aiServerUrl;
 
-    public AiServerAdminAdapter(RestTemplateBuilder builder) {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(Duration.ofSeconds(10));
-        factory.setReadTimeout(Duration.ofSeconds(30));
-        this.restTemplate = builder.requestFactory(() -> factory).build();
+    public AiServerAdminAdapter(com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+        this.httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
     }
 
     @Override
@@ -38,16 +35,28 @@ public class AiServerAdminAdapter implements AdminAiPort {
         if (items.isEmpty()) return Collections.emptyList();
         
         String url = aiServerUrl + "/api/admin/audit-shop-batch";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        
-        Map<String, Object> requestBody = Map.of("items", items);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
         
         try {
-            ResponseEntity<ShopAuditBatchResponse> response = restTemplate.postForEntity(url, entity, ShopAuditBatchResponse.class);
-            if (response.getBody() != null && response.getBody().results() != null) {
-                return response.getBody().results();
+            ShopAuditBatchRequestDto requestBody = new ShopAuditBatchRequestDto(items);
+            String jsonStr = objectMapper.writeValueAsString(requestBody);
+            log.info("Sending Shop Audit Request: {}", jsonStr);
+            
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Content-Type", "application/json; charset=utf-8")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonStr))
+                    .build();
+                    
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                ShopAuditBatchResponse res = objectMapper.readValue(response.body(), ShopAuditBatchResponse.class);
+                if (res != null && res.results() != null) {
+                    return res.results();
+                }
+            } else {
+                log.error("AI Server Shop Audit returned status {}: {}", response.statusCode(), response.body());
             }
         } catch (Exception e) {
             log.error("AI Server Shop Audit Error: ", e);
@@ -60,16 +69,28 @@ public class AiServerAdminAdapter implements AdminAiPort {
         if (items.isEmpty()) return Collections.emptyList();
         
         String url = aiServerUrl + "/api/admin/moderate-post-batch";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        
-        Map<String, Object> requestBody = Map.of("items", items);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
         
         try {
-            ResponseEntity<ModerationBatchResponse> response = restTemplate.postForEntity(url, entity, ModerationBatchResponse.class);
-            if (response.getBody() != null && response.getBody().results() != null) {
-                return response.getBody().results();
+            ModerationBatchRequestDto requestBody = new ModerationBatchRequestDto(items);
+            String jsonStr = objectMapper.writeValueAsString(requestBody);
+            log.info("Sending Moderation Request: {}", jsonStr);
+            
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Content-Type", "application/json; charset=utf-8")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonStr))
+                    .build();
+                    
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                ModerationBatchResponse res = objectMapper.readValue(response.body(), ModerationBatchResponse.class);
+                if (res != null && res.results() != null) {
+                    return res.results();
+                }
+            } else {
+                log.error("AI Server Moderation returned status {}: {}", response.statusCode(), response.body());
             }
         } catch (Exception e) {
             log.error("AI Server Moderation Error: ", e);
@@ -77,6 +98,70 @@ public class AiServerAdminAdapter implements AdminAiPort {
         return Collections.emptyList();
     }
 
-    record ShopAuditBatchResponse(List<ShopAuditResultDto> results) {}
-    record ModerationBatchResponse(List<ModerationResultDto> results) {}
+    @Override
+    public boolean syncRagData() {
+        String url = aiServerUrl + "/api/admin/sync-rag";
+        try {
+            log.info("Sending RAG Sync Request to AI Server");
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(60)) // RAG 인제스천은 오래 걸릴 수 있음
+                    .POST(HttpRequest.BodyPublishers.noBody())
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                log.info("RAG Sync successful: {}", response.body());
+                return true;
+            } else {
+                log.error("AI Server RAG Sync returned status {}: {}", response.statusCode(), response.body());
+            }
+        } catch (Exception e) {
+            log.error("AI Server RAG Sync Error: ", e);
+        }
+        return false;
+    }
+
+    @Override
+    public List<CommentModerationResultDto> moderateCommentBatch(List<CommentModerationItemDto> items) {
+        if (items.isEmpty()) return Collections.emptyList();
+        
+        String url = aiServerUrl + "/api/admin/moderate-comment-batch";
+        
+        try {
+            CommentModerationBatchRequestDto requestBody = new CommentModerationBatchRequestDto(items);
+            String jsonStr = objectMapper.writeValueAsString(requestBody);
+            log.info("Sending Comment Moderation Request: {}", jsonStr);
+            
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Content-Type", "application/json; charset=utf-8")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonStr))
+                    .build();
+                    
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                CommentModerationBatchResponse res = objectMapper.readValue(response.body(), CommentModerationBatchResponse.class);
+                if (res != null && res.results() != null) {
+                    return res.results();
+                }
+            } else {
+                log.error("AI Server Comment Moderation returned status {}: {}", response.statusCode(), response.body());
+            }
+        } catch (Exception e) {
+            log.error("AI Server Comment Moderation Error: ", e);
+        }
+        return Collections.emptyList();
+    }
+
+    public record ShopAuditBatchRequestDto(List<ShopAuditItemDto> items) {}
+    public record ShopAuditBatchResponse(List<ShopAuditResultDto> results) {}
+
+    public record ModerationBatchRequestDto(List<ModerationItemDto> items) {}
+    public record ModerationBatchResponse(List<ModerationResultDto> results) {}
+
+    public record CommentModerationBatchRequestDto(List<CommentModerationItemDto> items) {}
+    public record CommentModerationBatchResponse(List<CommentModerationResultDto> results) {}
 }

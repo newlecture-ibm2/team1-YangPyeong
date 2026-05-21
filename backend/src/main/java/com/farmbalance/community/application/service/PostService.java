@@ -58,9 +58,19 @@ public class PostService implements CreatePostUseCase, LoadPostUseCase, UpdatePo
     }
 
     @Override
-    public Post getPostDetail(Long postId) {
-        Post post = postPort.findActiveById(postId)
+    public Post getPostDetail(Long postId, Long requesterId, boolean isAdmin) {
+        Post post = postPort.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+
+        if (post.getDeletedAt() != null) {
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
+        }
+
+        if (post.isHidden()) {
+            if (!isAdmin && (requesterId == null || !post.getAuthorId().equals(requesterId))) {
+                throw new BusinessException(ErrorCode.POST_NOT_FOUND); // 접근 불가
+            }
+        }
 
         post.increaseViewCount();
         return postPort.save(post);

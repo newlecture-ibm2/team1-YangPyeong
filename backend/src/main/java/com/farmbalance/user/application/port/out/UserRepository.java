@@ -55,7 +55,7 @@ public interface UserRepository {
     void updateRole(Long id, String role);
 
     /**
-     * 사용자 상태 변경
+     * 사용자 상태 및 사유 변경
      */
-    void updateStatus(Long id, String status);
+    void updateStatus(Long id, String status, String reason);
 }

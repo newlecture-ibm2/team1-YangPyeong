@@ -108,8 +108,13 @@ public class PostController {
 
     @Operation(summary = "게시글 상세 조회")
     @GetMapping("/{postId}")
-    public ApiResponse<PostResponse> getPost(@PathVariable Long postId) {
-        com.farmbalance.community.domain.model.Post post = loadPostUseCase.getPostDetail(postId);
+    public ApiResponse<PostResponse> getPost(@PathVariable Long postId, Authentication authentication) {
+        Long requesterId = null;
+        if (authentication != null && authentication.isAuthenticated() && !authentication.getPrincipal().equals("anonymousUser")) {
+            requesterId = getUserId(authentication);
+        }
+        
+        com.farmbalance.community.domain.model.Post post = loadPostUseCase.getPostDetail(postId, requesterId, isAdmin(authentication));
         return ApiResponse.ok(PostResponse.fromDomain(
                 post,
                 loadPostCategoryPort.findNameById(post.getCategoryId()),

@@ -4,7 +4,7 @@ Farm Agent: 농장 데이터 및 재배 기술 지원 전문가
 import os
 import logging
 from typing import Annotated, TypedDict, List
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langgraph.graph import StateGraph, END, START
 from langgraph.prebuilt import ToolNode
 
@@ -39,7 +39,7 @@ FARM_AGENT_SYSTEM_PROMPT = """
 9. 면적은 항상 m2(제곱미터) 단위를 기본으로 설명하되, 필요시 평수 환산(1평 ≒ 3.3m2)을 곁들여주면 좋습니다.
 """
 
-def get_farm_agent():
+def get_farm_agent(farm_id: int = 0):
     """Farm Agent 인스턴스를 생성하여 반환합니다."""
     # 분석 능력이 좋은 모델을 사용합니다.
     llm = get_llm()
@@ -51,29 +51,20 @@ def get_farm_agent():
         get_nongsaro_variety,
         get_nongsaro_disaster
     ]
+    from langgraph.prebuilt import create_react_agent
+    from langchain_core.messages import SystemMessage
     
-    # Tool 호출 기능을 포함한 LLM 바인딩
-    llm_with_tools = llm.get_chat_model(temperature=0.1).bind_tools(tools)
-    
-    def agent_node(state):
-        messages = [AIMessage(content=FARM_AGENT_SYSTEM_PROMPT)] + state["messages"]
-        response = llm_with_tools.invoke(messages)
-        return {"messages": [response]}
+    def farm_agent_prompt(state) -> list:
+        from langchain_core.messages import SystemMessage
+        base_prompt = FARM_AGENT_SYSTEM_PROMPT
+        if farm_id:
+            base_prompt += f"\n\n[현재 로그인된 사용자 정보]\n- 사용자의 농장 ID: {farm_id}\n※ 도구 호출 시 이 농장 ID를 인자로 사용하세요. 사용자에게 농장 ID를 묻지 마세요."
+        else:
+            base_prompt += "\n\n[현재 로그인된 사용자 정보]\n- 현재 사용자는 등록된 농장(farm_id)이 없습니다.\n※ 만약 사용자가 '내 농장 상태', '내 재배 이력' 등 본인의 특정 농장 데이터를 요구하는 질문을 한다면, 농장 ID를 묻지 말고 '농장 등록을 먼저 진행해 주세요'라고 안내하세요.\n※ 단, 일반적인 농사 지식(예: 고구마 심는 법, 품종 추천 등)을 묻는 질문에는 농장 유무와 상관없이 도구를 사용하여 정상적으로 답변하세요."
+        return [SystemMessage(content=base_prompt)] + state["messages"]
 
-    # 그래프 구성
-    workflow = StateGraph(dict)
-    workflow.add_node("agent", agent_node)
-    workflow.add_node("tools", ToolNode(tools))
-    
-    workflow.add_edge(START, "agent")
-    
-    def should_continue(state):
-        last_message = state["messages"][-1]
-        if last_message.tool_calls:
-            return "tools"
-        return END
-
-    workflow.add_conditional_edges("agent", should_continue)
-    workflow.add_edge("tools", "agent")
-    
-    return workflow.compile()
+    return create_react_agent(
+        model=llm.get_chat_model(temperature=0.1),
+        tools=tools,
+        prompt=farm_agent_prompt
+    )

@@ -1,8 +1,10 @@
 package com.farmbalance.global.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * 모든 API 응답의 공통 래퍼.
@@ -20,13 +22,15 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
-    private final boolean success;
-    private final T data;
-    private final ErrorDetail error;
-    private final Meta meta;
+    private boolean success;
+    private T data;
+    private ErrorDetail error;
+    private Meta meta;
 
     /** 성공 응답 (데이터만) */
     public static <T> ApiResponse<T> ok(T data) {

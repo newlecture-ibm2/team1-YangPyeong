@@ -11,5 +11,14 @@ public interface AdminCommentPort {
 
     List<AdminComment> findByPostId(Long postId);
 
+    java.util.Optional<AdminComment> findById(Long id);
+    void hide(Long id, String reason);
+    void bulkDelete(List<Long> ids);
+    int deleteOldHidden(java.time.LocalDateTime threshold);
     void delete(Long id);
+
+    void restore(Long id);
+    List<AdminComment> findRecentActiveComments(int limit);
+    List<AdminComment> findByFilter(String keyword, String status, int offset, int limit);
+    long countByFilter(String keyword, String status);
 }

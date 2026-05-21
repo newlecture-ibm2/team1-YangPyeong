@@ -128,4 +128,5 @@ export interface SellerProduct {
   categoryName: string;
   description: string;
   createdAt: string;
+  statusReason?: string;
 }

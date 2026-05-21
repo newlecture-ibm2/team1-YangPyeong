@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface LoadPostUseCase {
     Page<Post> getPosts(List<Long> categoryIds, String keyword, String searchType, Pageable pageable);
-    Post getPostDetail(Long postId);
+    Post getPostDetail(Long postId, Long requesterId, boolean isAdmin);
 }

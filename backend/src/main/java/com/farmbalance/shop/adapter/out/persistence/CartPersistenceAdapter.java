@@ -112,6 +112,6 @@ public class CartPersistenceAdapter implements CartRepository {
 
         return new Product(p.getId(), p.getSellerId(), null, p.getCategoryId(), categoryName,
                 p.getName(), p.getPrice(), p.getStock(), p.getUnitKg(), p.getDescription(), p.getSalesCount(),
-                ProductStatus.valueOf(p.getStatus()), imageUrls, p.getCreatedAt());
+                ProductStatus.valueOf(p.getStatus()), p.getStatusReason(), imageUrls, p.getCreatedAt());
     }
 }

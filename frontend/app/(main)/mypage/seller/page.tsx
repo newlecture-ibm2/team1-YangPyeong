@@ -166,6 +166,17 @@ export default function SellerProductsPage() {
                     <td className={styles.tdProduct}>
                       <span className={styles.productName}>{product.name}</span>
                       <span className={styles.productCategory}>{product.categoryName}</span>
+                      {((product.status === 'INACTIVE' && product.statusReason) || product.status === 'REJECTED') && (
+                        <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '6px', fontSize: '0.85rem', color: '#B91C1C' }}>
+                          <p style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                            🚨 관리자에 의해 {product.status === 'REJECTED' ? '반려' : '판매 중지(숨김)'} 처리된 상품입니다.
+                          </p>
+                          <p style={{ marginBottom: '8px' }}>사유: {product.statusReason || '규정 위반'}</p>
+                          <p style={{ fontSize: '0.8rem', color: '#7F1D1D' }}>
+                            💡 이 상품은 임의로 상태를 변경하거나 수정할 수 없습니다. 조치가 필요하거나 이의가 있으신 경우 고객센터로 문의해주세요.
+                          </p>
+                        </div>
+                      )}
                     </td>
                     <td>{formatPrice(product.price)}</td>
                     <td>
@@ -178,6 +189,10 @@ export default function SellerProductsPage() {
                       {(product.status === 'PENDING' || product.status === 'REJECTED') ? (
                         <Badge variant={statusInfo.variant as any}>
                           {statusInfo.label}
+                        </Badge>
+                      ) : (product.status === 'INACTIVE' && product.statusReason) ? (
+                        <Badge variant="red">
+                          숨김(제재)
                         </Badge>
                       ) : (
                         <Dropdown
@@ -196,13 +211,17 @@ export default function SellerProductsPage() {
                     <td>
                       <div className={styles.actionBtns}>
                         <span
-                          title={product.status === 'PENDING' ? '검수중: 가격·재고만 수정 가능합니다.' : undefined}
+                          title={
+                            product.statusReason ? '제재된 상품은 수정할 수 없습니다.' :
+                            product.status === 'PENDING' ? '검수중: 가격·재고만 수정 가능합니다.' : undefined
+                          }
                           style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}
                         >
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => router.push(`/mypage/seller/${product.id}/edit`)}
+                            disabled={!!product.statusReason}
                           >
                             수정
                           </Button>
@@ -214,7 +233,8 @@ export default function SellerProductsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(product)}
-                          style={{ color: 'var(--color-danger)' }}
+                          style={{ color: !!product.statusReason ? 'var(--color-gray-400)' : 'var(--color-danger)' }}
+                          disabled={!!product.statusReason}
                         >
                           삭제
                         </Button>

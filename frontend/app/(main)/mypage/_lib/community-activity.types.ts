@@ -7,6 +7,9 @@ export interface MyPostActivity {
   commentCount: number;
   createdAt: string;
   updatedAt: string;
+  isHidden?: boolean;
+  statusReason?: string | null;
+  hiddenMessage?: string | null;
 }
 
 export interface MyCommentActivity {
@@ -17,6 +20,9 @@ export interface MyCommentActivity {
   accepted: boolean;
   createdAt: string;
   updatedAt: string;
+  isHidden?: boolean;
+  statusReason?: string | null;
+  hiddenMessage?: string | null;
 }
 
 export interface MyReportActivity {

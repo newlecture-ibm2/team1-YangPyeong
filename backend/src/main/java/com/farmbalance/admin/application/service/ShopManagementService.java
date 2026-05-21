@@ -52,11 +52,11 @@ public class ShopManagementService implements ManageShopUseCase {
 
     @Override
     @Transactional
-    public void updateProductStatus(Long productId, String status) {
+    public void updateProductStatus(Long productId, String status, String reason) {
         productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        productRepository.updateStatus(productId, status);
+        productRepository.updateStatus(productId, status, reason);
     }
 
     @Override
@@ -90,10 +90,10 @@ public class ShopManagementService implements ManageShopUseCase {
         int approvedCount = 0;
         for (ShopAuditResultDto result : results) {
             if (result.valid()) {
-                productRepository.updateStatus(result.productId(), "ACTIVE");
+                productRepository.updateStatus(result.productId(), "ACTIVE", null);
                 approvedCount++;
             }
-            // 비정상(false)인 경우는 PENDING 그대로 둡니다.
+            // 비정상(false)인 경우는 PENDING 그대로 둡니다. (또는 REJECTED, INACTIVE + reason으로 처리할 수 있음. 현재는 PENDING)
         }
 
         return approvedCount;

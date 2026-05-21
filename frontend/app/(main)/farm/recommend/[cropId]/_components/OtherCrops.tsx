@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { CropRecommendation } from '../../_lib/recommend.types';
+import { recommendItemKey } from '../../_lib/recommend.utils';
 import MiniRecommendCard from '../../_components/MiniRecommendCard/MiniRecommendCard';
 import styles from '../detail.module.css';
 
@@ -18,8 +19,8 @@ export default function OtherCrops({ recommendations, farmId }: OtherCropsProps)
         <Link href="/farm/recommend" className={styles.viewAllLink}>전체 보기 →</Link>
       </div>
       <div className={styles.miniCardGrid}>
-        {recommendations.map((r) => (
-          <MiniRecommendCard key={r.cropId} rec={r} farmId={farmId} />
+        {recommendations.map((r, idx) => (
+          <MiniRecommendCard key={recommendItemKey(r, 'other', idx)} rec={r} farmId={farmId} />
         ))}
       </div>
     </div>

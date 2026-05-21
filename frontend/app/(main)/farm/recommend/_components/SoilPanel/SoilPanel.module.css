@@ -1,31 +1,184 @@
 /* SoilPanel — 스타일 */
 
-.panel {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+.wrap {
   margin-bottom: 32px;
   animation: fadeInUp 0.5s ease-out both;
 }
 
+.panel {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
 .card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   background: var(--color-surface);
   border-radius: var(--radius-md);
   padding: 20px 24px;
   text-align: center;
   border: 1px solid var(--color-border);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.2s ease;
+  text-decoration: none;
+  color: inherit;
 }
 
-.card:hover {
+.editable {
+  cursor: default;
+}
+
+.readonly {
+  cursor: default;
+}
+
+.editable:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(45, 106, 79, 0.12);
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
-.icon   { font-size: 28px; margin-bottom: 8px; }
-.label  { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-secondary); margin-bottom: 4px; }
-.value  { font-family: var(--font-serif); font-size: 28px; font-weight: 700; color: var(--color-primary); }
-.unit   { font-family: var(--font-sans); font-size: 14px; color: var(--color-text-secondary); font-weight: 400; }
+.icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+  margin-bottom: 10px;
+}
+
+/* ── 통일 입력 박스 ── */
+.fieldBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.fieldBoxReadonly {
+  background: #f9fafb;
+}
+
+.fieldBoxSuffix .fieldControl {
+  padding-right: 40px;
+}
+
+.fieldBoxSuffix .fieldValue {
+  padding-right: 28px;
+}
+
+.fieldControl {
+  width: 100%;
+  min-height: 46px;
+  padding: 8px 4px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: center;
+  outline: none;
+}
+
+.fieldControl::placeholder {
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.fieldSelect {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+  padding-right: 22px;
+}
+
+.fieldValue {
+  width: 100%;
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.fieldSuffix {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 0 4px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.saveButton {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.saveButton:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.saveButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
 .delay1 { animation: fadeInUp 0.5s ease-out 0.1s both; }
 .delay2 { animation: fadeInUp 0.5s ease-out 0.2s both; }
@@ -38,4 +191,13 @@
 
 @media (max-width: 768px) {
   .panel { grid-template-columns: 1fr 1fr; }
+
+  .footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .saveButton {
+    width: 100%;
+  }
 }

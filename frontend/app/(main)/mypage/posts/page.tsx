@@ -15,11 +15,12 @@ export default function MyPostsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState('ALL');
 
-  const load = async (nextPage: number) => {
+  const load = async (nextPage: number, currentStatus = status) => {
     try {
       setLoading(true);
-      const res = await getMyPosts(nextPage, POSTS_PAGE_SIZE);
+      const res = await getMyPosts(nextPage, POSTS_PAGE_SIZE, currentStatus);
       setItems(res.items);
       setPage(nextPage);
       const pages = Math.max(1, Math.ceil(res.total / res.size));
@@ -33,12 +34,23 @@ export default function MyPostsPage() {
   };
 
   useEffect(() => {
-    load(0);
-  }, []);
+    load(0, status);
+  }, [status]);
 
   return (
     <Card>
       <div className={styles.container}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+          <select 
+            value={status} 
+            onChange={(e) => setStatus(e.target.value)}
+            style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--color-border)' }}
+          >
+            <option value="ALL">전체 상태</option>
+            <option value="ACTIVE">활성</option>
+            <option value="HIDDEN">숨김(격리)</option>
+          </select>
+        </div>
         {loading && items.length === 0 && <div className={styles.loading}>불러오는 중...</div>}
         {error && <div className={styles.errorBanner}>{error}</div>}
         {!loading && !error && items.length === 0 && <div className={styles.empty}>{POSTS_EMPTY_TEXT}</div>}
