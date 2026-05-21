@@ -207,6 +207,55 @@ def _check_guest_shortcircuit(message: str, has_jwt: bool) -> ChatResponse | Non
     return None
 
 
+# ════════════════════════════════════════════════════════════════════
+# 단순 페이지 이동 short-circuit — 에이전트 호출 없이 즉시 NAVIGATE
+# 로그인/비로그인 모두 적용 (공개 페이지만)
+# ════════════════════════════════════════════════════════════════════
+
+_PAGE_NAV_MAP: dict[str, tuple[str, str]] = {
+    # 키워드: (URL, 라벨)
+    "수다방": ("/community", "수다방"),
+    "수다방 이동": ("/community", "수다방"),
+    "커뮤니티": ("/community", "커뮤니티"),
+    "커뮤니티 이동": ("/community", "커뮤니티"),
+    "커뮤니티로": ("/community", "커뮤니티"),
+    "장터": ("/shop", "장터"),
+    "장터 이동": ("/shop", "장터"),
+    "장터로": ("/shop", "장터"),
+    "상점": ("/shop", "장터"),
+    "상점 이동": ("/shop", "장터"),
+    "상점으로": ("/shop", "장터"),
+    "동네구경": ("/stores", "동네구경"),
+    "동네구경 이동": ("/stores", "동네구경"),
+    "동네구경으로": ("/stores", "동네구경"),
+    "정책": ("/policy", "정책"),
+    "정책 이동": ("/policy", "정책"),
+    "정책으로": ("/policy", "정책"),
+    "정책 추천": ("/policy/recommend", "정책 추천"),
+    "시세": ("/balance", "수급·시세"),
+    "시세 이동": ("/balance", "수급·시세"),
+    "수급": ("/balance", "수급·시세"),
+}
+
+
+def _check_page_navigation(message: str) -> ChatResponse | None:
+    """단순 페이지 이동 요청을 즉시 처리. 에이전트 호출 불필요."""
+    lower = message.strip().lower()
+
+    # 정확 매칭 우선 (긴 키워드부터)
+    for kw in sorted(_PAGE_NAV_MAP, key=len, reverse=True):
+        if kw in lower:
+            url, label = _PAGE_NAV_MAP[kw]
+            return ChatResponse(
+                reply=f"네, {label}(으)로 이동할게요. 🚀",
+                actions=[
+                    ChatAction(type="NAVIGATE", url=url),
+                ],
+            )
+
+    return None
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
     logger.info("챗봇 요청 수신 [userId=%s, category=%s]", request.userId, request.category)
@@ -221,6 +270,12 @@ async def chat(request: ChatRequest) -> ChatResponse:
         if guest_response:
             logger.info("[Chat] 비회원 개인화 질문 short-circuit: '%s'", request.message[:40])
             return guest_response
+
+        # ── 단순 페이지 이동 short-circuit (에이전트 호출 없이 즉시 NAVIGATE) ──
+        nav_response = _check_page_navigation(request.message)
+        if nav_response:
+            logger.info("[Chat] 페이지 이동 short-circuit: '%s'", request.message[:40])
+            return nav_response
 
         # ── PendingIntent 처리 (다중 턴 슬롯 채우기) ──
         if request.pending_intent:
@@ -376,6 +431,13 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
             if guest_response:
                 logger.info("[ChatStream] 비회원 개인화 질문 short-circuit: '%s'", request.message[:40])
                 yield f"event: result\ndata: {json.dumps(guest_response.model_dump(), ensure_ascii=False)}\n\n"
+                return
+
+            # ── 단순 페이지 이동 short-circuit (스트리밍) ──
+            nav_response = _check_page_navigation(request.message)
+            if nav_response:
+                logger.info("[ChatStream] 페이지 이동 short-circuit: '%s'", request.message[:40])
+                yield f"event: result\ndata: {json.dumps(nav_response.model_dump(), ensure_ascii=False)}\n\n"
                 return
 
             # PendingIntent 처리 (스트리밍에서는 즉시 결과 반환)
