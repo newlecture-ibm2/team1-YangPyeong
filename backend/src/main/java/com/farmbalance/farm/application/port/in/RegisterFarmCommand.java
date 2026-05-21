@@ -1,11 +1,15 @@
 package com.farmbalance.farm.application.port.in;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import java.util.List;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RegisterFarmCommand {
     private Long userId; // 인증된 사용자의 ID
     private String name;
@@ -29,6 +33,8 @@ public class RegisterFarmCommand {
 
     @Getter
     @Builder
+@NoArgsConstructor
+@AllArgsConstructor
     public static class CultivationDetail {
         private Long cropId;
         private Double area;              // 재배 면적 (㎡)

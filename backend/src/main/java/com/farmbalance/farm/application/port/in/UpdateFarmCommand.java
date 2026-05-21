@@ -1,11 +1,15 @@
 package com.farmbalance.farm.application.port.in;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import java.util.List;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdateFarmCommand {
     private Long farmId;
     private String name;

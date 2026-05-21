@@ -1,7 +1,9 @@
 package com.farmbalance.admin.application.port.in.dto;
 
 import com.farmbalance.shop.domain.Order;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -10,6 +12,8 @@ import java.util.stream.Collectors;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AdminOrderDto {
     private Long id;
     private Long buyerId;
@@ -25,6 +29,8 @@ public class AdminOrderDto {
 
     @Getter
     @Builder
+@NoArgsConstructor
+@AllArgsConstructor
     public static class AdminOrderItemDto {
         private Long id;
         private Long productId;

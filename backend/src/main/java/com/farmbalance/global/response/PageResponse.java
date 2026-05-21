@@ -1,6 +1,8 @@
 package com.farmbalance.global.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.util.List;
@@ -10,6 +12,8 @@ import java.util.List;
  */
 @Getter
 @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class PageResponse<T> {
 
     private final List<T> content;
