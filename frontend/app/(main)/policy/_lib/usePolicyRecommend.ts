@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import type { PolicyRecommendResponse } from './policy.types';
 
+/** 클라이언트 쿠키에서 인증 세션 존재 여부 확인 */
+function isAuthenticated(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.cookie.includes('fb-session=');
+}
+
 export function usePolicyRecommend() {
   const [data, setData] = useState<PolicyRecommendResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -8,6 +14,13 @@ export function usePolicyRecommend() {
   const [statusCode, setStatusCode] = useState<number>(200);
 
   useEffect(() => {
+    // 비회원이면 API 호출 없이 즉시 미리보기 모드 진입
+    if (!isAuthenticated()) {
+      setStatusCode(401);
+      setIsLoading(false);
+      return;
+    }
+
     async function fetchRecommend() {
       try {
         setIsLoading(true);
@@ -38,8 +51,9 @@ export function usePolicyRecommend() {
         } else {
           throw new Error(json.error?.message || '데이터 구조 오류');
         }
-      } catch (err: any) {
-        setError(err.message || '알 수 없는 오류가 발생했습니다.');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+        setError(message);
       } finally {
         setIsLoading(false);
       }

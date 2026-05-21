@@ -57,6 +57,8 @@ public class SecurityConfig {
 
                 // ── 작물 마스터 조회 (일반 사용자 농장등록/재배등록에서 사용) ──
                 .requestMatchers(HttpMethod.GET, "/api/admin/crops", "/api/admin/crops/categories").permitAll()
+                // ── FCM 토큰 관리 ──
+                .requestMatchers("/api/fcm/**").permitAll()
 
                 // ── 관리자 전용 (위 GET 예외 외 나머지) ──
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
