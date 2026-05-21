@@ -1,6 +1,8 @@
 package com.farmbalance.farm.adapter.in.web.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -11,6 +13,8 @@ import java.time.LocalDateTime;
  */
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class HarvestRecordResponse {
     private Long id;
     private Long cultivationRegistrationId;

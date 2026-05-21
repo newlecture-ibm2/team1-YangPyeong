@@ -1,7 +1,9 @@
 package com.farmbalance.admin.application.port.in.dto;
 
 import com.farmbalance.policy.domain.model.PolicyData;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -9,6 +11,8 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class AdminPolicyDataDto {
     private final Long id;
     private final String externalId;

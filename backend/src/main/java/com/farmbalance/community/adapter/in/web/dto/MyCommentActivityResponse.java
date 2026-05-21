@@ -1,13 +1,17 @@
 package com.farmbalance.community.adapter.in.web.dto;
 
 import com.farmbalance.community.domain.model.Comment;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MyCommentActivityResponse {
     private Long commentId;
     private Long postId;

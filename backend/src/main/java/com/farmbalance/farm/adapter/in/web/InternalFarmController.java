@@ -11,6 +11,7 @@ import com.farmbalance.farm.domain.HarvestRecord;
 import com.farmbalance.farm.domain.ShortTermForecast;
 import com.farmbalance.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,16 +29,67 @@ public class InternalFarmController {
     private final LoadHarvestUseCase loadHarvestUseCase;
     private final WeatherRecordPort weatherRecordPort;
 
+    @Value("${app.ai-internal-secret-key:farm-balance-ai-secret-key}")
+    private String aiInternalSecretKey;
+
+    /**
+     * AI 내부 API 키 검증
+     */
+    private boolean isValidApiKey(String apiKey) {
+        return aiInternalSecretKey.equals(apiKey);
+    }
+
+    /**
+     * userId 기반 농장 조회 — AI agent가 farmId를 몰라도 사용자 농장 정보를 조회 가능.
+     * LLM이 farmId를 임의 지정하는 IDOR 취약점을 방지합니다.
+     */
+    @GetMapping("/by-user/{userId}")
+    public ResponseEntity<ApiResponse<FarmAgentSummaryResponse>> getAgentSummaryByUser(
+            @PathVariable Long userId,
+            @RequestHeader(value = "X-AI-Internal-Key", required = false) String apiKey) {
+
+        if (!isValidApiKey(apiKey)) {
+            return ResponseEntity.status(403).body(ApiResponse.fail("E-FM-AUTH-001", "AI 내부 API 키가 유효하지 않습니다."));
+        }
+
+        // userId로 농장 목록 조회 → 첫 번째 농장의 summary 반환
+        List<Farm> farms = loadFarmPort.loadFarmsByUserId(userId);
+        if (farms.isEmpty()) {
+            return ResponseEntity.ok(ApiResponse.fail("E-FM-NOT-FOUND", "등록된 농장이 없습니다."));
+        }
+
+        return buildAgentSummary(farms.get(0).getId());
+    }
+
+    /**
+     * farmId 기반 농장 조회 — 소유권 검증은 AI Key + X-AI-User-Id 헤더로 수행.
+     */
     @GetMapping("/{farmId}/agent-summary")
     public ResponseEntity<ApiResponse<FarmAgentSummaryResponse>> getAgentSummary(
             @PathVariable Long farmId,
-            @RequestHeader(value = "X-AI-Internal-Key", required = false) String apiKey) {
+            @RequestHeader(value = "X-AI-Internal-Key", required = false) String apiKey,
+            @RequestHeader(value = "X-AI-User-Id", required = false) Long requestUserId) {
 
-        // TODO: 환경 변수에서 가져오도록 변경
-        if (!"farm-balance-ai-secret-key".equals(apiKey)) {
-            return ResponseEntity.status(403).build();
+        if (!isValidApiKey(apiKey)) {
+            return ResponseEntity.status(403).body(ApiResponse.fail("E-FM-AUTH-001", "AI 내부 API 키가 유효하지 않습니다."));
         }
 
+        // 소유권 검증: X-AI-User-Id 헤더가 있으면 해당 사용자의 농장인지 확인
+        if (requestUserId != null) {
+            Farm farm = loadFarmUseCase.loadFarmDetail(farmId);
+            if (!requestUserId.equals(farm.getUserId())) {
+                return ResponseEntity.status(403).body(
+                        ApiResponse.fail("E-FM-AUTH-002", "해당 농장에 대한 접근 권한이 없습니다."));
+            }
+        }
+
+        return buildAgentSummary(farmId);
+    }
+
+    /**
+     * 농장 summary 빌드 로직 (공통)
+     */
+    private ResponseEntity<ApiResponse<FarmAgentSummaryResponse>> buildAgentSummary(Long farmId) {
         // 1. 농장 상태 조회
         Farm farm = loadFarmUseCase.loadFarmDetail(farmId);
         Double usedArea = loadFarmPort.sumActiveAreaByFarmId(farmId);

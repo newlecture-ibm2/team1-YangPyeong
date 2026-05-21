@@ -3,6 +3,7 @@ package com.farmbalance.notification.adapter.in.web.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.farmbalance.notification.domain.Notification;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class NotificationResponse {
     private Long id;
     private String type;

@@ -3,7 +3,9 @@ package com.farmbalance.admin.application.port.in.dto;
 import com.farmbalance.farm.domain.Farm;
 import com.farmbalance.farm.domain.FarmDocument;
 import com.farmbalance.user.domain.User;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.util.List;
@@ -11,6 +13,8 @@ import java.util.stream.Collectors;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AdminFarmApprovalDto {
 
     private Long farmId;
@@ -29,6 +33,8 @@ public class AdminFarmApprovalDto {
 
     @Getter
     @Builder
+@NoArgsConstructor
+@AllArgsConstructor
     public static class AdminFarmDocumentDto {
         private String type;
         private String url;

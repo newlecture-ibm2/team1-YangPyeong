@@ -1,6 +1,8 @@
 package com.farmbalance.gov.domain.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -9,6 +11,8 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class Region {
     private final Long id;
     private final String code;

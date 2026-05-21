@@ -1,7 +1,9 @@
 package com.farmbalance.admin.adapter.in.web.dto;
 
 import com.farmbalance.user.domain.User;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -13,6 +15,8 @@ import java.time.LocalDateTime;
  */
 @Getter
 @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class AdminUserResponse {
 
     private final Long id;

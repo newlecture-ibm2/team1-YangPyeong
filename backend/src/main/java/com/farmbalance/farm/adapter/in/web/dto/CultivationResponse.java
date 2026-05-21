@@ -1,7 +1,9 @@
 package com.farmbalance.farm.adapter.in.web.dto;
 
 import com.farmbalance.farm.domain.CultivationRegistration;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -9,6 +11,8 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CultivationResponse {
     private Long id;
     private Long farmId;
