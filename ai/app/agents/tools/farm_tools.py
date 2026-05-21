@@ -6,10 +6,18 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 # 백엔드 URL 및 보안 키 로드 (settings 싱글톤 활용)
-# BACKEND_URL 예: http://localhost:8080
 BACKEND_URL = settings.BACKEND_INTERNAL_URL
 AI_SECRET_KEY = settings.AI_INTERNAL_SECRET_KEY
 HEADERS = {"X-AI-Internal-Key": AI_SECRET_KEY}
+
+
+def _build_headers(user_id: int = 0) -> dict:
+    """AI 내부 인증 헤더 + 소유권 검증용 X-AI-User-Id 헤더를 생성합니다."""
+    h = {"X-AI-Internal-Key": AI_SECRET_KEY}
+    if user_id > 0:
+        h["X-AI-User-Id"] = str(user_id)
+    return h
+
 
 @tool
 async def get_farm_status(farm_id: int):

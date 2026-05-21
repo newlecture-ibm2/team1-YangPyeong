@@ -1,13 +1,17 @@
 package com.farmbalance.admin.application.port.in.dto;
 
 import com.farmbalance.user.domain.User;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class AdminUserDto {
     private final Long id;
     private final String email;

@@ -2,7 +2,9 @@ package com.farmbalance.admin.adapter.in.web.dto;
 
 import com.farmbalance.farm.domain.Farm;
 import com.farmbalance.user.domain.User;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -11,6 +13,8 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AdminFarmApprovalResponse {
 
     // ── 농장 정보 ──

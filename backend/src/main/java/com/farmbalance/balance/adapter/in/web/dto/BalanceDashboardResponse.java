@@ -1,12 +1,16 @@
 package com.farmbalance.balance.adapter.in.web.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.util.List;
 
 @Getter
 @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class BalanceDashboardResponse {
 
     private final List<TownInfo> userTowns;
@@ -17,6 +21,8 @@ public class BalanceDashboardResponse {
 
     @Getter
     @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
     public static class TownInfo {
         private final String code;
         private final String name;
@@ -24,6 +30,8 @@ public class BalanceDashboardResponse {
 
     @Getter
     @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
     public static class CropSupplyItem {
         private final String cropName;
         private final double currentSupplyKg;
@@ -35,6 +43,8 @@ public class BalanceDashboardResponse {
 
     @Getter
     @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
     public static class SupplySummary {
         private final String label;
         private final int farmCount;

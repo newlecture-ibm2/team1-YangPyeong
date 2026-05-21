@@ -135,6 +135,11 @@ DOMAIN_FORCE_KEYWORDS: dict[str, set[str]] = {
         "재배 작물", "재배작물", "재배 등록", "재배등록",
         "농장 등록", "농장등록", "농장 등록할",
         "내 농장 대시보드", "농장 대시보드",
+        # 추천 작물 관련 — balance_agent와 함께 라우팅되도록
+        "뭐 심으면", "뭐심으면", "심으면 좋", "심기 좋은", "심을만한", "심을 만한",
+        "뭐 키우면", "뭐키우면", "키우면 좋", "키울만한",
+        "추천 작물", "추천작물", "추천해줘", "추천해 줘",
+        "요즘 뭐", "지금 뭐",
     },
     "shop_agent": {
         # 장바구니
@@ -143,6 +148,8 @@ DOMAIN_FORCE_KEYWORDS: dict[str, set[str]] = {
         "담아줘", "담아 줘", "담아줄", "담아줄래", "담아봐",
         "넣어줘", "넣어 줘", "넣어줄", "넣어줄래",
         "바로구매", "바로 구매", "결제하기", "구매하기", "살래", "살게",
+        "바로 결제", "바로결제", "그걸로 결제", "이걸로 결제",
+        "그걸로 주문", "이걸로 주문", "그걸로 구매", "이걸로 구매",
         # 장터/상점
         "장터", "장터로", "장터에", "상점", "쇼핑",
         # 주문
@@ -162,6 +169,8 @@ DOMAIN_FORCE_KEYWORDS: dict[str, set[str]] = {
         # 장바구니/상품 상세
         "내 장바구니", "장바구니 확인", "장바구니 조회",
         "상품 상세", "상세 보여", "상세보기", "상세 정보", "상품 정보",
+        # 상품 상세 화면 이동 ("상추 상세설명으로 이동해달라고" 패턴)
+        "상세설명", "상세 설명", "상세화면", "상세 화면", "상세페이지", "상세 페이지",
         # 판매자 상품 수정/삭제/상태변경
         "가격 바꿔", "가격 변경", "가격 수정", "가격을 바꿔", "가격으로 바꿔",
         "재고 바꿔", "재고 변경", "재고 수정", "재고를 바꿔", "재고로 바꿔",
@@ -178,6 +187,10 @@ DOMAIN_FORCE_KEYWORDS: dict[str, set[str]] = {
     "balance_agent": {
         "시세", "가격", "수익", "수급", "공급", "수요", "전망", "돈 될까",
         "도매가", "시장", "예상 수익", "수확량", "수익 분석", "수익분석",
+        # 추천 질문에 수급 데이터도 참고하도록
+        "뭐 심으면", "뭐심으면", "심으면 좋", "심기 좋은",
+        "뭐 키우면", "뭐키우면", "키우면 좋",
+        "추천 작물", "추천작물",
     },
     "farm_agent": {
         "내 농장", "토양", "흙", "면적", "재배 이력", "날씨", "병해충", "작물 관리",
@@ -202,6 +215,7 @@ DOMAIN_CONTEXT_INDICATORS: dict[str, tuple[str, ...]] = {
     "shop_agent": (
         "id=", "productId=", "장바구니", "담아", "담았", "장터",
         "상품", "주문", "결제", "[ACTION:", "PRODUCT_LIST",
+        "진행할까요", "진행하면 되겠죠", "담아드릴까요",  # 상품 확인 질문 패턴
     ),
 }
 
@@ -289,6 +303,19 @@ async def router_node(state: AgentState) -> List[str]:
             logger.info("[Router] 멀티턴 컨텍스트 → %s ('%s')", prev_domain, last_message[:30])
             return [prev_domain]
 
+    # 1.5 컨텍스트 참조어 감지 — "이 상품이 뭔데?" 처럼 짧은 긍정어는 아니지만
+    # 직전 대화를 가리키는 표현이 있으면 직전 도메인으로 라우팅
+    _CONTEXT_REF_WORDS = (
+        "이 상품", "그 상품", "이 물건",
+        "이게 뭐", "이거 뭐", "그거 뭐",
+        "그걸로", "이걸로", "그것으로", "이것으로",  # "좋아 그걸로 결제" 패턴
+    )
+    if any(ref in last_message for ref in _CONTEXT_REF_WORDS):
+        prev_domain = last_bot_domain(state["messages"])
+        if prev_domain:
+            logger.info("[Router] 컨텍스트 참조어 감지 → %s ('%s')", prev_domain, last_message[:30])
+            return [prev_domain]
+
     # 2. 키워드 선제 라우팅 (LLM 오판 방지) — 복수 매칭 지원
     forced = force_routes(last_message)
     if forced:
@@ -363,11 +390,15 @@ def _agent_node_response(
 
 
 def _agent_error_response(domain_label: str) -> dict:
-    """에이전트 호출 실패 시 통일된 에러 응답을 생성합니다."""
+    """에이전트 호출 실패 시 통일된 에러 응답을 생성합니다.
+
+    [AGENT_ERROR] 접두사를 붙여서 Synthesizer가 부분 실패를 인식하고
+    성공한 다른 에이전트 결과를 우선 활용할 수 있도록 합니다.
+    """
     logger.exception("[Orchestrator] %s 에이전트 호출 실패", domain_label)
     return {
         "messages": [AIMessage(
-            content=f"죄송합니다, {domain_label} 처리 중 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+            content=f"[AGENT_ERROR:{domain_label}] 일부 실시간 {domain_label} 데이터 연결이 원활하지 않습니다."
         )]
     }
 
@@ -398,7 +429,7 @@ async def call_farm_agent(state: AgentState):
 async def call_policy_agent(state: AgentState):
     """Policy Agent — 보조금·지원금·정책."""
     try:
-        agent = get_policy_agent()
+        agent = get_policy_agent(state.get("analysis_context"))
         response = await agent.ainvoke({"messages": state["messages"]})
         return _agent_node_response(response["messages"], state)
     except Exception:
@@ -782,7 +813,8 @@ async def _shop_keyword_fallback(
 
     # ── 3순위: 상품 상세 조회 ──
     detail_kws = ("상세 보여", "상세보여", "상세 정보", "상세정보", "상품 정보", "상품정보",
-                  "상세 알려", "상세알려", "상세 조회", "상세보기")
+                  "상세 알려", "상세알려", "상세 조회", "상세보기",
+                  "상세설명", "상세 설명", "상세화면", "상세 화면", "상세페이지", "상세 페이지")
     if any(kw in lower for kw in detail_kws):
         attrs = extract_product_attrs(user_message)
         product_name = attrs.get("product_name")
@@ -1126,16 +1158,33 @@ async def call_account_agent(state: AgentState):
 _FALLBACK_PATTERNS = (
     "다시 시도해", "다시 질문해", "정보를 입력해",
     "어느 지역", "어떤 지역이나 작물", "어떤 작물을 대체",
-    "분석할 농장 이름을", "일시적인 오류", "처리 중 오류",
+    "분석할 농장 이름을",
     "찾지 못했습니다", "일치하는 분석 근거를 찾지",
 )
+
+# [AGENT_ERROR:xxx] 접두사가 있으면 부분 실패로 판별
+_AGENT_ERROR_PREFIX = "[AGENT_ERROR:"
 
 
 def _is_fallback_response(text: str) -> bool:
     """에이전트가 분석 실패/엔티티 누락 시 반환하는 안내 문구인지 판별."""
     if not text or len(text.strip()) < 10:
         return True
+    if text.startswith(_AGENT_ERROR_PREFIX):
+        return True
     return any(p in text for p in _FALLBACK_PATTERNS)
+
+
+def _extract_error_domains(messages: list) -> list[str]:
+    """[AGENT_ERROR:도메인] 접두사에서 실패한 도메인명 추출."""
+    domains = []
+    for msg in messages:
+        if hasattr(msg, 'content') and msg.content.startswith(_AGENT_ERROR_PREFIX):
+            # [AGENT_ERROR:수급 분석] → "수급 분석"
+            end = msg.content.find(']')
+            if end > 0:
+                domains.append(msg.content[len(_AGENT_ERROR_PREFIX):end])
+    return domains
 
 
 SYNTHESIZER_SYSTEM_PROMPT = """당신은 양평군 농업 전문 컨설턴트 매니저입니다.
@@ -1187,23 +1236,37 @@ async def synthesizer_node(state: AgentState):
         chat_model = llm.get_chat_model(temperature=0.5)
 
         # 에이전트 답변 수집 및 Fallback 필터링
-        all_ai_msgs = [msg.content for msg in state["messages"] if isinstance(msg, AIMessage)]
-        valid_responses = [r for r in all_ai_msgs if not _is_fallback_response(r)]
+        all_ai_msgs = [msg for msg in state["messages"] if isinstance(msg, AIMessage)]
+        valid_responses = [msg.content for msg in all_ai_msgs if not _is_fallback_response(msg.content)]
+        failed_domains = _extract_error_domains(all_ai_msgs)
         failed_count = len(all_ai_msgs) - len(valid_responses)
 
         if failed_count > 0:
-            logger.info("[Synthesizer] %d개의 Fallback 응답 필터링됨 (유효: %d개)",
-                        failed_count, len(valid_responses))
+            logger.info("[Synthesizer] %d개의 Fallback 응답 필터링됨 (유효: %d개, 실패 도메인: %s)",
+                        failed_count, len(valid_responses), failed_domains)
 
-        # 유효한 응답이 하나도 없으면 안내 메시지 반환
+        # 유효한 응답이 하나도 없으면 안내 메시지 반환 (CTA 아닌 일반 가이드)
         if not valid_responses:
+            if failed_domains:
+                warning = f"현재 {', '.join(failed_domains)} 데이터 연결이 원활하지 않습니다. "
+            else:
+                warning = ""
             return {"messages": [AIMessage(
-                content="현재 시스템에서 해당 조건의 데이터를 확인하지 못했습니다. "
-                        "질문을 더 구체적으로(예: 작물명, 지역명 포함) 해주시면 "
+                content=f"{warning}질문을 더 구체적으로(예: 작물명, 지역명 포함) 해주시면 "
                         "정확한 분석을 도와드리겠습니다."
             )]}
 
         agent_responses = "\n\n---\n\n".join(valid_responses)
+
+        # 부분 실패 알림 (성공한 결과는 있지만 일부 에이전트가 실패)
+        partial_warning = ""
+        if failed_domains:
+            partial_warning = (
+                f"\n\n[부분 데이터 경고]\n"
+                f"다음 분야의 실시간 데이터 연결이 원활하지 않아 해당 부분은 제한적입니다: "
+                f"{', '.join(failed_domains)}\n"
+                f"성공한 분석 결과를 중심으로 답변을 작성하되, 데이터 제한 사항은 간단히 언급하세요."
+            )
 
         # 공유 컨텍스트 정보를 프롬프트에 첨부
         ctx = state.get("analysis_context", {})
@@ -1212,6 +1275,8 @@ async def synthesizer_node(state: AgentState):
             ctx_parts = []
             if ctx.get("target_crop"):
                 ctx_parts.append(f"분석 대상 작물: {ctx['target_crop']}")
+            if ctx.get("active_crops"):
+                ctx_parts.append(f"재배 중인 작물: {', '.join(ctx['active_crops'])}")
             if ctx.get("target_region"):
                 ctx_parts.append(f"분석 대상 지역: {ctx['target_region']}")
             if ctx.get("soil_info"):
@@ -1227,7 +1292,7 @@ async def synthesizer_node(state: AgentState):
         prompt = [
             SystemMessage(content=SYNTHESIZER_SYSTEM_PROMPT),
             HumanMessage(content=(
-                f"사용자 질문: {user_question}{ctx_summary}\n\n"
+                f"사용자 질문: {user_question}{ctx_summary}{partial_warning}\n\n"
                 f"전문 분석팀 조사 결과 ({len(valid_responses)}건):\n{agent_responses}"
             ))
         ]
@@ -1256,10 +1321,44 @@ def get_main_orchestrator():
     workflow.add_node("account_agent", call_account_agent)
     workflow.add_node("synthesizer", synthesizer_node)  # 답변 합성 노드
 
-    # 라우팅 결과를 state에 기록하는 래퍼 노드
+    # 라우팅 결과를 state에 기록 + ContextResolver (farm context 선조회)
     async def router_with_tracking(state: AgentState):
         routes = await router_node(state)
-        return {"routed_agents": routes}
+
+        # ── ContextResolver: farm_id가 있고 컨텍스트 의존 에이전트가 라우팅된 경우 ──
+        # 병렬 dispatch 전에 농장 정보를 미리 조회하여 analysis_context에 채움
+        # → policy_agent, balance_agent 등이 사용자의 작물/지역을 알 수 있게 됨
+        analysis_context = state.get("analysis_context") or {}
+        farm_id = state.get("farm_id", 0)
+        context_needed = {"policy_agent", "balance_agent", "gov_agent", "farm_agent"}
+
+        if farm_id > 0 and not analysis_context and any(r in context_needed for r in routes):
+            try:
+                import httpx as _httpx
+                from app.config import get_settings as _gs
+                _settings = _gs()
+                async with _httpx.AsyncClient(timeout=3.0) as client:
+                    res = await client.get(
+                        f"{_settings.BACKEND_INTERNAL_URL.rstrip('/')}/api/internal/farms/{farm_id}/agent-summary",
+                        headers={
+                            "X-AI-Internal-Key": _settings.AI_INTERNAL_SECRET_KEY,
+                            "X-AI-User-Id": str(state.get("user_id", 0)),
+                        },
+                    )
+                    if res.status_code == 200:
+                        data = res.json().get("data", {})
+                        status = data.get("farmStatus", {})
+                        active_crops = status.get("activeCrops", [])
+                        if active_crops:
+                            analysis_context["target_crop"] = active_crops[0]
+                            analysis_context["active_crops"] = active_crops
+                        analysis_context["farm_name"] = status.get("name", "")
+                        analysis_context["target_region"] = "양평군"
+                        logger.info("[ContextResolver] farm_id=%s → crops=%s", farm_id, active_crops)
+            except Exception as e:
+                logger.warning("[ContextResolver] farm context 조회 실패: %s", e)
+
+        return {"routed_agents": routes, "analysis_context": analysis_context}
 
     workflow.add_node("router", router_with_tracking)
     workflow.add_edge(START, "router")

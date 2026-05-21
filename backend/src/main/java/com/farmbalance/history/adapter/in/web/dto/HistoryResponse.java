@@ -1,12 +1,16 @@
 package com.farmbalance.history.adapter.in.web.dto;
 
 import com.farmbalance.history.domain.HistoryType;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class HistoryResponse {
     private Long id;
     private Long farmId;

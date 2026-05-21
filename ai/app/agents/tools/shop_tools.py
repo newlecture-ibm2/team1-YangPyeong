@@ -129,9 +129,10 @@ async def search_products(keyword: str, category: Optional[str] = None, limit: i
     # 1건 → 자동 선택 안내 (product_id는 내부 메타로만, 사용자에게는 미노출)
     if len(products) == 1:
         p = products[0]
+        # ⚠️ 상품명을 확인 문장에도 반드시 포함 — LLM이 첫 문장을 요약해도 상품명이 남도록
         return (
             f"'{p['name']}' 한 가지를 찾았어요. (가격 {p['price']:,}원, 재고 {p['stock']}개) "
-            f"이 상품으로 진행하면 되겠죠? " +
+            f"'{p['name']}'으로 진행할까요? " +
             _action({
                 "type": "PRODUCT_LIST",
                 "products": [{

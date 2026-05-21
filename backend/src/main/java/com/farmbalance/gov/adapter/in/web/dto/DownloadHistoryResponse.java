@@ -1,10 +1,14 @@
 package com.farmbalance.gov.adapter.in.web.dto;
 import com.farmbalance.gov.domain.model.DownloadHistory;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import java.time.LocalDateTime;
 
 @Getter @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class DownloadHistoryResponse {
     private final Long id;
     private final Long userId;

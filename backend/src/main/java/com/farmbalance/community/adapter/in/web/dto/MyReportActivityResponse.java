@@ -1,13 +1,17 @@
 package com.farmbalance.community.adapter.in.web.dto;
 
 import com.farmbalance.global.report.domain.Report;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class MyReportActivityResponse {
     private Long reportId;
     private String targetType;

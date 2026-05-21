@@ -244,19 +244,29 @@ export function useCheckout(): UseCheckoutReturn {
 
       const { name, phone, address } = result.data;
 
-      // 주소와 상세주소를 구분자(|||)로 분리
+      // 우편번호, 주소, 상세주소를 구분자(|||)로 분리
+      // 신규 형식: 우편번호|||주소|||상세주소 (3개)
+      // 구형식: 주소|||상세주소 (2개) — 하위 호환 처리
+      let savedPostcode = '';
       let mainAddr = '';
       let detailAddr = '';
       if (address) {
         const parts = address.split('|||');
-        mainAddr = parts[0]?.trim() || '';
-        detailAddr = parts[1]?.trim() || '';
+        if (parts.length >= 3) {
+          savedPostcode = parts[0]?.trim() || '';
+          mainAddr = parts[1]?.trim() || '';
+          detailAddr = parts[2]?.trim() || '';
+        } else {
+          mainAddr = parts[0]?.trim() || '';
+          detailAddr = parts[1]?.trim() || '';
+        }
       }
 
       setShippingForm((prev) => ({
         ...prev,
         receiverName: name || prev.receiverName,
         receiverPhone: phone ? formatPhoneNumber(phone) : prev.receiverPhone,
+        postcode: savedPostcode || prev.postcode,
         address: mainAddr || prev.address,
         addressDetail: detailAddr || prev.addressDetail,
       }));
@@ -440,11 +450,9 @@ export function useCheckout(): UseCheckoutReturn {
         return;
       }
 
-      // 4. 기본 배송지로 저장 (체크 시) — 주소와 상세주소를 구분자로 분리 저장
+      // 4. 기본 배송지로 저장 (체크 시) — 우편번호|||주소|||상세주소 형식으로 저장
       if (saveAsDefault) {
-        const combinedAddress = shippingForm.addressDetail
-          ? `${shippingForm.address}|||${shippingForm.addressDetail}`
-          : shippingForm.address;
+        const combinedAddress = `${shippingForm.postcode}|||${shippingForm.address}|||${shippingForm.addressDetail}`;
         await apiFetch('/api/users/me', {
           method: 'PUT',
           body: {

@@ -1,13 +1,17 @@
 package com.farmbalance.admin.application.port.in.dto;
 
 import com.farmbalance.shop.domain.Product;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AdminShopProductDto {
 
     private Long id;

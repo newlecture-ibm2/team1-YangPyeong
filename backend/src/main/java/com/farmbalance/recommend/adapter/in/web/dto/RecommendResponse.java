@@ -2,7 +2,9 @@ package com.farmbalance.recommend.adapter.in.web.dto;
 
 import com.farmbalance.recommend.domain.*;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.util.Collections;
@@ -15,6 +17,8 @@ import java.util.stream.Collectors;
  */
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RecommendResponse {
 
     private FarmInfo farmInfo;
@@ -52,6 +56,8 @@ public class RecommendResponse {
 
     @Getter
     @Builder
+@NoArgsConstructor
+@AllArgsConstructor
     public static class FarmInfo {
         private Long id;
         private String name;
@@ -64,6 +70,8 @@ public class RecommendResponse {
 
     @Getter
     @Builder
+@NoArgsConstructor
+@AllArgsConstructor
     public static class CropItem {
         private int rank;
         private Long cropId;

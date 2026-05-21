@@ -114,7 +114,7 @@ public class OrderService implements OrderUseCase {
                     NotificationCategory.ORDER,
                     "새 결제/주문 완료",
                     String.format("새 결제 및 주문이 확정되었습니다. 배송을 준비해주세요. (주문번호: %s)", savedOrder.getOrderNumber()),
-                    "/shop/seller/orders"
+                    "/mypage/seller/orders"
             );
         }
 

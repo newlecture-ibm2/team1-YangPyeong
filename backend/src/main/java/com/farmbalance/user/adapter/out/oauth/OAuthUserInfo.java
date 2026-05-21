@@ -1,6 +1,8 @@
 package com.farmbalance.user.adapter.out.oauth;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -8,6 +10,8 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OAuthUserInfo {
     private String providerId;
     private String email;

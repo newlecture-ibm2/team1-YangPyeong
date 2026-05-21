@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/components';
 import {
   FREE_SHIPPING_THRESHOLD,
@@ -33,6 +34,21 @@ export default function CartPage() {
   } = useCart();
 
   const { success: toastSuccess, info: toastInfo } = useToast();
+
+  /** 직접 입력 중인 수량 임시 값 (blur 시 확정) */
+  const [draftQty, setDraftQty] = useState<Record<number, string>>({});
+
+  // items가 바뀔 때 draft를 실제 수량으로 동기화
+  useEffect(() => {
+    setDraftQty((prev) => {
+      const next: Record<number, string> = {};
+      items.forEach((item) => {
+        // 이미 편집 중인 값은 유지, 아니면 실제 수량으로 초기화
+        next[item.id] = prev[item.id] ?? String(item.quantity);
+      });
+      return next;
+    });
+  }, [items]);
 
   /** 선택 삭제 핸들러 */
   const handleRemoveSelected = () => {
@@ -184,7 +200,24 @@ export default function CartPage() {
                     >
                       −
                     </button>
-                    <span className={styles.qtyValue}>{item.quantity}</span>
+                    <input
+                      className={styles.qtyValue}
+                      type="text"
+                      inputMode="numeric"
+                      value={draftQty[item.id] ?? item.quantity}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, '');
+                        setDraftQty((prev) => ({ ...prev, [item.id]: raw }));
+                      }}
+                      onBlur={() => {
+                        const val = parseInt(draftQty[item.id] ?? '', 10);
+                        const clamped = isNaN(val) || val < 1
+                          ? 1
+                          : Math.min(val, item.product.stock);
+                        setDraftQty((prev) => ({ ...prev, [item.id]: String(clamped) }));
+                        if (clamped !== item.quantity) updateQuantity(item.id, clamped);
+                      }}
+                    />
                     <button
                       className={styles.qtyBtn}
                       onClick={() =>
