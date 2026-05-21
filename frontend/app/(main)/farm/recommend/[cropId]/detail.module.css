@@ -180,6 +180,52 @@
   margin-top: -8px;
 }
 
+.calendarCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.calendarCardTitle {
+  margin-bottom: 0;
+}
+
+.calendarPlanButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.calendarPlanButton:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(46, 125, 50, 0.04);
+}
+
+.calendarPlanButtonIcon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.calendarPlanButtonArrow {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
 /* ── 그리드 ── */
 .gridTwo {
   display: grid;
@@ -488,6 +534,16 @@
   }
 
   .backBtn, .planBtn {
+    justify-content: center;
+  }
+
+  .calendarCardHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .calendarPlanButton {
+    width: 100%;
     justify-content: center;
   }
 }

@@ -8,7 +8,9 @@ import RankingCard from './_components/RankingCard/RankingCard';
 import RecommendTable from './_components/RecommendTable/RecommendTable';
 import MockupOverlay from '@/components/common/MockupOverlay/MockupOverlay';
 import { DUMMY_RECOMMENDATIONS } from '@/lib/preview-data';
-import { RECOMMEND_MODE_LABEL, type CropRecommendation } from './_lib/recommend.types';
+import { buildAnalyzeGuide } from './_lib/analyzeHints';
+import type { CropRecommendation } from './_lib/recommend.types';
+import { recommendItemKey } from './_lib/recommend.utils';
 import styles from './page.module.css';
 import farmStyles from '../page.module.css';
 
@@ -42,7 +44,7 @@ export default function RecommendListPage() {
           <div className={styles.content}>
             <div className={styles.rankingGrid}>
               {previewRecs.slice(0, 3).map((rec, idx) => (
-                <RankingCard key={rec.cropId} rec={rec} index={idx} />
+                <RankingCard key={recommendItemKey(rec, 'recommendation', idx)} rec={rec} index={idx} />
               ))}
             </div>
             <RecommendTable recommendations={previewRecs} />
@@ -75,30 +77,47 @@ export default function RecommendListPage() {
       </div>
 
       <div className={styles.content}>
-        {hook.farm && <SoilPanel farm={hook.farm} result={hook.result} />}
+        {hook.farm && (
+          <SoilPanel
+            area={hook.displayArea}
+            values={hook.soilValues}
+            isDirty={hook.isSoilDirty}
+            isSaving={hook.isSavingSoil}
+            onChange={hook.handleSoilChange}
+            onSave={hook.handleSaveSoil}
+          />
+        )}
         <AnalyzeLoader
           isAnalyzing={hook.isAnalyzing}
           analyzeStepIndex={hook.analyzeStepIndex}
           isHydrating={hook.isHydrating}
           hasResult={hook.hasResult}
           disabled={!hook.farm}
+          guide={buildAnalyzeGuide({
+            variant: hook.hasResult ? 'retry' : 'initial',
+            recommendMode: hook.recommendMode,
+            registeredCropCount: Math.max(
+              hook.currentCropAdvices.length,
+              hook.farm?.cropNames?.length ?? 0,
+            ),
+            isSoilDirty: hook.isSoilDirty,
+          })}
           onAnalyze={hook.handleAnalyze}
         />
 
         {hook.result && !hook.isAnalyzing && (
           <>
-            {hook.recommendMode && (
-              <p className={styles.modeBanner}>
-                분석 모드: <strong>{RECOMMEND_MODE_LABEL[hook.recommendMode] ?? hook.recommendMode}</strong>
-              </p>
-            )}
-
             {hook.currentCropAdvices.length > 0 && (
               <section className={styles.coachingSection}>
                 <h3 className={styles.sectionTitle}>현재·예정 작물 코칭</h3>
                 <div className={styles.rankingGrid}>
                   {hook.currentCropAdvices.map((rec, idx) => (
-                    <RankingCard key={`coach-${rec.cropId}`} rec={rec} index={idx} farmId={hook.farm?.id} />
+                    <RankingCard
+                      key={recommendItemKey(rec, 'coaching', idx)}
+                      rec={rec}
+                      index={idx}
+                      farmId={hook.farm?.id}
+                    />
                   ))}
                 </div>
               </section>
@@ -113,7 +132,12 @@ export default function RecommendListPage() {
                 </h3>
                 <div className={styles.rankingGrid} data-guide="recommend-ranking">
                   {hook.top3.map((rec, idx) => (
-                    <RankingCard key={rec.cropId} rec={rec} index={idx} farmId={hook.farm?.id} />
+                    <RankingCard
+                      key={recommendItemKey(rec, 'recommendation', idx)}
+                      rec={rec}
+                      index={idx}
+                      farmId={hook.farm?.id}
+                    />
                   ))}
                 </div>
               </>

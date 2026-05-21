@@ -2,9 +2,15 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import type { CropRecommendation } from '../../_lib/recommend.types';
-import { formatDisplayAiReason } from '../../_lib/recommend.utils';
+import {
+  canRequestAiCoaching,
+  canRefreshAiCoaching,
+  cultivationRegisterHref,
+  formatDisplayAiReason,
+} from '../../_lib/recommend.utils';
 import { summarizeAiReason } from '../../_lib/formatAiReason';
 import GaugeBar from '../../_components/GaugeBar/GaugeBar';
 import AiReasonDisplay from './AiReasonDisplay';
@@ -15,18 +21,39 @@ interface ScoreAnalysisProps {
   rec: CropRecommendation;
   fitnessLabel: string;
   supplyLabel: string;
+  isCoaching?: boolean;
+  onRequestCoaching?: () => void;
 }
 
-export default function ScoreAnalysis({ rec, fitnessLabel, supplyLabel }: ScoreAnalysisProps) {
+export default function ScoreAnalysis({
+  rec,
+  fitnessLabel,
+  supplyLabel,
+  isCoaching = false,
+  onRequestCoaching,
+}: ScoreAnalysisProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const aiReason = formatDisplayAiReason(rec.aiReason);
+  const canRequest = canRequestAiCoaching(rec.aiCoachingStatus);
+  const canRefresh = canRefreshAiCoaching(rec.aiCoachingStatus);
   const summaryText = aiReason
     ? summarizeAiReason(aiReason, 140)
     : '토양·시세·수급 점수를 바탕으로 한 추천입니다.';
 
   const priceLevel =
     rec.priceForecastPercent >= 80 ? '높음' : rec.priceForecastPercent >= 60 ? '보통' : '낮음';
+
+  useEffect(() => {
+    if (isCoaching) {
+      setIsOpen(true);
+    }
+  }, [isCoaching]);
+
+  const handleRequestCoaching = () => {
+    setIsOpen(true);
+    onRequestCoaching?.();
+  };
 
   return (
     <div className={`${styles.fadeIn} ${styles.fadeInDelay1}`}>
@@ -121,13 +148,41 @@ export default function ScoreAnalysis({ rec, fitnessLabel, supplyLabel }: ScoreA
 
             <div className={`${acc.section} ${acc.opinionSection}`}>
               <h3 className={acc.sectionTitle}>🤖 AI 분석 의견</h3>
-              {aiReason ? (
-                <AiReasonDisplay text={aiReason} />
+              {isCoaching ? (
+                <div className={acc.coachingLoading}>
+                  <span className={acc.coachingSpinner} aria-hidden />
+                  <p>AI 맞춤 코칭을 생성 중입니다…</p>
+                  <span className={acc.coachingEta}>보통 15~30초 소요</span>
+                </div>
+              ) : aiReason ? (
+                <div className={acc.opinionEmptyState}>
+                  <AiReasonDisplay text={aiReason} />
+                  {canRefresh && onRequestCoaching && (
+                    <button
+                      type="button"
+                      className={acc.coachingRefreshButton}
+                      onClick={handleRequestCoaching}
+                    >
+                      🤖 AI 코칭 새로고침
+                    </button>
+                  )}
+                </div>
+              ) : canRequest && onRequestCoaching ? (
+                <div className={acc.opinionEmptyState}>
+                  <p className={acc.opinionEmpty}>이 작물에 대한 AI 맞춤 코칭을 생성할 수 있습니다.</p>
+                  <button type="button" className={acc.coachingButton} onClick={handleRequestCoaching}>
+                    🤖 AI 코칭 받기
+                  </button>
+                </div>
+              ) : rec.aiCoachingStatus === 'NEEDS_DATA' ? (
+                <div className={acc.opinionEmptyState}>
+                  {rec.aiCoachingHint && <p className={acc.opinionEmpty}>{rec.aiCoachingHint}</p>}
+                  <Link href={cultivationRegisterHref(rec)} className={acc.dataLink}>
+                    재배 데이터 입력 →
+                  </Link>
+                </div>
               ) : (
-                <p className={acc.opinionEmpty}>
-                  이 작물에 대한 AI 코멘트가 아직 없습니다. 추천 목록에서 「다시 분석」을 실행하면
-                  생성됩니다.
-                </p>
+                <p className={acc.opinionEmpty}>AI 코칭 대상이 아닌 작물입니다.</p>
               )}
             </div>
           </div>

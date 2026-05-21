@@ -5,8 +5,9 @@ import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { SUPPLY_STATUS_MAP, SOIL_FITNESS_MAP, ADVICE_TYPE_LABEL } from '../_lib/recommend.types';
 import type { CropRecommendation, CropRecommendResponse } from '../_lib/recommend.types';
-import { getLatestRecommendHistory } from '../_lib/recommend.api';
+import { getLatestRecommendHistory, requestAiCoaching } from '../_lib/recommend.api';
 import { findCropInRecommendResult, sanitizeRecommendResponse } from '../_lib/recommend.utils';
+import { useToast } from '@/components/common/Toast/ToastContext';
 import { getCropEmoji, getCropCalendarForRecommendation, generatePriceData } from '../_lib/recommend.constants';
 import { getCropDetailedPlanForRecommendation } from '../_lib/calendarPlanData';
 import { buildCalendarSubtitle } from '../_lib/cropCalendarSync';
@@ -77,7 +78,7 @@ function useRecommendDetailResult(cropId: number, farmIdQuery: number | null) {
     };
   }, [cropId, farmIdQuery]);
 
-  return { result, phase };
+  return { result, setResult, phase };
 }
 
 function DetailLoading() {
@@ -101,7 +102,9 @@ function RecommendDetailInner() {
   const farmIdQuery = farmIdRaw != null && farmIdRaw !== '' ? Number(farmIdRaw) : null;
   const farmIdQueryValid = farmIdQuery != null && Number.isFinite(farmIdQuery) ? farmIdQuery : null;
 
-  const { result, phase } = useRecommendDetailResult(cropId, farmIdQueryValid);
+  const { result, setResult, phase } = useRecommendDetailResult(cropId, farmIdQueryValid);
+  const [isCoaching, setIsCoaching] = useState(false);
+  const { success: toastSuccess, error: toastError } = useToast();
 
   const rec = useMemo(() => {
     if (!result) return null;
@@ -114,8 +117,43 @@ function RecommendDetailInner() {
       ...(result.currentCropAdvices ?? []),
       ...result.recommendations,
     ];
-    return combined.filter((r) => r.cropId !== cropId).slice(0, 4);
+    const seen = new Set<number>();
+    const unique: CropRecommendation[] = [];
+    for (const r of combined) {
+      if (r.cropId === cropId || seen.has(r.cropId)) continue;
+      seen.add(r.cropId);
+      unique.push(r);
+    }
+    return unique.slice(0, 4);
   }, [result, cropId]);
+
+  const farmIdForLinks = result?.farmInfo?.id ?? farmIdQueryValid ?? undefined;
+
+  const handleRequestCoaching = async () => {
+    const farmId = farmIdForLinks;
+    if (farmId == null) {
+      toastError('농장 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    setIsCoaching(true);
+    try {
+      const data = sanitizeRecommendResponse(await requestAiCoaching(farmId, [cropId]));
+      setResult(data);
+      try {
+        sessionStorage.setItem('recommend_result', JSON.stringify(data));
+      } catch {
+        // ignore
+      }
+      toastSuccess('AI 코칭이 완료되었습니다.');
+    } catch (err) {
+      console.error('AI 코칭 실패:', err);
+      const message = err instanceof Error ? err.message : 'AI 코칭 중 오류가 발생했습니다.';
+      toastError(message);
+    } finally {
+      setIsCoaching(false);
+    }
+  };
 
   if (phase === 'loading') {
     return <DetailLoading />;
@@ -151,7 +189,6 @@ function RecommendDetailInner() {
   const fitnessLabel = SOIL_FITNESS_MAP[rec.soilFitness];
   const priceData = generatePriceData(rec.expectedRevenuePerKg);
   const calendar = getCropCalendarForRecommendation(rec);
-  const farmIdForLinks = result.farmInfo?.id;
 
   return (
     <div className={styles.container}>
@@ -181,7 +218,13 @@ function RecommendDetailInner() {
         { icon: '💰', label: '예상 수익', value: `₩${rec.expectedRevenuePerKg.toLocaleString('ko-KR')}/kg` },
       ]} />
 
-      <ScoreAnalysis rec={rec} fitnessLabel={fitnessLabel} supplyLabel={supplyInfo.label} />
+      <ScoreAnalysis
+        rec={rec}
+        fitnessLabel={fitnessLabel}
+        supplyLabel={supplyInfo.label}
+        isCoaching={isCoaching}
+        onRequestCoaching={handleRequestCoaching}
+      />
 
       <CropGuide rec={rec} recommendResult={result} />
 
@@ -218,19 +261,18 @@ function CalendarSection({ rec, calendar }: { rec: CropRecommendation; calendar:
 
   return (
     <>
-      <div
-        className={`${styles.card} ${styles.fadeIn} ${styles.fadeInDelay3}`}
-        style={{ cursor: 'pointer', position: 'relative' }}
-        onClick={() => setIsPlanOpen(true)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter') setIsPlanOpen(true); }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <h2 className={styles.cardTitle} style={{ marginBottom: 0 }}>재배 캘린더</h2>
-          <span style={{ fontSize: 13, color: 'var(--color-primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-            📅 클릭하여 주별 세부 계획서 보기 →
-          </span>
+      <div className={`${styles.card} ${styles.fadeIn} ${styles.fadeInDelay3}`}>
+        <div className={styles.calendarCardHeader}>
+          <h2 className={`${styles.cardTitle} ${styles.calendarCardTitle}`}>재배 캘린더</h2>
+          <button
+            type="button"
+            className={styles.calendarPlanButton}
+            onClick={() => setIsPlanOpen(true)}
+          >
+            <span className={styles.calendarPlanButtonIcon} aria-hidden>📅</span>
+            주별 세부 계획서
+            <span className={styles.calendarPlanButtonArrow} aria-hidden>→</span>
+          </button>
         </div>
         <p className={styles.cardSub}>{calendarSub || '월별 주요 작업 일정을 한눈에 확인하세요.'}</p>
         <CropCalendar phases={calendar} />

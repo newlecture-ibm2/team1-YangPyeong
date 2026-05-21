@@ -27,6 +27,10 @@ public class RecommendHistoryItemEntity {
     private Integer rank;
     private Integer score;
 
+    private Long registrationId;
+    private String aiCoachingStatus;
+    private String aiCoachingHint;
+
     private String soilFitness;
     private Integer soilFitnessPercent;
     private Integer priceForecastPercent;
@@ -48,6 +52,7 @@ public class RecommendHistoryItemEntity {
 
     @Builder
     public RecommendHistoryItemEntity(Long cropId, String cropName, String category, Integer rank, Integer score,
+                                      Long registrationId, String aiCoachingStatus, String aiCoachingHint,
                                       String soilFitness, Integer soilFitnessPercent, Integer priceForecastPercent,
                                       Integer supplyStabilityPercent, String supplyStatus, Integer expectedRevenuePerKg,
                                       Integer expectedYield, String aiReason, Integer difficulty, Integer growthDays,
@@ -58,6 +63,9 @@ public class RecommendHistoryItemEntity {
         this.category = category;
         this.rank = rank;
         this.score = score;
+        this.registrationId = registrationId;
+        this.aiCoachingStatus = aiCoachingStatus;
+        this.aiCoachingHint = aiCoachingHint;
         this.soilFitness = soilFitness;
         this.soilFitnessPercent = soilFitnessPercent;
         this.priceForecastPercent = priceForecastPercent;
@@ -78,5 +86,20 @@ public class RecommendHistoryItemEntity {
 
     public void setHistory(RecommendHistoryEntity history) {
         this.history = history;
+    }
+
+    void mergeCoachingFields(String aiReason, String aiCoachingStatus, String aiCoachingHint, Long registrationId) {
+        if (aiReason != null) {
+            this.aiReason = aiReason;
+        }
+        if (aiCoachingStatus != null) {
+            this.aiCoachingStatus = aiCoachingStatus;
+        }
+        if (aiCoachingHint != null) {
+            this.aiCoachingHint = aiCoachingHint;
+        }
+        if (registrationId != null) {
+            this.registrationId = registrationId;
+        }
     }
 }

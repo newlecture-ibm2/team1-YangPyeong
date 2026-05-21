@@ -1,11 +1,9 @@
 import { ApiResponse } from '@/lib/constants';
 import { CropRecommendResponse } from './recommend.types';
 import { sanitizeRecommendResponse } from './recommend.utils';
+import { COACHING_TIMEOUT_MS, QUICK_RECOMMEND_TIMEOUT_MS } from './recommend.timeouts';
 
 const BASE_URL = '/api/recommend';
-
-/** 백엔드 AI 배치 2회 호출 시 120초를 넘길 수 있음 (로그 기준 ~150초) */
-const RECOMMEND_TIMEOUT_MS = 180_000;
 
 async function parseErrorMessage(res: Response): Promise<string> {
   const contentType = res.headers.get('content-type') ?? '';
@@ -29,12 +27,12 @@ export async function requestCropRecommendation(farmId: number): Promise<CropRec
     res = await fetch(`${BASE_URL}/${farmId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(RECOMMEND_TIMEOUT_MS),
+      signal: AbortSignal.timeout(QUICK_RECOMMEND_TIMEOUT_MS),
     });
   } catch (e) {
     if (e instanceof DOMException && e.name === 'TimeoutError') {
       throw new Error(
-        '분석 시간이 초과되었습니다. 잠시 후 다시 시도하거나, 이력에서 이전 결과를 확인해 주세요.',
+        '분석 시간이 초과되었습니다. 등록된 작물이 많으면 더 오래 걸릴 수 있습니다. 잠시 후 다시 시도해 주세요.',
       );
     }
     throw e;
@@ -46,6 +44,36 @@ export async function requestCropRecommendation(farmId: number): Promise<CropRec
 
   const response: ApiResponse<CropRecommendResponse> = await res.json();
   if (!response.data) throw new Error('추천 결과 데이터가 없습니다.');
+  return sanitizeRecommendResponse(response.data);
+}
+
+export async function requestAiCoaching(
+  farmId: number,
+  cropIds: number[],
+): Promise<CropRecommendResponse> {
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}/${farmId}/coaching`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cropIds }),
+      signal: AbortSignal.timeout(COACHING_TIMEOUT_MS),
+    });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'TimeoutError') {
+      throw new Error(
+        'AI 코칭 시간이 초과되었습니다. 선택한 작물이 많으면 더 오래 걸릴 수 있습니다. 작물 수를 줄여 다시 시도해 주세요.',
+      );
+    }
+    throw e;
+  }
+
+  if (!res.ok) {
+    throw new Error(await parseErrorMessage(res));
+  }
+
+  const response: ApiResponse<CropRecommendResponse> = await res.json();
+  if (!response.data) throw new Error('AI 코칭 결과 데이터가 없습니다.');
   return sanitizeRecommendResponse(response.data);
 }
 
