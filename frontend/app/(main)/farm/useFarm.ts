@@ -9,25 +9,28 @@ import { useToast } from '@/components/common/Toast';
 
 /**
  * 내 농장 목록을 관리하는 훅
+ * @param enabled - false이면 API 호출을 건너뜁니다 (비회원 미리보기 등)
  */
-export function useMyFarms() {
+export function useMyFarms(enabled = true) {
   const [farms, setFarms] = useState<FarmListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(enabled);
   const toast = useToast();
 
   const fetchFarms = useCallback(async () => {
+    if (!enabled) return;
     setIsLoading(true);
     try {
       const data = await getMyFarms();
       // 생성된 순서(ID 오름차순)로 정렬하여 UI 위치가 바뀌지 않도록 보장
       const sortedData = [...data].sort((a, b) => a.id - b.id);
       setFarms(sortedData);
-    } catch (err: any) {
-      toast.error(err.message || '농장 목록을 불러오지 못했습니다.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '농장 목록을 불러오지 못했습니다.';
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [enabled, toast]);
 
   useEffect(() => {
     fetchFarms();
@@ -39,8 +42,9 @@ export function useMyFarms() {
       toast.success('농장이 삭제되었습니다.');
       await fetchFarms();
       return true;
-    } catch (err: any) {
-      toast.error(err.message || '농장 삭제에 실패했습니다.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '농장 삭제에 실패했습니다.';
+      toast.error(message);
       return false;
     }
   };

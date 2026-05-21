@@ -1,6 +1,8 @@
 package com.farmbalance.recommend.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -9,6 +11,8 @@ import java.util.List;
 /** 추천 분석용 — 농장의 재배 등록 1건 스냅샷 */
 @Getter
 @Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class CultivationContextItem {
 
     private Long registrationId;

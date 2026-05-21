@@ -56,7 +56,10 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
               {(product.status === 'SOLDOUT' || product.stock <= 0) ? (
                 <span className={styles.soldOutPrice}>품절</span>
               ) : (
-                <>₩{formattedPrice}</>
+                <>
+                  ₩{formattedPrice}
+                  <span className={styles.priceUnit}> / {product.unitKg ?? 1}kg</span>
+                </>
               )}
             </strong>
             {/* onMouseDown으로 Link 이벤트 차단, onClick으로 콜백 실행 */}

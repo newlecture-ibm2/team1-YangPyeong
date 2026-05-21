@@ -273,7 +273,9 @@ export default function FarmBot({ children }: FarmBotProps) {
                   <Image src="/icon.png" alt="" width={28} height={28} className={styles.chatMsgAvatar} />
                 )}
                 <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleBot}`}>
-                  <span className={styles.chatMsgContent} style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>
+                  <span className={styles.chatMsgContent} style={{ whiteSpace: 'pre-wrap' }}>{stripInternalIds(msg.content)}</span>
+
+                  {/* CLARIFY 선택지 버튼 */}
                   {msg.role === 'bot' && msg.actions?.filter(a => a.type === 'CLARIFY').map((action, actionIdx) => (
                     <div key={`clarify-${actionIdx}`} className={styles.clarifyOptions}>
                       {action.options?.map((opt, optIdx) => (
@@ -281,14 +283,43 @@ export default function FarmBot({ children }: FarmBotProps) {
                           key={`opt-${optIdx}`}
                           className={styles.clarifyOptionBtn}
                           onClick={() => sendChatMessage(
-                            opt.label, 
-                            action.intent === 'CANCEL_ORDER' 
-                              ? `주문번호 ${opt.id} 취소해줘` 
+                            opt.label,
+                            action.intent === 'CANCEL_ORDER'
+                              ? `주문번호 ${opt.id} 취소해줘`
                               : `${opt.id} 선택할게`
                           )}
                         >
                           {opt.label}
                         </button>
+                      ))}
+                    </div>
+                  ))}
+
+                  {/* PRODUCT_LIST 상품 카드 */}
+                  {msg.role === 'bot' && msg.actions?.filter(a => a.type === 'PRODUCT_LIST' && a.products && a.products.length > 0).map((action, actionIdx) => (
+                    <div key={`product-list-${actionIdx}`} className={styles.productList}>
+                      {action.products!.map((product) => (
+                        <a
+                          key={product.id}
+                          href={`/shop/${product.id}`}
+                          className={styles.productCard}
+                        >
+                          <div className={styles.productCardImgWrap}>
+                            {product.imageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={product.imageUrl} alt={product.name} className={styles.productCardImg} />
+                            ) : (
+                              <div className={styles.productCardImgPlaceholder}>🌿</div>
+                            )}
+                          </div>
+                          <div className={styles.productCardBody}>
+                            <span className={styles.productCardName}>{product.name}</span>
+                            <span className={styles.productCardPrice}>
+                              ₩{product.price.toLocaleString()}
+                              <span className={styles.productCardUnit}> / {product.unitKg ?? 1}kg</span>
+                            </span>
+                          </div>
+                        </a>
                       ))}
                     </div>
                   ))}

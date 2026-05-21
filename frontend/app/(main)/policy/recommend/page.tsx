@@ -9,7 +9,10 @@ import styles from './page.module.css';
 
 export default function PolicyRecommendPage() {
   const { data, isLoading: isRecommendLoading, error, statusCode } = usePolicyRecommend();
-  const { farms: allFarms, isLoading: isFarmsLoading } = useMyFarms();
+  
+  // 비회원이면 /api/farm 호출 자체를 건너뜀
+  const isLoggedIn = typeof document !== 'undefined' && document.cookie.includes('fb-session=');
+  const { farms: allFarms, isLoading: isFarmsLoading } = useMyFarms(isLoggedIn);
 
   const approvedFarms = allFarms.filter(f => f.certificationStatus === 'APPROVED');
   const hasUnapprovedFarms = allFarms.length > approvedFarms.length;

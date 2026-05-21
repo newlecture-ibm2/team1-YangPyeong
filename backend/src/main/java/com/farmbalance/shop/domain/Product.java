@@ -104,12 +104,13 @@ public class Product {
     }
 
     /**
-     * 가격·재고만 수정 (운영 정보 — 검수 상태와 무관하게 즉시 반영).
+     * 가격·재고·판매단위 수정 (운영 정보 — 검수 상태와 무관하게 즉시 반영).
      * 이름·설명·카테고리·이미지 등 콘텐츠 필드는 변경하지 않으므로 재검수 불필요.
      */
-    public void updateInventory(int price, int stock) {
+    public void updateInventory(int price, int stock, int unitKg) {
         this.price = price;
         this.stock = stock;
+        this.unitKg = unitKg < 1 ? 1 : unitKg;
     }
 
     /** 상태 변경 (사유 없음) */

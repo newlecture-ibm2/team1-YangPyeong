@@ -266,6 +266,20 @@
   font-size: 32px;
   font-weight: 700;
   color: var(--color-primary);
+  margin-bottom: 4px;
+}
+
+.priceUnit {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-left: 4px;
+}
+
+.pricePerKg {
+  font-size: 13px;
+  color: var(--color-text-secondary);
   margin-bottom: var(--space-lg);
 }
 
