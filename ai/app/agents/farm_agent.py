@@ -51,30 +51,10 @@ def get_farm_agent():
         get_nongsaro_variety,
         get_nongsaro_disaster
     ]
+    from langgraph.prebuilt import create_react_agent
     
-    # Tool 호출 기능을 포함한 LLM 바인딩
-    llm_with_tools = llm.get_chat_model(temperature=0.1).bind_tools(tools)
-    
-    def agent_node(state):
-        # SystemMessage로 프롬프트 주입 (AIMessage 사용 시 Gemini role 교대 규칙 위반)
-        messages = [SystemMessage(content=FARM_AGENT_SYSTEM_PROMPT)] + state["messages"]
-        response = llm_with_tools.invoke(messages)
-        return {"messages": [response]}
-
-    # 그래프 구성
-    workflow = StateGraph(dict)
-    workflow.add_node("agent", agent_node)
-    workflow.add_node("tools", ToolNode(tools))
-    
-    workflow.add_edge(START, "agent")
-    
-    def should_continue(state):
-        last_message = state["messages"][-1]
-        if last_message.tool_calls:
-            return "tools"
-        return END
-
-    workflow.add_conditional_edges("agent", should_continue)
-    workflow.add_edge("tools", "agent")
-    
-    return workflow.compile()
+    return create_react_agent(
+        model=llm.get_chat_model(temperature=0.1),
+        tools=tools,
+        prompt=FARM_AGENT_SYSTEM_PROMPT
+    )
