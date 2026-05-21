@@ -86,9 +86,15 @@ export function middleware(request: NextRequest) {
   }
 
   // ── 6. 공개 경로는 인증 없이 통과 ──
-  const isPublicPath = PUBLIC_PATHS.some(
+  let isPublicPath = PUBLIC_PATHS.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
+  
+  // /policy는 공개지만, /policy/recommend는 로그인 필수
+  if (pathname.startsWith('/policy/recommend')) {
+    isPublicPath = false;
+  }
+
   if (isPublicPath) {
     return NextResponse.next();
   }

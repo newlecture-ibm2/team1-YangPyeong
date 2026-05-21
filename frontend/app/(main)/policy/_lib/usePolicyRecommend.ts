@@ -30,10 +30,6 @@ export function usePolicyRecommend() {
 
         const json = await res.json();
         if (json.success) {
-          if (!json.data || !json.data.farmerProfile) {
-            setStatusCode(403);
-            throw new Error('농업인 계정에서 이용할 수 있는 기능입니다.');
-          }
           setData(json.data);
         } else {
           throw new Error(json.error?.message || '데이터 구조 오류');
