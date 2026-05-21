@@ -86,16 +86,46 @@ public class ShopManagementService implements ManageShopUseCase {
         // 3. AI 서버 일괄 요청
         List<ShopAuditResultDto> results = adminAiPort.auditShopBatch(itemsToAudit);
 
-        // 4. 결과에 따라 정상인 상품만 ACTIVE로 업데이트
-        int approvedCount = 0;
+        // 4. 결과에 따라 상태 업데이트
+        int processedCount = 0;
         for (ShopAuditResultDto result : results) {
             if (result.valid()) {
                 productRepository.updateStatus(result.productId(), "ACTIVE", null);
-                approvedCount++;
+                processedCount++;
+            } else {
+                productRepository.updateStatus(result.productId(), "REJECTED", "[AI 자동 반려] " + result.reason());
+                processedCount++;
             }
-            // 비정상(false)인 경우는 PENDING 그대로 둡니다. (또는 REJECTED, INACTIVE + reason으로 처리할 수 있음. 현재는 PENDING)
         }
 
-        return approvedCount;
+        return processedCount;
+    }
+
+    @Override
+    @Transactional
+    public int aiAuditActiveProducts() {
+        // 1. ACTIVE 상품 최신 100개 조회 (정기적인 검수를 위해)
+        List<Product> activeProducts = productRepository.findAdminProducts("", "ALL", List.of("ACTIVE"), "createdAt", 0, 100);
+        if (activeProducts.isEmpty()) {
+            return 0;
+        }
+
+        List<ShopAuditItemDto> itemsToAudit = activeProducts.stream().map(p -> {
+            String desc = p.getDescription() != null ? p.getDescription() : "";
+            if (desc.length() > 300) desc = desc.substring(0, 300);
+            return new ShopAuditItemDto(p.getId(), p.getName(), p.getCategoryName(), p.getPrice(), desc);
+        }).toList();
+
+        List<ShopAuditResultDto> results = adminAiPort.auditShopBatch(itemsToAudit);
+
+        int hiddenCount = 0;
+        for (ShopAuditResultDto result : results) {
+            if (!result.valid()) {
+                productRepository.updateStatus(result.productId(), "HIDDEN", "[AI 재검수 적발] " + result.reason());
+                hiddenCount++;
+            }
+        }
+
+        return hiddenCount;
     }
 }
