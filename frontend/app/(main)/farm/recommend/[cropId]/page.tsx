@@ -261,19 +261,18 @@ function CalendarSection({ rec, calendar }: { rec: CropRecommendation; calendar:
 
   return (
     <>
-      <div
-        className={`${styles.card} ${styles.fadeIn} ${styles.fadeInDelay3}`}
-        style={{ cursor: 'pointer', position: 'relative' }}
-        onClick={() => setIsPlanOpen(true)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter') setIsPlanOpen(true); }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <h2 className={styles.cardTitle} style={{ marginBottom: 0 }}>재배 캘린더</h2>
-          <span style={{ fontSize: 13, color: 'var(--color-primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-            📅 클릭하여 주별 세부 계획서 보기 →
-          </span>
+      <div className={`${styles.card} ${styles.fadeIn} ${styles.fadeInDelay3}`}>
+        <div className={styles.calendarCardHeader}>
+          <h2 className={`${styles.cardTitle} ${styles.calendarCardTitle}`}>재배 캘린더</h2>
+          <button
+            type="button"
+            className={styles.calendarPlanButton}
+            onClick={() => setIsPlanOpen(true)}
+          >
+            <span className={styles.calendarPlanButtonIcon} aria-hidden>📅</span>
+            주별 세부 계획서
+            <span className={styles.calendarPlanButtonArrow} aria-hidden>→</span>
+          </button>
         </div>
         <p className={styles.cardSub}>{calendarSub || '월별 주요 작업 일정을 한눈에 확인하세요.'}</p>
         <CropCalendar phases={calendar} />
