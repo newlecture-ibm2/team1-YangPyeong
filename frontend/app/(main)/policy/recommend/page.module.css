@@ -58,7 +58,30 @@
   font-size: 15px;
   color: var(--color-text-secondary);
   line-height: 1.6;
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-md);
+}
+
+.progressBar {
+  width: 100%;
+  max-width: 300px;
+  height: 6px;
+  background-color: var(--color-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), #86efac, var(--color-primary));
+  background-size: 200% 100%;
+  border-radius: 3px;
+  animation: progressSlide 1.5s ease-in-out infinite;
+}
+
+@keyframes progressSlide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
 }
 
 .buttonGroup {
