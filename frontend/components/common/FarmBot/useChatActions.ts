@@ -56,8 +56,15 @@ export function useChatActions() {
         switch (action.type) {
           case 'NAVIGATE': {
             if (!action.url) break;
-            if (action.replace) router.replace(action.url);
-            else router.push(action.url);
+            const doNavigate = () => {
+              if (action.replace) router.replace(action.url!);
+              else router.push(action.url!);
+            };
+            if (action.delay && action.delay > 0) {
+              setTimeout(doNavigate, action.delay);
+            } else {
+              doNavigate();
+            }
             break;
           }
 

@@ -113,6 +113,7 @@ _GUEST_PERSONAL_KEYWORDS: set[str] = {
 # 농장 등록/관리 관련 키워드 (비회원에게 별도 안내)
 _GUEST_FARM_REGISTER_KEYWORDS: set[str] = {
     "농장 등록", "농장등록", "농장 등록할", "농장등록할",
+    "농장 추가", "농장추가",
     "재배 등록", "재배등록", "작물 등록", "작물등록",
 }
 
@@ -138,9 +139,12 @@ def _check_guest_shortcircuit(message: str, has_jwt: bool) -> ChatResponse | Non
             reply=(
                 "FarmBalance에 가입하시면 맞춤형 농장 관리와 정책 추천을 받을 수 있어요! 🌱\n\n"
                 "• **회원가입**: 상단 오른쪽 '회원가입' 버튼을 눌러주세요.\n"
-                "• **로그인**: 이미 계정이 있다면 '로그인' 버튼을 눌러주세요."
+                "• **로그인**: 이미 계정이 있다면 '로그인' 버튼을 눌러주세요.\n\n"
+                "⏳ 잠시 후 로그인 페이지로 이동합니다."
             ),
-            actions=[],
+            actions=[
+                ChatAction(type="NAVIGATE", url="/login", delay=5000),
+            ],
         )
 
     # 2. 농장 등록 관련 질문
@@ -150,9 +154,11 @@ def _check_guest_shortcircuit(message: str, has_jwt: bool) -> ChatResponse | Non
                 "농장 등록은 로그인 후 이용할 수 있습니다. 🌾\n\n"
                 "회원가입 후 **내농장 > 농장 등록**에서 농장 정보를 등록하시면 "
                 "AI 기반 작물 추천, 수익 분석, 맞춤 정책 추천 등 다양한 서비스를 이용하실 수 있어요!\n\n"
-                "👉 상단 메뉴에서 **회원가입** 또는 **로그인**을 먼저 진행해 주세요."
+                "⏳ 잠시 후 로그인 페이지로 이동합니다."
             ),
-            actions=[],
+            actions=[
+                ChatAction(type="NAVIGATE", url="/login", delay=5000),
+            ],
         )
 
     # 3. 개인화 질문 (내 농장, 내 작물, 내 보조금 등)
@@ -165,9 +171,11 @@ def _check_guest_shortcircuit(message: str, has_jwt: bool) -> ChatResponse | Non
                 "• 📊 AI 기반 수익 분석\n"
                 "• 📋 맞춤 정책·보조금 추천\n"
                 "• 🌱 작물 재배 관리\n\n"
-                "👉 상단 메뉴에서 **로그인** 또는 **회원가입**을 먼저 진행해 주세요."
+                "⏳ 잠시 후 로그인 페이지로 이동합니다."
             ),
-            actions=[],
+            actions=[
+                ChatAction(type="NAVIGATE", url="/login", delay=5000),
+            ],
         )
 
     # 일반 질문 → short-circuit 없이 오케스트레이터로 전달

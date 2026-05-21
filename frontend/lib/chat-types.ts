@@ -47,6 +47,8 @@ export interface ChatAction {
   /** NAVIGATE */
   url?: string;
   replace?: boolean;
+  /** 지연 실행 시간(ms) — NAVIGATE 등 즉시 실행 액션을 지연 후 실행 */
+  delay?: number;
 
   /** FILL_FORM / OPEN_MODAL */
   target?: string;
