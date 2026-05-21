@@ -110,6 +110,7 @@ services:
     build: ./ai
     restart: unless-stopped
     environment:
+      - TZ=Asia/Seoul
       - DATABASE_URL=postgresql+psycopg://${DB_USERNAME}:${DB_PASSWORD}@db:5432/farm_db
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - LLM_PROVIDER=${LLM_PROVIDER:-gemini}

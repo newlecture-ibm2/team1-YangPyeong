@@ -4,7 +4,7 @@ Farm Agent: 농장 데이터 및 재배 기술 지원 전문가
 import os
 import logging
 from typing import Annotated, TypedDict, List
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langgraph.graph import StateGraph, END, START
 from langgraph.prebuilt import ToolNode
 
@@ -56,7 +56,8 @@ def get_farm_agent():
     llm_with_tools = llm.get_chat_model(temperature=0.1).bind_tools(tools)
     
     def agent_node(state):
-        messages = [AIMessage(content=FARM_AGENT_SYSTEM_PROMPT)] + state["messages"]
+        # SystemMessage로 프롬프트 주입 (AIMessage 사용 시 Gemini role 교대 규칙 위반)
+        messages = [SystemMessage(content=FARM_AGENT_SYSTEM_PROMPT)] + state["messages"]
         response = llm_with_tools.invoke(messages)
         return {"messages": [response]}
 
