@@ -54,6 +54,13 @@ public class CropRecommendation {
     /** AI 조언 유형 (신규 추천 / 재배 중 코칭 등) */
     private AdviceType adviceType;
 
+    /** AI 코칭 요청 가능 여부 (응답 전용) */
+    private String aiCoachingStatus;
+    private String aiCoachingHint;
+
+    /** 재배 등록 ID (코칭 작물 — 데이터 입력 링크용) */
+    private Long registrationId;
+
     /** 토양 최적 작물과의 불일치 설명 */
     private String mismatchNote;
 }

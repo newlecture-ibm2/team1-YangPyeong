@@ -31,9 +31,17 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
 
     @Override
     public Farm saveFarm(Farm farm) {
-        // 1. PNU 중복 검증 (타 사용자가 이미 해당 필지를 등록했는지 확인)
-        if (farmJpaRepository.existsByPnuCodeAndUserIdNotAndDeletedAtIsNull(farm.getPnuCode(), farm.getUserId())) {
-            throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
+        // PNU 중복 검증
+        if (farm.getPnuCode() != null && !farm.getPnuCode().isBlank()) {
+            if (farm.getId() == null) {
+                if (farmJpaRepository.existsByPnuCodeAndUserIdNotAndDeletedAtIsNull(
+                        farm.getPnuCode(), farm.getUserId())) {
+                    throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
+                }
+            } else if (farmJpaRepository.existsByPnuCodeAndIdNotAndDeletedAtIsNull(
+                    farm.getPnuCode(), farm.getId())) {
+                throw new com.farmbalance.farm.domain.exception.PnuAlreadyExistsException();
+            }
         }
 
         FarmJpaEntity entity;

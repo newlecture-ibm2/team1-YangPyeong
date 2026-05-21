@@ -1,46 +1,194 @@
-/* CropGuide — 상세 가이드 버튼 스타일 */
+/* CropGuide — 상세 가이드 인라인 + AI 버튼 */
 
-.detailBtn {
+.detailSection {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+}
+
+.detailHeader {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  margin-top: 24px;
-  padding: 16px 24px;
-  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-  border: 1.5px dashed var(--color-primary);
-  border-radius: var(--radius-md);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-primary);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-family: inherit;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.detailBtn:hover {
+.detailTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.badgeBasic,
+.badgeAi {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badgeBasic {
+  background: #f3f4f6;
+  color: var(--color-text-secondary);
+}
+
+.badgeAi {
+  background: #ecfdf5;
+  color: var(--color-primary);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.detailHint {
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.detailHintMuted {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.fallbackWarn {
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #92400e;
+  background: #fffbeb;
+  border-radius: 8px;
+  border: 1px solid #fcd34d;
+}
+
+.loadingBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 16px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.loadingBlock p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.aiSpinnerDark {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #d1fae5;
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.aiButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border: none;
+  border-radius: var(--radius-pill);
   background: var(--color-primary);
   color: #fff;
-  border-style: solid;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.aiButton:hover:not(:disabled) {
+  background: var(--color-primary-dark, #1b4332);
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 6px 20px rgba(45, 106, 79, 0.2);
 }
 
-.detailBtnIcon {
-  font-size: 20px;
-  transition: transform 0.3s ease;
+.aiButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.detailBtn:hover .detailBtnIcon {
-  transform: scale(1.15);
+.aiButtonSecondary {
+  padding: 14px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: #fff;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.detailBtnArrow {
-  font-size: 18px;
-  transition: transform 0.3s ease;
+.aiButtonSecondary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
-.detailBtn:hover .detailBtnArrow {
-  transform: translateX(4px);
+.backButton {
+  padding: 14px 24px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: #fff;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.aiSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .actionRow {
+    flex-direction: column;
+  }
+
+  .aiButton,
+  .backButton,
+  .aiButtonSecondary {
+    width: 100%;
+  }
 }

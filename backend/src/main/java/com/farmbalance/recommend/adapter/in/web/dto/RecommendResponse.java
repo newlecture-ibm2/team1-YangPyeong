@@ -86,6 +86,9 @@ public class RecommendResponse {
         private List<String> pests;
         private String adviceType;
         private String mismatchNote;
+        private Long registrationId;
+        private String aiCoachingStatus;
+        private String aiCoachingHint;
 
         public static CropItem from(CropRecommendation rec) {
             return CropItem.builder()
@@ -110,6 +113,9 @@ public class RecommendResponse {
                     .pests(rec.getPests())
                     .adviceType(rec.getAdviceType() != null ? rec.getAdviceType().name() : null)
                     .mismatchNote(rec.getMismatchNote())
+                    .registrationId(rec.getRegistrationId())
+                    .aiCoachingStatus(rec.getAiCoachingStatus())
+                    .aiCoachingHint(rec.getAiCoachingHint())
                     .build();
         }
     }

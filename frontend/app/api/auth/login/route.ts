@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL } from '@/lib/constants';
 import { setSessionCookie } from '@/lib/cookie';
 import { decodeJwtPayload } from '@/lib/jwt';
+import { loginErrorResponse } from '@/lib/bff-auth-response';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
     const data = await backendResponse.json();
 
     if (!backendResponse.ok || !data.success) {
-      return NextResponse.json(data, { status: backendResponse.status });
+      return loginErrorResponse(backendResponse.status, data);
     }
 
     // JWT를 암호화하여 httpOnly 쿠키에 저장

@@ -27,6 +27,15 @@ export type AdviceType =
   | 'IN_SEASON_COACHING'
   | 'NEXT_SEASON';
 
+/** AI 코칭 요청 가능 상태 (백엔드 AiCoachingEligibility.Status) */
+export type AiCoachingStatus =
+  | 'ELIGIBLE'
+  | 'NEEDS_DATA'
+  | 'COMPLETED_IDLE'
+  | 'HAS_AI'
+  | 'OPTIONAL'
+  | 'NOT_APPLICABLE';
+
 /** 개별 추천 작물 */
 export interface CropRecommendation {
   rank: number;
@@ -50,6 +59,9 @@ export interface CropRecommendation {
   pests?: string[];
   adviceType?: AdviceType;
   mismatchNote?: string;
+  registrationId?: number;
+  aiCoachingStatus?: AiCoachingStatus;
+  aiCoachingHint?: string;
 }
 
 /** 추천 API 응답 */
@@ -81,6 +93,12 @@ export const ADVICE_TYPE_LABEL: Record<AdviceType, string> = {
   PLANNED_CROP: '재배 예정',
   IN_SEASON_COACHING: '재배 중',
   NEXT_SEASON: '다음 시즌 참고',
+};
+
+export const AI_COACHING_STATUS_LABEL: Partial<Record<AiCoachingStatus, string>> = {
+  ELIGIBLE: 'AI 코칭 받기',
+  COMPLETED_IDLE: 'AI 코칭 받기',
+  OPTIONAL: 'AI 코칭 받기',
 };
 
 /** 수급 상태 라벨 매핑 */
