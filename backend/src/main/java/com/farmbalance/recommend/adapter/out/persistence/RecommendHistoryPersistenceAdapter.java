@@ -8,8 +8,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,6 +50,69 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
         historyRepository.save(entity);
     }
 
+    @Override
+    public void updateLatestCoaching(Long farmId, RecommendResult result) {
+        RecommendHistoryEntity entity = historyRepository.findFirstByFarmIdOrderByGeneratedAtDesc(farmId)
+                .orElseThrow(() -> new IllegalStateException("업데이트할 추천 이력이 없습니다: farmId=" + farmId));
+
+        Map<String, RecommendHistoryItemEntity> itemsByKey = indexItems(entity.getItems());
+        mergeCoachingIntoItems(result.getCurrentCropAdvices(), itemsByKey);
+        mergeCoachingIntoItems(result.getRecommendations(), itemsByKey);
+
+        historyRepository.save(entity);
+    }
+
+    private static Map<String, RecommendHistoryItemEntity> indexItems(List<RecommendHistoryItemEntity> items) {
+        Map<String, RecommendHistoryItemEntity> byKey = new HashMap<>();
+        if (items == null) {
+            return byKey;
+        }
+        for (RecommendHistoryItemEntity item : items) {
+            byKey.put(itemKey(item), item);
+            byKey.putIfAbsent("crop-" + item.getCropId(), item);
+        }
+        return byKey;
+    }
+
+    private static void mergeCoachingIntoItems(
+            List<CropRecommendation> recs,
+            Map<String, RecommendHistoryItemEntity> itemsByKey
+    ) {
+        if (recs == null) {
+            return;
+        }
+        for (CropRecommendation rec : recs) {
+            RecommendHistoryItemEntity item = itemsByKey.get(recommendationKey(rec));
+            if (item == null) {
+                item = itemsByKey.get("crop-" + rec.getCropId());
+            }
+            if (item == null) {
+                continue;
+            }
+            item.mergeCoachingFields(
+                    rec.getAiReason(),
+                    rec.getAiCoachingStatus(),
+                    rec.getAiCoachingHint(),
+                    rec.getRegistrationId());
+        }
+    }
+
+    private static String recommendationKey(CropRecommendation rec) {
+        if (rec.getRegistrationId() != null) {
+            return "reg-" + rec.getRegistrationId();
+        }
+        return "crop-" + rec.getCropId() + "-"
+                + (rec.getAdviceType() != null ? rec.getAdviceType().name() : "na");
+    }
+
+    private static String itemKey(RecommendHistoryItemEntity item) {
+        if (item.getRegistrationId() != null) {
+            return "reg-" + item.getRegistrationId();
+        }
+        return "crop-" + item.getCropId() + "-"
+                + (item.getAdviceType() != null ? item.getAdviceType() : "na");
+    }
+
     private RecommendHistoryItemEntity toItemEntity(CropRecommendation rec) {
         return RecommendHistoryItemEntity.builder()
                 .cropId(rec.getCropId())
@@ -55,6 +120,9 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
                 .category(rec.getCategory() != null ? rec.getCategory().getLabel() : null)
                 .rank(rec.getRank())
                 .score(rec.getScore())
+                .registrationId(rec.getRegistrationId())
+                .aiCoachingStatus(rec.getAiCoachingStatus())
+                .aiCoachingHint(rec.getAiCoachingHint())
                 .soilFitness(rec.getSoilFitness() != null ? rec.getSoilFitness().name() : null)
                 .soilFitnessPercent(rec.getSoilFitnessPercent())
                 .priceForecastPercent(rec.getPriceForecastPercent())
@@ -140,6 +208,9 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
                 .expectedRevenuePerKg(item.getExpectedRevenuePerKg())
                 .expectedYield(item.getExpectedYield())
                 .aiReason(item.getAiReason())
+                .registrationId(item.getRegistrationId())
+                .aiCoachingStatus(item.getAiCoachingStatus())
+                .aiCoachingHint(item.getAiCoachingHint())
                 .difficulty(item.getDifficulty())
                 .growthDays(item.getGrowthDays())
                 .optimalTemp(item.getOptimalTemp())

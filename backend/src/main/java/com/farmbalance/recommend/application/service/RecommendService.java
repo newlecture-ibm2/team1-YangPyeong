@@ -91,6 +91,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
 
         RecommendBuild build = buildScoredRecommendations(userId, farmId);
         preserveAiReasonsFromLatestHistory(build, farmId);
+        Map<String, String> reasonsBeforeCoaching = loadLatestReasonSnapshot(farmId);
         overlayPreviousMetricsFromLatestHistory(build, farmId);
 
         Set<Long> targetIds = new LinkedHashSet<>(cropIds);
@@ -109,9 +110,8 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
 
         log.info("AI 코칭 완료: farmId={}, 요청 작물={}", farmId, targetIds);
 
-        return saveAndNotify(userId, build, coaching, recommendations,
-                "AI 코칭 완료",
-                String.format("'%s' 농장의 AI 맞춤 코칭이 준비되었습니다.", build.farm().getName()));
+        boolean notify = shouldNotifyCoaching(targetIds, reasonsBeforeCoaching, build);
+        return saveCoachingResult(userId, build, coaching, recommendations, notify);
     }
 
     private record RecommendBuild(
@@ -224,6 +224,78 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
                 "/farm/recommend");
 
         return result;
+    }
+
+    private RecommendResult saveCoachingResult(
+            Long userId,
+            RecommendBuild build,
+            List<CropRecommendation> coaching,
+            List<CropRecommendation> recommendations,
+            boolean notify
+    ) {
+        coaching = dedupeCoachingList(coaching);
+        recommendations = dedupeRecommendationList(recommendations);
+
+        RecommendResult result = RecommendResult.builder()
+                .farmId(build.farm().getId())
+                .farmName(build.farm().getName())
+                .farmAddress(build.farm().getAddress())
+                .farmArea(build.farm().getArea())
+                .soilPh(build.farm().getPh())
+                .organicMatter(build.farm().getOrganicMatter())
+                .soilType(build.farm().getSoilType())
+                .recommendMode(build.mode())
+                .currentCropAdvices(coaching)
+                .recommendations(recommendations)
+                .generatedAt(LocalDateTime.now())
+                .build();
+
+        if (loadRecommendHistoryPort.loadLatestByFarmId(build.farm().getId()).isPresent()) {
+            saveRecommendHistoryPort.updateLatestCoaching(build.farm().getId(), result);
+        } else {
+            saveRecommendHistoryPort.save(result);
+        }
+
+        if (notify) {
+            notificationUseCase.createNotification(
+                    userId,
+                    NotificationType.SYSTEM,
+                    NotificationCategory.SYSTEM,
+                    "AI 코칭 완료",
+                    String.format("'%s' 농장의 AI 맞춤 코칭이 준비되었습니다.", build.farm().getName()),
+                    "/farm/recommend");
+        }
+
+        return result;
+    }
+
+    private Map<String, String> loadLatestReasonSnapshot(Long farmId) {
+        Map<String, String> reasons = new HashMap<>();
+        loadRecommendHistoryPort.loadLatestByFarmId(farmId).ifPresent(prev -> {
+            appendReasons(reasons, prev.getCurrentCropAdvices());
+            appendReasons(reasons, prev.getRecommendations());
+        });
+        return reasons;
+    }
+
+    private boolean shouldNotifyCoaching(
+            Set<Long> targetIds,
+            Map<String, String> reasonsBeforeCoaching,
+            RecommendBuild build
+    ) {
+        for (Long cropId : targetIds) {
+            CropRecommendation rec = findRecommendationByCropId(
+                    build.currentCropAdvices(), build.recommendations(), cropId);
+            if (rec == null) {
+                continue;
+            }
+            String key = recommendationKey(rec);
+            if (!reasonsBeforeCoaching.containsKey(key)
+                    && !reasonsBeforeCoaching.containsKey("crop-" + cropId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void preserveAiReasonsFromLatestHistory(RecommendBuild build, Long farmId) {
@@ -370,10 +442,11 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
             AiCoachingEligibility.Result elig = coachingList
                     ? AiCoachingEligibility.evaluate(item, rec)
                     : AiCoachingEligibility.evaluateNewRecommendation(rec, rec.getRank());
+            boolean hasPersistedStatus = rec.getAiCoachingStatus() != null && !rec.getAiCoachingStatus().isBlank();
             out.add(rec.toBuilder()
-                    .registrationId(item != null ? item.getRegistrationId() : null)
-                    .aiCoachingStatus(elig.status().name())
-                    .aiCoachingHint(elig.hint())
+                    .registrationId(item != null ? item.getRegistrationId() : rec.getRegistrationId())
+                    .aiCoachingStatus(hasPersistedStatus ? rec.getAiCoachingStatus() : elig.status().name())
+                    .aiCoachingHint(rec.getAiCoachingHint() != null ? rec.getAiCoachingHint() : elig.hint())
                     .build());
         }
         return out;
