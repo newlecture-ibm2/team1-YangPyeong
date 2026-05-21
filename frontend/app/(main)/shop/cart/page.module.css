@@ -256,13 +256,17 @@
 
 .qtyValue {
   width: 44px;
+  height: 36px;
   text-align: center;
   font-size: 15px;
   font-weight: 600;
   color: var(--color-text);
+  border: none;
   border-left: 1px solid var(--color-border);
   border-right: 1px solid var(--color-border);
-  line-height: 36px;
+  background: transparent;
+  padding: 0;
+  outline: none;
 }
 
 /* 소계 + 삭제 */
