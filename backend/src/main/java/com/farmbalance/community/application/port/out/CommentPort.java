@@ -15,7 +15,7 @@ public interface CommentPort {
     Map<Long, String> findActiveContentsByIds(List<Long> ids);
     Map<Long, Long> countByPostIds(List<Long> postIds);
     List<Comment> findByPostId(Long postId);
-    Page<Comment> findByAuthorId(Long authorId, Pageable pageable);
+    Page<Comment> findByAuthorIdAndStatus(Long authorId, String status, Pageable pageable);
     long countByPostId(Long postId);
     boolean existsAcceptedByPostId(Long postId);
     void deleteById(Long id);

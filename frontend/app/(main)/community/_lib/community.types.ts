@@ -24,6 +24,7 @@ export interface Post {
   hasAcceptedComment: boolean;
   categoryName: string;
   isNotice: boolean;
+  isHidden?: boolean;
   createdAt: string;
   updatedAt: string;
 }

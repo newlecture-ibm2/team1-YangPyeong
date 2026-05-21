@@ -31,6 +31,7 @@ export default function useSellerProducts() {
         categoryName: p.categoryName,
         description: p.description,
         createdAt: p.createdAt,
+        statusReason: p.statusReason,
       }));
       setProducts(mapped);
     } else {

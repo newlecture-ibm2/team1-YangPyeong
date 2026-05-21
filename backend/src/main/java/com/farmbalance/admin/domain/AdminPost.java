@@ -16,6 +16,8 @@ public class AdminPost {
     private Long id;
     private Long authorId;
     private Long categoryId;
+    private String authorNickname;
+    private String authorEmail;
     private String title;
     private String content;
     private Integer viewCount;
@@ -23,4 +25,8 @@ public class AdminPost {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
+    @com.fasterxml.jackson.annotation.JsonProperty("isHidden")
+    private boolean isHidden;
+    private String statusReason;
+    private int commentCount;
 }

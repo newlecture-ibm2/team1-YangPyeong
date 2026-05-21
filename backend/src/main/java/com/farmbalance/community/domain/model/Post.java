@@ -25,6 +25,8 @@ public class Post {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
+    private boolean isHidden;
+    private String statusReason;
 
     public void increaseViewCount() {
         this.viewCount++;
@@ -44,5 +46,15 @@ public class Post {
 
     public boolean isDeleted() {
         return this.deletedAt != null;
+    }
+
+    public void hide(String reason) {
+        this.isHidden = true;
+        this.statusReason = reason;
+    }
+
+    public void restoreHidden() {
+        this.isHidden = false;
+        this.statusReason = null;
     }
 }

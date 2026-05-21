@@ -8,6 +8,8 @@ export interface ApiResponse<T> {
 export interface AdminPost {
   id: number
   authorId: number
+  authorNickname?: string
+  authorEmail?: string
   categoryId: number
   title: string
   content: string
@@ -16,6 +18,9 @@ export interface AdminPost {
   createdAt: string
   updatedAt: string | null
   deletedAt: string | null
+  isHidden: boolean
+  statusReason: string | null
+  commentCount: number
 }
 
 /** 관리자용 게시글 페이징 응답 */
@@ -25,31 +30,43 @@ export interface PaginatedAdminPosts {
   totalPages: number
 }
 
+export interface PaginatedAdminComments {
+  comments: AdminComment[]
+  totalElements: number
+  totalPages: number
+}
+
 /** 관리자용 댓글 */
 export interface AdminComment {
   id: number
   postId: number
+  postTitle?: string
   authorId: number
+  authorNickname?: string
+  authorEmail?: string
   content: string
   accepted: boolean
   createdAt: string
   updatedAt: string | null
   deletedAt: string | null
+  isHidden: boolean
+  statusReason: string | null
 }
 
-/** 관리자용 신고 내역 */
-export interface AdminReport {
-  id: number
+/** 관리자용 그룹화된 신고 내역 */
+export interface AdminGroupedReport {
   targetType: string // "POST" | "COMMENT"
   targetId: number
-  reporterId: number
-  reason: string
+  reportCount: number
+  recentReason: string
+  allReasons?: string
   status: string // "PENDING" | "RESOLVED" | "DISMISSED"
-  createdAt: string
+  actionTaken?: string
+  recentReportAt: string
 }
 
 export interface PaginatedAdminReports {
-  reports: AdminReport[]
+  reports: AdminGroupedReport[]
   totalElements: number
   totalPages: number
 }

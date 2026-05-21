@@ -24,11 +24,11 @@ export async function fetchProducts(
   return json.data
 }
 
-export async function updateProductStatus(productId: number, status: string): Promise<void> {
+export async function updateProductStatus(productId: number, status: string, reason?: string): Promise<void> {
   const res = await fetch(`/api/admin/shop/${productId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status })
+    body: JSON.stringify({ status, reason })
   })
 
   if (!res.ok) {

@@ -21,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
@@ -41,9 +42,10 @@ public class MyCommunityActivityController {
     @Operation(summary = "내 게시글 목록")
     @GetMapping("/posts")
     public ApiResponse<List<MyPostActivityResponse>> getMyPosts(
+            @RequestParam(required = false, defaultValue = "ALL") String status,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Long userId = SecurityUtil.getCurrentUserId();
-        Page<Post> posts = postPort.findByAuthorId(userId, pageable);
+        Page<Post> posts = postPort.findByAuthorIdAndStatus(userId, status, pageable);
         List<Long> postIds = posts.getContent().stream()
                 .map(Post::getId)
                 .collect(Collectors.toList());
@@ -61,9 +63,10 @@ public class MyCommunityActivityController {
     @Operation(summary = "내 댓글 목록")
     @GetMapping("/comments")
     public ApiResponse<List<MyCommentActivityResponse>> getMyComments(
+            @RequestParam(required = false, defaultValue = "ALL") String status,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Long userId = SecurityUtil.getCurrentUserId();
-        Page<Comment> comments = commentPort.findByAuthorId(userId, pageable);
+        Page<Comment> comments = commentPort.findByAuthorIdAndStatus(userId, status, pageable);
         List<Long> postIds = comments.getContent().stream()
                 .map(Comment::getPostId)
                 .distinct()

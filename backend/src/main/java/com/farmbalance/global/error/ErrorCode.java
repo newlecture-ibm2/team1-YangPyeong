@@ -75,6 +75,7 @@ public enum ErrorCode {
     ORDER_INVALID_STATUS("E-SHOP-004", "주문 상태를 변경할 수 없습니다.", HttpStatus.BAD_REQUEST),
     ORDER_CANCEL_NOT_ALLOWED("E-SHOP-006", "현재 상태에서는 취소할 수 없습니다. 판매자가 이미 접수한 주문입니다.", HttpStatus.BAD_REQUEST),
     CART_ITEM_NOT_FOUND("E-SHOP-005", "장바구니 항목을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    PRODUCT_ADMIN_LOCKED("E-SHOP-006", "관리자에 의해 제재된 상품은 상태를 변경할 수 없습니다. 고객센터에 문의해주세요.", HttpStatus.FORBIDDEN),
 
     // ── 커뮤니티 ──
     POST_NOT_FOUND("E-COMMUNITY-001", "게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -82,6 +83,8 @@ public enum ErrorCode {
     POST_NOT_AUTHOR("E-COMMUNITY-003", "게시글 작성자만 수정/삭제할 수 있습니다.", HttpStatus.FORBIDDEN),
     REPORT_DUPLICATE("E-COMMUNITY-004", "이미 신고한 게시글/댓글입니다.", HttpStatus.CONFLICT),
     REPORT_OWN_CONTENT("E-COMMUNITY-005", "자신의 게시글/댓글은 신고할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    REPORT_NOT_FOUND("E-COMMUNITY-006", "신고 내역을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    COMMUNITY_MUST_BE_HIDDEN_BEFORE_DELETE("E-COMMUNITY-007", "게시물은 삭제하기 전에 먼저 숨김 처리되어야 합니다.", HttpStatus.BAD_REQUEST),
 
     // ── 가게 ──
     STORE_NOT_FOUND("E-STORE-001", "가게 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

@@ -7,6 +7,8 @@ import { DEFAULT_PRODUCT_IMAGE } from '@/lib/constants'
 import styles from './Shop.module.css'
 import type { AdminProduct } from '../_lib/shop.types'
 import { fetchProducts, updateProductStatus, deleteAdminProduct, aiAuditProducts } from '../_lib/shop.api'
+import ReasonModal from '../community/_components/ReasonModal'
+import ProductDetailModal from './_components/ProductDetailModal'
 
 function formatPrice(price: number): string {
   return price.toLocaleString() + '원'
@@ -74,6 +76,12 @@ export default function ShopPage() {
   const [pendingCount, setPendingCount] = useState(0)
   const [isAuditing, setIsAuditing] = useState(false)
 
+  const [reasonModalOpen, setReasonModalOpen] = useState(false)
+  const [targetProductForReason, setTargetProductForReason] = useState<{ id: number, status: string } | null>(null)
+
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null)
+
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('ALL')
   const [sort, setSort] = useState('createdAt')
@@ -128,10 +136,43 @@ export default function ShopPage() {
   }
 
   const handleStatusChange = async (productId: number, newStatus: string) => {
+    if (newStatus === 'INACTIVE' || newStatus === 'REJECTED') {
+      setTargetProductForReason({ id: productId, status: newStatus })
+      setReasonModalOpen(true)
+      return
+    }
+    
     try {
       await updateProductStatus(productId, newStatus)
       toast.success('상품 상태가 성공적으로 변경되었습니다.')
       loadData() // 갱신
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '상태 변경 실패')
+    }
+  }
+
+  const handleOpenDetail = (product: AdminProduct) => {
+    setSelectedProduct(product)
+    setDetailModalOpen(true)
+  }
+
+  const handleModalStatusChange = (productId: number, newStatus: string) => {
+    handleStatusChange(productId, newStatus)
+    setDetailModalOpen(false)
+  }
+
+  const handleModalDelete = (productId: number) => {
+    handleDelete(productId)
+    setDetailModalOpen(false)
+  }
+
+  const handleReasonConfirm = async (reason: string) => {
+    if (!targetProductForReason) return
+    try {
+      await updateProductStatus(targetProductForReason.id, targetProductForReason.status, reason)
+      toast.success('상품 상태가 성공적으로 변경되었습니다.')
+      setReasonModalOpen(false)
+      loadData()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '상태 변경 실패')
     }
@@ -336,7 +377,18 @@ export default function ShopPage() {
                       <td data-label="재고">{product.stock}개</td>
                       <td data-label="상태"><Badge variant={badge.variant as any}>{badge.label}</Badge></td>
                       <td data-label="등록일">{formatDate(product.createdAt)}</td>
-                      <td data-label="">{renderActionButtons(product)}</td>
+                      <td data-label="">
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <button 
+                            className={styles.actionBtn} 
+                            style={{ background: 'white', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }} 
+                            onClick={() => handleOpenDetail(product)}
+                          >
+                            🔍 상세
+                          </button>
+                          {renderActionButtons(product)}
+                        </div>
+                      </td>
                     </tr>
                   )
                 })
@@ -380,6 +432,29 @@ export default function ShopPage() {
           </button>
         </div>
       )}
+
+      <ReasonModal
+        isOpen={reasonModalOpen}
+        title="상품 상태 변경 사유 입력"
+        onClose={() => setReasonModalOpen(false)}
+        onConfirm={handleReasonConfirm}
+        presets={[
+          '상품 정보 및 이미지 불충분 (재등록 요망)',
+          '양평군 관내 생산 농산물 인증 불가',
+          '허위 매물 또는 과장된 상품 설명',
+          '온라인 거래 금지 품목 취급',
+          '농가(판매자) 필수 증빙 서류 누락 또는 식별 불가',
+          '재고 부족 또는 잦은 배송 지연으로 인한 판매 중지'
+        ]}
+      />
+
+      <ProductDetailModal
+        isOpen={detailModalOpen}
+        product={selectedProduct}
+        onClose={() => setDetailModalOpen(false)}
+        onStatusChange={handleModalStatusChange}
+        onDelete={handleModalDelete}
+      />
     </div>
   )
 }

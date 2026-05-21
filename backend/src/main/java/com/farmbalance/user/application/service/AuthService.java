@@ -232,7 +232,8 @@ public class AuthService implements LoginUseCase, SignUpUseCase, RefreshTokenUse
                     "WITHDRAWN:" + user.getEmail());
         }
         if (user.getStatus() == UserStatus.SUSPENDED) {
-            throw new BusinessException(ErrorCode.AUTH_ACCOUNT_SUSPENDED);
+            String reason = user.getStatusReason() != null ? user.getStatusReason() : "관리자 정지";
+            throw new BusinessException(ErrorCode.AUTH_ACCOUNT_SUSPENDED, "이용 정지된 계정입니다. 사유: " + reason);
         }
         if (user.getStatus() == UserStatus.PENDING) {
             throw new BusinessException(ErrorCode.AUTH_ACCOUNT_PENDING);

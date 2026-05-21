@@ -15,6 +15,19 @@ export async function fetchPosts(params: { keyword?: string; status?: string; pa
   return json.data
 }
 
+export async function fetchAllComments(params: { keyword?: string; status?: string; page?: number; size?: number } = {}): Promise<import('./community.types').PaginatedAdminComments> {
+  const qs = new URLSearchParams()
+  if (params.keyword) qs.append('keyword', params.keyword)
+  if (params.status) qs.append('status', params.status)
+  if (params.page !== undefined) qs.append('page', String(params.page))
+  if (params.size !== undefined) qs.append('size', String(params.size))
+
+  const res = await fetch(`${BASE}/comments?${qs.toString()}`)
+  const json: ApiResponse<import('./community.types').PaginatedAdminComments> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '전체 댓글 조회 실패')
+  return json.data
+}
+
 export async function fetchPostDetail(postId: number): Promise<AdminPost> {
   const res = await fetch(`${BASE}/${postId}`)
   const json: ApiResponse<AdminPost> = await res.json()
@@ -39,6 +52,58 @@ export async function deletePost(postId: number): Promise<void> {
   const res = await fetch(`${BASE}/${postId}`, { method: 'DELETE' })
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '게시글 삭제 실패')
+}
+
+export async function hidePost(postId: number, reason: string): Promise<void> {
+  const res = await fetch(`${BASE}/${postId}/hide`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason }),
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '게시글 숨김 실패')
+}
+
+export async function hideComment(commentId: number, reason: string): Promise<void> {
+  const res = await fetch(`${BASE}/comments/${commentId}/hide`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason }),
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '댓글 숨김 실패')
+}
+
+export async function bulkDeletePosts(ids: number[]): Promise<void> {
+  const res = await fetch(`${BASE}/bulk-delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '게시글 일괄 삭제 실패')
+}
+
+export async function bulkDeleteComments(ids: number[]): Promise<void> {
+  const res = await fetch(`${BASE}/comments/bulk-delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '댓글 일괄 삭제 실패')
+}
+
+export async function restorePost(postId: number): Promise<void> {
+  const res = await fetch(`${BASE}/${postId}/restore`, { method: 'PATCH' })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '게시글 복구 실패')
+}
+
+export async function restoreComment(commentId: number): Promise<void> {
+  const res = await fetch(`${BASE}/comments/${commentId}/restore`, { method: 'PATCH' })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '댓글 복구 실패')
 }
 
 export async function toggleNotice(postId: number, isNotice: boolean): Promise<void> {
@@ -73,14 +138,34 @@ export async function fetchReports(params: { status?: string; page?: number; siz
   return json.data
 }
 
-export async function updateReportStatus(reportId: number, status: string): Promise<void> {
-  const res = await fetch(`${BASE}/reports/${reportId}/status`, {
+export async function updateReportStatus(targetType: string, targetId: number, status: string): Promise<void> {
+  const res = await fetch(`${BASE}/reports/target/status`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status })
+    body: JSON.stringify({ targetType, targetId, status })
   })
   const json: ApiResponse<null> = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? '신고 상태 변경 실패')
+}
+
+export async function sanctionReport(targetType: string, targetId: number, data: { hideContent: boolean; deleteContent: boolean; suspendUser: boolean }): Promise<void> {
+  const res = await fetch(`${BASE}/reports/target/sanction`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targetType, targetId, ...data })
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '신고 제재 실패')
+}
+
+export async function undoSanctionReport(targetType: string, targetId: number): Promise<void> {
+  const res = await fetch(`${BASE}/reports/target/sanction/undo`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targetType, targetId })
+  })
+  const json: ApiResponse<null> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '신고 제재 복구 실패')
 }
 
 export async function aiModeratePosts(): Promise<{ hiddenCount: number }> {

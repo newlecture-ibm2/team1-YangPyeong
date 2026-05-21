@@ -70,13 +70,13 @@ public class CommentPersistenceAdapter implements CommentPort {
     }
 
     @Override
-    public Page<Comment> findByAuthorId(Long authorId, Pageable pageable) {
-        return commentJpaRepository.findByAuthorId(authorId, pageable).map(CommentEntity::toDomain);
+    public Page<Comment> findByAuthorIdAndStatus(Long authorId, String status, Pageable pageable) {
+        return commentJpaRepository.findByAuthorIdAndStatus(authorId, status, pageable).map(CommentEntity::toDomain);
     }
 
     @Override
     public long countByPostId(Long postId) {
-        return commentJpaRepository.countByPostIdAndDeletedAtIsNull(postId);
+        return commentJpaRepository.countByPostIdAndDeletedAtIsNullAndIsHiddenFalse(postId);
     }
 
     @Override

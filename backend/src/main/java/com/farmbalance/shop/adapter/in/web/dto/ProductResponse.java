@@ -21,6 +21,7 @@ public record ProductResponse(
         String description,
         int salesCount,
         String status,
+        String statusReason,
         List<String> imageUrls,
         String createdAt
 ) {
@@ -38,6 +39,7 @@ public record ProductResponse(
                 product.getDescription(),
                 product.getSalesCount(),
                 product.getStatus().name(),
+                product.getStatusReason(),
                 product.getImageUrls(),
                 product.getCreatedAt() != null ? product.getCreatedAt().toString() : null
         );

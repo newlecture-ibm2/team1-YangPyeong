@@ -38,5 +38,5 @@ public interface ProductRepository {
     long countAdminProducts(String keyword, String category, List<String> statuses);
 
     /** 상품 상태 변경 — 관리자용 (ACTIVE / INACTIVE / REJECTED 등) */
-    void updateStatus(Long id, String status);
+    void updateStatus(Long id, String status, String reason);
 }

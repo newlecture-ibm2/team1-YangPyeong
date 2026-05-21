@@ -30,6 +30,7 @@ export interface Product {
   /** 상품 이미지 URL 배열 (최대 5장, 첫 번째가 대표 이미지) */
   imageUrls: string[];
   status: ProductStatus;
+  statusReason?: string;
   salesCount: number;
   createdAt: string;
 }

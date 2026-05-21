@@ -14,14 +14,14 @@ import java.util.Optional;
 @Repository
 public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
 
-    @Query("SELECT p FROM PostEntity p JOIN FETCH p.category WHERE p.id = :id AND p.deletedAt IS NULL")
+    @Query("SELECT p FROM PostEntity p JOIN FETCH p.category WHERE p.id = :id AND p.deletedAt IS NULL AND p.isHidden = false")
     Optional<PostEntity> findActiveById(@Param("id") Long id);
 
     @Query("SELECT p.id, p.title FROM PostEntity p WHERE p.id IN :ids AND p.deletedAt IS NULL")
     List<Object[]> findActiveTitlesByIds(@Param("ids") List<Long> ids);
 
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.category " +
-           "WHERE p.deletedAt IS NULL " +
+           "WHERE p.deletedAt IS NULL AND p.isHidden = false " +
            "AND (:categoryIds IS NULL OR p.category.id IN :categoryIds) " +
            "AND (:keyword IS NULL OR p.title LIKE %:keyword% OR p.content LIKE %:keyword%)")
     Page<PostEntity> findByFilters(
@@ -30,7 +30,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             Pageable pageable);
 
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.category " +
-           "WHERE p.deletedAt IS NULL " +
+           "WHERE p.deletedAt IS NULL AND p.isHidden = false " +
            "AND (:categoryIds IS NULL OR p.category.id IN :categoryIds) " +
            "AND (:keyword IS NULL OR p.title LIKE %:keyword%)")
     Page<PostEntity> findByFiltersTitle(
@@ -39,7 +39,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             Pageable pageable);
 
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.category " +
-           "WHERE p.deletedAt IS NULL " +
+           "WHERE p.deletedAt IS NULL AND p.isHidden = false " +
            "AND (:categoryIds IS NULL OR p.category.id IN :categoryIds) " +
            "AND (:keyword IS NULL OR p.content LIKE %:keyword%)")
     Page<PostEntity> findByFiltersContent(
@@ -47,9 +47,10 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             @Param("keyword") String keyword,
             Pageable pageable);
 
-    List<PostEntity> findTop5ByDeletedAtIsNullOrderByCreatedAtDesc();
+    List<PostEntity> findTop5ByDeletedAtIsNullAndIsHiddenFalseOrderByCreatedAtDesc();
 
     @Query("SELECT p FROM PostEntity p JOIN FETCH p.category " +
-           "WHERE p.authorId = :authorId AND p.deletedAt IS NULL")
-    Page<PostEntity> findByAuthorId(@Param("authorId") Long authorId, Pageable pageable);
+           "WHERE p.authorId = :authorId AND p.deletedAt IS NULL " +
+           "AND (:status = 'ALL' OR (:status = 'ACTIVE' AND p.isHidden = false) OR (:status = 'HIDDEN' AND p.isHidden = true))")
+    Page<PostEntity> findByAuthorIdAndStatus(@Param("authorId") Long authorId, @Param("status") String status, Pageable pageable);
 }
