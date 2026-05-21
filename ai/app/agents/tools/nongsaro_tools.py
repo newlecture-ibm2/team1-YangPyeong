@@ -14,9 +14,10 @@ logger = logging.getLogger(__name__)
 async def get_nongsaro_schedule(crop_keyword: str, month: int = None):
     """
     농사로 DB에서 특정 작물의 월별 농작업 일정을 조회합니다.
-    사용자가 '지금 감자 농사 뭐 해야 해?' 또는 '5월에 벼 농사 작업 알려줘'라고 물을 때 사용합니다.
-    crop_keyword에는 작물명(감자, 벼, 상추 등)을 입력합니다.
+    사용자가 특정 작물의 재배법, 심는 법, 농작업 일정을 물을 때 반드시 사용하세요.
+    crop_keyword에는 사용자가 질문한 작물명(예: 고구마, 감자, 벼 등)을 정확히 추출해서 입력하세요.
     month를 입력하지 않으면 해당 작물의 전체 연간 일정을 조회합니다.
+    조회 후에는 결과를 바탕으로 사용자에게 답변하고, 절대로 동일한 인자로 이 도구를 반복 호출하지 마세요.
     """
     session = None
     try:
