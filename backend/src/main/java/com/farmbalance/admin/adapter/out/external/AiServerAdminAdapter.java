@@ -55,9 +55,11 @@ public class AiServerAdminAdapter implements AdminAiPort {
                 if (res != null && res.results() != null) {
                     return res.results();
                 }
+            } else {
                 log.error("AI Server Shop Audit returned status {}: {}", response.statusCode(), response.body());
                 throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
             }
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
         } catch (com.farmbalance.global.error.BusinessException e) {
             throw e;
         } catch (Exception e) {
@@ -91,9 +93,11 @@ public class AiServerAdminAdapter implements AdminAiPort {
                 if (res != null && res.results() != null) {
                     return res.results();
                 }
+            } else {
                 log.error("AI Server Moderation returned status {}: {}", response.statusCode(), response.body());
                 throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
             }
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
         } catch (com.farmbalance.global.error.BusinessException e) {
             throw e;
         } catch (Exception e) {
@@ -151,9 +155,11 @@ public class AiServerAdminAdapter implements AdminAiPort {
                 if (res != null && res.results() != null) {
                     return res.results();
                 }
+            } else {
                 log.error("AI Server Comment Moderation returned status {}: {}", response.statusCode(), response.body());
                 throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
             }
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
         } catch (com.farmbalance.global.error.BusinessException e) {
             throw e;
         } catch (Exception e) {
