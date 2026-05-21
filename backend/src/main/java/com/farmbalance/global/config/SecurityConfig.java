@@ -55,7 +55,10 @@ public class SecurityConfig {
                 // ── AI 내부 API (JWT 불필요, 컨트롤러에서 X-AI-Internal-Key 검증) ──
                 .requestMatchers("/api/internal/**").permitAll()
 
-                // ── 관리자 전용 ──
+                // ── 작물 마스터 조회 (일반 사용자 농장등록/재배등록에서 사용) ──
+                .requestMatchers(HttpMethod.GET, "/api/admin/crops", "/api/admin/crops/categories").permitAll()
+
+                // ── 관리자 전용 (위 GET 예외 외 나머지) ──
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 // ── 지자체 전용 ──
