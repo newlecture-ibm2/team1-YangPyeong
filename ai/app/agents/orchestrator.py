@@ -389,7 +389,8 @@ async def call_farm_agent(state: AgentState):
         agent = get_farm_agent()
         response = await agent.ainvoke(state)
         return _agent_node_response(response["messages"], state)
-    except Exception:
+    except Exception as e:
+        logger.exception(f"[Farm Agent Error] {e}")
         return _agent_error_response("농장 데이터 조회")
 
 
