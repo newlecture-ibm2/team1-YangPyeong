@@ -42,6 +42,9 @@ export default function PolicyRecommendPage() {
           <div className={styles.stateContainer}>
             <span className={styles.icon}>⏳</span>
             <p className={styles.stateMessage}>맞춤 정책을 찾고 있습니다...</p>
+            <div className={styles.progressBar}>
+              <div className={styles.progressFill} />
+            </div>
           </div>
         )}
 
