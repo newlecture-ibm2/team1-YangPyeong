@@ -61,20 +61,46 @@ export default function SellerOrdersPage() {
 
   /** 드롭다운 메뉴 상태 */
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  /** 외부 클릭 시 메뉴 닫기 */
+  /** 외부 클릭 / 스크롤 시 메뉴 닫기 */
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpenMenuId(null);
+        setDropdownPos(null);
       }
+    };
+    const handleScroll = () => {
+      setOpenMenuId(null);
+      setDropdownPos(null);
     };
     if (openMenuId !== null) {
       document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, true);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
   }, [openMenuId]);
+
+  /** 케밥 버튼 클릭 — 버튼 위치 기반으로 fixed 드롭다운 좌표 계산 */
+  const handleKebabClick = (e: React.MouseEvent<HTMLButtonElement>, orderId: number) => {
+    e.stopPropagation();
+    if (openMenuId === orderId) {
+      setOpenMenuId(null);
+      setDropdownPos(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDropdownPos({
+      top: rect.bottom + 4,
+      right: window.innerWidth - rect.right,
+    });
+    setOpenMenuId(orderId);
+  };
 
   /** 가격 포맷 */
   const formatPrice = (price: number) =>
@@ -125,6 +151,42 @@ export default function SellerOrdersPage() {
         </div>
       ) : (
         <div className={styles.tableWrap} data-guide="orders-list">
+          {/* fixed 드롭다운 — overflow 컨테이너 밖에서 렌더 */}
+          {openMenuId !== null && dropdownPos && (() => {
+            const order = orders.find(o => o.id === openMenuId);
+            if (!order) return null;
+            const nextLabel = NEXT_ACTION_LABEL[order.status];
+            return (
+              <div
+                ref={menuRef}
+                className={styles.dropdownMenu}
+                style={{ top: dropdownPos.top, right: dropdownPos.right }}
+              >
+                <button
+                  className={styles.menuItem}
+                  onClick={() => { openDetail(order); setOpenMenuId(null); setDropdownPos(null); }}
+                >
+                  <span>📋</span><span>상세보기</span>
+                </button>
+                {nextLabel && (
+                  <button
+                    className={`${styles.menuItem} ${styles.menuItemPrimary}`}
+                    onClick={() => { advanceStatus(order.id); setOpenMenuId(null); setDropdownPos(null); }}
+                  >
+                    <span>✅</span><span>{nextLabel}</span>
+                  </button>
+                )}
+                {order.status === 'ORDERED' && (
+                  <button
+                    className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                    onClick={() => { handleCancelRequest(order); setOpenMenuId(null); setDropdownPos(null); }}
+                  >
+                    <span>✕</span><span>주문 거절</span>
+                  </button>
+                )}
+              </div>
+            );
+          })()}
           <table className={styles.table}>
             <thead>
               <tr>
@@ -161,40 +223,14 @@ export default function SellerOrdersPage() {
                       )}
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
-                      <div className={styles.actionCell} ref={openMenuId === order.id ? menuRef : undefined}>
+                      <div className={styles.actionCell}>
                         <button
                           className={styles.kebabBtn}
-                          onClick={() => setOpenMenuId(openMenuId === order.id ? null : order.id)}
+                          onClick={(e) => handleKebabClick(e, order.id)}
                           aria-label="주문 처리 메뉴"
                         >
                           ⋮
                         </button>
-                        {openMenuId === order.id && (
-                          <div className={styles.dropdownMenu}>
-                            <button
-                              className={styles.menuItem}
-                              onClick={() => { openDetail(order); setOpenMenuId(null); }}
-                            >
-                              <span>📋</span><span>상세보기</span>
-                            </button>
-                            {nextLabel && (
-                              <button
-                                className={`${styles.menuItem} ${styles.menuItemPrimary}`}
-                                onClick={() => { advanceStatus(order.id); setOpenMenuId(null); }}
-                              >
-                                <span>✅</span><span>{nextLabel}</span>
-                              </button>
-                            )}
-                            {order.status === 'ORDERED' && (
-                              <button
-                                className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                                onClick={() => { handleCancelRequest(order); setOpenMenuId(null); }}
-                              >
-                                <span>✕</span><span>주문 거절</span>
-                              </button>
-                            )}
-                          </div>
-                        )}
                       </div>
                     </td>
                   </tr>

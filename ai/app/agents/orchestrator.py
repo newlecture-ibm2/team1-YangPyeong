@@ -143,6 +143,8 @@ DOMAIN_FORCE_KEYWORDS: dict[str, set[str]] = {
         "담아줘", "담아 줘", "담아줄", "담아줄래", "담아봐",
         "넣어줘", "넣어 줘", "넣어줄", "넣어줄래",
         "바로구매", "바로 구매", "결제하기", "구매하기", "살래", "살게",
+        "바로 결제", "바로결제", "그걸로 결제", "이걸로 결제",
+        "그걸로 주문", "이걸로 주문", "그걸로 구매", "이걸로 구매",
         # 장터/상점
         "장터", "장터로", "장터에", "상점", "쇼핑",
         # 주문
@@ -162,6 +164,8 @@ DOMAIN_FORCE_KEYWORDS: dict[str, set[str]] = {
         # 장바구니/상품 상세
         "내 장바구니", "장바구니 확인", "장바구니 조회",
         "상품 상세", "상세 보여", "상세보기", "상세 정보", "상품 정보",
+        # 상품 상세 화면 이동 ("상추 상세설명으로 이동해달라고" 패턴)
+        "상세설명", "상세 설명", "상세화면", "상세 화면", "상세페이지", "상세 페이지",
         # 판매자 상품 수정/삭제/상태변경
         "가격 바꿔", "가격 변경", "가격 수정", "가격을 바꿔", "가격으로 바꿔",
         "재고 바꿔", "재고 변경", "재고 수정", "재고를 바꿔", "재고로 바꿔",
@@ -202,6 +206,7 @@ DOMAIN_CONTEXT_INDICATORS: dict[str, tuple[str, ...]] = {
     "shop_agent": (
         "id=", "productId=", "장바구니", "담아", "담았", "장터",
         "상품", "주문", "결제", "[ACTION:", "PRODUCT_LIST",
+        "진행할까요", "진행하면 되겠죠", "담아드릴까요",  # 상품 확인 질문 패턴
     ),
 }
 
@@ -287,6 +292,19 @@ async def router_node(state: AgentState) -> List[str]:
         prev_domain = last_bot_domain(state["messages"])
         if prev_domain:
             logger.info("[Router] 멀티턴 컨텍스트 → %s ('%s')", prev_domain, last_message[:30])
+            return [prev_domain]
+
+    # 1.5 컨텍스트 참조어 감지 — "이 상품이 뭔데?" 처럼 짧은 긍정어는 아니지만
+    # 직전 대화를 가리키는 표현이 있으면 직전 도메인으로 라우팅
+    _CONTEXT_REF_WORDS = (
+        "이 상품", "그 상품", "이 물건",
+        "이게 뭐", "이거 뭐", "그거 뭐",
+        "그걸로", "이걸로", "그것으로", "이것으로",  # "좋아 그걸로 결제" 패턴
+    )
+    if any(ref in last_message for ref in _CONTEXT_REF_WORDS):
+        prev_domain = last_bot_domain(state["messages"])
+        if prev_domain:
+            logger.info("[Router] 컨텍스트 참조어 감지 → %s ('%s')", prev_domain, last_message[:30])
             return [prev_domain]
 
     # 2. 키워드 선제 라우팅 (LLM 오판 방지) — 복수 매칭 지원
@@ -782,7 +800,8 @@ async def _shop_keyword_fallback(
 
     # ── 3순위: 상품 상세 조회 ──
     detail_kws = ("상세 보여", "상세보여", "상세 정보", "상세정보", "상품 정보", "상품정보",
-                  "상세 알려", "상세알려", "상세 조회", "상세보기")
+                  "상세 알려", "상세알려", "상세 조회", "상세보기",
+                  "상세설명", "상세 설명", "상세화면", "상세 화면", "상세페이지", "상세 페이지")
     if any(kw in lower for kw in detail_kws):
         attrs = extract_product_attrs(user_message)
         product_name = attrs.get("product_name")

@@ -31,6 +31,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     loading,
     quantity,
     totalPrice,
+    setQuantity,
     increaseQuantity,
     decreaseQuantity,
     // 이미지 갤러리
@@ -350,8 +351,19 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             <input
               className={styles.quantityInput}
               type="text"
+              inputMode="numeric"
               value={quantity}
-              readOnly
+              onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, '');
+                if (raw === '') { setQuantity(1); return; }
+                const val = parseInt(raw, 10);
+                if (!isNaN(val)) setQuantity(Math.max(1, Math.min(val, product.stock)));
+              }}
+              onBlur={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (isNaN(val) || val < 1) setQuantity(1);
+                else if (val > product.stock) setQuantity(product.stock);
+              }}
             />
             <button
               className={styles.quantityBtn}
