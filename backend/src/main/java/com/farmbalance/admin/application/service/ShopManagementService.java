@@ -83,18 +83,22 @@ public class ShopManagementService implements ManageShopUseCase {
             return new ShopAuditItemDto(p.getId(), p.getName(), p.getCategoryName(), p.getPrice(), desc);
         }).toList();
 
-        // 3. AI 서버 일괄 요청
-        List<ShopAuditResultDto> results = adminAiPort.auditShopBatch(itemsToAudit);
-
-        // 4. 결과에 따라 상태 업데이트
+        // 3. AI 서버 일괄 요청 (Chunking)
         int processedCount = 0;
-        for (ShopAuditResultDto result : results) {
-            if (result.valid()) {
-                productRepository.updateStatus(result.productId(), "ACTIVE", null);
-                processedCount++;
-            } else {
-                productRepository.updateStatus(result.productId(), "REJECTED", "[AI 자동 반려] " + result.reason());
-                processedCount++;
+        int chunkSize = 20;
+        for (int i = 0; i < itemsToAudit.size(); i += chunkSize) {
+            List<ShopAuditItemDto> chunk = itemsToAudit.subList(i, Math.min(itemsToAudit.size(), i + chunkSize));
+            List<ShopAuditResultDto> results = adminAiPort.auditShopBatch(chunk);
+
+            // 4. 결과에 따라 상태 업데이트
+            for (ShopAuditResultDto result : results) {
+                if (result.valid()) {
+                    productRepository.updateStatus(result.productId(), "ACTIVE", null);
+                    processedCount++;
+                } else {
+                    productRepository.updateStatus(result.productId(), "REJECTED", "[AI 자동 반려] " + result.reason());
+                    processedCount++;
+                }
             }
         }
 
@@ -116,13 +120,18 @@ public class ShopManagementService implements ManageShopUseCase {
             return new ShopAuditItemDto(p.getId(), p.getName(), p.getCategoryName(), p.getPrice(), desc);
         }).toList();
 
-        List<ShopAuditResultDto> results = adminAiPort.auditShopBatch(itemsToAudit);
-
+        // 3. AI 서버 일괄 요청 (Chunking)
         int hiddenCount = 0;
-        for (ShopAuditResultDto result : results) {
-            if (!result.valid()) {
-                productRepository.updateStatus(result.productId(), "HIDDEN", "[AI 재검수 적발] " + result.reason());
-                hiddenCount++;
+        int chunkSize = 20;
+        for (int i = 0; i < itemsToAudit.size(); i += chunkSize) {
+            List<ShopAuditItemDto> chunk = itemsToAudit.subList(i, Math.min(itemsToAudit.size(), i + chunkSize));
+            List<ShopAuditResultDto> results = adminAiPort.auditShopBatch(chunk);
+
+            for (ShopAuditResultDto result : results) {
+                if (!result.valid()) {
+                    productRepository.updateStatus(result.productId(), "INACTIVE", "[AI 재검수 적발] " + result.reason());
+                    hiddenCount++;
+                }
             }
         }
 
