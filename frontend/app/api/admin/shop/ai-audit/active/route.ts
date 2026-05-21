@@ -7,18 +7,10 @@ import { cookies } from 'next/headers'
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionFromCookie();
-    const cookieStore = await cookies()
-    const token = cookieStore.get('accessToken')?.value
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    }
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
 
-    const res = await fetch(`${BACKEND_URL}/api/admin/shop/ai-audit/active`,  { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) }, 
+    const res = await fetch(`${BACKEND_URL}/api/admin/shop/ai-audit/active`, {
       method: 'POST',
-      headers
+      headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}), 'Content-Type': 'application/json' }
     })
 
     const data = await res.json()
