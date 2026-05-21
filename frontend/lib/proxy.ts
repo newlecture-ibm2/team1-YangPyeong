@@ -86,7 +86,8 @@ export async function proxyToBackend(
       cache: 'no-store',
     });
 
-    const data = await backendResponse.json();
+    const text = await backendResponse.text();
+    const data = text ? JSON.parse(text) : {};
 
     return NextResponse.json(data, {
       status: backendResponse.status,
