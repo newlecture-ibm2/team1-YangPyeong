@@ -122,6 +122,15 @@ _GUEST_AUTH_KEYWORDS: set[str] = {
     "로그인", "회원가입", "가입", "로그인하고", "로그인해",
 }
 
+# 장터 로그인 필수 기능 키워드
+_GUEST_SHOP_KEYWORDS: set[str] = {
+    "장바구니", "장바구니에", "장바구니로",
+    "담아줘", "담아 줘", "넣어줘", "넣어 줘",
+    "주문할게", "주문해줘", "주문 해줘", "결제하기", "구매하기",
+    "상품 등록", "상품등록", "판매 등록", "판매등록",
+    "바로구매", "바로 구매",
+}
+
 
 def _check_guest_shortcircuit(message: str, has_jwt: bool) -> ChatResponse | None:
     """비회원(JWT 없음)이 개인화 질문을 하면 즉시 안내 응답을 반환.
@@ -171,6 +180,22 @@ def _check_guest_shortcircuit(message: str, has_jwt: bool) -> ChatResponse | Non
                 "• 📊 AI 기반 수익 분석\n"
                 "• 📋 맞춤 정책·보조금 추천\n"
                 "• 🌱 작물 재배 관리\n\n"
+                "⏳ 잠시 후 로그인 페이지로 이동합니다."
+            ),
+            actions=[
+                ChatAction(type="NAVIGATE", url="/login", delay=5000),
+            ],
+        )
+
+    # 4. 장터 로그인 필수 기능 (장바구니, 주문, 상품 등록/관리 등)
+    if any(kw in lower for kw in _GUEST_SHOP_KEYWORDS):
+        return ChatResponse(
+            reply=(
+                "장바구니, 주문, 상품 등록 등 장터 기능은 **로그인 후 이용**할 수 있습니다. 🛒\n\n"
+                "로그인하시면 다음 기능을 이용할 수 있어요:\n"
+                "• 🛒 장바구니 담기·주문\n"
+                "• 📦 주문 내역 확인\n"
+                "• 🏷️ 상품 등록·판매 관리\n\n"
                 "⏳ 잠시 후 로그인 페이지로 이동합니다."
             ),
             actions=[
