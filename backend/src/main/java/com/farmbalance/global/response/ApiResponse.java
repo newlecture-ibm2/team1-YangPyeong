@@ -1,8 +1,10 @@
 package com.farmbalance.global.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * 모든 API 응답의 공통 래퍼.
