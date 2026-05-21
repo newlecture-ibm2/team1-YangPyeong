@@ -18,6 +18,8 @@ from app.models.chat import ChatAction, ChatResponse, PendingIntent
 from app.utils.backend_client import user_jwt_ctx
 import base64
 import json
+import httpx
+import os
 
 # 도메인 슬롯 추출기 등록 (서버 시작 시 1회)
 def _register_domain_extractors():
@@ -128,23 +130,44 @@ async def chat(request: ChatRequest) -> ChatResponse:
         if not (messages and isinstance(messages[-1], HumanMessage) and messages[-1].content == request.message):
             messages.append(HumanMessage(content=request.message))
 
-        # ── JWT에서 role 추출 (서명 검증은 Spring Security가 이미 수행) ──
+        # ── JWT에서 role 및 farmId 추출 (서명 검증은 Spring Security가 이미 수행) ──
         user_role = "USER"
+        farm_id = 0
         if jwt:
             try:
                 payload_b64 = jwt.split(".")[1]
                 payload_b64 += "=" * ((4 - len(payload_b64) % 4) % 4)
                 payload_json = base64.b64decode(payload_b64).decode("utf-8")
-                user_role = json.loads(payload_json).get("role", "USER")
+                payload_dict = json.loads(payload_json)
+                user_role = payload_dict.get("role", "USER")
+                farm_id = payload_dict.get("farmId", 0)
             except Exception as e:
-                logger.warning("[Chat] JWT role 파싱 실패: %s", e)
+                logger.warning("[Chat] JWT 파싱 실패: %s", e)
+            
+            # JWT에 farmId가 없거나 0이면 백엔드 API에서 조회
+            if farm_id == 0:
+                try:
+                    backend_url = os.getenv("BACKEND_URL", "http://backend:8080")
+                    async with httpx.AsyncClient() as client:
+                        res = await client.get(
+                            f"{backend_url}/api/farms", 
+                            headers={"Authorization": f"Bearer {jwt}"},
+                            timeout=3.0
+                        )
+                        logger.info(f"[ChatStream] backend res: {res.status_code}, body: {res.text}")
+                        if res.status_code == 200:
+                            data_block = res.json().get("data", [])
+                            if data_block and len(data_block) > 0:
+                                farm_id = data_block[0].get("id", 0)
+                except Exception as e:
+                    logger.warning("[Chat] 백엔드 농장 정보 조회 실패: %s", e)
 
         # ── 오케스트레이터 호출 ──
         result = await orchestrator.ainvoke({
             "messages": messages,
             "user_id": request.userId,
             "user_role": user_role,
-            "farm_id": 0,
+            "farm_id": farm_id,
             "next_node": "",
             "current_focus": "",
             "pending_actions": [],
@@ -256,22 +279,45 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
                     and messages[-1].content == request.message):
                 messages.append(HumanMessage(content=request.message))
 
-            # JWT에서 role 추출
+            # JWT에서 role 및 farm_id 추출 (farm_id는 보통 백엔드에서 받아와야 함)
             user_role = "USER"
+            farm_id = 0
             if jwt:
                 try:
                     payload_b64 = jwt.split(".")[1]
                     payload_b64 += "=" * ((4 - len(payload_b64) % 4) % 4)
                     payload_json = base64.b64decode(payload_b64).decode("utf-8")
-                    user_role = json.loads(payload_json).get("role", "USER")
+                    payload_dict = json.loads(payload_json)
+                    user_role = payload_dict.get("role", "USER")
+                    farm_id = payload_dict.get("farmId", 0)
                 except Exception as e:
-                    logger.warning("[ChatStream] JWT role 파싱 실패: %s", e)
+                    logger.warning("[ChatStream] JWT 파싱 실패: %s", e)
+                
+                # 백엔드에 직접 농장 목록을 요청하여 첫 번째 농장의 ID를 가져옴
+                if farm_id == 0:
+                    try:
+                        import httpx
+                        import os
+                        backend_url = os.getenv("BACKEND_URL", "http://backend:8080")
+                        async with httpx.AsyncClient() as client:
+                            res = await client.get(
+                                f"{backend_url}/api/farms",
+                                headers={"Authorization": f"Bearer {jwt}"},
+                                timeout=3.0
+                            )
+                            logger.info(f"[ChatStream] backend res: {res.status_code}, body: {res.text}")
+                            if res.status_code == 200:
+                                data_block = res.json().get("data", [])
+                                if data_block and len(data_block) > 0:
+                                    farm_id = data_block[0].get("id", 0)
+                    except Exception as e:
+                        logger.warning("[ChatStream] 백엔드 농장 정보 조회 실패: %s", e)
 
             input_state = {
                 "messages": messages,
                 "user_id": request.userId,
                 "user_role": user_role,
-                "farm_id": 0,
+                "farm_id": farm_id,
                 "next_node": "",
                 "current_focus": "",
                 "pending_actions": [],
