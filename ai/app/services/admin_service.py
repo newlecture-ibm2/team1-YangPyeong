@@ -55,15 +55,16 @@ class AdminService:
             )
             
             # Extract JSON block using string indexing to handle nested structures safely
-            start_idx = response_text.find('{')
-            end_idx = response_text.rfind('}')
+            first_brace = response_text.find('{')
+            first_bracket = response_text.find('[')
             
-            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
-                # Try array if object fails
-                start_idx = response_text.find('[')
+            if first_brace != -1 and (first_bracket == -1 or first_brace < first_bracket):
+                start_idx = first_brace
+                end_idx = response_text.rfind('}')
+            elif first_bracket != -1:
+                start_idx = first_bracket
                 end_idx = response_text.rfind(']')
-                
-            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
+            else:
                 raise ValueError(f"Could not find JSON object/array in response: {response_text[:100]}...")
                 
             json_str = response_text[start_idx:end_idx+1]
@@ -116,14 +117,16 @@ class AdminService:
                 temperature=0.1
             )
             
-            start_idx = response_text.find('{')
-            end_idx = response_text.rfind('}')
+            first_brace = response_text.find('{')
+            first_bracket = response_text.find('[')
             
-            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
-                start_idx = response_text.find('[')
+            if first_brace != -1 and (first_bracket == -1 or first_brace < first_bracket):
+                start_idx = first_brace
+                end_idx = response_text.rfind('}')
+            elif first_bracket != -1:
+                start_idx = first_bracket
                 end_idx = response_text.rfind(']')
-                
-            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
+            else:
                 raise ValueError(f"Could not find JSON object/array in response: {response_text[:100]}...")
                 
             json_str = response_text[start_idx:end_idx+1]
@@ -174,14 +177,16 @@ class AdminService:
                 temperature=0.1
             )
             
-            start_idx = response_text.find('{')
-            end_idx = response_text.rfind('}')
+            first_brace = response_text.find('{')
+            first_bracket = response_text.find('[')
             
-            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
-                start_idx = response_text.find('[')
+            if first_brace != -1 and (first_bracket == -1 or first_brace < first_bracket):
+                start_idx = first_brace
+                end_idx = response_text.rfind('}')
+            elif first_bracket != -1:
+                start_idx = first_bracket
                 end_idx = response_text.rfind(']')
-                
-            if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
+            else:
                 raise ValueError(f"Could not find JSON object/array in response: {response_text[:100]}...")
                 
             json_str = response_text[start_idx:end_idx+1]
