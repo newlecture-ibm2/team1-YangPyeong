@@ -1,12 +1,14 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
 /** GET /api/admin/api-sync 전체 목록 조회 프록시*/
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/api-sync`)
+    const session = await getSessionFromCookie();
+    const res = await fetch(`${BACKEND_URL}/api/admin/api-sync`, { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) } })
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {

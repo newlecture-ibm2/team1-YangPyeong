@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
 /** PATCH /api/admin/crops/[id]/deactivate → 백엔드 프록시 */
 export async function PATCH(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await getSessionFromCookie();
     const { id } = await params
-    const res = await fetch(`${BACKEND_URL}/api/admin/crops/${id}/deactivate`, { method: 'PATCH' })
+    const res = await fetch(`${BACKEND_URL}/api/admin/crops/${id}/deactivate`,  { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) },  method: 'PATCH' })
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {

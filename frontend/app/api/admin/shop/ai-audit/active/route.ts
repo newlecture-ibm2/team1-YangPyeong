@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 import { cookies } from 'next/headers'
 
 /** POST /api/admin/shop/ai-audit/active → 기승인 상품 AI 일괄 재검수 프록시 */
 export async function POST(request: NextRequest) {
   try {
+    const session = await getSessionFromCookie();
     const cookieStore = await cookies()
     const token = cookieStore.get('accessToken')?.value
     const headers: Record<string, string> = {
@@ -14,7 +16,7 @@ export async function POST(request: NextRequest) {
       headers['Authorization'] = `Bearer ${token}`
     }
 
-    const res = await fetch(`${BACKEND_URL}/api/admin/shop/ai-audit/active`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/shop/ai-audit/active`,  { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) }, 
       method: 'POST',
       headers
     })

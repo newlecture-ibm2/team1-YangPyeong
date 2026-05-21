@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
 interface RouteParams {
@@ -8,8 +9,9 @@ interface RouteParams {
 /** PATCH /api/admin/farms/:farmId/approve → 승인 프록시 */
 export async function PATCH(_request: NextRequest, { params }: RouteParams) {
   try {
+    const session = await getSessionFromCookie();
     const { farmId } = await params
-    const res = await fetch(`${BACKEND_URL}/api/admin/farms/${farmId}/approve`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/farms/${farmId}/approve`,  { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) }, 
       method: 'PATCH',
     })
     const data = await res.json()

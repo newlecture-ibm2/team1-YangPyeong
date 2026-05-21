@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
 /** POST /api/admin/api-sync/:id/health-check → 수동 헬스체크 트리거 프록시 */
@@ -7,8 +8,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSessionFromCookie();
     const { id } = await params
-    const res = await fetch(`${BACKEND_URL}/api/admin/api-sync/${id}/health-check`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/api-sync/${id}/health-check`,  { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) }, 
       method: 'POST',
     })
     const data = await res.json()
