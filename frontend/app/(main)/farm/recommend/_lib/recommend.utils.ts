@@ -1,4 +1,4 @@
-import type { CropRecommendation, CropRecommendResponse } from './recommend.types';
+import type { AiCoachingStatus, CropRecommendation, CropRecommendResponse } from './recommend.types';
 import { enrichCropGuideCardFields } from './cropGuideCardFallback';
 
 export const FAILED_AI_REASON_SNIPPET = 'AI 분석 중 오류가 발생했습니다';
@@ -27,14 +27,53 @@ function sanitizeCrop(rec: CropRecommendation): CropRecommendation {
   return enrichCropGuideCardFields(base);
 }
 
-/** API·DB 이력에 남은 플레이스홀더를 화면에서 제거 */
+function dedupeRecommendations(list: CropRecommendation[]): CropRecommendation[] {
+  const seen = new Set<number>();
+  const out: CropRecommendation[] = [];
+  for (const rec of list) {
+    if (seen.has(rec.cropId)) continue;
+    seen.add(rec.cropId);
+    out.push(rec);
+  }
+  return out.sort((a, b) => a.rank - b.rank);
+}
+
+function dedupeCoaching(list: CropRecommendation[]): CropRecommendation[] {
+  const seen = new Set<string>();
+  const out: CropRecommendation[] = [];
+  for (const rec of list) {
+    const key =
+      rec.registrationId != null
+        ? `reg-${rec.registrationId}`
+        : `crop-${rec.cropId}-${rec.adviceType ?? 'coach'}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(rec);
+  }
+  return out;
+}
+
+/** React list key — cropId만으로는 유일하지 않을 수 있음 */
+export function recommendItemKey(
+  rec: CropRecommendation,
+  scope: 'coaching' | 'recommendation' | 'other',
+  index: number,
+): string {
+  const reg = rec.registrationId != null ? `-r${rec.registrationId}` : '';
+  const advice = rec.adviceType ?? 'na';
+  return `${scope}-${rec.cropId}${reg}-${advice}-${rec.rank}-${index}`;
+}
+
+/** API·DB 이력에 남은 플레이스홀더를 화면에서 제거 + 중복 작물 제거 */
 export function sanitizeRecommendResponse(
   data: CropRecommendResponse,
 ): CropRecommendResponse {
+  const coaching = dedupeCoaching(data.currentCropAdvices?.map(sanitizeCrop) ?? []);
+  const recommendations = dedupeRecommendations(data.recommendations?.map(sanitizeCrop) ?? []);
   return {
     ...data,
-    recommendations: data.recommendations?.map(sanitizeCrop),
-    currentCropAdvices: data.currentCropAdvices?.map(sanitizeCrop),
+    currentCropAdvices: coaching,
+    recommendations,
   };
 }
 
@@ -53,5 +92,21 @@ export function recommendResultHasFailedAiReason(result: CropRecommendResponse |
   if (!result) return false;
   const items = [...(result.currentCropAdvices ?? []), ...(result.recommendations ?? [])];
   return items.some((rec) => isWeakAiReason(rec.aiReason));
+}
+
+/** AI 코칭 버튼 노출·요청 가능 여부 */
+export function canRequestAiCoaching(status?: AiCoachingStatus | null): boolean {
+  return status === 'ELIGIBLE' || status === 'COMPLETED_IDLE' || status === 'OPTIONAL';
+}
+
+export function cultivationRegisterHref(rec: CropRecommendation): string {
+  const params = new URLSearchParams({
+    cropId: String(rec.cropId),
+    cropName: rec.cropName,
+  });
+  if (rec.registrationId != null) {
+    params.set('registrationId', String(rec.registrationId));
+  }
+  return `/farm/cultivation-register?${params.toString()}`;
 }
 

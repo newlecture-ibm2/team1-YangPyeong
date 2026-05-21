@@ -155,7 +155,7 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
         boolean isMountain = command.isMountain();
 
         String newPnuCode = farm.getPnuCode();
-        if (newBjdCode != null && !newBjdCode.isBlank()) {
+        if (newBjdCode != null && newBjdCode.length() == 10) {
             newPnuCode = PnuGeneratorUtil.generate(
                     newBjdCode,
                     isMountain,

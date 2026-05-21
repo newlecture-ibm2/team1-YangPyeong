@@ -69,6 +69,16 @@
   animation: fadeInUp 0.5s ease-out 0.4s both;
 }
 
+.ctaHint {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .ctaButton {
   display: inline-flex;
   align-items: center;

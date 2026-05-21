@@ -8,8 +8,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -88,13 +90,22 @@ public class RecommendHistoryPersistenceAdapter implements SaveRecommendHistoryP
     private RecommendResult mapToDomain(RecommendHistoryEntity entity) {
         List<CropRecommendation> currentCropAdvices = new ArrayList<>();
         List<CropRecommendation> recommendations = new ArrayList<>();
+        Set<String> seenCoaching = new HashSet<>();
+        Set<Long> seenRecommendations = new HashSet<>();
 
         for (RecommendHistoryItemEntity item : entity.getItems()) {
             CropRecommendation rec = mapItemToRecommendation(item);
             AdviceType type = AdviceType.fromString(item.getAdviceType());
             if (type == AdviceType.IN_SEASON_COACHING || type == AdviceType.PLANNED_CROP) {
+                String coachingKey = rec.getCropId() + ":" + (type != null ? type.name() : "");
+                if (!seenCoaching.add(coachingKey)) {
+                    continue;
+                }
                 currentCropAdvices.add(rec);
             } else {
+                if (!seenRecommendations.add(rec.getCropId())) {
+                    continue;
+                }
                 recommendations.add(rec);
             }
         }

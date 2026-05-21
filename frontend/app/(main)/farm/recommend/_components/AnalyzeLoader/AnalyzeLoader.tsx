@@ -2,7 +2,7 @@
 
 'use client';
 
-import { ANALYZE_STEPS } from '../../_lib/analyzeSteps';
+import { QUICK_ANALYZE_STEPS } from '../../_lib/analyzeSteps';
 import RecommendResultSkeleton from '../RecommendResultSkeleton/RecommendResultSkeleton';
 import styles from './AnalyzeLoader.module.css';
 
@@ -24,8 +24,9 @@ export default function AnalyzeLoader({
   onAnalyze,
 }: AnalyzeLoaderProps) {
   if (isAnalyzing) {
-    const step = ANALYZE_STEPS[Math.min(analyzeStepIndex, ANALYZE_STEPS.length - 1)];
-    const progress = ((analyzeStepIndex + 1) / ANALYZE_STEPS.length) * 100;
+    const steps = QUICK_ANALYZE_STEPS;
+    const step = steps[Math.min(analyzeStepIndex, steps.length - 1)];
+    const progress = ((analyzeStepIndex + 1) / steps.length) * 100;
 
     return (
       <div className={styles.analyzingBlock}>
@@ -33,7 +34,7 @@ export default function AnalyzeLoader({
           <div className={styles.progressHeader}>
             <div className={styles.spinner} aria-hidden />
             <div>
-              <p className={styles.text}>AI가 최적의 작물을 분석 중입니다</p>
+              <p className={styles.text}>작물 적합도를 분석 중입니다</p>
               <p className={styles.sub}>{step.hint}</p>
             </div>
           </div>
@@ -43,7 +44,7 @@ export default function AnalyzeLoader({
           </div>
 
           <ol className={styles.stepList}>
-            {ANALYZE_STEPS.map((s, idx) => {
+            {steps.map((s, idx) => {
               const state = idx < analyzeStepIndex ? 'done' : idx === analyzeStepIndex ? 'active' : 'pending';
               return (
                 <li key={s.id} className={`${styles.stepItem} ${styles[state]}`}>
@@ -56,7 +57,7 @@ export default function AnalyzeLoader({
             })}
           </ol>
 
-          <p className={styles.eta}>보통 20~40초 정도 소요됩니다. 창을 닫지 말고 잠시만 기다려 주세요.</p>
+          <p className={styles.eta}>보통 5~15초 소요</p>
         </div>
 
         <RecommendResultSkeleton />
@@ -74,7 +75,7 @@ export default function AnalyzeLoader({
             onClick={onAnalyze}
             disabled={disabled || isHydrating}
           >
-            🤖 AI 작물 추천 다시 분석
+            📊 작물 적합도 다시 분석
           </button>
         </div>
       </div>
@@ -94,7 +95,7 @@ export default function AnalyzeLoader({
         onClick={onAnalyze}
         disabled={disabled || isHydrating}
       >
-        🤖 AI 작물 추천 분석 시작
+        📊 작물 적합도 분석 시작
       </button>
     </div>
   );

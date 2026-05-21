@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { CropRecommendation } from '../../_lib/recommend.types';
 import { SUPPLY_STATUS_MAP, ADVICE_TYPE_LABEL } from '../../_lib/recommend.types';
+import { recommendItemKey } from '../../_lib/recommend.utils';
 import styles from './RecommendTable.module.css';
 
 interface RecommendTableProps {
@@ -54,8 +55,8 @@ export default function RecommendTable({ recommendations, farmId }: RecommendTab
             </tr>
           </thead>
           <tbody>
-            {recommendations.map((rec) => (
-              <tr key={rec.cropId}>
+            {recommendations.map((rec, idx) => (
+              <tr key={recommendItemKey(rec, 'recommendation', idx)}>
                 <td><span className={styles.rankNum}>{rec.rank}</span></td>
                 <td style={{ fontWeight: 500 }}>{rec.cropName}</td>
                 <td>{rec.adviceType ? (ADVICE_TYPE_LABEL[rec.adviceType] ?? rec.adviceType) : '—'}</td>
