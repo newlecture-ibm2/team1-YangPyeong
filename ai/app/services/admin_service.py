@@ -47,42 +47,47 @@ class AdminService:
         
         logger.info(f"Shop audit requested for {len(request.items)} items.")
         
-        try:
-            response_text = await self.llm.generate_json(
-                prompt=prompt,
-                system_instruction=system_instruction,
-                temperature=0.1
-            )
-            
-            # Extract JSON block using string indexing to handle nested structures safely
-            first_brace = response_text.find('{')
-            first_bracket = response_text.find('[')
-            
-            if first_brace != -1 and (first_bracket == -1 or first_brace < first_bracket):
-                start_idx = first_brace
-                end_idx = response_text.rfind('}')
-            elif first_bracket != -1:
-                start_idx = first_bracket
-                end_idx = response_text.rfind(']')
-            else:
-                raise ValueError(f"Could not find JSON object/array in response: {response_text[:100]}...")
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                response_text = await self.llm.generate_json(
+                    prompt=prompt,
+                    system_instruction=system_instruction,
+                    temperature=0.1
+                )
                 
-            json_str = response_text[start_idx:end_idx+1]
-            data = json.loads(json_str)
-            
-            # Validate output matches Pydantic model
-            if "results" not in data:
-                # If LLM returned a direct list
-                if isinstance(data, list):
-                    data = {"results": data}
+                # Extract JSON block using string indexing to handle nested structures safely
+                first_brace = response_text.find('{')
+                first_bracket = response_text.find('[')
+                
+                if first_brace != -1 and (first_bracket == -1 or first_brace < first_bracket):
+                    start_idx = first_brace
+                    end_idx = response_text.rfind('}')
+                elif first_bracket != -1:
+                    start_idx = first_bracket
+                    end_idx = response_text.rfind(']')
                 else:
-                    raise ValueError("Invalid LLM response format: missing 'results' key")
+                    raise ValueError(f"Could not find JSON object/array in response: {response_text[:100]}...")
                     
-            return ShopAuditBatchResponse(**data)
-            
-        except Exception as e:
-            logger.error(f"Error during shop audit: {e}")
-            raise RuntimeError("E-AI-SHOP-001: AI 상품 심사 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
+                json_str = response_text[start_idx:end_idx+1]
+                data = json.loads(json_str)
+                
+                # Validate output matches Pydantic model
+                if "results" not in data:
+                    if isinstance(data, list):
+                        data = {"results": data}
+                    else:
+                        raise ValueError("Invalid LLM response format: missing 'results' key")
+                        
+                return ShopAuditBatchResponse(**data)
+                
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON Decode Error on attempt {attempt+1}: {e}")
+                if attempt == max_retries - 1:
+                    raise RuntimeError("E-AI-SHOP-001: AI 상품 심사 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
+            except Exception as e:
+                logger.error(f"Error during shop audit: {e}")
+                raise RuntimeError("E-AI-SHOP-001: AI 상품 심사 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
 
     async def moderate_post_batch(self, request: ModerationBatchRequest) -> ModerationBatchResponse:
         system_instruction = """
@@ -93,7 +98,7 @@ class AdminService:
         - 정상 (is_clean=true): 일반적인 농업 정보 공유, 질문, 일상 대화. 약간의 비속어가 있더라도 문맥상 분노 표출이 아니라면 허용.
         - 비정상 (is_clean=false): 불법 도박(카지노, 토토) 홍보, 성인물 유도 링크, 타인에 대한 심각한 비방 및 모욕, 의미 없는 문자열 반복(도배).
         
-        응답은 반드시 아래 JSON 배열 형식으로만 반환하세요:
+        응답은 반드시 아래 JSON 객체 형식으로만 반환하세요:
         {
           "results": [
             {
@@ -120,12 +125,12 @@ class AdminService:
             first_brace = response_text.find('{')
             first_bracket = response_text.find('[')
             
-            if first_brace != -1 and (first_bracket == -1 or first_brace < first_bracket):
-                start_idx = first_brace
-                end_idx = response_text.rfind('}')
-            elif first_bracket != -1:
+            if first_brace != -1 and (first_bracket == -1 or first_bracket < first_brace):
                 start_idx = first_bracket
                 end_idx = response_text.rfind(']')
+            elif first_brace != -1:
+                start_idx = first_brace
+                end_idx = response_text.rfind('}')
             else:
                 raise ValueError(f"Could not find JSON object/array in response: {response_text[:100]}...")
                 
@@ -153,7 +158,7 @@ class AdminService:
         - 정상 (is_clean=true): 일반적인 답변, 리액션, 농업 정보 공유.
         - 비정상 (is_clean=false): 불법 도박 홍보, 스팸 링크, 심한 모욕.
         
-        응답은 반드시 아래 JSON 배열 형식으로만 반환하세요:
+        응답은 반드시 아래 JSON 객체 형식으로만 반환하세요:
         {
           "results": [
             {
