@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import type { PolicyRecommendResponse } from './policy.types';
 
-/** 클라이언트 쿠키에서 인증 세션 존재 여부 확인 */
+/** 클라이언트 쿠키에서 인증 세션 존재 여부 확인 (fb-user는 non-httpOnly) */
 function isAuthenticated(): boolean {
   if (typeof document === 'undefined') return false;
-  return document.cookie.includes('fb-session=');
+  return document.cookie.includes('fb-user=');
 }
 
 export function usePolicyRecommend() {

@@ -11,7 +11,8 @@ export default function PolicyRecommendPage() {
   const { data, isLoading: isRecommendLoading, error, statusCode } = usePolicyRecommend();
   
   // 비회원이면 /api/farm 호출 자체를 건너뜀
-  const isLoggedIn = typeof document !== 'undefined' && document.cookie.includes('fb-session=');
+  // fb-session은 httpOnly → document.cookie에서 읽을 수 없으므로 fb-user(non-httpOnly)로 체크
+  const isLoggedIn = typeof document !== 'undefined' && document.cookie.includes('fb-user=');
   const { farms: allFarms, isLoading: isFarmsLoading } = useMyFarms(isLoggedIn);
 
   const approvedFarms = allFarms.filter(f => f.certificationStatus === 'APPROVED');
