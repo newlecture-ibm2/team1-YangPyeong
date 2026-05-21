@@ -138,7 +138,7 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
                 score += 5;
             }
 
-            if (score > 15) { 
+            if (score >= 15) { 
                 candidates.add(new Candidate(policy, score, reasons, exactRegion));
             }
         }
