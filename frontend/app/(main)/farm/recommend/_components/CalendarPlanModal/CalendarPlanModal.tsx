@@ -54,7 +54,7 @@ export default function CalendarPlanModal({ isOpen, onClose, plan }: CalendarPla
 
         {/* 하단 안내 */}
         <div className={styles.footer}>
-          <p>📚 위 계획은 양평군 기준 일반적인 재배 가이드입니다. 실제 기후·토양 조건에 따라 일정을 조정하세요.</p>
+          <p>📚 위 일정은 이 작물의 추천 파종·수확 시기·생육 기간을 반영했습니다. 실제 기후·토양에 맞게 조정하세요.</p>
         </div>
       </div>
     </Modal>

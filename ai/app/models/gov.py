@@ -43,6 +43,7 @@ class GraphContext(BaseModel):
     target_region: str | None = None
     target_crop: str | None = None
     target_farm: str | None = None
+    region_farm_count: int | None = None
     supply_status: str | None = None
     supply_ratio: float | None = None
     related_policies: list[PolicySummary] = Field(default_factory=list)

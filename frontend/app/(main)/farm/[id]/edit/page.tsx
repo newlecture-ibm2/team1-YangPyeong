@@ -17,6 +17,8 @@ import { useFarmDetail } from '../../useFarm';
 import { updateFarm } from '../../_lib/farm.api';
 import { getCultivations } from '../../_lib/cultivation.api';
 import styles from '../../register/page.module.css';
+import { generatePnuCode, getSoilTextureName, getDrainageName, getSoilDepthName } from '../../register/_lib/soilMapper';
+import { fetchSoilAnalysis, type SoilAnalysisResult } from '../../register/_lib/soil.api';
 
 interface CropOption {
   id: number;
@@ -54,6 +56,10 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog();
+
+  // 토양 분석 결과 및 로딩 상태
+  const [soilAnalysis, setSoilAnalysis] = useState<SoilAnalysisResult | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // 작물 마스터 목록 가져오기
   const [cropOptions, setCropOptions] = useState<CropOption[]>([]);
@@ -184,6 +190,55 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     }));
     setIsPostcodeOpen(false);
     toast.success('주소가 변경되었습니다. 저장 시 PNU 정보가 갱신됩니다.');
+
+    // --- 토양 분석 로직 추가 ---
+    const pnu = generatePnuCode(
+      data.bcode,
+      extended.mountain === 'Y',
+      extended.main_address_no || '0001',
+      extended.sub_address_no || '0'
+    );
+    
+    setIsAnalyzing(true);
+    fetchSoilAnalysis(pnu).then(result => {
+      if (result) {
+        setSoilAnalysis(result);
+        
+        if (result.isBjdAverage) {
+          toast.info('해당 필지의 정밀 데이터가 없어 인근 지역 평균값을 불러왔습니다.', 5000);
+        } else {
+          toast.success('해당 필지의 토양 분석 데이터를 불러왔습니다.');
+        }
+        
+        // 토양 유형 자동 선택 (코드 매핑)
+        let mappedType = '';
+        if (result.soilTexture === '01') mappedType = 'sand';
+        else if (result.soilTexture === '02') mappedType = 'sandy_loam';
+        else if (result.soilTexture === '03') mappedType = 'loam';
+        else if (['05', '06', '12'].includes(result.soilTexture)) mappedType = 'clay';
+        
+        if (mappedType) {
+          setFormData(prev => ({ 
+            ...prev, 
+            soilType: mappedType,
+            ph: result.ph || prev.ph,
+            organicMatter: result.organicMatter ? (parseFloat(result.organicMatter) / 10).toFixed(1) : prev.organicMatter
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            ph: result.ph || prev.ph,
+            organicMatter: result.organicMatter ? (parseFloat(result.organicMatter) / 10).toFixed(1) : prev.organicMatter
+          }));
+        }
+      } else {
+        setSoilAnalysis(null);
+      }
+    }).catch(() => {
+      setSoilAnalysis(null);
+    }).finally(() => {
+      setIsAnalyzing(false);
+    });
   };
 
   const handleCropSelect = (cropIdStr: string) => {
@@ -408,7 +463,58 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
           </Card>
 
           <Card>
-            <h3 className={styles.cardTitle}>토양 정보 (선택)</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 className={styles.cardTitle} style={{ marginBottom: 0 }}>토양 정보 (선택)</h3>
+              {isAnalyzing && <span style={{ fontSize: '12px', color: 'var(--color-primary)' }}>🔍 분석 중...</span>}
+            </div>
+
+            {/* AI 토양 분석 결과 표시 영역 */}
+            {soilAnalysis && (
+              <div style={{ 
+                background: 'rgba(45,106,79,0.05)', 
+                padding: '16px', 
+                borderRadius: '12px', 
+                marginBottom: '20px',
+                border: '1px dashed var(--color-primary-light)'
+              }}>
+                <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-primary)', marginBottom: '8px' }}>
+                  {soilAnalysis.isBjdAverage 
+                    ? '💡 인근 지역 평균 토양 분석 (추천값)' 
+                    : '✨ 흙토람 실시간 토양 분석 결과'}
+                </p>
+                {soilAnalysis.isBjdAverage && (
+                  <p style={{ fontSize: '12px', color: 'var(--color-secondary)', marginBottom: '10px', lineHeight: '1.4' }}>
+                    해당 필지의 정밀 검사 기록이 확인되지 않아, 주소지 법정동의 평균 통계 데이터를 바탕으로 가이드를 제공해 드립니다.
+                  </p>
+                )}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '14px' }}>
+                  <div>
+                    <span style={{ color: 'var(--color-secondary)', marginRight: '4px' }}>• 토성:</span>
+                    <strong>{getSoilTextureName(soilAnalysis.soilTexture)}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--color-secondary)', marginRight: '4px' }}>• 배수:</span>
+                    <strong>{getDrainageName(soilAnalysis.drainage)}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--color-secondary)', marginRight: '4px' }}>• 토심:</span>
+                    <strong>{getSoilDepthName(soilAnalysis.soilDepth)}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--color-secondary)', marginRight: '4px' }}>• pH:</span>
+                    <strong>{soilAnalysis.ph || '데이터 없음'}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--color-secondary)', marginRight: '4px' }}>• 유기물:</span>
+                    <strong>{soilAnalysis.organicMatter ? `${soilAnalysis.organicMatter} g/kg` : '데이터 없음'}</strong>
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--color-secondary)', alignSelf: 'center' }}>
+                    * PNU: {soilAnalysis.pnuCd}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className={styles.inputGroup}>
               <Dropdown
                 label="토양 유형"

@@ -3,7 +3,8 @@
    농장 선택, 분석 요청, 결과 상태 관리
    ════════════════════════════════════════════════════════ */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { stepIndexFromElapsed } from './_lib/analyzeSteps';
 import { useMyFarms } from '../useFarm';
 import { getLatestRecommendHistory, requestCropRecommendation } from './_lib/recommend.api';
 import type { CropRecommendResponse } from './_lib/recommend.types';
@@ -15,7 +16,9 @@ export default function useRecommend() {
   const [selectedFarmIdx, setSelectedFarmIdx] = useState(0);
   const [result, setResult] = useState<CropRecommendResponse | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzeStepIndex, setAnalyzeStepIndex] = useState(0);
   const [isHydrating, setIsHydrating] = useState(false);
+  const analyzeStartedAt = useRef<number | null>(null);
   const { success: toastSuccess, error: toastError } = useToast();
 
   const farms = allFarms.filter((f) => f.certificationStatus === 'APPROVED');
@@ -78,9 +81,28 @@ export default function useRecommend() {
     };
   }, [farm?.id]);
 
+  useEffect(() => {
+    if (!isAnalyzing) {
+      analyzeStartedAt.current = null;
+      setAnalyzeStepIndex(0);
+      return;
+    }
+
+    analyzeStartedAt.current = Date.now();
+    const tick = () => {
+      const start = analyzeStartedAt.current;
+      if (start == null) return;
+      setAnalyzeStepIndex(stepIndexFromElapsed(Date.now() - start));
+    };
+    tick();
+    const id = window.setInterval(tick, 800);
+    return () => window.clearInterval(id);
+  }, [isAnalyzing]);
+
   const handleAnalyze = async () => {
     if (!farm?.id) return;
     setIsAnalyzing(true);
+    setAnalyzeStepIndex(0);
 
     try {
       const data = sanitizeRecommendResponse(await requestCropRecommendation(farm.id));
@@ -116,6 +138,7 @@ export default function useRecommend() {
     result,
     hasResult,
     isAnalyzing,
+    analyzeStepIndex,
     isHydrating,
     handleAnalyze,
     top3,

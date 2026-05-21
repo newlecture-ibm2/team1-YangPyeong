@@ -1,21 +1,46 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Badge from '@/components/common/Badge/Badge';
 import Card from '@/components/common/Card/Card';
-import FilterBar from '@/components/common/FilterBar/FilterBar';
 import SearchInput from '@/components/common/SearchInput/SearchInput';
 import MockupOverlay from '@/components/common/MockupOverlay/MockupOverlay';
-import { fetchAllBalances, BalanceAnalysisResponse } from './_lib/balance.api';
+import { fetchAllBalances, fetchBalanceDashboard, BalanceAnalysisResponse, BalanceDashboardData, CropSupplyItem } from './_lib/balance.api';
 import { useMyFarms } from '../farm/useFarm';
 import { DUMMY_BALANCE } from '@/lib/preview-data';
 import styles from './page.module.css';
+
+/** 수급 상태 → Badge variant 매핑 */
+function getStatusBadgeVariant(status: string): 'green' | 'orange' | 'red' | 'lime' | 'blue' | 'gray' {
+  switch (status) {
+    case 'BALANCED': return 'green';
+    case 'EXCESS_CAUTION': return 'orange';
+    case 'EXCESS_WARN': return 'red';
+    case 'SHORT_CAUTION': return 'lime';
+    case 'SHORT_WARN': return 'blue';
+    default: return 'gray';
+  }
+}
+
+/** 수급 상태 → 신호등 이모지 */
+function getStatusEmoji(status: string): string {
+  switch (status) {
+    case 'BALANCED': return '🟢';
+    case 'EXCESS_CAUTION': return '🟡';
+    case 'EXCESS_WARN': return '🔴';
+    case 'SHORT_CAUTION': return '🟡';
+    case 'SHORT_WARN': return '🔴';
+    default: return '⚪';
+  }
+}
 
 export default function BalanceListPage() {
   const { farms: allFarms, isLoading: isFarmsLoading } = useMyFarms();
   const [balances, setBalances] = useState<BalanceAnalysisResponse[]>([]);
   const [filteredBalances, setFilteredBalances] = useState<BalanceAnalysisResponse[]>([]);
+  const [dashboard, setDashboard] = useState<BalanceDashboardData | null>(null);
+  const [isDashboardLoading, setIsDashboardLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,6 +49,21 @@ export default function BalanceListPage() {
   const approvedFarms = allFarms.filter(f => f.certificationStatus === 'APPROVED');
   const hasUnapprovedFarms = allFarms.length > approvedFarms.length;
   const isPreviewMode = !isFarmsLoading && approvedFarms.length === 0;
+
+  // 읍면동 대시보드 데이터 로드
+  const loadDashboard = useCallback(async (townCode?: string) => {
+    try {
+      setIsDashboardLoading(true);
+      const data = await fetchBalanceDashboard(townCode);
+      setDashboard(data);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '대시보드 데이터를 불러오는 중 오류가 발생했습니다.';
+      console.error('[Balance Dashboard]', message);
+      // 대시보드 로드 실패 시 null로 두고, 기존 테이블은 정상 표시
+    } finally {
+      setIsDashboardLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (isFarmsLoading) return;
@@ -57,6 +97,7 @@ export default function BalanceListPage() {
       setBalances(dummyData);
       setFilteredBalances(dummyData);
       setIsLoading(false);
+      setIsDashboardLoading(false);
       return;
     }
 
@@ -65,14 +106,16 @@ export default function BalanceListPage() {
         const data = await fetchAllBalances();
         setBalances(data);
         setFilteredBalances(data);
-      } catch (err: any) {
-        setError(err.message || '데이터를 불러오는 중 오류가 발생했습니다.');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : '데이터를 불러오는 중 오류가 발생했습니다.';
+        setError(message);
       } finally {
         setIsLoading(false);
       }
     };
     loadData();
-  }, [isFarmsLoading, isPreviewMode]);
+    loadDashboard();
+  }, [isFarmsLoading, isPreviewMode, loadDashboard]);
 
   useEffect(() => {
     let filtered = balances;
@@ -85,15 +128,9 @@ export default function BalanceListPage() {
     setFilteredBalances(filtered);
   }, [searchQuery, statusFilter, balances]);
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'BALANCED': return 'green';
-      case 'EXCESS_CAUTION': return 'orange';
-      case 'EXCESS_WARN': return 'red';
-      case 'SHORT_CAUTION': return 'lime';
-      case 'SHORT_WARN': return 'blue';
-      default: return 'gray';
-    }
+  /** 읍면동 변경 핸들러 */
+  const handleTownChange = (townCode: string) => {
+    loadDashboard(townCode || undefined);
   };
 
   const top3 = balances.slice(0, 3);
@@ -115,7 +152,7 @@ export default function BalanceListPage() {
         <Link href="/farm">대시보드</Link>
         <Link href="/balance" className={styles.activeTab}>수급 분석</Link>
         <Link href="/farm/recommend">AI 작물 추천</Link>
-        <Link href="/farm?tab=history">농장 정보</Link>
+        <Link href="/farm?tab=history">농장 일지</Link>
       </div>
 
       {isPreviewMode ? (
@@ -127,7 +164,9 @@ export default function BalanceListPage() {
             setStatusFilter={setStatusFilter}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            getStatusBadgeVariant={getStatusBadgeVariant}
+            dashboard={null}
+            isDashboardLoading={false}
+            onTownChange={handleTownChange}
           />
         </MockupOverlay>
       ) : (
@@ -138,35 +177,168 @@ export default function BalanceListPage() {
           setStatusFilter={setStatusFilter}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          getStatusBadgeVariant={getStatusBadgeVariant}
+          dashboard={dashboard}
+          isDashboardLoading={isDashboardLoading}
+          onTownChange={handleTownChange}
         />
       )}
     </div>
   );
 }
 
-// 분리된 콘텐츠 컴포넌트
-function BalanceContent({ top3, filteredBalances, statusFilter, setStatusFilter, searchQuery, setSearchQuery, getStatusBadgeVariant }: any) {
+// ========== 대시보드 카드 ==========
+
+interface DashboardSectionProps {
+  dashboard: BalanceDashboardData;
+  isDashboardLoading: boolean;
+  onTownChange: (townCode: string) => void;
+}
+
+function DashboardSection({ dashboard, isDashboardLoading, onTownChange }: DashboardSectionProps) {
+  if (isDashboardLoading) {
+    return <div className={styles.dashboardLoading}>대시보드 데이터를 불러오는 중...</div>;
+  }
+
+  const { userTowns, selectedTownCode, selectedTownName, townSummary, totalSummary } = dashboard;
+  const hasTowns = userTowns && userTowns.length > 0;
+  const isWholeYangpyeong = !selectedTownCode;
+
   return (
-    <>
-      {/* TOP 3 SUMMARY */}
-      <div className={styles.topSummary} data-guide="balance-summary">
-        {top3.map((item: any) => (
-          <Card key={item.cropName} className={styles.summaryCard}>
-            <p className={styles.cardLabel}>{item.cropName}</p>
-            <div className={styles.summaryInfo}>
-              <span className={styles.ratioValue}>공급률 {item.supplyRatio}%</span>
-              <Badge variant={getStatusBadgeVariant(item.status)}>{item.statusLabel}</Badge>
+    <div className={styles.dashboardSection}>
+      {/* 읍면동 선택 */}
+      <div className={styles.dashboardHeader}>
+        <div className={styles.dashboardTitleRow}>
+          <span className={styles.dashboardIcon}>⚖️</span>
+          <h2 className={styles.dashboardTitle}>
+            {isWholeYangpyeong ? '양평군 전체' : `${selectedTownName}`} 실시간 수급 현황
+          </h2>
+        </div>
+        {hasTowns && userTowns.length > 1 && (
+          <select
+            id="town-select"
+            className={styles.townSelect}
+            value={selectedTownCode || ''}
+            onChange={(e) => onTownChange(e.target.value)}
+          >
+            {userTowns.map((town) => (
+              <option key={town.code} value={town.code}>
+                {town.name}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* 신규 가입자 폴백 가이드 배너 */}
+      {isWholeYangpyeong && (
+        <div className={styles.fallbackBanner}>
+          <span className={styles.fallbackIcon}>🌱</span>
+          <p className={styles.fallbackText}>
+            아직 등록된 농장이 없어 <strong>양평군 전체</strong> 현황을 보여드립니다.
+            <Link href="/farm/register" className={styles.fallbackLink}> 농장을 등록하면</Link> 우리 동네의 수급 상황을 확인할 수 있어요!
+          </p>
+        </div>
+      )}
+
+      {/* 대조 카드: 우리 동네 vs 양평군 전체 */}
+      <div className={styles.dashboardCards}>
+        {/* 우리 동네 카드 */}
+        <Card className={styles.dashboardCard}>
+          <div className={styles.cardHeaderRow}>
+            <h3 className={styles.cardTitleLg}>🏡 {townSummary.label}</h3>
+            {townSummary.farmCount > 0 && (
+              <span className={styles.farmCountBadge}>참여 농가 {townSummary.farmCount}곳</span>
+            )}
+          </div>
+          <div className={styles.cropGrid}>
+            {townSummary.crops.slice(0, 5).map((crop) => (
+              <CropStatusRow key={crop.cropName} crop={crop} />
+            ))}
+            {townSummary.crops.length === 0 && (
+              <p className={styles.noCropText}>등록된 재배 정보가 없습니다.</p>
+            )}
+          </div>
+        </Card>
+
+        {/* 양평군 전체 카드 */}
+        {!isWholeYangpyeong && (
+          <Card className={styles.dashboardCard}>
+            <div className={styles.cardHeaderRow}>
+              <h3 className={styles.cardTitleLg}>🏔️ {totalSummary.label}</h3>
             </div>
-            <div className={styles.gaugeBar}>
-              <div
-                className={`${styles.gaugeFill} ${styles[item.status.toLowerCase()]}`}
-                style={{ width: `${Math.min(item.supplyRatio, 100)}%` }}
-              ></div>
+            <div className={styles.cropGrid}>
+              {totalSummary.crops.slice(0, 5).map((crop) => (
+                <CropStatusRow key={crop.cropName} crop={crop} />
+              ))}
             </div>
           </Card>
-        ))}
+        )}
       </div>
+    </div>
+  );
+}
+
+function CropStatusRow({ crop }: { crop: CropSupplyItem }) {
+  return (
+    <div className={styles.cropRow}>
+      <span className={styles.cropEmoji}>{getStatusEmoji(crop.status)}</span>
+      <span className={styles.cropNameText}>{crop.cropName}</span>
+      <span className={styles.cropRatio}>{crop.supplyRatio}%</span>
+      <Badge variant={getStatusBadgeVariant(crop.status)}>{crop.statusLabel}</Badge>
+    </div>
+  );
+}
+
+// ========== 메인 콘텐츠 ==========
+
+interface BalanceContentProps {
+  top3: BalanceAnalysisResponse[];
+  filteredBalances: BalanceAnalysisResponse[];
+  statusFilter: string;
+  setStatusFilter: (v: string) => void;
+  searchQuery: string;
+  setSearchQuery: (v: string) => void;
+  dashboard: BalanceDashboardData | null;
+  isDashboardLoading: boolean;
+  onTownChange: (townCode: string) => void;
+}
+
+function BalanceContent({
+  top3, filteredBalances, statusFilter, setStatusFilter,
+  searchQuery, setSearchQuery,
+  dashboard, isDashboardLoading, onTownChange,
+}: BalanceContentProps) {
+  return (
+    <>
+      {/* 읍면동 대시보드 (로그인 유저 전용) */}
+      {dashboard && (
+        <DashboardSection
+          dashboard={dashboard}
+          isDashboardLoading={isDashboardLoading}
+          onTownChange={onTownChange}
+        />
+      )}
+
+      {/* TOP 3 SUMMARY (대시보드가 없을 때만 렌더링하여 중복 정보 피로도 방지) */}
+      {!dashboard && (
+        <div className={styles.topSummary} data-guide="balance-summary">
+          {top3.map((item) => (
+            <Card key={item.cropName} className={styles.summaryCard}>
+              <p className={styles.cardLabel}>{item.cropName}</p>
+              <div className={styles.summaryInfo}>
+                <span className={styles.ratioValue}>공급률 {item.supplyRatio}%</span>
+                <Badge variant={getStatusBadgeVariant(item.status)}>{item.statusLabel}</Badge>
+              </div>
+              <div className={styles.gaugeBar}>
+                <div
+                  className={`${styles.gaugeFill} ${styles[item.status.toLowerCase()]}`}
+                  style={{ width: `${Math.min(item.supplyRatio, 100)}%` }}
+                ></div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* GUIDE BANNER */}
       <div className={styles.guideBanner}>
@@ -215,7 +387,7 @@ function BalanceContent({ top3, filteredBalances, statusFilter, setStatusFilter,
             </tr>
           </thead>
           <tbody>
-            {filteredBalances.map((item: any) => (
+            {filteredBalances.map((item) => (
               <tr key={item.cropName}>
                 <td><strong>{item.cropName}</strong></td>
                 <td>{item.supplyRatio}%</td>

@@ -65,10 +65,17 @@ export async function proxyToBackend(
     }
   }
 
-  // ── 쿼리스트링 전달 ──
-  const url = new URL(request.url);
-  const queryString = url.search; // ?key=value&...
-  const backendUrl = `${BACKEND_URL}${backendPath}${queryString}`;
+  // ── 쿼리스트링 전달 (중복 및 충돌 방지 병합) ──
+  const clientUrl = new URL(request.url);
+  const resolvedPath = backendPath.startsWith('/') ? backendPath : `/${backendPath}`;
+  const targetUrl = new URL(`${BACKEND_URL}${resolvedPath}`);
+  
+  // 클라이언트 요청의 쿼리 스트링 파라미터를 타겟 백엔드 URL에 덮어쓰기 병합
+  clientUrl.searchParams.forEach((value, key) => {
+    targetUrl.searchParams.set(key, value);
+  });
+  
+  const backendUrl = targetUrl.toString();
   console.log(`[BFF Proxy] Requesting to: ${backendUrl}`);
 
   try {

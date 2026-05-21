@@ -23,3 +23,22 @@ export interface UnreadCountResponse {
     unreadCount: number;
   };
 }
+
+/** 알림 카테고리별 수신 설정 */
+export interface NotificationPreference {
+  balanceWarnEnabled: boolean;
+  policyEnabled: boolean;
+  orderEnabled: boolean;
+  systemEnabled: boolean;
+  guideWeatherEnabled: boolean;
+  guideScheduleEnabled: boolean;
+  guidePestEnabled: boolean;
+  guideSoilEnabled: boolean;
+}
+
+export interface NotificationPreferenceResponse {
+  data: NotificationPreference;
+}
+
+/** 부분 업데이트용 — 전송할 필드만 포함 */
+export type NotificationPreferenceUpdateRequest = Partial<NotificationPreference>;

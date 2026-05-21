@@ -2,6 +2,7 @@ package com.farmbalance.notification.adapter.out.persistence.entity;
 
 import com.farmbalance.global.entity.BaseTimeEntity;
 import com.farmbalance.notification.domain.Notification;
+import com.farmbalance.notification.domain.NotificationCategory;
 import com.farmbalance.notification.domain.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,6 +30,9 @@ public class NotificationJpaEntity extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private String type;
 
+    @Column(length = 30)
+    private String category;
+
     @Column(nullable = false, length = 200)
     private String title;
 
@@ -51,6 +55,7 @@ public class NotificationJpaEntity extends BaseTimeEntity {
                 .id(this.id)
                 .userId(this.userId)
                 .type(NotificationType.valueOf(this.type))
+                .category(this.category != null ? NotificationCategory.valueOf(this.category) : null)
                 .title(this.title)
                 .message(this.message)
                 .link(this.link)
@@ -67,6 +72,7 @@ public class NotificationJpaEntity extends BaseTimeEntity {
                 .id(notification.getId())
                 .userId(notification.getUserId())
                 .type(notification.getType().name())
+                .category(notification.getCategory() != null ? notification.getCategory().name() : null)
                 .title(notification.getTitle())
                 .message(notification.getMessage())
                 .link(notification.getLink())

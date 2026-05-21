@@ -69,7 +69,7 @@ export default function CultivationPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="region" />
+                      <XAxis dataKey="region" interval={0} angle={-45} textAnchor="end" height={60} tick={{ fontSize: 12 }} />
                       <YAxis width={80} tickFormatter={(val) => val >= 10000 ? (val / 10000).toFixed(0) + '만' : val.toLocaleString()} />
                       <Tooltip formatter={(value) => `${Number(value).toLocaleString()}㎡`} />
                       <Bar dataKey="areaM2" name="재배 면적(㎡)" fill="#2D6A4F" radius={[4, 4, 0, 0]} />
