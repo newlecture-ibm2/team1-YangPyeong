@@ -52,9 +52,19 @@ def get_farm_agent():
         get_nongsaro_disaster
     ]
     from langgraph.prebuilt import create_react_agent
+    from langchain_core.messages import SystemMessage
     
+    def farm_agent_prompt(state) -> str:
+        base_prompt = FARM_AGENT_SYSTEM_PROMPT
+        farm_id = state.get("farm_id")
+        if farm_id:
+            base_prompt += f"\n\n[현재 로그인된 사용자 정보]\n- 사용자의 농장 ID: {farm_id}\n※ 도구 호출 시 이 농장 ID를 인자로 사용하세요. 사용자에게 농장 ID를 묻지 마세요."
+        else:
+            base_prompt += "\n\n[현재 로그인된 사용자 정보]\n- 현재 사용자는 등록된 농장이 없습니다. 농장 ID를 요구하는 대신, '농장 등록을 먼저 진행해 주세요'라고 안내하세요."
+        return base_prompt
+
     return create_react_agent(
         model=llm.get_chat_model(temperature=0.1),
         tools=tools,
-        prompt=FARM_AGENT_SYSTEM_PROMPT
+        prompt=farm_agent_prompt
     )

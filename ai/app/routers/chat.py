@@ -128,23 +128,26 @@ async def chat(request: ChatRequest) -> ChatResponse:
         if not (messages and isinstance(messages[-1], HumanMessage) and messages[-1].content == request.message):
             messages.append(HumanMessage(content=request.message))
 
-        # ── JWT에서 role 추출 (서명 검증은 Spring Security가 이미 수행) ──
+        # ── JWT에서 role 및 farmId 추출 (서명 검증은 Spring Security가 이미 수행) ──
         user_role = "USER"
+        farm_id = 0
         if jwt:
             try:
                 payload_b64 = jwt.split(".")[1]
                 payload_b64 += "=" * ((4 - len(payload_b64) % 4) % 4)
                 payload_json = base64.b64decode(payload_b64).decode("utf-8")
-                user_role = json.loads(payload_json).get("role", "USER")
+                payload_dict = json.loads(payload_json)
+                user_role = payload_dict.get("role", "USER")
+                farm_id = payload_dict.get("farmId", 0)
             except Exception as e:
-                logger.warning("[Chat] JWT role 파싱 실패: %s", e)
+                logger.warning("[Chat] JWT 파싱 실패: %s", e)
 
         # ── 오케스트레이터 호출 ──
         result = await orchestrator.ainvoke({
             "messages": messages,
             "user_id": request.userId,
             "user_role": user_role,
-            "farm_id": 0,
+            "farm_id": farm_id,
             "next_node": "",
             "current_focus": "",
             "pending_actions": [],
