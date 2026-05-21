@@ -5,6 +5,8 @@ export interface BalanceAnalysisResponse {
   status: 'EXCESS_WARN' | 'EXCESS_CAUTION' | 'BALANCED' | 'SHORT_CAUTION' | 'SHORT_WARN' | 'UNKNOWN';
   statusLabel: string;
   message: string;
+  currentSupplyKg?: number;
+  standardYieldKg?: number;
 }
 
 export async function fetchBalanceAnalysis(cropName: string, year?: number): Promise<BalanceAnalysisResponse> {
@@ -14,6 +16,35 @@ export async function fetchBalanceAnalysis(cropName: string, year?: number): Pro
 
   if (!response.ok || !result.success) {
     throw new Error(result.error?.message || '수급 분석 데이터를 불러오는데 실패했습니다.');
+  }
+
+  return result.data;
+}
+
+export interface BalanceAgentAnalysisParams {
+  cropName: string;
+  townName?: string;
+  townRatio?: number;
+  townStatus?: string;
+}
+
+export async function fetchBalanceAgentAnalysis(params: BalanceAgentAnalysisParams): Promise<{ reply: string }> {
+  const url = `/api/balance/${encodeURIComponent(params.cropName)}/ai-analysis`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      townName: params.townName,
+      townRatio: params.townRatio,
+      townStatus: params.townStatus
+    }),
+  });
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error?.message || 'AI 심층 수급 분석을 호출하는 데 실패했습니다.');
   }
 
   return result.data;

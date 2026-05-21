@@ -158,7 +158,7 @@ export default function FarmRegisterPage() {
   // 카카오 우편번호 검색 완료 핸들러
   const handlePostcodeComplete = (data: Address) => {
     // Address 타입에 포함되지 않는 확장 필드는 안전하게 접근
-    const extended = data as Address & { mountain?: string; main_address_no?: string; sub_address_no?: string; autoJibunAddress?: string };
+    const extended = data as any;
 
     // 농지의 특성을 고려한 주소 추출 우선순위 적용
     let finalAddress = data.roadAddress;
@@ -176,14 +176,21 @@ export default function FarmRegisterPage() {
       finalAddress = data.address;
     }
 
+    // 1. 산지 여부 판별 (지번 주소나 기본 주소에 '산 '이 포함되어 있는지 확인하거나 mountain 필드가 'Y'인지 체크)
+    const isMountain = (data.jibunAddress || data.address || '').includes('산 ') || extended.mountain === 'Y';
+
+    // 2. 본번/부번 추출 (Daum Postcode API의 camelCase 명세에 맞춰 mainAddressNo/subAddressNo 우선, 없으면 fallback)
+    const mainNo = extended.mainAddressNo || extended.main_address_no || '0001';
+    const subNo = extended.subAddressNo || extended.sub_address_no || '0';
+
     setFormData((prev) => ({
       ...prev,
       zipCode: data.zonecode,
       baseAddress: finalAddress,
       bjdCode: data.bcode,
-      isMountain: extended.mountain === 'Y',
-      mainNo: extended.main_address_no || '0001',
-      subNo: extended.sub_address_no || '0',
+      isMountain: isMountain,
+      mainNo: mainNo,
+      subNo: subNo,
     }));
     setIsPostcodeOpen(false);
 
@@ -204,7 +211,7 @@ export default function FarmRegisterPage() {
     toast.success('주소가 입력되었습니다.');
 
     // --- 토양 분석 로직 추가 ---
-    const pnu = generatePnuCode(data.bcode, extended.mountain === 'Y', extended.main_address_no || '0001', extended.sub_address_no || '0');
+    const pnu = generatePnuCode(data.bcode, isMountain, mainNo, subNo);
     
     setIsAnalyzing(true);
     fetchSoilAnalysis(pnu).then(result => {

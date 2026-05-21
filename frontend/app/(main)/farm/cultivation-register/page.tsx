@@ -53,6 +53,7 @@ function CultivationRegisterContent() {
   const [activeGuideCropName, setActiveGuideCropName] = useState<string>('');
   const [guideData, setGuideData] = useState<any>(null);
   const [isGuideLoading, setIsGuideLoading] = useState<boolean>(false);
+  const [queryInitialized, setQueryInitialized] = useState(false);
 
   // 등록 대기 작물 목록 변동 시 가이드 대상 지정
   useEffect(() => {
@@ -100,8 +101,12 @@ function CultivationRegisterContent() {
       .then(res => res.json())
       .then(json => { if (json.success) setCropCategories(json.data || []); })
       .catch(() => {});
+  }, []);
 
-    // [추가] 쿼리 파라미터로 넘어온 작물이 있다면 자동으로 추가
+  // [추가] 쿼리 파라미터로 넘어온 작물이 있다면 자동으로 추가 (cropId + cropName 혹은 cropName 단독 지원)
+  useEffect(() => {
+    if (queryInitialized) return;
+
     const cropId = searchParams.get('cropId');
     const cropName = searchParams.get('cropName');
 
@@ -116,8 +121,24 @@ function CultivationRegisterContent() {
         alreadyPlanted: false,
         sowingDate: '',
       }]);
+      setQueryInitialized(true);
+    } else if (cropName && cropOptions.length > 0) {
+      const matchedCrop = cropOptions.find(c => c.name === cropName);
+      if (matchedCrop) {
+        setCultivations([{
+          cropId: matchedCrop.id,
+          cropName: matchedCrop.name,
+          area: '',
+          pyeong: '',
+          expectedYield: '',
+          yieldUnit: 'kg',
+          alreadyPlanted: false,
+          sowingDate: '',
+        }]);
+        setQueryInitialized(true);
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, cropOptions, queryInitialized]);
 
   // 작물 목록 가져오기
   useEffect(() => {
