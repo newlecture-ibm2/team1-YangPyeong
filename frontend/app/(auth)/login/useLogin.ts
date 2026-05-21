@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api-fetch';
+import { loginFetch, apiFetch } from '@/lib/api-fetch';
 
 // ── OAuth 설정 ──
 const KAKAO_CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID || '';
@@ -24,10 +24,7 @@ export default function useLogin() {
     setLoading(true);
 
     try {
-      const result = await apiFetch('/api/auth/login', {
-        method: 'POST',
-        body: { email, password },
-      });
+      const result = await loginFetch({ email, password });
 
       if (result.success) {
         router.push('/');
@@ -60,10 +57,7 @@ export default function useLogin() {
 
       if (reactivateResult.success) {
         // 재활성화 성공 → 자동 로그인 시도
-        const loginResult = await apiFetch('/api/auth/login', {
-          method: 'POST',
-          body: { email: reactivateEmail, password },
-        });
+        const loginResult = await loginFetch({ email: reactivateEmail, password });
 
         if (loginResult.success) {
           setShowReactivate(false);
