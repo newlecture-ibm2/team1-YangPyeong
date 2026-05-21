@@ -94,6 +94,14 @@
   font-family: var(--font-serif);
 }
 
+.priceUnit {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-left: 2px;
+}
+
 .cartBtn {
   border-radius: 50% !important;
   width: 36px !important;

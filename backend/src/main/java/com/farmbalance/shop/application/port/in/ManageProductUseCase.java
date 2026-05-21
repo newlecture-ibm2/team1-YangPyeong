@@ -21,10 +21,10 @@ public interface ManageProductUseCase {
                           Integer unitKg, String description, String categoryName, List<String> imageUrls);
 
     /**
-     * 가격·재고만 수정 (운영 정보 — 검수 상태와 무관하게 즉시 반영).
-     * price, stock 중 null인 항목은 기존 값 유지.
+     * 가격·재고·판매단위 수정 (운영 정보 — 검수 상태와 무관하게 즉시 반영).
+     * price, stock, unitKg 중 null인 항목은 기존 값 유지.
      */
-    Product updateInventory(Long sellerId, Long productId, Integer price, Integer stock);
+    Product updateInventory(Long sellerId, Long productId, Integer price, Integer stock, Integer unitKg);
 
     /** 상품 상태(판매중/품절/숨김) 변경 */
     Product changeProductStatus(Long sellerId, Long productId, String newStatus);

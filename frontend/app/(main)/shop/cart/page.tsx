@@ -186,6 +186,9 @@ export default function CartPage() {
                     </span>
                     <span className={styles.itemPrice}>
                       {formatPrice(item.product.price)}
+                      <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--color-text-secondary)', marginLeft: 4 }}>
+                        / {item.product.unitKg ?? 1}kg
+                      </span>
                     </span>
                   </div>
 
