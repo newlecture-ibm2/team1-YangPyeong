@@ -1,11 +1,15 @@
 package com.farmbalance.farm.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @ToString
 public class ShortTermForecast {
     private Double tmp; // 1시간 기온

@@ -1,9 +1,13 @@
 package com.farmbalance.gov.adapter.in.web.dto;
 import com.farmbalance.gov.application.result.GovCultivationResult;
 import lombok.Getter;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 @Getter @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class GovCultivationResponse {
     private final String region;
     private final int farmCount;

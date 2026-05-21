@@ -100,10 +100,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // ── 8. (FARMER 등 일반 유저) /gov 경로 접근 차단 ──
-  if (pathname.startsWith('/gov') && !skipAuth) {
-    // GOV 롤은 4단계에서 이미 next()로 통과했으므로 여기 도달한 사람은 ADMIN 또는 일반 유저입니다.
+  // ── 8. /admin 경로 접근 차단 — ADMIN만 허용 ──
+  if (pathname.startsWith('/admin')) {
     if (userRole !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+
+  // ── 9. /gov 경로 접근 차단 — GOV 또는 ADMIN만 허용 ──
+  if (pathname.startsWith('/gov')) {
+    // GOV 롤은 4단계에서 이미 next()로 통과했으므로 여기 도달한 사람은 ADMIN 또는 일반 유저입니다.
+    if (userRole !== 'ADMIN' && userRole !== 'GOV') {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }

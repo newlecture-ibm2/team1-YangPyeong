@@ -54,7 +54,7 @@ export default function HamburgerMenu({ open, onClose }: HamburgerMenuProps) {
   };
 
   const displayName = user?.email ? user.email.split('@')[0] : '';
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'GOV';
+  const isAdmin = user?.role === 'ADMIN';
 
   return (
     <>

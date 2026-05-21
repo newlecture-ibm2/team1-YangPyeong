@@ -1,6 +1,8 @@
 package com.farmbalance.recommend.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.util.List;
@@ -11,6 +13,8 @@ import java.util.List;
  */
 @Getter
 @Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class CropRecommendation {
 
     private int rank;

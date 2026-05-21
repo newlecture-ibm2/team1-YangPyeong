@@ -1,12 +1,16 @@
 package com.farmbalance.history.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CultivationHistory {
     private Long id;
     private Long farmId;

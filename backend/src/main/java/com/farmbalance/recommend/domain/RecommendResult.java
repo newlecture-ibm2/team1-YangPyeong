@@ -1,6 +1,8 @@
 package com.farmbalance.recommend.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -12,6 +14,8 @@ import java.util.List;
  */
 @Getter
 @Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class RecommendResult {
 
     private Long farmId;

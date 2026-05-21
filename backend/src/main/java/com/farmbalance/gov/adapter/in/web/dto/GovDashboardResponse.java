@@ -1,10 +1,14 @@
 package com.farmbalance.gov.adapter.in.web.dto;
 import com.farmbalance.gov.application.result.GovDashboardResult;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import java.util.List;
 
 @Getter @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class GovDashboardResponse {
     private final GovDashboardResult.DashboardSummary summary;
     private final List<GovDashboardResult.WarningItem> warningItems;

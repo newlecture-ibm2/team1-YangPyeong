@@ -1,12 +1,16 @@
 package com.farmbalance.balance.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.math.BigDecimal;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CropProductionStats {
     private Long id;
     private String itmNm;

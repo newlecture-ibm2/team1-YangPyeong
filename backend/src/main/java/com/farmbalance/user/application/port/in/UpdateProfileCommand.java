@@ -1,6 +1,8 @@
 package com.farmbalance.user.application.port.in;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -8,6 +10,8 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class UpdateProfileCommand {
     private final String email;
     private final String name;

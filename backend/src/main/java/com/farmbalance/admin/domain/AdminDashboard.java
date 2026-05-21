@@ -12,6 +12,7 @@ import java.util.Map;
 @Getter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class AdminDashboard {
 
     // 섹션 1: 최상단 요약 위젯
@@ -30,6 +31,7 @@ public class AdminDashboard {
     @Getter
     @Builder
     @AllArgsConstructor
+@NoArgsConstructor
     public static class CropAreaStat {
         private String cropName;
         private double totalArea;
@@ -38,6 +40,7 @@ public class AdminDashboard {
     @Getter
     @Builder
     @AllArgsConstructor
+@NoArgsConstructor
     public static class SeedSalesStat {
         private String seedName;
         private long salesCount;
@@ -46,6 +49,7 @@ public class AdminDashboard {
     @Getter
     @Builder
     @AllArgsConstructor
+@NoArgsConstructor
     public static class CropBalanceStat {
         private String cropName;
         private double ratio;

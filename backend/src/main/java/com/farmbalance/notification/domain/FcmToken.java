@@ -1,6 +1,7 @@
 package com.farmbalance.notification.domain;
 
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor(force = true)
 public class FcmToken {
     private final Long id;
     private final Long userId;
