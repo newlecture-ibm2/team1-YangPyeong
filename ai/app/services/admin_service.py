@@ -42,52 +42,66 @@ class AdminService:
         }
         """
         
-        items_json = request.model_dump_json()
-        prompt = f"다음 상품 목록을 심사해주세요:\n{items_json}"
-        
         logger.info(f"Shop audit requested for {len(request.items)} items.")
         
-        max_retries = 2
-        for attempt in range(max_retries):
-            try:
-                response_text = await self.llm.generate_json(
-                    prompt=prompt,
-                    system_instruction=system_instruction,
-                    temperature=0.1
-                )
-                
-                # Extract JSON block using string indexing to handle nested structures safely
-                first_brace = response_text.find('{')
-                first_bracket = response_text.find('[')
-                
-                if first_brace != -1 and (first_bracket == -1 or first_brace < first_bracket):
-                    start_idx = first_brace
-                    end_idx = response_text.rfind('}')
-                elif first_bracket != -1:
-                    start_idx = first_bracket
-                    end_idx = response_text.rfind(']')
-                else:
-                    raise ValueError(f"Could not find JSON object/array in response: {response_text[:100]}...")
+        all_results = []
+        chunk_size = 5
+        
+        for i in range(0, len(request.items), chunk_size):
+            chunk_items = request.items[i:i + chunk_size]
+            chunk_request = ShopAuditBatchRequest(items=chunk_items)
+            items_json = chunk_request.model_dump_json()
+            prompt = f"다음 상품 목록을 심사해주세요:\n{items_json}"
+            
+            max_retries = 2
+            chunk_success = False
+            
+            for attempt in range(max_retries):
+                try:
+                    response_text = await self.llm.generate_json(
+                        prompt=prompt,
+                        system_instruction=system_instruction,
+                        temperature=0.1
+                    )
                     
-                json_str = response_text[start_idx:end_idx+1]
-                data = json.loads(json_str)
-                
-                # Validate output matches Pydantic model
-                if "results" not in data:
-                    if isinstance(data, list):
-                        data = {"results": data}
+                    first_brace = response_text.find('{')
+                    first_bracket = response_text.find('[')
+                    
+                    if first_brace != -1 and (first_bracket == -1 or first_brace < first_bracket):
+                        start_idx = first_brace
+                        end_idx = response_text.rfind('}')
+                    elif first_bracket != -1:
+                        start_idx = first_bracket
+                        end_idx = response_text.rfind(']')
                     else:
-                        raise ValueError("Invalid LLM response format: missing 'results' key")
+                        raise ValueError(f"Could not find JSON object/array in response: {response_text[:100]}...")
                         
-                return ShopAuditBatchResponse(**data)
-                
-            except json.JSONDecodeError as e:
-                logger.error(f"JSON Decode Error on attempt {attempt+1}: {e}")
-                if attempt == max_retries - 1:
-                    raise RuntimeError("E-AI-SHOP-001: AI 상품 심사 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
-            except Exception as e:
-                logger.error(f"Error during shop audit: {e}")
+                    json_str = response_text[start_idx:end_idx+1]
+                    data = json.loads(json_str)
+                    
+                    if "results" not in data:
+                        if isinstance(data, list):
+                            data = {"results": data}
+                        else:
+                            raise ValueError("Invalid LLM response format: missing 'results' key")
+                            
+                    all_results.extend(data["results"])
+                    chunk_success = True
+                    break
+                    
+                except json.JSONDecodeError as e:
+                    logger.error(f"JSON Decode Error on chunk {i//chunk_size + 1}, attempt {attempt+1}: {e}")
+                    if attempt == max_retries - 1:
+                        raise RuntimeError("E-AI-SHOP-001: AI 상품 심사 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
+                except Exception as e:
+                    logger.error(f"Error during shop audit chunk {i//chunk_size + 1}: {e}")
+                    if attempt == max_retries - 1:
+                        raise RuntimeError("E-AI-SHOP-001: AI 상품 심사 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
+                        
+            if not chunk_success:
                 raise RuntimeError("E-AI-SHOP-001: AI 상품 심사 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
+                
+        return ShopAuditBatchResponse(results=all_results)
 
     async def moderate_post_batch(self, request: ModerationBatchRequest) -> ModerationBatchResponse:
         system_instruction = """
