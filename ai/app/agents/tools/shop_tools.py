@@ -129,9 +129,11 @@ async def search_products(keyword: str, category: Optional[str] = None, limit: i
     # 1건 → 자동 선택 안내 (product_id는 내부 메타로만, 사용자에게는 미노출)
     if len(products) == 1:
         p = products[0]
+        unit_kg = p.get("unitKg") or 1
+        unit_suffix = f" / {unit_kg}kg" if unit_kg > 1 else ""
         # ⚠️ 상품명을 확인 문장에도 반드시 포함 — LLM이 첫 문장을 요약해도 상품명이 남도록
         return (
-            f"'{p['name']}' 한 가지를 찾았어요. (가격 {p['price']:,}원, 재고 {p['stock']}개) "
+            f"'{p['name']}' 한 가지를 찾았어요. (가격 {p['price']:,}원{unit_suffix}, 재고 {p['stock']}개) "
             f"'{p['name']}'으로 진행할까요? " +
             _action({
                 "type": "PRODUCT_LIST",
@@ -140,6 +142,7 @@ async def search_products(keyword: str, category: Optional[str] = None, limit: i
                     "name": p["name"],
                     "price": p["price"],
                     "stock": p["stock"],
+                    "unitKg": unit_kg,
                     "imageUrl": (p.get("imageUrls") or [None])[0],
                 }],
             })
@@ -655,6 +658,7 @@ async def list_shop_menu() -> str:
             "name": p["name"],
             "price": p["price"],
             "stock": p["stock"],
+            "unitKg": p.get("unitKg") or 1,
             "salesCount": p.get("salesCount"),
             "imageUrl": (p.get("imageUrls") or [None])[0],
             "categoryName": p.get("categoryName"),
@@ -704,16 +708,19 @@ async def get_my_cart() -> str:
         product = item.get("product") or {}
         name = product.get("name") or f"상품 #{item.get('productId', '?')}"
         price = product.get("price", 0)
+        unit_kg = product.get("unitKg") or 1
         qty = item.get("quantity", 1)
         subtotal = price * qty
         total_amount += subtotal
-        lines.append(f"- {name} {qty}개 ({price:,}원 × {qty} = {subtotal:,}원)")
+        unit_suffix = f" / {unit_kg}kg" if unit_kg > 1 else ""
+        lines.append(f"- {name} {qty}개{unit_suffix} ({price:,}원 × {qty} = {subtotal:,}원)")
         image_urls = product.get("imageUrls") or []
         product_items.append({
             "id": item.get("productId"),
             "name": name,
             "price": price,
             "stock": product.get("stock"),
+            "unitKg": unit_kg,
             "imageUrl": image_urls[0] if image_urls else None,
             "quantity": qty,
         })
@@ -1051,6 +1058,7 @@ async def get_product_detail(product_id: Optional[int] = None, product_name: Opt
     name = p.get("name", "?")
     price = p.get("price", 0)
     stock = p.get("stock", 0)
+    unit_kg = p.get("unitKg") or 1
     description = p.get("description", "")
     category = p.get("categoryName", "")
     seller = p.get("sellerName", "")
@@ -1066,9 +1074,10 @@ async def get_product_detail(product_id: Optional[int] = None, product_name: Opt
     }
     status_label = status_map.get(status, status)
 
+    unit_suffix = f" / {unit_kg}kg" if unit_kg > 1 else ""
     detail_lines = [
         f"📦 **{name}**",
-        f"가격: {price:,}원 | 재고: {stock}개 | 판매량: {sales_count}개",
+        f"가격: {price:,}원{unit_suffix} | 판매 단위: 1개당 {unit_kg}kg | 재고: {stock}개 | 판매량: {sales_count}개",
         f"카테고리: {category} | 판매자: {seller} | 상태: {status_label}",
     ]
     if description:
@@ -1081,6 +1090,7 @@ async def get_product_detail(product_id: Optional[int] = None, product_name: Opt
         "name": name,
         "price": price,
         "stock": stock,
+        "unitKg": unit_kg,
         "imageUrl": image_urls[0] if image_urls else None,
         "salesCount": sales_count,
         "categoryName": category,
