@@ -75,7 +75,8 @@ export async function backendFetch<T = unknown>(
     });
 
     // JSON 파싱
-    const data: ApiResponse<T> = await response.json();
+    const text = await response.text();
+    const data: ApiResponse<T> = text ? JSON.parse(text) : {};
 
     // 백엔드 에러 응답 처리
     if (!response.ok) {
