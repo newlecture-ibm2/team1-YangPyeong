@@ -99,6 +99,11 @@ export function canRequestAiCoaching(status?: AiCoachingStatus | null): boolean 
   return status === 'ELIGIBLE' || status === 'COMPLETED_IDLE' || status === 'OPTIONAL';
 }
 
+/** 이미 AI 코칭이 있을 때 재생성 */
+export function canRefreshAiCoaching(status?: AiCoachingStatus | null): boolean {
+  return status === 'HAS_AI';
+}
+
 export function cultivationRegisterHref(rec: CropRecommendation): string {
   const params = new URLSearchParams({
     cropId: String(rec.cropId),

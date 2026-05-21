@@ -145,17 +145,21 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
         Farm farm = loadFarmPort.loadFarmById(command.getFarmId())
                 .orElseThrow(FarmNotFoundException::new);
 
-        // 2. PNU 재계산 (정보가 넘어온 경우에만 갱신, 없으면 기존값 유지)
-        String newBjdCode = (command.getBjdCode() != null && !command.getBjdCode().isBlank()) 
+        // 2. PNU 재계산 — 주소·지번 필드가 요청에 포함된 경우에만
+        boolean shouldRecalculatePnu = (command.getBjdCode() != null && !command.getBjdCode().isBlank())
+                || (command.getMainNo() != null && !command.getMainNo().isBlank())
+                || (command.getSubNo() != null && !command.getSubNo().isBlank());
+
+        String newBjdCode = (command.getBjdCode() != null && !command.getBjdCode().isBlank())
                 ? command.getBjdCode() : farm.getBjdCode();
-        String newMainNo = (command.getMainNo() != null && !command.getMainNo().isBlank()) 
+        String newMainNo = (command.getMainNo() != null && !command.getMainNo().isBlank())
                 ? command.getMainNo() : (farm.getPnuCode() != null && farm.getPnuCode().length() == 19 ? farm.getPnuCode().substring(11, 15) : "0001");
-        String newSubNo = (command.getSubNo() != null && !command.getSubNo().isBlank()) 
+        String newSubNo = (command.getSubNo() != null && !command.getSubNo().isBlank())
                 ? command.getSubNo() : (farm.getPnuCode() != null && farm.getPnuCode().length() == 19 ? farm.getPnuCode().substring(15, 19) : "0000");
-        boolean isMountain = command.isMountain();
 
         String newPnuCode = farm.getPnuCode();
-        if (newBjdCode != null && newBjdCode.length() == 10) {
+        if (shouldRecalculatePnu && newBjdCode != null && newBjdCode.length() == 10) {
+            boolean isMountain = resolveMountainForPnu(command, farm);
             newPnuCode = PnuGeneratorUtil.generate(
                     newBjdCode,
                     isMountain,
@@ -216,6 +220,23 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
     @Override
     public List<CultivationRegistration> loadCultivationsByFarmId(Long farmId) {
         return loadFarmPort.loadCultivationsByFarmId(farmId);
+    }
+
+    /**
+     * 토양-only PATCH 등 주소 필드 없이 isMountain=false가 넘어올 때 기존 PNU 임야 여부를 유지합니다.
+     * 농장 주소 수정 화면은 bjdCode/mainNo/subNo와 함께 isMountain을 명시적으로 전달합니다.
+     */
+    private boolean resolveMountainForPnu(UpdateFarmCommand command, Farm farm) {
+        boolean hasAddressPatch = (command.getBjdCode() != null && !command.getBjdCode().isBlank())
+                || (command.getMainNo() != null && !command.getMainNo().isBlank())
+                || (command.getSubNo() != null && !command.getSubNo().isBlank());
+        if (hasAddressPatch) {
+            return command.isMountain();
+        }
+        if (farm.getPnuCode() != null && farm.getPnuCode().length() == 19) {
+            return farm.getPnuCode().charAt(10) == '2';
+        }
+        return command.isMountain();
     }
 }
 

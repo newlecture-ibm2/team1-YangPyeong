@@ -34,61 +34,65 @@ export default function SoilPanel({
         <div className={`${styles.card} ${styles.editable}`}>
           <div className={styles.icon}>🧪</div>
           <label className={styles.label} htmlFor="soil-ph">토양 pH</label>
-          <input
-            id="soil-ph"
-            type="number"
-            step="0.1"
-            min="0"
-            max="14"
-            className={styles.input}
-            placeholder="6.5"
-            value={values.soilPh}
-            onChange={(e) => onChange('soilPh', e.target.value)}
-          />
+          <div className={styles.fieldBox}>
+            <input
+              id="soil-ph"
+              type="number"
+              step="0.1"
+              min="0"
+              max="14"
+              className={styles.fieldControl}
+              placeholder="6.5"
+              value={values.soilPh}
+              onChange={(e) => onChange('soilPh', e.target.value)}
+            />
+          </div>
         </div>
 
         <div className={`${styles.card} ${styles.editable} ${styles.delay1}`}>
           <div className={styles.icon}>🌱</div>
           <label className={styles.label} htmlFor="soil-om">유기물</label>
-          <div className={styles.inputRow}>
+          <div className={`${styles.fieldBox} ${styles.fieldBoxSuffix}`}>
             <input
               id="soil-om"
               type="number"
               step="0.1"
               min="0"
-              className={styles.input}
+              className={styles.fieldControl}
               placeholder="2.5"
               value={values.organicMatter}
               onChange={(e) => onChange('organicMatter', e.target.value)}
             />
-            <span className={styles.unitInline}>g/kg</span>
+            <span className={styles.fieldSuffix} aria-hidden>g/kg</span>
           </div>
         </div>
 
         <div className={`${styles.card} ${styles.readonly} ${styles.delay2}`}>
           <div className={styles.icon}>📐</div>
           <div className={styles.label}>재배 면적</div>
-          <div className={styles.value}>
-            {area.toLocaleString('ko-KR')}
-            <span className={styles.unit}> ㎡</span>
+          <div className={`${styles.fieldBox} ${styles.fieldBoxReadonly} ${styles.fieldBoxSuffix}`}>
+            <span className={styles.fieldValue}>{area.toLocaleString('ko-KR')}</span>
+            <span className={styles.fieldSuffix} aria-hidden>㎡</span>
           </div>
         </div>
 
         <div className={`${styles.card} ${styles.editable} ${styles.delay3}`}>
           <div className={styles.icon}>🏔️</div>
           <label className={styles.label} htmlFor="soil-type">토양 유형</label>
-          <select
-            id="soil-type"
-            className={styles.select}
-            value={values.soilType}
-            onChange={(e) => onChange('soilType', e.target.value)}
-          >
+          <div className={styles.fieldBox}>
+            <select
+              id="soil-type"
+              className={`${styles.fieldControl} ${styles.fieldSelect}`}
+              value={values.soilType}
+              onChange={(e) => onChange('soilType', e.target.value)}
+            >
             {SOIL_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value || 'empty'} value={opt.value}>
                 {opt.label}
               </option>
             ))}
-          </select>
+            </select>
+          </div>
         </div>
       </div>
 

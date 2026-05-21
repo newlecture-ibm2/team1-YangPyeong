@@ -1,6 +1,16 @@
 import type { FarmDetail } from '../../_lib/farm.types';
 
-/** PATCH 시 PNU·법정동 필드 유지용 */
+/** PATCH 시 필수 필드 + 토양만 갱신 (PNU 재계산 없음) */
+export function buildFarmSoilUpdatePayload(detail: FarmDetail) {
+  return {
+    name: detail.name,
+    address: detail.address,
+    area: detail.area,
+    cropIds: detail.cropIds ?? [],
+  };
+}
+
+/** 주소·PNU 변경 시 사용 */
 export function buildFarmAddressPayload(detail: FarmDetail) {
   const pnu = detail.pnuCode;
   let bjdCode = detail.bjdCode;

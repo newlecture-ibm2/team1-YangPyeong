@@ -7,6 +7,7 @@ import Link from 'next/link';
 import type { CropRecommendation } from '../../_lib/recommend.types';
 import {
   canRequestAiCoaching,
+  canRefreshAiCoaching,
   cultivationRegisterHref,
   formatDisplayAiReason,
 } from '../../_lib/recommend.utils';
@@ -35,6 +36,7 @@ export default function ScoreAnalysis({
 
   const aiReason = formatDisplayAiReason(rec.aiReason);
   const canRequest = canRequestAiCoaching(rec.aiCoachingStatus);
+  const canRefresh = canRefreshAiCoaching(rec.aiCoachingStatus);
   const summaryText = aiReason
     ? summarizeAiReason(aiReason, 140)
     : '토양·시세·수급 점수를 바탕으로 한 추천입니다.';
@@ -153,7 +155,18 @@ export default function ScoreAnalysis({
                   <span className={acc.coachingEta}>보통 15~30초 소요</span>
                 </div>
               ) : aiReason ? (
-                <AiReasonDisplay text={aiReason} />
+                <div className={acc.opinionEmptyState}>
+                  <AiReasonDisplay text={aiReason} />
+                  {canRefresh && onRequestCoaching && (
+                    <button
+                      type="button"
+                      className={acc.coachingRefreshButton}
+                      onClick={handleRequestCoaching}
+                    >
+                      🤖 AI 코칭 새로고침
+                    </button>
+                  )}
+                </div>
               ) : canRequest && onRequestCoaching ? (
                 <div className={acc.opinionEmptyState}>
                   <p className={acc.opinionEmpty}>이 작물에 대한 AI 맞춤 코칭을 생성할 수 있습니다.</p>

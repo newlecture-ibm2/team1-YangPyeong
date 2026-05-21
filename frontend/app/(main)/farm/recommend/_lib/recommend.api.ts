@@ -1,13 +1,9 @@
 import { ApiResponse } from '@/lib/constants';
 import { CropRecommendResponse } from './recommend.types';
 import { sanitizeRecommendResponse } from './recommend.utils';
+import { COACHING_TIMEOUT_MS, QUICK_RECOMMEND_TIMEOUT_MS } from './recommend.timeouts';
 
 const BASE_URL = '/api/recommend';
-
-/** 빠른 분석(점수·순위) — LLM 없음 */
-const QUICK_RECOMMEND_TIMEOUT_MS = 60_000;
-/** AI 코칭 — 작물 수에 따라 길어질 수 있음 */
-const COACHING_TIMEOUT_MS = 180_000;
 
 async function parseErrorMessage(res: Response): Promise<string> {
   const contentType = res.headers.get('content-type') ?? '';

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL } from '@/lib/constants';
 import { getSessionFromCookie } from '@/lib/cookie';
+import { QUICK_RECOMMEND_TIMEOUT_MS } from '@/app/(main)/farm/recommend/_lib/recommend.timeouts';
 
 export async function POST(
   request: NextRequest,
@@ -17,7 +18,7 @@ export async function POST(
         ...(session?.token ? { 'Authorization': `Bearer ${session.token}` } : {}),
       },
       cache: 'no-store',
-      signal: AbortSignal.timeout(180_000),
+      signal: AbortSignal.timeout(QUICK_RECOMMEND_TIMEOUT_MS),
     });
 
     const contentType = backendResponse.headers.get('content-type') ?? '';

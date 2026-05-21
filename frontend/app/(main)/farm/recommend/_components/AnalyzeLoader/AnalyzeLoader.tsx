@@ -3,6 +3,7 @@
 'use client';
 
 import { QUICK_ANALYZE_STEPS } from '../../_lib/analyzeSteps';
+import type { AnalyzeGuide } from '../../_lib/analyzeHints';
 import RecommendResultSkeleton from '../RecommendResultSkeleton/RecommendResultSkeleton';
 import styles from './AnalyzeLoader.module.css';
 
@@ -12,7 +13,24 @@ interface AnalyzeLoaderProps {
   hasResult: boolean;
   disabled: boolean;
   analyzeStepIndex: number;
+  guide?: AnalyzeGuide;
   onAnalyze: () => void;
+}
+
+function GuideBlock({ guide }: { guide?: AnalyzeGuide }) {
+  if (!guide || (guide.lines.length === 0 && !guide.warning)) return null;
+  return (
+    <>
+      {guide.warning && <p className={styles.warn}>{guide.warning}</p>}
+      {guide.lines.length > 0 && (
+        <ul className={styles.guideList}>
+          {guide.lines.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
 }
 
 export default function AnalyzeLoader({
@@ -21,6 +39,7 @@ export default function AnalyzeLoader({
   hasResult,
   disabled,
   analyzeStepIndex,
+  guide,
   onAnalyze,
 }: AnalyzeLoaderProps) {
   if (isAnalyzing) {
@@ -69,6 +88,9 @@ export default function AnalyzeLoader({
     return (
       <div className={styles.toolbar}>
         <div className={styles.toolbarRow}>
+          <div className={styles.toolbarGuide}>
+            <GuideBlock guide={guide} />
+          </div>
           <button
             type="button"
             className={styles.retryButton}
@@ -89,6 +111,7 @@ export default function AnalyzeLoader({
           저장된 추천 결과를 불러오는 중입니다…
         </p>
       )}
+      {guide && <GuideBlock guide={guide} />}
       <button
         type="button"
         className={styles.ctaButton}

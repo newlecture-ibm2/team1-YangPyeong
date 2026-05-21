@@ -8,7 +8,8 @@ import RankingCard from './_components/RankingCard/RankingCard';
 import RecommendTable from './_components/RecommendTable/RecommendTable';
 import MockupOverlay from '@/components/common/MockupOverlay/MockupOverlay';
 import { DUMMY_RECOMMENDATIONS } from '@/lib/preview-data';
-import { RECOMMEND_MODE_LABEL, type CropRecommendation } from './_lib/recommend.types';
+import { buildAnalyzeGuide } from './_lib/analyzeHints';
+import type { CropRecommendation } from './_lib/recommend.types';
 import { recommendItemKey } from './_lib/recommend.utils';
 import styles from './page.module.css';
 import farmStyles from '../page.module.css';
@@ -92,17 +93,20 @@ export default function RecommendListPage() {
           isHydrating={hook.isHydrating}
           hasResult={hook.hasResult}
           disabled={!hook.farm}
+          guide={buildAnalyzeGuide({
+            variant: hook.hasResult ? 'retry' : 'initial',
+            recommendMode: hook.recommendMode,
+            registeredCropCount: Math.max(
+              hook.currentCropAdvices.length,
+              hook.farm?.cropNames?.length ?? 0,
+            ),
+            isSoilDirty: hook.isSoilDirty,
+          })}
           onAnalyze={hook.handleAnalyze}
         />
 
         {hook.result && !hook.isAnalyzing && (
           <>
-            {hook.recommendMode && (
-              <p className={styles.modeBanner}>
-                분석 모드: <strong>{RECOMMEND_MODE_LABEL[hook.recommendMode] ?? hook.recommendMode}</strong>
-              </p>
-            )}
-
             {hook.currentCropAdvices.length > 0 && (
               <section className={styles.coachingSection}>
                 <h3 className={styles.sectionTitle}>현재·예정 작물 코칭</h3>

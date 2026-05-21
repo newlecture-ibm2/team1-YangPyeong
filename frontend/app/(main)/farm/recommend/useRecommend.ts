@@ -7,7 +7,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { quickStepIndexFromElapsed } from './_lib/analyzeSteps';
 import { useMyFarms } from '../useFarm';
 import { getFarmDetail, updateFarm } from '../_lib/farm.api';
-import { buildFarmAddressPayload } from './_lib/farmUpdatePayload';
+import { buildFarmSoilUpdatePayload } from './_lib/farmUpdatePayload';
 import { getLatestRecommendHistory, requestCropRecommendation } from './_lib/recommend.api';
 import type { CropRecommendResponse } from './_lib/recommend.types';
 import { sanitizeRecommendResponse } from './_lib/recommend.utils';
@@ -195,7 +195,7 @@ export default function useRecommend() {
     try {
       const detail = await getFarmDetail(farm.id);
       await updateFarm(farm.id, {
-        ...buildFarmAddressPayload(detail),
+        ...buildFarmSoilUpdatePayload(detail),
         soilType: soilValues.soilType || undefined,
         ph: soilValues.soilPh ? Number(soilValues.soilPh) : undefined,
         organicMatter: soilValues.organicMatter ? Number(soilValues.organicMatter) : undefined,

@@ -18,6 +18,7 @@ import com.farmbalance.recommend.domain.*;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -53,6 +55,9 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
     private final RecommendModeResolver recommendModeResolver;
     private final FarmRecommendDetailsBuilder farmRecommendDetailsBuilder;
     private final RecommendCropAnalysisHelper cropAnalysisHelper;
+
+    @Qualifier("recommendAiExecutor")
+    private final Executor recommendAiExecutor;
 
     @Override
     @Transactional
@@ -86,6 +91,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
 
         RecommendBuild build = buildScoredRecommendations(userId, farmId);
         preserveAiReasonsFromLatestHistory(build, farmId);
+        overlayPreviousMetricsFromLatestHistory(build, farmId);
 
         Set<Long> targetIds = new LinkedHashSet<>(cropIds);
         validateCoachingTargets(targetIds, build);
@@ -222,7 +228,7 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
 
     private void preserveAiReasonsFromLatestHistory(RecommendBuild build, Long farmId) {
         loadRecommendHistoryPort.loadLatestByFarmId(farmId).ifPresent(prev -> {
-            Map<Long, String> reasons = new HashMap<>();
+            Map<String, String> reasons = new HashMap<>();
             appendReasons(reasons, prev.getCurrentCropAdvices());
             appendReasons(reasons, prev.getRecommendations());
             if (reasons.isEmpty()) {
@@ -233,21 +239,73 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
         });
     }
 
-    private static void appendReasons(Map<Long, String> reasons, List<CropRecommendation> list) {
+    /** AI 코칭 요청 시 점수·순위 급변 방지 — 직전 이력의 지표 유지 */
+    private void overlayPreviousMetricsFromLatestHistory(RecommendBuild build, Long farmId) {
+        loadRecommendHistoryPort.loadLatestByFarmId(farmId).ifPresent(prev -> {
+            overlayListMetrics(build.currentCropAdvices(), prev.getCurrentCropAdvices());
+            overlayListMetrics(build.recommendations(), prev.getRecommendations());
+        });
+    }
+
+    private static String recommendationKey(CropRecommendation rec) {
+        if (rec.getRegistrationId() != null) {
+            return "reg-" + rec.getRegistrationId();
+        }
+        return "crop-" + rec.getCropId() + "-"
+                + (rec.getAdviceType() != null ? rec.getAdviceType().name() : "na");
+    }
+
+    private static void overlayListMetrics(
+            List<CropRecommendation> current,
+            List<CropRecommendation> previous
+    ) {
+        if (previous == null || previous.isEmpty() || current == null) {
+            return;
+        }
+        Map<String, CropRecommendation> prevByKey = new HashMap<>();
+        for (CropRecommendation prev : previous) {
+            prevByKey.put(recommendationKey(prev), prev);
+            prevByKey.putIfAbsent("crop-" + prev.getCropId(), prev);
+        }
+        for (int i = 0; i < current.size(); i++) {
+            CropRecommendation rec = current.get(i);
+            CropRecommendation prev = prevByKey.get(recommendationKey(rec));
+            if (prev == null) {
+                prev = prevByKey.get("crop-" + rec.getCropId());
+            }
+            if (prev == null) {
+                continue;
+            }
+            current.set(i, rec.toBuilder()
+                    .score(prev.getScore())
+                    .rank(prev.getRank())
+                    .soilFitness(prev.getSoilFitness())
+                    .soilFitnessPercent(prev.getSoilFitnessPercent())
+                    .priceForecastPercent(prev.getPriceForecastPercent())
+                    .supplyStabilityPercent(prev.getSupplyStabilityPercent())
+                    .supplyStatus(prev.getSupplyStatus())
+                    .build());
+        }
+    }
+
+    private static void appendReasons(Map<String, String> reasons, List<CropRecommendation> list) {
         if (list == null) {
             return;
         }
         for (CropRecommendation rec : list) {
             if (rec.getAiReason() != null && !rec.getAiReason().isBlank()) {
-                reasons.putIfAbsent(rec.getCropId(), rec.getAiReason());
+                reasons.putIfAbsent(recommendationKey(rec), rec.getAiReason());
             }
         }
     }
 
-    private static void mergeReasons(List<CropRecommendation> list, Map<Long, String> reasons) {
+    private static void mergeReasons(List<CropRecommendation> list, Map<String, String> reasons) {
         for (int i = 0; i < list.size(); i++) {
             CropRecommendation rec = list.get(i);
-            String preserved = reasons.get(rec.getCropId());
+            String preserved = reasons.get(recommendationKey(rec));
+            if (preserved == null) {
+                preserved = reasons.get("crop-" + rec.getCropId());
+            }
             if (preserved != null && (rec.getAiReason() == null || rec.getAiReason().isBlank())) {
                 list.set(i, rec.toBuilder().aiReason(preserved).build());
             }
@@ -416,13 +474,15 @@ public class RecommendService implements RecommendCropUseCase, GetRecommendHisto
                 ? CompletableFuture.completedFuture(Map.of())
                 : CompletableFuture.supplyAsync(() -> recommendAiPort.generateBatchReasons(
                         farmDetails, mode,
-                        coachingCommands.stream().map(IndexedCommand::command).toList()));
+                        coachingCommands.stream().map(IndexedCommand::command).toList()),
+                        recommendAiExecutor);
 
         CompletableFuture<Map<String, String>> newFuture = newCommands.isEmpty()
                 ? CompletableFuture.completedFuture(Map.of())
                 : CompletableFuture.supplyAsync(() -> recommendAiPort.generateBatchReasons(
                         farmDetails, mode,
-                        newCommands.stream().map(IndexedCommand::command).toList()));
+                        newCommands.stream().map(IndexedCommand::command).toList()),
+                        recommendAiExecutor);
 
         Map<String, String> coachingReasons = coachingFuture.join();
         Map<String, String> newReasons = newFuture.join();
