@@ -39,7 +39,7 @@ FARM_AGENT_SYSTEM_PROMPT = """
 9. 면적은 항상 m2(제곱미터) 단위를 기본으로 설명하되, 필요시 평수 환산(1평 ≒ 3.3m2)을 곁들여주면 좋습니다.
 """
 
-def get_farm_agent():
+def get_farm_agent(farm_id: int = 0):
     """Farm Agent 인스턴스를 생성하여 반환합니다."""
     # 분석 능력이 좋은 모델을 사용합니다.
     llm = get_llm()
@@ -57,7 +57,6 @@ def get_farm_agent():
     def farm_agent_prompt(state) -> list:
         from langchain_core.messages import SystemMessage
         base_prompt = FARM_AGENT_SYSTEM_PROMPT
-        farm_id = state.get("farm_id")
         if farm_id:
             base_prompt += f"\n\n[현재 로그인된 사용자 정보]\n- 사용자의 농장 ID: {farm_id}\n※ 도구 호출 시 이 농장 ID를 인자로 사용하세요. 사용자에게 농장 ID를 묻지 마세요."
         else:

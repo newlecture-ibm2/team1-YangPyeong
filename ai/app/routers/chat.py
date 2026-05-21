@@ -154,6 +154,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
                             headers={"Authorization": f"Bearer {jwt}"},
                             timeout=3.0
                         )
+                        logger.info(f"[ChatStream] backend res: {res.status_code}, body: {res.text}")
                         if res.status_code == 200:
                             data_block = res.json().get("data", [])
                             if data_block and len(data_block) > 0:
@@ -304,6 +305,7 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
                                 headers={"Authorization": f"Bearer {jwt}"},
                                 timeout=3.0
                             )
+                            logger.info(f"[ChatStream] backend res: {res.status_code}, body: {res.text}")
                             if res.status_code == 200:
                                 data_block = res.json().get("data", [])
                                 if data_block and len(data_block) > 0:
