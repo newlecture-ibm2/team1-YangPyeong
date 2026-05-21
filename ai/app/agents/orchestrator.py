@@ -386,10 +386,12 @@ async def call_balance_agent(state: AgentState):
 async def call_farm_agent(state: AgentState):
     """Farm Agent — 농장 상태·재배 이력·날씨."""
     try:
-        agent = get_farm_agent()
+        farm_id = state.get("farm_id", 0)
+        agent = get_farm_agent(farm_id)
         response = await agent.ainvoke(state)
         return _agent_node_response(response["messages"], state)
-    except Exception:
+    except Exception as e:
+        logger.exception(f"[Farm Agent Error] {e}")
         return _agent_error_response("농장 데이터 조회")
 
 
