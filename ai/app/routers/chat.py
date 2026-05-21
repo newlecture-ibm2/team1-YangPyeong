@@ -96,6 +96,91 @@ def _get_orchestrator():
     return _orchestrator
 
 
+# ════════════════════════════════════════════════════════════════════
+# 비회원(게스트) 정책 — 개인화 질문 감지 및 short-circuit
+# ════════════════════════════════════════════════════════════════════
+
+# 개인화 키워드: 내 농장/작물/보조금 등 로그인 필수 기능
+_GUEST_PERSONAL_KEYWORDS: set[str] = {
+    "내 농장", "내농장", "내 작물", "내작물", "내 농장 상태",
+    "내 맞춤", "내 보조금", "내 정책", "내 추천",
+    "내 재배", "내 수익", "내 수확", "내 면적",
+    "내 장바구니", "내장바구니", "내 주문", "내주문",
+    "내 상품", "내상품", "내 프로필", "내프로필",
+    "내가 쓴", "내 댓글", "내 게시글",
+}
+
+# 농장 등록/관리 관련 키워드 (비회원에게 별도 안내)
+_GUEST_FARM_REGISTER_KEYWORDS: set[str] = {
+    "농장 등록", "농장등록", "농장 등록할", "농장등록할",
+    "재배 등록", "재배등록", "작물 등록", "작물등록",
+}
+
+# 로그인/회원가입 관련 키워드 (비회원에게 안내)
+_GUEST_AUTH_KEYWORDS: set[str] = {
+    "로그인", "회원가입", "가입", "로그인하고", "로그인해",
+}
+
+
+def _check_guest_shortcircuit(message: str, has_jwt: bool) -> ChatResponse | None:
+    """비회원(JWT 없음)이 개인화 질문을 하면 즉시 안내 응답을 반환.
+
+    일반 농업 질문은 None을 반환하여 오케스트레이터로 정상 라우팅.
+    """
+    if has_jwt:
+        return None
+
+    lower = message.lower().strip()
+
+    # 1. 로그인/회원가입 질문
+    if any(kw in lower for kw in _GUEST_AUTH_KEYWORDS):
+        return ChatResponse(
+            reply=(
+                "FarmBalance에 가입하시면 맞춤형 농장 관리와 정책 추천을 받을 수 있어요! 🌱\n\n"
+                "**회원가입**: 상단 메뉴의 '회원가입' 버튼을 눌러주세요.\n"
+                "**로그인**: 이미 계정이 있다면 '로그인' 버튼을 눌러주세요."
+            ),
+            actions=[
+                ChatAction(type="NAVIGATE", label="회원가입", payload={"url": "/signup"}),
+                ChatAction(type="NAVIGATE", label="로그인", payload={"url": "/login"}),
+            ],
+        )
+
+    # 2. 농장 등록 관련 질문
+    if any(kw in lower for kw in _GUEST_FARM_REGISTER_KEYWORDS):
+        return ChatResponse(
+            reply=(
+                "농장 등록은 로그인 후 이용할 수 있습니다. 🌾\n\n"
+                "회원가입 후 **내농장 > 농장 등록**에서 농장 정보를 등록하시면 "
+                "AI 기반 작물 추천, 수익 분석, 맞춤 정책 추천 등 다양한 서비스를 이용하실 수 있어요!"
+            ),
+            actions=[
+                ChatAction(type="NAVIGATE", label="회원가입하기", payload={"url": "/signup"}),
+                ChatAction(type="NAVIGATE", label="로그인하기", payload={"url": "/login"}),
+            ],
+        )
+
+    # 3. 개인화 질문 (내 농장, 내 작물, 내 보조금 등)
+    if any(kw in lower for kw in _GUEST_PERSONAL_KEYWORDS):
+        return ChatResponse(
+            reply=(
+                "개인 농장 정보를 확인하려면 **로그인 후 농장 등록**이 필요합니다. 🔒\n\n"
+                "로그인하시면 다음과 같은 맞춤 서비스를 이용할 수 있어요:\n"
+                "• 🌾 내 농장 현황 조회\n"
+                "• 📊 AI 기반 수익 분석\n"
+                "• 📋 맞춤 정책·보조금 추천\n"
+                "• 🌱 작물 재배 관리"
+            ),
+            actions=[
+                ChatAction(type="NAVIGATE", label="로그인", payload={"url": "/login"}),
+                ChatAction(type="NAVIGATE", label="회원가입", payload={"url": "/signup"}),
+            ],
+        )
+
+    # 일반 질문 → short-circuit 없이 오케스트레이터로 전달
+    return None
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
     logger.info("챗봇 요청 수신 [userId=%s, category=%s]", request.userId, request.category)
@@ -105,6 +190,12 @@ async def chat(request: ChatRequest) -> ChatResponse:
     token = user_jwt_ctx.set(jwt)
 
     try:
+        # ── 비회원 개인화 질문 short-circuit ──
+        guest_response = _check_guest_shortcircuit(request.message, has_jwt=bool(jwt))
+        if guest_response:
+            logger.info("[Chat] 비회원 개인화 질문 short-circuit: '%s'", request.message[:40])
+            return guest_response
+
         # ── PendingIntent 처리 (다중 턴 슬롯 채우기) ──
         if request.pending_intent:
             return await _handle_pending_intent(request.pending_intent, request.message)
@@ -254,6 +345,13 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
     async def event_generator():
         token = user_jwt_ctx.set(jwt)
         try:
+            # ── 비회원 개인화 질문 short-circuit (스트리밍) ──
+            guest_response = _check_guest_shortcircuit(request.message, has_jwt=bool(jwt))
+            if guest_response:
+                logger.info("[ChatStream] 비회원 개인화 질문 short-circuit: '%s'", request.message[:40])
+                yield f"event: result\ndata: {json.dumps(guest_response.model_dump(), ensure_ascii=False)}\n\n"
+                return
+
             # PendingIntent 처리 (스트리밍에서는 즉시 결과 반환)
             if request.pending_intent:
                 result = await _handle_pending_intent(request.pending_intent, request.message)
