@@ -119,5 +119,12 @@ public class AdminRagDocumentController {
         manageRagDocumentUseCase.deleteDocument(id);
         return ApiResponse.ok(null);
     }
+
+    /** AI 서버와 RAG 데이터 동기화 */
+    @PostMapping("/sync")
+    public ApiResponse<Boolean> syncRagData() {
+        boolean result = manageRagDocumentUseCase.syncRagData();
+        return ApiResponse.ok(result);
+    }
 }
 

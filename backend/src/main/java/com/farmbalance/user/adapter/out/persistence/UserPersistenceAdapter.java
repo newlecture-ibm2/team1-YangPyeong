@@ -138,9 +138,9 @@ public class UserPersistenceAdapter implements UserRepository {
     }
 
     @Override
-    public void updateStatus(Long id, String status) {
+    public void updateStatus(Long id, String status, String reason) {
         userJpaRepository.findById(id).ifPresent(entity -> {
-            entity.updateStatus(UserStatus.valueOf(status));
+            entity.updateStatus(UserStatus.valueOf(status), reason);
             userJpaRepository.save(entity);
         });
     }

@@ -3,7 +3,8 @@ import logging
 from app.llm import get_llm
 from app.models.admin import (
     ShopAuditBatchRequest, ShopAuditBatchResponse, ShopAuditResult,
-    ModerationBatchRequest, ModerationBatchResponse, ModerationResult
+    ModerationBatchRequest, ModerationBatchResponse, ModerationResult,
+    CommentModerationBatchRequest, CommentModerationBatchResponse, CommentModerationResult
 )
 
 logger = logging.getLogger(__name__)
@@ -132,3 +133,83 @@ class AdminService:
                 for item in request.items
             ]
             return ModerationBatchResponse(results=results)
+
+    async def moderate_comment_batch(self, request: CommentModerationBatchRequest) -> CommentModerationBatchResponse:
+        system_instruction = """
+        당신은 농업인 커뮤니티의 자동 모더레이터 AI입니다.
+        사용자가 작성한 댓글 목록을 보고 스팸이나 악성 글을 필터링하세요.
+        
+        [심사 기준]
+        - 정상 (is_clean=true): 일반적인 답변, 리액션, 농업 정보 공유.
+        - 비정상 (is_clean=false): 불법 도박 홍보, 스팸 링크, 심한 모욕.
+        
+        응답은 반드시 아래 JSON 배열 형식으로만 반환하세요:
+        {
+          "results": [
+            {
+              "comment_id": 456,
+              "is_clean": false,
+              "reason": "불법 도박 사이트 홍보"
+            }
+          ]
+        }
+        """
+        
+        items_json = request.model_dump_json()
+        prompt = f"다음 커뮤니티 댓글 목록을 심사해주세요:\n{items_json}"
+        
+        logger.info(f"Comment moderation requested for {len(request.items)} items.")
+        
+        try:
+            response_text = await self.llm.generate_json(
+                prompt=prompt,
+                system_instruction=system_instruction,
+                temperature=0.1
+            )
+            
+            response_text = response_text.strip()
+            if response_text.startswith("```json"):
+                response_text = response_text[7:-3]
+            elif response_text.startswith("```"):
+                response_text = response_text[3:-3]
+            response_text = response_text.strip()
+                
+            data = json.loads(response_text)
+            
+            if "results" not in data:
+                if isinstance(data, list):
+                    data = {"results": data}
+                else:
+                    raise ValueError("Invalid LLM response format: missing 'results' key")
+                    
+            return CommentModerationBatchResponse(**data)
+            
+        except Exception as e:
+            logger.error(f"Error during comment moderation: {e}")
+            results = [
+                CommentModerationResult(comment_id=item.comment_id, is_clean=True, reason="AI 심사 오류로 인한 통과") 
+                for item in request.items
+            ]
+            return CommentModerationBatchResponse(results=results)
+
+    async def sync_rag_data(self) -> dict:
+        try:
+            from app.rag.ingestion import load_and_chunk_documents
+            from app.rag.vectorstore import get_vectorstore
+
+            logger.info("=== RAG 데이터 인제스천 시작 (API 요청) ===")
+            documents = load_and_chunk_documents()
+            
+            if not documents:
+                logger.warning("DB에서 처리할 문서가 없습니다.")
+                return {"success": True, "message": "처리할 문서가 없습니다.", "chunk_count": 0}
+
+            logger.info(f"총 {len(documents)}개의 텍스트 청크를 ChromaDB에 적재합니다...")
+            vectorstore = get_vectorstore()
+            vectorstore.add_documents(documents)
+            
+            logger.info("=== RAG 데이터 인제스천 완료 ===")
+            return {"success": True, "message": "RAG 데이터 동기화 완료", "chunk_count": len(documents)}
+        except Exception as e:
+            logger.error(f"RAG 동기화 중 오류 발생: {e}")
+            return {"success": False, "error": str(e)}

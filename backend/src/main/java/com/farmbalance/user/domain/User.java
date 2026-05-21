@@ -21,6 +21,7 @@ public class User {
     private Role role;
 
     private UserStatus status;
+    private String statusReason;
     private AuthProvider provider;
     private String providerId;
     private String profileImageUrl;
@@ -46,6 +47,7 @@ public class User {
                 .phone(this.phone)
                 .role(this.role)
                 .status(this.status)
+                .statusReason(this.statusReason)
                 .provider(this.provider)
                 .providerId(this.providerId)
                 .profileImageUrl(this.profileImageUrl)

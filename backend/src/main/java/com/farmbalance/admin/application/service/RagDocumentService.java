@@ -22,6 +22,7 @@ import java.util.List;
 public class RagDocumentService implements ManageRagDocumentUseCase {
 
     private final AdminRagDocumentPort adminRagDocumentPort;
+    private final com.farmbalance.admin.application.port.out.AdminAiPort adminAiPort;
 
     @Override
     public List<RagDocument> getAllDocuments() {
@@ -84,5 +85,10 @@ public class RagDocumentService implements ManageRagDocumentUseCase {
     public void deleteDocument(Long id) {
         getDocumentById(id);
         adminRagDocumentPort.delete(id);
+    }
+
+    @Override
+    public boolean syncRagData() {
+        return adminAiPort.syncRagData();
     }
 }

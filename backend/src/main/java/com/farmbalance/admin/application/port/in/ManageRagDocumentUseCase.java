@@ -22,4 +22,6 @@ public interface ManageRagDocumentUseCase {
                         String textContent, String fileUrl, String fileName, String fileType);
 
     void deleteDocument(Long id);
+
+    boolean syncRagData();
 }

@@ -1,4 +1,5 @@
-import { getPostDetail, getComments } from '../_lib/community.api';
+import { backendFetch } from '@/lib/api-client';
+import type { Post, Comment } from '../_lib/community.types';
 import styles from './PostDetail.module.css';
 import Badge from '@/components/common/Badge';
 import Button from '@/components/common/Button';
@@ -18,10 +19,10 @@ export default async function PostDetailPage({
 }) {
   const { postId } = await params;
   
-  // 데이터 병렬 페칭
+  // 데이터 병렬 페칭 (서버 컴포넌트이므로 backendFetch 사용 - withAuth로 인증 정보 포함)
   const [postRes, commentsRes] = await Promise.all([
-    getPostDetail(Number(postId)),
-    getComments(Number(postId))
+    backendFetch<Post>(`/api/community/posts/${postId}`, { withAuth: true, revalidate: 0 }),
+    backendFetch<Comment[]>(`/api/community/posts/${postId}/comments`, { withAuth: true, revalidate: 0 })
   ]);
 
   if (!postRes.success || !postRes.data) {
@@ -33,6 +34,23 @@ export default async function PostDetailPage({
 
   return (
     <article className={styles.container}>
+      {post.isHidden && (
+        <div style={{
+          backgroundColor: '#fff1f0',
+          border: '1px solid #ffa39e',
+          padding: '16px',
+          borderRadius: '8px',
+          marginBottom: '24px',
+          color: '#cf1322',
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span>⚠️</span>
+          <span>관리자에 의해 숨김 처리된 게시글입니다. (작성자 본인 및 관리자만 열람 가능)</span>
+        </div>
+      )}
       <header className={styles.header}>
         <div className={styles.meta}>
           <Badge variant={post.isNotice ? 'dark' : 'green'}>

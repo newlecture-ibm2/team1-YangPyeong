@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/constants'
+import { getSessionFromCookie } from '@/lib/cookie'
 
 /** DELETE /api/admin/community/:postId → 게시글 삭제 프록시 */
 export async function DELETE(
@@ -7,8 +8,14 @@ export async function DELETE(
   { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
+    const session = await getSessionFromCookie()
     const { postId } = await params
-    const res = await fetch(`${BACKEND_URL}/api/admin/community/${postId}`, { method: 'DELETE' })
+    const res = await fetch(`${BACKEND_URL}/api/admin/community/${postId}`, { 
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session?.token || ''}`
+      }
+    })
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
@@ -26,8 +33,13 @@ export async function GET(
   { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
+    const session = await getSessionFromCookie()
     const { postId } = await params
-    const res = await fetch(`${BACKEND_URL}/api/admin/community/${postId}`)
+    const res = await fetch(`${BACKEND_URL}/api/admin/community/${postId}`, {
+      headers: {
+        'Authorization': `Bearer ${session?.token || ''}`
+      }
+    })
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {

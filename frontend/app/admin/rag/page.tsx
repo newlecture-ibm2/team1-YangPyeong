@@ -29,6 +29,7 @@ import {
   createDocument,
   updateDocument,
   deleteDocument,
+  syncDocuments,
 } from '../_lib/rag.api'
 
 type Tab = 'documents' | 'categories'
@@ -143,6 +144,16 @@ export default function RagPage() {
     return categories.find((c) => c.id === categoryId)?.name ?? '-'
   }
 
+  const handleSync = async () => {
+    try {
+      toast.info('AI 챗봇 데이터 동기화를 시작합니다. 시간이 걸릴 수 있습니다.')
+      await syncDocuments()
+      toast.success('동기화가 완료되었습니다. 이제 챗봇이 최신 데이터를 사용합니다.')
+    } catch (e: any) {
+      toast.error(e.message || '동기화 중 오류가 발생했습니다.')
+    }
+  }
+
   if (loading) {
     return <div className={styles.loading}>데이터를 불러오는 중...</div>
   }
@@ -191,15 +202,20 @@ export default function RagPage() {
                   ]}
                 />
               </div>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setEditingDocument(null)
-                  setShowDocumentModal(true)
-                }}
-              >
-                + 문서 추가
-              </Button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Button variant="outline" onClick={handleSync}>
+                  🔄 AI 챗봇 동기화
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setEditingDocument(null)
+                    setShowDocumentModal(true)
+                  }}
+                >
+                  + 문서 추가
+                </Button>
+              </div>
             </div>
 
             {documents.length === 0 ? (

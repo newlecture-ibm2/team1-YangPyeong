@@ -23,7 +23,7 @@ public interface ManageShopUseCase {
     /**
      * 상품 상태 변경 (ACTIVE / INACTIVE / REJECTED 등)
      */
-    void updateProductStatus(Long productId, String status);
+    void updateProductStatus(Long productId, String status, String reason);
 
     /** 관리자 권한으로 특정 상품 삭제 (Soft Delete) */
     void deleteProduct(Long productId);

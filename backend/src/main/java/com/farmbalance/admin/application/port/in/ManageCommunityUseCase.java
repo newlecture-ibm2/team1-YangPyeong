@@ -2,6 +2,7 @@ package com.farmbalance.admin.application.port.in;
 
 import com.farmbalance.admin.adapter.in.web.dto.CreateNoticeRequest;
 import com.farmbalance.admin.domain.AdminPost;
+import com.farmbalance.admin.domain.AdminComment;
 
 import java.util.List;
 
@@ -26,10 +27,14 @@ public interface ManageCommunityUseCase {
      */
     AdminPost getPost(Long postId);
 
+    // 댓글 관리
+    List<AdminComment> getComments(String keyword, String status, int page, int size);
+    long countComments(String keyword, String status);
+
     /**
      * 특정 게시글의 댓글 목록 조회
      */
-    List<com.farmbalance.admin.domain.AdminComment> getComments(Long postId);
+    List<AdminComment> getComments(Long postId);
 
     /**
      * 댓글 삭제 (soft delete)
@@ -37,9 +42,39 @@ public interface ManageCommunityUseCase {
     void deleteComment(Long commentId);
 
     /**
+     * 댓글 숨김 (관리자 제재/AI 차단)
+     */
+    void hideComment(Long commentId, String reason);
+
+    /**
+     * 게시글 숨김 (관리자 제재/AI 차단)
+     */
+    void hidePost(Long postId, String reason);
+
+    /**
+     * 댓글 일괄 삭제 (격리된 상태에서만 가능)
+     */
+    void bulkDeleteComments(List<Long> commentIds);
+
+    /**
+     * 게시글 일괄 삭제 (격리된 상태에서만 가능)
+     */
+    void bulkDeletePosts(List<Long> postIds);
+
+    /**
      * 게시글 삭제 (soft delete)
      */
     void deletePost(Long postId);
+
+    /**
+     * 게시글 복구 (restore soft delete)
+     */
+    void restorePost(Long postId);
+
+    /**
+     * 댓글 복구 (restore soft delete)
+     */
+    void restoreComment(Long commentId);
 
     /**
      * 게시글 공지 설정/해제
@@ -54,7 +89,7 @@ public interface ManageCommunityUseCase {
     /**
      * 신고 내역 조회 (페이징)
      */
-    List<com.farmbalance.admin.domain.AdminReport> getReports(String status, int page, int size);
+    List<com.farmbalance.admin.domain.AdminGroupedReport> getReports(String status, int page, int size);
 
     /**
      * 신고 내역 개수 조회
@@ -62,9 +97,19 @@ public interface ManageCommunityUseCase {
     long countReports(String status);
 
     /**
-     * 신고 상태 변경 (RESOLVED, DISMISSED 등)
+     * 특정 타겟(게시글/댓글)에 대한 신고 상태 일괄 변경
      */
-    void updateReportStatus(Long reportId, String status);
+    void updateReportStatusByTarget(String targetType, Long targetId, String status);
+
+    /**
+     * 특정 타겟(게시글/댓글) 제재 일괄 처리
+     */
+    void sanctionReportByTarget(String targetType, Long targetId, boolean hideContent, boolean deleteContent, boolean suspendUser);
+
+    /**
+     * 특정 타겟(게시글/댓글) 제재 일괄 취소 (Undo)
+     */
+    void undoSanctionByTarget(String targetType, Long targetId);
 
     /** AI를 활용해 최근 작성된 ACTIVE 게시글의 스팸 여부를 일괄 자동 검사 */
     int aiModerateActivePosts();

@@ -24,6 +24,7 @@ export interface ChangeRoleRequest {
 
 export interface ChangeStatusRequest {
   status: UserStatus
+  reason?: string
 }
 
 export interface CreateUserRequest {
