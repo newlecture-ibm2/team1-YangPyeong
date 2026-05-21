@@ -137,8 +137,8 @@ export async function updateProduct(id: number, data: {
   });
 }
 
-/** 가격·재고만 수정 (운영 정보 — 검수중 포함 모든 상태에서 즉시 반영) */
-export async function updateInventory(id: number, data: { price?: number; stock?: number }) {
+/** 가격·재고·판매단위 수정 (운영 정보 — 검수중 포함 모든 상태에서 즉시 반영) */
+export async function updateInventory(id: number, data: { price?: number; stock?: number; unitKg?: number }) {
   return apiFetch<Product>(`/api/shop/seller/${id}/inventory`, {
     method: 'PATCH',
     body: data,

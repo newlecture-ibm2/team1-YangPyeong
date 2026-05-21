@@ -19,6 +19,8 @@ export interface ChatProductItem {
   name: string;
   price: number;
   stock: number;
+  /** 1개당 판매 단위 (kg). 기본 1. */
+  unitKg?: number;
   salesCount?: number;
   imageUrl?: string;
   categoryName?: string;

@@ -280,20 +280,35 @@ function SellerRegisterForm() {
       if (numericOnly === '') return;
       const cleaned = String(Number(numericOnly));
       const newUnit = Math.max(1, Number(cleaned));
+      const oldUnit = Math.max(1, Number(form.unitKg) || 1);
 
-      // 가격 재계산: pricePer1kg × newUnit
-      if (pricePer1kg !== null && pricePer1kg > 0) {
-        const newPrice = Math.round(pricePer1kg * newUnit);
-        updateField('price', String(newPrice));
+      // 1kg 단가 기준값 — 없으면 현재 폼에서 역산 후 저장 (drift 방지)
+      let base1kgPrice = pricePer1kg;
+      if (base1kgPrice === null && Number(form.price) > 0) {
+        base1kgPrice = Number(form.price) / oldUnit;
+        setPricePer1kg(base1kgPrice);
       }
-      // 재고 재계산: floor(totalKg / newUnit)
-      if (totalKg !== null && totalKg > 0) {
-        const newStock = Math.floor(totalKg / newUnit);
-        updateField('stock', String(newStock));
+
+      // 총량(kg) 기준값 — 없으면 현재 폼에서 역산 후 저장 (drift 방지)
+      let baseTotalKg = totalKg;
+      if (baseTotalKg === null && form.stock !== '' && Number(form.stock) >= 0) {
+        baseTotalKg = Number(form.stock) * oldUnit;
+        setTotalKg(baseTotalKg);
       }
+
+      // 가격 재계산: base1kgPrice × newUnit
+      if (base1kgPrice !== null && base1kgPrice > 0) {
+        updateField('price', String(Math.round(base1kgPrice * newUnit)));
+      }
+
+      // 재고 재계산: floor(baseTotalKg / newUnit)
+      if (baseTotalKg !== null && baseTotalKg >= 0) {
+        updateField('stock', String(Math.floor(baseTotalKg / newUnit)));
+      }
+
       updateField('unitKg', cleaned);
     },
-    [updateField, pricePer1kg, totalKg],
+    [updateField, pricePer1kg, totalKg, form.unitKg, form.price, form.stock],
   );
 
   /** 이미지 추가 (최대 5장) */

@@ -314,7 +314,10 @@ export default function FarmBot({ children }: FarmBotProps) {
                           </div>
                           <div className={styles.productCardBody}>
                             <span className={styles.productCardName}>{product.name}</span>
-                            <span className={styles.productCardPrice}>₩{product.price.toLocaleString()}</span>
+                            <span className={styles.productCardPrice}>
+                              ₩{product.price.toLocaleString()}
+                              <span className={styles.productCardUnit}> / {product.unitKg ?? 1}kg</span>
+                            </span>
                           </div>
                         </a>
                       ))}

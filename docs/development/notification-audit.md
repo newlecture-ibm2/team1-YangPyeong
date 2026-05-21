@@ -18,6 +18,7 @@
 | 7 | 수급 알림 중복 발송 — 5분 쿨다운 추가 (`ConcurrentHashMap`) | `73dc2c2` |
 | 8 | FCM 토큰 매 새로고침마다 중복 등록 — `localStorage` 비교 후 생략 | `73dc2c2` |
 | 9 | Bulk 알림 N+1 최적화 — `saveAll()` 배치 INSERT 적용 | 해당 커밋 |
+| 10 | 상품 검수 알림 링크 `/seller/products` → `/mypage/seller` 수정 — DB에 저장된 기존 알림은 수동 UPDATE 필요 | - |
 
 ---
 
