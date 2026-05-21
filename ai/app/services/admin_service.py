@@ -71,13 +71,7 @@ class AdminService:
             
         except Exception as e:
             logger.error(f"Error during shop audit: {e}")
-            # Fallback: return everything as valid if AI fails, or everything as pending (is_valid=False). 
-            # We return False to leave it in admin queue to be safe.
-            results = [
-                ShopAuditResult(product_id=item.product_id, is_valid=False, reason="AI 심사 오류로 인한 보류") 
-                for item in request.items
-            ]
-            return ShopAuditBatchResponse(results=results)
+            raise RuntimeError("E-AI-SHOP-001: AI 상품 심사 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
 
     async def moderate_post_batch(self, request: ModerationBatchRequest) -> ModerationBatchResponse:
         system_instruction = """
@@ -131,11 +125,7 @@ class AdminService:
             
         except Exception as e:
             logger.error(f"Error during moderation: {e}")
-            results = [
-                ModerationResult(post_id=item.post_id, is_clean=True, reason="AI 심사 오류로 인한 통과") 
-                for item in request.items
-            ]
-            return ModerationBatchResponse(results=results)
+            raise RuntimeError("E-AI-COMM-001: AI 게시글 심사 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
 
     async def moderate_comment_batch(self, request: CommentModerationBatchRequest) -> CommentModerationBatchResponse:
         system_instruction = """
@@ -189,11 +179,7 @@ class AdminService:
             
         except Exception as e:
             logger.error(f"Error during comment moderation: {e}")
-            results = [
-                CommentModerationResult(comment_id=item.comment_id, is_clean=True, reason="AI 심사 오류로 인한 통과") 
-                for item in request.items
-            ]
-            return CommentModerationBatchResponse(results=results)
+            raise RuntimeError("E-AI-COMM-002: AI 댓글 심사 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
 
     async def sync_rag_data(self) -> dict:
         try:

@@ -173,6 +173,10 @@ public class ShopManagementService implements ManageShopUseCase {
             return new ShopAuditItemDto(p.getId(), p.getName(), p.getCategoryName(), p.getPrice(), desc);
         }).toList();
 
+        // 빠른 조회를 위해 productId → Product 맵 생성
+        Map<Long, Product> activeProductMap = activeProducts.stream()
+                .collect(Collectors.toMap(Product::getId, p -> p));
+
         // 3. AI 서버 일괄 요청 (Chunking)
         int hiddenCount = 0;
         int chunkSize = 20;
@@ -182,7 +186,19 @@ public class ShopManagementService implements ManageShopUseCase {
 
             for (ShopAuditResultDto result : results) {
                 if (!result.valid()) {
-                    productRepository.updateStatus(result.productId(), "INACTIVE", "[AI 재검수 적발] " + result.reason());
+                    String reason = "[AI 재검수 적발] " + result.reason();
+                    productRepository.updateStatus(result.productId(), "INACTIVE", reason);
+                    Product product = activeProductMap.get(result.productId());
+                    if (product != null) {
+                        notificationUseCase.createNotification(
+                                product.getSellerId(),
+                                NotificationType.SYSTEM,
+                                NotificationCategory.SYSTEM,
+                                "상품 숨김 처리 안내",
+                                String.format("[%s] 상품이 재검수에서 적발되어 숨김 처리되었습니다. 사유: %s", product.getName(), reason),
+                                "/mypage/seller"
+                        );
+                    }
                     hiddenCount++;
                 }
             }
