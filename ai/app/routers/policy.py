@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 from app.models.policy import PolicyAnalyzeRequest, PolicyAnalyzeResponse
 from app.services.policy_analyzer import analyze_policy
 from app.services.policy_recommend_service import generate_recommend_reasons
+from app.services.policy_curate_service import curate_top5
 
 logger = logging.getLogger(__name__)
 
@@ -74,3 +75,15 @@ async def recommend_reasons(request_data: dict) -> dict:
     except Exception as e:
         logger.error(f"[policy/recommend-reasons] 실패: {e}")
         return {"reasons": []}
+
+
+@router.post("/curate-top5")
+async def curate_top5_endpoint(request_data: dict) -> dict:
+    """
+    룰 기반 후보 정책 중 AI가 Top 5를 선정하고 aiReason을 생성합니다.
+    """
+    try:
+        return await curate_top5(request_data)
+    except Exception as e:
+        logger.error(f"[policy/curate-top5] 실패: {e}")
+        return {"topPicks": []}

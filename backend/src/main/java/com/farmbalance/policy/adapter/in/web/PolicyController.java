@@ -106,6 +106,16 @@ public class PolicyController {
         return ApiResponse.ok(result);
     }
 
+    /**
+     * 정책 수동 동기화 API (관리자용)
+     * POST /api/admin/policies/sync
+     */
+    @PostMapping("/api/admin/policies/sync")
+    public ApiResponse<SyncPolicyUseCase.SyncResult> syncPolicies() {
+        SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies();
+        return ApiResponse.ok(result);
+    }
+
     // ── Domain → Response DTO 변환 ──
 
     private PolicyListResponse toListResponse(PolicyData domain) {
