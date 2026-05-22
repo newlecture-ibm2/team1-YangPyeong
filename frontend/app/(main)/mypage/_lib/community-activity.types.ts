@@ -30,6 +30,7 @@ export interface MyReportActivity {
   targetType: string;
   targetId: number;
   targetTitle: string;
+  targetPostId?: number;
   reason: string;
   status: string;
   createdAt: string;

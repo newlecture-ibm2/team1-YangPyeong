@@ -23,6 +23,9 @@ public interface CommentJpaRepository extends JpaRepository<CommentEntity, Long>
     @Query("SELECT c.id, c.content FROM CommentEntity c WHERE c.id IN :ids AND c.deletedAt IS NULL")
     List<Object[]> findActiveContentsByIds(@Param("ids") List<Long> ids);
 
+    @Query("SELECT c.id, c.post.id FROM CommentEntity c WHERE c.id IN :ids")
+    List<Object[]> findPostIdsByIds(@Param("ids") List<Long> ids);
+
     @Query("SELECT c.post.id, COUNT(c) FROM CommentEntity c " +
            "WHERE c.post.id IN :postIds AND c.deletedAt IS NULL AND c.isHidden = false GROUP BY c.post.id")
     List<Object[]> countByPostIds(@Param("postIds") List<Long> postIds);
