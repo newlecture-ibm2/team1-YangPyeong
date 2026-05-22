@@ -3,6 +3,7 @@ import { Button, Badge, SearchInput, Dropdown, FilterBar, useToast } from '@/com
 import { fetchAllComments, hideComment, restoreComment, deleteComment, bulkDeleteComments } from '../../_lib/community.api'
 import type { AdminComment } from '../../_lib/community.types'
 import ReasonModal from './ReasonModal'
+import CommentDetailModal from './CommentDetailModal'
 import styles from '../Community.module.css'
 
 function formatDate(dateString: string) {
@@ -21,6 +22,9 @@ export default function CommentTable() {
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [reasonModalOpen, setReasonModalOpen] = useState(false)
   const [targetCommentId, setTargetCommentId] = useState<number | null>(null)
+  
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [selectedComment, setSelectedComment] = useState<AdminComment | null>(null)
   
   const toast = useToast()
 
@@ -94,6 +98,11 @@ export default function CommentTable() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '댓글 숨김 처리 실패')
     }
+  }
+
+  const handleOpenDetail = (comment: AdminComment) => {
+    setSelectedComment(comment)
+    setDetailModalOpen(true)
   }
 
   return (
@@ -189,9 +198,17 @@ export default function CommentTable() {
                       : comment.isHidden 
                         ? <Badge variant="orange">숨김</Badge> 
                         : <Badge variant="green">활성</Badge>}
+                    {comment.statusReason && (comment.deletedAt || comment.isHidden) && (
+                      <div style={{ marginTop: '4px', fontSize: '0.8rem', color: 'var(--color-text-tertiary)', wordBreak: 'keep-all' }}>
+                        사유: {comment.statusReason}
+                      </div>
+                    )}
                   </td>
                   <td data-label="">
                     <div className={styles.actionGroup}>
+                      <button className={styles.actionBtnNotice} onClick={() => handleOpenDetail(comment)}>
+                        상세보기
+                      </button>
                       {comment.deletedAt ? (
                         <button className={styles.actionBtnNotice} onClick={() => handleRestore(comment.id)}>
                           복구
@@ -239,6 +256,13 @@ export default function CommentTable() {
         title="댓글 숨김 처리"
         onClose={() => setReasonModalOpen(false)}
         onConfirm={handleHideConfirm}
+      />
+
+      <CommentDetailModal
+        comment={selectedComment}
+        isOpen={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        onUpdate={() => loadData()}
       />
     </>
   )

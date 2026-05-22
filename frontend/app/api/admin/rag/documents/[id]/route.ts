@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
 interface RouteParams {
@@ -8,11 +9,12 @@ interface RouteParams {
 /** PATCH /api/admin/rag/documents/:id → 백엔드 프록시 */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
+    const session = await getSessionFromCookie();
     const { id } = await params
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admin/rag/documents/${id}`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/rag/documents/${id}`,  {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),  'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
     const data = await res.json()
@@ -29,8 +31,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 /** DELETE /api/admin/rag/documents/:id → 백엔드 프록시 */
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
+    const session = await getSessionFromCookie();
     const { id } = await params
-    const res = await fetch(`${BACKEND_URL}/api/admin/rag/documents/${id}`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/rag/documents/${id}`,  { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) }, 
       method: 'DELETE',
     })
     const data = await res.json()

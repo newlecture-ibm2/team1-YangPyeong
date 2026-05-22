@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
 interface RouteParams {
@@ -8,11 +9,12 @@ interface RouteParams {
 /** PATCH /api/admin/users/:id/role → 역할 변경 프록시 */
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
+    const session = await getSessionFromCookie();
     const { id } = await params
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admin/users/${id}/role`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/users/${id}/role`,  {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),  'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
     const data = await res.json()

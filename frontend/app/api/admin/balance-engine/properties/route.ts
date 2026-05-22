@@ -1,9 +1,11 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/balance-engine/properties`)
+    const session = await getSessionFromCookie();
+    const res = await fetch(`${BACKEND_URL}/api/admin/balance-engine/properties`, { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) } })
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
@@ -17,10 +19,11 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
+    const session = await getSessionFromCookie();
     const body = await req.json()
-    const res = await fetch(`${BACKEND_URL}/api/admin/balance-engine/properties`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/balance-engine/properties`,  {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),  'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     })
     const data = await res.json()
