@@ -35,6 +35,7 @@ export interface CultivationRegistration {
  * 농장별 재배 목록 조회
  */
 export async function getCultivations(farmId: number): Promise<CultivationRegistration[]> {
+  if (farmId === 0) return []; // 더미 농장(미리보기) 조회 스킵
   const response = await fetch(`/api/farm/${farmId}/cultivations`);
   const result = await response.json();
 
