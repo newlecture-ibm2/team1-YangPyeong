@@ -18,7 +18,21 @@ export function useHistory(farmId?: number, skipInitialFetch = false) {
     try {
       const data = await getFarmHistories(farmId);
       if (farmIdRef.current !== targetFarmId) return;
-      setHistories(data);
+      
+      // 중복되는 날씨 기록 필터링 (같은 날짜에 동일한 내용이면 하나만 표시)
+      const filteredData = data.filter((h, index, self) => {
+        if (h.activityType !== 'WEATHER') return true;
+        const dateStr = new Date(h.createdAt).toLocaleDateString();
+        const firstIndex = self.findIndex(
+          (item) =>
+            item.activityType === 'WEATHER' &&
+            new Date(item.createdAt).toLocaleDateString() === dateStr &&
+            item.activityContent === h.activityContent
+        );
+        return firstIndex === index;
+      });
+
+      setHistories(filteredData);
     } catch (err: any) {
       if (farmIdRef.current === targetFarmId) {
         console.error(err);
