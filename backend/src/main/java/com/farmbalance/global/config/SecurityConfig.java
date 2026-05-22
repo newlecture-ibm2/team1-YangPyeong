@@ -60,6 +60,10 @@ public class SecurityConfig {
                 // ── FCM 토큰 관리 ──
                 .requestMatchers("/api/fcm/**").permitAll()
 
+                // ── 회원가입 시 이메일/닉네임 중복 확인 (공개) ──
+                .requestMatchers(HttpMethod.GET, "/api/users/check-email").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/users/check-nickname").permitAll()
+
                 // ── 관리자 전용 (위 GET 예외 외 나머지) ──
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
