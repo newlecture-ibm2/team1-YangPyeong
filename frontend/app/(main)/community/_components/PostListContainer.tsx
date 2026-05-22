@@ -8,6 +8,19 @@ import Button from '@/components/common/Button';
 import { useRouter } from 'next/navigation';
 import { getCategories, getPosts } from '../_lib/community.api';
 import Pagination from '@/components/common/Pagination';
+import ModalDialog from '@/components/common/Modal/ModalDialog';
+import { useModalDialog } from '@/components/common/Modal/useModalDialog';
+
+function getUserFromCookie() {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|;\s*)fb-user=([^;]*)/);
+  if (!match) return null;
+  try {
+    return JSON.parse(decodeURIComponent(match[1]));
+  } catch {
+    return null;
+  }
+}
 
 interface PostListContainerProps {
   initialPosts: Post[];
@@ -34,6 +47,7 @@ export default function PostListContainer({
   const [totalCount, setTotalCount] = useState(initialTotalCount);
 
   const router = useRouter();
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
   // 카테고리 목록 로드
   useEffect(() => {
@@ -101,7 +115,18 @@ export default function PostListContainer({
     fetchPosts(undefined, undefined, undefined, newPage);
   };
 
-  const handleWriteClick = () => {
+  const handleWriteClick = async () => {
+    const user = getUserFromCookie();
+    if (!user) {
+      const isConfirmed = await showConfirm(
+        '로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?',
+        '로그인 안내'
+      );
+      if (isConfirmed) {
+        router.push('/login?callbackUrl=/community/write');
+      }
+      return;
+    }
     router.push('/community/write');
   };
 
@@ -190,6 +215,12 @@ export default function PostListContainer({
           <p>{loading ? '데이터를 불러오는 중입니다...' : '아직 등록된 게시글이 없습니다. 첫 번째 주인공이 되어보세요!'}</p>
         </div>
       )}
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   );
 }
