@@ -10,10 +10,13 @@
 import { ReactNode, useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useFarmBot, ChatMessage, NodeStatus } from './useFarmBot';
+import RecommendRadarChart from './RecommendRadarChart';
 import { FarmBotContext } from './FarmBotContext';
 import Image from 'next/image';
 import styles from './FarmBot.module.css';
 import { FARM_BOT_CONSTANTS } from './farmBotConstants';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
@@ -274,7 +277,11 @@ export default function FarmBot({ children }: FarmBotProps) {
                   <Image src="/icon.png" alt="" width={28} height={28} className={styles.chatMsgAvatar} />
                 )}
                 <div className={`${styles.chatBubble} ${msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleBot}`}>
-                  <span className={styles.chatMsgContent} style={{ whiteSpace: 'pre-wrap' }}>{stripInternalIds(msg.content)}</span>
+                  <div className={styles.chatMsgContent}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {stripInternalIds(msg.content)}
+                    </ReactMarkdown>
+                  </div>
 
                   {/* CLARIFY 선택지 버튼 */}
                   {msg.role === 'bot' && msg.actions?.filter(a => a.type === 'CLARIFY').map((action, actionIdx) => (
@@ -323,6 +330,11 @@ export default function FarmBot({ children }: FarmBotProps) {
                         </a>
                       ))}
                     </div>
+                  ))}
+
+                  {/* RECOMMEND_CHART 레이더 차트 */}
+                  {msg.role === 'bot' && msg.actions?.filter(a => a.type === 'RECOMMEND_CHART' && a.recommendChartData && a.recommendChartData.length > 0).map((action, actionIdx) => (
+                    <RecommendRadarChart key={`radar-${actionIdx}`} data={action.recommendChartData!} />
                   ))}
                 </div>
               </div>

@@ -24,6 +24,10 @@ export async function GET(request: NextRequest) {
     if (!data) {
       // 401/403 등 인증 관련 응답은 원래 status 유지
       if (res.status === 401 || res.status === 403) {
+        if (res.status === 401) {
+          const { clearSessionCookie } = await import('@/lib/cookie');
+          await clearSessionCookie();
+        }
         return NextResponse.json({ message: 'Unauthorized' }, { status: res.status });
       }
       return NextResponse.json(
