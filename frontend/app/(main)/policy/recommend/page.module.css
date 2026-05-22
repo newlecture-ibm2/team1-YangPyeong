@@ -211,6 +211,46 @@
   font-size: 14px;
 }
 
+/* 섹션 제목 */
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  border-bottom: 2px solid var(--color-border);
+}
+
+/* 관련 정책 카드 (추천 카드보다 간결) */
+.relatedCard {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
+  transition: all 0.2s ease;
+}
+
+.relatedCard:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* 규칙 기반 사유 박스 */
+.ruleReasonBox {
+  background-color: #f0fdf4;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  border-left: 3px solid var(--color-primary);
+}
+
+.ruleReasonText {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
 .policyList {
   display: flex;
   flex-direction: column;
@@ -437,4 +477,43 @@
   .stateContainer {
     padding: var(--space-lg);
   }
+}
+
+/* ── 추천 부족 안내 배너 ── */
+.insufficientNotice {
+  background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%);
+  border: 1px solid #ffe082;
+  border-left: 4px solid #ffa726;
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-lg);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.insufficientNotice p {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  color: #5d4037;
+  line-height: 1.5;
+  min-width: 200px;
+}
+
+.insufficientIcon {
+  font-size: 20px;
+}
+
+.insufficientLink {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e65100;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.insufficientLink:hover {
+  text-decoration: underline;
 }

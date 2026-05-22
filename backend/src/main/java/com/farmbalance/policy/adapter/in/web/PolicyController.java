@@ -54,13 +54,13 @@ public class PolicyController {
                 keyword, regionCode, category, period, minConfidence, page, size);
 
         List<PolicyData> policies = searchPolicyUseCase.searchPolicies(condition);
-        long totalCount = searchPolicyUseCase.countPolicies(condition);
 
         List<PolicyListResponse> responseList = policies.stream()
                 .map(this::toListResponse)
                 .toList();
 
-        return ApiResponse.ok(PageResponse.of(responseList, page, size, totalCount));
+        // 행정 공고 필터가 서비스 계층에서 적용되므로, 필터 후 크기를 총 건수로 사용
+        return ApiResponse.ok(PageResponse.of(responseList, page, size, policies.size()));
     }
 
     /**
