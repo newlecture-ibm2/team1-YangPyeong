@@ -20,6 +20,8 @@ export const FARM_BOT_CONSTANTS = {
     { emoji: '🌶️', text: '요즘 뭐 심으면 좋아요?' },
     { emoji: '💰', text: '농업 보조금 정보 알려줘요' },
     { emoji: '🌱', text: '초보 농부인데 뭐부터 해야 해요?' },
+    { emoji: '🏆', text: '내 농장 추천 작물 순위 보여줘' },
+    { emoji: '⚖️', text: '추천 작물 비교해줘' },
   ],
   
   // 설정

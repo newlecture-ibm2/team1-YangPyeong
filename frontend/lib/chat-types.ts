@@ -11,7 +11,8 @@ export type ChatActionType =
   | 'CLARIFY'
   | 'CONFIRM'
   | 'OPEN_MODAL'
-  | 'PRODUCT_LIST';
+  | 'PRODUCT_LIST'
+  | 'RECOMMEND_CHART';
 
 /** PRODUCT_LIST 액션에 포함되는 상품 카드 데이터 */
 export interface ChatProductItem {
@@ -40,6 +41,14 @@ export interface ChatClarifyOption {
   id: string | number;
   label: string;
   meta?: Record<string, unknown>;
+}
+
+export interface RecommendChartItem {
+  cropName: string;
+  score: number;
+  soil: number;
+  price: number;
+  supply: number;
 }
 
 /** 챗봇이 프론트에 요청하는 단일 액션 */
@@ -73,6 +82,9 @@ export interface ChatAction {
 
   /** PRODUCT_LIST — 상품 카드 인라인 렌더링 */
   products?: ChatProductItem[];
+
+  /** RECOMMEND_CHART — 추천 레이더 차트 데이터 */
+  recommendChartData?: RecommendChartItem[];
 }
 
 /** 다중 턴 슬롯 채우기 — 도구가 누락된 인자를 다음 턴에서 받을 수 있게 함 */
