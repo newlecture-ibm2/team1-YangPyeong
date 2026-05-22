@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Badge, Dropdown, SearchInput, Spinner, FilterBar } from '@/components'
-import { useToast } from '@/components'
+import { useToast } from '@/components/common/Toast'
+import ResponsiveTable from '@/components/common/ResponsiveTable/ResponsiveTable'
 import { DEFAULT_PRODUCT_IMAGE } from '@/lib/constants'
 import styles from './Shop.module.css'
 import type { AdminProduct } from '../_lib/shop.types'
@@ -353,81 +354,58 @@ export default function ShopPage() {
             <Spinner message="상품 정보를 불러오는 중입니다..." />
           </div>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>상품명</th>
-                <th>카테고리</th>
-                <th>판매자명</th>
-                <th>판매가</th>
-                <th>재고현황</th>
-                <th>현재 상태</th>
-                <th>등록일자</th>
-                <th style={{ width: '160px' }}>액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className={styles.emptyRow}>
-                    조회된 상품이 없습니다.
-                  </td>
-                </tr>
-              ) : (
-                products.map(product => {
-                  const badge = getStatusBadge(product.status)
-
-                  return (
-                    <tr key={product.id}>
-                      <td data-label="No">#{product.id}</td>
-                      <td data-label="상품명">
-                        <div className={styles.productCell}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={product.imageUrl || DEFAULT_PRODUCT_IMAGE}
-                            alt={product.name}
-                            className={styles.productThumbnail}
-                          />
-                          <div className={styles.productName}>
-                            {product.status === 'PENDING' && <span title="신규 요청" style={{ marginRight: '4px' }}>🆕</span>}
-                            {product.name}
-                          </div>
-                        </div>
-                      </td>
-                      <td data-label="카테고리">{product.categoryName || '-'}</td>
-                      <td data-label="판매자">{product.sellerName}</td>
-                      <td className={styles.priceCell} data-label="판매가">{formatPrice(product.price)}</td>
-                      <td data-label="재고">{product.stock}개</td>
-                      <td data-label="상태">
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
-                          <Badge variant={badge.variant as any}>{badge.label}</Badge>
-                          {product.statusReason && (
-                            <span style={{ fontSize: '12px', color: 'var(--color-danger)' }}>
-                              [사유: {product.statusReason}]
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td data-label="등록일">{formatDate(product.createdAt)}</td>
-                      <td data-label="">
-                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                          <button
-                            className={styles.actionBtn}
-                            style={{ background: 'white', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
-                            onClick={() => handleOpenDetail(product)}
-                          >
-                            🔍 상세
-                          </button>
-                          {renderActionButtons(product)}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })
+          <ResponsiveTable<AdminProduct & Record<string, unknown>>
+            columns={[
+              { key: 'id', label: 'No', render: (p) => `#${p.id}` },
+              { key: 'name', label: '상품명', render: (p) => (
+                <div className={styles.productCell}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={p.imageUrl || DEFAULT_PRODUCT_IMAGE}
+                    alt={p.name}
+                    className={styles.productThumbnail}
+                  />
+                  <div className={styles.productName}>
+                    {p.status === 'PENDING' && <span title="신규 요청" style={{ marginRight: '4px' }}>🆕</span>}
+                    {p.name}
+                  </div>
+                </div>
+              )},
+              { key: 'category', label: '카테고리', render: (p) => p.categoryName || '-' },
+              { key: 'sellerName', label: '판매자명', render: (p) => p.sellerName },
+              { key: 'price', label: '판매가', render: (p) => <div className={styles.priceCell}>{formatPrice(p.price)}</div> },
+              { key: 'stock', label: '재고현황', render: (p) => `${p.stock}개` },
+              { key: 'status', label: '현재 상태', render: (p) => {
+                const badge = getStatusBadge(p.status)
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                    <Badge variant={badge.variant as any}>{badge.label}</Badge>
+                    {p.statusReason && (
+                      <span style={{ fontSize: '12px', color: 'var(--color-danger)' }}>
+                        [사유: {p.statusReason}]
+                      </span>
+                    )}
+                  </div>
+                )
+              }},
+              { key: 'createdAt', label: '등록일자', render: (p) => formatDate(p.createdAt) },
+              { key: 'actions', label: '액션', render: (p) => (
+                <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    className={styles.actionBtn}
+                    style={{ background: 'white', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
+                    onClick={() => handleOpenDetail(p)}
+                  >
+                    🔍 상세
+                  </button>
+                  {renderActionButtons(p)}
+                </div>
               )}
-            </tbody>
-          </table>
+            ]}
+            data={products as any}
+            rowKey={(p) => String(p.id)}
+            emptyMessage="조회된 상품이 없습니다."
+          />
         )}
       </div>
 

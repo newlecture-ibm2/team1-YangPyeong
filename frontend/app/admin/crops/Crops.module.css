@@ -18,11 +18,12 @@
 }
 
 .title {
-  font-family: var(--font-serif);
-  font-size: 40px;
+  font-family: var(--font-sans);
+  font-size: 28px;
+  font-weight: 700;
   color: var(--color-text);
-  line-height: 1.15;
-  font-weight: 400;
+  margin-bottom: var(--space-md);
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
@@ -269,8 +270,13 @@
   }
 
   .title {
-    font-size: 28px;
-  }
+  font-family: var(--font-sans);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-md);
+  letter-spacing: -0.02em;
+}
 
   .headerActions {
     width: 100%;

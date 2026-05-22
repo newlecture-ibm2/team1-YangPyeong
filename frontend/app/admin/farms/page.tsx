@@ -118,7 +118,7 @@ export default function FarmsPage() {
     <div className={styles.container}>
       {/* 헤더 */}
       <div className={styles.header}>
-        <h1 className={styles.title}>🌾 농장 관리</h1>
+        <h1 className={styles.title}>농장 관리</h1>
         {tab === 'PENDING' && approvals.length > 0 && (
           <Badge variant="red">{approvals.length}건 대기</Badge>
         )}
