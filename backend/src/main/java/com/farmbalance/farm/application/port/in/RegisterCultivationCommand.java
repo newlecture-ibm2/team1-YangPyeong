@@ -1,6 +1,8 @@
 package com.farmbalance.farm.application.port.in;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -10,6 +12,8 @@ import java.time.LocalDate;
  */
 @Getter
 @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class RegisterCultivationCommand {
     private final Long farmId;
     private final Long cropId;

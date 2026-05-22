@@ -1,10 +1,14 @@
 package com.farmbalance.farm.application.port.in;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class ModifyCultivationCommand {
     private final Long id;
     private final Double area;

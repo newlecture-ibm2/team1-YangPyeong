@@ -7,6 +7,9 @@ import com.farmbalance.admin.application.port.out.AdminAiPort.ShopAuditItemDto;
 import com.farmbalance.admin.application.port.out.AdminAiPort.ShopAuditResultDto;
 import com.farmbalance.global.error.BusinessException;
 import com.farmbalance.global.error.ErrorCode;
+import com.farmbalance.notification.application.port.in.NotificationUseCase;
+import com.farmbalance.notification.domain.NotificationCategory;
+import com.farmbalance.notification.domain.NotificationType;
 import com.farmbalance.shop.application.port.out.ProductRepository;
 import com.farmbalance.shop.domain.Product;
 import com.farmbalance.user.application.port.out.UserRepository;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -30,6 +34,7 @@ public class ShopManagementService implements ManageShopUseCase {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final AdminAiPort adminAiPort;
+    private final NotificationUseCase notificationUseCase;
 
     @Override
     public List<AdminShopProductDto> getProducts(String keyword, String category, String status, String sort, int page, int size) {
@@ -53,10 +58,32 @@ public class ShopManagementService implements ManageShopUseCase {
     @Override
     @Transactional
     public void updateProductStatus(Long productId, String status, String reason) {
-        productRepository.findById(productId)
+        Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
 
         productRepository.updateStatus(productId, status, reason);
+
+        // 검수 결과 알림 발송 (ACTIVE: 승인, REJECTED: 반려)
+        if ("ACTIVE".equals(status)) {
+            notificationUseCase.createNotification(
+                    product.getSellerId(),
+                    NotificationType.SYSTEM,
+                    NotificationCategory.SYSTEM,
+                    "상품 검수 완료",
+                    String.format("[%s] 상품이 검수를 통과하여 판매 중입니다.", product.getName()),
+                    "/mypage/seller"
+            );
+        } else if ("REJECTED".equals(status)) {
+            String reasonSuffix = (reason != null && !reason.isBlank()) ? " 사유: " + reason : "";
+            notificationUseCase.createNotification(
+                    product.getSellerId(),
+                    NotificationType.SYSTEM,
+                    NotificationCategory.SYSTEM,
+                    "상품 검수 반려",
+                    String.format("[%s] 상품이 반려되었습니다.%s", product.getName(), reasonSuffix),
+                    "/mypage/seller"
+            );
+        }
     }
 
     @Override
@@ -86,11 +113,27 @@ public class ShopManagementService implements ManageShopUseCase {
         // 3. AI 서버 일괄 요청
         List<ShopAuditResultDto> results = adminAiPort.auditShopBatch(itemsToAudit);
 
-        // 4. 결과에 따라 정상인 상품만 ACTIVE로 업데이트
+        // 4. 빠른 조회를 위해 productId → Product 맵 생성
+        Map<Long, Product> pendingProductMap = pendingProducts.stream()
+                .collect(Collectors.toMap(Product::getId, p -> p));
+
+        // 5. 결과에 따라 정상인 상품만 ACTIVE로 업데이트 + 승인 알림 발송
         int approvedCount = 0;
         for (ShopAuditResultDto result : results) {
             if (result.valid()) {
                 productRepository.updateStatus(result.productId(), "ACTIVE", null);
+
+                Product product = pendingProductMap.get(result.productId());
+                if (product != null) {
+                    notificationUseCase.createNotification(
+                            product.getSellerId(),
+                            NotificationType.SYSTEM,
+                            NotificationCategory.SYSTEM,
+                            "상품 검수 완료",
+                            String.format("[%s] 상품이 검수를 통과하여 판매 중입니다.", product.getName()),
+                            "/mypage/seller"
+                    );
+                }
                 approvedCount++;
             }
             // 비정상(false)인 경우는 PENDING 그대로 둡니다. (또는 REJECTED, INACTIVE + reason으로 처리할 수 있음. 현재는 PENDING)

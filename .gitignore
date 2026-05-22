@@ -68,3 +68,6 @@ backend/scratch.java
 .gemini/
 test_env/
 node_modules/
+
+# ===== Local SQL Sessions =====
+FarmBalance-Local.session.sql

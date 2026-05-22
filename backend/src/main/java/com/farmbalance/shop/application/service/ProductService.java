@@ -108,7 +108,7 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
 
     @Override
     @Transactional
-    public Product updateInventory(Long sellerId, Long productId, Integer price, Integer stock) {
+    public Product updateInventory(Long sellerId, Long productId, Integer price, Integer stock, Integer unitKg) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
 
@@ -116,15 +116,16 @@ public class ProductService implements GetProductUseCase, ManageProductUseCase {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
-        // price/stock 중 null이면 기존 값 유지
-        int newPrice = price != null ? price : product.getPrice();
-        int newStock = stock != null ? stock : product.getStock();
+        // null이면 기존 값 유지
+        int newPrice  = price  != null ? price  : product.getPrice();
+        int newStock  = stock  != null ? stock  : product.getStock();
+        int newUnitKg = unitKg != null ? Math.max(1, unitKg) : product.getUnitKg();
 
         if (newPrice <= 0) throw new BusinessException(ErrorCode.VALIDATION_ERROR);
         if (newStock < 0)  throw new BusinessException(ErrorCode.VALIDATION_ERROR);
 
-        // 가격·재고만 변경 — 상태(status) 는 그대로 유지 (PENDING이어도 통과)
-        product.updateInventory(newPrice, newStock);
+        // 가격·재고·판매단위 변경 — 상태(status)는 그대로 유지 (PENDING이어도 통과)
+        product.updateInventory(newPrice, newStock, newUnitKg);
         return productRepository.save(product);
     }
 

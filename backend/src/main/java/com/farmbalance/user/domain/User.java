@@ -11,6 +11,7 @@ import java.util.UUID;
 @Getter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class User {
 
     private Long id;

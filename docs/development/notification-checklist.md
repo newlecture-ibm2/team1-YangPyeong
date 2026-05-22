@@ -13,6 +13,7 @@
 - [x] 수급 부족주의/경고 (전체 농부 대상) - `BALANCE_WARN`
 - [x] 작물 등록 시 정책 매칭 안내 - `POLICY`
 - [x] 농장 승인/반려 - `SYSTEM`
+- [x] 상품 검수 완료/반려 (내가 등록한 상품) - `SYSTEM` → 링크: `/mypage/seller`
 - [x] 주문 상태 변경 (내가 구매한 상품) - `ORDER`
 - [x] 새 주문 접수 (내가 판매한 상품) - `ORDER`
 - [x] 내 게시글에 댓글 - `SYSTEM`
@@ -55,6 +56,7 @@
 - [x] 수급 비율 임계값 알림 (BALANCE_WARN) — 5단계 분기 + 타겟팅
 - [x] 작물 등록 시 정책 매칭 안내 (POLICY)
 - [x] 농장 승인/반려 알림 (SYSTEM) — FarmApprovalService에서 발송
+- [x] 상품 검수 완료/반려 알림 (SYSTEM) — ShopManagementService에서 발송, 링크: `/mypage/seller`
 
 ---
 

@@ -1,13 +1,14 @@
-import os
 import httpx
 import logging
 from langchain_core.tools import tool
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# 백엔드 내부 통신 설정
-BACKEND_INTERNAL_URL = os.getenv("BACKEND_INTERNAL_URL", "http://localhost:8080")
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "farm-balance-secret-key")
+# 백엔드 내부 통신 설정 (settings 싱글톤 활용 — farm_tools와 동일 패턴)
+BACKEND_INTERNAL_URL = settings.BACKEND_INTERNAL_URL
+AI_SECRET_KEY = settings.AI_INTERNAL_SECRET_KEY
+HEADERS = {"X-AI-Internal-Key": AI_SECRET_KEY}
 
 @tool
 async def get_all_crops_balance(year: int = None) -> dict:
@@ -20,7 +21,7 @@ async def get_all_crops_balance(year: int = None) -> dict:
     
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, params=params, timeout=10.0)
+            response = await client.get(url, params=params, headers=HEADERS, timeout=10.0)
             if response.status_code == 200:
                 data = response.json()
                 return {"status": "success", "data": data.get("data", [])}
@@ -49,7 +50,7 @@ async def get_crop_balance_detail(crop_name: str, year: int = None) -> dict:
     
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, params=params, timeout=10.0)
+            response = await client.get(url, params=params, headers=HEADERS, timeout=10.0)
             if response.status_code == 200:
                 data = response.json()
                 result = data.get("data", {})
@@ -82,7 +83,7 @@ async def get_crop_supply_trend(crop_name: str) -> dict:
     
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, timeout=10.0)
+            response = await client.get(url, headers=HEADERS, timeout=10.0)
             if response.status_code == 200:
                 data = response.json()
                 return {"status": "success", "data": data.get("data", [])}

@@ -80,15 +80,16 @@
 
 /* ── 테이블 ── */
 .tableWrap {
-  overflow: visible;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   background: var(--color-surface);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
-  margin-bottom: 120px; /* 드롭다운 메뉴가 잘리지 않도록 하단 여백 추가 */
 }
 
 .table {
   width: 100%;
+  min-width: 700px; /* 가로 스크롤 기준 최소 너비 */
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -179,12 +180,9 @@
 }
 
 .dropdownMenu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 20;
+  position: fixed; /* overflow 컨테이너에 클리핑되지 않도록 fixed 사용 */
+  z-index: 600;    /* 헤더(500) 위, 모달(1000) 아래 */
   width: max-content;
-  margin-top: 4px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);

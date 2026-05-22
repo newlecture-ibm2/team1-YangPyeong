@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Builder
-@NoArgsConstructor
+@NoArgsConstructor(force = true)
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {

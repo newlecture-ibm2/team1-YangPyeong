@@ -2,11 +2,15 @@ package com.farmbalance.balance.adapter.in.web.dto;
 
 import com.farmbalance.balance.domain.BalanceStatus;
 import com.farmbalance.balance.domain.SupplyRatioResult;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BalanceAnalysisResponse {
     private String cropName;
     private Integer baseYear;
@@ -14,6 +18,8 @@ public class BalanceAnalysisResponse {
     private BalanceStatus status;
     private String statusLabel;
     private String message;
+    private Double currentSupplyKg;
+    private Double standardYieldKg;
 
     public static BalanceAnalysisResponse from(String cropName, SupplyRatioResult result) {
         double roundedRatio = Math.round(result.getRatio() * 10.0) / 10.0;
@@ -25,6 +31,8 @@ public class BalanceAnalysisResponse {
                 .status(result.getStatus())
                 .statusLabel(result.getStatus().getLabel())
                 .message(generateMessage(cropName, result.getStatus(), roundedRatio))
+                .currentSupplyKg(result.getCurrentSupplyKg())
+                .standardYieldKg(result.getStandardYieldKg())
                 .build();
     }
 

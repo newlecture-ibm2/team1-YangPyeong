@@ -10,7 +10,7 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { SESSION_COOKIE_NAME, PUBLIC_PATHS, AUTH_REDIRECT_PATHS } from './lib/constants';
+import { SESSION_COOKIE_NAME, PUBLIC_PATHS, AUTH_REDIRECT_PATHS, PROTECTED_SUB_PATHS } from './lib/constants';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -86,9 +86,15 @@ export function middleware(request: NextRequest) {
   }
 
   // ── 6. 공개 경로는 인증 없이 통과 ──
-  const isPublicPath = PUBLIC_PATHS.some(
+  // 단, 공개 경로 중 일부 하위 경로(예: /community/write 등)는 로그인 필수
+  const isProtectedSubPath = PROTECTED_SUB_PATHS.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
+
+  const isPublicPath =
+    !isProtectedSubPath &&
+    PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+
   if (isPublicPath) {
     return NextResponse.next();
   }
@@ -100,10 +106,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // ── 8. (FARMER 등 일반 유저) /gov 경로 접근 차단 ──
-  if (pathname.startsWith('/gov') && !skipAuth) {
-    // GOV 롤은 4단계에서 이미 next()로 통과했으므로 여기 도달한 사람은 ADMIN 또는 일반 유저입니다.
+  // ── 8. /admin 경로 접근 차단 — ADMIN만 허용 ──
+  if (pathname.startsWith('/admin')) {
     if (userRole !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+
+  // ── 9. /gov 경로 접근 차단 — GOV 또는 ADMIN만 허용 ──
+  if (pathname.startsWith('/gov')) {
+    // GOV 롤은 4단계에서 이미 next()로 통과했으므로 여기 도달한 사람은 ADMIN 또는 일반 유저입니다.
+    if (userRole !== 'ADMIN' && userRole !== 'GOV') {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }

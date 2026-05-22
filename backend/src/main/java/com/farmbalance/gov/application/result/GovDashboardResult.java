@@ -1,11 +1,15 @@
 package com.farmbalance.gov.application.result;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import java.util.List;
 
 @Getter
 @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class GovDashboardResult {
     private final DashboardSummary summary;
     private final List<WarningItem> warningItems;
@@ -13,6 +17,8 @@ public class GovDashboardResult {
     private final List<RegionDistribution> regionDistribution;
 
     @Getter @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
     public static class DashboardSummary {
         private final int totalFarms;
         private final int totalCrops;
@@ -21,6 +27,8 @@ public class GovDashboardResult {
     }
 
     @Getter @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
     public static class WarningItem {
         private final String cropName;
         private final double supplyRate;
@@ -30,6 +38,8 @@ public class GovDashboardResult {
     }
 
     @Getter @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
     public static class MonthlySupply {
         private final String label;
         private final double supply;
@@ -37,6 +47,8 @@ public class GovDashboardResult {
     }
 
     @Getter @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
     public static class RegionDistribution {
         private final String region;
         private final int count;

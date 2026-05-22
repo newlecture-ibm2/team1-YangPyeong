@@ -39,6 +39,7 @@ class ChatAction(BaseModel):
     # NAVIGATE
     url: Optional[str] = Field(None, description="이동할 경로 (NAVIGATE)")
     replace: Optional[bool] = Field(None, description="router.replace 사용 여부")
+    delay: Optional[int] = Field(None, description="지연 실행 시간(ms) — 프론트에서 setTimeout 사용")
 
     # FILL_FORM
     target: Optional[str] = Field(None, description="폼 식별자 (FILL_FORM)")
