@@ -178,15 +178,23 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
   const handlePostcodeComplete = (data: Address) => {
     const finalAddress = data.roadAddress || data.jibunAddress || data.address;
     // Address 타입에 포함되지 않는 확장 필드는 안전하게 접근
-    const extended = data as Address & { mountain?: string; main_address_no?: string; sub_address_no?: string };
+    const extended = data as any;
+
+    // 1. 산지 여부 판별
+    const isMountain = (data.jibunAddress || data.address || '').includes('산 ') || extended.mountain === 'Y';
+
+    // 2. 본번/부번 추출
+    const mainNo = extended.mainAddressNo || extended.main_address_no || '0001';
+    const subNo = extended.subAddressNo || extended.sub_address_no || '0';
+
     setFormData((prev) => ({
       ...prev,
       zipCode: data.zonecode,
       baseAddress: finalAddress,
       bjdCode: data.bcode,
-      isMountain: extended.mountain === 'Y',
-      mainNo: extended.main_address_no || '0001',
-      subNo: extended.sub_address_no || '0',
+      isMountain: isMountain,
+      mainNo: mainNo,
+      subNo: subNo,
     }));
     setIsPostcodeOpen(false);
     toast.success('주소가 변경되었습니다. 저장 시 PNU 정보가 갱신됩니다.');
@@ -194,9 +202,9 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
     // --- 토양 분석 로직 추가 ---
     const pnu = generatePnuCode(
       data.bcode,
-      extended.mountain === 'Y',
-      extended.main_address_no || '0001',
-      extended.sub_address_no || '0'
+      isMountain,
+      mainNo,
+      subNo
     );
     
     setIsAnalyzing(true);

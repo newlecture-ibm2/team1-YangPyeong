@@ -9,4 +9,6 @@ public class SupplyRatioResult {
     private Double ratio;
     private BalanceStatus status;
     private Integer baseYear;
+    private Double currentSupplyKg;
+    private Double standardYieldKg;
 }

@@ -152,10 +152,41 @@
   text-decoration: underline;
 }
 
-/* 대조 카드 (우리 동네 vs 양평군) */
+/* 맵 대시보드 스플릿 레이아웃 */
+.dashboardSplitLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mapPanel {
+  background: white;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.mapPanelHeader {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.mapPanelTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.mapPanelSub {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
 .dashboardCards {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 24px;
 }
 
@@ -281,6 +312,25 @@
 .gaugeFill.excess_caution { background-color: var(--color-warning); }
 .gaugeFill.excess_warn { background-color: var(--color-danger); }
 
+/* ========== 리스트 섹션 헤더 ========== */
+
+.listSectionHeader {
+  margin-bottom: 24px;
+}
+
+.listTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.listDesc {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
 /* ========== 필터 & 테이블 ========== */
 
 .filterSection {
@@ -356,6 +406,106 @@
   color: var(--color-danger);
 }
 
+/* ========== 온디맨드 (자체 집계) 작물 패널 ========== */
+.onDemandSection {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--color-border);
+}
+
+.onDemandHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.onDemandTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.onDemandGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.onDemandCard {
+  background: linear-gradient(145deg, #fbfbfd, #f5f6f8);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast) ease;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.onDemandCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--color-warning); /* 예쁜 오렌지 계열 */
+  opacity: 0.8;
+}
+
+.onDemandCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--color-primary-light);
+  background: white;
+}
+
+.onDemandCropHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.onDemandCropName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.onDemandCropVolume {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-top: 2px;
+}
+
+.onDemandBadgeWrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.onDemandStatusLabel {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.emptyOnDemand {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  padding: 8px 0;
+}
+
 /* ========== 가이드 배너 ========== */
 
 .guideBanner {
@@ -403,6 +553,11 @@
     overflow-x: auto;
   }
 
+  .dashboardSplitLayout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
   .dashboardCards {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -439,4 +594,24 @@
     padding: 12px;
     font-size: 14px;
   }
+}
+
+/* 온디맨드 카드 상태별 세로 바 색상 */
+.onDemandCard.balanced::before {
+  background: var(--color-primary);
+}
+.onDemandCard.short_caution::before {
+  background: #10b981;
+}
+.onDemandCard.short_warn::before {
+  background: #3b82f6;
+}
+.onDemandCard.excess_caution::before {
+  background: var(--color-warning);
+}
+.onDemandCard.excess_warn::before {
+  background: var(--color-danger);
+}
+.onDemandCard.unknown::before {
+  background: var(--color-warning);
 }
