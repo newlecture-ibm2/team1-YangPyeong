@@ -15,7 +15,7 @@ export default function MobileHeader() {
   const avatarRef = useRef<HTMLDivElement>(null);
 
   const displayName = user?.email ? user.email.split('@')[0] : '';
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === 'ROLE_ADMIN';
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

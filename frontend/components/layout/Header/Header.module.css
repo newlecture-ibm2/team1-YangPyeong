@@ -139,6 +139,27 @@
   color: #fff;
 }
 
+.adminBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  transition: all var(--transition-fast);
+  margin-right: 8px;
+}
+
+.adminBtn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 /* ── User Area (로그인 상태) ── */
 .userArea {
   position: relative;

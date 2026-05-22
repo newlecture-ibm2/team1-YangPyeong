@@ -129,6 +129,13 @@ export default function Header() {
       </div>
 
       <div className={styles.right}>
+        {/* 관리자 패널 버튼 */}
+        {user?.role === 'ROLE_ADMIN' && (
+          <Link href="/admin" className={styles.adminBtn} data-guide="admin-btn">
+            ⚙️ 관리자 패널
+          </Link>
+        )}
+
         {/* 🔔 알림 벨 버튼 */}
         {user && (
           <div className={styles.notifArea} ref={notifRef}>
