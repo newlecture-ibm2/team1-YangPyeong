@@ -15,7 +15,7 @@ export function formatPhone(value: string): string {
 export function validatePhone(value: string): string | undefined {
   if (!value.trim()) return '연락처를 입력해주세요.';
   const cleaned = value.replace(/[\s-]/g, '');
-  if (!/^\d{10,11}$/.test(cleaned)) return '올바른 전화번호 형식이 아닙니다.';
+  if (!/^\d{11}$/.test(cleaned)) return '올바른 전화번호 형식이 아닙니다. (11자리)';
   if (!cleaned.startsWith('01')) return '휴대폰 번호는 01로 시작해야 합니다.';
   return undefined;
 }
@@ -24,7 +24,7 @@ export function validatePhone(value: string): string | undefined {
 export function validatePhoneOptional(value: string): string | undefined {
   if (!value.trim()) return undefined;
   const cleaned = value.replace(/[\s-]/g, '');
-  if (!/^\d{10,11}$/.test(cleaned)) return '올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)';
+  if (!/^\d{11}$/.test(cleaned)) return '올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)';
   if (!cleaned.startsWith('01')) return '휴대폰 번호는 01로 시작해야 합니다.';
   return undefined;
 }
