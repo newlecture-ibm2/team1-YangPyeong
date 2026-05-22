@@ -11,6 +11,10 @@ interface Step3Props {
 }
 
 export default function Step3Security({ hook }: Step3Props) {
+  const isStep3Valid =
+    hook.securityQuestion !== '' &&
+    hook.securityAnswer.trim() !== '';
+
   return (
     <div className={styles.stepContent}>
       <div className={styles.selectGroup}>
@@ -39,8 +43,13 @@ export default function Step3Security({ hook }: Step3Props) {
 
       <div className={styles.btnGroup}>
         <Button type="button" variant="outline" size="lg" onClick={hook.handlePrev}>이전</Button>
-        <Button type="submit" variant="primary" size="lg" disabled={hook.loading}>
-          {hook.loading ? '가입 중...' : '가입하기'}
+        <Button 
+          type="submit" 
+          variant="primary" 
+          size="lg" 
+          disabled={hook.loading || !isStep3Valid}
+        >
+          {hook.loading ? '가입 중...' : (!isStep3Valid ? '보안질문을 작성해주세요' : '가입하기')}
         </Button>
       </div>
     </div>
