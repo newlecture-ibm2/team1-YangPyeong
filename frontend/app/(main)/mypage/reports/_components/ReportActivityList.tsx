@@ -39,7 +39,7 @@ export default function ReportActivityList({ items }: ReportActivityListProps) {
         >
           <div className={styles.titleRow}>
             <h3 className={styles.title}>
-              [{report.targetType === 'POST' ? '게시글' : '댓글'}] {report.targetTitle}
+              {report.targetTitle}
             </h3>
           </div>
           <div className={styles.meta}>사유: {report.reason}</div>

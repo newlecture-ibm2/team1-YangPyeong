@@ -18,10 +18,10 @@ export default function ReportDetailModal({ isOpen, onClose, report }: ReportDet
 
   const handleGoToPost = () => {
     if (report.targetPostId) {
-      router.push(`/community/posts/${report.targetPostId}`);
+      router.push(`/community/${report.targetPostId}`);
       onClose();
     } else if (report.targetType === 'POST') {
-      router.push(`/community/posts/${report.targetId}`);
+      router.push(`/community/${report.targetId}`);
       onClose();
     }
   };
