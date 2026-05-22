@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Badge, Dropdown, SearchInput, Spinner, useToast } from '@/components'
+import ResponsiveTable from '@/components/common/ResponsiveTable/ResponsiveTable'
 import styles from './Orders.module.css'
 import type { AdminOrder, OrderStatus } from '../_lib/orders.types'
 import { fetchOrders, updateOrderStatus } from '../_lib/orders.api'
@@ -98,69 +99,58 @@ export default function AdminOrdersPage() {
       </div>
 
       <div className={styles.tableWrapper}>
-        <table className={styles.table}>
-          <thead>
-              <tr>
-                <th>주문일시</th>
-                <th>주문번호</th>
-                <th>주문상품</th>
-                <th>총 결제금액</th>
-                <th>수령인</th>
-                <th>현재 상태</th>
-                <th style={{ width: '160px' }}>상태 변경</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className={styles.emptyRow}>
-                    조회된 주문이 없습니다.
-                  </td>
-                </tr>
-              ) : (
-                filteredOrders.map(order => {
-                  const badge = getStatusBadge(order.status)
-                  const options = STATUS_OPTIONS.filter(o => o.value !== order.status)
-                  const mainItemName = order.items.length > 0 ? order.items[0].productName : '상품 없음'
-                  const itemsSummary = order.items.length > 1 ? `${mainItemName} 외 ${order.items.length - 1}건` : mainItemName
-
-                  return (
-                    <tr key={order.id}>
-                      <td data-label="주문일시">{formatDate(order.createdAt)}</td>
-                      <td className={styles.orderNumber} data-label="주문번호">
-                        {order.status === 'ORDERED' && <span title="신규 주문">🆕</span>}
-                        {order.orderNumber}
-                      </td>
-                      <td data-label="주문상품">
-                        <div>{itemsSummary}</div>
-                        {order.items.length === 1 && (
-                          <div className={styles.itemsSummary}>({order.items[0].quantity}개)</div>
-                        )}
-                      </td>
-                      <td className={styles.priceCell} data-label="결제금액">{formatPrice(order.totalAmount)}</td>
-                      <td data-label="수령인">
-                        <div>{order.receiverName}</div>
-                        <div className={styles.itemsSummary}>{order.receiverPhone}</div>
-                      </td>
-                      <td data-label="상태"><Badge variant={badge.variant}>{badge.label}</Badge></td>
-                      <td data-label="">
-                        <div className={styles.actions}>
-                          <Dropdown
-                            placeholder="상태 변경"
-                            options={options}
-                            value=""
-                            onChange={(value) => handleStatusChange(order.id, value)}
-                            size="sm"
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveTable<AdminOrder & Record<string, unknown>>
+          columns={[
+            { key: 'createdAt', label: '주문일시', render: (o) => formatDate(o.createdAt) },
+            { key: 'orderNumber', label: '주문번호', render: (o) => (
+              <div className={styles.orderNumber}>
+                {o.status === 'ORDERED' && <span title="신규 주문">🆕</span>}
+                {o.orderNumber}
+              </div>
+            )},
+            { key: 'items', label: '주문상품', render: (o) => {
+              const mainItemName = o.items.length > 0 ? o.items[0].productName : '상품 없음'
+              const itemsSummary = o.items.length > 1 ? `${mainItemName} 외 ${o.items.length - 1}건` : mainItemName
+              return (
+                <div>
+                  <div>{itemsSummary}</div>
+                  {o.items.length === 1 && (
+                    <div className={styles.itemsSummary}>({o.items[0].quantity}개)</div>
+                  )}
+                </div>
+              )
+            }},
+            { key: 'totalAmount', label: '결제금액', render: (o) => <div className={styles.priceCell}>{formatPrice(o.totalAmount)}</div> },
+            { key: 'receiver', label: '수령인', render: (o) => (
+              <div>
+                <div>{o.receiverName}</div>
+                <div className={styles.itemsSummary}>{o.receiverPhone}</div>
+              </div>
+            )},
+            { key: 'status', label: '현재 상태', render: (o) => {
+              const badge = getStatusBadge(o.status)
+              return <Badge variant={badge.variant as any}>{badge.label}</Badge>
+            }},
+            { key: 'actions', label: '상태 변경', align: 'center', render: (o) => {
+              const options = STATUS_OPTIONS.filter(opt => opt.value !== o.status)
+              return (
+                <div className={styles.actions}>
+                  <Dropdown
+                    placeholder="상태 변경"
+                    options={options}
+                    value=""
+                    onChange={(value) => handleStatusChange(o.id, value)}
+                    size="sm"
+                  />
+                </div>
+              )
+            }}
+          ]}
+          data={filteredOrders as any}
+          rowKey={(o) => String(o.id)}
+          emptyMessage="조회된 주문이 없습니다."
+        />
+      </div>
     </div>
   )
 }

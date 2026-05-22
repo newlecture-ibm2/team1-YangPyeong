@@ -11,6 +11,7 @@ import FilterBar from '@/components/common/FilterBar/FilterBar'
 import ModalDialog from '@/components/common/Modal/ModalDialog'
 import { useModalDialog } from '@/components/common/Modal/useModalDialog'
 import { useToast } from '@/components/common/Toast'
+import ResponsiveTable from '@/components/common/ResponsiveTable/ResponsiveTable'
 import styles from './RagPage.module.css'
 import type {
   RagCategory,
@@ -245,56 +246,44 @@ export default function RagPage() {
                 등록된 문서가 없습니다.
               </div>
             ) : (
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>제목</th>
-                    <th>카테고리</th>
-                    <th>유형</th>
-                    <th>내용 미리보기</th>
-                    <th>상태</th>
-                    <th>등록일</th>
-                    <th>관리</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {documents.map((doc) => (
-                    <tr key={doc.id}>
-                      <td><strong>{doc.title}</strong></td>
-                      <td>{getCategoryName(doc.categoryId)}</td>
-                      <td>
-                        <Badge variant={doc.contentType === 'FILE' ? 'dark' : 'outline'}>
-                          {doc.contentType}
-                        </Badge>
-                      </td>
-                      <td>
-                        <div className={styles.textPreview}>
-                          {doc.contentType === 'TEXT'
-                            ? doc.textContent ?? '-'
-                            : doc.fileName ?? doc.fileUrl ?? '-'}
-                        </div>
-                      </td>
-                      <td>
-                        <Badge variant={doc.status === 'ACTIVE' ? 'green' : 'red'}>
-                          {doc.status === 'ACTIVE' ? '활성' : '삭제됨'}
-                        </Badge>
-                      </td>
-                      <td>{new Date(doc.createdAt).toLocaleDateString('ko-KR')}</td>
-                      <td>
-                        <div className={styles.actions}>
-                          <Button size="sm" variant="outline" onClick={() => {
-                            setEditingDocument(doc)
-                            setShowDocumentModal(true)
-                          }}>수정</Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDeleteDocument(doc.id)} className={styles.dangerText}>
-                            삭제
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ResponsiveTable<RagDocument & Record<string, unknown>>
+                columns={[
+                  { key: 'title', label: '제목', render: (doc) => <strong>{doc.title}</strong> },
+                  { key: 'category', label: '카테고리', render: (doc) => getCategoryName(doc.categoryId) },
+                  { key: 'contentType', label: '유형', render: (doc) => (
+                    <Badge variant={doc.contentType === 'FILE' ? 'dark' : 'outline'}>
+                      {doc.contentType}
+                    </Badge>
+                  )},
+                  { key: 'preview', label: '내용 미리보기', render: (doc) => (
+                    <div className={styles.textPreview}>
+                      {doc.contentType === 'TEXT'
+                        ? doc.textContent ?? '-'
+                        : doc.fileName ?? doc.fileUrl ?? '-'}
+                    </div>
+                  )},
+                  { key: 'status', label: '상태', render: (doc) => (
+                    <Badge variant={doc.status === 'ACTIVE' ? 'green' : 'red'}>
+                      {doc.status === 'ACTIVE' ? '활성' : '삭제됨'}
+                    </Badge>
+                  )},
+                  { key: 'createdAt', label: '등록일', render: (doc) => new Date(doc.createdAt).toLocaleDateString('ko-KR') },
+                  { key: 'actions', label: '관리', render: (doc) => (
+                    <div className={styles.actions}>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setEditingDocument(doc)
+                        setShowDocumentModal(true)
+                      }}>수정</Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDeleteDocument(doc.id)} className={styles.dangerText}>
+                        삭제
+                      </Button>
+                    </div>
+                  )}
+                ]}
+                data={documents as any}
+                rowKey={(doc) => String(doc.id)}
+                emptyMessage="등록된 문서가 없습니다."
+              />
             )}
           </>
         )}
@@ -320,44 +309,33 @@ export default function RagPage() {
                 등록된 카테고리가 없습니다.
               </div>
             ) : (
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>카테고리명</th>
-                    <th>설명</th>
-                    <th>표시 순서</th>
-                    <th>상태</th>
-                    <th>등록일</th>
-                    <th>관리</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {categories.map((cat) => (
-                    <tr key={cat.id}>
-                      <td><strong>{cat.name}</strong></td>
-                      <td>{cat.description ?? '-'}</td>
-                      <td>{cat.displayOrder}</td>
-                      <td>
-                        <Badge variant={cat.isActive ? 'green' : 'gray'}>
-                          {cat.isActive ? '활성' : '비활성'}
-                        </Badge>
-                      </td>
-                      <td>{new Date(cat.createdAt).toLocaleDateString('ko-KR')}</td>
-                      <td>
-                        <div className={styles.actions}>
-                          <Button size="sm" variant="outline" onClick={() => {
-                            setEditingCategory(cat)
-                            setShowCategoryModal(true)
-                          }}>수정</Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDeleteCategory(cat.id)} className={styles.dangerText}>
-                            삭제
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ResponsiveTable<RagCategory & Record<string, unknown>>
+                columns={[
+                  { key: 'name', label: '카테고리명', render: (cat) => <strong>{cat.name}</strong> },
+                  { key: 'description', label: '설명', render: (cat) => cat.description ?? '-' },
+                  { key: 'displayOrder', label: '표시 순서', render: (cat) => cat.displayOrder },
+                  { key: 'isActive', label: '상태', render: (cat) => (
+                    <Badge variant={cat.isActive ? 'green' : 'gray'}>
+                      {cat.isActive ? '활성' : '비활성'}
+                    </Badge>
+                  )},
+                  { key: 'createdAt', label: '등록일', render: (cat) => new Date(cat.createdAt).toLocaleDateString('ko-KR') },
+                  { key: 'actions', label: '관리', render: (cat) => (
+                    <div className={styles.actions}>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setEditingCategory(cat)
+                        setShowCategoryModal(true)
+                      }}>수정</Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDeleteCategory(cat.id)} className={styles.dangerText}>
+                        삭제
+                      </Button>
+                    </div>
+                  )}
+                ]}
+                data={categories as any}
+                rowKey={(cat) => String(cat.id)}
+                emptyMessage="등록된 카테고리가 없습니다."
+              />
             )}
           </>
         )}

@@ -1,5 +1,8 @@
-import { ReactNode } from 'react'
+'use client'
+
+import { ReactNode, useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import styles from './AdminLayout.module.css'
 import Button from '@/components/common/Button/Button'
 import AdminLogoutButton from './_components/AdminLogoutButton'
@@ -23,9 +26,33 @@ const ADMIN_MENUS = [
 ]
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
+
+  // Close menu when route changes on mobile
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [pathname])
+
   return (
     <div className={styles.adminLayout}>
-      <aside className={styles.sidebar}>
+      {/* Mobile Header */}
+      <div className={styles.mobileHeader}>
+        <h2 className={styles.logo}>FarmBalance <span>Admin</span></h2>
+        <button 
+          className={styles.hamburgerBtn} 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? '✕' : '☰'}
+        </button>
+      </div>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div className={styles.overlay} onClick={() => setIsMobileMenuOpen(false)} />
+      )}
+
+      <aside className={`${styles.sidebar} ${isMobileMenuOpen ? styles.open : ''}`}>
         <div className={styles.sidebarHeader}>
           <h2 className={styles.logo}>FarmBalance<br/><span>Admin</span></h2>
         </div>
