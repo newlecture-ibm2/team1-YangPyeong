@@ -32,6 +32,13 @@ export async function GET() {
       cache: 'no-store',
     });
 
+    if (backendResponse.status === 401 || backendResponse.status === 403) {
+      return NextResponse.json(
+        { success: false, error: { code: 'UNAUTHORIZED', message: '권한이 없습니다.' } },
+        { status: 401 }
+      );
+    }
+
     const contentType = backendResponse.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       const data = await backendResponse.json();

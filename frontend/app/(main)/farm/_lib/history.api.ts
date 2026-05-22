@@ -16,6 +16,7 @@ export interface CultivationHistory {
  * 특정 농장의 재배 이력 조회
  */
 export async function getFarmHistories(farmId: number): Promise<CultivationHistory[]> {
+  if (farmId === 0) return []; // 더미 농장(미리보기) 조회 스킵
   const res = await fetch(`/api/farm/${farmId}/histories`, {
     method: 'GET',
     cache: 'no-store',
