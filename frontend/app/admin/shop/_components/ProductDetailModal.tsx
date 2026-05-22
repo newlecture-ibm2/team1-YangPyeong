@@ -89,6 +89,7 @@ export default function ProductDetailModal({ isOpen, product, onClose, onStatusC
                   alt={`${product.name} - 이미지 ${idx + 1}`}
                   className={styles.productImage}
                   style={{ width: '100%', height: '100%', objectFit: 'cover', scrollSnapAlign: 'start', flexShrink: 0 }}
+                  onError={(e) => { e.currentTarget.src = DEFAULT_PRODUCT_IMAGE; }}
                 />
               ))
             ) : (
@@ -98,6 +99,7 @@ export default function ProductDetailModal({ isOpen, product, onClose, onStatusC
                 alt={product.name}
                 className={styles.productImage}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => { e.currentTarget.src = DEFAULT_PRODUCT_IMAGE; }}
               />
             )}
           </div>

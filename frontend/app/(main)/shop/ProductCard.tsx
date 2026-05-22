@@ -36,6 +36,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
             src={product.imageUrls[0] || DEFAULT_PRODUCT_IMAGE}
             alt={product.name}
             className={styles.image}
+            onError={(e) => { e.currentTarget.src = DEFAULT_PRODUCT_IMAGE; }}
           />
           {(product.status === 'SOLDOUT' || product.stock <= 0) && (
             <div className={styles.soldOutOverlay}>
