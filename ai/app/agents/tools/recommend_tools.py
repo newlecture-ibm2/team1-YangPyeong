@@ -135,7 +135,7 @@ def _format_crop_line(item: dict[str, Any], *, include_coaching: bool = False) -
 
     mismatch = item.get("mismatchNote")
     if mismatch:
-        parts.append(f"  🚨 주의: {mismatch}")
+        parts.append(f"  🚨 단점/주의: {mismatch} (AI: 이 문제를 극복할 실질적인 해결책을 고민해 1줄로 답변에 포함하세요)")
 
     return "\n".join(parts)
 
