@@ -5,6 +5,11 @@ from app.agents.tools.recommend_tools import (
     get_crop_recommendation_detail,
     get_latest_recommend_overview,
     navigate_to_crop_recommend_detail,
+    compare_crop_recommendations,
+    get_recommendations_by_score_type,
+    get_recommend_analysis_info,
+    get_needs_data_guidance,
+    compare_with_previous_recommendation,
 )
 from app.llm import get_llm
 
@@ -22,16 +27,27 @@ RECOMMEND_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 AI 작물 추천' 전
 - get_latest_recommend_overview: 1등/TOP3/전체 순위/추천 결과 요약
 - get_crop_recommendation_detail: 특정 작물 점수·적합도·코칭 상태·AI 코칭 요약
 - navigate_to_crop_recommend_detail: 특정 작물 상세 화면 이동 요청
+- compare_crop_recommendations: 'A vs B', 'A랑 B 비교', '뭐가 나아?' 등 비교 질문
+- get_recommendations_by_score_type: '토양 점수 높은 순', '시세 전망 좋은 작물' 등 특정 점수 기준 정렬
+- get_recommend_analysis_info: '분석 언제', '마지막 분석', '분석 모드' 등 메타 정보
+- get_needs_data_guidance: 코칭 NEEDS_DATA 상태일 때 어떤 데이터를 입력해야 하는지 구체적 안내 요청
+- compare_with_previous_recommendation: '지난번 분석이랑 달라진 거 있어?', '추천 점수 올랐어?' 등 과거 분석 결과와의 비교 요청
 
 [설명 가이드]
 - 종합 점수 = 토양 35% + 시세 25% + 수급 25% + 난이도 15%
 - AI 코칭(aiReason)이 없으면 "아직 빠른 분석만 완료, 상세 코칭은 상세 화면에서 요청"이라고 안내
+- 코칭 상태가 ELIGIBLE 또는 HAS_AI일 경우, "자세한 코칭을 받으시려면 아래 버튼을 눌러주세요" 등 도구가 반환한 네비게이션 액션을 클릭하도록 자연스럽게 유도
 - NEEDS_DATA면 aiCoachingHint 내용을 그대로 전달하고 재배 데이터 입력을 권장
 - 분석 이력이 없으면 추천 화면에서 「작물 적합도 다시 분석」 실행을 안내
 
 [화면 이동 vs 데이터]
 - "추천 페이지로 가줘" → navigate 도구 또는 안내 (guidance와 겹치면 overview 후 recommend 화면 action)
 - "몇 점/몇 등" → overview 또는 crop detail 도구
+
+[에러 대처]
+- 도구 결과가 비어 있으면 "분석 이력이 없습니다" 안내 + 추천 화면 이동 제안
+- 작물을 찾지 못하면 "다른 이름으로 검색" 제안 + 전체 순위 요약 제공
+- 농장 미등록 시 "농장 등록이 필요해요" 안내 및 농장 등록 화면 이동 제안
 """
 
 
@@ -43,6 +59,11 @@ def get_recommend_agent():
         get_latest_recommend_overview,
         get_crop_recommendation_detail,
         navigate_to_crop_recommend_detail,
+        compare_crop_recommendations,
+        get_recommendations_by_score_type,
+        get_recommend_analysis_info,
+        get_needs_data_guidance,
+        compare_with_previous_recommendation,
     ]
 
     return create_react_agent(

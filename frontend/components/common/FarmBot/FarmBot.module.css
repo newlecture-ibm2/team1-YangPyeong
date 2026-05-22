@@ -802,6 +802,44 @@
   margin-top: 2px;
 }
 
+/* ── Markdown Styles ── */
+.chatMsgContent {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.chatMsgContent table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.chatMsgContent th,
+.chatMsgContent td {
+  border: 1px solid #e2e8f0;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.chatMsgContent th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #334155;
+}
+
+.chatMsgContent td {
+  background-color: #ffffff;
+}
+
+.chatMsgContent p {
+  margin: 0 0 8px 0;
+}
+
+.chatMsgContent p:last-child {
+  margin-bottom: 0;
+}
+
 .chatHeaderBtns {
   display: flex;
   gap: 4px;
