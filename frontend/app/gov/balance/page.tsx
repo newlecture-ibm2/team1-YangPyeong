@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import styles from '../gov.module.css';
 import { useGovUser, getTestHeaders } from '../useGovUser';
 import GovTabs from '../_components/GovTabs';
+import { useGovChat } from '../_components/GovChatProvider';
 import Spinner from '@/components/common/Spinner/Spinner';
 import Dropdown from '@/components/common/Dropdown/Dropdown';
 import SearchInput from '@/components/common/SearchInput/SearchInput';
@@ -19,6 +20,7 @@ interface WarningItem {
 
 export default function GovBalancePage() {
   const { user, loading: userLoading } = useGovUser();
+  const { setPageContext } = useGovChat();
   const [items, setItems] = useState<WarningItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,6 +43,24 @@ export default function GovBalancePage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  // ── 화면 데이터를 챗봇 pageContext로 등록 ──
+  useEffect(() => {
+    if (items.length > 0) {
+      setPageContext({
+        pageType: 'balance',
+        pageTitle: '수급 분석',
+        balanceItems: items.map(i => ({
+          cropName: i.cropName,
+          supplyRate: i.supplyRate,
+          status: i.status,
+          level: i.level,
+          advice: i.advice,
+        })),
+      });
+    }
+    return () => setPageContext(null);
+  }, [items, setPageContext]);
 
   const filteredItems = useMemo(() => {
     let result = [...items];

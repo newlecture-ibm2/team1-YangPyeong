@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import styles from '../gov.module.css';
 import { useGovUser, getTestHeaders } from '../useGovUser';
 import GovTabs from '../_components/GovTabs';
+import { useGovChat } from '../_components/GovChatProvider';
 import Spinner from '@/components/common/Spinner/Spinner';
 import Dropdown from '@/components/common/Dropdown';
 
@@ -21,6 +22,7 @@ export default function ComparePage() {
   const [data, setData] = useState<CompareRow[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, loading: userLoading } = useGovUser();
+  const { setPageContext } = useGovChat();
   const [baseYear, setBaseYear] = useState('2025');
   const [compareYear, setCompareYear] = useState('2026');
 
@@ -40,6 +42,26 @@ export default function ComparePage() {
       })
       .catch(() => setLoading(false));
   }, [baseYear, compareYear]);
+
+  // ── 화면 데이터를 챗봇 pageContext로 등록 ──
+  useEffect(() => {
+    if (data.length > 0) {
+      setPageContext({
+        pageType: 'compare',
+        pageTitle: '연도 비교',
+        baseYear,
+        compareYear,
+        compareSummary: data.map(d => ({
+          crop: d.crop,
+          prevYearTon: d.prevYearTon,
+          currentYearTon: d.currentYearTon,
+          diffTon: d.diffTon,
+          diffRate: d.diffRate,
+        })),
+      });
+    }
+    return () => setPageContext(null);
+  }, [data, baseYear, compareYear, setPageContext]);
 
   const region = user?.regionName || "지자체";
 
@@ -84,14 +106,14 @@ export default function ComparePage() {
               <h2 className={styles.cardTitle}>생산량 비교</h2>
               <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>단위: kg</span>
             </div>
-            {loading ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '280px' }}><Spinner /></div> : (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            {loading ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '380px' }}><Spinner /></div> : (
+              <ResponsiveContainer width="100%" height={380}>
+                <BarChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="crop" />
+                  <XAxis dataKey="crop" interval={0} angle={-30} textAnchor="end" height={65} tick={{ fontSize: 12 }} />
                   <YAxis width={80} tickFormatter={(value) => value.toLocaleString()} />
                   <Tooltip formatter={(value) => `${Number(value).toLocaleString()}kg`} />
-                  <Legend />
+                  <Legend wrapperStyle={{ paddingTop: '8px' }} />
                   <Bar dataKey="prevYearTon" name={`${baseYear}년`} fill="#52B788" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="currentYearTon" name={`${compareYear}년`} fill="#2D6A4F" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -104,13 +126,13 @@ export default function ComparePage() {
               <h2 className={styles.cardTitle}>증감률</h2>
               <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>단위: %</span>
             </div>
-            {loading ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '280px' }}><Spinner /></div> : (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            {loading ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '380px' }}><Spinner /></div> : (
+              <ResponsiveContainer width="100%" height={380}>
+                <BarChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="crop" />
+                  <XAxis dataKey="crop" interval={0} angle={-30} textAnchor="end" height={65} tick={{ fontSize: 12 }} />
                   <YAxis width={60} unit="%" tickFormatter={(value) => value.toLocaleString()} />
-                  <Tooltip formatter={(value: any) => typeof value === 'number' ? `${value.toFixed(2)}%` : `계산 불가`} />
+                  <Tooltip formatter={(value) => typeof value === 'number' ? `${value.toFixed(2)}%` : `계산 불가`} />
                   <Bar dataKey="diffRate" name="증감률(%)" fill="#CCFF33" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -119,7 +141,7 @@ export default function ComparePage() {
         </div>
 
         {/* 우측: 연도 비교 상세 테이블 카드 */}
-        <div className={styles.card} style={{ marginBottom: 0 }}>
+        <div className={`${styles.card} ${styles.compactTableCard}`}>
           <div className={styles.cardHeaderRow}>
             <h2 className={styles.cardTitle}>연도 비교 상세 현황</h2>
             <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>총 {data.length}건</span>

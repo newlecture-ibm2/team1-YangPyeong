@@ -53,6 +53,16 @@ public class CommentPersistenceAdapter implements CommentPort {
     }
 
     @Override
+    public Map<Long, Long> findPostIdsByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return Map.of();
+        return commentJpaRepository.findPostIdsByIds(ids).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
+
+    @Override
     public Map<Long, Long> countByPostIds(List<Long> postIds) {
         if (postIds == null || postIds.isEmpty()) return Map.of();
         return commentJpaRepository.countByPostIds(postIds).stream()

@@ -13,6 +13,7 @@ public interface CommentPort {
     Optional<Comment> findById(Long id);
     Optional<Comment> findActiveById(Long id);
     Map<Long, String> findActiveContentsByIds(List<Long> ids);
+    Map<Long, Long> findPostIdsByIds(List<Long> ids);
     Map<Long, Long> countByPostIds(List<Long> postIds);
     List<Comment> findByPostId(Long postId);
     Page<Comment> findByAuthorIdAndStatus(Long authorId, String status, Pageable pageable);
