@@ -19,6 +19,9 @@ const BASE_URL = '/api/farm';
 export async function getMyFarms(): Promise<FarmListItem[]> {
   const res = await fetch(BASE_URL, { cache: 'no-store' });
   if (!res.ok) {
+    if (res.status === 401) {
+      return []; // 비회원(토큰 없음) 접속 시 미리보기 모드를 위해 빈 배열 반환
+    }
     const error = await res.json();
     throw new Error(error.error?.message || '농장 목록을 불러오는데 실패했습니다.');
   }

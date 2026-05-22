@@ -114,9 +114,14 @@ function FarmDashboardContent() {
   /** 농장 단위로만 갱신 — 재배 목록 변경 시 재요청하지 않아 단가 매칭이 안정적 */
   const [latestRecommendData, setLatestRecommendData] = useState<CropRecommendResponse | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isGuest, setIsGuest] = useState<boolean>(false);
 
   // 유저 권한 확인
   useEffect(() => {
+    // fb-session은 httpOnly 쿠키라 클라이언트에서 읽을 수 없으므로 fb-user 쿠키 유무로 로그인 여부 판별
+    const hasUserCookie = document.cookie.includes('fb-user');
+    setIsGuest(!hasUserCookie);
+    
     const match = document.cookie.match(/(?:^|;\s*)fb-user=([^;]*)/);
     if (match) {
       try {
@@ -768,7 +773,7 @@ function FarmDashboardContent() {
       </div>
 
       <div style={{ position: 'relative' }}>
-        {isShowPreviewBlur && <MockupOverlay hasUnapprovedFarms={hasUnapprovedFarms} />}
+        {isShowPreviewBlur && <MockupOverlay hasUnapprovedFarms={hasUnapprovedFarms} isGuest={isGuest} />}
         <div style={{ filter: isShowPreviewBlur ? 'blur(8px) grayscale(0.3)' : 'none', pointerEvents: isShowPreviewBlur ? 'none' : 'auto' }}>
       <HistoryModal
         isOpen={isHistoryModalOpen}
