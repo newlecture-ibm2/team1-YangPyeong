@@ -624,21 +624,110 @@ export default function BalanceDetailPage({ params }: PageProps) {
       </div>
 
       <div className={styles.grid2}>
-        {/* GAUGE CHART CARD */}
+        {/* 🏔️ 양평군 전체 수급 카드 (도넛 차트 탑재) */}
         <Card className={styles.chartCard}>
-          <h2 className={styles.cardTitle}>수급 밸런스 미터</h2>
-          <div className={styles.gaugeContainer}>
-            <div className={styles.gaugeArcWrapper}>
-              <div className={styles.gaugeBackground}></div>
-              <div className={styles.gaugeInner}></div>
-            </div>
-            <div
-              className={styles.gaugeNeedle}
-              style={{ transform: `rotate(${getNeedleRotation(data.status === 'UNKNOWN' ? 100 : data.supplyRatio)}deg)` }}
-            ></div>
-            <div className={styles.gaugeNeedleCenter}></div>
-          </div>
-          <p className={styles.gaugeStatus}>{data.statusLabel}</p>
+          <h2 className={styles.cardTitle}>🏔️ 양평군 5대 주요 작물 전체 공급 비중</h2>
+          {(() => {
+            if (!dashboardData || !dashboardData.totalSummary) {
+              return <p className={styles.noDataText}>대시보드 데이터를 불러오는데 실패했거나 연동 대기 중입니다.</p>;
+            }
+
+            const OFFICIAL_CROPS = new Set(['감자', '고구마', '고추', '메밀', '방울토마토']);
+            const kosisTotalCrops = dashboardData.totalSummary.crops.filter(c => OFFICIAL_CROPS.has(c.cropName));
+            
+            const totalSupplyKg = kosisTotalCrops.reduce((sum, c) => sum + c.currentSupplyKg, 0);
+
+            if (totalSupplyKg === 0) {
+              return <p className={styles.noDataText}>양평군 전체에 등록된 5대 작물 재배 정보가 없습니다.</p>;
+            }
+
+            // 도넛 차트용 색상 스키마
+            const cropColors: Record<string, string> = {
+              '감자': '#A78BFA',      // 보라
+              '고구마': '#F43F5E',    // 로즈
+              '고추': '#F97316',      // 오렌지
+              '메밀': '#10B981',      // 초록
+              '방울토마토': '#3B82F6'  // 파랑
+            };
+
+            // 누적 계산을 통해 도넛 세그먼트 생성
+            const C = 439.82; // 2 * PI * r (r = 70)
+            let accumulatedPercent = 0;
+
+            const chartSegments = kosisTotalCrops.map((crop) => {
+              const currentSupply = crop.currentSupplyKg;
+              const percent = (currentSupply / totalSupplyKg) * 100;
+              const strokeLength = C * (percent / 100);
+              const strokeOffset = C - strokeLength + (C * (accumulatedPercent / 100));
+              
+              accumulatedPercent += percent;
+
+              return {
+                cropName: crop.cropName,
+                percent: Math.round(percent * 10) / 10,
+                strokeLength,
+                strokeOffset,
+                color: cropColors[crop.cropName] || '#6B7280',
+                currentSupplyKg: currentSupply
+              };
+            });
+
+            return (
+              <div className={styles.donutChartContainer}>
+                {/* SVG Donut Chart */}
+                <div className={styles.donutSvgWrapper}>
+                  <svg className={styles.donutSvg} viewBox="0 0 200 200" width="180" height="180">
+                    {/* Background Circle */}
+                    <circle cx="100" cy="100" r="70" stroke="#f1f5f9" strokeWidth="22" fill="transparent" />
+                    
+                    {/* Segments */}
+                    <g transform="rotate(-90 100 100)">
+                      {chartSegments.map((seg) => (
+                        <circle
+                          key={seg.cropName}
+                          cx="100"
+                          cy="100"
+                          r="70"
+                          stroke={seg.color}
+                          strokeWidth="22"
+                          strokeDasharray={`${seg.strokeLength} ${C - seg.strokeLength}`}
+                          strokeDashoffset={-seg.strokeOffset}
+                          fill="transparent"
+                          strokeLinecap="butt"
+                          className={styles.donutSegment}
+                          style={{
+                            transition: 'stroke-dashoffset 0.8s ease-in-out',
+                          }}
+                        >
+                          <title>{`${seg.cropName}: ${seg.percent}% (${formatWeightWithUnit(seg.currentSupplyKg)})`}</title>
+                        </circle>
+                      ))}
+                    </g>
+
+                    {/* Center Text */}
+                    <g transform="translate(100, 102)" textAnchor="middle">
+                      <text className={styles.donutCenterLabel} y="-10" fill="var(--color-text-secondary)" fontSize="12" fontWeight="500">총 공급량</text>
+                      <text className={styles.donutCenterValue} y="12" fill="var(--color-text)" fontSize="16" fontWeight="800">
+                        {formatWeightWithUnit(totalSupplyKg)}
+                      </text>
+                    </g>
+                  </svg>
+                </div>
+
+                {/* Donut Legend */}
+                <div className={styles.donutLegend}>
+                  {chartSegments.map((seg) => (
+                    <div key={seg.cropName} className={styles.legendItemDonut}>
+                      <span className={styles.legendColorBadge} style={{ backgroundColor: seg.color }}></span>
+                      <span className={styles.legendCropName}>{seg.cropName}</span>
+                      <span className={styles.legendCropRatio}>{seg.percent}%</span>
+                      <span className={styles.legendCropKg}>({formatWeightWithUnit(seg.currentSupplyKg)})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </Card>
 
         {/* AI INSIGHT CARD */}

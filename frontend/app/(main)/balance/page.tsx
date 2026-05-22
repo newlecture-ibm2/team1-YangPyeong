@@ -347,56 +347,7 @@ function DashboardSection({ dashboard, isDashboardLoading, onTownChange, activeT
             )}
           </Card>
 
-          {/* 양평군 전체 카드 */}
-          {!isWholeYangpyeong && (
-            <Card className={styles.dashboardCard}>
-              <div className={styles.cardHeaderRow}>
-                <h3 className={styles.cardTitleLg}>🏔️ {totalSummary.label} 실시간 수급</h3>
-              </div>
-              <div className={styles.cropGrid}>
-                {kosisTotalCrops.map((crop) => (
-                  <CropStatusRow key={crop.cropName} crop={crop} />
-                ))}
-              </div>
 
-              {/* 🌱 양평군 전체 농가 자체 등록 온디맨드 작물 패널 */}
-              {onDemandTotalCrops.length > 0 && (
-                <div className={styles.onDemandSection}>
-                  <div className={styles.onDemandHeader}>
-                    <h4 className={styles.onDemandTitle}>
-                      🌱 양평군 농가 자체 등록 작물
-                    </h4>
-                  </div>
-                  <div className={styles.onDemandGrid}>
-                    {onDemandTotalCrops.map((crop) => (
-                      <Link
-                        href={`/balance/${encodeURIComponent(crop.cropName)}`}
-                        key={crop.cropName}
-                        className={`${styles.onDemandCard} ${styles[crop.status.toLowerCase()] || ''}`}
-                      >
-                        <div className={styles.onDemandCropHeader}>
-                          <span className={styles.onDemandCropName}>{crop.cropName}</span>
-                          <Badge variant={getStatusBadgeVariant(crop.status)}>
-                            {crop.status === 'UNKNOWN' ? '집계중' : crop.statusLabel}
-                          </Badge>
-                        </div>
-                        <div className={styles.onDemandCropVolume}>
-                          {crop.currentSupplyKg.toLocaleString()} kg
-                        </div>
-                        <div className={styles.onDemandBadgeWrap}>
-                          <span className={styles.onDemandStatusLabel}>
-                            {crop.status === 'UNKNOWN' 
-                              ? '농가 집계 진행중' 
-                              : `수급률 ${crop.supplyRatio}% (기준 ${crop.standardYieldKg.toLocaleString()} kg)`}
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </Card>
-          )}
         </div>
       </div>
 
