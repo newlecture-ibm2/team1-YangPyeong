@@ -75,6 +75,17 @@ public class CommunityManagementService implements ManageCommunityUseCase {
         }
 
         adminCommentPort.delete(commentId);
+        
+        String snippet = comment.getContent() != null ? comment.getContent() : "";
+        if (snippet.length() > 15) snippet = snippet.substring(0, 15) + "...";
+        notificationUseCase.createNotification(
+                comment.getAuthorId(),
+                com.farmbalance.notification.domain.NotificationType.SYSTEM,
+                com.farmbalance.notification.domain.NotificationCategory.SYSTEM,
+                "댓글 삭제 안내",
+                String.format("[%s] 댓글이 삭제 처리되었습니다.", snippet),
+                "/mypage/community"
+        );
     }
 
     @Override
@@ -88,15 +99,36 @@ public class CommunityManagementService implements ManageCommunityUseCase {
         }
 
         adminPostPort.delete(postId);
+        
+        String title = post.getTitle() != null ? post.getTitle() : "게시글";
+        notificationUseCase.createNotification(
+                post.getAuthorId(),
+                com.farmbalance.notification.domain.NotificationType.SYSTEM,
+                com.farmbalance.notification.domain.NotificationCategory.SYSTEM,
+                "게시글 삭제 안내",
+                String.format("[%s] 게시글이 삭제 처리되었습니다.", title),
+                "/mypage/community"
+        );
     }
 
     @Override
     @Transactional
     public void hidePost(Long postId, String reason) {
-        adminPostPort.findById(postId)
+        AdminPost post = adminPostPort.findById(postId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
 
         adminPostPort.hide(postId, reason);
+        
+        String title = post.getTitle() != null ? post.getTitle() : "게시글";
+        String reasonStr = (reason != null && !reason.isBlank()) ? " 사유: " + reason : "";
+        notificationUseCase.createNotification(
+                post.getAuthorId(),
+                com.farmbalance.notification.domain.NotificationType.SYSTEM,
+                com.farmbalance.notification.domain.NotificationCategory.SYSTEM,
+                "게시글 숨김 안내",
+                String.format("[%s] 게시글이 숨김 처리되었습니다.%s", title, reasonStr),
+                "/mypage/community"
+        );
     }
 
     @Override
@@ -109,10 +141,22 @@ public class CommunityManagementService implements ManageCommunityUseCase {
     @Override
     @Transactional
     public void hideComment(Long commentId, String reason) {
-        adminCommentPort.findById(commentId)
+        com.farmbalance.admin.domain.AdminComment comment = adminCommentPort.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
         adminCommentPort.hide(commentId, reason);
+        
+        String snippet = comment.getContent() != null ? comment.getContent() : "";
+        if (snippet.length() > 15) snippet = snippet.substring(0, 15) + "...";
+        String reasonStr = (reason != null && !reason.isBlank()) ? " 사유: " + reason : "";
+        notificationUseCase.createNotification(
+                comment.getAuthorId(),
+                com.farmbalance.notification.domain.NotificationType.SYSTEM,
+                com.farmbalance.notification.domain.NotificationCategory.SYSTEM,
+                "댓글 숨김 안내",
+                String.format("[%s] 댓글이 숨김 처리되었습니다.%s", snippet, reasonStr),
+                "/mypage/community"
+        );
     }
 
     @Override

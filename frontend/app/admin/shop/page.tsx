@@ -141,7 +141,7 @@ export default function ShopPage() {
       setReasonModalOpen(true)
       return
     }
-    
+
     try {
       await updateProductStatus(productId, newStatus)
       toast.success('상품 상태가 성공적으로 변경되었습니다.')
@@ -399,13 +399,22 @@ export default function ShopPage() {
                       <td data-label="판매자">{product.sellerName}</td>
                       <td className={styles.priceCell} data-label="판매가">{formatPrice(product.price)}</td>
                       <td data-label="재고">{product.stock}개</td>
-                      <td data-label="상태"><Badge variant={badge.variant as any}>{badge.label}</Badge></td>
+                      <td data-label="상태">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                          <Badge variant={badge.variant as any}>{badge.label}</Badge>
+                          {product.statusReason && (
+                            <span style={{ fontSize: '12px', color: 'var(--color-danger)' }}>
+                              [사유: {product.statusReason}]
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td data-label="등록일">{formatDate(product.createdAt)}</td>
                       <td data-label="">
                         <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                          <button 
-                            className={styles.actionBtn} 
-                            style={{ background: 'white', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }} 
+                          <button
+                            className={styles.actionBtn}
+                            style={{ background: 'white', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
                             onClick={() => handleOpenDetail(product)}
                           >
                             🔍 상세

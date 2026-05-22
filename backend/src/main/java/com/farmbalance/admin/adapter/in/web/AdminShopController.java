@@ -68,7 +68,9 @@ public class AdminShopController {
                 .stock(dto.getStock())
                 .description(dto.getDescription())
                 .imageUrl(dto.getImageUrl())
+                .imageUrls(dto.getImageUrls())
                 .status(dto.getStatus())
+                .statusReason(dto.getStatusReason())
                 .createdAt(dto.getCreatedAt())
                 .build();
     }
