@@ -10,6 +10,7 @@
 import { ReactNode, useEffect, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useFarmBot, ChatMessage, NodeStatus } from './useFarmBot';
+import RecommendRadarChart from './RecommendRadarChart';
 import { FarmBotContext } from './FarmBotContext';
 import Image from 'next/image';
 import styles from './FarmBot.module.css';
@@ -329,6 +330,11 @@ export default function FarmBot({ children }: FarmBotProps) {
                         </a>
                       ))}
                     </div>
+                  ))}
+
+                  {/* RECOMMEND_CHART 레이더 차트 */}
+                  {msg.role === 'bot' && msg.actions?.filter(a => a.type === 'RECOMMEND_CHART' && a.recommendChartData && a.recommendChartData.length > 0).map((action, actionIdx) => (
+                    <RecommendRadarChart key={`radar-${actionIdx}`} data={action.recommendChartData!} />
                   ))}
                 </div>
               </div>

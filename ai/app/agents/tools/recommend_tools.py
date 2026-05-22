@@ -332,6 +332,24 @@ def _format_comparison(items: list[dict[str, Any]]) -> str:
     advice_line = "| 유형 | " + " | ".join([ADVICE_LABELS.get(item.get("adviceType", ""), "추천") for item in items]) + " |"
     lines.append(advice_line)
     
+    # 레이더 차트 액션 토큰 생성
+    chart_data = []
+    for item in items:
+        chart_data.append({
+            "cropName": item.get("cropName", "작물"),
+            "score": float(item.get("score", 0)),
+            "soil": float(item.get("soilFitnessPercent", 0)),
+            "price": float(item.get("priceForecastPercent", 0)),
+            "supply": float(item.get("supplyStabilityPercent", 0))
+        })
+        
+    action_dict = {
+        "type": "RECOMMEND_CHART",
+        "recommendChartData": chart_data
+    }
+    
+    lines.append("\n" + action_token(action_dict))
+    
     return "\n".join(lines)
 
 @tool
