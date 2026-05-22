@@ -95,5 +95,10 @@ export interface RecommendedPolicy {
 /** 맞춤 정책 추천 API 응답 */
 export interface PolicyRecommendResponse {
   farmerProfile: FarmerProfileSummary;
+  /** AI 사유 포함 상위 추천 정책 (TOP 5) */
   recommendedPolicies: RecommendedPolicy[];
+  /** 규칙 기반 사유만 포함된 관련 정책 (최대 20개) */
+  relatedPolicies: RecommendedPolicy[];
+  /** 추천 가능 정책 부족 시 안내 메시지 (null이면 정상) */
+  insufficientNotice: string | null;
 }

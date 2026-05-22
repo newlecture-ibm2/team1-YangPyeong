@@ -1,0 +1,89 @@
+.mapContainer {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, minmax(80px, 1fr));
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 12px 0;
+}
+
+.mapTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  background-color: #f3f4f6; /* 약간 어두운 회색 (선택 해제 시 기본) */
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.mapTile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  background-color: #e5e7eb;
+}
+
+.activeTile {
+  background-color: var(--color-primary) !important;
+  color: white !important;
+  border-color: var(--color-primary-dark);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
+  transform: scale(1.05);
+  z-index: 10;
+}
+
+.activeTile:hover {
+  transform: scale(1.05) translateY(-2px);
+}
+
+/* 수급 상태 색상 (작물 선택 시 히트맵 모드로 사용) */
+.status_balanced {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: #34d399;
+}
+.status_short {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-color: #60a5fa;
+}
+.status_excess {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #f87171;
+}
+
+.emptyTile {
+  visibility: hidden;
+}
+
+.tileBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+
+.mapGuide {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+  margin-top: -8px;
+  margin-bottom: 8px;
+}
