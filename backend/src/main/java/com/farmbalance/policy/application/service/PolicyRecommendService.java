@@ -88,10 +88,11 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
                 score += 30;
                 exactRegion = true;
                 reasons.add("거주 지역(" + profile.regionName() + ") 농업인을 위한 맞춤형 정책입니다.");
-            } else if (policy.getRegionCode() == null || policy.getRegionCode().trim().isEmpty() || 
-                       (policy.getCategory() != null && policy.getCategory().contains("전국"))) {
+            } else if (isNationwidePolicy(policy)) {
                 score += 15;
                 reasons.add("전국 어디서나 신청 가능한 공통 지원 정책입니다.");
+                log.debug("전국 공통 정책 포함: policyId={}, regionCode={}, title={}", 
+                          policy.getId(), policy.getRegionCode(), policy.getTitle());
             } else {
                 log.debug("정책 제외 - 지역 불일치: policyId={}, regionCode={}, userRegion={}", 
                           policy.getId(), policy.getRegionCode(), profile.regionCode());
@@ -241,5 +242,18 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
             case "곡물" -> "곡물류";
             default -> category;
         };
+    }
+
+    /**
+     * 전국 공통 정책 여부를 판별합니다.
+     * - regionCode가 null / 빈 문자열 / "0000" → 전국
+     * - category에 "전국" 포함 → 전국
+     */
+    private boolean isNationwidePolicy(PolicyDataJpaEntity policy) {
+        String regionCode = policy.getRegionCode();
+        if (regionCode == null || regionCode.trim().isEmpty() || "0000".equals(regionCode.trim())) {
+            return true;
+        }
+        return policy.getCategory() != null && policy.getCategory().contains("전국");
     }
 }
