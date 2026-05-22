@@ -17,16 +17,18 @@ public class MyReportActivityResponse {
     private String targetType;
     private Long targetId;
     private String targetTitle;
+    private Long targetPostId;
     private String reason;
     private String status;
     private LocalDateTime createdAt;
 
-    public static MyReportActivityResponse of(Report report, String targetTitle) {
+    public static MyReportActivityResponse of(Report report, String targetTitle, Long targetPostId) {
         return MyReportActivityResponse.builder()
                 .reportId(report.getId())
                 .targetType(report.getTargetType())
                 .targetId(report.getTargetId())
                 .targetTitle(targetTitle)
+                .targetPostId(targetPostId)
                 .reason(report.getReason())
                 .status(report.getStatus())
                 .createdAt(report.getCreatedAt())

@@ -6,6 +6,7 @@ import styles from './gov.module.css';
 import { useGovUser, getTestHeaders } from './useGovUser';
 import GovTabs from './_components/GovTabs';
 import GovAiPanel from './_components/GovAiPanel/GovAiPanel';
+import { useGovChat } from './_components/GovChatProvider';
 import Modal from '@/components/common/Modal';
 import Spinner from '@/components/common/Spinner/Spinner';
 import Button from '@/components/common/Button/Button';
@@ -19,6 +20,7 @@ interface DashboardData {
 
 export default function GovDashboardPage() {
   const { user, loading: userLoading } = useGovUser();
+  const { setPageContext } = useGovChat();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBoardModalOpen, setIsBoardModalOpen] = useState(false);
@@ -29,6 +31,36 @@ export default function GovDashboardPage() {
       .then(res => { setData(res.data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
+
+  // ── 화면 데이터를 챗봇 pageContext로 등록 ──
+  useEffect(() => {
+    if (data) {
+      setPageContext({
+        pageType: 'dashboard',
+        pageTitle: '대시보드',
+        kpiSummary: {
+          totalFarms: data.summary.totalFarms,
+          totalCrops: data.summary.totalCrops,
+          surplusCount: data.summary.surplusCount,
+          shortageCount: data.summary.shortageCount,
+        },
+        topWarnings: data.warningItems
+          .sort((a, b) => {
+            const s: Record<string, number> = { '긴급': 3, '주의': 2, '관심': 1 };
+            return (s[b.level] || 0) - (s[a.level] || 0);
+          })
+          .slice(0, 5)
+          .map(w => ({
+            cropName: w.cropName,
+            supplyRate: w.supplyRate,
+            status: w.status,
+            level: w.level,
+          })),
+        regionDistribution: data.regionDistribution,
+      });
+    }
+    return () => setPageContext(null);
+  }, [data, setPageContext]);
 
   if (userLoading || loading) return <div className={styles.page}><Spinner /></div>;
   if (!user || user.role !== 'GOV') return <div className={styles.page}><p>지자체 관리자만 접근할 수 있습니다.</p></div>;
@@ -75,13 +107,13 @@ export default function GovDashboardPage() {
           <div className={styles.chartsColumn}>
             <div className={styles.card}>
               <h3 className={styles.cardTitle}>계절별 수급 추이</h3>
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={monthlySupply}>
+              <ResponsiveContainer width="100%" height={320}>
+                <LineChart data={monthlySupply} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="label" />
-                  <YAxis tickFormatter={(value) => value.toLocaleString()} />
+                  <XAxis dataKey="label" tick={{ fontSize: 13 }} />
+                  <YAxis tickFormatter={(value) => value.toLocaleString()} width={70} />
                   <Tooltip />
-                  <Legend />
+                  <Legend wrapperStyle={{ paddingTop: '8px' }} />
                   <Line type="monotone" dataKey="supply" name="공급" stroke="#2D6A4F" strokeWidth={2} />
                   <Line type="monotone" dataKey="demand" name="수요" stroke="#DC2626" strokeWidth={2} />
                 </LineChart>
@@ -90,11 +122,11 @@ export default function GovDashboardPage() {
 
             <div className={styles.card}>
               <h3 className={styles.cardTitle}>지역별 농가 분포</h3>
-              <ResponsiveContainer width="100%" height={500}>
-                <BarChart data={regionDistribution} layout="vertical">
+              <ResponsiveContainer width="100%" height={Math.max(400, regionDistribution.length * 36)}>
+                <BarChart data={regionDistribution} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
-                  <YAxis dataKey="region" type="category" width={60} />
+                  <YAxis dataKey="region" type="category" width={80} tick={{ fontSize: 13 }} />
                   <Tooltip cursor={{ fill: 'transparent' }} />
                   <Bar dataKey="count" name="농가 수" fill="#52B788" radius={[0, 4, 4, 0]} maxBarSize={24} />
                 </BarChart>

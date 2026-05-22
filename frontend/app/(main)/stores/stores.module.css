@@ -1,10 +1,10 @@
 .page {
-  padding: 16px;
-  max-width: 1200px;
+  padding: 24px 32px 48px;
+  max-width: 1280px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 80px); /* 헤더 제외 남은 높이 */
+  min-height: calc(100vh - 80px);
 }
 
 .header {
@@ -20,47 +20,22 @@
   margin: 0;
 }
 
+/* ── 지도 + 리스트 그리드 ── */
 .contentWrapper {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(640px, 1.4fr) minmax(320px, 0.6fr);
   gap: 24px;
-  flex: 1;
-  overflow: hidden;
+  align-items: stretch;
 }
 
-@media (min-width: 900px) {
-  .contentWrapper {
-    grid-template-columns: 1fr 1fr;
-  }
+/* ── FilterBar 간격 override ── */
+.searchBar {
+  margin-bottom: 0 !important;
 }
 
-@media (max-width: 768px) {
-  .page {
-    height: auto;
-    min-height: 0;
-    padding: 12px;
-  }
-
-  .contentWrapper {
-    overflow: visible;
-    flex: none;
-  }
-
-  .mapSection {
-    min-height: 300px;
-    height: 300px;
-  }
-
-  .listSection {
-    height: auto;
-    overflow-y: visible;
-    max-height: none;
-  }
-}
-
+/* ── 지도 패널 ── */
 .mapSection {
-  min-height: 500px;
-  height: 100%;
+  height: 640px;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid #e5e7eb;
@@ -68,16 +43,17 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
+/* ── 가게 리스트 패널 ── */
 .listSection {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   overflow-y: auto;
   padding-right: 4px;
-  height: 100%;
+  max-height: 640px;
 }
 
-/* Card UI */
+/* ── Card UI ── */
 .storeCard {
   background-color: white;
   border: 1px solid #e5e7eb;
@@ -88,6 +64,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .storeCard:hover {
@@ -151,9 +128,43 @@
   align-items: center;
   justify-content: center;
   height: 100%;
+  min-height: 200px;
   color: #6b7280;
   font-size: 14px;
   background: white;
   border-radius: 12px;
   border: 1px dashed #d1d5db;
+}
+
+/* ── 태블릿 (1024px 이하) ── */
+@media (max-width: 1024px) {
+  .contentWrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .mapSection {
+    height: 480px;
+  }
+
+  .listSection {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+/* ── 모바일 (768px 이하) ── */
+@media (max-width: 768px) {
+  .page {
+    padding: 12px;
+    min-height: 0;
+  }
+
+  .mapSection {
+    height: 360px;
+  }
+
+  .listSection {
+    max-height: none;
+    overflow-y: visible;
+  }
 }

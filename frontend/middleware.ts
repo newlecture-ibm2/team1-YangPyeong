@@ -67,7 +67,7 @@ export function middleware(request: NextRequest) {
         if (jwt) {
           const parts = jwt.split('.');
           if (parts.length === 3) {
-            const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+            const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
             userRole = (payload.role || '').toUpperCase();
           }
         }
