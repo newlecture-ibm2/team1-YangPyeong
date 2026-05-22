@@ -110,35 +110,100 @@ public class ShopManagementService implements ManageShopUseCase {
             return new ShopAuditItemDto(p.getId(), p.getName(), p.getCategoryName(), p.getPrice(), desc);
         }).toList();
 
-        // 3. AI 서버 일괄 요청
-        List<ShopAuditResultDto> results = adminAiPort.auditShopBatch(itemsToAudit);
-
-        // 4. 빠른 조회를 위해 productId → Product 맵 생성
+        // 3. 빠른 조회를 위해 productId → Product 맵 생성
         Map<Long, Product> pendingProductMap = pendingProducts.stream()
                 .collect(Collectors.toMap(Product::getId, p -> p));
 
-        // 5. 결과에 따라 정상인 상품만 ACTIVE로 업데이트 + 승인 알림 발송
-        int approvedCount = 0;
-        for (ShopAuditResultDto result : results) {
-            if (result.valid()) {
-                productRepository.updateStatus(result.productId(), "ACTIVE", null);
+        // 4. AI 서버 일괄 요청 (Chunking)
+        int processedCount = 0;
+        int chunkSize = 20;
+        for (int i = 0; i < itemsToAudit.size(); i += chunkSize) {
+            List<ShopAuditItemDto> chunk = itemsToAudit.subList(i, Math.min(itemsToAudit.size(), i + chunkSize));
+            List<ShopAuditResultDto> results = adminAiPort.auditShopBatch(chunk);
 
+            // 5. 결과에 따라 상태 업데이트 및 알림 발송
+            for (ShopAuditResultDto result : results) {
                 Product product = pendingProductMap.get(result.productId());
-                if (product != null) {
-                    notificationUseCase.createNotification(
-                            product.getSellerId(),
-                            NotificationType.SYSTEM,
-                            NotificationCategory.SYSTEM,
-                            "상품 검수 완료",
-                            String.format("[%s] 상품이 검수를 통과하여 판매 중입니다.", product.getName()),
-                            "/mypage/seller"
-                    );
+
+                if (result.valid()) {
+                    productRepository.updateStatus(result.productId(), "ACTIVE", null);
+                    if (product != null) {
+                        notificationUseCase.createNotification(
+                                product.getSellerId(),
+                                NotificationType.SYSTEM,
+                                NotificationCategory.SYSTEM,
+                                "상품 검수 완료",
+                                String.format("[%s] 상품이 검수를 통과하여 판매 중입니다.", product.getName()),
+                                "/mypage/seller"
+                        );
+                    }
+                } else {
+                    String rejectReason = "[AI 자동 반려] " + result.reason();
+                    productRepository.updateStatus(result.productId(), "REJECTED", rejectReason);
+                    if (product != null) {
+                        notificationUseCase.createNotification(
+                                product.getSellerId(),
+                                NotificationType.SYSTEM,
+                                NotificationCategory.SYSTEM,
+                                "상품 검수 반려",
+                                String.format("[%s] 상품이 반려되었습니다. 사유: %s", product.getName(), rejectReason),
+                                "/mypage/seller"
+                        );
+                    }
                 }
-                approvedCount++;
+                processedCount++;
             }
-            // 비정상(false)인 경우는 PENDING 그대로 둡니다. (또는 REJECTED, INACTIVE + reason으로 처리할 수 있음. 현재는 PENDING)
         }
 
-        return approvedCount;
+        return processedCount;
+    }
+
+    @Override
+    @Transactional
+    public int aiAuditActiveProducts() {
+        // 1. ACTIVE 상품 최신 100개 조회 (정기적인 검수를 위해)
+        List<Product> activeProducts = productRepository.findAdminProducts("", "ALL", List.of("ACTIVE"), "createdAt", 0, 100);
+        if (activeProducts.isEmpty()) {
+            return 0;
+        }
+
+        List<ShopAuditItemDto> itemsToAudit = activeProducts.stream().map(p -> {
+            String desc = p.getDescription() != null ? p.getDescription() : "";
+            if (desc.length() > 300) desc = desc.substring(0, 300);
+            return new ShopAuditItemDto(p.getId(), p.getName(), p.getCategoryName(), p.getPrice(), desc);
+        }).toList();
+
+        // 빠른 조회를 위해 productId → Product 맵 생성
+        Map<Long, Product> activeProductMap = activeProducts.stream()
+                .collect(Collectors.toMap(Product::getId, p -> p));
+
+        // 3. AI 서버 일괄 요청 (Chunking)
+        int hiddenCount = 0;
+        int chunkSize = 20;
+        for (int i = 0; i < itemsToAudit.size(); i += chunkSize) {
+            List<ShopAuditItemDto> chunk = itemsToAudit.subList(i, Math.min(itemsToAudit.size(), i + chunkSize));
+            List<ShopAuditResultDto> results = adminAiPort.auditShopBatch(chunk);
+
+            for (ShopAuditResultDto result : results) {
+                if (!result.valid()) {
+                    String reason = "[AI 재검수 적발] " + result.reason();
+                    productRepository.updateStatus(result.productId(), "INACTIVE", reason);
+                    Product product = activeProductMap.get(result.productId());
+                    if (product != null) {
+                        notificationUseCase.createNotification(
+                                product.getSellerId(),
+                                NotificationType.SYSTEM,
+                                NotificationCategory.SYSTEM,
+                                "상품 숨김 처리 안내",
+                                String.format("[%s] 상품이 재검수에서 적발되어 숨김 처리되었습니다. 사유: %s", product.getName(), reason),
+                                "/mypage/seller"
+                        );
+                    }
+                    hiddenCount++;
+                }
+            }
+        }
+
+        return hiddenCount;
     }
 }

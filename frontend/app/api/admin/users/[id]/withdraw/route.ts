@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
 /** POST /api/admin/users/:id/withdraw → 사용자 강제 탈퇴 프록시 */
@@ -7,11 +8,12 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSessionFromCookie();
     const { id } = await params
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admin/users/${id}/withdraw`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/users/${id}/withdraw`,  {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),  'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
     const data = await res.json()

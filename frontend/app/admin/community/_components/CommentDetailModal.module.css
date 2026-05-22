@@ -1,0 +1,134 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.centerText {
+  text-align: center;
+  padding: 24px;
+  color: var(--color-text-sub);
+}
+
+.errorText {
+  color: var(--color-danger);
+  padding: 16px;
+  background-color: var(--color-danger-100);
+  border-radius: 8px;
+}
+
+/* Original Post Section */
+.postSection {
+  background-color: var(--color-bg-sub);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.postLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-sub);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.postHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.postTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.postAuthor {
+  font-size: 0.85rem;
+  color: var(--color-text-sub);
+}
+
+.postContent {
+  font-size: 0.95rem;
+  color: var(--color-text-sub);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Target Comment Section (Highlighted) */
+.commentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.commentLabel {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-primary-700);
+}
+
+.commentBox {
+  background-color: var(--color-bg);
+  border: 2px solid var(--color-primary-400);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.commentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.commentAuthor {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text);
+  display: block;
+}
+
+.commentEmail {
+  font-size: 0.85rem;
+  color: var(--color-text-sub);
+}
+
+.commentMeta {
+  font-size: 0.85rem;
+  color: var(--color-text-tertiary);
+  text-align: right;
+}
+
+.commentContent {
+  font-size: 1.1rem;
+  color: var(--color-text);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  background-color: var(--color-primary-50);
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.leftActions {
+  display: flex;
+  gap: 8px;
+}

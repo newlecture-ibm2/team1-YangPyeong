@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
 /** POST /api/admin/shop/ai-audit → 상품 AI 일괄 심사 프록시 */
 export async function POST(request: NextRequest) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/shop/ai-audit`, {
+    const session = await getSessionFromCookie();
+    const res = await fetch(`${BACKEND_URL}/api/admin/shop/ai-audit`,  { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) }, 
       method: 'POST',
     })
     const data = await res.json()

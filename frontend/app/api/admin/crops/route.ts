@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
 /** GET /api/admin/crops 백엔드 프록시 */
 export async function GET(request: NextRequest) {
   try {
+    const session = await getSessionFromCookie();
     const { searchParams } = new URL(request.url)
     const query = searchParams.toString() ? `?${searchParams}` : ''
-    const res = await fetch(`${BACKEND_URL}/api/admin/crops${query}`)
+    const res = await fetch(`${BACKEND_URL}/api/admin/crops${query}`, { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) } })
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {
@@ -21,10 +23,11 @@ export async function GET(request: NextRequest) {
 /** POST /api/admin/crops 작물 등록 */
 export async function POST(request: NextRequest) {
   try {
+    const session = await getSessionFromCookie();
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admin/crops`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/crops`,  {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),  'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
     const data = await res.json()

@@ -1,6 +1,7 @@
 package com.farmbalance.policy.adapter.in.web;
 
 import com.farmbalance.global.response.ApiResponse;
+import com.farmbalance.global.batch.BatchLogService;
 import com.farmbalance.policy.application.service.GraphRefreshService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class GraphAdminController {
 
     private final GraphRefreshService graphRefreshService;
+    private final BatchLogService batchLogService;
 
     /**
      * 그래프 스키마 수동 갱신 실행
@@ -24,7 +26,8 @@ public class GraphAdminController {
     @PostMapping("/api/admin/graph/refresh")
     public ApiResponse<String> refreshGraphManually() {
         log.info("Manual graph refresh triggered via API.");
-        graphRefreshService.refreshGraph();
+        // batch_logs 테이블에 기록되도록 batchLogService로 감싸서 실행
+        batchLogService.execute("MANUAL_GRAPH_REFRESH", () -> graphRefreshService.refreshGraph());
         return ApiResponse.ok("그래프 수동 갱신이 성공적으로 실행되었습니다.");
     }
 }
