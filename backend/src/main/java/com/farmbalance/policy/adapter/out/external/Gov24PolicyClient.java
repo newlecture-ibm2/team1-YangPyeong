@@ -30,16 +30,21 @@ public class Gov24PolicyClient implements PolicyExternalFetchPort {
     private final String apiKey;
 
     private static final String BASE_URL = "https://api.odcloud.kr/api/gov24/v3/serviceList";
-    /** 농업 관련 키워드 — 서비스명/목적요약/소관기관에 포함되면 수집 */
+    /** 농업 관련 키워드 — 서비스명/목적요약/소관기관/지원내용에 포함되면 수집 */
     private static final List<String> FARM_KEYWORDS = List.of(
             "농업", "농촌", "영농", "귀농", "귀촌", "농가", "농기계",
             "축산", "임업", "농산물", "양잠", "양봉", "스마트팜",
-            "농림", "원예", "농지", "토양", "비료", "종자"
+            "농림", "원예", "농지", "토양", "비료", "종자",
+            "특용작물", "과수", "채소", "화훼", "식량작물", "밭작물",
+            "친환경농업", "유기농", "방제", "농약", "재배", "수확",
+            "청년농", "후계농", "여성농업", "농업인", "경영체",
+            "농협", "농식품", "식품산업", "가공식품", "로컬푸드",
+            "직불금", "보조금", "재해보험", "농작물", "수확후관리"
     );
     /** 한 번에 가져올 페이지 크기 (최대 100) */
     private static final int PER_PAGE = 100;
-    /** 최대 수집 페이지 수 */
-    private static final int MAX_PAGES = 5;
+    /** 최대 수집 페이지 수 (100건/페이지 × 20 = 최대 2000건 탐색) */
+    private static final int MAX_PAGES = 20;
 
     public Gov24PolicyClient(
             @Value("${gov24.api-key:}") String apiKey) {

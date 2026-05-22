@@ -6,8 +6,6 @@ import com.farmbalance.policy.adapter.out.persistence.repository.PolicyDataRepos
 import com.farmbalance.policy.application.port.in.RecommendPolicyUseCase;
 import com.farmbalance.policy.application.port.out.LoadFarmerProfilePort;
 import com.farmbalance.policy.application.port.out.LoadFarmerProfilePort.FarmerProfileData;
-import com.farmbalance.policy.application.port.out.PolicyGraphQueryPort;
-import com.farmbalance.policy.application.port.out.PolicyAiPort;
 import com.farmbalance.policy.domain.PolicyNoticeFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -27,8 +24,6 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
 
     private final LoadFarmerProfilePort loadFarmerProfilePort;
     private final PolicyDataRepository policyDataRepository;
-    private final PolicyGraphQueryPort policyGraphQueryPort;
-    private final PolicyAiPort policyAiPort;
 
     /** 추천 후보 내부 데이터 클래스 */
     private static class Candidate {
@@ -193,50 +188,20 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
                 excludedByNotice - excludedPermit - excludedRecruitment - excludedOutsourcing,
                 localCount, nationwideCount, candidates.size());
 
-        // 6. TOP 5 추출 (AI 사유 생성 대상)
-        List<Candidate> top5Candidates = candidates.stream().limit(5).toList();
-        List<PolicyDataJpaEntity> top5Policies = top5Candidates.stream().map(c -> c.policy).toList();
-        List<Long> top5PolicyIds = top5Policies.stream().map(PolicyDataJpaEntity::getId).toList();
-
-        // 6. GraphRAG 릴레이션 조회 (TOP 5만)
-        List<Map<String, Object>> graphRelations = policyGraphQueryPort.findRelationsForFarmerAndPolicies(userId, top5PolicyIds);
-
-        // 7. AI 추천 사유 생성 데이터 준비 (TOP 5만)
-        Map<String, Object> farmerProfileMap = new java.util.HashMap<>();
-        farmerProfileMap.put("name", profile.name());
-        farmerProfileMap.put("regionName", profile.regionName());
-        farmerProfileMap.put("totalArea", totalArea);
-        farmerProfileMap.put("crops", userCrops);
-
-        List<Map<String, Object>> candidatePoliciesMap = top5Policies.stream().map(p -> {
-            Map<String, Object> map = new java.util.HashMap<>();
-            map.put("policyId", p.getId());
-            map.put("title", p.getTitle());
-            map.put("category", p.getCategory());
-            map.put("supportAmount", p.getSupportAmount());
-            return map;
-        }).toList();
-
-        // 8. AI 초개인화 사유 요청 (TOP 5만)
-        PolicyAiPort.AiPolicyRecommendation aiResult = policyAiPort.generatePolicyReason(userId, farmerProfileMap, graphRelations, candidatePoliciesMap);
-        Map<Long, PolicyAiPort.PolicyReason> aiReasonMap = aiResult.reasons() != null ? 
-            aiResult.reasons().stream().collect(java.util.stream.Collectors.toMap(PolicyAiPort.PolicyReason::policyId, r -> r, (r1, r2) -> r1)) : Map.of();
-
-        log.info("ai_reason_generated={}", aiReasonMap.size());
-
-        // 9. TOP 5 DTO 변환 (AI 사유 포함)
-        List<PolicyRecommendResponse.RecommendedPolicyDto> topRecommendations = top5Candidates.stream()
-                .map(c -> toPolicyDto(c, aiReasonMap))
+        // 6. TOP 5 추출 (규칙 기반 사유 직접 사용)
+        List<PolicyRecommendResponse.RecommendedPolicyDto> topRecommendations = candidates.stream()
+                .limit(5)
+                .map(this::toPolicyDto)
                 .toList();
 
-        // 10. 관련 정책 DTO 변환 (규칙 기반 사유, AI 호출 없음, 최대 20개)
+        // 7. 관련 정책 DTO 변환 (최대 20개)
         List<PolicyRecommendResponse.RecommendedPolicyDto> relatedPolicies = candidates.stream()
                 .skip(5)
                 .limit(20)
-                .map(c -> toPolicyDto(c, Map.of()))
+                .map(this::toPolicyDto)
                 .toList();
 
-        log.info("final_recommended={} (top5={}, related={})", 
+        log.info("final_recommended={} (top5={}, related={}) — 규칙 기반 사유 적용", 
                 topRecommendations.size() + relatedPolicies.size(), topRecommendations.size(), relatedPolicies.size());
 
         // 11. 후보 부족 시 안내 메시지
@@ -289,29 +254,19 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
 
 
     /**
-     * Candidate → DTO 변환.
-     * aiReasonMap이 비어있으면 규칙 기반 사유만 사용합니다.
+     * Candidate → DTO 변환 (규칙 기반 사유 직접 사용).
      */
-    private PolicyRecommendResponse.RecommendedPolicyDto toPolicyDto(
-            Candidate c, Map<Long, PolicyAiPort.PolicyReason> aiReasonMap) {
+    private PolicyRecommendResponse.RecommendedPolicyDto toPolicyDto(Candidate c) {
         PolicyDataJpaEntity p = c.policy;
         String safeSummary = p.getContent() != null
                 ? (p.getContent().length() > 100 ? p.getContent().substring(0, 100) + "..." : p.getContent())
                 : "지원 내용 상세는 원문을 확인해주세요.";
 
-        PolicyAiPort.PolicyReason aiReason = aiReasonMap.get(p.getId());
-        String finalReason = (aiReason != null && aiReason.matchReason() != null)
-                ? aiReason.matchReason()
-                : String.join(" ", c.reasons);
-        int finalScore = (aiReason != null && aiReason.matchScore() > 0)
-                ? aiReason.matchScore()
-                : c.score;
-
         return new PolicyRecommendResponse.RecommendedPolicyDto(
                 p.getId(), p.getTitle(), p.getCategory(), p.getSupportAmount(),
                 p.getOrganization(),
                 p.getApplyEnd() != null ? p.getApplyEnd().toString() : null,
-                p.getSourceUrl(), finalScore, finalReason, safeSummary
+                p.getSourceUrl(), c.score, String.join(" ", c.reasons), safeSummary
         );
     }
 }

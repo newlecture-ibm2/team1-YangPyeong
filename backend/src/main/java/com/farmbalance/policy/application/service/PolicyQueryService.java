@@ -27,16 +27,8 @@ public class PolicyQueryService implements SearchPolicyUseCase {
 
     @Override
     public List<PolicyData> searchPolicies(PolicySearchCondition condition) {
-        List<PolicyData> results = policyQueryPort.findByCondition(condition);
-        // 행정 공고(비혜택 문서) 필터링 — DB 데이터는 유지하되 사용자 목록에서 제외
-        List<PolicyData> filtered = results.stream()
-                .filter(p -> !PolicyNoticeFilter.isNonBenefitNotice(p.getTitle()))
-                .toList();
-        if (results.size() != filtered.size()) {
-            log.debug("정책 목록 필터링: 전체={}, 행정공고 제외={}, 노출={}",
-                    results.size(), results.size() - filtered.size(), filtered.size());
-        }
-        return filtered;
+        // 행정 공고 필터는 DB 쿼리(searchPolicies JPQL)에서 처리되므로 추가 필터 불필요
+        return policyQueryPort.findByCondition(condition);
     }
 
     @Override
