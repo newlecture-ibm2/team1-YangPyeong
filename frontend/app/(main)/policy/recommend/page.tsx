@@ -141,18 +141,30 @@ export default function PolicyRecommendPage() {
                   <div className={styles.emptyState}>
                     <span className={styles.icon}>📭</span>
                     <h3 className={styles.emptyStateTitle}>현재 조건에 딱 맞는 추천 정책이 없습니다</h3>
-                    <p className={styles.emptyStateDesc}>전체 정책 목록에서 지역/분야 필터를 활용해 직접 확인해 보세요.</p>
+                    <p className={styles.emptyStateDesc}>
+                      전국 단위 지원사업과 양평군 관련 정책을 함께 확인해보세요.
+                      공식 공고는 수시로 갱신됩니다.
+                    </p>
                     <Link href="/policy" className={styles.actionButton}>전체 정책 보기</Link>
                   </div>
                 )}
 
                 {data.recommendedPolicies.length > 0 && (
                   <>
+                    {/* 추천 부족 안내 배너 */}
+                    {data.insufficientNotice && (
+                      <div className={styles.insufficientNotice}>
+                        <span className={styles.insufficientIcon}>💡</span>
+                        <p>{data.insufficientNotice}</p>
+                        <Link href="/policy" className={styles.insufficientLink}>전체 정책 보기 →</Link>
+                      </div>
+                    )}
                     {data.farmerProfile.crops.length === 0 && (
                       <div className={styles.fallbackNotice}>
                         <p>💡 재배 작물 정보가 없어 <strong>거주 지역 기반</strong>으로 우선 추천된 정책입니다.</p>
                       </div>
                     )}
+                    <h3 className={styles.sectionTitle}>🎯 맞춤 추천 정책</h3>
                     <div className={styles.policyList}>
                       {[...data.recommendedPolicies].sort((a, b) => b.matchScore - a.matchScore).map((policy) => (
                         <div key={policy.policyId} className={styles.policyCard}>
@@ -181,6 +193,47 @@ export default function PolicyRecommendPage() {
                             <div className={styles.reasonsList} style={{ fontSize: '0.9rem', lineHeight: '1.5', marginTop: '0.5rem', color: 'var(--color-text)' }}>
                               {policy.matchReason}
                             </div>
+                          </div>
+
+                          {policy.sourceUrl ? (
+                            <a href={policy.sourceUrl} target="_blank" rel="noopener noreferrer" className={styles.detailButton}>
+                              원문 보기
+                            </a>
+                          ) : (
+                            <Link href={`/policy/${policy.policyId}`} className={styles.detailButton}>
+                              자세히 보기
+                            </Link>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* 3. 관련 정책 (규칙 기반 사유, AI 사유 없음) */}
+                {data.relatedPolicies && data.relatedPolicies.length > 0 && (
+                  <>
+                    <h3 className={styles.sectionTitle}>📋 함께 확인할 만한 정책</h3>
+                    <div className={styles.policyList}>
+                      {data.relatedPolicies.map((policy) => (
+                        <div key={policy.policyId} className={styles.relatedCard}>
+                          <div className={styles.policyHeader}>
+                            <div className={`${styles.matchBadge} ${getScoreClass(policy.matchScore)}`}>
+                              <span className={styles.scoreText}>{policy.matchScore}점</span>
+                            </div>
+                            <span className={styles.categoryBadge}>{policy.category || '기타'}</span>
+                          </div>
+                          <h4 className={styles.policyTitle}>{policy.title}</h4>
+                          <p className={styles.policySummary}>{policy.summary}</p>
+                          
+                          <div className={styles.policyMeta}>
+                            <span className={styles.metaItem}>🏢 {policy.organization || '기관 미상'}</span>
+                            {policy.supportAmount && <span className={styles.metaItem}>💰 {policy.supportAmount}</span>}
+                            {policy.applyEnd && <span className={styles.metaItem}>🗓 마감일: {policy.applyEnd}</span>}
+                          </div>
+
+                          <div className={styles.ruleReasonBox}>
+                            <p className={styles.ruleReasonText}>💡 {policy.matchReason}</p>
                           </div>
 
                           {policy.sourceUrl ? (
