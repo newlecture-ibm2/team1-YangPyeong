@@ -28,6 +28,11 @@
   align-items: stretch;
 }
 
+/* ── FilterBar 간격 override ── */
+.searchBar {
+  margin-bottom: 0 !important;
+}
+
 /* ── 지도 패널 ── */
 .mapSection {
   height: 640px;
