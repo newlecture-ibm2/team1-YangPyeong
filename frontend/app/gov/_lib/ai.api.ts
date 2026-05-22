@@ -1,12 +1,27 @@
 import { GovChatResponse } from "./ai.types";
 
-export async function askLocalGovAi(message: string): Promise<GovChatResponse> {
+/** 페이지 컨텍스트: 현재 화면에 표시 중인 데이터를 AI에 전달 */
+export interface GovPageContext {
+  pageType: string;
+  pageTitle: string;
+  [key: string]: unknown;
+}
+
+export async function askLocalGovAi(
+  message: string,
+  pageContext?: GovPageContext
+): Promise<GovChatResponse> {
+  const body: Record<string, unknown> = { message };
+  if (pageContext) {
+    body.page_context = pageContext;
+  }
+
   const response = await fetch("/api/gov/ai-chat", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {

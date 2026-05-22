@@ -10,7 +10,7 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { SESSION_COOKIE_NAME, PUBLIC_PATHS, AUTH_REDIRECT_PATHS } from './lib/constants';
+import { SESSION_COOKIE_NAME, PUBLIC_PATHS, AUTH_REDIRECT_PATHS, PROTECTED_SUB_PATHS } from './lib/constants';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -22,6 +22,16 @@ export function middleware(request: NextRequest) {
     pathname.includes('.') // 정적 파일 (favicon, images 등)
   ) {
     return NextResponse.next();
+  }
+
+  // ── 1.1. /login 진입 시 callbackUrl이 있다면 임시 쿠키에 저장 ──
+  if (pathname === '/login') {
+    const callbackUrl = request.nextUrl.searchParams.get('callbackUrl');
+    if (callbackUrl) {
+      const response = NextResponse.next();
+      response.cookies.set('temp-callback-url', callbackUrl, { maxAge: 300, path: '/' });
+      return response;
+    }
   }
 
   // ── 2. 세션 쿠키 존재 여부 및 skipAuth 확인 ──
@@ -57,7 +67,7 @@ export function middleware(request: NextRequest) {
         if (jwt) {
           const parts = jwt.split('.');
           if (parts.length === 3) {
-            const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+            const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
             userRole = (payload.role || '').toUpperCase();
           }
         }
@@ -85,10 +95,25 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
+  // ── 5.1. 로그인 성공 후 임시 리다이렉트 쿠키가 있으면 해당 경로로 이동 ──
+  const tempCallbackUrl = request.cookies.get('temp-callback-url')?.value;
+  if (isAuthenticated && hasUserDetail && tempCallbackUrl) {
+    const response = NextResponse.redirect(new URL(tempCallbackUrl, request.url));
+    response.cookies.delete('temp-callback-url');
+    return response;
+  }
+
+
   // ── 6. 공개 경로는 인증 없이 통과 ──
-  const isPublicPath = PUBLIC_PATHS.some(
+  // 단, 공개 경로 중 일부 하위 경로(예: /community/write 등)는 로그인 필수
+  const isProtectedSubPath = PROTECTED_SUB_PATHS.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
+
+  const isPublicPath =
+    !isProtectedSubPath &&
+    PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+
   if (isPublicPath) {
     return NextResponse.next();
   }

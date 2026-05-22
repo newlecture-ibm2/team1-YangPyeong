@@ -310,7 +310,7 @@ public class FarmPersistenceAdapter implements SaveFarmPort, LoadFarmPort, Delet
     public List<Farm> loadFarmsByStatus(String status) {
         com.farmbalance.farm.domain.CertificationStatus certStatus =
                 com.farmbalance.farm.domain.CertificationStatus.valueOf(status);
-        return farmJpaRepository.findByCertificationStatusOrderByCreatedAtDesc(certStatus).stream()
+        return farmJpaRepository.findByCertificationStatusAndDeletedAtIsNullOrderByCreatedAtDesc(certStatus).stream()
                 .map(this::mapToDomain)
                 .collect(Collectors.toList());
     }

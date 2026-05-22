@@ -108,3 +108,9 @@ export async function syncDocuments(): Promise<boolean> {
   if (!json.success) throw new Error(json.error?.message ?? '동기화 실패')
   return json.data
 }
+
+export async function syncGraphRag(): Promise<void> {
+  const res = await fetch('/api/admin/graph/refresh', { method: 'POST' })
+  const json: ApiResponse<any> = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? '지식 그래프 동기화 실패')
+}

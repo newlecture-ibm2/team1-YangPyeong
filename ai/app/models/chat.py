@@ -17,6 +17,7 @@ ActionType = Literal[
     "CONFIRM",        # 사용자에게 예/아니오 확인
     "OPEN_MODAL",     # 모달 오픈
     "PRODUCT_LIST",   # 상품 카드 목록 인라인 표시
+    "RECOMMEND_CHART", # AI 추천 비교 차트 인라인 표시
 ]
 
 
@@ -29,6 +30,15 @@ class ChatProductItem(BaseModel):
     salesCount: Optional[int] = None
     imageUrl: Optional[str] = None
     categoryName: Optional[str] = None
+
+
+class RecommendChartItem(BaseModel):
+    """RECOMMEND_CHART 액션에 포함되는 레이더 차트용 데이터."""
+    cropName: str
+    score: float
+    soil: float
+    price: float
+    supply: float
 
 
 class ChatAction(BaseModel):
@@ -67,6 +77,11 @@ class ChatAction(BaseModel):
     # PRODUCT_LIST — 상품 카드 인라인 렌더링
     products: Optional[list[ChatProductItem]] = Field(
         None, description="상품 카드 목록 (PRODUCT_LIST)"
+    )
+
+    # RECOMMEND_CHART — 추천 비교 레이더 차트
+    recommendChartData: Optional[list[RecommendChartItem]] = Field(
+        None, description="레이더 차트에 그릴 작물 점수 목록 (RECOMMEND_CHART)"
     )
 
 

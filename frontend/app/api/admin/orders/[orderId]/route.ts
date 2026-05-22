@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
 /** PATCH /api/admin/orders/:orderId 상태 변경 프록시 */
@@ -7,11 +8,12 @@ export async function PATCH(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
+    const session = await getSessionFromCookie();
     const { orderId } = await params
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admin/orders/${orderId}`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/orders/${orderId}`,  {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),  'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
     const data = await res.json()

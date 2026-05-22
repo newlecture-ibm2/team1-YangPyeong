@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,53 +30,64 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .authorizeHttpRequests(auth -> auth
-                // ── 인증 관련 (공개) ──
-                .requestMatchers("/api/auth/**").permitAll()
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // ── 인증 관련 (공개) ──
+                        .requestMatchers("/api/auth/**").permitAll()
 
-                // ── Swagger / OpenAPI (공개) ──
-                .requestMatchers("/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**").permitAll()
+                        // ── Swagger / OpenAPI (공개) ──
+                        .requestMatchers("/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**").permitAll()
 
-                // ── 헬스체크 (공개) ──
-                .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
+                        // ── 업로드 파일 정적 서빙 (공개) ──
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
-                // ── 공개 조회 API (GET only) ──
-                .requestMatchers(HttpMethod.GET, "/api/balance/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/recommend/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/community/posts/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/community/categories/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/shop/products/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/policies/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/weather/**").permitAll()
+                        // ── 헬스체크 (공개) ──
+                        .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
 
-                // ── AI 내부 API (JWT 불필요, 컨트롤러에서 X-AI-Internal-Key 검증) ──
-                .requestMatchers("/api/internal/**").permitAll()
+                        // ── 공개 조회 API (GET only) ──
+                        .requestMatchers(HttpMethod.GET, "/api/balance/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/recommend/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/community/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/community/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/shop/product/**", "/api/shop/category").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/policies/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/weather/**").permitAll()
 
-                // ── 작물 마스터 조회 (일반 사용자 농장등록/재배등록에서 사용) ──
-                .requestMatchers(HttpMethod.GET, "/api/admin/crops", "/api/admin/crops/categories").permitAll()
-                // ── FCM 토큰 관리 ──
-                .requestMatchers("/api/fcm/**").permitAll()
+                        // ── AI 내부 API (JWT 불필요, 컨트롤러에서 X-AI-Internal-Key 검증) ──
+                        .requestMatchers("/api/internal/**").permitAll()
 
-                // ── 회원가입 시 이메일/닉네임 중복 확인 (공개) ──
-                .requestMatchers(HttpMethod.GET, "/api/users/check-email").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/users/check-nickname").permitAll()
+                        // ── 작물 마스터 조회 (일반 사용자 농장등록/재배등록에서 사용) ──
+                        .requestMatchers(HttpMethod.GET, "/api/admin/crops", "/api/admin/crops/categories").permitAll()
+                        // ── FCM 토큰 관리 ──
+                        .requestMatchers("/api/fcm/**").permitAll()
 
-                // ── 관리자 전용 (위 GET 예외 외 나머지) ──
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // ── 회원가입 시 이메일/닉네임 중복 확인, 프로필 이미지 서빙, 탈퇴 계정 재활성화 (공개) ──
+                        .requestMatchers(HttpMethod.GET, "/api/users/check-email").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/check-nickname").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/profile-image/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/reactivate").permitAll()
 
-                // ── 지자체 전용 ──
-                .requestMatchers("/api/gov/**").hasAnyRole("GOV", "ADMIN")
+                        // ── 관리자 전용 (위 GET 예외 외 나머지) ──
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // ── 나머지: 인증 필수 ──
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                        // ── 지자체 전용 ──
+                        .requestMatchers("/api/gov/**").hasAnyRole("GOV", "ADMIN")
+
+                        // ── 나머지: 인증 필수 ──
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * 업로드 파일 정적 서빙 경로는 Security 필터 체인 자체에서 제외
+     */
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring()
+            .requestMatchers("/uploads/**");
     }
 
     @Bean

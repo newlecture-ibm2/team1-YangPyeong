@@ -6,7 +6,7 @@ import { useToast } from '@/components'
 import { DEFAULT_PRODUCT_IMAGE } from '@/lib/constants'
 import styles from './Shop.module.css'
 import type { AdminProduct } from '../_lib/shop.types'
-import { fetchProducts, updateProductStatus, deleteAdminProduct, aiAuditProducts } from '../_lib/shop.api'
+import { fetchProducts, updateProductStatus, deleteAdminProduct, aiAuditProducts, aiAuditActiveProducts } from '../_lib/shop.api'
 import ReasonModal from '../community/_components/ReasonModal'
 import ProductDetailModal from './_components/ProductDetailModal'
 
@@ -141,7 +141,7 @@ export default function ShopPage() {
       setReasonModalOpen(true)
       return
     }
-    
+
     try {
       await updateProductStatus(productId, newStatus)
       toast.success('상품 상태가 성공적으로 변경되었습니다.')
@@ -190,14 +190,28 @@ export default function ShopPage() {
   }
 
   const handleAiAudit = async () => {
-    if (!confirm('현재 대기 중인 신규 신청 상품들을 AI가 일괄 심사합니다. 진행하시겠습니까?')) return
+    if (!confirm('현재 대기 중인 신규 신청 상품들을 AI가 일괄 심사합니다. 적격 상품은 승인되고 부적격 상품은 반려(사유 포함) 처리됩니다. 진행하시겠습니까?')) return
     setIsAuditing(true)
     try {
       const res = await aiAuditProducts()
-      toast.success(`총 ${res.approvedCount}개의 상품이 정상으로 확인되어 자동 승인되었습니다!`)
+      toast.success(`AI 심사 완료! 총 ${res.processedCount}개의 상품이 검수(승인/반려) 되었습니다.`)
       loadData()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'AI 자동 심사 실패')
+    } finally {
+      setIsAuditing(false)
+    }
+  }
+
+  const handleAiAuditActive = async () => {
+    if (!confirm('현재 판매 중인(ACTIVE) 상품들을 AI가 일괄 검수합니다. 부적절한 상품이 적발되면 사유와 함께 즉시 숨김 처리됩니다. 진행하시겠습니까?')) return
+    setIsAuditing(true)
+    try {
+      const res = await aiAuditActiveProducts()
+      toast.success(`AI 재검수 완료! 총 ${res.hiddenCount}개의 부적절한 상품이 적발되어 숨김 처리되었습니다.`)
+      loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'AI 재검수 실패')
     } finally {
       setIsAuditing(false)
     }
@@ -294,11 +308,21 @@ export default function ShopPage() {
         {activeTab === 'REVIEW' && (
           <button
             className={`${styles.actionBtn} ${styles.btnApprove}`}
-            style={{ padding: '8px 16px', fontSize: '14px', background: 'var(--color-primary)', color: 'white' }}
+            style={{ padding: '8px 16px', fontSize: '14px', background: 'var(--color-primary)', color: 'white', border: 'none' }}
             onClick={handleAiAudit}
             disabled={isAuditing}
           >
             {isAuditing ? 'AI 심사 중...' : '🤖 AI 일괄 자동 심사'}
+          </button>
+        )}
+        {activeTab === 'INVENTORY' && (
+          <button
+            className={`${styles.actionBtn} ${styles.btnReject}`}
+            style={{ padding: '8px 16px', fontSize: '14px', background: 'var(--color-danger)', color: 'white', border: 'none' }}
+            onClick={handleAiAuditActive}
+            disabled={isAuditing}
+          >
+            {isAuditing ? 'AI 재검수 중...' : '🤖 AI 판매 상품 재검수 (자동 숨김)'}
           </button>
         )}
       </div>
@@ -375,13 +399,22 @@ export default function ShopPage() {
                       <td data-label="판매자">{product.sellerName}</td>
                       <td className={styles.priceCell} data-label="판매가">{formatPrice(product.price)}</td>
                       <td data-label="재고">{product.stock}개</td>
-                      <td data-label="상태"><Badge variant={badge.variant as any}>{badge.label}</Badge></td>
+                      <td data-label="상태">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                          <Badge variant={badge.variant as any}>{badge.label}</Badge>
+                          {product.statusReason && (
+                            <span style={{ fontSize: '12px', color: 'var(--color-danger)' }}>
+                              [사유: {product.statusReason}]
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td data-label="등록일">{formatDate(product.createdAt)}</td>
                       <td data-label="">
                         <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                          <button 
-                            className={styles.actionBtn} 
-                            style={{ background: 'white', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }} 
+                          <button
+                            className={styles.actionBtn}
+                            style={{ background: 'white', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}
                             onClick={() => handleOpenDetail(product)}
                           >
                             🔍 상세

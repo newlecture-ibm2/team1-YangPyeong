@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 import { safeJsonParse } from '@/lib/safe-json'
 
 /** GET /api/admin/farms?status=PENDING 백엔드 프록시 */
 export async function GET(request: NextRequest) {
   try {
+    const session = await getSessionFromCookie();
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') || 'PENDING'
-    const res = await fetch(`${BACKEND_URL}/api/admin/farms?status=${status}`)
+    const res = await fetch(`${BACKEND_URL}/api/admin/farms?status=${status}`, { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) } })
     const data = await safeJsonParse(res, '/admin/farms')
     if (!data) {
       if (res.status === 401 || res.status === 403) {
