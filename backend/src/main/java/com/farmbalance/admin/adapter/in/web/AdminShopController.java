@@ -68,7 +68,9 @@ public class AdminShopController {
                 .stock(dto.getStock())
                 .description(dto.getDescription())
                 .imageUrl(dto.getImageUrl())
+                .imageUrls(dto.getImageUrls())
                 .status(dto.getStatus())
+                .statusReason(dto.getStatusReason())
                 .createdAt(dto.getCreatedAt())
                 .build();
     }
@@ -101,7 +103,17 @@ public class AdminShopController {
      */
     @PostMapping("/ai-audit")
     public ApiResponse<Map<String, Integer>> aiAudit() {
-        int approvedCount = manageShopUseCase.aiAuditPendingProducts();
-        return ApiResponse.ok(Map.of("approvedCount", approvedCount));
+        int processedCount = manageShopUseCase.aiAuditPendingProducts();
+        return ApiResponse.ok(Map.of("processedCount", processedCount));
+    }
+
+    /**
+     * AI 기승인 상품 일괄 재검수 (부적절 시 숨김)
+     * POST /api/admin/shop/ai-audit/active
+     */
+    @PostMapping("/ai-audit/active")
+    public ApiResponse<Map<String, Integer>> aiAuditActive() {
+        int hiddenCount = manageShopUseCase.aiAuditActiveProducts();
+        return ApiResponse.ok(Map.of("hiddenCount", hiddenCount));
     }
 }

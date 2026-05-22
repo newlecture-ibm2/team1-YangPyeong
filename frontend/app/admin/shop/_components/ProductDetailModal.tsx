@@ -79,12 +79,28 @@ export default function ProductDetailModal({ isOpen, product, onClose, onStatusC
     <Modal isOpen={isOpen} onClose={onClose} title="상품 상세 정보">
       <div className={styles.modalBody}>
         <div className={styles.productHeader}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={product.imageUrl || DEFAULT_PRODUCT_IMAGE}
-            alt={product.name}
-            className={styles.productImage}
-          />
+          <div className={styles.productImageContainer} style={{ width: '200px', height: '200px', flexShrink: 0, overflow: 'auto', display: 'flex', gap: '8px', scrollSnapType: 'x mandatory' }}>
+            {product.imageUrls && product.imageUrls.length > 0 ? (
+              product.imageUrls.map((url, idx) => (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  key={idx}
+                  src={url || DEFAULT_PRODUCT_IMAGE}
+                  alt={`${product.name} - 이미지 ${idx + 1}`}
+                  className={styles.productImage}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', scrollSnapAlign: 'start', flexShrink: 0 }}
+                />
+              ))
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={product.imageUrl || DEFAULT_PRODUCT_IMAGE}
+                alt={product.name}
+                className={styles.productImage}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            )}
+          </div>
           <div className={styles.productInfo}>
             <div className={styles.statusRow}>
               <Badge variant={badge.variant as any}>{badge.label}</Badge>
@@ -95,6 +111,12 @@ export default function ProductDetailModal({ isOpen, product, onClose, onStatusC
               <p><strong>카테고리:</strong> {product.categoryName || '-'}</p>
               <p><strong>판매가:</strong> {formatPrice(product.price)}</p>
               <p><strong>재고:</strong> {product.stock}개</p>
+              {product.statusReason && (
+                <div style={{ marginTop: '12px', padding: '12px', backgroundColor: 'var(--color-bg-sub)', borderRadius: '6px', fontSize: '0.9rem' }}>
+                  <strong>{product.status === 'REJECTED' ? '❌ 반려 사유' : '⏸️ 숨김/기타 사유'}:</strong><br/>
+                  <span style={{ color: 'var(--color-danger)' }}>{product.statusReason}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

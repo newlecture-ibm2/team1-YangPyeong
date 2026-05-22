@@ -48,11 +48,20 @@ export async function deleteAdminProduct(productId: number): Promise<void> {
   }
 }
 
-export async function aiAuditProducts(): Promise<{ approvedCount: number }> {
+export async function aiAuditProducts(): Promise<{ processedCount: number }> {
   const res = await fetch('/api/admin/shop/ai-audit', {
     method: 'POST',
   })
   const json = await res.json()
   if (!json.success) throw new Error(json.error?.message ?? 'AI 자동 심사 실패')
+  return json.data
+}
+
+export async function aiAuditActiveProducts(): Promise<{ hiddenCount: number }> {
+  const res = await fetch('/api/admin/shop/ai-audit/active', {
+    method: 'POST',
+  })
+  const json = await res.json()
+  if (!json.success) throw new Error(json.error?.message ?? 'AI 재검수 실패')
   return json.data
 }

@@ -57,11 +57,15 @@ public class AiServerAdminAdapter implements AdminAiPort {
                 }
             } else {
                 log.error("AI Server Shop Audit returned status {}: {}", response.statusCode(), response.body());
+                throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
             }
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
+        } catch (com.farmbalance.global.error.BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("AI Server Shop Audit Error: ", e);
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
         }
-        return Collections.emptyList();
     }
 
     @Override
@@ -91,11 +95,15 @@ public class AiServerAdminAdapter implements AdminAiPort {
                 }
             } else {
                 log.error("AI Server Moderation returned status {}: {}", response.statusCode(), response.body());
+                throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
             }
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
+        } catch (com.farmbalance.global.error.BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("AI Server Moderation Error: ", e);
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
         }
-        return Collections.emptyList();
     }
 
     @Override
@@ -149,11 +157,15 @@ public class AiServerAdminAdapter implements AdminAiPort {
                 }
             } else {
                 log.error("AI Server Comment Moderation returned status {}: {}", response.statusCode(), response.body());
+                throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
             }
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
+        } catch (com.farmbalance.global.error.BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("AI Server Comment Moderation Error: ", e);
+            throw new com.farmbalance.global.error.BusinessException(com.farmbalance.global.error.ErrorCode.EXTERNAL_API_ERROR);
         }
-        return Collections.emptyList();
     }
 
     public record ShopAuditBatchRequestDto(List<ShopAuditItemDto> items) {}
