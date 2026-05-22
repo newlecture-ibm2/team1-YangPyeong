@@ -201,7 +201,7 @@ export default function StoreMapPage() {
         </h1>
       </div>
       
-      <div style={{ marginBottom: '32px' }} data-guide="stores-search">
+      <div style={{ marginBottom: '16px' }} data-guide="stores-search">
         <FilterBar
           dropdowns={[
             <Dropdown
