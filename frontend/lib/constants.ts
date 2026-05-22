@@ -30,6 +30,15 @@ export const PUBLIC_PATHS = [
   '/policy',
 ];
 
+/** 공개 경로의 하위 경로 중 인증이 필요한 예외 경로 패턴 */
+export const PROTECTED_SUB_PATHS = [
+  '/community/write',
+  '/shop/cart',
+  '/shop/checkout',
+  '/shop/orders',
+  '/shop/seller',
+];
+
 /** 인증된 사용자가 접근하면 리다이렉트할 경로 */
 export const AUTH_REDIRECT_PATHS = ['/login', '/signup'];
 

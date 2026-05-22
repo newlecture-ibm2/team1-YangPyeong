@@ -212,7 +212,8 @@ export default function FarmBot({ children }: FarmBotProps) {
             </div>
             {!showBubble && (
               <span className={styles.footerWalkTooltip}>
-                <span className={styles.tooltipTitle}>저 눌러주세요~ 👆</span>
+                <span className={styles.tooltipIntro}>저는 팜가이드, 양평이 할아버지예요! 👨‍🌾</span>
+                <span className={styles.tooltipAction}>양평 농사에 대해 무엇이든 물어보세요~ 👆</span>
               </span>
             )}
           </button>
