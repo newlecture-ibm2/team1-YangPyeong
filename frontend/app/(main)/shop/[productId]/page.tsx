@@ -193,7 +193,15 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             판매자: {product.sellerName}
             <Badge variant="green">인증 농가</Badge>
           </div>
-          <div className={styles.price}>₩{formatPrice(product.price)}</div>
+          <div className={styles.price}>
+            ₩{formatPrice(product.price)}
+            <span className={styles.priceUnit}> / {product.unitKg ?? 1}kg</span>
+          </div>
+          {(product.unitKg ?? 1) > 1 && (
+            <div className={styles.pricePerKg}>
+              1kg당 약 ₩{formatPrice(Math.round(product.price / product.unitKg))}
+            </div>
+          )}
 
           <table className={styles.infoTable}>
             <tbody>
@@ -332,7 +340,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           />
           <div className={styles.purchaseProductInfo}>
             <p className={styles.purchaseProductName}>{product.name}</p>
-            <p className={styles.purchaseProductPrice}>₩{formatPrice(product.price)}</p>
+            <p className={styles.purchaseProductPrice}>
+              ₩{formatPrice(product.price)}
+              <span style={{ fontSize: '13px', fontWeight: 400, color: 'var(--color-text-secondary)', marginLeft: 4 }}>
+                / {product.unitKg ?? 1}kg
+              </span>
+            </p>
           </div>
           <span className={styles.purchaseStockBadge}>재고 {product.stock}개</span>
         </div>
@@ -444,7 +457,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             />
             <div>
               <p className={styles.cartSuccessName}>{product.name}</p>
-              <p className={styles.cartSuccessQty}>{quantity}개 · ₩{formatPrice(totalPrice)}</p>
+              <p className={styles.cartSuccessQty}>
+                {quantity}개 (총 {quantity * (product.unitKg ?? 1)}kg) · ₩{formatPrice(totalPrice)}
+              </p>
             </div>
           </div>
           <div className={styles.cartSuccessButtons}>

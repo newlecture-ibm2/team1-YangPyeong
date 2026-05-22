@@ -1,6 +1,8 @@
 package com.farmbalance.farm.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import java.math.BigDecimal;
 import java.util.List;
@@ -9,6 +11,8 @@ import com.farmbalance.global.error.ErrorCode;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Farm {
     private Long id;
     private Long userId;

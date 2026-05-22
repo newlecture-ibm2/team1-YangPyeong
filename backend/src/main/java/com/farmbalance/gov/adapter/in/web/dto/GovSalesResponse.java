@@ -1,10 +1,14 @@
 package com.farmbalance.gov.adapter.in.web.dto;
 import com.farmbalance.gov.application.result.GovSalesResult;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import java.util.List;
 
 @Getter @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class GovSalesResponse {
     private final GovSalesResult.SalesSummary summary;
     private final List<GovSalesResult.TopProductRow> topProducts;

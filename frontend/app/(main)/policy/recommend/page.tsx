@@ -9,11 +9,16 @@ import styles from './page.module.css';
 
 export default function PolicyRecommendPage() {
   const { data, isLoading: isRecommendLoading, error, statusCode } = usePolicyRecommend();
-  const { farms: allFarms, isLoading: isFarmsLoading } = useMyFarms();
+  
+  // 비회원이면 /api/farm 호출 자체를 건너뜀
+  // fb-session은 httpOnly → document.cookie에서 읽을 수 없으므로 fb-user(non-httpOnly)로 체크
+  const isLoggedIn = typeof document !== 'undefined' && document.cookie.includes('fb-user=');
+  const { farms: allFarms, isLoading: isFarmsLoading } = useMyFarms(isLoggedIn);
 
   const approvedFarms = allFarms.filter(f => f.certificationStatus === 'APPROVED');
   const hasUnapprovedFarms = allFarms.length > approvedFarms.length;
-  const isPreviewMode = !isFarmsLoading && (!data && (statusCode === 401 || statusCode === 403) || approvedFarms.length === 0);
+  // 미리보기: 비로그인 사용자만 — 로그인한 사용자는 절대 미리보기 안 뜸
+  const isPreviewMode = !isFarmsLoading && !isLoggedIn;
   const isLoading = isRecommendLoading || isFarmsLoading;
 
   const getScoreClass = (score: number) => {
@@ -37,6 +42,9 @@ export default function PolicyRecommendPage() {
           <div className={styles.stateContainer}>
             <span className={styles.icon}>⏳</span>
             <p className={styles.stateMessage}>맞춤 정책을 찾고 있습니다...</p>
+            <div className={styles.progressBar}>
+              <div className={styles.progressFill} />
+            </div>
           </div>
         )}
 

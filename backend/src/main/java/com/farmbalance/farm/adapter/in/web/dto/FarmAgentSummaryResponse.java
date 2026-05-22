@@ -1,11 +1,15 @@
 package com.farmbalance.farm.adapter.in.web.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 import java.util.List;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FarmAgentSummaryResponse {
     private FarmStatusDto farmStatus;
     private List<CultivationHistoryDto> cultivationHistory;
@@ -13,6 +17,8 @@ public class FarmAgentSummaryResponse {
 
     @Getter
     @Builder
+@NoArgsConstructor
+@AllArgsConstructor
     public static class FarmStatusDto {
         private Long farmId;
         private String name;
@@ -23,6 +29,8 @@ public class FarmAgentSummaryResponse {
 
     @Getter
     @Builder
+@NoArgsConstructor
+@AllArgsConstructor
     public static class CultivationHistoryDto {
         private String cropName;
         private String action; // e.g., "PLANTED", "HARVESTED"
@@ -33,6 +41,8 @@ public class FarmAgentSummaryResponse {
 
     @Getter
     @Builder
+@NoArgsConstructor
+@AllArgsConstructor
     public static class WeatherContextDto {
         private String currentCondition;
         private Double temperature;

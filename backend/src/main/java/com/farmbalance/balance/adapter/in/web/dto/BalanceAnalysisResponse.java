@@ -2,11 +2,15 @@ package com.farmbalance.balance.adapter.in.web.dto;
 
 import com.farmbalance.balance.domain.BalanceStatus;
 import com.farmbalance.balance.domain.SupplyRatioResult;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BalanceAnalysisResponse {
     private String cropName;
     private Integer baseYear;

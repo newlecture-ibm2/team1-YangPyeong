@@ -267,6 +267,9 @@ function CheckoutContent() {
               <div key={item.id} className={styles.orderItemRow}>
                 <span className={styles.orderItemName}>
                   {item.product.name}
+                  <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginLeft: 4 }}>
+                    ({item.product.unitKg ?? 1}kg)
+                  </span>
                 </span>
                 <span className={styles.orderItemQty}>
                   x{item.quantity}

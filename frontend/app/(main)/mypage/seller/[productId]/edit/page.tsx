@@ -41,6 +41,11 @@ export default function SellerEditPage({ params }: EditPageProps) {
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isAiAutofilling, setIsAiAutofilling] = useState(false);
   const [priceRecommendationType, setPriceRecommendationType] = useState<'KAMIS' | 'AI' | null>(null);
+
+  // 단위 변경 시 재계산 기준값 (drift 방지)
+  // pricePer1kg: 1kg당 가격, totalKg: 전체 재고 총량(kg)
+  const [pricePer1kg, setPricePer1kg] = useState<number | null>(null);
+  const [totalKg, setTotalKg] = useState<number | null>(null);
   const { showQuickMessage } = useFarmBotContext();
   const { dialog, showAlert, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
@@ -71,14 +76,18 @@ export default function SellerEditPage({ params }: EditPageProps) {
       setLoading(true);
       const result = await getProduct(Number(productId));
       if (result.success && result.data) {
+        const loadedUnitKg = Math.max(1, result.data.unitKg ?? 1);
         setForm({
           name: result.data.name,
           price: String(result.data.price),
           stock: String(result.data.stock),
-          unitKg: String(result.data.unitKg ?? 1),
+          unitKg: String(loadedUnitKg),
           categoryName: result.data.categoryName || '',
           description: result.data.description || '',
         });
+        // 단위 변경 재계산 기준값 초기화
+        setPricePer1kg(result.data.price / loadedUnitKg);
+        setTotalKg(result.data.stock * loadedUnitKg);
         setProductStatus(result.data.status);
         // 기존 이미지 URL 로드
         setExistingImages(result.data.imageUrls || []);
@@ -101,9 +110,62 @@ export default function SellerEditPage({ params }: EditPageProps) {
     const onlyNums = value.replace(/[^0-9]/g, '');
     updateField(field, onlyNums);
     if (field === 'price') {
-      setPriceRecommendationType(null); // 사용자가 직접 수정하면 안내문구 제거
+      setPriceRecommendationType(null);
+      // 수동 가격 변경 시 1kg 단가 기준값 갱신
+      const unit = Math.max(1, Number(form.unitKg) || 1);
+      const next = Number(onlyNums);
+      if (next > 0) setPricePer1kg(next / unit);
     }
-  }, [updateField]);
+    if (field === 'stock') {
+      // 수동 재고 변경 시 총량(kg) 기준값 갱신
+      const unit = Math.max(1, Number(form.unitKg) || 1);
+      const next = Number(onlyNums);
+      if (next >= 0) setTotalKg(next * unit);
+    }
+  }, [updateField, form.unitKg]);
+
+  /** 단위(unitKg) 변경 — 가격·재고 자동 재계산
+   *  pricePer1kg / totalKg 기준값을 항상 사용해 drift 방지.
+   *  기준값 미설정 시 현재 폼에서 1회 역산 후 저장. */
+  const handleUnitChange = useCallback(
+    (value: string) => {
+      if (value === '') {
+        updateField('unitKg', '');
+        return;
+      }
+      const numericOnly = value.replace(/[^0-9]/g, '');
+      if (numericOnly === '') return;
+      const cleaned = String(Number(numericOnly));
+      const newUnit = Math.max(1, Number(cleaned));
+      const oldUnit = Math.max(1, Number(form.unitKg) || 1);
+
+      // 1kg 단가 기준값 — 없으면 현재 폼에서 역산 후 저장
+      let base1kgPrice = pricePer1kg;
+      if (base1kgPrice === null && Number(form.price) > 0) {
+        base1kgPrice = Number(form.price) / oldUnit;
+        setPricePer1kg(base1kgPrice);
+      }
+
+      // 총량(kg) 기준값 — 없으면 현재 폼에서 역산 후 저장
+      let baseTotalKg = totalKg;
+      if (baseTotalKg === null && form.stock !== '') {
+        baseTotalKg = Number(form.stock) * oldUnit;
+        setTotalKg(baseTotalKg);
+      }
+
+      if (base1kgPrice !== null && base1kgPrice > 0) {
+        updateField('price', String(Math.round(base1kgPrice * newUnit)));
+        setPriceRecommendationType(null);
+      }
+
+      if (baseTotalKg !== null && baseTotalKg >= 0) {
+        updateField('stock', String(Math.floor(baseTotalKg / newUnit)));
+      }
+
+      updateField('unitKg', cleaned);
+    },
+    [updateField, pricePer1kg, totalKg, form.unitKg, form.price, form.stock],
+  );
 
   /** 기존 이미지 삭제 */
   const handleRemoveExisting = useCallback((index: number) => {
@@ -151,8 +213,8 @@ export default function SellerEditPage({ params }: EditPageProps) {
     form.description.trim().length >= 10 &&
     form.description.length <= MAX_DESC;
 
-  /** 폼 유효성 — 검수중이면 가격·재고만 검사 */
-  const isInventoryValid = Number(form.price) > 0 && Number(form.stock) >= 0;
+  /** 폼 유효성 — 검수중이면 가격·재고·판매단위만 검사 */
+  const isInventoryValid = Number(form.price) > 0 && Number(form.stock) >= 0 && Number(form.unitKg) >= 1;
 
   /** 상품 수정 (검수중: 가격·재고만 / 일반: 전체) */
   const handleSubmit = useCallback(async () => {
@@ -161,10 +223,11 @@ export default function SellerEditPage({ params }: EditPageProps) {
 
     try {
       if (isPending) {
-        // 검수중: 가격·재고만 즉시 수정 (재검수 없음)
+        // 검수중: 가격·재고·판매단위 즉시 수정 (재검수 없음)
         await updateInventory(Number(productId), {
           price: Number(form.price),
           stock: Number(form.stock),
+          unitKg: Math.max(1, Number(form.unitKg) || 1),
         });
       } else {
         if (!isValid) { setIsSubmitting(false); return; }
@@ -355,7 +418,7 @@ export default function SellerEditPage({ params }: EditPageProps) {
             <div>
               <strong style={{ color: '#92400e', display: 'block', marginBottom: '2px' }}>검수 진행 중인 상품입니다</strong>
               <span style={{ fontSize: '0.875rem', color: '#78350f' }}>
-                가격·재고는 지금 바로 수정할 수 있어요. 이름·설명·카테고리·이미지는 검수 완료 후에 변경 가능합니다.
+                가격·재고·판매 단위는 지금 바로 수정할 수 있어요. 이름·설명·카테고리·이미지는 검수 완료 후에 변경 가능합니다.
               </span>
             </div>
           </div>
@@ -455,12 +518,11 @@ export default function SellerEditPage({ params }: EditPageProps) {
               label="판매 단위 (kg)"
               placeholder="1"
               value={form.unitKg}
-              onChange={(e) => handleNumberInput('unitKg', e.target.value)}
-              disabled={isPending}
+              onChange={(e) => handleUnitChange(e.target.value)}
               required
             />
             <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginTop: '-12px', marginBottom: '16px', marginLeft: '4px' }}>
-              💡 1개당 판매할 단위(kg). 검수중에는 단위 변경 불가.
+              💡 1개당 판매할 단위(kg)를 입력하세요. 기본 1kg.
             </div>
           </div>
 
@@ -565,7 +627,7 @@ export default function SellerEditPage({ params }: EditPageProps) {
             {isSubmitting
               ? '수정 중...'
               : isPending
-                ? '가격·재고 저장'
+                ? '가격·재고·단위 저장'
                 : '수정 완료'}
           </Button>
         </div>

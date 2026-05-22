@@ -1,6 +1,8 @@
 package com.farmbalance.gov.domain.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -12,6 +14,8 @@ import java.time.LocalDateTime;
  */
 @Getter
 @Builder
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class DownloadHistory {
     private final Long id;
     private final Long userId;
