@@ -76,7 +76,7 @@ class BaseLLM(ABC):
         *,
         system_instruction: Optional[str] = None,
         temperature: float = 0.1,
-        max_tokens: int = 2048,
+        max_tokens: int = 8192,
         file_bytes: Optional[bytes] = None,
         mime_type: Optional[str] = None,
     ) -> str:
