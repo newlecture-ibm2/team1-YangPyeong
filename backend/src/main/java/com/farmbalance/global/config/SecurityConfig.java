@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -37,6 +38,9 @@ public class SecurityConfig {
 
                         // ── Swagger / OpenAPI (공개) ──
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**").permitAll()
+
+                        // ── 업로드 파일 정적 서빙 (공개) ──
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
 
                         // ── 헬스체크 (공개) ──
                         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
@@ -75,6 +79,15 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * 업로드 파일 정적 서빙 경로는 Security 필터 체인 자체에서 제외
+     */
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring()
+            .requestMatchers("/uploads/**");
     }
 
     @Bean
