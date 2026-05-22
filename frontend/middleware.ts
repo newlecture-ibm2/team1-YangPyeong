@@ -24,6 +24,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // ── 1.1. /login 진입 시 callbackUrl이 있다면 임시 쿠키에 저장 ──
+  if (pathname === '/login') {
+    const callbackUrl = request.nextUrl.searchParams.get('callbackUrl');
+    if (callbackUrl) {
+      const response = NextResponse.next();
+      response.cookies.set('temp-callback-url', callbackUrl, { maxAge: 300, path: '/' });
+      return response;
+    }
+  }
+
   // ── 2. 세션 쿠키 존재 여부 및 skipAuth 확인 ──
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
   const isAuthenticated = !!sessionCookie?.value;
@@ -84,6 +94,15 @@ export function middleware(request: NextRequest) {
   if (isAuthenticated && hasUserDetail && AUTH_REDIRECT_PATHS.includes(pathname)) {
     return NextResponse.redirect(new URL('/', request.url));
   }
+
+  // ── 5.1. 로그인 성공 후 임시 리다이렉트 쿠키가 있으면 해당 경로로 이동 ──
+  const tempCallbackUrl = request.cookies.get('temp-callback-url')?.value;
+  if (isAuthenticated && hasUserDetail && tempCallbackUrl) {
+    const response = NextResponse.redirect(new URL(tempCallbackUrl, request.url));
+    response.cookies.delete('temp-callback-url');
+    return response;
+  }
+
 
   // ── 6. 공개 경로는 인증 없이 통과 ──
   // 단, 공개 경로 중 일부 하위 경로(예: /community/write 등)는 로그인 필수
