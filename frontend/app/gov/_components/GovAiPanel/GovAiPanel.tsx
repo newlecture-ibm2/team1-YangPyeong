@@ -1,77 +1,40 @@
 'use client';
 
-import React, { useState, Fragment, useRef, useEffect } from 'react';
+import React, { Fragment, useRef, useEffect, useState } from 'react';
 import styles from './GovAiPanel.module.css';
-import { useGovUser } from '@/app/gov/useGovUser';
-import { askLocalGovAi } from '@/app/gov/_lib/ai.api';
-import { ChatMessage } from '@/app/gov/_lib/ai.types';
+import { useGovChat } from '../GovChatProvider';
+import type { GraphSource } from '@/app/gov/_lib/ai.types';
+
+/* ════════════════════════════════════════════════════════
+   GovAiPanel — 대시보드 인라인 AI 패널
+   - 공통 GovChatProvider의 상태를 사용
+   - 대시보드에서 나눈 대화가 다른 페이지 플로팅 챗봇에도 공유됨
+   ════════════════════════════════════════════════════════ */
 
 export default function GovAiPanel() {
-  const { user, loading: userLoading } = useGovUser();
-  const [question, setQuestion] = useState("");
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { messages, isLoading, sendMessage } = useGovChat();
+  const [question, setQuestion] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const chatBoxRef = useRef<HTMLDivElement>(null);
 
-  const region = user?.regionName || process.env.NEXT_PUBLIC_DEFAULT_GOV_REGION || '양평군';
-
   const suggestions = [
-    `수급 요약`,
-    `과잉 품목 분석`,
-    `부족 품목 대응`,
-    `배추 위험도`
+    '수급 요약',
+    '과잉 품목 분석',
+    '부족 품목 대응',
+    '배추 위험도',
   ];
 
-  // Auto-scroll to bottom
+  // 자동 스크롤
   useEffect(() => {
     if (chatBoxRef.current) {
       chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
     }
-  }, [chatHistory, isLoading]);
+  }, [messages, isLoading]);
 
   const handleSendMessage = async (msg: string) => {
     if (!msg.trim()) return;
-
-    // TODO: 향후 dashboard_context를 함께 보내는 구조로 확장
-    // const dashboardContext = { ... }
-
-    const userMsg: ChatMessage = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: msg,
-      timestamp: Date.now(),
-    };
-
-    setChatHistory((prev) => [...prev, userMsg]);
-    setQuestion("");
-    setIsLoading(true);
-
-    try {
-      // 프롬프트에 지역명을 추가해서 보냄
-      const fullMessage = `${region} ${msg}`;
-      const response = await askLocalGovAi(fullMessage);
-
-      const aiMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'ai',
-        content: response.answer,
-        timestamp: Date.now(),
-        sources: response.graph_summary?.sources || [],
-      };
-
-      setChatHistory((prev) => [...prev, aiMsg]);
-    } catch (err: any) {
-      const errorMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'ai',
-        content: err.message || "분석 요청에 실패했습니다.",
-        timestamp: Date.now(),
-      };
-      setChatHistory((prev) => [...prev, errorMsg]);
-    } finally {
-      setIsLoading(false);
-    }
+    setQuestion('');
+    await sendMessage(msg);
   };
 
   return (
@@ -87,12 +50,12 @@ export default function GovAiPanel() {
 
       <div className={styles.chatBody}>
         <div className={styles.chatBox} ref={chatBoxRef}>
-          {chatHistory.length === 0 && (
-            <div style={{ textAlign: "center", color: "#6B7280", margin: "auto 0" }}>
+          {messages.length === 0 && (
+            <div style={{ textAlign: 'center', color: '#6B7280', margin: 'auto 0' }}>
               AI에게 궁금한 점을 물어보세요.<br />(예: 배추 위험도 알려줘)
             </div>
           )}
-          {chatHistory.map((msg) => (
+          {messages.map((msg) => (
             <div key={msg.id} className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.aiMessage}`}>
               {msg.role === 'ai' ? (
                 <div>
@@ -107,8 +70,8 @@ export default function GovAiPanel() {
                   {msg.sources && msg.sources.length > 0 && (
                     <details className={styles.sources}>
                       <summary style={{ cursor: 'pointer', outline: 'none' }}>분석 근거 ({msg.sources.length}건)</summary>
-                      <ul style={{ marginTop: "8px", paddingLeft: "20px", margin: 0 }}>
-                        {msg.sources.map((s, idx) => (
+                      <ul style={{ marginTop: '8px', paddingLeft: '20px', margin: 0 }}>
+                        {msg.sources.map((s: GraphSource, idx: number) => (
                           <li key={idx}>[{s.type}] {s.description}</li>
                         ))}
                       </ul>
@@ -140,12 +103,12 @@ export default function GovAiPanel() {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(question)}
-          disabled={isLoading || userLoading}
+          disabled={isLoading}
         />
         <button
           className={styles.sendBtn}
           onClick={() => handleSendMessage(question)}
-          disabled={isLoading || !question.trim() || userLoading}
+          disabled={isLoading || !question.trim()}
         >
           전송
         </button>

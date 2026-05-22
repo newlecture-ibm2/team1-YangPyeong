@@ -5,7 +5,8 @@
 
 /* ── Page ── */
 .page {
-  max-width: 1440px; /* Increase width */
+  max-width: 1440px;
+  /* Increase width */
   margin: 0 auto;
   padding: 24px 48px 80px;
 }
@@ -151,27 +152,47 @@
 
 /* 색상 테마 (status/severity) */
 .kpiThemeNeutral .kpiCardIcon,
-.kpiThemeNeutral .kpiCardValue { color: #E4A11B; } /* 관심 (Yellow/Neutral) */
+.kpiThemeNeutral .kpiCardValue {
+  color: #E4A11B;
+}
+
+/* 관심 (Yellow/Neutral) */
 
 .kpiThemeOrange .kpiCardIcon,
-.kpiThemeOrange .kpiCardValue { color: #E65100; } /* 과잉 (Orange) */
+.kpiThemeOrange .kpiCardValue {
+  color: #E65100;
+}
+
+/* 과잉 (Orange) */
 
 .kpiThemeBlue .kpiCardIcon,
-.kpiThemeBlue .kpiCardValue { color: #1565C0; } /* 부족 (Blue) */
+.kpiThemeBlue .kpiCardValue {
+  color: #1565C0;
+}
+
+/* 부족 (Blue) */
 
 /* 긴급 (경고 카드 전용 스타일) */
 .kpiThemeDanger {
   background: rgba(198, 40, 40, 0.06);
   border-color: rgba(198, 40, 40, 0.15);
 }
+
 .kpiThemeDanger:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(198, 40, 40, 0.08);
   background: rgba(198, 40, 40, 0.08);
 }
-.kpiThemeDanger .kpiCardLabel { color: var(--color-danger); opacity: 0.85; }
+
+.kpiThemeDanger .kpiCardLabel {
+  color: var(--color-danger);
+  opacity: 0.85;
+}
+
 .kpiThemeDanger .kpiCardIcon,
-.kpiThemeDanger .kpiCardValue { color: var(--color-danger); }
+.kpiThemeDanger .kpiCardValue {
+  color: var(--color-danger);
+}
 
 /* ── Card ── */
 .card {
@@ -221,25 +242,22 @@
   margin-bottom: 0;
 }
 
-/* ── 2 Column Layout for Dashboard ── */
+/* ── 차트/표 분리 레이아웃 ── */
 .twoColumnGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
-  align-items: start;
-}
-
-@media (max-width: 1024px) {
-  .twoColumnGrid {
-    grid-template-columns: 1fr;
-  }
+  align-items: stretch;
 }
 
 .chartCard {
-  height: 460px;
-  margin-bottom: 0;
+  min-height: 520px;
   display: flex;
   flex-direction: column;
+}
+
+.compactTableCard {
+  /* 표도 차트와 동일 폭 유지 */
 }
 
 .chartContainer {
@@ -259,25 +277,15 @@
   margin-bottom: 0;
 }
 
-.chartContainer {
-  flex: 1;
-  min-height: 0;
-}
-
 /* ── Compare Page Layout ── */
 .compareGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
-  align-items: start;
   margin-bottom: 24px;
 }
 
-@media (max-width: 1024px) {
-  .compareGrid {
-    grid-template-columns: 1fr;
-  }
-}
+/* 비교 테이블: 차트와 동일 폭 */
 
 .compareCharts {
   display: flex;
@@ -308,6 +316,7 @@
 .compareTableWrap .table td:last-child {
   padding-right: 24px;
 }
+
 /* ── Bento Grid ── */
 .bento {
   display: grid;
@@ -316,8 +325,13 @@
   margin-bottom: 48px;
 }
 
-.col8 { grid-column: span 8; }
-.col4 { grid-column: span 4; }
+.col8 {
+  grid-column: span 8;
+}
+
+.col4 {
+  grid-column: span 4;
+}
 
 /* ── Placeholder (차트 영역) ── */
 .placeholder {
@@ -394,7 +408,8 @@
 .table .numberCell {
   text-align: right;
   font-variant-numeric: tabular-nums;
-  width: 120px; /* 고정 너비 설정으로 흔들림 방지 */
+  width: 120px;
+  /* 고정 너비 설정으로 흔들림 방지 */
 }
 
 .table .dateCell {
@@ -415,20 +430,54 @@
 }
 
 /* 범용 테이블 컬럼 넓이 */
-.table .col60 { width: 60px; }
-.table .col80 { width: 80px; }
-.table .col100 { width: 100px; }
-.table .col120 { width: 120px; }
-.table .col150 { width: 150px; }
-.table .col200 { width: 200px; }
-.table .colAuto { width: auto; }
+.table .col60 {
+  width: 60px;
+}
+
+.table .col80 {
+  width: 80px;
+}
+
+.table .col100 {
+  width: 100px;
+}
+
+.table .col120 {
+  width: 120px;
+}
+
+.table .col150 {
+  width: 150px;
+}
+
+.table .col200 {
+  width: 200px;
+}
+
+.table .colAuto {
+  width: auto;
+}
 
 /* 수급 경고 대시보드 전용 넓이 (기존 유지) */
-.table .colCrop { width: 120px; }
-.table .colSupply { width: 120px; }
-.table .colStatus { width: 100px; }
-.table .colLevel { width: 100px; }
-.table .colAdvice { width: auto; }
+.table .colCrop {
+  width: 120px;
+}
+
+.table .colSupply {
+  width: 120px;
+}
+
+.table .colStatus {
+  width: 100px;
+}
+
+.table .colLevel {
+  width: 100px;
+}
+
+.table .colAdvice {
+  width: auto;
+}
 
 .tdBold {
   font-weight: 600;
@@ -593,16 +642,22 @@
     grid-template-columns: 1fr;
   }
 
-  .col8, .col4 {
+  .col8,
+  .col4 {
     grid-column: span 1;
   }
 
-  .grid2, .downloadGrid {
+  .grid2,
+  .downloadGrid {
     grid-template-columns: 1fr;
   }
 
   .pageTitle {
     font-size: 28px;
+  }
+
+  .compactTableCard {
+    max-width: 100%;
   }
 
   /* ── 수급 경고 테이블 → 카드형 ── */
