@@ -40,6 +40,7 @@ services:
       - NEXT_PUBLIC_FIREBASE_VAPID_KEY=${NEXT_PUBLIC_FIREBASE_VAPID_KEY}
       - SKIP_AUTH=${SKIP_AUTH:-false}
       - AI_SERVER_URL=http://ai-server:8000
+      - AI_INTERNAL_SECRET_KEY=${AI_INTERNAL_SECRET_KEY}
       - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
@@ -117,6 +118,7 @@ services:
       - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
       - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - AI_INTERNAL_SECRET_KEY=${AI_INTERNAL_SECRET_KEY}
       - GOV_AGENT_MODE=${GOV_AGENT_MODE:-classic}
       - CHROMA_PERSIST_DIR=/app/data/chroma
     volumes:
