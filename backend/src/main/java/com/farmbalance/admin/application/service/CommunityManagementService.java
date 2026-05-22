@@ -29,6 +29,7 @@ public class CommunityManagementService implements ManageCommunityUseCase {
     private final com.farmbalance.admin.application.port.out.AdminReportPort adminReportPort;
     private final AdminAiPort adminAiPort;
     private final UserRepository userRepository;
+    private final com.farmbalance.notification.application.port.in.NotificationUseCase notificationUseCase;
 
     @Override
     public List<AdminPost> getPosts(String keyword, String status, int page, int size) {
@@ -220,6 +221,33 @@ public class CommunityManagementService implements ManageCommunityUseCase {
 
         String actionTakenStr = String.join(", ", actions);
         adminReportPort.updateStatusAndActionByTarget(targetType, targetId, "RESOLVED", actionTakenStr);
+
+        // 발송용 알림 제목 및 내용 구성 (첫 번째 액션 기준)
+        if (!actions.isEmpty()) {
+            String title = "커뮤니티 제재 안내";
+            String contentPrefix = "POST".equals(targetType) ? "회원님의 게시글이 " : "회원님의 댓글이 ";
+            String content = contentPrefix + "신고 누적 및 운영정책 위반으로 인해 [" + actions.get(0) + "] 처리되었습니다.";
+            
+            Long authorId = null;
+            if ("POST".equals(targetType)) {
+                AdminPost post = adminPostPort.findById(targetId).orElse(null);
+                if (post != null) authorId = post.getAuthorId();
+            } else if ("COMMENT".equals(targetType)) {
+                com.farmbalance.admin.domain.AdminComment comment = adminCommentPort.findById(targetId).orElse(null);
+                if (comment != null) authorId = comment.getAuthorId();
+            }
+
+            if (authorId != null) {
+                notificationUseCase.createNotification(
+                        authorId,
+                        com.farmbalance.notification.domain.NotificationType.SYSTEM,
+                        com.farmbalance.notification.domain.NotificationCategory.SYSTEM,
+                        title,
+                        content,
+                        "/mypage/community"
+                );
+            }
+        }
     }
 
     @Override

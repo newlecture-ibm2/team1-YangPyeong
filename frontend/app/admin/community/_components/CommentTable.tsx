@@ -198,6 +198,11 @@ export default function CommentTable() {
                       : comment.isHidden 
                         ? <Badge variant="orange">숨김</Badge> 
                         : <Badge variant="green">활성</Badge>}
+                    {comment.statusReason && (comment.deletedAt || comment.isHidden) && (
+                      <div style={{ marginTop: '4px', fontSize: '0.8rem', color: 'var(--color-text-tertiary)', wordBreak: 'keep-all' }}>
+                        사유: {comment.statusReason}
+                      </div>
+                    )}
                   </td>
                   <td data-label="">
                     <div className={styles.actionGroup}>
