@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants';
+import { safeJsonParse } from '@/lib/safe-json';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,17 @@ export async function GET(request: NextRequest) {
       cache: 'no-store',
     });
 
-    const data = await res.json();
+    const data = await safeJsonParse(res, '/notifications/unread-count');
+    if (!data) {
+      // 401/403 등 인증 관련 응답은 원래 status 유지
+      if (res.status === 401 || res.status === 403) {
+        return NextResponse.json({ message: 'Unauthorized' }, { status: res.status });
+      }
+      return NextResponse.json(
+        { message: '백엔드 응답을 처리할 수 없습니다.' },
+        { status: 502 },
+      );
+    }
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
     console.error('BFF /api/notifications/unread-count GET error:', error);

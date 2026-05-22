@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { BACKEND_URL } from '@/lib/constants';
+import { safeJsonParse } from '@/lib/safe-json';
 
 /**
  * 토양 분석 API를 백엔드(Spring Boot)로 프록시합니다.
@@ -8,7 +10,6 @@ export async function GET(
   { params }: { params: Promise<{ pnu: string }> }
 ) {
   const { pnu } = await params;
-  const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
   const targetUrl = `${BACKEND_URL}/api/test/soil/${pnu}`;
 
   console.log(`[Soil Proxy] 요청 시작 - PNU: ${pnu}, Target: ${targetUrl}`);
@@ -28,7 +29,13 @@ export async function GET(
       );
     }
 
-    const data = await response.json();
+    const data = await safeJsonParse(response, `test/soil/${pnu}`);
+    if (!data) {
+      return NextResponse.json(
+        { message: '백엔드 응답을 처리할 수 없습니다.' },
+        { status: 502 }
+      );
+    }
     return NextResponse.json(data);
   } catch (error) {
     console.error('[Soil Proxy] Error:', error);
