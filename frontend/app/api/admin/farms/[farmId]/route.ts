@@ -5,7 +5,7 @@ import { BACKEND_URL } from '@/lib/constants'
 /** DELETE /api/admin/farms/[farmId] 백엔드 프록시 (농장 강제 삭제) */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { farmId: string } }
+  { params }: { params: Promise<{ farmId: string }> }
 ) {
   try {
     const session = await getSessionFromCookie();
