@@ -89,10 +89,12 @@ public class MyCommunityActivityController {
         Page<Report> reports = reportPort.findByReporterId(userId, pageable);
         Map<Long, String> postTitleMap = buildPostTitleMap(reports.getContent());
         Map<Long, String> commentContentMap = buildCommentContentMap(reports.getContent());
+        Map<Long, Long> commentPostIdMap = buildCommentPostIdMap(reports.getContent());
         Page<MyReportActivityResponse> page = reports
                 .map(report -> MyReportActivityResponse.of(
                         report,
-                        resolveReportTargetTitle(report, postTitleMap, commentContentMap)
+                        resolveReportTargetTitle(report, postTitleMap, commentContentMap),
+                        resolveReportTargetPostId(report, commentPostIdMap)
                 ));
         return ApiResponse.ok(page.getContent(),
                 ApiResponse.Meta.of(page.getNumber(), page.getSize(), page.getTotalElements()));
@@ -116,6 +118,15 @@ public class MyCommunityActivityController {
         return commentPort.findActiveContentsByIds(commentIds);
     }
 
+    private Map<Long, Long> buildCommentPostIdMap(List<Report> reports) {
+        List<Long> commentIds = reports.stream()
+                .filter(r -> "COMMENT".equalsIgnoreCase(r.getTargetType()))
+                .map(Report::getTargetId)
+                .distinct()
+                .collect(Collectors.toList());
+        return commentPort.findPostIdsByIds(commentIds);
+    }
+
     private String resolveReportTargetTitle(Report report, Map<Long, String> postTitleMap, Map<Long, String> commentContentMap) {
         if ("POST".equalsIgnoreCase(report.getTargetType())) {
             return postTitleMap.getOrDefault(report.getTargetId(), "(삭제되었거나 없는 게시글)");
@@ -128,5 +139,15 @@ public class MyCommunityActivityController {
             return content.length() > 50 ? content.substring(0, 50) + "..." : content;
         }
         return "(알 수 없는 대상)";
+    }
+
+    private Long resolveReportTargetPostId(Report report, Map<Long, Long> commentPostIdMap) {
+        if ("POST".equalsIgnoreCase(report.getTargetType())) {
+            return report.getTargetId();
+        }
+        if ("COMMENT".equalsIgnoreCase(report.getTargetType())) {
+            return commentPostIdMap.get(report.getTargetId());
+        }
+        return null;
     }
 }
