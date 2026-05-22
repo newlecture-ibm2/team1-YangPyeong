@@ -4,7 +4,14 @@
 
 .pageHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-xl); }
 .headerLeft {}
-.pageTitle { font-family: var(--font-serif); font-size: 32px; font-weight: 400; color: var(--color-text); margin-bottom: var(--space-xs); }
+.pageTitle {
+  font-family: var(--font-sans);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-md);
+  letter-spacing: -0.02em;
+}
 .pageSub { font-size: 16px; color: var(--color-text-secondary); }
 
 /* ── 테이블 ── */
@@ -200,8 +207,13 @@
   }
 
   .pageTitle {
-    font-size: 24px;
-  }
+  font-family: var(--font-sans);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-md);
+  letter-spacing: -0.02em;
+}
 
   .addBtn {
     width: 100%;

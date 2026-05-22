@@ -255,7 +255,7 @@ export default function CommunityPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>💬 커뮤니티 관리</h1>
+          <h1 className={styles.pageTitle}>커뮤니티 관리</h1>
           <p className={styles.pageSub}>게시글 삭제, 공지 지정, 신고 처리를 관리합니다.</p>
         </div>
         <div className={styles.headerActions}>

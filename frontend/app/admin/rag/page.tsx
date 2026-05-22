@@ -178,7 +178,7 @@ export default function RagPage() {
     <div className={styles.ragPage}>
       {/* 헤더 */}
       <div className={styles.header}>
-        <h1 className={styles.title}>🤖 AI 챗봇 학습 데이터 관리</h1>
+        <h1 className={styles.title}>AI 챗봇 학습 데이터 관리</h1>
         <p className={styles.subtitle}>AI 챗봇이 농업인들에게 정확한 답변과 맞춤형 추천을 제공할 수 있도록, 기초 지식(매뉴얼, 정책)과 데이터 연결망을 관리합니다.</p>
       </div>
 

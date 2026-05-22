@@ -218,7 +218,7 @@ export default function UserManagementPage() {
       {/* 헤더 */}
       <div className={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <h1 className={styles.title}>👥 사용자 관리</h1>
+          <h1 className={styles.title}>유저 관리</h1>
           <span className={styles.totalCount}>총 {totalCount.toLocaleString()}명</span>
         </div>
         <Button variant="primary" onClick={() => setCreateModalOpen(true)}>

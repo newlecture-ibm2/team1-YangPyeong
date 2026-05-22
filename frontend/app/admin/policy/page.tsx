@@ -133,7 +133,7 @@ export default function PolicyPage() {
     <div>
       <div className={styles.pageHeader}>
         <div className={styles.headerLeft}>
-          <h1 className={styles.pageTitle}>📋 정책 데이터 관리</h1>
+          <h1 className={styles.pageTitle}>정책 관리</h1>
           <p className={styles.pageSub}>지자체 농업 지원 정책 DB를 등록/갱신합니다. 총 {policies.length}건</p>
         </div>
         <button className={styles.addBtn} onClick={openCreateModal}>+ 정책 등록</button>

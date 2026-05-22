@@ -124,7 +124,7 @@ export default function DataPage() {
     <div>
       {/* 페이지 헤더 */}
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>🗄️ 데이터 수집 관리</h1>
+        <h1 className={styles.pageTitle}>외부 데이터 연동 관리</h1>
         <p className={styles.pageSub}>
           외부 API(KOSIS, 기상청, KAMIS 등) 데이터 수집 상태를 관리합니다.
         </p>
