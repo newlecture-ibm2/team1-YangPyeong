@@ -14,6 +14,7 @@ from app.routers import gov as gov_router
 from app.routers import analysis as analysis_router
 from app.routers import revenue as revenue_router
 from app.routers import farm_agent as farm_agent_router
+from app.routers import balance_agent as balance_agent_router
 from app.routers import general_agent as general_agent_router
 from app.routers import community_agent as community_agent_router
 from app.routers import ocr as ocr_router
@@ -52,6 +53,7 @@ app.include_router(admin_router.router)
 app.include_router(gov_router.router)
 app.include_router(revenue_router.router)
 app.include_router(farm_agent_router.router)
+app.include_router(balance_agent_router.router)
 app.include_router(ocr_router.router)
 app.include_router(general_agent_router.router)
 app.include_router(community_agent_router.router)
