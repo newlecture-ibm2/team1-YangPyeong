@@ -107,7 +107,7 @@ class GeminiLLM(BaseLLM):
         *,
         system_instruction: Optional[str] = None,
         temperature: float = 0.1,
-        max_tokens: int = 2048,
+        max_tokens: int = 8192,
         file_bytes: Optional[bytes] = None,
         mime_type: Optional[str] = None,
     ) -> str:
@@ -117,6 +117,8 @@ class GeminiLLM(BaseLLM):
             "temperature": temperature,
             "max_output_tokens": max_tokens,
             "response_mime_type": "application/json",
+            # NOTE: google-generativeai 0.8.x SDK는 thinking_config를 지원하지 않음.
+            # thinking 토큰 소모로 인한 JSON 잘림 방지를 위해 max_tokens 기본값을 충분히 설정할 것.
         }
         
         # 파일이 첨부된 경우 멀티모달 입력 구성
