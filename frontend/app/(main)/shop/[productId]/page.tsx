@@ -158,6 +158,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   src={currentImage}
                   alt={`${product.name} - 이미지 ${selectedImageIndex + 1}`}
                   className={styles.mainImage}
+                  onError={(e) => { e.currentTarget.src = DEFAULT_PRODUCT_IMAGE; }}
                 />
                 <span className={styles.zoomHint}>🔍 클릭하여 크게 보기</span>
               </>
@@ -179,6 +180,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                     src={url}
                     alt={`${product.name} - 썸네일 ${index + 1}`}
                     className={styles.thumbnailImg}
+                    onError={(e) => { e.currentTarget.src = DEFAULT_PRODUCT_IMAGE; }}
                   />
                 </button>
               ))}
