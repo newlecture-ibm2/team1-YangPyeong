@@ -8,19 +8,52 @@
   background-color: var(--color-bg);
 }
 
-/* ── Sidebar ── */
 .sidebar {
   width: 260px;
   background-color: var(--color-surface);
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
   height: 100vh;
   overflow-y: auto;
   z-index: 100;
 }
+
+.mobileHeader {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 90;
+}
+
+.hamburgerBtn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 95;
+}
+
 
 .sidebarHeader {
   padding: var(--space-xl) var(--space-lg);
@@ -96,6 +129,7 @@
 .mainContent {
   flex: 1;
   padding: var(--space-2xl);
+  margin-left: 260px; /* Space for fixed sidebar */
   max-width: calc(100vw - 260px);
   overflow-x: hidden;
 }
@@ -105,15 +139,27 @@
     flex-direction: column;
   }
   
+  .mobileHeader {
+    display: flex;
+  }
+
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    border-right: none;
-    border-bottom: 1px solid var(--color-border);
+    left: -280px; /* Hide by default */
+    z-index: 100;
+    transition: left 0.3s ease;
+    border-right: 1px solid var(--color-border);
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .overlay {
+    display: block;
   }
   
   .mainContent {
+    margin-left: 0;
     max-width: 100%;
     padding: var(--space-xl) var(--space-lg);
   }

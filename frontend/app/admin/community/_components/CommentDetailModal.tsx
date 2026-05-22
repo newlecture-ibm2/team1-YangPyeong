@@ -7,6 +7,8 @@ import { fetchPostDetail, deleteComment, hideComment, restoreComment } from '../
 import type { AdminPost, AdminComment } from '../../_lib/community.types'
 import styles from './CommentDetailModal.module.css'
 import { useToast } from '@/components'
+import ModalDialog from '@/components/common/Modal/ModalDialog'
+import { useModalDialog } from '@/components/common/Modal/useModalDialog'
 
 interface CommentDetailModalProps {
   comment: AdminComment | null
@@ -23,6 +25,7 @@ export default function CommentDetailModal({ comment, isOpen, onClose, onUpdate 
   const [reasonModalOpen, setReasonModalOpen] = useState(false)
   
   const toast = useToast()
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
   useEffect(() => {
     if (isOpen && comment?.postId) {
@@ -48,7 +51,8 @@ export default function CommentDetailModal({ comment, isOpen, onClose, onUpdate 
 
   const handleDelete = async () => {
     if (!comment) return
-    if (!confirm('이 댓글을 완전 삭제하시겠습니까? (복구 불가)')) return
+    const confirmed = await showConfirm('이 댓글을 완전 삭제하시겠습니까? (복구 불가)')
+    if (!confirmed) return
     try {
       await deleteComment(comment.id)
       toast.success('댓글이 완전히 삭제되었습니다.')
@@ -61,7 +65,8 @@ export default function CommentDetailModal({ comment, isOpen, onClose, onUpdate 
 
   const handleRestore = async () => {
     if (!comment) return
-    if (!confirm('숨겨진 댓글을 다시 복구하시겠습니까?')) return
+    const confirmed = await showConfirm('숨겨진 댓글을 다시 복구하시겠습니까?')
+    if (!confirmed) return
     try {
       await restoreComment(comment.id)
       toast.success('댓글이 복구되었습니다.')
@@ -161,6 +166,12 @@ export default function CommentDetailModal({ comment, isOpen, onClose, onUpdate 
         title="댓글 숨김 처리"
         onClose={() => setReasonModalOpen(false)}
         onConfirm={handleHideConfirm}
+      />
+      
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
       />
     </Modal>
   )

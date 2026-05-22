@@ -27,7 +27,25 @@ export default function useLogin() {
       const result = await loginFetch({ email, password });
 
       if (result.success) {
-        router.push('/');
+        let isAdmin = false;
+        try {
+          const match = document.cookie.match(/(?:^|;\s*)fb-user=([^;]*)/);
+          if (match) {
+            const userStr = decodeURIComponent(match[1]);
+            const userObj = JSON.parse(userStr);
+            if (userObj?.role === 'ADMIN') {
+              isAdmin = true;
+            }
+          }
+        } catch (e) {
+          // ignore parsing error
+        }
+
+        if (isAdmin) {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
         router.refresh();
       } else {
         // 탈퇴 계정 감지
@@ -61,7 +79,26 @@ export default function useLogin() {
 
         if (loginResult.success) {
           setShowReactivate(false);
-          router.push('/');
+          
+          let isAdmin = false;
+          try {
+            const match = document.cookie.match(/(?:^|;\s*)fb-user=([^;]*)/);
+            if (match) {
+              const userStr = decodeURIComponent(match[1]);
+              const userObj = JSON.parse(userStr);
+              if (userObj?.role === 'ADMIN') {
+                isAdmin = true;
+              }
+            }
+          } catch (e) {
+            // ignore parsing error
+          }
+
+          if (isAdmin) {
+            router.push('/admin');
+          } else {
+            router.push('/');
+          }
           router.refresh();
         } else {
           setError('계정이 복구되었습니다. 다시 로그인해주세요.');

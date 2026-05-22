@@ -8,6 +8,7 @@ import SearchInput from '@/components/common/SearchInput/SearchInput'
 import FilterBar from '@/components/common/FilterBar/FilterBar'
 import ModalDialog from '@/components/common/Modal/ModalDialog'
 import { useModalDialog } from '@/components/common/Modal/useModalDialog'
+import ResponsiveTable from '@/components/common/ResponsiveTable/ResponsiveTable'
 import { useToast } from '@/components/common/Toast'
 import styles from './UserManagement.module.css'
 import type { AdminUser, UserRole, ChangeableRole } from '../_lib/user.types'
@@ -217,7 +218,7 @@ export default function UserManagementPage() {
       {/* 헤더 */}
       <div className={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <h1 className={styles.title}>👥 사용자 관리</h1>
+          <h1 className={styles.title}>유저 관리</h1>
           <span className={styles.totalCount}>총 {totalCount.toLocaleString()}명</span>
         </div>
         <Button variant="primary" onClick={() => setCreateModalOpen(true)}>
@@ -253,84 +254,59 @@ export default function UserManagementPage() {
 
       {/* 테이블 */}
       <div className={styles.tableWrapper}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>이름</th>
-              <th>이메일</th>
-              <th>역할</th>
-              <th>가입일</th>
-              <th>상태</th>
-              <th>관리</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.length === 0 ? (
-              <tr>
-                <td colSpan={7} className={styles.emptyRow}>
-                  검색 결과가 없습니다.
-                </td>
-              </tr>
-            ) : (
-              users.map((user) => (
-                <tr key={user.id}>
-                  <td data-label="ID">{user.id}</td>
-                  <td data-label="이름">{user.name}</td>
-                  <td data-label="이메일">{user.email}</td>
-                  <td data-label="역할">
-                    <Badge variant={getRoleBadgeVariant(user.role)}>
-                      {ROLE_LABELS[user.role] ?? user.role}
-                    </Badge>
-                  </td>
-                  <td data-label="가입일">{user.createdAt ? new Date(user.createdAt).toLocaleDateString('ko-KR') : '-'}</td>
-                  <td data-label="상태">
-                    {user.status === 'WITHDRAWN' ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
-                        <Badge variant="gray">[탈퇴 (파기 대기중)]</Badge>
-                        {user.deletedAt && (
-                          <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600 }}>
-                            D-{30 - Math.floor((Date.now() - new Date(user.deletedAt).getTime()) / (1000 * 60 * 60 * 24))}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <Badge variant={user.status === 'ACTIVE' ? 'green' : 'red'}>
-                        {STATUS_LABELS[user.status] ?? user.status}
-                      </Badge>
-                    )}
-                  </td>
-                  <td data-label="관리">
-                    <div className={styles.actions}>
-                      {/* 역할 변경 (ADMIN, GOV는 변경 불가) — Dropdown 공통 컴포넌트 사용 */}
-                      {user.role !== 'ADMIN' && user.role !== 'GOV' && user.status !== 'WITHDRAWN' && (
-                        <Dropdown
-                          options={changeableRoleOptions}
-                          value={user.role}
-                          onChange={(val) => handleRoleChange(user.id, val as ChangeableRole)}
-                          size="sm"
-                        />
-                      )}
-
-                      {/* 정지/재활성화 (ADMIN은 정지 불가) */}
-                      {user.role !== 'ADMIN' && user.status !== 'WITHDRAWN' && (
-                        <Button
-                          variant={user.status === 'ACTIVE' ? 'outline' : 'primary'}
-                          size="sm"
-                          onClick={() => handleStatusToggle(user)}
-                        >
-                          {user.status === 'ACTIVE' ? '정지' : '해제'}
-                        </Button>
-                      )}
-
-
-                    </div>
-                  </td>
-                </tr>
-              ))
+        <ResponsiveTable<AdminUser & Record<string, unknown>>
+          columns={[
+            { key: 'id', label: 'ID', render: (u) => u.id },
+            { key: 'name', label: '이름', render: (u) => u.name },
+            { key: 'email', label: '이메일', render: (u) => u.email },
+            { key: 'role', label: '역할', render: (u) => (
+              <Badge variant={getRoleBadgeVariant(u.role)}>
+                {ROLE_LABELS[u.role] ?? u.role}
+              </Badge>
+            )},
+            { key: 'createdAt', label: '가입일', render: (u) => u.createdAt ? new Date(u.createdAt).toLocaleDateString('ko-KR') : '-' },
+            { key: 'status', label: '상태', render: (u) => (
+              u.status === 'WITHDRAWN' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+                  <Badge variant="gray">[탈퇴 (파기 대기중)]</Badge>
+                  {u.deletedAt && (
+                    <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600 }}>
+                      D-{30 - Math.floor((Date.now() - new Date(u.deletedAt).getTime()) / (1000 * 60 * 60 * 24))}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <Badge variant={u.status === 'ACTIVE' ? 'green' : 'red'}>
+                  {STATUS_LABELS[u.status] ?? u.status}
+                </Badge>
+              )
+            )},
+            { key: 'actions', label: '관리', render: (u) => (
+              <div className={styles.actions}>
+                {u.role !== 'ADMIN' && u.role !== 'GOV' && u.status !== 'WITHDRAWN' && (
+                  <Dropdown
+                    options={changeableRoleOptions}
+                    value={u.role}
+                    onChange={(val) => handleRoleChange(u.id, val as ChangeableRole)}
+                    size="sm"
+                  />
+                )}
+                {u.role !== 'ADMIN' && u.status !== 'WITHDRAWN' && (
+                  <Button
+                    variant={u.status === 'ACTIVE' ? 'outline' : 'primary'}
+                    size="sm"
+                    onClick={() => handleStatusToggle(u)}
+                  >
+                    {u.status === 'ACTIVE' ? '정지' : '해제'}
+                  </Button>
+                )}
+              </div>
             )}
-          </tbody>
-        </table>
+          ]}
+          data={users as any}
+          rowKey={(u) => String(u.id)}
+          emptyMessage="검색 결과가 없습니다."
+        />
       </div>
 
       {/* 페이지네이션 */}
