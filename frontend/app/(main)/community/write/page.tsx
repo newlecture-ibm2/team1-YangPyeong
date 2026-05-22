@@ -25,6 +25,15 @@ function PostWriteContent() {
   const isEditMode = !!postId;
   const { success: toastSuccess, error: toastError } = useToast();
 
+  // 로그인 체크 가드
+  useEffect(() => {
+    const hasSessionCookie =
+      typeof document !== 'undefined' && document.cookie.includes('fb-user=');
+    if (!hasSessionCookie) {
+      router.replace('/login?callbackUrl=/community/write');
+    }
+  }, [router]);
+
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [formData, setFormData] = useState({

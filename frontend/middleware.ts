@@ -10,7 +10,7 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { SESSION_COOKIE_NAME, PUBLIC_PATHS, AUTH_REDIRECT_PATHS } from './lib/constants';
+import { SESSION_COOKIE_NAME, PUBLIC_PATHS, AUTH_REDIRECT_PATHS, PROTECTED_SUB_PATHS } from './lib/constants';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -86,9 +86,15 @@ export function middleware(request: NextRequest) {
   }
 
   // ── 6. 공개 경로는 인증 없이 통과 ──
-  const isPublicPath = PUBLIC_PATHS.some(
+  // 단, 공개 경로 중 일부 하위 경로(예: /community/write 등)는 로그인 필수
+  const isProtectedSubPath = PROTECTED_SUB_PATHS.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
+
+  const isPublicPath =
+    !isProtectedSubPath &&
+    PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+
   if (isPublicPath) {
     return NextResponse.next();
   }

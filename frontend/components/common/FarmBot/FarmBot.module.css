@@ -419,18 +419,21 @@
   position: absolute;
   bottom: calc(100% + 12px);
   left: 50%;
-  transform: translateX(-50%);
-  background: white;
+  transform: translateX(-50%) translateY(4px) scale(0.95);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: 14px;
-  padding: 12px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
+  padding: 10px 16px;
   white-space: nowrap;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 /* 말풍선과 캐릭터 사이 빈 공간을 투명 영역으로 연결 (hover 끊김 방지) */
@@ -449,22 +452,31 @@
   bottom: -6px;
   left: 50%;
   margin-left: -6px;
-  width: 12px;
-  height: 12px;
-  background: white;
+  width: 10px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  border-right: 1px solid rgba(16, 185, 129, 0.25);
+  border-bottom: 1px solid rgba(16, 185, 129, 0.25);
   transform: rotate(45deg);
 }
 
 .footerWalkBtn:hover .footerWalkTooltip {
   opacity: 1;
   pointer-events: auto;
+  transform: translateX(-50%) translateY(0) scale(1);
 }
 
-.tooltipTitle {
-  display: block;
-  font-size: 14px;
+.tooltipIntro {
+  font-size: 13px;
   font-weight: 600;
-  color: #333;
+  color: #111827;
+  text-align: center;
+}
+
+.tooltipAction {
+  font-size: 11px;
+  font-weight: 500;
+  color: #10b981;
   text-align: center;
 }
 
@@ -647,8 +659,15 @@
   }
 
   .footerWalkTooltip {
+    padding: 8px 12px;
+  }
+
+  .tooltipIntro {
     font-size: 11px;
-    padding: 6px 10px;
+  }
+
+  .tooltipAction {
+    font-size: 9px;
   }
 
   .restoreBtn {
