@@ -130,7 +130,7 @@ export default function Header() {
 
       <div className={styles.right}>
         {/* 관리자 패널 버튼 */}
-        {user?.role === 'ROLE_ADMIN' && (
+        {user?.role === 'ADMIN' && (
           <Link href="/admin" className={styles.adminBtn} data-guide="admin-btn">
             ⚙️ 관리자 패널
           </Link>

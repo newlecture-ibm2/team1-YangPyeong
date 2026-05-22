@@ -33,7 +33,7 @@ export default function useLogin() {
           if (match) {
             const userStr = decodeURIComponent(match[1]);
             const userObj = JSON.parse(userStr);
-            if (userObj?.role === 'ROLE_ADMIN') {
+            if (userObj?.role === 'ADMIN') {
               isAdmin = true;
             }
           }
@@ -86,7 +86,7 @@ export default function useLogin() {
             if (match) {
               const userStr = decodeURIComponent(match[1]);
               const userObj = JSON.parse(userStr);
-              if (userObj?.role === 'ROLE_ADMIN') {
+              if (userObj?.role === 'ADMIN') {
                 isAdmin = true;
               }
             }
