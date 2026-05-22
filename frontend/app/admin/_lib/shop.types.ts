@@ -16,7 +16,9 @@ export interface AdminProduct {
   stock: number
   description: string
   imageUrl: string | null
+  imageUrls?: string[] | null
   status: string
+  statusReason?: string | null
   createdAt: string
   updatedAt: string | null
   deletedAt: string | null

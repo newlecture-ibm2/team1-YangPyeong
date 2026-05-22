@@ -21,6 +21,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SupplyService implements CalculateSupplyRatioUseCase {
 
+    private static final java.util.Set<String> OFFICIAL_CROPS = java.util.Set.of("감자", "고구마", "고추", "메밀", "방울토마토");
+
     private final LoadCropStatsPort loadCropStatsPort;
     private final LoadFarmSupplyPort loadFarmSupplyPort;
     private final BalanceProperties balanceProperties;
@@ -39,7 +41,10 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
         }
 
         if (stats == null || stats.getTotalProduction() == null || stats.getTotalProduction().compareTo(java.math.BigDecimal.ZERO) <= 0) {
-            return new SupplyRatioResult(0.0, BalanceStatus.UNKNOWN, year);
+            Double currentSupplyKg = loadFarmSupplyPort.sumEstimatedYieldByCropName(cropName);
+            double actualSupply = (currentSupplyKg != null) ? currentSupplyKg : 0.0;
+            int targetYear = (year != null) ? year : java.time.LocalDate.now().getYear();
+            return new SupplyRatioResult(0.0, BalanceStatus.UNKNOWN, targetYear, actualSupply, 0.0);
         }
 
         Integer baseYear = stats.getYear();
@@ -64,7 +69,7 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
         System.out.printf("[Balance-Analysis] 작물: %s, 공급량: %.1fkg, 기준량: %.1fkg, 비율: %.1f%% (%s)%n", 
                 cropName, actualSupply, standardYieldKg, ratio, status.getDescription());
         
-        return new SupplyRatioResult(ratio, status, baseYear);
+        return new SupplyRatioResult(ratio, status, baseYear, actualSupply, standardYieldKg);
     }
 
     @Override
@@ -82,8 +87,11 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
         Map<String, SupplyRatioResult> results = new HashMap<>();
         BalanceProperties.Thresholds thresholds = balanceProperties.getThresholds();
 
+        Map<String, CropProductionStats> statsMap = new HashMap<>();
         for (CropProductionStats stats : allStats) {
             String cropName = stats.getItmNm();
+            
+            statsMap.put(cropName, stats);
             
             // 기준 생산량 계산 (Kg 단위)
             double standardYieldKg = stats.getTotalProduction().doubleValue();
@@ -103,7 +111,17 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
                     thresholds.getShortCaution(), 
                     thresholds.getShortWarn());
             
-            results.put(cropName, new SupplyRatioResult(ratio, status, stats.getYear()));
+            results.put(cropName, new SupplyRatioResult(ratio, status, stats.getYear(), actualSupply, standardYieldKg));
+        }
+
+        // KOSIS 통계청 대표 작물에 없는 "온디맨드(On-demand) 작물" 추가
+        int targetYear = (year != null) ? year : java.time.LocalDate.now().getYear();
+        for (Map.Entry<String, Double> entry : allSupplies.entrySet()) {
+            String cropName = entry.getKey();
+            if (!statsMap.containsKey(cropName)) {
+                double actualSupply = entry.getValue();
+                results.put(cropName, new SupplyRatioResult(0.0, BalanceStatus.UNKNOWN, targetYear, actualSupply, 0.0));
+            }
         }
         
         long endTime = System.currentTimeMillis();
@@ -231,7 +249,7 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
                     .filter(t -> t.getCode().equals(townCode))
                     .map(BalanceDashboardResponse.TownInfo::getName)
                     .findFirst()
-                    .orElse("선택된 지역");
+                    .orElseGet(() -> resolveTownNameByCode(townCode));
         } else if (!userTowns.isEmpty()) {
             // 농장이 있는 경우 → 첫 번째 읍면동 자동 선택
             selectedCode = userTowns.get(0).getCode();
@@ -264,6 +282,25 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
                 .build();
     }
 
+    private String resolveTownNameByCode(String townCode) {
+        if (townCode == null) return "선택된 지역";
+        return switch (townCode) {
+            case "4183010" -> "양평읍";
+            case "4183020" -> "강상면";
+            case "4183030" -> "강하면";
+            case "4183040" -> "양서면";
+            case "4183050" -> "옥천면";
+            case "4183060" -> "서종면";
+            case "4183070" -> "단월면";
+            case "4183080" -> "청운면";
+            case "4183090" -> "양동면";
+            case "4183100" -> "지평면";
+            case "4183110" -> "용문면";
+            case "4183120" -> "개군면";
+            default -> "선택된 지역";
+        };
+    }
+
     /**
      * 수급 요약 정보를 빌드합니다.
      *
@@ -290,9 +327,6 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
         // 2. KOSIS 기준 통계 (양평군 전체 기준)
         List<CropProductionStats> allStats = loadCropStatsPort.loadAllLatestCropStats(regionCode);
         Map<String, CropProductionStats> statsMap = new HashMap<>();
-        for (CropProductionStats s : allStats) {
-            statsMap.put(s.getItmNm(), s);
-        }
 
         // 3. 작물별 수급 아이템 빌드
         List<BalanceDashboardResponse.CropSupplyItem> cropItems = new ArrayList<>();
@@ -300,10 +334,24 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
         for (CropProductionStats stats : allStats) {
             String cropName = stats.getItmNm();
 
+            statsMap.put(cropName, stats);
+
             double standardYieldKg = stats.getTotalProduction().doubleValue();
             if (YieldUnit.TON.getLabel().equals(stats.getUnitNm())) {
                 standardYieldKg *= YieldUnit.TON.getFactorToKg();
             }
+            
+            // 읍면동 단위일 경우 실제 통계청 농가 사업체 수 가중치를 적용하여 수요량 분배
+            if (townCode != null && label != null) {
+                try {
+                    com.farmbalance.balance.domain.YangpyeongRegion region = com.farmbalance.balance.domain.YangpyeongRegion.fromHangulName(label);
+                    standardYieldKg = standardYieldKg * region.getWeight();
+                } catch (IllegalArgumentException e) {
+                    // 매칭 실패 시 기본값(1/12)으로 폴백
+                    standardYieldKg = standardYieldKg / 12.0;
+                }
+            }
+
             if (standardYieldKg <= 0) continue;
 
             double currentSupplyKg = supplies.getOrDefault(cropName, 0.0);
@@ -329,6 +377,24 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
                     .status(status.name())
                     .statusLabel(status.getLabel())
                     .build());
+        }
+
+        // KOSIS 통계청 대표 작물에 없는 "온디맨드(On-demand) 작물" 추가
+        for (Map.Entry<String, Double> entry : supplies.entrySet()) {
+            String cropName = entry.getKey();
+            if (!statsMap.containsKey(cropName)) {
+                double currentSupplyKg = entry.getValue();
+                currentSupplyKg = Math.round(currentSupplyKg * 100.0) / 100.0;
+
+                cropItems.add(BalanceDashboardResponse.CropSupplyItem.builder()
+                        .cropName(cropName)
+                        .currentSupplyKg(currentSupplyKg)
+                        .standardYieldKg(0.0)
+                        .supplyRatio(0.0)
+                        .status("UNKNOWN")
+                        .statusLabel("농가 집계 진행중")
+                        .build());
+            }
         }
 
         return BalanceDashboardResponse.SupplySummary.builder()

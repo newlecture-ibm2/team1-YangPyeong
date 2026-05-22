@@ -73,7 +73,7 @@ export default function AdminDashboardPage() {
   return (
     <div>
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>⚙️ 관리자 <em>대시보드</em></h1>
+        <h1 className={styles.pageTitle}>대시보드</h1>
         <p className={styles.pageSub}>FarmBalance 시스템 전체 현황을 한눈에 확인합니다.</p>
       </div>
 

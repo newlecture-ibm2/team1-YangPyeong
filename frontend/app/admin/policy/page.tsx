@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import Modal from '@/components/common/Modal/Modal'
 import Button from '@/components/common/Button/Button'
 import { useToast } from '@/components/common/Toast'
+import ResponsiveTable from '@/components/common/ResponsiveTable/ResponsiveTable'
+import { useModalDialog } from '@/components/common/Modal/useModalDialog'
+import ModalDialog from '@/components/common/Modal/ModalDialog'
 import styles from './Policy.module.css'
 import type { AdminPolicyData, PolicyDataRequest } from '../_lib/policy.types'
 import { fetchPolicies, createPolicy, updatePolicy, deletePolicy } from '../_lib/policy.api'
@@ -24,6 +27,7 @@ export default function PolicyPage() {
   const [formData, setFormData] = useState<PolicyDataRequest>({ externalId: '', title: '', category: '', organization: '', regionCode: '', target: '', supportAmount: '', applyStart: '', applyEnd: '', contentSummary: '', sourceUrl: '' })
   const [parsedData, setParsedData] = useState<Record<string, any>>({})
   const toast = useToast()
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
   const loadData = useCallback(async () => {
     try {
@@ -111,7 +115,8 @@ export default function PolicyPage() {
   }
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('정말로 이 정책을 삭제하시겠습니까?')) return
+    const confirmed = await showConfirm('정말로 이 정책을 삭제하시겠습니까?')
+    if (!confirmed) return
     
     try {
       await deletePolicy(id)
@@ -128,7 +133,7 @@ export default function PolicyPage() {
     <div>
       <div className={styles.pageHeader}>
         <div className={styles.headerLeft}>
-          <h1 className={styles.pageTitle}>📋 정책 데이터 관리</h1>
+          <h1 className={styles.pageTitle}>정책 관리</h1>
           <p className={styles.pageSub}>지자체 농업 지원 정책 DB를 등록/갱신합니다. 총 {policies.length}건</p>
         </div>
         <button className={styles.addBtn} onClick={openCreateModal}>+ 정책 등록</button>
@@ -138,56 +143,44 @@ export default function PolicyPage() {
         <div className={styles.emptyState}>등록된 정책이 없습니다.</div>
       ) : (
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>외부 ID</th>
-                <th>정책 기본정보 (미리보기)</th>
-                <th>지원기관</th>
-                <th>수집일 / 등록일</th>
-                <th>액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {policies.map(policy => {
-                const title = policy.title || '제목 없음'
-                const category = policy.category || '기타'
-                const region = policy.regionName || policy.regionCode || '전국'
-                const org = policy.organization || '-'
-                
+          <ResponsiveTable<AdminPolicyData & Record<string, unknown>>
+            columns={[
+              { key: 'externalId', label: '외부 ID', render: (p) => <div className={styles.externalId}>{p.externalId}</div> },
+              { key: 'policyInfo', label: '정책 기본정보 (미리보기)', render: (p) => {
+                const title = p.title || '제목 없음'
+                const category = p.category || '기타'
+                const region = p.regionName || p.regionCode || '전국'
                 return (
-                  <tr key={policy.id}>
-                    <td className={styles.externalId} data-label="외부 ID">{policy.externalId}</td>
-                    <td data-label="정책 기본정보">
-                      <div className={styles.policyPreviewInfo}>
-                        <div className={styles.policyPreviewBadges}>
-                          <span className={styles.previewBadge}>{region}</span>
-                          <span className={styles.previewBadge}>{category}</span>
-                        </div>
-                        <div className={styles.policyPreviewTitle}>{title}</div>
-                      </div>
-                    </td>
-                    <td data-label="지원기관">{org}</td>
-                    <td data-label="수집일 / 등록일">
-                      <div className={styles.dateBlock}>
-                        <span><small>수집:</small> {formatDate(policy.fetchedAt)}</span>
-                        <span><small>등록:</small> {formatDate(policy.createdAt)}</span>
-                      </div>
-                    </td>
-                    <td data-label="">
-                      <div className={styles.actionGroup}>
-                        {policy.sourceUrl && (
-                          <button className={styles.editBtn} style={{ background: '#3b82f6', color: '#fff', border: 'none' }} onClick={() => window.open(policy.sourceUrl!, '_blank')}>원문 보기</button>
-                        )}
-                        <button className={styles.editBtn} onClick={() => openEditModal(policy)}>수정</button>
-                        <button className={styles.deleteBtn} onClick={() => handleDelete(policy.id)}>삭제</button>
-                      </div>
-                    </td>
-                  </tr>
+                  <div className={styles.policyPreviewInfo}>
+                    <div className={styles.policyPreviewBadges}>
+                      <span className={styles.previewBadge}>{region}</span>
+                      <span className={styles.previewBadge}>{category}</span>
+                    </div>
+                    <div className={styles.policyPreviewTitle}>{title}</div>
+                  </div>
                 )
-              })}
-            </tbody>
-          </table>
+              }},
+              { key: 'organization', label: '지원기관', render: (p) => p.organization || '-' },
+              { key: 'dates', label: '수집일 / 등록일', render: (p) => (
+                <div className={styles.dateBlock}>
+                  <span><small>수집:</small> {formatDate(p.fetchedAt)}</span>
+                  <span><small>등록:</small> {formatDate(p.createdAt)}</span>
+                </div>
+              )},
+              { key: 'actions', label: '액션', render: (p) => (
+                <div className={styles.actionGroup}>
+                  {p.sourceUrl && (
+                    <button className={styles.editBtn} style={{ background: '#3b82f6', color: '#fff', border: 'none' }} onClick={() => window.open(p.sourceUrl!, '_blank')}>원문 보기</button>
+                  )}
+                  <button className={styles.editBtn} onClick={() => openEditModal(p)}>수정</button>
+                  <button className={styles.deleteBtn} onClick={() => handleDelete(p.id)}>삭제</button>
+                </div>
+              )}
+            ]}
+            data={policies as any}
+            rowKey={(p) => String(p.id)}
+            emptyMessage="등록된 정책이 없습니다."
+          />
         </div>
       )}
 
@@ -312,6 +305,12 @@ export default function PolicyPage() {
           </div>
         </Modal>
       )}
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
+      />
     </div>
   )
 }

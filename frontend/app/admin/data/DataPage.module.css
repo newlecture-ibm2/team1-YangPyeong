@@ -7,11 +7,12 @@
 }
 
 .pageTitle {
-  font-family: var(--font-serif);
-  font-size: 32px;
-  font-weight: 400;
+  font-family: var(--font-sans);
+  font-size: 28px;
+  font-weight: 700;
   color: var(--color-text);
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--space-md);
+  letter-spacing: -0.02em;
 }
 
 .pageSub {

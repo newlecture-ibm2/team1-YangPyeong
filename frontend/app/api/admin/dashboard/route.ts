@@ -1,11 +1,13 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 import { safeJsonParse } from '@/lib/safe-json'
 
 /** GET /api/admin/dashboard 대시보드 KPI 프록시 */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/dashboard`)
+    const session = await getSessionFromCookie();
+    const res = await fetch(`${BACKEND_URL}/api/admin/dashboard`, { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) } })
     const data = await safeJsonParse(res, '/admin/dashboard')
     if (!data) {
       if (res.status === 401 || res.status === 403) {

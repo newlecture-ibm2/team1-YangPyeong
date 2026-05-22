@@ -3,6 +3,9 @@ import { Button, Badge, SearchInput, Dropdown, FilterBar, useToast } from '@/com
 import { fetchAllComments, hideComment, restoreComment, deleteComment, bulkDeleteComments } from '../../_lib/community.api'
 import type { AdminComment } from '../../_lib/community.types'
 import ReasonModal from './ReasonModal'
+import CommentDetailModal from './CommentDetailModal'
+import ResponsiveTable from '@/components/common/ResponsiveTable/ResponsiveTable'
+import Pagination from '@/components/common/Pagination'
 import styles from '../Community.module.css'
 
 function formatDate(dateString: string) {
@@ -21,6 +24,9 @@ export default function CommentTable() {
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [reasonModalOpen, setReasonModalOpen] = useState(false)
   const [targetCommentId, setTargetCommentId] = useState<number | null>(null)
+  
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [selectedComment, setSelectedComment] = useState<AdminComment | null>(null)
   
   const toast = useToast()
 
@@ -96,6 +102,11 @@ export default function CommentTable() {
     }
   }
 
+  const handleOpenDetail = (comment: AdminComment) => {
+    setSelectedComment(comment)
+    setDetailModalOpen(true)
+  }
+
   return (
     <>
       <div className={styles.filterSection} style={{ marginTop: '20px' }}>
@@ -137,101 +148,111 @@ export default function CommentTable() {
 
       {loading && comments.length === 0 ? (
         <div className={styles.loadingWrap}>댓글 로딩 중...</div>
-      ) : comments.length === 0 ? (
-        <div className={styles.emptyState}>검색된 댓글이 없습니다.</div>
       ) : (
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                {statusFilter === 'HIDDEN' && (
-                  <th style={{ width: '40px' }}>
-                    <input type="checkbox" checked={selectedIds.length > 0 && selectedIds.length === comments.length} onChange={handleSelectAll} />
-                  </th>
-                )}
-                <th>ID</th>
-                <th>원본 게시글</th>
-                <th>작성자</th>
-                <th>내용</th>
-                <th>작성일</th>
-                <th>상태</th>
-                <th>액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {comments.map(comment => (
-                <tr key={comment.id} className={comment.deletedAt ? styles.deletedRow : (comment.isHidden ? styles.hiddenRow : '')}>
-                  {statusFilter === 'HIDDEN' && (
-                    <td>
-                      <input type="checkbox" checked={selectedIds.includes(comment.id)} onChange={() => handleSelectOne(comment.id)} />
-                    </td>
-                  )}
-                  <td data-label="ID">{comment.id}</td>
-                  <td data-label="원본 게시글">
-                    <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
-                      <span style={{ fontWeight: 500, maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{comment.postTitle || '알 수 없는 게시글'}</span>
-                      <span style={{ color: 'var(--color-text-tertiary)' }}>ID: {comment.postId}</span>
-                    </div>
-                  </td>
-                  <td data-label="작성자">
-                    <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
-                      <span style={{ fontWeight: 500 }}>{comment.authorNickname || `User ${comment.authorId}`}</span>
-                      <span style={{ color: 'var(--color-text-tertiary)' }}>{comment.authorEmail || '이메일 없음'}</span>
-                    </div>
-                  </td>
-                  <td className={styles.titleCell} data-label="내용" style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <ResponsiveTable<AdminComment & Record<string, unknown>>
+            columns={[
+              ...(statusFilter === 'HIDDEN' ? [{
+                key: 'select',
+                label: '선택',
+                render: (comment: AdminComment) => <input type="checkbox" checked={selectedIds.includes(comment.id)} onChange={() => handleSelectOne(comment.id)} />
+              }] : []),
+              { key: 'id', label: 'ID', render: (comment) => comment.id },
+              {
+                key: 'postTitle',
+                label: '원본 게시글',
+                render: (comment) => (
+                  <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
+                    <span style={{ fontWeight: 500, maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{comment.postTitle || '알 수 없는 게시글'}</span>
+                    <span style={{ color: 'var(--color-text-tertiary)' }}>ID: {comment.postId}</span>
+                  </div>
+                )
+              },
+              {
+                key: 'author',
+                label: '작성자',
+                render: (comment) => (
+                  <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
+                    <span style={{ fontWeight: 500 }}>{comment.authorNickname || `User ${comment.authorId}`}</span>
+                    <span style={{ color: 'var(--color-text-tertiary)' }}>{comment.authorEmail || '이메일 없음'}</span>
+                  </div>
+                )
+              },
+              {
+                key: 'content',
+                label: '내용',
+                render: (comment) => (
+                  <div className={styles.titleCell} style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {comment.content}
-                  </td>
-                  <td data-label="작성일">{formatDate(comment.createdAt)}</td>
-                  <td data-label="상태">
+                  </div>
+                )
+              },
+              { key: 'createdAt', label: '작성일', render: (comment) => formatDate(comment.createdAt) },
+              {
+                key: 'status',
+                label: '상태',
+                render: (comment) => (
+                  <div>
                     {comment.deletedAt
                       ? <Badge variant="red">삭제됨</Badge>
                       : comment.isHidden 
                         ? <Badge variant="orange">숨김</Badge> 
                         : <Badge variant="green">활성</Badge>}
-                  </td>
-                  <td data-label="">
-                    <div className={styles.actionGroup}>
-                      {comment.deletedAt ? (
+                    {comment.statusReason && (comment.deletedAt || comment.isHidden) && (
+                      <div style={{ marginTop: '4px', fontSize: '0.8rem', color: 'var(--color-text-tertiary)', wordBreak: 'keep-all' }}>
+                        사유: {comment.statusReason}
+                      </div>
+                    )}
+                  </div>
+                )
+              },
+              {
+                key: 'actions',
+                label: '액션',
+                align: 'center',
+                render: (comment) => (
+                  <div className={styles.actionGroup}>
+                    <button className={styles.actionBtnNotice} onClick={() => handleOpenDetail(comment)}>
+                      상세보기
+                    </button>
+                    {comment.deletedAt ? (
+                      <button className={styles.actionBtnNotice} onClick={() => handleRestore(comment.id)}>
+                        복구
+                      </button>
+                    ) : comment.isHidden ? (
+                      <>
+                        <button className={styles.actionBtnDanger} onClick={() => handleDelete(comment.id)}>
+                          삭제
+                        </button>
                         <button className={styles.actionBtnNotice} onClick={() => handleRestore(comment.id)}>
                           복구
                         </button>
-                      ) : comment.isHidden ? (
-                        <>
-                          <button className={styles.actionBtnDanger} onClick={() => handleDelete(comment.id)}>
-                            삭제
-                          </button>
-                          <button className={styles.actionBtnNotice} onClick={() => handleRestore(comment.id)}>
-                            복구
-                          </button>
-                        </>
-                      ) : (
-                        <button className={styles.actionBtnDanger} onClick={() => {
-                          setTargetCommentId(comment.id)
-                          setReasonModalOpen(true)
-                        }}>
-                          숨김
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      </>
+                    ) : (
+                      <button className={styles.actionBtnDanger} onClick={() => {
+                        setTargetCommentId(comment.id)
+                        setReasonModalOpen(true)
+                      }}>
+                        숨김
+                      </button>
+                    )}
+                  </div>
+                )
+              }
+            ]}
+            data={comments as any}
+            rowKey={(comment) => String(comment.id)}
+            emptyMessage="검색된 댓글이 없습니다."
+          />
         </div>
       )}
 
       {totalPages > 1 && (
-        <div className={styles.pagination}>
-          <Button variant="outline" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
-            이전
-          </Button>
-          <span className={styles.pageInfo}>{page + 1} / {totalPages}</span>
-          <Button variant="outline" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
-            다음
-          </Button>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       )}
 
       <ReasonModal
@@ -239,6 +260,13 @@ export default function CommentTable() {
         title="댓글 숨김 처리"
         onClose={() => setReasonModalOpen(false)}
         onConfirm={handleHideConfirm}
+      />
+
+      <CommentDetailModal
+        comment={selectedComment}
+        isOpen={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        onUpdate={() => loadData()}
       />
     </>
   )

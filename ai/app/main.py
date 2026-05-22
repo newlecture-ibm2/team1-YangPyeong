@@ -14,10 +14,25 @@ from app.routers import gov as gov_router
 from app.routers import analysis as analysis_router
 from app.routers import revenue as revenue_router
 from app.routers import farm_agent as farm_agent_router
+from app.routers import balance_agent as balance_agent_router
 from app.routers import general_agent as general_agent_router
 from app.routers import community_agent as community_agent_router
 from app.routers import ocr as ocr_router
 from app.routers import admin as admin_router
+from app.routers import parse as parse_router
+from app.routers import stt as stt_router
+
+# ── STT 도메인 등록 ──
+from app.services.domain_registry import register, DomainSpec, LLMConfig
+from app.models.farm_history import FarmHistoryParseResponse, sanitize_farm_history
+from app.prompts.farm_history import SYSTEM_PROMPT as FARM_HISTORY_PROMPT
+
+register("farm_history", DomainSpec(
+    schema=FarmHistoryParseResponse,
+    prompt=FARM_HISTORY_PROMPT,
+    sanitizer=sanitize_farm_history,
+    llm_config=LLMConfig(temperature=0.2, max_output_tokens=1024),
+))
 
 # 로깅 설정
 logging.basicConfig(
@@ -52,8 +67,11 @@ app.include_router(admin_router.router)
 app.include_router(gov_router.router)
 app.include_router(revenue_router.router)
 app.include_router(farm_agent_router.router)
+app.include_router(balance_agent_router.router)
 app.include_router(ocr_router.router)
 app.include_router(general_agent_router.router)
 app.include_router(community_agent_router.router)
+app.include_router(parse_router.router)
+app.include_router(stt_router.router)
 
 logger.info("FarmBalance AI Server has started successfully.")

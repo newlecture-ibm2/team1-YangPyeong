@@ -49,6 +49,7 @@ jobs:
           NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
           NEXT_PUBLIC_FIREBASE_VAPID_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_VAPID_KEY }}
           FIREBASE_CREDENTIALS_BASE64=${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}
+          AI_INTERNAL_SECRET_KEY=${{ secrets.AI_INTERNAL_SECRET_KEY }}
           EOF
 
       - name: Deploy with Docker Compose

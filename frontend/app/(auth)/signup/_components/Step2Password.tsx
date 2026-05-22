@@ -11,6 +11,12 @@ interface Step2Props {
 }
 
 export default function Step2Password({ hook }: Step2Props) {
+  // 필수 조건 충족 여부 계산
+  const isStep2Valid =
+    hook.password.length >= 8 &&
+    hook.password === hook.confirmPassword &&
+    hook.strength.level >= 2;
+
   return (
     <div className={styles.stepContent}>
       <div>
@@ -39,7 +45,15 @@ export default function Step2Password({ hook }: Step2Props) {
 
       <div className={styles.btnGroup}>
         <Button type="button" variant="outline" size="lg" onClick={hook.handlePrev}>이전</Button>
-        <Button type="button" variant="dark" size="lg" onClick={hook.handleNext}>다음</Button>
+        <Button 
+          type="button" 
+          variant="dark" 
+          size="lg" 
+          onClick={hook.handleNext}
+          disabled={!isStep2Valid}
+        >
+          {isStep2Valid ? '다음' : '비밀번호 규칙을 확인해주세요'}
+        </Button>
       </div>
     </div>
   );

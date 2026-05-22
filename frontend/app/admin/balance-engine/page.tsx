@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Badge from '@/components/common/Badge/Badge';
 import Button from '@/components/common/Button/Button';
+import ResponsiveTable from '@/components/common/ResponsiveTable/ResponsiveTable';
 import { fetchBalanceData, fetchThresholds, updateThresholds, AdminBalanceData, BalanceThresholdsDto } from './_lib/balanceEngine.api';
 import styles from './page.module.css';
 
@@ -227,35 +228,19 @@ export default function AdminBalanceEnginePage() {
           </div>
 
           <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>작물명</th>
-                  <th>예측 수요량 (통계)</th>
-                  <th>예측 공급량 (등록)</th>
-                  <th>수급 비율</th>
-                  <th>현재 상태</th>
-                  <th>산출일</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map(d => (
-                  <tr key={d.id}>
-                    <td><strong>{d.cropName}</strong></td>
-                    <td>{d.demandForecast?.toLocaleString() || '-'} kg</td>
-                    <td>{d.supplyForecast?.toLocaleString() || '-'} kg</td>
-                    <td>{d.supplyRatio}%</td>
-                    <td>{getStatusBadge(d.balanceStatus)}</td>
-                    <td>{d.calculatedAt ? new Date(d.calculatedAt).toLocaleDateString() : '-'}</td>
-                  </tr>
-                ))}
-                {filteredData.length === 0 && (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '24px' }}>조건에 맞는 데이터가 없습니다.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <ResponsiveTable<AdminBalanceData & Record<string, unknown>>
+              columns={[
+                { key: 'cropName', label: '작물명', render: (d) => <strong>{d.cropName}</strong> },
+                { key: 'demand', label: '예측 수요량 (통계)', render: (d) => `${d.demandForecast?.toLocaleString() || '-'} kg` },
+                { key: 'supply', label: '예측 공급량 (등록)', render: (d) => `${d.supplyForecast?.toLocaleString() || '-'} kg` },
+                { key: 'ratio', label: '수급 비율', render: (d) => `${d.supplyRatio}%` },
+                { key: 'status', label: '현재 상태', render: (d) => getStatusBadge(d.balanceStatus) },
+                { key: 'calculatedAt', label: '산출일', render: (d) => d.calculatedAt ? new Date(d.calculatedAt).toLocaleDateString() : '-' }
+              ]}
+              data={filteredData as any}
+              rowKey={(d) => String(d.id)}
+              emptyMessage="조건에 맞는 데이터가 없습니다."
+            />
           </div>
         </div>
       </div>

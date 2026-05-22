@@ -30,4 +30,7 @@ public interface ManageShopUseCase {
 
     /** AI를 활용해 PENDING 상태의 신규 상품을 일괄 자동 심사 */
     int aiAuditPendingProducts();
+
+    /** AI를 활용해 이미 승인된 ACTIVE 상태의 상품을 재검수하여 부적절 시 HIDDEN 처리 */
+    int aiAuditActiveProducts();
 }

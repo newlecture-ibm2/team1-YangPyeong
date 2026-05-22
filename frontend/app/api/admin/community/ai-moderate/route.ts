@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
 /** POST /api/admin/community/ai-moderate → 커뮤니티 스팸 AI 일괄 청소 프록시 */
 export async function POST(request: NextRequest) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/admin/community/ai-moderate`, {
+    const session = await getSessionFromCookie();
+    const res = await fetch(`${BACKEND_URL}/api/admin/community/ai-moderate`,  { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) }, 
       method: 'POST',
     })
     const data = await res.json()

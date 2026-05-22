@@ -1,5 +1,8 @@
-import { ReactNode } from 'react'
+'use client'
+
+import { ReactNode, useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import styles from './AdminLayout.module.css'
 import Button from '@/components/common/Button/Button'
 import AdminLogoutButton from './_components/AdminLogoutButton'
@@ -11,21 +14,45 @@ interface AdminLayoutProps {
 const ADMIN_MENUS = [
   { href: '/admin', label: '대시보드', icon: '📊' },
   { href: '/admin/users', label: '유저 관리', icon: '👥' },
-  { href: '/admin/farms', label: '농장 승인 관리', icon: '🏡' },
+  { href: '/admin/farms', label: '농장 관리', icon: '🏡' },
   { href: '/admin/community', label: '커뮤니티 관리', icon: '💬' },
-  { href: '/admin/shop', label: '상점 상품 관리', icon: '🛒' },
+  { href: '/admin/shop', label: '상점 관리', icon: '🛒' },
   { href: '/admin/orders', label: '주문 관리', icon: '📦' },
   { href: '/admin/crops', label: '작물 정보 관리', icon: '🌾' },
   { href: '/admin/policy', label: '정책 관리', icon: '📄' },
-  { href: '/admin/rag', label: 'AI RAG 관리', icon: '🤖' },
+  { href: '/admin/rag', label: 'AI 챗봇 학습 데이터 관리', icon: '🤖' },
   { href: '/admin/data', label: '외부 데이터 연동 관리', icon: '🔌' },
   { href: '/admin/balance-engine', label: '밸런스 엔진 관리', icon: '⚖️' },
 ]
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
+
+  // Close menu when route changes on mobile
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [pathname])
+
   return (
     <div className={styles.adminLayout}>
-      <aside className={styles.sidebar}>
+      {/* Mobile Header */}
+      <div className={styles.mobileHeader}>
+        <h2 className={styles.logo}>FarmBalance <span>Admin</span></h2>
+        <button 
+          className={styles.hamburgerBtn} 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? '✕' : '☰'}
+        </button>
+      </div>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div className={styles.overlay} onClick={() => setIsMobileMenuOpen(false)} />
+      )}
+
+      <aside className={`${styles.sidebar} ${isMobileMenuOpen ? styles.open : ''}`}>
         <div className={styles.sidebarHeader}>
           <h2 className={styles.logo}>FarmBalance<br/><span>Admin</span></h2>
         </div>

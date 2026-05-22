@@ -34,7 +34,7 @@ public interface FarmJpaRepository extends JpaRepository<FarmJpaEntity, Long> {
     List<FarmJpaEntity> findAllActiveFarmsByUserId(@Param("userId") Long userId);
 
     // 인증 상태별 농장 목록 조회 (Admin 승인 관리용)
-    List<FarmJpaEntity> findByCertificationStatusOrderByCreatedAtDesc(
+    List<FarmJpaEntity> findByCertificationStatusAndDeletedAtIsNullOrderByCreatedAtDesc(
             com.farmbalance.farm.domain.CertificationStatus certificationStatus);
 
     /**

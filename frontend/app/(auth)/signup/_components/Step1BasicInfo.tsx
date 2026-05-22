@@ -17,6 +17,15 @@ export default function Step1BasicInfo({ hook }: Step1Props) {
     type: 'terms',
   });
 
+  // 필수 조건 충족 여부 계산
+  const isStep1Valid = 
+    hook.name.trim().length >= 2 &&
+    hook.email.trim().length > 0 &&
+    hook.emailStatus === 'available' &&
+    hook.phone.trim().length > 0 &&
+    hook.agreements.termsOfService &&
+    hook.agreements.privacyPolicy;
+
   return (
     <div className={styles.stepContent}>
       <div className={styles.fieldGroup}>
@@ -119,8 +128,15 @@ export default function Step1BasicInfo({ hook }: Step1Props) {
         )}
       </div>
 
-      <Button type="button" variant="dark" size="lg" fullWidth onClick={hook.handleNext}>
-        다음
+      <Button 
+        type="button" 
+        variant="dark" 
+        size="lg" 
+        fullWidth 
+        onClick={hook.handleNext}
+        disabled={!isStep1Valid}
+      >
+        {isStep1Valid ? '다음' : '필수 정보를 확인해주세요'}
       </Button>
 
       <LegalModal 

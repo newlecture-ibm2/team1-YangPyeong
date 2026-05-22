@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 import { safeJsonParse } from '@/lib/safe-json'
 
 /** GET /api/admin/users 백엔드 프록시 */
 export async function GET(request: NextRequest) {
   try {
+    const session = await getSessionFromCookie();
     const { searchParams } = new URL(request.url)
-    const res = await fetch(`${BACKEND_URL}/api/admin/users?${searchParams.toString()}`)
+    const res = await fetch(`${BACKEND_URL}/api/admin/users?${searchParams.toString()}`, { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) } })
     const data = await safeJsonParse(res, '/admin/users GET')
     if (!data) {
       if (res.status === 401 || res.status === 403) {
@@ -33,10 +35,11 @@ export async function GET(request: NextRequest) {
 /** POST /api/admin/users 백엔드 프록시 (특수 계정 발급) */
 export async function POST(request: NextRequest) {
   try {
+    const session = await getSessionFromCookie();
     const body = await request.json()
-    const res = await fetch(`${BACKEND_URL}/api/admin/users`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/users`,  {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),  'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     })
     const data = await safeJsonParse(res, '/admin/users POST')

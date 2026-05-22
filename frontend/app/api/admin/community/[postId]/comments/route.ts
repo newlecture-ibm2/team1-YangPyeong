@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getSessionFromCookie } from '@/lib/cookie';
 import { BACKEND_URL } from '@/lib/constants'
 
 /** GET /api/admin/community/:postId/comments → 댓글 목록 조회 프록시 */
@@ -7,8 +8,9 @@ export async function GET(
   { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
+    const session = await getSessionFromCookie();
     const { postId } = await params
-    const res = await fetch(`${BACKEND_URL}/api/admin/community/${postId}/comments`)
+    const res = await fetch(`${BACKEND_URL}/api/admin/community/${postId}/comments`, { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) } })
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (error) {

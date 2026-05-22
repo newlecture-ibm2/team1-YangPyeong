@@ -1,6 +1,7 @@
 package com.farmbalance.policy.adapter.out.external;
 
 import com.farmbalance.policy.application.port.out.PolicyExternalFetchPort;
+import com.farmbalance.policy.domain.PolicyNoticeFilter;
 import com.farmbalance.policy.domain.model.PolicyData;
 import com.farmbalance.policy.domain.model.PolicySource;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +20,12 @@ import java.util.List;
  * 양평군청 고시/공고 게시판 크롤러.
  * yp21.go.kr 내 농업/귀농/스마트팜 관련 공고를 수집합니다.
  *
- * 페이지 구조가 변경되거나 접근이 차단될 경우 빈 리스트를 반환하며,
- * 전체 sync 파이프라인은 계속 진행됩니다.
+ * <h3>크롤링 종료 조건 (recommendable 기준)</h3>
+ * <ol>
+ *   <li>추천 가능한 정책이 TARGET_RECOMMENDABLE_COUNT 이상이면 조기 종료</li>
+ *   <li>연속 NO_RECOMMENDABLE_PAGE_LIMIT 페이지 동안 추천 가능 정책 0건이면 종료</li>
+ *   <li>MAX_PAGES에 도달하면 종료</li>
+ * </ol>
  */
 @Slf4j
 @Component
@@ -33,9 +38,13 @@ public class YangpyeongPolicyClient implements PolicyExternalFetchPort {
     private static final String YANGPYEONG_NOTICE_URL =
             BASE_URL + "/www/selectBbsNttList.do?bbsNo=5&key=1119";
 
-    private static final int MAX_PAGES_TO_FETCH = 20;
-    private static final int TARGET_POLICY_COUNT = 15; // 적정 수집 목표 건수
-    private static final int PAGE_CHUNK_SIZE = 5;      // 한 번에 확인할 페이지 단위
+    // ── 크롤링 제어 상수 ──
+    /** 추천 가능한 정책 목표 수집 건수 */
+    private static final int TARGET_RECOMMENDABLE_COUNT = 15;
+    /** 최대 탐색 페이지 수 */
+    private static final int MAX_PAGES = 50;
+    /** 연속 추천 가능 정책 0건 시 종료할 페이지 임계치 */
+    private static final int NO_RECOMMENDABLE_PAGE_LIMIT = 10;
 
     // ── 농업 관련 키워드 필터 (확장) ──
     private static final List<String> FARM_KEYWORDS = List.of(
@@ -55,30 +64,66 @@ public class YangpyeongPolicyClient implements PolicyExternalFetchPort {
 
     @Override
     public List<PolicyData> fetchPolicies() {
-        List<PolicyData> allPolicies = new ArrayList<>();
+        List<PolicyData> allRecommendable = new ArrayList<>();
+        int rawCollected = 0;
+        int excludedNonBenefit = 0;
+        int consecutiveEmptyPages = 0;
+        int scannedPages = 0;
+
         try {
-            for (int page = 1; page <= MAX_PAGES_TO_FETCH; page++) {
+            for (int page = 1; page <= MAX_PAGES; page++) {
+                scannedPages = page;
                 String pageUrl = YANGPYEONG_NOTICE_URL + "&pageIndex=" + page;
-                List<PolicyData> policies = fetchFromPage(pageUrl);
-                allPolicies.addAll(policies);
+                List<PolicyData> rawPolicies = fetchFromPage(pageUrl);
+
+                // 페이지별 분류
+                int pageRaw = rawPolicies.size();
+                int pageExcluded = 0;
+                int pageRecommendable = 0;
+
+                for (PolicyData p : rawPolicies) {
+                    rawCollected++;
+                    if (PolicyNoticeFilter.isNonBenefitNotice(p.getTitle())) {
+                        pageExcluded++;
+                        excludedNonBenefit++;
+                    } else {
+                        allRecommendable.add(p);
+                        pageRecommendable++;
+                    }
+                }
+
+                log.info("[YangpyeongPolicyClient] page={}, rawAgriculture={}, excludedNotice={}, " +
+                         "recommendable={}, totalRecommendable={}",
+                         page, pageRaw, pageExcluded, pageRecommendable, allRecommendable.size());
 
                 // 서버 부하 방지를 위한 짧은 딜레이
                 Thread.sleep(500);
 
-                // 5페이지 단위로 적정 수집량을 체크하여 조기 종료
-                if (page % PAGE_CHUNK_SIZE == 0) {
-                    if (allPolicies.size() >= TARGET_POLICY_COUNT) {
-                        log.info("[YangpyeongPolicyClient] {}페이지까지 {}건 수집 완료 (목표치 {}건 달성). 조기 종료.", 
-                                page, allPolicies.size(), TARGET_POLICY_COUNT);
+                // ── 종료 조건 1: 추천 가능 정책 목표 달성 ──
+                if (allRecommendable.size() >= TARGET_RECOMMENDABLE_COUNT) {
+                    log.info("[YangpyeongPolicyClient] 추천 가능 정책 {}건 도달 (목표 {}건). {}페이지에서 조기 종료.",
+                            allRecommendable.size(), TARGET_RECOMMENDABLE_COUNT, page);
+                    break;
+                }
+
+                // ── 종료 조건 2: 연속 추천 가능 정책 0건 ──
+                if (pageRecommendable == 0) {
+                    consecutiveEmptyPages++;
+                    if (consecutiveEmptyPages >= NO_RECOMMENDABLE_PAGE_LIMIT) {
+                        log.info("[YangpyeongPolicyClient] 연속 {}페이지 추천 가능 정책 0건. 탐색 종료.",
+                                consecutiveEmptyPages);
                         break;
-                    } else if (page < MAX_PAGES_TO_FETCH) {
-                        log.info("[YangpyeongPolicyClient] {}페이지까지 {}건 수집 (목표 미달). 다음 페이지 계속 탐색...", 
-                                page, allPolicies.size());
                     }
+                } else {
+                    consecutiveEmptyPages = 0;
                 }
             }
-            log.info("[YangpyeongPolicyClient] 양평군 고시/공고 최종 탐색 완료 → 농업 관련 총 {}건 수집", allPolicies.size());
-            return allPolicies;
+
+            log.info("[YangpyeongPolicyClient] 양평군 크롤링 최종 결과: " +
+                     "rawCollected={}, recommendableCollected={}, excludedNonBenefitNotice={}, scannedPages={}",
+                     rawCollected, allRecommendable.size(), excludedNonBenefit, scannedPages);
+
+            return allRecommendable;
         } catch (Exception e) {
             // 크롤러 실패가 전체 sync 파이프라인을 중단시키지 않도록 방어
             log.warn("[YangpyeongPolicyClient] 양평군 게시판 수집 실패. 빈 리스트 반환: {}", e.getMessage());
@@ -163,6 +208,9 @@ public class YangpyeongPolicyClient implements PolicyExternalFetchPort {
      * 게시판 한 행을 PolicyData로 변환합니다.
      * 농업 관련 키워드가 없으면 null을 반환합니다.
      * 셀렉터 실패 시 NPE 없이 null을 반환합니다.
+     *
+     * <p>참고: 행정 공고(비혜택 문서) 판별은 {@code fetchPolicies()}에서 수행합니다.
+     * 이 메서드에서는 농업 관련 여부만 체크합니다.</p>
      */
     private PolicyData parseRow(Element row) {
         // 1. 제목 추출 (null-safe)

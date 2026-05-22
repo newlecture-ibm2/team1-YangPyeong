@@ -11,6 +11,7 @@ import FilterBar from '@/components/common/FilterBar/FilterBar'
 import ModalDialog from '@/components/common/Modal/ModalDialog'
 import { useModalDialog } from '@/components/common/Modal/useModalDialog'
 import { useToast } from '@/components/common/Toast'
+import ResponsiveTable from '@/components/common/ResponsiveTable/ResponsiveTable'
 import styles from './RagPage.module.css'
 import type {
   RagCategory,
@@ -30,9 +31,10 @@ import {
   updateDocument,
   deleteDocument,
   syncDocuments,
+  syncGraphRag,
 } from '../_lib/rag.api'
 
-type Tab = 'documents' | 'categories'
+type Tab = 'documents' | 'categories' | 'graph'
 
 export default function RagPage() {
   const [tab, setTab] = useState<Tab>('documents')
@@ -40,6 +42,7 @@ export default function RagPage() {
   const [documents, setDocuments] = useState<RagDocument[]>([])
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all')
   const [loading, setLoading] = useState(true)
+  const [isGraphSyncing, setIsGraphSyncing] = useState(false)
   const toast = useToast()
   const toastRef = useRef(toast)
   toastRef.current = toast
@@ -146,11 +149,24 @@ export default function RagPage() {
 
   const handleSync = async () => {
     try {
-      toast.info('AI 챗봇 데이터 동기화를 시작합니다. 시간이 걸릴 수 있습니다.')
+      toast.info('AI 챗봇 일반 지식 동기화를 시작합니다. 시간이 걸릴 수 있습니다.')
       await syncDocuments()
-      toast.success('동기화가 완료되었습니다. 이제 챗봇이 최신 데이터를 사용합니다.')
+      toast.success('동기화가 완료되었습니다. 이제 챗봇이 최신 문서를 사용합니다.')
     } catch (e: any) {
       toast.error(e.message || '동기화 중 오류가 발생했습니다.')
+    }
+  }
+
+  const handleGraphSync = async () => {
+    try {
+      setIsGraphSyncing(true)
+      toast.info('AI 추천용 지식 그래프 재구축을 시작합니다. 잠시만 기다려주세요.')
+      await syncGraphRag()
+      toast.success('AI 지식 그래프 갱신이 완료되었습니다! 이제 AI가 최신 데이터를 바탕으로 추천합니다.')
+    } catch (e: any) {
+      toast.error(e.message || '지식 그래프 동기화 중 오류가 발생했습니다.')
+    } finally {
+      setIsGraphSyncing(false)
     }
   }
 
@@ -162,8 +178,8 @@ export default function RagPage() {
     <div className={styles.ragPage}>
       {/* 헤더 */}
       <div className={styles.header}>
-        <h1 className={styles.title}>🤖 RAG 데이터 관리</h1>
-        <p className={styles.subtitle}>AI 챗봇이 참조하는 문서와 카테고리를 관리합니다.</p>
+        <h1 className={styles.title}>AI 챗봇 학습 데이터 관리</h1>
+        <p className={styles.subtitle}>AI 챗봇이 농업인들에게 정확한 답변과 맞춤형 추천을 제공할 수 있도록, 기초 지식(매뉴얼, 정책)과 데이터 연결망을 관리합니다.</p>
       </div>
 
       {/* 탭 */}
@@ -172,13 +188,19 @@ export default function RagPage() {
           variant={tab === 'documents' ? 'primary' : 'outline'}
           onClick={() => setTab('documents')}
         >
-          📄 문서 관리
+          📄 일반 지식 (문서) 관리
         </Button>
         <Button
           variant={tab === 'categories' ? 'primary' : 'outline'}
           onClick={() => setTab('categories')}
         >
-          🗂️ 카테고리 관리
+          🗂️ 지식 카테고리 관리
+        </Button>
+        <Button
+          variant={tab === 'graph' ? 'primary' : 'outline'}
+          onClick={() => setTab('graph')}
+        >
+          🕸️ 추천용 지식 그래프 관리
         </Button>
       </div>
 
@@ -224,56 +246,44 @@ export default function RagPage() {
                 등록된 문서가 없습니다.
               </div>
             ) : (
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>제목</th>
-                    <th>카테고리</th>
-                    <th>유형</th>
-                    <th>내용 미리보기</th>
-                    <th>상태</th>
-                    <th>등록일</th>
-                    <th>관리</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {documents.map((doc) => (
-                    <tr key={doc.id}>
-                      <td><strong>{doc.title}</strong></td>
-                      <td>{getCategoryName(doc.categoryId)}</td>
-                      <td>
-                        <Badge variant={doc.contentType === 'FILE' ? 'dark' : 'outline'}>
-                          {doc.contentType}
-                        </Badge>
-                      </td>
-                      <td>
-                        <div className={styles.textPreview}>
-                          {doc.contentType === 'TEXT'
-                            ? doc.textContent ?? '-'
-                            : doc.fileName ?? doc.fileUrl ?? '-'}
-                        </div>
-                      </td>
-                      <td>
-                        <Badge variant={doc.status === 'ACTIVE' ? 'green' : 'red'}>
-                          {doc.status === 'ACTIVE' ? '활성' : '삭제됨'}
-                        </Badge>
-                      </td>
-                      <td>{new Date(doc.createdAt).toLocaleDateString('ko-KR')}</td>
-                      <td>
-                        <div className={styles.actions}>
-                          <Button size="sm" variant="outline" onClick={() => {
-                            setEditingDocument(doc)
-                            setShowDocumentModal(true)
-                          }}>수정</Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDeleteDocument(doc.id)} className={styles.dangerText}>
-                            삭제
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ResponsiveTable<RagDocument & Record<string, unknown>>
+                columns={[
+                  { key: 'title', label: '제목', render: (doc) => <strong>{doc.title}</strong> },
+                  { key: 'category', label: '카테고리', render: (doc) => getCategoryName(doc.categoryId) },
+                  { key: 'contentType', label: '유형', render: (doc) => (
+                    <Badge variant={doc.contentType === 'FILE' ? 'dark' : 'outline'}>
+                      {doc.contentType}
+                    </Badge>
+                  )},
+                  { key: 'preview', label: '내용 미리보기', render: (doc) => (
+                    <div className={styles.textPreview}>
+                      {doc.contentType === 'TEXT'
+                        ? doc.textContent ?? '-'
+                        : doc.fileName ?? doc.fileUrl ?? '-'}
+                    </div>
+                  )},
+                  { key: 'status', label: '상태', render: (doc) => (
+                    <Badge variant={doc.status === 'ACTIVE' ? 'green' : 'red'}>
+                      {doc.status === 'ACTIVE' ? '활성' : '삭제됨'}
+                    </Badge>
+                  )},
+                  { key: 'createdAt', label: '등록일', render: (doc) => new Date(doc.createdAt).toLocaleDateString('ko-KR') },
+                  { key: 'actions', label: '관리', render: (doc) => (
+                    <div className={styles.actions}>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setEditingDocument(doc)
+                        setShowDocumentModal(true)
+                      }}>수정</Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDeleteDocument(doc.id)} className={styles.dangerText}>
+                        삭제
+                      </Button>
+                    </div>
+                  )}
+                ]}
+                data={documents as any}
+                rowKey={(doc) => String(doc.id)}
+                emptyMessage="등록된 문서가 없습니다."
+              />
             )}
           </>
         )}
@@ -299,46 +309,65 @@ export default function RagPage() {
                 등록된 카테고리가 없습니다.
               </div>
             ) : (
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>카테고리명</th>
-                    <th>설명</th>
-                    <th>표시 순서</th>
-                    <th>상태</th>
-                    <th>등록일</th>
-                    <th>관리</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {categories.map((cat) => (
-                    <tr key={cat.id}>
-                      <td><strong>{cat.name}</strong></td>
-                      <td>{cat.description ?? '-'}</td>
-                      <td>{cat.displayOrder}</td>
-                      <td>
-                        <Badge variant={cat.isActive ? 'green' : 'gray'}>
-                          {cat.isActive ? '활성' : '비활성'}
-                        </Badge>
-                      </td>
-                      <td>{new Date(cat.createdAt).toLocaleDateString('ko-KR')}</td>
-                      <td>
-                        <div className={styles.actions}>
-                          <Button size="sm" variant="outline" onClick={() => {
-                            setEditingCategory(cat)
-                            setShowCategoryModal(true)
-                          }}>수정</Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDeleteCategory(cat.id)} className={styles.dangerText}>
-                            삭제
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ResponsiveTable<RagCategory & Record<string, unknown>>
+                columns={[
+                  { key: 'name', label: '카테고리명', render: (cat) => <strong>{cat.name}</strong> },
+                  { key: 'description', label: '설명', render: (cat) => cat.description ?? '-' },
+                  { key: 'displayOrder', label: '표시 순서', render: (cat) => cat.displayOrder },
+                  { key: 'isActive', label: '상태', render: (cat) => (
+                    <Badge variant={cat.isActive ? 'green' : 'gray'}>
+                      {cat.isActive ? '활성' : '비활성'}
+                    </Badge>
+                  )},
+                  { key: 'createdAt', label: '등록일', render: (cat) => new Date(cat.createdAt).toLocaleDateString('ko-KR') },
+                  { key: 'actions', label: '관리', render: (cat) => (
+                    <div className={styles.actions}>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setEditingCategory(cat)
+                        setShowCategoryModal(true)
+                      }}>수정</Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDeleteCategory(cat.id)} className={styles.dangerText}>
+                        삭제
+                      </Button>
+                    </div>
+                  )}
+                ]}
+                data={categories as any}
+                rowKey={(cat) => String(cat.id)}
+                emptyMessage="등록된 카테고리가 없습니다."
+              />
             )}
           </>
+        )}
+
+        {/* ════ 지식 그래프 탭 ════ */}
+        {tab === 'graph' && (
+          <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div>
+              <h2 style={{ fontSize: '1.2rem', marginBottom: '8px', color: 'var(--color-text)' }}>AI 추천용 지식 그래프 동기화</h2>
+              <p style={{ color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
+                AI가 맞춤형 농작물 및 보조금 정책을 추천할 때 사용하는 <strong>'지식 그래프 데이터(지역 ↔ 작물 ↔ 정책 ↔ 농가)'</strong>를 최신 상태로 강제 갱신합니다.<br/>
+                (기본적으로 매일 새벽 3시에 자동 갱신됩니다.)
+              </p>
+            </div>
+            
+            <div style={{ padding: '16px', backgroundColor: 'var(--color-background-soft)', borderRadius: '8px', borderLeft: '4px solid var(--color-warning)' }}>
+              <p style={{ color: 'var(--color-warning-dark)', margin: 0, fontSize: '0.9rem' }}>
+                <strong>※ 주의사항:</strong> 새로운 보조금 정책을 등록했거나 농가 정보가 크게 변경되어 <strong>즉시 AI에게 반영해야 할 경우</strong>에만 수동으로 실행해 주세요.
+              </p>
+            </div>
+
+            <div style={{ marginTop: '16px' }}>
+              <Button 
+                variant="primary" 
+                onClick={handleGraphSync} 
+                disabled={isGraphSyncing}
+                style={{ padding: '12px 24px', fontSize: '1.05rem' }}
+              >
+                {isGraphSyncing ? '⏳ AI 지식 그래프 재구축 중...' : '🔄 지식 그래프 수동 동기화'}
+              </Button>
+            </div>
+          </div>
         )}
       </Card>
 

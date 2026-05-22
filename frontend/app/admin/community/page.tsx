@@ -17,6 +17,8 @@ import SanctionModal from './_components/SanctionModal'
 import ReasonModal from './_components/ReasonModal'
 import CommentTable from './_components/CommentTable'
 import Button from '@/components/common/Button/Button'
+import ResponsiveTable from '@/components/common/ResponsiveTable/ResponsiveTable'
+import Pagination from '@/components/common/Pagination'
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '-'
@@ -253,7 +255,7 @@ export default function CommunityPage() {
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.pageTitle}>💬 커뮤니티 관리</h1>
+          <h1 className={styles.pageTitle}>커뮤니티 관리</h1>
           <p className={styles.pageSub}>게시글 삭제, 공지 지정, 신고 처리를 관리합니다.</p>
         </div>
         <div className={styles.headerActions}>
@@ -333,135 +335,130 @@ export default function CommunityPage() {
 
       {loading && posts.length === 0 ? (
         <div className={styles.loadingWrap}>게시글 로딩 중...</div>
-      ) : posts.length === 0 ? (
-        <div className={styles.emptyState}>등록된 게시글이 없습니다.</div>
       ) : (
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                {statusFilter === 'HIDDEN' && (
-                  <th style={{ width: '40px' }}>
-                    <input type="checkbox" checked={selectedPostIds.length > 0 && selectedPostIds.length === posts.length} onChange={handleSelectAll} />
-                  </th>
-                )}
-                <th>ID</th>
-                <th>제목</th>
-                <th>작성자</th>
-                <th>조회수</th>
-                <th>공지</th>
-                <th>작성일</th>
-                <th>상태</th>
-                <th>액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {posts.map(post => (
-                <tr key={post.id} className={post.deletedAt ? styles.deletedRow : (post.isHidden ? styles.hiddenRow : '')}>
-                  {statusFilter === 'HIDDEN' && (
-                    <td>
-                      <input type="checkbox" checked={selectedPostIds.includes(post.id)} onChange={() => handleSelectOne(post.id)} />
-                    </td>
-                  )}
-                  <td data-label="ID">{post.id}</td>
-                  <td className={styles.titleCell} data-label="제목">
+          <ResponsiveTable<AdminPost & Record<string, unknown>>
+            columns={[
+              ...(statusFilter === 'HIDDEN' ? [{
+                key: 'select',
+                label: '선택',
+                render: (post: AdminPost) => <input type="checkbox" checked={selectedPostIds.includes(post.id)} onChange={() => handleSelectOne(post.id)} />
+              }] : []),
+              { key: 'id', label: 'ID', render: (post) => post.id },
+              {
+                key: 'title',
+                label: '제목',
+                render: (post) => (
+                  <div className={styles.titleCell}>
                     {post.title} {post.commentCount > 0 && <span style={{ color: 'var(--color-primary-600)', fontWeight: 600, marginLeft: '4px' }}>[{post.commentCount}]</span>}
-                  </td>
-                  <td data-label="작성자">
-                    <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
-                      <span style={{ fontWeight: 500 }}>{post.authorNickname || `User ${post.authorId}`}</span>
-                      <span style={{ color: 'var(--color-text-tertiary)' }}>{post.authorEmail || '이메일 없음'}</span>
-                    </div>
-                  </td>
-                  <td data-label="조회수">{post.viewCount.toLocaleString()}</td>
-                  <td data-label="공지">
-                    {post.isNotice
-                      ? <Badge variant="green">공지</Badge>
-                      : <Badge variant="gray">일반</Badge>}
-                  </td>
-                  <td data-label="작성일">{formatDate(post.createdAt)}</td>
-                  <td data-label="상태">
+                  </div>
+                )
+              },
+              {
+                key: 'author',
+                label: '작성자',
+                render: (post) => (
+                  <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
+                    <span style={{ fontWeight: 500 }}>{post.authorNickname || `User ${post.authorId}`}</span>
+                    <span style={{ color: 'var(--color-text-tertiary)' }}>{post.authorEmail || '이메일 없음'}</span>
+                  </div>
+                )
+              },
+              { key: 'viewCount', label: '조회수', align: 'right', render: (post) => post.viewCount.toLocaleString() },
+              {
+                key: 'isNotice',
+                label: '공지',
+                align: 'center',
+                render: (post) => post.isNotice ? <Badge variant="green">공지</Badge> : <Badge variant="gray">일반</Badge>
+              },
+              { key: 'createdAt', label: '작성일', render: (post) => formatDate(post.createdAt) },
+              {
+                key: 'status',
+                label: '상태',
+                render: (post) => (
+                  <div>
                     {post.deletedAt
                       ? <Badge variant="red">삭제됨</Badge>
                       : post.isHidden 
                         ? <Badge variant="orange">숨김</Badge> 
                         : <Badge variant="green">활성</Badge>}
-                  </td>
-                  <td data-label="">
-                    <div className={styles.actionGroup}>
+                    {post.statusReason && (post.deletedAt || post.isHidden) && (
+                      <div style={{ marginTop: '4px', fontSize: '0.8rem', color: 'var(--color-text-tertiary)', wordBreak: 'keep-all' }}>
+                        사유: {post.statusReason}
+                      </div>
+                    )}
+                  </div>
+                )
+              },
+              {
+                key: 'actions',
+                label: '액션',
+                align: 'center',
+                render: (post) => (
+                  <div className={styles.actionGroup}>
+                    <button
+                      className={styles.actionBtnNotice}
+                      onClick={() => handleOpenDetail(post.id)}
+                    >
+                      상세보기
+                    </button>
+                    <button
+                      className={styles.actionBtnNotice}
+                      onClick={() => handleToggleNotice(post.id, post.isNotice)}
+                      disabled={!!post.deletedAt}
+                    >
+                      {post.isNotice ? '공지 해제' : '공지 설정'}
+                    </button>
+                    {post.deletedAt ? (
                       <button
                         className={styles.actionBtnNotice}
-                        onClick={() => handleOpenDetail(post.id)}
+                        onClick={() => handleRestorePost(post.id)}
                       >
-                        상세보기
+                        복구
                       </button>
-                      <button
-                        className={styles.actionBtnNotice}
-                        onClick={() => handleToggleNotice(post.id, post.isNotice)}
-                        disabled={!!post.deletedAt}
-                      >
-                        {post.isNotice ? '공지 해제' : '공지 설정'}
-                      </button>
-                      {post.deletedAt ? (
+                    ) : post.isHidden ? (
+                      <>
+                        <button
+                          className={styles.actionBtnDanger}
+                          onClick={() => handleDelete(post.id)}
+                        >
+                          삭제
+                        </button>
                         <button
                           className={styles.actionBtnNotice}
                           onClick={() => handleRestorePost(post.id)}
                         >
                           복구
                         </button>
-                      ) : post.isHidden ? (
-                        <>
-                          <button
-                            className={styles.actionBtnDanger}
-                            onClick={() => handleDelete(post.id)}
-                          >
-                            삭제
-                          </button>
-                          <button
-                            className={styles.actionBtnNotice}
-                            onClick={() => handleRestorePost(post.id)}
-                          >
-                            복구
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          className={styles.actionBtnDanger}
-                          onClick={() => {
-                            setTargetForReason({ type: 'POST', id: post.id })
-                            setReasonModalOpen(true)
-                          }}
-                        >
-                          숨김
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      </>
+                    ) : (
+                      <button
+                        className={styles.actionBtnDanger}
+                        onClick={() => {
+                          setTargetForReason({ type: 'POST', id: post.id })
+                          setReasonModalOpen(true)
+                        }}
+                      >
+                        숨김
+                      </button>
+                    )}
+                  </div>
+                )
+              }
+            ]}
+            data={posts as any}
+            rowKey={(post) => String(post.id)}
+            emptyMessage="등록된 게시글이 없습니다."
+          />
         </div>
       )}
 
       {activeTab === 'POSTS' && totalPages > 1 && (
-        <div className={styles.pagination}>
-          <Button 
-            variant="outline" 
-            disabled={page === 0} 
-            onClick={() => setPage(p => p - 1)}
-          >
-            이전
-          </Button>
-          <span className={styles.pageInfo}>{page + 1} / {totalPages}</span>
-          <Button 
-            variant="outline" 
-            disabled={page >= totalPages - 1} 
-            onClick={() => setPage(p => p + 1)}
-          >
-            다음
-          </Button>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       )}
       </>
       )}
@@ -493,42 +490,37 @@ export default function CommunityPage() {
 
           {loading && reports.length === 0 ? (
             <div className={styles.loadingWrap}>신고 내역 로딩 중...</div>
-          ) : reports.length === 0 ? (
-            <div className={styles.emptyState}>신고 내역이 없습니다.</div>
           ) : (
             <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>대상</th>
-                    <th>대상ID</th>
-                    <th>누적 신고 수</th>
-                    <th>최근 사유</th>
-                    <th>최근 신고일</th>
-                    <th>상태</th>
-                    <th>액션</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reports.map((report, idx) => (
-                    <tr key={`${report.targetType}-${report.targetId}-${idx}`}>
-                      <td data-label="대상">
-                        {report.targetType === 'POST' ? <Badge variant="blue">게시글</Badge> : <Badge variant="gray">댓글</Badge>}
-                      </td>
-                      <td data-label="대상ID">{report.targetId}</td>
-                      <td data-label="누적 신고 수">{report.reportCount}건</td>
-                      <td data-label="사유 요약">
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <span>{report.recentReason}</span>
-                          {report.reportCount > 1 && (
-                            <span onClick={() => alert(report.allReasons?.replace(/\|\|/g, '\n'))} style={{ cursor: 'pointer', display: 'inline-block', width: 'fit-content' }}>
-                              <Badge variant="gray">[외 {report.reportCount - 1}건] 전체보기</Badge>
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td data-label="최근 신고일">{formatDate(report.recentReportAt)}</td>
-                      <td data-label="상태 및 제재">
+              <ResponsiveTable<AdminGroupedReport & Record<string, unknown>>
+                columns={[
+                  {
+                    key: 'targetType',
+                    label: '대상',
+                    render: (report) => report.targetType === 'POST' ? <Badge variant="blue">게시글</Badge> : <Badge variant="gray">댓글</Badge>
+                  },
+                  { key: 'targetId', label: '대상ID', render: (report) => report.targetId },
+                  { key: 'reportCount', label: '누적 신고 수', render: (report) => `${report.reportCount}건` },
+                  {
+                    key: 'reason',
+                    label: '사유 요약',
+                    render: (report) => (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span>{report.recentReason}</span>
+                        {report.reportCount > 1 && (
+                          <span onClick={() => showConfirm(report.allReasons?.replace(/\|\|/g, '\n') || '')} style={{ cursor: 'pointer', display: 'inline-block', width: 'fit-content' }}>
+                            <Badge variant="gray">[외 {report.reportCount - 1}건] 전체보기</Badge>
+                          </span>
+                        )}
+                      </div>
+                    )
+                  },
+                  { key: 'recentReportAt', label: '최근 신고일', render: (report) => formatDate(report.recentReportAt) },
+                  {
+                    key: 'status',
+                    label: '상태 및 제재',
+                    render: (report) => (
+                      <div>
                         {report.status === 'PENDING' && <Badge variant="orange">대기중</Badge>}
                         {report.status === 'DISMISSED' && <Badge variant="gray">반려</Badge>}
                         {report.status === 'RESOLVED' && (
@@ -538,69 +530,65 @@ export default function CommunityPage() {
                             )) : <Badge variant="green">처리완료</Badge>}
                           </div>
                         )}
-                      </td>
-                      <td data-label="">
-                        <div className={styles.actionGroup}>
-                          {report.targetType === 'POST' && (
+                      </div>
+                    )
+                  },
+                  {
+                    key: 'actions',
+                    label: '액션',
+                    align: 'center',
+                    render: (report) => (
+                      <div className={styles.actionGroup}>
+                        {report.targetType === 'POST' && (
+                          <button
+                            className={styles.actionBtnNotice}
+                            onClick={() => handleOpenDetail(report.targetId)}
+                          >
+                            게시글 보기
+                          </button>
+                        )}
+                        {report.status === 'PENDING' && (
+                          <>
                             <button
                               className={styles.actionBtnNotice}
-                              onClick={() => handleOpenDetail(report.targetId)}
+                              onClick={() => handleOpenSanctionModal(report.targetType, report.targetId)}
+                              style={{ backgroundColor: 'var(--color-danger)', borderColor: 'var(--color-danger)', color: 'white' }}
                             >
-                              게시글 보기
+                              🚨 제재 처리
                             </button>
-                          )}
-                          {report.status === 'PENDING' && (
-                            <>
-                              <button
-                                className={styles.actionBtnNotice}
-                                onClick={() => handleOpenSanctionModal(report.targetType, report.targetId)}
-                                style={{ backgroundColor: 'var(--color-danger)', borderColor: 'var(--color-danger)', color: 'white' }}
-                              >
-                                🚨 제재 처리
-                              </button>
-                              <button
-                                className={styles.actionBtnDanger}
-                                onClick={() => handleUpdateReportStatus(report.targetType, report.targetId, 'DISMISSED')}
-                              >
-                                반려
-                              </button>
-                            </>
-                          )}
-                          {report.status === 'RESOLVED' && (
                             <button
-                              className={styles.actionBtnNotice}
-                              onClick={() => handleUndoSanction(report.targetType, report.targetId)}
+                              className={styles.actionBtnDanger}
+                              onClick={() => handleUpdateReportStatus(report.targetType, report.targetId, 'DISMISSED')}
                             >
-                              제재 복구
+                              반려
                             </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          </>
+                        )}
+                        {report.status === 'RESOLVED' && (
+                          <button
+                            className={styles.actionBtnNotice}
+                            onClick={() => handleUndoSanction(report.targetType, report.targetId)}
+                          >
+                            제재 복구
+                          </button>
+                        )}
+                      </div>
+                    )
+                  }
+                ]}
+                data={reports as any}
+                rowKey={(report) => `${report.targetType}-${report.targetId}`}
+                emptyMessage="신고 내역이 없습니다."
+              />
             </div>
           )}
 
           {reportTotalPages > 1 && (
-            <div className={styles.pagination}>
-              <Button 
-                variant="outline" 
-                disabled={reportPage === 0} 
-                onClick={() => setReportPage(p => p - 1)}
-              >
-                이전
-              </Button>
-              <span className={styles.pageInfo}>{reportPage + 1} / {reportTotalPages}</span>
-              <Button 
-                variant="outline" 
-                disabled={reportPage >= reportTotalPages - 1} 
-                onClick={() => setReportPage(p => p + 1)}
-              >
-                다음
-              </Button>
-            </div>
+            <Pagination
+              currentPage={reportPage}
+              totalPages={reportTotalPages}
+              onPageChange={setReportPage}
+            />
           )}
         </>
       )}

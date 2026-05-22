@@ -7,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import styles from '../gov.module.css';
 import { useGovUser, getTestHeaders } from '../useGovUser';
 import GovTabs from '../_components/GovTabs';
+import { useGovChat } from '../_components/GovChatProvider';
 import Spinner from '@/components/common/Spinner/Spinner';
 
 interface SalesData {
@@ -22,6 +23,7 @@ export default function SalesPage() {
   const [data, setData] = useState<SalesData | null>(null);
   const [loading, setLoading] = useState(true);
   const { user, loading: userLoading } = useGovUser();
+  const { setPageContext } = useGovChat();
 
   useEffect(() => {
     fetch('/api/gov/sales' + (window.location.search || ''), { headers: getTestHeaders() }) //')
@@ -29,6 +31,31 @@ export default function SalesPage() {
       .then(res => { setData(res.data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
+
+  // ── 화면 데이터를 챗봇 pageContext로 등록 ──
+  useEffect(() => {
+    if (data) {
+      setPageContext({
+        pageType: 'sales',
+        pageTitle: '판매 현황',
+        salesSummary: {
+          totalAmount: data.summary.totalAmount,
+          txCount: data.summary.txCount,
+          activeSellers: data.summary.activeSellers,
+          momRate: data.summary.momRate,
+        },
+        topProducts: data.topProducts.map(p => ({
+          rank: p.rank,
+          productName: p.productName,
+          seller: p.seller,
+          salesVolume: p.salesVolume,
+          revenue: p.revenue,
+        })),
+        monthlySales: data.monthlySales,
+      });
+    }
+    return () => setPageContext(null);
+  }, [data, setPageContext]);
 
     if (userLoading || loading) return <div className={styles.page}><Spinner /></div>;
   if (!user || user.role !== 'GOV') return <div className={styles.page}><p>지자체 관리자만 접근할 수 있습니다.</p></div>;
@@ -68,11 +95,11 @@ export default function SalesPage() {
             <h2 className={styles.cardTitle}>월별 거래액 추이</h2>
           </div>
           <div className={styles.chartContainer}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlySales}>
+            <ResponsiveContainer width="100%" height={420}>
+              <LineChart data={monthlySales} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis width={80} tickFormatter={(value) => value.toLocaleString()} />
+                <XAxis dataKey="month" tick={{ fontSize: 13 }} />
+                <YAxis width={80} tickFormatter={(value) => value >= 10000 ? (value / 10000).toFixed(0) + '만' : value.toLocaleString()} />
                 <Tooltip formatter={(value) => `₩${Number(value).toLocaleString()}`} />
                 <Line type="monotone" dataKey="amount" name="거래액" stroke="#2D6A4F" strokeWidth={2} dot={{ r: 4 }} />
               </LineChart>
@@ -80,13 +107,13 @@ export default function SalesPage() {
           </div>
         </div>
 
-        {/* 우측 50%: 인기 상품 TOP 5 (높이를 좌측과 동일하게 고정) */}
-        <div className={`${styles.card} ${styles.chartCard}`}>
+        {/* 인기 상품 TOP 5 — 건수만큼 자연 높이 */}
+        <div className={`${styles.card} ${styles.compactTableCard}`}>
           <div className={styles.cardHeaderRow}>
             <h2 className={styles.cardTitle}>인기 상품 TOP 5</h2>
           </div>
-          <div className={styles.compareTableWrap} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <table className={styles.table} style={{ marginBottom: 0 }}>
+          <div className={styles.compareTableWrap}>
+            <table className={styles.table}>
               <thead>
                 <tr>
                   <th className={`${styles.statusCell} ${styles.col60}`}>순위</th>
