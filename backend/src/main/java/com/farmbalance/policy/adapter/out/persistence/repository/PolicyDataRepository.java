@@ -39,7 +39,34 @@ public interface PolicyDataRepository extends JpaRepository<PolicyDataJpaEntity,
                OR (:period = 'active' AND (p.applyEnd IS NULL OR p.applyEnd >= CURRENT_DATE))
                OR (:period = 'closed' AND p.applyEnd IS NOT NULL AND p.applyEnd < CURRENT_DATE))
           AND (:minConfidence IS NULL OR p.confidence >= :minConfidence)
-        ORDER BY p.applyEnd ASC NULLS LAST, p.createdAt DESC
+          AND (p.title IS NULL
+               OR (LOWER(p.title) NOT LIKE '%주민의견%'
+                   AND LOWER(p.title) NOT LIKE '%의견청취%'
+                   AND LOWER(p.title) NOT LIKE '%의견 청취%'
+                   AND LOWER(p.title) NOT LIKE '%의견수렴%'
+                   AND LOWER(p.title) NOT LIKE '%공람%'
+                   AND LOWER(p.title) NOT LIKE '%행정예고%'
+                   AND LOWER(p.title) NOT LIKE '%열람공고%'
+                   AND LOWER(p.title) NOT LIKE '%사용허가%'
+                   AND LOWER(p.title) NOT LIKE '%점용허가%'
+                   AND LOWER(p.title) NOT LIKE '%구인공고%'
+                   AND LOWER(p.title) NOT LIKE '%구인 공고%'
+                   AND LOWER(p.title) NOT LIKE '%채용공고%'
+                   AND LOWER(p.title) NOT LIKE '%채용 공고%'
+                   AND LOWER(p.title) NOT LIKE '%채용시험%'
+                   AND LOWER(p.title) NOT LIKE '%기간제근로자%'
+                   AND LOWER(p.title) NOT LIKE '%서류전형%'
+                   AND LOWER(p.title) NOT LIKE '%면접시험%'
+                   AND LOWER(p.title) NOT LIKE '%합격자%'
+                   AND LOWER(p.title) NOT LIKE '%민간위탁%'
+                   AND LOWER(p.title) NOT LIKE '%수탁업체%'
+                   AND LOWER(p.title) NOT LIKE '%위탁 운영%'
+                   AND LOWER(p.title) NOT LIKE '%번지%'))
+        ORDER BY
+          CASE WHEN p.applyEnd IS NULL OR p.applyEnd >= CURRENT_DATE THEN 0 ELSE 1 END ASC,
+          CASE WHEN p.applyEnd IS NULL OR p.applyEnd >= CURRENT_DATE THEN p.applyEnd END ASC NULLS LAST,
+          CASE WHEN p.applyEnd IS NOT NULL AND p.applyEnd < CURRENT_DATE THEN p.applyEnd END DESC,
+          p.createdAt DESC
     """)
     Page<PolicyDataJpaEntity> searchPolicies(
             @Param("keyword") String keyword,

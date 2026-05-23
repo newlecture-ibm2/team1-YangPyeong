@@ -247,8 +247,9 @@ public class YangpyeongPolicyClient implements PolicyExternalFetchPort {
         // 5. 상세 페이지에서 본문 요약 시도 (실패해도 목록 제목만으로 저장)
         String contentSummary = fetchDetailContent(detailHref, title);
 
-        // 6. 고유 ID 생성 (URL + 제목 해시 기반 — 중복 방지)
-        String externalId = "YP_" + Math.abs((title + detailHref).hashCode());
+        // 6. 고유 ID 생성 (pageIndex 제거한 URL + 제목 해시 — 같은 공고가 다른 페이지에 나타나도 중복 방지)
+        String stableUrl = detailHref.replaceAll("[&?]pageIndex=\\d+", "");
+        String externalId = "YP_" + Math.abs((title + stableUrl).hashCode());
 
         PolicyData p = new PolicyData();
         p.setExternalId(externalId);
