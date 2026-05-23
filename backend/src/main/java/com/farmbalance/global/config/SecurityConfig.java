@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/shop/product/**", "/api/shop/category").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/policies/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/weather/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/soil/**").permitAll()
 
                         // ── AI 내부 API (JWT 불필요, 컨트롤러에서 X-AI-Internal-Key 검증) ──
                         .requestMatchers("/api/internal/**").permitAll()
