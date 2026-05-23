@@ -13,7 +13,7 @@ export interface PolicyItem {
   target: string | null;
   contentSummary: string | null;
   supportAmount: string | null;
-  applyEnd: string | null; // ISO date string (yyyy-MM-dd)
+  applyEnd: string | null;
   source: string | null;
   sourceUrl: string | null;
 }
@@ -61,7 +61,6 @@ export const POLICY_PERIOD_OPTIONS = [
 /**
  * 지역 필터 옵션 (더미).
  * TODO: 추후 regions 마스터 API (GET /api/regions)에서 동적 로딩으로 교체 예정.
- *       현재는 양평군 중심의 최소 옵션만 제공합니다.
  */
 export const POLICY_REGION_OPTIONS = [
   { value: '', label: '지역: 전체' },
@@ -78,7 +77,13 @@ export interface FarmerProfileSummary {
   crops: string[];
 }
 
-/** 추천된 정책 항목 */
+/** 추천 등급 코드 */
+export type RecommendGrade = 'VERY_SUITABLE' | 'SUITABLE' | 'REFERENCEABLE' | 'LOW_RELEVANCE' | 'HIDDEN';
+
+/** 화면 노출 그룹 */
+export type DisplayGroup = 'TOP_RECOMMENDATION' | 'REFERENCE_COLLAPSED' | 'LOW_RELEVANCE_COLLAPSED' | 'HIDDEN';
+
+/** 추천된 정책 항목 (v2.1) */
 export interface RecommendedPolicy {
   policyId: number;
   title: string;
@@ -88,17 +93,29 @@ export interface RecommendedPolicy {
   applyEnd: string | null;
   sourceUrl: string | null;
   matchScore: number;
+  grade: RecommendGrade;
+  gradeLabel: string;
+  displayGroup: DisplayGroup;
+  reasons: string[];
   matchReason: string;
   summary: string;
+  /** AI Top 5 선정 여부 */
+  aiPick: boolean;
+  /** AI가 생성한 추천 사유 (aiPick=true일 때만 값 있음) */
+  aiReason: string | null;
 }
 
-/** 맞춤 정책 추천 API 응답 */
+/** 맞춤 정책 추천 API 응답 (v2.1) */
 export interface PolicyRecommendResponse {
   farmerProfile: FarmerProfileSummary;
-  /** AI 사유 포함 상위 추천 정책 (TOP 5) */
+  /** 맞춤 추천 (TOP_RECOMMENDATION, 최대 12건) */
+  topRecommendations: RecommendedPolicy[];
+  /** 하위 호환: recommendedPolicies = topRecommendations */
   recommendedPolicies: RecommendedPolicy[];
-  /** 규칙 기반 사유만 포함된 관련 정책 (최대 20개) */
-  relatedPolicies: RecommendedPolicy[];
-  /** 추천 가능 정책 부족 시 안내 메시지 (null이면 정상) */
+  /** 참고 가능 정책 (REFERENCE_COLLAPSED) */
+  referencePolicies: RecommendedPolicy[];
+  /** 관련 낮음 정책 (LOW_RELEVANCE_COLLAPSED) */
+  lowRelevancePolicies: RecommendedPolicy[];
+  /** 추천 가능 정책 부족 시 안내 메시지 */
   insufficientNotice: string | null;
 }
