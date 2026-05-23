@@ -56,7 +56,7 @@ export async function proxyToBackend(
 
   // ── 요청 본문 추출 ──
   let body: string | undefined;
-  if (['POST', 'PUT', 'PATCH'].includes(request.method)) {
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
     try {
       const json = await request.json();
       body = JSON.stringify(json);
