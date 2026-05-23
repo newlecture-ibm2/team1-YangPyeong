@@ -170,6 +170,7 @@ export default function CartPage() {
                       src={item.product.imageUrls[0] || DEFAULT_PRODUCT_IMAGE}
                       alt={item.product.name}
                       className={styles.itemImage}
+                      onError={(e) => { e.currentTarget.src = DEFAULT_PRODUCT_IMAGE; }}
                     />
                   </Link>
 

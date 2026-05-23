@@ -32,9 +32,16 @@ export default function ComparePage() {
       .then(r => r.json())
       .then(res => { 
         const mappedData = (res.data || []).map((row: any) => {
+          // kg → ton 변환
+          if (row.prevYearTon != null) row.prevYearTon = Math.round(row.prevYearTon / 1000 * 100) / 100;
+          if (row.currentYearTon != null) row.currentYearTon = Math.round(row.currentYearTon / 1000 * 100) / 100;
           if (row.prevYearTon === 0) row.prevYearTon = null;
           if (row.currentYearTon === 0) row.currentYearTon = null;
           if (row.prevYearTon == null) row.diffRate = null;
+          // diffTon도 ton 단위로 재계산
+          const prev = row.prevYearTon ?? 0;
+          const curr = row.currentYearTon ?? 0;
+          row.diffTon = Math.round((curr - prev) * 100) / 100;
           return row;
         });
         setData(mappedData); 
@@ -104,7 +111,7 @@ export default function ComparePage() {
           <div className={styles.card} style={{ marginBottom: 0 }}>
             <div className={styles.cardHeaderRow}>
               <h2 className={styles.cardTitle}>생산량 비교</h2>
-              <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>단위: kg</span>
+              <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>단위: ton</span>
             </div>
             {loading ? <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '380px' }}><Spinner /></div> : (
               <ResponsiveContainer width="100%" height={380}>
@@ -112,7 +119,7 @@ export default function ComparePage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="crop" interval={0} angle={-30} textAnchor="end" height={65} tick={{ fontSize: 12 }} />
                   <YAxis width={80} tickFormatter={(value) => value.toLocaleString()} />
-                  <Tooltip formatter={(value) => `${Number(value).toLocaleString()}kg`} />
+                  <Tooltip formatter={(value) => `${Number(value).toLocaleString()}ton`} />
                   <Legend wrapperStyle={{ paddingTop: '8px' }} />
                   <Bar dataKey="prevYearTon" name={`${baseYear}년`} fill="#52B788" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="currentYearTon" name={`${compareYear}년`} fill="#2D6A4F" radius={[4, 4, 0, 0]} />
@@ -133,7 +140,7 @@ export default function ComparePage() {
                   <XAxis dataKey="crop" interval={0} angle={-30} textAnchor="end" height={65} tick={{ fontSize: 12 }} />
                   <YAxis width={60} unit="%" tickFormatter={(value) => value.toLocaleString()} />
                   <Tooltip formatter={(value) => typeof value === 'number' ? `${value.toFixed(2)}%` : `계산 불가`} />
-                  <Bar dataKey="diffRate" name="증감률(%)" fill="#CCFF33" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="diffRate" name="증감률(%)" fill="#2D6A4F" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

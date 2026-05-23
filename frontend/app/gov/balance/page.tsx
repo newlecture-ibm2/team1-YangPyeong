@@ -138,7 +138,7 @@ export default function GovBalancePage() {
       </div>
 
       <div className={styles.filterBar}>
-        <div className={styles.formGroup} style={{ marginBottom: 0, width: '120px' }}>
+        <div className={styles.formGroup} style={{ marginBottom: 0, minWidth: '130px' }}>
           <Dropdown
             options={[
               { value: '전체', label: '상태: 전체' },
@@ -150,7 +150,7 @@ export default function GovBalancePage() {
             size="md"
           />
         </div>
-        <div className={styles.formGroup} style={{ marginBottom: 0, width: '120px' }}>
+        <div className={styles.formGroup} style={{ marginBottom: 0, minWidth: '130px' }}>
           <Dropdown
             options={[
               { value: '전체', label: '경고: 전체' },
