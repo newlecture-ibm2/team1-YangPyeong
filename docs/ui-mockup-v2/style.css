@@ -12,6 +12,27 @@
   box-sizing: border-box;
 }
 
+@font-face {
+  font-family: 'GyeonggiMillenniumBackground';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2410-3@1.0/Batang_Regular.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GyeonggiMillenniumBackground';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2410-3@1.0/Batang_Bold.woff') format('woff');
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MapoFlowerIsland';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/MapoFlowerIslandA.woff') format('woff');
+  font-weight: normal;
+  font-display: swap;
+}
+
 :root {
   /* Exact colors from olhauzhykova.com */
   --sage: #F5F0E8;
@@ -206,7 +227,7 @@ img {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  max-width: 1300px;
+  max-width: 1600px;
   height: 64px;
   background: var(--white);
   border: 1px solid rgba(81, 115, 63, 0.4);
@@ -224,19 +245,20 @@ img {
 }
 
 .header__group--left {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   justify-content: flex-start;
 }
 
 .header__group--center {
-  flex: 2 1 auto;
+  flex: 0 1 auto;
   justify-content: center;
   gap: 0;
 }
 
 .header__group--right {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   justify-content: flex-end;
+  gap: 8px;
 }
 
 .header__brand {
@@ -320,8 +342,8 @@ img {
   padding: 0 24px;
   height: 64px;
   color: var(--dark);
-  font-weight: 500;
-  font-size: 1rem;
+  font-weight: 700;
+  font-size: 1.15rem;
   text-decoration: none;
   transition: color 0.2s;
   white-space: nowrap;
@@ -329,6 +351,39 @@ img {
 
 .header__nav-link:hover {
   color: var(--green-pill);
+}
+
+.header__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--dark);
+  text-decoration: none;
+  transition: color 0.2s, background 0.2s;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.header__icon-btn:hover {
+  background: rgba(81, 115, 63, 0.08);
+  color: var(--green-pill);
+}
+
+/* 장바구니 버튼은 기본 숨김 (로그인 시 표시) */
+.header__icon-btn--cart {
+  display: none;
+}
+
+/* body에 is-logged-in 클래스가 있을 경우 장바구니 표시 및 로그인/회원가입 숨김 */
+body.is-logged-in .header__icon-btn--cart {
+  display: inline-flex;
+}
+
+body.is-logged-in .header__login-btn,
+body.is-logged-in .header__signup-btn {
+  display: none;
 }
 
 .header__login-btn {
@@ -339,8 +394,8 @@ img {
   border-radius: 999px;
   border: 1px solid rgba(81, 115, 63, 0.5);
   color: var(--green-pill);
-  font-weight: 500;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 1.05rem;
   text-decoration: none;
   transition: all 0.2s;
   background: var(--white);
@@ -352,6 +407,28 @@ img {
   transform: translateY(-1px);
 }
 
+.header__signup-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 24px;
+  border-radius: 999px;
+  border: 1px solid var(--green-pill);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  background: var(--green-pill);
+  white-space: nowrap;
+}
+
+.header__signup-btn:hover {
+  background: #3d5a2e;
+  border-color: #3d5a2e;
+  transform: translateY(-1px);
+}
+
 /* ?먥븧?먥븧?먥븧?먥븧?먥븧??HERO ?먥븧?먥븧?먥븧?먥븧?먥븧??*/
 .hero {
   min-height: 100vh;
@@ -359,7 +436,7 @@ img {
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
+  z-index: 10;
   padding: 120px var(--side-pad) 60px;
 }
 
@@ -374,20 +451,34 @@ img {
 
 .hero__ball-container {
   position: absolute;
-  right: -5%;
+  left: 50%;
   top: 50%;
-  transform: translateY(-55%);
+  transform: translate(-50%, -55%);
   z-index: 2;
+  width: clamp(600px, 80vw, 1000px);
+  height: clamp(600px, 80vw, 1000px);
+  pointer-events: none;
 }
 
 .hero__ball {
-  width: clamp(320px, 42vw, 600px);
-  height: clamp(320px, 42vw, 600px);
+  position: absolute;
   border-radius: 50%;
   object-fit: contain;
-  animation: float 8s ease-in-out infinite;
-  position: relative;
-  filter: drop-shadow(0 40px 60px rgba(74, 109, 58, 0.3));
+  filter: drop-shadow(0 20px 30px rgba(74, 109, 58, 0.3));
+}
+
+.hero__ball--left {
+  width: clamp(200px, 25vw, 350px);
+  height: clamp(200px, 25vw, 350px);
+  left: 0%;
+  top: 45%;
+}
+
+.hero__ball--right {
+  width: clamp(300px, 38vw, 500px);
+  height: clamp(300px, 38vw, 500px);
+  right: 0%;
+  top: 35%;
 }
 
 .hero__title {
@@ -398,10 +489,11 @@ img {
 .hero__name,
 .hero__surname {
   font-family: 'MapoFlowerIsland', var(--font-serif);
-  font-weight: 700;
+  font-weight: normal;
+  -webkit-text-stroke: 1px #3d5a2e;
   line-height: 0.95;
-  letter-spacing: -0.03em;
-  color: #51733F;
+  letter-spacing: 0em;
+  color: #3d5a2e;
   animation: fade-in-up 1s ease both;
 }
 
@@ -419,12 +511,12 @@ img {
   margin-top: clamp(30px, 4vw, 60px);
   position: relative;
   z-index: 3;
-  font-family: var(--font-serif);
-  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
-  font-weight: 400;
+  font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
+  font-size: clamp(1.15rem, 1.9vw, 1.6rem);
+  font-weight: 500;
   line-height: 1.7;
-  color: rgba(81, 115, 63, 0.6);
-  letter-spacing: 0.01em;
+  color: rgba(81, 115, 63, 0.95);
+  letter-spacing: 0.02em;
   animation: fade-in-up 1s ease 0.4s both;
 }
 
@@ -459,14 +551,81 @@ img {
   margin-left: clamp(30px, 4vw, 80px);
 }
 
-.flow-card--bottom {
-  border-radius: 9999px 9999px 0 0;
+/* ── CTA Two Circles ── */
+.cta-circles-container {
+  position: relative;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 600px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 50px 20px 100px;
+  z-index: 1;
+}
+
+.cta-circle {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   text-align: center;
-  padding-bottom: clamp(60px, 8vw, 120px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.cta-circle--photo {
+  width: clamp(350px, 40vw, 550px);
+  height: clamp(350px, 40vw, 550px);
+  left: clamp(-300px, -25vw, -100px);
+  top: 50px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.cta-circle--photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cta-circle--text {
+  width: clamp(380px, 45vw, 550px);
+  height: clamp(380px, 45vw, 550px);
+  right: clamp(-100px, -10vw, 50px);
+  bottom: 50px;
+  background-color: #fff;
+  z-index: 3;
+  padding: clamp(20px, 4vw, 50px);
+}
+
+.cta-circle__title {
+  font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
+  font-size: clamp(2rem, 3.5vw, 3.2rem);
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -0.03em;
+  color: var(--dark);
+  margin-bottom: clamp(16px, 2vw, 30px);
+}
+
+.cta-circle__title .font-italic {
+  color: var(--green-pill);
+  font-weight: 500;
+}
+
+.cta-circle__buttons {
+  display: flex;
+  gap: clamp(8px, 1vw, 16px);
+  justify-content: center;
 }
 
 .flow-card__title {
-  font-family: 'MapoFlowerIsland', var(--font-serif);
+  font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
   font-size: clamp(2.5rem, 6vw, 5rem);
   font-weight: 400;
   line-height: 0.95;
@@ -482,6 +641,8 @@ img {
 
 .flow-card__title--cta .font-italic {
   font-weight: 500;
+  margin-right: 0.15em;
+  color: var(--green-pill);
 }
 
 .flow-card__desc {
@@ -513,10 +674,10 @@ img {
 .flow-card__photo {
   position: absolute;
   right: clamp(30px, 6vw, 100px);
-  bottom: clamp(30px, 5vw, 80px);
-  width: clamp(180px, 22vw, 320px);
-  height: clamp(220px, 26vw, 380px);
-  border-radius: 20px;
+  bottom: clamp(-120px, -10vw, -60px);
+  width: clamp(220px, 26vw, 380px);
+  height: clamp(280px, 32vw, 460px);
+  border-radius: 0;
   overflow: hidden;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.12),
@@ -603,24 +764,47 @@ img {
   transform: scale(1.05);
 }
 
-/* ?? ?띿뒪????ぉ 由ъ뒪???? */
+/* ?€?€ ?띿뒪????ぉ 由ъ뒪???€?€ */
 .flow-items {
-  padding: clamp(40px, 5vw, 80px) var(--side-pad) 0;
+  padding: clamp(260px, 20vw, 320px) var(--side-pad) 0;
   max-width: 600px;
   margin-left: clamp(40px, 8vw, 120px);
 }
 
 .flow-item {
-  margin-bottom: clamp(24px, 3vw, 40px);
+  margin-bottom: clamp(40px, 5vw, 70px);
 }
 
 .flow-item__title {
-  font-family: var(--font-serif);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
   font-size: clamp(1.6rem, 2.8vw, 2.5rem);
-  font-weight: 400;
+  font-weight: 500;
+  -webkit-text-stroke: 0.4px currentColor;
   line-height: 1.2;
   letter-spacing: -0.03em;
   color: var(--dark);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.flow-item__title:hover {
+  color: #51733F;
+}
+
+.flow-item__title .arrow {
+  font-family: var(--font-sans);
+  font-size: 0.8em;
+  font-weight: 300;
+  color: rgba(81, 115, 63, 0.5);
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.flow-item__title:hover .arrow {
+  transform: translateX(4px);
+  color: #51733F;
 }
 
 .flow-item__sub {
@@ -629,12 +813,13 @@ img {
   margin-top: 6px;
   padding-left: clamp(16px, 2vw, 28px);
   color: var(--dark-soft);
-  font-weight: 300;
+  font-weight: 400;
+  white-space: nowrap;
 }
 
 /* ── Flow concept photos ── */
 .flow-photo {
-  border-radius: 20px;
+  border-radius: 0;
   overflow: hidden;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.10),
@@ -660,10 +845,10 @@ img {
 /* 수급밸런스 오른쪽 — 세로 사진 */
 .flow-photo--right {
   position: absolute;
-  left: 50%;
-  top: clamp(460px, 40vw, 700px);
-  width: clamp(200px, 22vw, 340px);
-  height: clamp(260px, 28vw, 420px);
+  right: clamp(40px, 10vw, 150px);
+  top: clamp(340px, 28vw, 420px);
+  width: clamp(380px, 40vw, 600px);
+  height: clamp(500px, 52vw, 800px);
   z-index: 4;
   transform: rotate(-2deg);
 }
@@ -681,45 +866,63 @@ img {
   z-index: 4;
 }
 
-/* ?? 아웃라인 장식 원 ?? */
-.flow-outline-circle {
+/* ── 긴 타원 컨테이너 ── */
+.long-oval-wrapper {
+  width: 88%;
+  margin: -120px auto 0;
+  background-color: #e5ead6;
+  /* soft earthy pastel green/beige */
+  border-radius: 500px;
+  position: relative;
+  z-index: 1;
+  padding: 200px 0 100px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 타원 상단 진한 원 ── */
+.dark-circle-badge {
   position: absolute;
-  right: clamp(20px, 8vw, 120px);
-  bottom: clamp(200px, 20vw, 400px);
-  width: clamp(300px, 34vw, 500px);
-  height: clamp(300px, 34vw, 500px);
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(260px, 35vw, 440px);
+  height: clamp(260px, 35vw, 440px);
+  background-color: #a8bd91;
+  /* 연한 그린 (Light Sage/Mint) */
   border-radius: 50%;
-  border: 1.5px solid #252525;
-  z-index: 3;
-  pointer-events: none;
-  --scroll-scale: 0.2;
-  /* Will be updated by JS */
-  animation: circle-spin 60s linear infinite,
-    circle-pulse 8s ease-in-out infinite;
 }
 
-@keyframes circle-spin {
-  from {
-    rotate: 0deg;
-  }
-
-  to {
-    rotate: 360deg;
-  }
+/* ── STATS BREAKOUT ── */
+.long-oval-wrapper .stats {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  position: relative;
+  z-index: 2;
+  margin-top: clamp(80px, 10vw, 150px);
+  margin-bottom: clamp(60px, 8vw, 100px);
 }
 
-@keyframes circle-pulse {
+/* ── 파트너 빈 원 ── */
+.partners-circle-wrapper {
+  position: relative;
+  width: clamp(1200px, 115vw, 1300px);
+  height: clamp(1200px, 115vw, 1300px);
+  margin: -450px auto 100px;
+  border: 2px solid #3d5a2e;
+  border-radius: 50%;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: 150px;
+  /* Reduced from 350px to move content up */
+}
 
-  0%,
-  100% {
-    transform: scale(var(--scroll-scale));
-    opacity: 0.6;
-  }
-
-  50% {
-    transform: scale(calc(var(--scroll-scale) * 1.06));
-    opacity: 1;
-  }
+.partners-circle-wrapper .links {
+  padding: 0;
+  width: 80%;
 }
 
 /* ?먥븧?먥븧?먥븧?먥븧?먥븧??STATS ?먥븧?먥븧?먥븧?먥븧?먥븧??*/
@@ -782,12 +985,17 @@ img {
 }
 
 .links__title {
-  font-family: var(--font-serif);
+  font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
   font-size: clamp(2rem, 4vw, 3.5rem);
-  font-weight: 400;
+  font-weight: 500;
+  -webkit-text-stroke: 0.4px currentColor;
   letter-spacing: -0.02em;
   color: var(--dark);
   margin-bottom: 12px;
+}
+
+.links__title .font-italic {
+  color: var(--green-pill);
 }
 
 .links__desc {
@@ -811,7 +1019,7 @@ img {
   align-items: center;
   gap: clamp(14px, 2vw, 20px);
   padding: clamp(20px, 2.5vw, 28px) clamp(20px, 2.5vw, 28px);
-  border: 1.5px solid rgba(81, 115, 63, 0.15);
+  border: 1.5px solid rgba(81, 115, 63, 0.35);
   border-radius: 16px;
   background: rgba(245, 240, 232, 0.6);
   backdrop-filter: blur(8px);
@@ -830,7 +1038,7 @@ img {
   box-shadow:
     0 8px 24px rgba(81, 115, 63, 0.10),
     0 20px 48px rgba(81, 115, 63, 0.06);
-  border-color: rgba(81, 115, 63, 0.35);
+  border-color: rgba(81, 115, 63, 0.6);
   background: rgba(245, 240, 232, 0.9);
 }
 
@@ -878,17 +1086,17 @@ img {
 }
 
 .links__card-name {
-  font-family: var(--font-serif);
-  font-size: 1.05rem;
-  font-weight: 500;
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
+  font-weight: 700;
   color: var(--dark);
   line-height: 1.3;
 }
 
 .links__card-desc {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  font-weight: 300;
+  font-size: 0.85rem;
+  color: #555555;
+  font-weight: 400;
   line-height: 1.4;
 }
 

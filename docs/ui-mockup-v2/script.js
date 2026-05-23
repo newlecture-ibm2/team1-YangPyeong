@@ -95,4 +95,118 @@
       }
     });
   });
+
+  // ── GSAP Scroll Physics Animation ──
+  if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Floating animation (repeating)
+    const floatLeft = gsap.to('.hero__ball--left', {
+      y: 20,
+      duration: 2,
+      yoyo: true,
+      repeat: -1,
+      ease: "sine.inOut"
+    });
+
+    const floatRight = gsap.to('.hero__ball--right', {
+      y: 30,
+      duration: 2.5,
+      yoyo: true,
+      repeat: -1,
+      ease: "sine.inOut",
+      delay: 0.5
+    });
+
+    // Scroll sequence
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: ".hero",
+        start: "top top",
+        end: "bottom top",
+        scrub: 1,
+        onUpdate: (self) => {
+          if (self.progress > 0) {
+            floatLeft.pause();
+            floatRight.pause();
+          } else {
+            floatLeft.play();
+            floatRight.play();
+          }
+        }
+      }
+    });
+
+    // 1. Drop the balls
+    tl.to('.hero__ball--left', { top: "100%", yPercent: -80, duration: 1, ease: "power2.in" }, 0)
+      .to('.hero__ball--right', { top: "100%", yPercent: -80, duration: 1, ease: "power2.in" }, 0)
+    // (Pause for a moment: Next animation starts at 1.3)
+    // 2. Tilt the top flow-card (angle reduced to 18) AND Roll balls at the exact same time
+      .to('.flow-card--top', { rotation: 18, transformOrigin: "center top", duration: 1.5, ease: "power1.inOut" }, 1.3)
+      .to('.hero__ball--left', { left: "150%", y: "+=300", rotation: 200, duration: 1.5, ease: "power1.in" }, 1.3)
+      .to('.hero__ball--right', { right: "-100%", y: "+=300", rotation: 200, duration: 1.5, ease: "power1.in" }, 1.3)
+    // 3. Return seesaw to its original position very quickly with a tight bounce
+      .to('.flow-card--top', { rotation: 0, duration: 0.15, ease: "back.out(3)" }, 2.8);
+
+    gsap.fromTo('.cta-circle--photo', 
+      { scale: 1.1, transformOrigin: "center center" },
+      {
+        scale: 2.2,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: ".cta-circles-container",
+          start: "top 80%",
+          end: "bottom center",
+          scrub: 1.5
+        }
+      }
+    );
+
+    gsap.fromTo('.cta-circle--text', 
+      { scale: 0.9, transformOrigin: "center center" },
+      {
+        scale: 1.6,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: ".cta-circles-container",
+          start: "top 80%",
+          end: "bottom center",
+          scrub: 1.5
+        }
+      }
+    );
+
+    // Green circle animation
+    gsap.fromTo('.dark-circle-badge', 
+      { scale: 0.8 },
+      {
+        scale: 1.3,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: ".long-oval-wrapper",
+          start: "top 90%",
+          end: "top 20%",
+          scrub: 1.5
+        }
+      }
+    );
+
+    // Partners large empty circle - Trendy 3D tilt & scale reveal
+    gsap.fromTo('.partners-circle-wrapper',
+      { rotationX: 45, scale: 0.9, y: 150, transformPerspective: 1500 },
+      {
+        rotationX: 0,
+        scale: 1,
+        y: 0,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: ".partners-circle-wrapper",
+          start: "top 80%",
+          end: "center 60%",
+          scrub: 1.5
+        }
+      }
+    );
+  }
+
 })();
