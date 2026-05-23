@@ -1268,8 +1268,8 @@ body.is-logged-in .header__signup-btn {
   max-width: 100%;
   z-index: 9999;
   height: 56px;
-  background: var(--sage);
-  border-bottom: 1px solid rgba(81, 115, 63, 0.15);
+  background: var(--white);
+  border-bottom: 1px solid rgba(81, 115, 63, 0.4);
   padding: 0 16px;
   align-items: center;
   justify-content: space-between;

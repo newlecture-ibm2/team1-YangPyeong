@@ -9,7 +9,7 @@
 (function () {
   'use strict';
 
-  const MOBILE_BREAKPOINT = 768;
+  const MOBILE_BREAKPOINT = 1024;
 
   function isMobile() {
     return window.innerWidth <= MOBILE_BREAKPOINT;
