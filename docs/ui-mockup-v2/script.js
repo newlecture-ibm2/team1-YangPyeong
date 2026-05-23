@@ -148,29 +148,32 @@
     // 3. Return seesaw to its original position very quickly with a tight bounce
       .to('.flow-card--top', { rotation: 0, duration: 0.15, ease: "back.out(3)" }, 2.8);
 
-    gsap.fromTo('.cta-circle--photo', 
-      { scale: 1.1, transformOrigin: "center center" },
+    gsap.fromTo('.cta-circle--intro', 
+      { y: 50, opacity: 0 },
       {
-        scale: 2.2,
+        y: 0,
+        opacity: 1,
         ease: "power2.out",
         scrollTrigger: {
           trigger: ".cta-circles-container",
           start: "top 80%",
-          end: "bottom center",
+          end: "center center",
           scrub: 1.5
         }
       }
     );
 
     gsap.fromTo('.cta-circle--text', 
-      { scale: 0.9, transformOrigin: "center center" },
+      { rotation: 25, opacity: 0, x: 150 },
       {
-        scale: 1.6,
-        ease: "power2.out",
+        rotation: 0,
+        x: 0,
+        opacity: 1,
+        ease: "power3.out",
         scrollTrigger: {
           trigger: ".cta-circles-container",
-          start: "top 80%",
-          end: "bottom center",
+          start: "top 75%",
+          end: "center center",
           scrub: 1.5
         }
       }
@@ -191,17 +194,17 @@
       }
     );
 
-    // Partners large empty circle - Trendy 3D tilt & scale reveal
+    // Partners large empty circle - Clean fade & parallax
     gsap.fromTo('.partners-circle-wrapper',
-      { rotationX: 45, scale: 0.9, y: 150, transformPerspective: 1500 },
+      { y: 150, scale: 0.95, opacity: 0 },
       {
-        rotationX: 0,
-        scale: 1,
         y: 0,
+        scale: 1,
+        opacity: 1,
         ease: "power2.out",
         scrollTrigger: {
           trigger: ".partners-circle-wrapper",
-          start: "top 80%",
+          start: "top 85%",
           end: "center 60%",
           scrub: 1.5
         }

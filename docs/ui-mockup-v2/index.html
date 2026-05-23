@@ -73,8 +73,8 @@
     <div class="hero__wrapper">
       <div class="hero__ball-container">
         <!-- Floating balls -->
-        <img class="hero__ball hero__ball--left" src="hero-ball.png" alt="구슬 1" />
-        <img class="hero__ball hero__ball--right" src="hero-ball.png" alt="구슬 2" />
+        <img class="hero__ball hero__ball--left" src="cabbage.png" alt="배추" />
+        <img class="hero__ball hero__ball--right" src="onion.png" alt="양파" />
       </div>
       <div class="hero__title">
         <div class="hero__name" data-animate="slide-up">Farm</div>
@@ -91,9 +91,9 @@
 
     <!-- ▼ 상단 둥근 세이지 카드 (소개) -->
     <div class="flow-card-wrapper" style="position: relative; width: 88%; margin: 0 auto; z-index: 2;">
-      <div class="flow-card flow-card--top show-up" style="width: 100%; margin: 0;">
-        <h2 class="flow-card__title" data-animate="title">
-          자연에 데이터를 심다,<br /><span class="font-italic">스마트 양평</span>
+      <div class="flow-card flow-card--top" style="width: 100%; margin: 0;">
+        <h2 class="flow-card__title">
+          데이터로 잇는 스마트 양평
         </h2>
         <div class="flow-card__desc">
           <p>FarmBalance는 양평군 농업의 수급 불균형을</p>
@@ -109,7 +109,16 @@
 
     <!-- ▼ 긴 타원 컨테이너 시작 -->
     <div style="position:relative; z-index: 5;">
-      <div class="dark-circle-badge"></div>
+      <div class="dark-circle-badge">
+        <svg viewBox="0 0 300 300" class="badge-text-svg">
+          <path id="badgePath" fill="none" d="M 150, 150 m -120, 0 a 120,120 0 1,1 240,0 a 120,120 0 1,1 -240,0" />
+          <text>
+            <textPath href="#badgePath" startOffset="25%" text-anchor="middle">
+              Let's see how I may help you
+            </textPath>
+          </text>
+        </svg>
+      </div>
     </div>
     <div class="long-oval-wrapper">
 
@@ -124,7 +133,7 @@
           <p class="flow-item__sub">간편한 농장 등록과 음성(STT) 기록으로 나만의 영농 일지를 관리하세요</p>
         </div>
         <div class="flow-item show-up">
-          <a href="/shop" class="flow-item__title">양평 직거래 마켓 <span class="arrow">→</span></a>
+          <a href="/shop" class="flow-item__title">양평 장터 <span class="arrow">→</span></a>
           <p class="flow-item__sub">중간 유통 과정 없이 신선한 양평 농산물을 소비자와 직접 거래합니다</p>
         </div>
         <div class="flow-item show-up">
@@ -142,33 +151,51 @@
       <section class="stats">
         <div class="stats__inner">
           <div class="stats__item">
-            <div class="stats__number" data-count="2500">0</div>
-            <div class="stats__label">등록 농가</div>
+            <div class="stats__number" data-count="324">0</div>
+            <div class="stats__label">양평군 등록 농가</div>
           </div>
           <div class="stats__item">
-            <div class="stats__number" data-count="150">0</div>
-            <div class="stats__label">취급 작물 종</div>
+            <div class="stats__number" data-count="28">0</div>
+            <div class="stats__label">수급 관리 작물 종</div>
           </div>
           <div class="stats__item">
-            <div class="stats__number" data-count="98">0</div>
-            <div class="stats__label">수급 예측 정확도 %</div>
+            <div class="stats__number" data-count="1250">0</div>
+            <div class="stats__label">맞춤 정책 매칭 건수</div>
           </div>
           <div class="stats__item">
-            <div class="stats__number" data-count="30">0</div>
-            <div class="stats__label">유통 비용 절감 %</div>
+            <div class="stats__number" data-count="95">0</div>
+            <div class="stats__label">AI 추천 만족도 (%)</div>
           </div>
         </div>
       </section>
 
       <!-- ▼ 하단 세이지 카드 텍스트 (타원 내부로 흡수) -->
       <div class="cta-circles-container" id="contact">
-        <div class="cta-circle cta-circle--photo">
-          <img src="Gemini_Generated_Image_prlpu6prlpu6prlp.png" alt="양평 농업 풍경" />
+        <div class="cta-circle cta-circle--intro">
+          <svg viewBox="0 0 500 500" class="circular-text-svg">
+            <path id="circlePath" fill="none" d="M 250, 250 m -220, 0 a 220,220 0 1,1 440,0 a 220,220 0 1,1 -440,0" />
+            <text>
+              <textPath href="#circlePath" startOffset="0%">
+                FarmBalance • Data-driven Agriculture Ecosystem • Yangpyeong • FarmBalance • Data-driven Agriculture Ecosystem • Yangpyeong • 
+              </textPath>
+            </text>
+          </svg>
+          <div class="intro-content">
+            <h3 class="intro-content__ko">
+              <span class="font-italic">데이터</span>가 이끄는<br/>양평 농업의 내일
+            </h3>
+            <p class="intro-content__desc">
+              생산과 소비의 완벽한 균형을 찾아<br/>모두가 미소 짓는 풍요로운 생태계를 만듭니다.
+            </p>
+          </div>
         </div>
         <div class="cta-circle cta-circle--text">
           <h2 class="cta-circle__title">
-            함께 <span class="font-italic">시작</span>할<br />준비 되셨나요?
+            <span class="font-italic">시작</span>할<br />준비 되셨나요?
           </h2>
+          <p class="cta-circle__desc">
+            지금 팜밸런스에 농장을 등록하고<br/>스마트한 수급 관리를 경험해 보세요.
+          </p>
           <div class="cta-circle__buttons">
             <a href="#" class="flow-btn flow-btn--primary">농장 등록하기</a>
             <a href="#" class="flow-btn flow-btn--secondary">둘러보기</a>
@@ -325,7 +352,7 @@
     <div class="footer__inner">
       <div class="footer__left">
         <div class="footer__logo">
-          <img src="../../frontend/public/images/새싹.png" alt="FarmBalance" width="28" height="28" />
+          <img src="logo.png" alt="FarmBalance" width="28" height="28" />
           <span>FarmBalance</span>
         </div>
         <p class="footer__copy">© 2026 FarmBalance. 양평군 스마트 농업 플랫폼</p>
