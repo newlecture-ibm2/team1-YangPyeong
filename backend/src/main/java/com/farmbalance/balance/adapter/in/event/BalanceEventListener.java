@@ -46,14 +46,18 @@ public class BalanceEventListener {
             SupplyRatioResult result = calculateSupplyRatioUseCase.recalculate(event.cropName());
             evictSupplyTrendCache(event.cropName());
 
+            // 1-0. balance_data 테이블에 최신 계산 결과 동기화 (지자체 포탈 연동)
+            syncToBalanceData(event.cropName(), result);
+
             // 1-1. 파종 밀도에 따른 쏠림/부족 알림 (명세서 5번 반영)
             handleBalanceNotification(event.cropName(), result.getRatio());
 
             // 2. 만약 작물명이 바뀌었다면 이전 작물도 재계산 및 캐시 무효화
             if (event.oldCropName() != null && !event.oldCropName().equals(event.cropName())) {
                 log.info("[Event-Balance] 작물명 변경 감지: {} -> {}. 기존 작물 캐시도 무효화합니다.", event.oldCropName(), event.cropName());
-                calculateSupplyRatioUseCase.recalculate(event.oldCropName());
+                SupplyRatioResult oldResult = calculateSupplyRatioUseCase.recalculate(event.oldCropName());
                 evictSupplyTrendCache(event.oldCropName());
+                syncToBalanceData(event.oldCropName(), oldResult);
             }
 
             log.info("[Event-Balance] 수급 밸런스 업데이트 및 캐시 무효화 완료 - 작물: {}", event.cropName());
@@ -67,8 +71,9 @@ public class BalanceEventListener {
     public void handleHarvestRecorded(HarvestRecordedEvent event) {
         log.info("[Event-Balance] 수확 완료 감지 - 캐시 무효화 시작: {}", event.getCropName());
         try {
-            calculateSupplyRatioUseCase.recalculate(event.getCropName());
+            SupplyRatioResult result = calculateSupplyRatioUseCase.recalculate(event.getCropName());
             evictSupplyTrendCache(event.getCropName());
+            syncToBalanceData(event.getCropName(), result);
             log.info("[Event-Balance] 수확 완료에 따른 수급 밸런스 갱신 완료: {}", event.getCropName());
         } catch (Exception e) {
             log.error("[Event-Balance-Error] 수확 완료 처리 실패: {}, 원인: {}", event.getCropName(), e.getMessage(), e);
@@ -80,6 +85,54 @@ public class BalanceEventListener {
         if (cache != null) {
             cache.evict(cropName);
             log.info("[Cache-Evict] 'supplyTrends' 캐시 삭제 완료 - 키: {}", cropName);
+        }
+    }
+
+    /**
+     * 수급 계산 결과를 balance_data 테이블에 UPSERT (지자체 포탈 데이터 동기화)
+     * UNIQUE 제약: (region_code, crop_id, year, season)
+     */
+    public void syncToBalanceData(String cropName, SupplyRatioResult result) {
+        try {
+            Long cropId = jdbcTemplate.queryForObject(
+                    "SELECT id FROM crops WHERE name = ? LIMIT 1", Long.class, cropName);
+            if (cropId == null) {
+                log.warn("[Balance-Sync] crops 테이블에서 '{}' 를 찾을 수 없어 balance_data 동기화를 건너뜁니다.", cropName);
+                return;
+            }
+
+            String regionCode = "4183"; // 양평군
+            int year = result.getBaseYear();
+            String season = "ALL";
+
+            String upsertSql = """
+                INSERT INTO balance_data (region_code, crop_id, year, season, supply_forecast, demand_forecast, supply_ratio, balance_status, calculated_at, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                ON CONFLICT (region_code, crop_id, year, season)
+                DO UPDATE SET
+                    supply_forecast = EXCLUDED.supply_forecast,
+                    demand_forecast = EXCLUDED.demand_forecast,
+                    supply_ratio = EXCLUDED.supply_ratio,
+                    balance_status = EXCLUDED.balance_status,
+                    calculated_at = NOW(),
+                    updated_at = NOW()
+                """;
+
+            jdbcTemplate.update(upsertSql,
+                    regionCode,
+                    cropId,
+                    year,
+                    season,
+                    result.getCurrentSupplyKg(),
+                    result.getStandardYieldKg(),
+                    Math.round(result.getRatio() * 10.0) / 10.0,
+                    result.getStatus().name()
+            );
+
+            log.info("[Balance-Sync] balance_data 동기화 완료 - 작물: {}, 연도: {}, 수급률: {}% ({})",
+                    cropName, year, result.getRatio(), result.getStatus().name());
+        } catch (Exception e) {
+            log.error("[Balance-Sync-Error] balance_data 동기화 실패 - 작물: {}, 원인: {}", cropName, e.getMessage(), e);
         }
     }
 
