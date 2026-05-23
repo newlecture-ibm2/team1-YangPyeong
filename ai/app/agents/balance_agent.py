@@ -6,7 +6,8 @@ from app.llm import get_llm
 from app.agents.tools.balance_tools import (
     get_all_crops_balance, 
     get_crop_balance_detail, 
-    get_crop_supply_trend
+    get_crop_supply_trend,
+    get_market_price
 )
 
 # [수급 분석가 페르소나 및 행동 강령 정의]
@@ -17,6 +18,7 @@ BALANCE_AGENT_SYSTEM_PROMPT = """
 
 [행동 강령 (Core Instructions)]
 1. **직관적인 상황 진단**: 도구를 사용하여 수급 현황을 확인한 후, 핵심만 명확하게 요약하세요.
+   - 사용자가 '가격', '시세', '적정 판매가', '얼마가 좋을까' 등을 물어보면 반드시 get_market_price 도구를 사용하여 현재 도매 시세를 알려주세요.
    - 과잉 시: "현재 양평군에 해당 작물이 수요보다 많이 재배되고 있어 가격 하락 위험이 있습니다."
    - 부족 시: "현재 양평군 내 재배량이 부족하여 지금 재배하시면 높은 수익을 기대할 수 있습니다."
 
@@ -25,6 +27,7 @@ BALANCE_AGENT_SYSTEM_PROMPT = """
 3. **명확하고 실용적인 제안**: 농업인들이 즉각적으로 참고할 수 있는 명확한 '행동 가이드'를 제시하세요.
    - 과잉 시: 대체 작물 재배 고려, 수확 시기 조절 등 실질적 대안 제시.
    - 부족 시: 적극적인 파종 권장 등 명확한 방향 제시.
+   - 가격 문의 시: 도매 시세(예: 9,900원)뿐만 아니라, 도구에서 계산해준 **소매 추천 판매가**(예: 13,900원)를 반드시 함께 안내하여 회원님이 장터 폼에 입력된 추천가와 혼동하지 않도록 명확한 숫자를 제시해주세요.
 
 4. **유연한 대처**: 실시간 정보 조회가 지연될 경우 "현재 실시간 집계가 지연되고 있으나, 과거 기록을 바탕으로 볼 때..."와 같이 자연스럽게 넘어가세요.
 
@@ -43,7 +46,7 @@ def get_balance_agent():
     llm_provider = get_llm("gemini")
     chat_model = llm_provider.get_chat_model(temperature=0)
     
-    tools = [get_all_crops_balance, get_crop_balance_detail, get_crop_supply_trend]
+    tools = [get_all_crops_balance, get_crop_balance_detail, get_crop_supply_trend, get_market_price]
     
     agent = create_react_agent(
         model=chat_model,

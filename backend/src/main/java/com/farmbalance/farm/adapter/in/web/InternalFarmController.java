@@ -74,8 +74,8 @@ public class InternalFarmController {
             return ResponseEntity.status(403).body(ApiResponse.fail("E-FM-AUTH-001", "AI 내부 API 키가 유효하지 않습니다."));
         }
 
-        // 소유권 검증: X-AI-User-Id 헤더가 있으면 해당 사용자의 농장인지 확인
-        if (requestUserId != null) {
+        // 소유권 검증: X-AI-User-Id 헤더가 있으면 해당 사용자의 농장인지 확인 (0은 테스트 익명 사용자)
+        if (requestUserId != null && requestUserId > 0) {
             Farm farm = loadFarmUseCase.loadFarmDetail(farmId);
             if (!requestUserId.equals(farm.getUserId())) {
                 return ResponseEntity.status(403).body(
@@ -108,6 +108,9 @@ public class InternalFarmController {
                 .totalArea(farm.getArea())
                 .availableArea(Math.max(0, farm.getArea() - usedArea))
                 .activeCrops(activeCrops)
+                .soilType(farm.getSoilType())
+                .ph(farm.getPh())
+                .organicMatter(farm.getOrganicMatter())
                 .build();
 
         // 2. 재배/수확 이력 조회 (최근 10건)

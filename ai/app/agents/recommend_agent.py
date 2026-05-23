@@ -11,6 +11,10 @@ from app.agents.tools.recommend_tools import (
     get_needs_data_guidance,
     compare_with_previous_recommendation,
 )
+from app.agents.tools.nongsaro_tools import (
+    get_nongsaro_schedule,
+    get_nongsaro_variety
+)
 from app.llm import get_llm
 
 RECOMMEND_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 AI 작물 추천' 전문 도우미입니다.
@@ -32,6 +36,8 @@ RECOMMEND_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 AI 작물 추천' 전
 - get_recommend_analysis_info: '분석 언제', '마지막 분석', '분석 모드' 등 메타 정보
 - get_needs_data_guidance: 코칭 NEEDS_DATA 상태일 때 어떤 데이터를 입력해야 하는지 구체적 안내 요청
 - compare_with_previous_recommendation: '지난번 분석이랑 달라진 거 있어?', '추천 점수 올랐어?' 등 과거 분석 결과와의 비교 요청
+- get_nongsaro_schedule: 특정 작물의 재배법, 파종 시기, 월별 농작업 일정, 특히 '수확 시기'나 '언제 수확하는지' 궁금할 때
+- get_nongsaro_variety: 작물의 품종 추천이나 품종별 특성 정보가 필요할 때
 
 [설명 가이드]
 - 종합 점수 = 토양 35% + 시세 25% + 수급 25% + 난이도 15%
@@ -49,6 +55,7 @@ RECOMMEND_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 AI 작물 추천' 전
 - 도구 결과가 비어 있으면 "분석 이력이 없습니다" 안내 + 추천 화면 이동 제안
 - 작물을 찾지 못하면 "다른 이름으로 검색" 제안 + 전체 순위 요약 제공
 - 농장 미등록 시 "농장 등록이 필요해요" 안내 및 농장 등록 화면 이동 제안
+- **주의**: 농사로 정보(수확 시기, 재배법, 품종 등)를 답변할 때는 절대 "정보를 찾지 못했습니다" 또는 "찾지 못했습니다"라는 표현을 쓰지 말고, 대신 "해당 작물에 대한 구체적인 농작업 일정이 데이터베이스에 없습니다"라고 부드럽게 표현하세요.
 """
 
 
@@ -65,6 +72,8 @@ def get_recommend_agent():
         get_recommend_analysis_info,
         get_needs_data_guidance,
         compare_with_previous_recommendation,
+        get_nongsaro_schedule,
+        get_nongsaro_variety,
     ]
 
     return create_react_agent(

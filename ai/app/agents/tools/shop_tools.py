@@ -1251,7 +1251,7 @@ async def autofill_product_info(
     )
 
     return (
-        f"'{product_name}' 상품 정보를 자동으로 채워드렸어요.{user_note} " +
+        f"'{product_name}' 상품 정보를 자동으로 채워드렸어요. (추천 가격: {final_price:,}원){user_note} " +
         _action({"type": "NAVIGATE", "url": "/mypage/seller/register"}) +
         _action({"type": "FILL_FORM", "target": "seller_register", "payload": fill_payload})
     )

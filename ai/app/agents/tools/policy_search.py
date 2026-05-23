@@ -16,7 +16,14 @@ async def search_policies(keyword: str = "", region: str = "") -> List[Dict[str,
     if not session:
         return [{"error": "DB 연결 실패"}]
         
+    logger.info(f"[policy_search] Called with keyword='{keyword}', region='{region}'")
+        
     try:
+        # Debug: check what's in the DB
+        debug_stmt = text("SELECT title FROM policy_data LIMIT 5")
+        debug_res = session.execute(debug_stmt)
+        logger.info(f"[policy_search] DB Sample titles: {[r.title for r in debug_res]}")
+
         query_str = "SELECT id, title, category, target, support_amount, region_code FROM policy_data WHERE deleted_at IS NULL"
         params = {}
         
@@ -26,8 +33,12 @@ async def search_policies(keyword: str = "", region: str = "") -> List[Dict[str,
             
         # 간단한 텍스트 기반 검색 (실제로는 region_code 매핑 필요)
         if region:
-            query_str += " AND region_code = :region"
-            params["region"] = region
+            if region == "양평군":
+                query_str += " AND region_code = '41830'"
+            elif region.isdigit():
+                query_str += " AND region_code = :region"
+                params["region"] = region
+            # 그 외의 지역명은 필터 조건을 아예 걸지 않음 (혹은 전체검색)
             
         query_str += " LIMIT 10"
         
