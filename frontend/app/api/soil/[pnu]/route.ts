@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL } from '@/lib/constants';
 import { safeJsonParse } from '@/lib/safe-json';
+import { getSessionFromCookie } from '@/lib/cookie';
 
 /**
  * 토양 정보 통합 조회 핸들러 (지능형 Fallback 포함)
@@ -12,8 +13,12 @@ export async function GET(
   const { pnu } = await params;
 
   try {
-    const cookieHeader = request.headers.get('cookie');
-    const fetchOptions = cookieHeader ? { headers: { Cookie: cookieHeader } } : {};
+    const session = await getSessionFromCookie();
+    const fetchOptions = {
+      headers: {
+        ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {})
+      }
+    };
 
     // 1. 물리성 및 화학성 데이터 동시 요청
     const [physRes, chemRes] = await Promise.all([
