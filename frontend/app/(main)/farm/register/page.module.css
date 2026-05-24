@@ -1,7 +1,7 @@
 .container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 48px 48px 80px;
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -11,6 +11,8 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  border-bottom: 1px solid #C0C4CC;
+  padding-bottom: 24px;
 }
 
 .breadcrumb {
@@ -28,6 +30,7 @@
 }
 
 .title {
+  font-family: var(--font-page-title);
   font-size: 32px;
   font-weight: 700;
   color: var(--color-text);
@@ -45,6 +48,10 @@
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding: 24px 16px 48px;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import LegalModal from '@/components/common/LegalModal/LegalModal';
 import styles from './Footer.module.css';
 
@@ -13,9 +14,12 @@ export default function Footer() {
   return (
     <>
       <footer className={styles.footer}>
-        <div className={styles.brand}>
-          <Image src="/logo.png" alt="FarmBalance 로고" width={64} height={64} />
-          <span>FarmBalance</span>
+        <div className={styles.copy}>
+          <Link href="/" className={styles.brand}>
+            <Image src="/logo.png" alt="FarmBalance 로고" width={28} height={28} />
+            FarmBalance
+          </Link>
+          © 2026 FarmBalance. All rights reserved.
         </div>
 
         <div className={styles.links}>
@@ -25,10 +29,6 @@ export default function Footer() {
           <button className={styles.link} onClick={() => setOpenModal('privacy')}>
             개인정보처리방침
           </button>
-        </div>
-
-        <div className={styles.copy}>
-          © 2026 FarmBalance. All rights reserved.
         </div>
       </footer>
 

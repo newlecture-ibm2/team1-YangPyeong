@@ -74,7 +74,7 @@
 /* ── 타이틀 ── */
 
 .title {
-  font-family: var(--font-serif);
+  font-family: var(--font-page-title);
   font-size: 26px;
   font-weight: 700;
   color: var(--color-text);

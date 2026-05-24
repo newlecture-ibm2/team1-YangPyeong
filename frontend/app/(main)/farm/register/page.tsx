@@ -350,12 +350,14 @@ export default function FarmRegisterPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <p className={styles.breadcrumb}>
-          <Link href="/farm" className={styles.breadcrumbLink}>내 농장</Link> / 농장 등록
-        </p>
-        <h1 className={styles.title}>농장 <span style={{ fontStyle: 'italic', color: 'var(--color-primary)' }}>등록</span></h1>
-        <p className={styles.subtitle}>새로운 농장을 등록하고 FarmBalance의 AI 분석과 수급 관리를 시작하세요.</p>
+      <div className="page-header">
+        <div>
+          <p className={styles.breadcrumb}>
+            <Link href="/farm" className={styles.breadcrumbLink}>내 농장</Link> / 농장 등록
+          </p>
+          <h1 className="page-title">농장 <em>등록</em></h1>
+          <p className={styles.subtitle}>새로운 농장을 등록하고 FarmBalance의 AI 분석과 수급 관리를 시작하세요.</p>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className={styles.grid}>

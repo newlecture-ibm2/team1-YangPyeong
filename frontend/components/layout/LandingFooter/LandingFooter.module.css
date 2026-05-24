@@ -1,0 +1,90 @@
+@font-face {
+  font-family: 'MapoFlowerIsland';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/MapoFlowerIslandA.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.footer {
+  --dark: #1B1C1E;
+  --white: #FFFFFF;
+  --side-pad: clamp(24px, 5vw, 80px);
+  --font-serif: 'GyeonggiCheonnyeonBatang', var(--font-playfair), 'Playfair Display', 'Noto Serif KR', Georgia, serif;
+  --font-sans: var(--font-noto-sans-kr), 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  padding: 40px var(--side-pad);
+  background: var(--dark);
+  color: rgba(255, 255, 255, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.footerInner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.footerLogo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'MapoFlowerIsland', var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--white);
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+}
+
+.footerLogo img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  filter: brightness(1.2);
+}
+
+.footerCopy {
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+}
+
+.footerRight {
+  display: flex;
+  gap: 24px;
+}
+
+.footerLink {
+  font-size: 0.85rem;
+  transition: color 0.3s;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-sans);
+}
+
+.footerLink:hover {
+  color: var(--white);
+}
+
+@media (max-width: 768px) {
+  .footerInner {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .footerLogo {
+    justify-content: center;
+  }
+
+  .footerRight {
+    justify-content: center;
+  }
+}
