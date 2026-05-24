@@ -33,7 +33,7 @@ export async function getFarmHistories(farmId: number): Promise<CultivationHisto
 /**
  * 재배 이력 직접 기록
  */
-export async function recordFarmHistory(farmId: number, content: string): Promise<void> {
+export async function recordFarmHistory(farmId: number, content: string, recordDate?: string): Promise<void> {
   const res = await fetch(`/api/farm/${farmId}/histories`, {
     method: 'POST',
     headers: {
@@ -42,7 +42,7 @@ export async function recordFarmHistory(farmId: number, content: string): Promis
     body: JSON.stringify({
       activityContent: content,
       activityType: 'USER',
-      recordDate: new Date().toISOString().split('T')[0],
+      recordDate: recordDate || new Date().toISOString().split('T')[0],
     }),
   });
 

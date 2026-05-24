@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Modal from '@/components/common/Modal/Modal';
 import Button from '@/components/common/Button/Button';
+import Input from '@/components/common/Input/Input';
 import VoiceInputButton from '@/components/common/VoiceInputButton/VoiceInputButton';
 import { useSpeechToText } from '@/lib/hooks/useSpeechToText';
 import styles from './HistoryModal.module.css';
@@ -15,7 +16,7 @@ interface FarmHistoryParseResult {
 interface HistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (content: string) => Promise<boolean>;
+  onSave: (content: string, date?: string) => Promise<boolean>;
   farmName: string;
   initialContent?: string;
   mode?: 'create' | 'edit';
@@ -41,6 +42,7 @@ export default function HistoryModal({
 }: HistoryModalProps) {
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [customContent, setCustomContent] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
 
@@ -80,6 +82,7 @@ export default function HistoryModal({
       } else {
         setSelectedActivities([]);
         setCustomContent('');
+        setSelectedDate(new Date().toISOString().split('T')[0]);
       }
     }
   }, [isOpen, initialContent]);
@@ -101,7 +104,7 @@ export default function HistoryModal({
     if (!finalContent.trim()) return;
     
     setIsSubmitting(true);
-    const success = await onSave(finalContent);
+    const success = await onSave(finalContent, selectedDate);
     setIsSubmitting(false);
     
     if (success) {
@@ -118,6 +121,18 @@ export default function HistoryModal({
         <p className={styles.desc}>
           오늘 <strong>{farmName}</strong>에서 수행한 작업을 선택하고 상세 내용을 적어주세요.
         </p>
+
+        {/* 날짜 선택 영역 */}
+        <div className={styles.inputArea} style={{ marginBottom: '20px' }}>
+          <Input 
+            label="작업 날짜" 
+            type="date" 
+            value={selectedDate} 
+            onChange={(e) => setSelectedDate(e.target.value)} 
+            disabled={mode === 'edit'}
+            max={new Date().toISOString().split('T')[0]}
+          />
+        </div>
         
         {/* 선택지 영역 */}
         <div className={styles.inputArea}>

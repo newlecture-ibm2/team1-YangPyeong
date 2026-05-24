@@ -44,10 +44,10 @@ export function useHistory(farmId?: number, skipInitialFetch = false) {
     }
   }, [farmId]);
 
-  const addHistory = async (content: string): Promise<boolean> => {
+  const addHistory = async (content: string, recordDate?: string): Promise<boolean> => {
     if (!farmId) return false;
     try {
-      await recordFarmHistory(farmId, content);
+      await recordFarmHistory(farmId, content, recordDate);
       toast.success('이력이 기록되었습니다.');
       await fetchHistories(); // 갱신
       return true;

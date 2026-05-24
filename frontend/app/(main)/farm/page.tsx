@@ -593,11 +593,11 @@ function FarmDashboardContent() {
   };
 
   // 저장/수정 실행 핸들러
-  const handleSaveHistory = async (content: string) => {
+  const handleSaveHistory = async (content: string, date?: string) => {
     if (editingHistoryId) {
       return await updateHistory(editingHistoryId, content);
     } else {
-      return await addHistory(content);
+      return await addHistory(content, date);
     }
   };
 
