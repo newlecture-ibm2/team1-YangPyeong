@@ -80,7 +80,7 @@ export default function CartPage() {
   return (
     <div className={styles.page}>
       {/* ════════ 페이지 헤더 ════════ */}
-      <div className={styles.pageHeader}>
+      <div className="page-header">
         <div>
           <nav className={styles.breadcrumb}>
             <Link href="/">홈</Link>

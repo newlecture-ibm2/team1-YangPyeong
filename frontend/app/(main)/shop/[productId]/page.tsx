@@ -141,7 +141,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   return (
     <div className={styles.page}>
       {/* ════════ 페이지 헤더 ════════ */}
-      <div className={styles.pageHeader}>
+      <div className="page-header">
         <div>
           <div className={styles.breadcrumb}>
             <Link href="/">홈</Link> › <Link href="/shop">상점</Link> › {product.name}
