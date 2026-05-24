@@ -209,3 +209,33 @@
   text-align: center;
   color: var(--color-gray-500);
 }
+
+/* ── 반응형 (모바일) ── */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .title {
+    font-size: 24px;
+  }
+  .chartCard, .dataGrid {
+    padding: 16px;
+  }
+  .filterBar {
+    flex-direction: column;
+  }
+  .selectInput, .searchInput {
+    width: 100%;
+  }
+  .saveBtnWrap {
+    justify-content: stretch;
+  }
+  .saveBtnWrap button {
+    width: 100%;
+  }
+}

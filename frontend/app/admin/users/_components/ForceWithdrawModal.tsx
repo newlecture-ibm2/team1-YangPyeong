@@ -74,7 +74,7 @@ export default function ForceWithdrawModal({
           />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
+        <div className={styles.actions}>
           <Button variant="outline" onClick={handleClose}>취소</Button>
           <Button variant="primary" onClick={handleConfirm}>강제 탈퇴 실행</Button>
         </div>
