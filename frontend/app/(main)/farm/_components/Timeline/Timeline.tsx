@@ -10,6 +10,7 @@ export interface CultivationHistory {
   cultivationRegistrationId?: number;
   activityType: HistoryType;
   activityContent: string;
+  recordDate?: string;
   createdAt: string;
 }
 
@@ -85,12 +86,15 @@ export default function Timeline({ histories, onEdit, onDelete, onEditCultivatio
         ) : (
           filteredHistories.map((history) => {
             const theme = getTheme(history.activityType);
-            const dateStr = new Date(history.createdAt).toLocaleString('ko-KR', {
+            const targetDateStr = history.recordDate || history.createdAt;
+            // recordDate('YYYY-MM-DD') 처리를 위해 T00:00:00 추가
+            const dateObj = new Date(targetDateStr.includes('T') ? targetDateStr : `${targetDateStr}T00:00:00`);
+            
+            const dateStr = dateObj.toLocaleString('ko-KR', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
+              ...(history.recordDate ? {} : { hour: '2-digit', minute: '2-digit' }) // recordDate가 있으면 날짜만 표시
             });
 
             return (

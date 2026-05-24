@@ -22,12 +22,15 @@ export function useHistory(farmId?: number, skipInitialFetch = false) {
       // 중복되는 날씨 기록 필터링 (같은 날짜에 동일한 내용이면 하나만 표시)
       const filteredData = data.filter((h, index, self) => {
         if (h.activityType !== 'WEATHER') return true;
-        const dateStr = new Date(h.createdAt).toLocaleDateString();
+        const targetDateStr1 = h.recordDate || h.createdAt;
+        const dateStr = new Date(targetDateStr1.includes('T') ? targetDateStr1 : `${targetDateStr1}T00:00:00`).toLocaleDateString();
         const firstIndex = self.findIndex(
-          (item) =>
-            item.activityType === 'WEATHER' &&
-            new Date(item.createdAt).toLocaleDateString() === dateStr &&
+          (item) => {
+            const targetDateStr2 = item.recordDate || item.createdAt;
+            return item.activityType === 'WEATHER' &&
+            new Date(targetDateStr2.includes('T') ? targetDateStr2 : `${targetDateStr2}T00:00:00`).toLocaleDateString() === dateStr &&
             item.activityContent === h.activityContent
+          }
         );
         return firstIndex === index;
       });
