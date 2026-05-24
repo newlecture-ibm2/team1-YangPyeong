@@ -553,21 +553,21 @@
 }
 
 .hero__name {
-  font-size: clamp(5rem, 14vw, 12rem);
+  font-size: clamp(4.5rem, 8.5vw, 10rem);
 }
 
 .hero__surname {
-  font-size: clamp(5rem, 14vw, 12rem);
-  margin-left: clamp(60px, 10vw, 180px);
+  font-size: clamp(4.5rem, 8.5vw, 10rem);
+  margin-left: clamp(40px, 7vw, 150px);
   animation-delay: 0.15s;
 }
 
 .hero__subtitle {
-  margin-top: clamp(30px, 4vw, 60px);
+  margin-top: clamp(20px, 3vw, 45px);
   position: relative;
   z-index: 3;
   font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
-  font-size: clamp(1.15rem, 1.9vw, 1.6rem);
+  font-size: clamp(1.1rem, 1.4vw, 1.45rem);
   font-weight: 500;
   line-height: 1.7;
   color: rgba(81, 115, 63, 0.95);
@@ -587,7 +587,7 @@
   width: 88%;
   margin: 0 auto;
   background: #c8d4b8;
-  padding: clamp(60px, 8vw, 120px) clamp(40px, 7vw, 110px) clamp(80px, 12vw, 200px);
+  padding: clamp(40px, 5vw, 90px) clamp(30px, 5vw, 80px) clamp(50px, 7vw, 120px);
   position: relative;
   overflow: hidden;
   z-index: 2;
@@ -634,9 +634,9 @@
 }
 
 .cta-circle--intro {
-  width: clamp(420px, 45vw, 650px);
-  height: clamp(420px, 45vw, 650px);
-  left: clamp(-380px, -34vw, -130px);
+  width: clamp(380px, 40vw, 550px);
+  aspect-ratio: 1 / 1;
+  left: clamp(-280px, -24vw, -100px);
   top: -40px;
   background-color: #2b3a20;
   color: #fff;
@@ -644,7 +644,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: clamp(60px, 8vw, 120px);
+  padding: clamp(40px, 6vw, 90px);
   position: relative;
 }
 
@@ -704,13 +704,13 @@
 }
 
 .cta-circle--text {
-  width: clamp(550px, 60vw, 800px);
-  height: clamp(550px, 60vw, 800px);
-  right: clamp(-100px, -10vw, 50px);
-  bottom: -100px;
+  width: clamp(480px, 50vw, 680px);
+  aspect-ratio: 1 / 1;
+  right: clamp(-80px, -8vw, 40px);
+  bottom: -80px;
   background-color: #fff;
   z-index: 3;
-  padding: clamp(30px, 5vw, 60px);
+  padding: clamp(24px, 4vw, 50px);
 }
 
 .cta-circle__title {
@@ -750,12 +750,12 @@
 
 .flow-card__title {
   font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
-  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-size: clamp(2rem, 4.5vw, 4rem);
   font-weight: 400;
-  line-height: 0.95;
-  letter-spacing: -0.05em;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   color: var(--dark);
-  margin-bottom: clamp(30px, 4vw, 50px);
+  margin-bottom: clamp(20px, 3vw, 40px);
 }
 
 .flow-card__title--cta {
@@ -770,12 +770,12 @@
 }
 
 .flow-card__desc {
-  padding-left: clamp(80px, 16vw, 280px);
+  padding-left: clamp(40px, 10vw, 200px);
 }
 
 .flow-card__desc p {
   font-family: var(--font-sans);
-  font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+  font-size: clamp(0.95rem, 1.1vw, 1.1rem);
   line-height: 1.6;
   color: var(--dark-soft);
   margin-bottom: 4px;
@@ -798,9 +798,9 @@
 .flow-card__photo {
   position: absolute;
   right: clamp(30px, 6vw, 100px);
-  bottom: clamp(-120px, -10vw, -60px);
-  width: clamp(220px, 26vw, 380px);
-  height: clamp(280px, 32vw, 460px);
+  bottom: clamp(-100px, -7vw, -50px);
+  width: clamp(200px, 22vw, 340px);
+  aspect-ratio: 3 / 4;
   border-radius: 0;
   overflow: hidden;
   box-shadow:
@@ -916,7 +916,7 @@
 
 /* ???? ???????? ????????? */
 .flow-items {
-  padding: clamp(260px, 20vw, 320px) var(--side-pad) 0;
+  padding: clamp(200px, 18vw, 260px) var(--side-pad) 0;
   max-width: 600px;
   margin-left: clamp(20px, 5vw, 80px);
 }
@@ -930,7 +930,7 @@
   align-items: center;
   gap: 8px;
   font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
-  font-size: clamp(1.6rem, 2.8vw, 2.5rem);
+  font-size: clamp(1.4rem, 2vw, 2.1rem);
   font-weight: 500;
   -webkit-text-stroke: 0.4px currentColor;
   line-height: 1.2;
@@ -959,7 +959,7 @@
 
 .flow-item__sub {
   font-family: var(--font-sans);
-  font-size: clamp(0.85rem, 1.1vw, 1rem);
+  font-size: clamp(0.85rem, 0.95vw, 0.95rem);
   margin-top: 6px;
   padding-left: clamp(16px, 2vw, 28px);
   color: var(--dark-soft);
@@ -996,9 +996,9 @@
 .flow-photo--right {
   position: absolute;
   right: clamp(20px, 5vw, 100px);
-  top: clamp(340px, 28vw, 420px);
-  width: clamp(380px, 40vw, 600px);
-  height: clamp(500px, 52vw, 800px);
+  top: clamp(300px, 22vw, 380px);
+  width: clamp(320px, 32vw, 500px);
+  aspect-ratio: 3 / 4;
   z-index: 4;
   transform: rotate(-2deg);
 }
@@ -1112,7 +1112,7 @@
 
 .stats__number {
   font-family: 'GyeonggiCheonnyeonBatang', serif;
-  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-size: clamp(2rem, 3.5vw, 3.5rem);
   font-weight: 700;
   letter-spacing: -0.03em;
   margin-bottom: 8px;
