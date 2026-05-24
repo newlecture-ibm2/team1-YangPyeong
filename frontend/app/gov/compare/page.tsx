@@ -77,7 +77,7 @@ export default function ComparePage() {
       <div className={styles.headerWrapper}>
         <div className={styles.pageHeader}>
           <p className={styles.breadcrumb}>지자체 / 연도 비교</p>
-          <h1 className={styles.pageTitle}>📊 연도 비교</h1>
+          <h1 className="page-title">📊 연도 <em>비교</em></h1>
           <div className={styles.tabsWrapper}>
             <GovTabs />
           </div>

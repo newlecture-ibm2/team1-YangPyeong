@@ -66,5 +66,11 @@ public class BalanceController {
         
         return ApiResponse.ok(calculateSupplyRatioUseCase.getSupplyTrend(cropName));
     }
+
+    @Operation(summary = "랜딩페이지 공용 실제 통계 데이터 조회", description = "비로그인 방문자 대상 전체 활성 농장 수, 관리 작물 종 수, 정책 수 등을 조회합니다.")
+    @GetMapping("/stats")
+    public ApiResponse<com.farmbalance.balance.domain.LandingStatsResult> getLandingStats() {
+        return ApiResponse.ok(calculateSupplyRatioUseCase.getLandingStats());
+    }
 }
 
