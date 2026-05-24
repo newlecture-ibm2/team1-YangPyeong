@@ -202,5 +202,40 @@ public class BalancePersistenceAdapter implements LoadCropStatsPort, LoadFarmSup
                 .unitNm(rs.getString("unit_nm"))
                 .build(), regionCode);
     }
+
+    @Override
+    public long countAllFarms() {
+        String sql = "SELECT COUNT(*) FROM farms WHERE deleted_at IS NULL";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class);
+        return count != null ? count : 0L;
+    }
+
+    @Override
+    public long countAllPolicies() {
+        String sql = "SELECT COUNT(*) FROM policies WHERE deleted_at IS NULL";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class);
+        return count != null ? count : 0L;
+    }
+
+    @Override
+    public long countActiveUsers() {
+        String sql = "SELECT COUNT(*) FROM users WHERE anonymized_at IS NULL";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class);
+        return count != null ? count : 0L;
+    }
+
+    @Override
+    public long countTotalRecommends() {
+        String sql = "SELECT COUNT(*) FROM recommend_history";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class);
+        return count != null ? count : 0L;
+    }
+
+    @Override
+    public long countTotalOrders() {
+        String sql = "SELECT COUNT(*) FROM orders";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class);
+        return count != null ? count : 0L;
+    }
 }
 

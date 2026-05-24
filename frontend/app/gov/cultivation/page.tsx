@@ -58,7 +58,7 @@ export default function CultivationPage() {
       <div className={styles.headerWrapper}>
         <div className={styles.pageHeader}>
           <p className={styles.breadcrumb}>지자체 / 재배 현황</p>
-          <h1 className={styles.pageTitle}>🌾 재배 현황</h1>
+          <h1 className="page-title">🌾 재배 <em>현황</em></h1>
           <div className={styles.tabsWrapper}>
             <GovTabs />
           </div>

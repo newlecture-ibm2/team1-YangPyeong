@@ -16,6 +16,15 @@ const TYPE_LABELS: Record<string, { label: string; icon: string }> = {
   SYSTEM: { label: '시스템', icon: '⚙️' },
 };
 
+/** link가 없거나 비어있을 때 타입별 기본 이동 경로 */
+const TYPE_FALLBACK_LINKS: Record<string, string> = {
+  BALANCE_WARN: '/balance',
+  GUIDE: '/farm',
+  ORDER: '/mypage/orders',
+  POLICY: '/policy',
+  SYSTEM: '/mypage',
+};
+
 export default function MypageNotificationsPage() {
   const router = useRouter();
   const {
@@ -30,12 +39,18 @@ export default function MypageNotificationsPage() {
     markAllAsRead,
   } = useNotifications();
 
-  const handleNotificationClick = (id: number, link: string, isRead: boolean) => {
+  const handleNotificationClick = (
+    id: number,
+    type: string,
+    link: string | null | undefined,
+    isRead: boolean
+  ) => {
     if (!isRead) {
-      markAsRead(id); // 백그라운드 처리 (await 없이 즉시 이동)
+      markAsRead(id); // optimistic update — scroll 유지, 재조회 없음
     }
-    if (link) {
-      router.push(link);
+    const destination = link || TYPE_FALLBACK_LINKS[type];
+    if (destination) {
+      router.push(destination);
     }
   };
 
@@ -105,7 +120,7 @@ export default function MypageNotificationsPage() {
                   key={notif.id}
                   className={styles.notificationCard}
                   data-read={notif.isRead}
-                  onClick={() => handleNotificationClick(notif.id, notif.link, notif.isRead)}
+                  onClick={() => handleNotificationClick(notif.id, notif.type, notif.link, notif.isRead)}
                 >
                   <div className={`${styles.iconWrapper} ${styles[`icon_${notif.type}`]}`}>
                     {TYPE_LABELS[notif.type]?.icon || '🔔'}

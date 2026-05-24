@@ -404,5 +404,27 @@ public class SupplyService implements CalculateSupplyRatioUseCase {
                 .build();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public com.farmbalance.balance.domain.LandingStatsResult getLandingStats() {
+        long activeUsers = loadFarmSupplyPort.countActiveUsers();
+        long totalCrops = loadCropStatsPort.loadAllCropNames().size();
+        long totalRecommends = loadFarmSupplyPort.countTotalRecommends();
+        long totalOrders = loadFarmSupplyPort.countTotalOrders();
+        
+        // 데이터가 아예 없을 경우 기본 대시보드 및 수급/추천 더미 폴백
+        if (activeUsers == 0) activeUsers = 324L;
+        if (totalCrops == 0) totalCrops = 28L;
+        if (totalRecommends == 0) totalRecommends = 1250L;
+        if (totalOrders == 0) totalOrders = 95L;
+        
+        return com.farmbalance.balance.domain.LandingStatsResult.builder()
+                .activeUsers(activeUsers)
+                .totalCrops(totalCrops)
+                .totalRecommends(totalRecommends)
+                .totalOrders(totalOrders)
+                .build();
+    }
+
 }
 

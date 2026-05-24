@@ -46,21 +46,20 @@ const scenarios: FarmBotScenario[] = [
 
   /* ──────────────── 내 농장 ──────────────── */
   /*
-   * 비농업인(게스트)과 농업인이 보는 페이지가 다르므로
-   * 양쪽 스텝을 모두 정의합니다.
-   * useFarmBot에서 DOM에 실제 존재하는 타겟만 필터링합니다.
+   * 비회원·비농업인·농업인 모두 이 시나리오를 공유합니다.
+   * useFarmBot이 DOM에 실제 존재하는 타겟만 필터링하므로
+   * 각 상태에 맞는 스텝만 자동으로 노출됩니다.
+   *
+   * 비회원   → nav-farm + farm-guest-login 만 표시
+   * 농업인   → nav-farm + farm-farmer-* 만 표시
    */
   {
     path: '/farm',
     steps: [
       // ── 공통 ──
       { target: '[data-guide="nav-farm"]', message: '내 농장을 관리하는 페이지예요 🏡', position: 'bottom' },
-      // ── 비농업인(게스트) 전용 ──
-      { target: '[data-guide="farm-guest-banner"]', message: '이 페이지는 농업인을 위한 미리보기 화면이에요. 농업인 인증을 하면 실제 농장 데이터를 관리할 수 있어요! 🌾', position: 'bottom' },
-      { target: '[data-guide="farm-guest-preview"]', message: '현재 보시는 화면은 미리보기예요. 인증 후에는 본인 농장의 실제 면적, 재배 작물, 수익 등을 확인할 수 있어요 📊', position: 'bottom' },
-      { target: '[data-guide="farm-guest-kpi"]', message: '이 카드들은 샘플 데이터예요. 농업인 인증 후에는 실제 농장 면적, 재배 현황, 예상 수익이 표시돼요 💰', position: 'bottom' },
-      { target: '[data-guide="farm-guest-interaction"]', message: '인증하시면 대시보드 차트, 날씨 정보, AI 분석 리포트 등 다양한 기능을 실제로 사용할 수 있어요! 🌤️', position: 'top' },
-      { target: '[data-guide="farm-guest-certify"]', message: '여기를 눌러 농업인 인증을 시작해보세요! 인증 후 모든 기능을 자유롭게 사용할 수 있답니다 ✅', position: 'bottom' },
+      // ── 비회원 전용 — 로그인이 필요한 기능 안내 (GuestPreviewBanner에 연결) ──
+      { target: '[data-guide="farm-guest-login"]', message: '로그인하면 내 농장을 직접 등록하고 AI 분석도 받아볼 수 있어요! 지금 바로 시작해보세요 🔑', position: 'top' },
       // ── 농업인 전용 ──
       { target: '[data-guide="farm-farmer-tabs"]', message: '대시보드, 수급 분석, AI 작물 추천, 농장 일지 탭을 이용할 수 있어요! 📑', position: 'bottom' },
       { target: '[data-guide="farm-farmer-kpi"]', message: '농장 면적, 재배 현황, 예상 수익 등 핵심 지표를 한눈에 확인하세요 📈', position: 'bottom' },

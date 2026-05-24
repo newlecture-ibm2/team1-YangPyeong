@@ -10,6 +10,8 @@ export interface UseSpeechToTextOptions<T> {
   onResult: (data: T) => void;
   onError?: (message: string) => void;
   maxRecordSec?: number;
+  /** 마지막 음성 인식 후 자동 종료까지 침묵 허용 시간(ms). 기본 7000ms */
+  silenceTimeoutMs?: number;
 }
 
 export function useSpeechToText<T>({
@@ -18,6 +20,7 @@ export function useSpeechToText<T>({
   onResult,
   onError,
   maxRecordSec = 60,
+  silenceTimeoutMs = 7000,
 }: UseSpeechToTextOptions<T>) {
   const [state, setState] = useState<SpeechState>('idle');
   const [remainSec, setRemainSec] = useState(maxRecordSec);
@@ -26,6 +29,7 @@ export function useSpeechToText<T>({
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
@@ -42,11 +46,13 @@ export function useSpeechToText<T>({
     }
     streamRef.current?.getTracks().forEach((t) => t.stop());
     if (timerRef.current) clearInterval(timerRef.current);
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     abortRef.current?.abort();
     recognitionRef.current?.stop();
     recorderRef.current = null;
     streamRef.current = null;
     timerRef.current = null;
+    silenceTimerRef.current = null;
     abortRef.current = null;
     recognitionRef.current = null;
   }
@@ -129,28 +135,46 @@ export function useSpeechToText<T>({
 
     const rec = new SpeechRecognitionCtor();
     rec.lang = 'ko-KR';
-    rec.continuous = false;
-    rec.interimResults = false; // P18 — 중간 결과 비활성화
+    // continuous = true: 짧은 침묵 후 자동 종료되지 않고 사용자가 직접 멈출 때까지 계속 인식
+    // (느린 화자나 중간에 잠깐 쉬는 경우 대응)
+    rec.continuous = true;
+    rec.interimResults = false; // 최종 결과만 수집
+
+    // 누적된 최종 인식 텍스트 조각
+    const transcriptParts: string[] = [];
+    // onerror / onend 중복 처리 방지 플래그
+    let hasError = false;
+    let hasProcessed = false;
+
+    /** 침묵 타이머 리셋 — 마지막 음성으로부터 silenceTimeoutMs 후 자동 종료 */
+    function _resetSilenceTimer() {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = setTimeout(() => {
+        recognitionRef.current?.stop();
+      }, silenceTimeoutMs);
+    }
 
     rec.onstart = () => {
       setState('recording');
       _startCountdown();
+      _resetSilenceTimer(); // 녹음 시작 직후부터 침묵 카운트 시작
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult = (event: any) => {
-      const text: string = event.results[0]?.[0]?.transcript ?? '';
-      _cleanup();
-      if (text.trim()) {
-        _sendText(text);
-      } else {
-        onError?.('음성이 인식되지 않았습니다. 다시 시도해주세요.');
-        setState('idle');
+      // continuous 모드에서는 결과가 누적됨 — resultIndex부터 순회하여 최종(isFinal) 결과만 수집
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          transcriptParts.push(event.results[i][0].transcript);
+        }
       }
+      // 음성이 들어올 때마다 침묵 타이머 초기화
+      _resetSilenceTimer();
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onerror = (event: any) => {
+      hasError = true;
       _cleanup();
       if (event.error === 'not-allowed') {
         onError?.('마이크 권한이 필요합니다. 브라우저 설정에서 마이크를 허용해주세요.');
@@ -161,7 +185,17 @@ export function useSpeechToText<T>({
     };
 
     rec.onend = () => {
-      if (timerRef.current) _stopRecording();
+      // onerror가 먼저 처리했거나 이미 처리된 경우 무시
+      if (hasError || hasProcessed) return;
+      hasProcessed = true;
+      _cleanup();
+      const fullText = transcriptParts.join(' ').trim();
+      if (fullText) {
+        _sendText(fullText);
+      } else {
+        onError?.('음성이 인식되지 않았습니다. 다시 시도해주세요.');
+        setState('idle');
+      }
     };
 
     recognitionRef.current = rec;

@@ -36,21 +36,15 @@ export function useNotifications() {
     fetchNotifications(0);
   }, [fetchNotifications]);
 
-  // 헤더 드롭다운에서 읽음 처리 시 현재 페이지 리패치
-  useEffect(() => {
-    const handleReadChanged = () => fetchNotifications(currentPage);
-    window.addEventListener('notif-read-changed', handleReadChanged);
-    return () => window.removeEventListener('notif-read-changed', handleReadChanged);
-  }, [fetchNotifications, currentPage]);
-
   const markAsRead = async (id: number) => {
     try {
       await notificationApi.markAsRead(id);
-      setNotifications((prev) => 
+      // optimistic update — 재조회 없이 UI만 갱신 (scroll 초기화 방지)
+      setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
-      // 헤더 배지 카운트 동기화
-      window.dispatchEvent(new Event('notif-read-changed'));
+      // 헤더 배지 카운트만 동기화 (페이지 자체는 재조회하지 않음)
+      window.dispatchEvent(new CustomEvent('notif-read-changed', { detail: { source: 'page' } }));
     } catch (err) {
       console.error(err);
     }
@@ -59,11 +53,12 @@ export function useNotifications() {
   const markAllAsRead = async () => {
     try {
       await notificationApi.markAllAsRead();
-      setNotifications((prev) => 
+      // optimistic update — 재조회 없이 UI만 갱신 (scroll 초기화 방지)
+      setNotifications((prev) =>
         prev.map((n) => ({ ...n, isRead: true }))
       );
-      // 헤더 배지 카운트 동기화
-      window.dispatchEvent(new Event('notif-read-changed'));
+      // 헤더 배지 카운트만 동기화 (페이지 자체는 재조회하지 않음)
+      window.dispatchEvent(new CustomEvent('notif-read-changed', { detail: { source: 'page' } }));
     } catch (err) {
       console.error(err);
     }
