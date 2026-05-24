@@ -9,6 +9,8 @@ from app.agents.tools.balance_tools import (
     get_crop_supply_trend,
     get_market_price
 )
+# pyrefly: ignore [missing-import]
+from app.agents.tools.rag_search_tool import search_rag_documents_tool
 
 # [수급 분석가 페르소나 및 행동 강령 정의]
 BALANCE_AGENT_SYSTEM_PROMPT = """
@@ -29,7 +31,8 @@ BALANCE_AGENT_SYSTEM_PROMPT = """
    - 부족 시: 적극적인 파종 권장 등 명확한 방향 제시.
    - 가격 문의 시: 도매 시세(예: 9,900원)뿐만 아니라, 도구에서 계산해준 **소매 추천 판매가**(예: 13,900원)를 반드시 함께 안내하여 회원님이 장터 폼에 입력된 추천가와 혼동하지 않도록 명확한 숫자를 제시해주세요.
 
-4. **유연한 대처**: 실시간 정보 조회가 지연될 경우 "현재 실시간 집계가 지연되고 있으나, 과거 기록을 바탕으로 볼 때..."와 같이 자연스럽게 넘어가세요.
+4. **추가 매뉴얼 검색**: DB나 도구에서 관련 수급 정보를 찾지 못한 경우에만 `search_rag_documents_tool`을 사용하여 기타 매뉴얼이나 정보를 검색하세요.
+5. **유연한 대처**: 실시간 정보 조회가 지연될 경우 "현재 실시간 집계가 지연되고 있으나, 과거 기록을 바탕으로 볼 때..."와 같이 자연스럽게 넘어가세요.
 
 [답변 형식 — 반드시 지키세요]
 - 기본적으로 **짧고 핵심만**(4~6줄) 전달하세요. 상세 분석이 필요한 질문(추이 비교, 복수 작물 등)은 늘려도 되지만 반드시 불릿·번호로 구조화하세요.
@@ -46,7 +49,7 @@ def get_balance_agent():
     llm_provider = get_llm("gemini")
     chat_model = llm_provider.get_chat_model(temperature=0)
     
-    tools = [get_all_crops_balance, get_crop_balance_detail, get_crop_supply_trend, get_market_price]
+    tools = [get_all_crops_balance, get_crop_balance_detail, get_crop_supply_trend, get_market_price, search_rag_documents_tool]
     
     agent = create_react_agent(
         model=chat_model,
