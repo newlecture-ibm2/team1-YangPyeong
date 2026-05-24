@@ -1,15 +1,18 @@
 .container {
-  padding: var(--space-xl) var(--space-xl);
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
+  padding: 48px 48px 80px;
 }
 
 .header {
   margin-bottom: var(--space-2xl);
   text-align: center;
+  border-bottom: 1px solid #C0C4CC;
+  padding-bottom: 24px;
 }
 
 .title {
+  font-family: var(--font-page-title);
   font-size: 28px;
   font-weight: 700;
   color: var(--color-text);
@@ -574,12 +577,14 @@
 /* ── 반응형 ── */
 @media (max-width: 768px) {
   .container {
-    padding: var(--space-lg) var(--space-md);
+    padding: 24px 16px 48px;
   }
 
   .header {
     margin-bottom: var(--space-lg);
-  }
+    border-bottom: 1px solid #C0C4CC;
+  padding-bottom: 24px;
+}
 
   .title {
     font-size: 22px;

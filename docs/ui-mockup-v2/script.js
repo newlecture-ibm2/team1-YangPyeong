@@ -3,9 +3,48 @@
  * - Header scroll effect
  * - Scroll-triggered show-up animations
  * - Counter animation for stats
+ * - Mobile menu toggle
+ * - GSAP disabled on mobile (≤768px)
  */
 (function () {
   'use strict';
+
+  const MOBILE_BREAKPOINT = 1024;
+
+  function isMobile() {
+    return window.innerWidth <= MOBILE_BREAKPOINT;
+  }
+
+  // ── Mobile Menu Toggle ──
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const mobileMenuClose = document.getElementById('mobileMenuClose');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+  function openMobileMenu() {
+    if (mobileMenu && mobileMenuOverlay) {
+      mobileMenu.classList.add('open');
+      mobileMenuOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeMobileMenu() {
+    if (mobileMenu && mobileMenuOverlay) {
+      mobileMenu.classList.remove('open');
+      mobileMenuOverlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  }
+
+  if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileMenu);
+  if (mobileMenuClose) mobileMenuClose.addEventListener('click', closeMobileMenu);
+  if (mobileMenuOverlay) mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+
+  // 메뉴 링크 클릭 시 닫기
+  document.querySelectorAll('.mobile-menu__link').forEach(function(link) {
+    link.addEventListener('click', closeMobileMenu);
+  });
 
   // ── Header scroll ──
   const header = document.getElementById('header');
@@ -96,8 +135,8 @@
     });
   });
 
-  // ── GSAP Scroll Physics Animation ──
-  if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+  // ── GSAP Scroll Physics Animation (데스크탑에서만 실행) ──
+  if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined' && !isMobile()) {
     gsap.registerPlugin(ScrollTrigger);
 
     // Floating animation (repeating)
@@ -140,12 +179,11 @@
     // 1. Drop the balls
     tl.to('.hero__ball--left', { top: "100%", yPercent: -80, duration: 1, ease: "power2.in" }, 0)
       .to('.hero__ball--right', { top: "100%", yPercent: -80, duration: 1, ease: "power2.in" }, 0)
-    // (Pause for a moment: Next animation starts at 1.3)
-    // 2. Tilt the top flow-card (angle reduced to 18) AND Roll balls at the exact same time
+    // 2. Tilt the top flow-card AND Roll balls
       .to('.flow-card--top', { rotation: 18, transformOrigin: "center top", duration: 1.5, ease: "power1.inOut" }, 1.3)
       .to('.hero__ball--left', { left: "150%", y: "+=300", rotation: 200, duration: 1.5, ease: "power1.in" }, 1.3)
       .to('.hero__ball--right', { right: "-100%", y: "+=300", rotation: 200, duration: 1.5, ease: "power1.in" }, 1.3)
-    // 3. Return seesaw to its original position very quickly with a tight bounce
+    // 3. Return seesaw
       .to('.flow-card--top', { rotation: 0, duration: 0.15, ease: "back.out(3)" }, 2.8);
 
     gsap.fromTo('.cta-circle--intro', 
@@ -194,7 +232,7 @@
       }
     );
 
-    // Partners large empty circle - Clean fade & parallax
+    // Partners large empty circle
     gsap.fromTo('.partners-circle-wrapper',
       { y: 150, scale: 0.95, opacity: 0 },
       {

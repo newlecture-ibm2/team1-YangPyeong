@@ -4,23 +4,9 @@ import { useState, useEffect } from 'react';
 import type { Post, CategoryResponse } from '../_lib/community.types';
 import PostCard from './PostCard';
 import styles from '../community.module.css';
-import Button from '@/components/common/Button';
-import { useRouter } from 'next/navigation';
 import { getCategories, getPosts } from '../_lib/community.api';
 import Pagination from '@/components/common/Pagination';
-import ModalDialog from '@/components/common/Modal/ModalDialog';
-import { useModalDialog } from '@/components/common/Modal/useModalDialog';
-
-function getUserFromCookie() {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(/(?:^|;\s*)fb-user=([^;]*)/);
-  if (!match) return null;
-  try {
-    return JSON.parse(decodeURIComponent(match[1]));
-  } catch {
-    return null;
-  }
-}
+import { FilterBar, Dropdown, SearchInput } from '@/components';
 
 interface PostListContainerProps {
   initialPosts: Post[];
@@ -45,9 +31,6 @@ export default function PostListContainer({
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
-
-  const router = useRouter();
-  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog();
 
   // 카테고리 목록 로드
   useEffect(() => {
@@ -115,21 +98,6 @@ export default function PostListContainer({
     fetchPosts(undefined, undefined, undefined, newPage);
   };
 
-  const handleWriteClick = async () => {
-    const user = getUserFromCookie();
-    if (!user) {
-      const isConfirmed = await showConfirm(
-        '로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?',
-        '로그인 안내'
-      );
-      if (isConfirmed) {
-        router.push('/login?callbackUrl=/community/write');
-      }
-      return;
-    }
-    router.push('/community/write');
-  };
-
   return (
     <div className={styles.listWrapper}>
       {/* ... (카테고리 탭 영역) */}
@@ -152,47 +120,49 @@ export default function PostListContainer({
       </nav>
 
       <div className={styles.filterSection}>
-        <form onSubmit={handleSearch} className={styles.searchBar} data-guide="community-search">
-          <select
-            value={searchType}
-            onChange={(e) => setSearchType(e.target.value as any)}
-            className={styles.searchTypeSelect}
-          >
-            <option value="all">전체</option>
-            <option value="title">제목</option>
-            <option value="content">내용</option>
-          </select>
-          <input
-            type="text"
-            placeholder="검색어를 입력하세요"
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            className={styles.searchInput}
-          />
-          <button type="submit" className={styles.searchButton}>🔍</button>
-        </form>
-        <div className={styles.sortSection}>
-          <select value={sortBy} onChange={handleSortChange} className={styles.sortSelect}>
-            <option value="createdAt,desc">최신순</option>
-            <option value="viewCount,desc">조회순</option>
-            <option value="commentCount,desc">댓글순</option>
-          </select>
-        </div>
+        <FilterBar
+          dropdowns={[
+            <Dropdown
+              key="searchType"
+              options={[
+                { value: 'all', label: '전체' },
+                { value: 'title', label: '제목' },
+                { value: 'content', label: '내용' },
+              ]}
+              value={searchType}
+              onChange={(value) => setSearchType(value as any)}
+              size="sm"
+            />,
+            <Dropdown
+              key="sortBy"
+              options={[
+                { value: 'createdAt,desc', label: '최신순' },
+                { value: 'viewCount,desc', label: '조회순' },
+                { value: 'commentCount,desc', label: '댓글순' },
+              ]}
+              value={sortBy}
+              onChange={(value) => {
+                setSortBy(value);
+                fetchPosts(undefined, undefined, value);
+              }}
+              size="sm"
+            />,
+          ]}
+          search={
+            <SearchInput
+              placeholder="검색어를 입력하세요"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onSearch={() => fetchPosts()}
+              size="sm"
+            />
+          }
+        />
       </div>
 
       <div className={styles.listHeader}>
         <div className={styles.listMeta}>
           {loading ? '불러오는 중...' : <>총 <strong>{totalCount}</strong>개의 지혜가 쌓여있습니다. (페이지 {currentPage + 1} / {totalPages})</>}
-        </div>
-        <div className={styles.actions}>
-          <Button
-            variant="primary"
-            size="md"
-            onClick={handleWriteClick}
-            data-guide="community-write"
-          >
-            지식 공유하기
-          </Button>
         </div>
       </div>
 
@@ -215,12 +185,6 @@ export default function PostListContainer({
           <p>{loading ? '데이터를 불러오는 중입니다...' : '아직 등록된 게시글이 없습니다. 첫 번째 주인공이 되어보세요!'}</p>
         </div>
       )}
-
-      <ModalDialog
-        {...dialog}
-        onConfirm={handleConfirm}
-        onClose={handleClose}
-      />
     </div>
   );
 }

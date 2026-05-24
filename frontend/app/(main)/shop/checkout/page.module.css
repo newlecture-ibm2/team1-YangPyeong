@@ -5,9 +5,9 @@
 /* ── 페이지 컨테이너 ── */
 
 .page {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: var(--space-xl) var(--space-lg);
+  padding: 48px 48px 80px;
   min-height: 60vh;
 }
 
@@ -40,10 +40,12 @@
 
 .pageHeader {
   margin-bottom: var(--space-xl);
+  border-bottom: 1px solid #C0C4CC;
+  padding-bottom: 24px;
 }
 
 .pageTitle {
-  font-family: var(--font-serif);
+  font-family: var(--font-page-title);
   font-size: 32px;
   font-weight: 700;
   color: var(--color-text);
@@ -521,6 +523,10 @@
 }
 
 @media (max-width: 768px) {
+  .page {
+    padding: 24px 16px 48px;
+  }
+
   .pageTitle {
     font-size: 24px;
   }

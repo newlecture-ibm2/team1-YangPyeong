@@ -9,7 +9,9 @@
   min-width: 600px;
 }
 
-.header { margin-bottom: 4px; }
+.header { margin-bottom: 4px;   border-bottom: 1px solid #C0C4CC;
+  padding-bottom: 24px;
+}
 
 .label {
   font-size: 12px;

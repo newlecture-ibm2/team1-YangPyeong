@@ -113,7 +113,7 @@ function CheckoutContent() {
 
       {/* ════════ 페이지 헤더 ════════ */}
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>주문/결제</h1>
+        <h1 className="page-title">주문/<em>결제</em></h1>
         <p className={styles.pageSub}>
           배송 정보와 결제 수단을 확인한 후 결제를 진행해 주세요.
         </p>

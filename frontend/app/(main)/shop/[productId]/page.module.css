@@ -7,9 +7,9 @@
 /* ── 페이지 컨테이너 ── */
 
 .page {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: var(--space-xl) var(--space-lg);
+  padding: 48px 48px 80px;
   min-height: 60vh;
 }
 
@@ -606,6 +606,10 @@
    ══════════════════════════════════════════ */
 
 @media (max-width: 768px) {
+  .page {
+    padding: 24px 16px 48px;
+  }
+
   .detailGrid {
     grid-template-columns: 1fr;
   }
