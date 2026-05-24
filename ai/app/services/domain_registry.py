@@ -15,9 +15,12 @@ logger = logging.getLogger(__name__)
 class LLMConfig:
     """도메인별 LLM 튜닝 옵션. None이면 dispatcher 기본값 사용."""
     temperature: float = 0.2
-    # gemini-2.5-flash는 thinking 토큰이 max_output_tokens 예산을 소모하므로
-    # JSON 잘림 방지를 위해 충분히 크게 설정 (실제 JSON 응답은 200~300 토큰 수준)
-    max_output_tokens: int = 8192
+    # gemini-2.5-flash는 thinking 토큰이 max_output_tokens 예산을 공유한다.
+    # 복잡한 SYSTEM_PROMPT 분석 시 thinking이 7000~8000 토큰을 소모해
+    # 실제 JSON 출력 공간이 부족해지는 현상이 재현됨.
+    # google-generativeai 0.8.x SDK는 thinking_config(=thinking_budget: 0)를 지원하지 않으므로
+    # 모델 최대 출력 한도(65,536)로 예산을 설정해 thinking+JSON 공간을 모두 확보한다.
+    max_output_tokens: int = 65536
 
 
 @dataclass
