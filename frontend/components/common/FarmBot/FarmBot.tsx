@@ -173,7 +173,7 @@ export default function FarmBot({ children }: FarmBotProps) {
           title="가이드봇 다시 보기"
           aria-label="가이드봇 다시 보기"
         >
-          <Image src="/icon.png" alt="가이드봇" width={64} height={64} className={styles.restoreIcon} />
+          <Image src="/icon.png" alt="가이드봇" width={76} height={76} className={styles.restoreIcon} />
         </button>
       </FarmBotContext.Provider>
     );

@@ -671,8 +671,8 @@
   }
 
   .restoreBtn {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     bottom: calc(72px + env(safe-area-inset-bottom));
     right: 20px;
   }
@@ -684,8 +684,8 @@
   bottom: 80px;
   right: 80px;
   z-index: 10000;
-  width: 64px;
-  height: 64px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   border: 2px solid var(--color-primary, #2d6a4f);
   background: white;
