@@ -13,7 +13,7 @@ interface MainLayoutShellProps {
   children: ReactNode;
 }
 
-export default function MainLayoutShell({ children }: MainLayoutShellProps) {
+export function MainLayoutShell({ children }: MainLayoutShellProps) {
   const pathname = usePathname();
   const isLanding = pathname === '/';
 
