@@ -106,7 +106,7 @@ export default function Header() {
     await handleLogout();
   };
 
-  const displayName = user?.email ? user.email.split('@')[0] : '';
+  const displayName = user?.name || (user?.email ? user.email.split('@')[0] : '');
 
   const [scrolled, setScrolled] = useState(false);
 
@@ -217,7 +217,7 @@ export default function Header() {
               <button className={styles.userBtn} onClick={() => setDropdownOpen(!dropdownOpen)}>
                 {user.profileImageUrl && !profileImageLoadFailed ? (
                   <span className={styles.avatar}>
-                    <Image src={user.profileImageUrl} alt="프로필" width={32} height={32} className={styles.avatarImg} onError={() => setProfileImageLoadFailed(true)} />
+                    <img src={user.profileImageUrl} alt="프로필" className={styles.avatarImg} onError={() => setProfileImageLoadFailed(true)} />
                   </span>
                 ) : (
                   <span className={styles.avatar}>{displayName.charAt(0).toUpperCase()}</span>
