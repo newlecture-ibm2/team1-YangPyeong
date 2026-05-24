@@ -19,5 +19,10 @@ public interface CalculateSupplyRatioUseCase {
      * @return 대시보드 응답 DTO
      */
     BalanceDashboardResponse getDashboard(Long userId, String townCode);
+
+    /**
+     * 비로그인 랜딩페이지에서 노출할 전체 실제 통계 데이터를 조회합니다.
+     */
+    com.farmbalance.balance.domain.LandingStatsResult getLandingStats();
 }
 

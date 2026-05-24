@@ -115,7 +115,7 @@ export default function GovBalancePage() {
         <div className={styles.pageHeader}>
           <p className={styles.breadcrumb}>홈 / 지자체 / 수급 분석</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <h1 className={styles.pageTitle}>수급 분석</h1>
+            <h1 className="page-title">수급 <em>분석</em></h1>
           </div>
           <p className={styles.pageSub} style={{ marginTop: '8px' }}>
             {region} 주요 작물의 공급률과 수급 위험 상태를 확인하세요.

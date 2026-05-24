@@ -84,7 +84,7 @@ export default function GovDashboardPage() {
         <div className={styles.pageHeader}>
           <p className={styles.breadcrumb}>지자체 / 대시보드</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <h1 className={styles.pageTitle}>{region} <em>대시보드</em></h1>
+            <h1 className="page-title">{region} <em>대시보드</em></h1>
           </div>
           <div className={styles.tabsWrapper}>
             <GovTabs />
