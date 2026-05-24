@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL } from '@/lib/constants';
 import { safeJsonParse } from '@/lib/safe-json';
+import { getSessionFromCookie } from '@/lib/cookie';
 
 /**
  * 토양 정보 통합 조회 핸들러 (지능형 Fallback 포함)
@@ -12,10 +13,17 @@ export async function GET(
   const { pnu } = await params;
 
   try {
+    const session = await getSessionFromCookie();
+    const fetchOptions = {
+      headers: {
+        ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {})
+      }
+    };
+
     // 1. 물리성 및 화학성 데이터 동시 요청
     const [physRes, chemRes] = await Promise.all([
-      fetch(`${BACKEND_URL}/api/soil/physical/${pnu}`),
-      fetch(`${BACKEND_URL}/api/soil/chemical/${pnu}`)
+      fetch(`${BACKEND_URL}/api/soil/physical/${pnu}`, fetchOptions),
+      fetch(`${BACKEND_URL}/api/soil/chemical/${pnu}`, fetchOptions)
     ]);
 
     const physData = (await safeJsonParse(physRes, `soil/physical/${pnu}`)) as Record<string, unknown> | null;
@@ -33,7 +41,7 @@ export async function GET(
       const bjdCode = pnu.substring(0, 10);
       console.log(`[Soil API Proxy] 개별 데이터 없음 -> 법정동 통계 조회 시작: ${bjdCode}`);
       
-      const statRes = await fetch(`${BACKEND_URL}/api/soil/statistics/${bjdCode}`);
+      const statRes = await fetch(`${BACKEND_URL}/api/soil/statistics/${bjdCode}`, fetchOptions);
       const statData = (await safeJsonParse(statRes, `soil/statistics/${bjdCode}`)) as Record<string, unknown> | null;
       
       const statBody = (statData as Record<string, unknown> | null)?.body as Record<string, unknown> | undefined;

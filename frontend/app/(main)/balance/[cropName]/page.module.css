@@ -1226,4 +1226,29 @@
   border: 1px dashed var(--color-border);
 }
 
+.donutGuideBanner {
+  margin-top: 20px;
+  padding: 12px 18px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.donutGuideIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.donutGuideText {
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
 

@@ -25,6 +25,9 @@ public class FarmAgentSummaryResponse {
         private Double totalArea;
         private Double availableArea;
         private List<String> activeCrops;
+        private String soilType;
+        private Double ph;
+        private Double organicMatter;
     }
 
     @Getter

@@ -37,9 +37,11 @@ async def get_nongsaro_schedule(crop_keyword: str, month: int = None):
             query += " AND start_month = :month"
             params["month"] = month
 
-        query += " ORDER BY start_month, start_period LIMIT 20"
+        query += " ORDER BY start_month, start_period LIMIT 100"
 
+        logger.info(f"[nongsaro_tools] get_nongsaro_schedule executing with keyword: {crop_keyword}, month: {month}")
         result = session.execute(text(query), params).fetchall()
+        logger.info(f"[nongsaro_tools] query result count: {len(result)}")
 
         if not result:
             return f"'{crop_keyword}'에 대한 농작업 일정 정보를 찾을 수 없습니다."
