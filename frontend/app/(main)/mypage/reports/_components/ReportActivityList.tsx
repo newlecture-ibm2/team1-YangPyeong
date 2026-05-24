@@ -38,7 +38,7 @@ export default function ReportActivityList({ items }: ReportActivityListProps) {
           }}
         >
           <div className={styles.titleRow}>
-            <h3 className={styles.title}>
+            <h3 className={styles.cardTitle}>
               {report.targetTitle}
             </h3>
           </div>

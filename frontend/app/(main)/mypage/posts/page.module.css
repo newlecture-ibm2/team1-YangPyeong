@@ -100,7 +100,7 @@
   gap: 10px;
 }
 
-.title {
+.cardTitle {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
@@ -109,7 +109,7 @@
   transition: color var(--transition-fast);
 }
 
-.title:hover {
+.cardTitle:hover {
   color: var(--color-primary);
 }
 
@@ -165,7 +165,7 @@
     gap: 6px;
   }
 
-  .title {
+  .cardTitle {
     font-size: 14px;
   }
 

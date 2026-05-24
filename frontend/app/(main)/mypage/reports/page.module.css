@@ -58,7 +58,7 @@
   gap: 10px;
 }
 
-.title {
+.cardTitle {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
@@ -117,7 +117,7 @@
     gap: 6px;
   }
 
-  .title {
+  .cardTitle {
     font-size: 14px;
   }
 
