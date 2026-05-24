@@ -624,110 +624,46 @@ export default function BalanceDetailPage({ params }: PageProps) {
       </div>
 
       <div className={styles.grid2}>
-        {/* 🏔️ 양평군 전체 수급 카드 (도넛 차트 탑재) */}
-        <Card className={styles.chartCard}>
-          <h2 className={styles.cardTitle}>🏔️ 양평군 5대 주요 작물 전체 공급 비중</h2>
-          {(() => {
-            if (!dashboardData || !dashboardData.totalSummary) {
-              return <p className={styles.noDataText}>대시보드 데이터를 불러오는데 실패했거나 연동 대기 중입니다.</p>;
-            }
+        <Card className={styles.card}>
+          <h2 className={styles.cardTitle}>연도별 수급 추이</h2>
+          <div className={styles.trendChartContainer}>
+            {trendData.map((item, index) => {
+              const maxVal = Math.max(...trendData.map(t => Math.max(t.supply, t.demand)));
+              const supplyHeight = (item.supply / maxVal) * 100;
+              const demandHeight = (item.demand / maxVal) * 100;
 
-            const OFFICIAL_CROPS = new Set(['감자', '고구마', '고추', '메밀', '방울토마토']);
-            const kosisTotalCrops = dashboardData.totalSummary.crops.filter(c => OFFICIAL_CROPS.has(c.cropName));
-            
-            const totalSupplyKg = kosisTotalCrops.reduce((sum, c) => sum + c.currentSupplyKg, 0);
-
-            if (totalSupplyKg === 0) {
-              return <p className={styles.noDataText}>양평군 전체에 등록된 5대 작물 재배 정보가 없습니다.</p>;
-            }
-
-            // 도넛 차트용 색상 스키마
-            const cropColors: Record<string, string> = {
-              '감자': '#A78BFA',      // 보라
-              '고구마': '#F43F5E',    // 로즈
-              '고추': '#F97316',      // 오렌지
-              '메밀': '#10B981',      // 초록
-              '방울토마토': '#3B82F6'  // 파랑
-            };
-
-            // 누적 계산을 통해 도넛 세그먼트 생성
-            const C = 439.82; // 2 * PI * r (r = 70)
-            let accumulatedPercent = 0;
-
-            const chartSegments = kosisTotalCrops.map((crop) => {
-              const currentSupply = crop.currentSupplyKg;
-              const percent = (currentSupply / totalSupplyKg) * 100;
-              const strokeLength = C * (percent / 100);
-              const strokeOffset = C - strokeLength + (C * (accumulatedPercent / 100));
-              
-              accumulatedPercent += percent;
-
-              return {
-                cropName: crop.cropName,
-                percent: Math.round(percent * 10) / 10,
-                strokeLength,
-                strokeOffset,
-                color: cropColors[crop.cropName] || '#6B7280',
-                currentSupplyKg: currentSupply
+              const formatValue = (val: number) => {
+                if (val === 0) return '';
+                return val >= 10000 ? `${(val / 10000).toFixed(1).replace('.0', '')}만` : val.toLocaleString();
               };
-            });
 
-            return (
-              <div className={styles.donutChartContainer}>
-                {/* SVG Donut Chart */}
-                <div className={styles.donutSvgWrapper}>
-                  <svg className={styles.donutSvg} viewBox="0 0 200 200" width="180" height="180">
-                    {/* Background Circle */}
-                    <circle cx="100" cy="100" r="70" stroke="#f1f5f9" strokeWidth="22" fill="transparent" />
-                    
-                    {/* Segments */}
-                    <g transform="rotate(-90 100 100)">
-                      {chartSegments.map((seg) => (
-                        <circle
-                          key={seg.cropName}
-                          cx="100"
-                          cy="100"
-                          r="70"
-                          stroke={seg.color}
-                          strokeWidth="22"
-                          strokeDasharray={`${seg.strokeLength} ${C - seg.strokeLength}`}
-                          strokeDashoffset={-seg.strokeOffset}
-                          fill="transparent"
-                          strokeLinecap="butt"
-                          className={styles.donutSegment}
-                          style={{
-                            transition: 'stroke-dashoffset 0.8s ease-in-out',
-                          }}
-                        >
-                          <title>{`${seg.cropName}: ${seg.percent}% (${formatWeightWithUnit(seg.currentSupplyKg)})`}</title>
-                        </circle>
-                      ))}
-                    </g>
-
-                    {/* Center Text */}
-                    <g transform="translate(100, 102)" textAnchor="middle">
-                      <text className={styles.donutCenterLabel} y="-10" fill="var(--color-text-secondary)" fontSize="12" fontWeight="500">총 공급량</text>
-                      <text className={styles.donutCenterValue} y="12" fill="var(--color-text)" fontSize="16" fontWeight="800">
-                        {formatWeightWithUnit(totalSupplyKg)}
-                      </text>
-                    </g>
-                  </svg>
-                </div>
-
-                {/* Donut Legend */}
-                <div className={styles.donutLegend}>
-                  {chartSegments.map((seg) => (
-                    <div key={seg.cropName} className={styles.legendItemDonut}>
-                      <span className={styles.legendColorBadge} style={{ backgroundColor: seg.color }}></span>
-                      <span className={styles.legendCropName}>{seg.cropName}</span>
-                      <span className={styles.legendCropRatio}>{seg.percent}%</span>
-                      <span className={styles.legendCropKg}>({formatWeightWithUnit(seg.currentSupplyKg)})</span>
+              return (
+                <div key={item.year} className={styles.trendCol}>
+                  <div className={styles.barGroup}>
+                    <div
+                      className={styles.barSupply}
+                      style={{ height: `${supplyHeight}%` }}
+                      title={`공급: ${formatWeightWithUnit(item.supply)}`}
+                    >
+                      {supplyHeight > 5 && <span className={styles.barValue}>{formatValue(item.supply)}</span>}
                     </div>
-                  ))}
+                    <div
+                      className={styles.barDemand}
+                      style={{ height: `${demandHeight}%` }}
+                      title={`수요: ${formatWeightWithUnit(item.demand)}`}
+                    >
+                      {demandHeight > 5 && <span className={styles.barValueDemand}>{formatValue(item.demand)}</span>}
+                    </div>
+                  </div>
+                  <p className={styles.yearLabel}>{item.year}</p>
                 </div>
-              </div>
-            );
-          })()}
+              );
+            })}
+          </div>
+          <div className={styles.legend}>
+            <span className={styles.legendItem}><span className={styles.dotSupply}></span> 공급(통계/실시간)</span>
+            <span className={styles.legendItem}><span className={styles.dotDemand}></span> 수요(기준치)</span>
+          </div>
         </Card>
 
         {/* AI INSIGHT CARD */}
@@ -821,46 +757,151 @@ export default function BalanceDetailPage({ params }: PageProps) {
 
       {/* REAL TREND CHART */}
       <div className={styles.grid2}>
-        <Card className={styles.card}>
-          <h2 className={styles.cardTitle}>연도별 수급 추이</h2>
-          <div className={styles.trendChartContainer}>
-            {trendData.map((item, index) => {
-              const maxVal = Math.max(...trendData.map(t => Math.max(t.supply, t.demand)));
-              const supplyHeight = (item.supply / maxVal) * 100;
-              const demandHeight = (item.demand / maxVal) * 100;
+        {/* 🏔️ 양평군 전체 수급 카드 (도넛 차트 탑재) */}
+        <Card className={styles.chartCard}>
+          <h2 className={styles.cardTitle}>🏔️ 양평군 9대 대표 작물 전체 공급 비중</h2>
+          {(() => {
+            if (!dashboardData || !dashboardData.totalSummary) {
+              return <p className={styles.noDataText}>대시보드 데이터를 불러오는데 실패했거나 연동 대기 중입니다.</p>;
+            }
 
-              const formatValue = (val: number) => {
-                if (val === 0) return '';
-                return val >= 10000 ? `${(val / 10000).toFixed(1).replace('.0', '')}만` : val.toLocaleString();
+            const OFFICIAL_CROPS = new Set(['쌀', '배추', '수박', '무', '호박', '감자', '고구마', '상추', '옥수수']);
+            const kosisTotalCrops = dashboardData.totalSummary.crops
+              .filter(c => OFFICIAL_CROPS.has(c.cropName))
+              .sort((a, b) => b.currentSupplyKg - a.currentSupplyKg); // 비중이 가장 큰 작물부터 내림차순 정렬
+            
+            const totalSupplyKg = kosisTotalCrops.reduce((sum, c) => sum + c.currentSupplyKg, 0);
+
+            if (totalSupplyKg === 0) {
+              return <p className={styles.noDataText}>양평군 전체에 등록된 9대 대표 작물 재배 정보가 없습니다.</p>;
+            }
+
+            // 도넛 차트용 색상 스키마 (겹침과 혼선이 절대 없는 궁극의 극대비 9색 팔레트)
+            const cropColors: Record<string, string> = {
+              '쌀': '#F59E0B',        // 풍요로운 황금색 (양평 대표 작물 쌀)
+              '배추': '#16A34A',      // 정석 그린 (배추 겉잎)
+              '수박': '#EF4444',      // 강렬한 레드 (수박 속살 - 오렌지와 혼선 전면 차단)
+              '무': '#94A3B8',        // 깨끗한 실버 그레이 (무의 흰 단면 느낌)
+              '호박': '#EAB308',      // 선명한 옐로우 (단호박/늙은호박 골드 옐로우)
+              '감자': '#78350F',      // 듬직한 대지 브라운 (흙감자 갈색)
+              '고구마': '#C084FC',    // 부드러운 라벤더 퍼플 (자색고구마 연보라)
+              '상추': '#A3E635',      // 싱그러운 상큼 라임 (상추 연두색)
+              '옥수수': '#2563EB'     // 청량한 로열 블루 (수확용 시원한 파랑)
+            };
+
+            // 누적 계산을 통해 도넛 세그먼트 생성 (오프셋 겹침 연산 버그 완전 해결)
+            const C = 439.82; // 2 * PI * r (r = 70)
+            let accumulatedPercent = 0;
+
+            const chartSegments = kosisTotalCrops.map((crop) => {
+              const currentSupply = crop.currentSupplyKg;
+              const percent = (currentSupply / totalSupplyKg) * 100;
+              const strokeLength = C * (percent / 100);
+              
+              // 각 조각이 겹치지 않고 꼬리에 꼬리를 물며 이어지도록 오프셋 누적 연산
+              const strokeOffset = C * (accumulatedPercent / 100);
+              
+              accumulatedPercent += percent;
+
+              return {
+                cropName: crop.cropName,
+                percent: Math.round(percent * 10) / 10,
+                strokeLength,
+                strokeOffset,
+                color: cropColors[crop.cropName] || '#6B7280',
+                currentSupplyKg: currentSupply
               };
+            });
 
-              return (
-                <div key={item.year} className={styles.trendCol}>
-                  <div className={styles.barGroup}>
-                    <div
-                      className={styles.barSupply}
-                      style={{ height: `${supplyHeight}%` }}
-                      title={`공급: ${formatWeightWithUnit(item.supply)}`}
-                    >
-                      {supplyHeight > 5 && <span className={styles.barValue}>{formatValue(item.supply)}</span>}
-                    </div>
-                    <div
-                      className={styles.barDemand}
-                      style={{ height: `${demandHeight}%` }}
-                      title={`수요: ${formatWeightWithUnit(item.demand)}`}
-                    >
-                      {demandHeight > 5 && <span className={styles.barValueDemand}>{formatValue(item.demand)}</span>}
-                    </div>
-                  </div>
-                  <p className={styles.yearLabel}>{item.year}</p>
-                </div>
+            // 현재 상세페이지에서 보고 있는 작물의 양평군 전체 공급비중 가이드 정보 추출
+            const decodedName = decodeURIComponent(cropName);
+            const currentCropSeg = chartSegments.find(seg => seg.cropName === decodedName);
+            const isMainCrop = OFFICIAL_CROPS.has(decodedName);
+
+            let guideTextNode: React.ReactNode;
+            if (isMainCrop && currentCropSeg) {
+              guideTextNode = (
+                <span>
+                  현재 조회 중인 <strong>{decodedName}</strong>은 양평군 9대 대표 작물 전체 공급 비중(총 {formatWeightWithUnit(totalSupplyKg)}) 중 
+                  <strong style={{ color: currentCropSeg.color, marginLeft: '4px', marginRight: '4px', fontSize: '15px' }}>
+                    {currentCropSeg.percent}%
+                  </strong> 
+                  (공급량: {formatWeightWithUnit(currentCropSeg.currentSupplyKg)})를 차지하는 핵심 주력 작물입니다.
+                </span>
               );
-            })}
-          </div>
-          <div className={styles.legend}>
-            <span className={styles.legendItem}><span className={styles.dotSupply}></span> 공급(통계/실시간)</span>
-            <span className={styles.legendItem}><span className={styles.dotDemand}></span> 수요(기준치)</span>
-          </div>
+            } else {
+              guideTextNode = (
+                <span>
+                  현재 조회 중인 <strong>{decodedName}</strong>은 9대 대표 작물 외에, 
+                  <strong> 우리 동네 농부들이 직접 재배량을 등록하여 실시간으로 수급을 함께 돌보고 관리 중인 작물</strong>입니다.
+                </span>
+              );
+            }
+
+            return (
+              <>
+                <div className={styles.donutChartContainer}>
+                  {/* SVG Donut Chart */}
+                  <div className={styles.donutSvgWrapper}>
+                    <svg className={styles.donutSvg} viewBox="0 0 200 200" width="180" height="180">
+                      {/* Background Circle */}
+                      <circle cx="100" cy="100" r="70" stroke="#f1f5f9" strokeWidth="22" fill="transparent" />
+                      
+                      {/* Segments */}
+                      <g transform="rotate(-90 100 100)">
+                        {chartSegments.map((seg) => (
+                          <circle
+                             key={seg.cropName}
+                             cx="100"
+                             cy="100"
+                             r="70"
+                             stroke={seg.color}
+                             strokeWidth="22"
+                             strokeDasharray={`${seg.strokeLength} ${C - seg.strokeLength}`}
+                             strokeDashoffset={-seg.strokeOffset}
+                             fill="transparent"
+                             strokeLinecap="butt"
+                             className={styles.donutSegment}
+                             style={{
+                               transition: 'stroke-dashoffset 0.8s ease-in-out',
+                             }}
+                          >
+                            <title>{`${seg.cropName}: ${seg.percent}% (${formatWeightWithUnit(seg.currentSupplyKg)})`}</title>
+                          </circle>
+                        ))}
+                      </g>
+
+                      {/* Center Text */}
+                      <g transform="translate(100, 102)" textAnchor="middle">
+                        <text className={styles.donutCenterLabel} y="-10" fill="var(--color-text-secondary)" fontSize="12" fontWeight="500">총 공급량</text>
+                        <text className={styles.donutCenterValue} y="12" fill="var(--color-text)" fontSize="16" fontWeight="800">
+                          {formatWeightWithUnit(totalSupplyKg)}
+                        </text>
+                      </g>
+                    </svg>
+                  </div>
+
+                  {/* Donut Legend */}
+                  <div className={styles.donutLegend}>
+                    {chartSegments.map((seg) => (
+                      <div key={seg.cropName} className={styles.legendItemDonut}>
+                        <span className={styles.legendColorBadge} style={{ backgroundColor: seg.color }}></span>
+                        <span className={styles.legendCropName}>{seg.cropName}</span>
+                        <span className={styles.legendCropRatio}>{seg.percent}%</span>
+                        <span className={styles.legendCropKg}>({formatWeightWithUnit(seg.currentSupplyKg)})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 💡 실시간 수급 비중 가이드 배너 */}
+                <div className={styles.donutGuideBanner}>
+                  <span className={styles.donutGuideIcon}>💡</span>
+                  <p className={styles.donutGuideText}>{guideTextNode}</p>
+                </div>
+              </>
+            );
+          })()}
         </Card>
         {(() => {
           if (dashboardData && dashboardData.selectedTownName && dashboardData.selectedTownName !== '선택된 지역') {
@@ -882,7 +923,7 @@ export default function BalanceDetailPage({ params }: PageProps) {
                 stateClass = styles.briefingCardWarning;
                 Illustration = WarningIllustration;
                 currentStatusLabel = '농가 자체 집계';
-                detailMessage = `현재 통계청 공식 5대 작물 외에 관내 농가들이 참여하여 실시간 재배량을 집계 중인 작물입니다. AI 분석관의 실시간 유통 시황 심층 리포트를 통해 시장 트렌드를 함께 점검해 보세요.`;
+                detailMessage = `현재 통계청 공식 9대 대표 작물 외에 관내 농가들이 참여하여 실시간 재배량을 집계 중인 작물입니다. AI 분석관의 실시간 유통 시황 심층 리포트를 통해 시장 트렌드를 함께 점검해 보세요.`;
               } else if (statusStr.includes('EXCESS_WARN')) {
                 stateClass = styles.briefingCardWarning;
                 Illustration = WarningIllustration;

@@ -364,6 +364,7 @@ export default function ShopPage() {
                     src={p.imageUrl || DEFAULT_PRODUCT_IMAGE}
                     alt={p.name}
                     className={styles.productThumbnail}
+                    onError={(e) => { e.currentTarget.src = DEFAULT_PRODUCT_IMAGE; }}
                   />
                   <div className={styles.productName}>
                     {p.status === 'PENDING' && <span title="신규 요청" style={{ marginRight: '4px' }}>🆕</span>}

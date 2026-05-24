@@ -7,6 +7,7 @@ import { getMyComments } from '../_lib/community-activity.api';
 import type { MyCommentActivity } from '../_lib/community-activity.types';
 import CommentActivityList from './_components/CommentActivityList';
 import { COMMENTS_EMPTY_TEXT, COMMENTS_ERROR_TEXT, COMMENTS_PAGE_SIZE } from './_lib/constants';
+import Pagination from '@/components/common/Pagination';
 import styles from './page.module.css';
 
 export default function MyCommentsPage() {
@@ -40,48 +41,58 @@ export default function MyCommentsPage() {
   return (
     <Card>
       <div className={styles.container}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-          <select 
-            value={status} 
-            onChange={(e) => setStatus(e.target.value)}
-            style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--color-border)' }}
-          >
-            <option value="ALL">전체 상태</option>
-            <option value="ACTIVE">활성</option>
-            <option value="HIDDEN">숨김(격리)</option>
-          </select>
+        <div className={styles.header}>
+          <h2 className={styles.title}>내 댓글</h2>
         </div>
-        {loading && items.length === 0 && <div className={styles.loading}>불러오는 중...</div>}
-        {error && <div className={styles.errorBanner}>{error}</div>}
-        {!loading && !error && items.length === 0 && <div className={styles.empty}>{COMMENTS_EMPTY_TEXT}</div>}
 
-        <CommentActivityList items={items} />
+        {/* 필터 칩 */}
+        <div className={styles.filters}>
+          <button
+            className={`${styles.filterChip} ${status === 'ALL' ? styles.filterChipActive : ''}`}
+            onClick={() => setStatus('ALL')}
+          >
+            전체
+          </button>
+          <button
+            className={`${styles.filterChip} ${status === 'ACTIVE' ? styles.filterChipActive : ''}`}
+            onClick={() => setStatus('ACTIVE')}
+          >
+            활성
+          </button>
+          <button
+            className={`${styles.filterChip} ${status === 'HIDDEN' ? styles.filterChipActive : ''}`}
+            onClick={() => setStatus('HIDDEN')}
+          >
+            숨김(격리)
+          </button>
+        </div>
 
-        {totalPages > 1 && (
-          <div className={styles.footer}>
-            <div className={styles.pagination}>
-              <Button
-                variant="outline"
-                onClick={() => load(page - 1)}
-                disabled={loading || page <= 0}
-              >
-                이전
-              </Button>
-              <span className={styles.pageInfo}>
-                {page + 1} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                onClick={() => load(page + 1)}
-                disabled={loading || page >= totalPages - 1}
-              >
-                다음
-              </Button>
+        {loading && items.length === 0 ? (
+          <div className={styles.loading}>불러오는 중...</div>
+        ) : error ? (
+          <div className={styles.errorBanner}>{error}</div>
+        ) : items.length === 0 ? (
+          <div className={styles.empty}>{COMMENTS_EMPTY_TEXT}</div>
+        ) : (
+          <div className={styles.listContent}>
+            <div className={styles.list}>
+              <CommentActivityList items={items} />
             </div>
+
+            {totalPages > 1 && (
+              <div className={styles.paginationWrapper}>
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={(nextPage) => load(nextPage)}
+                />
+              </div>
+            )}
           </div>
         )}
+        
         {loading && items.length > 0 && (
-          <div className={styles.footer}>
+          <div className={styles.loadingWrapper}>
             <span className={styles.pageInfo}>불러오는 중...</span>
           </div>
         )}

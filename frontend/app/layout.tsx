@@ -1,8 +1,24 @@
 import type { Metadata, Viewport } from 'next'
+import { Noto_Sans_KR, Playfair_Display } from 'next/font/google'
 import { ReactNode } from 'react'
 import { ToastProvider } from '@/components/common/Toast'
 import SessionManager from './(auth)/_components/SessionManager'
 import './globals.css'
+
+const notoSansKr = Noto_Sans_KR({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700'],
+  variable: '--font-noto-sans-kr',
+  display: 'swap',
+})
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-playfair',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'FarmBalance — 양평군 스마트 파밍 플랫폼',
@@ -23,7 +39,7 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="ko">
+    <html lang="ko" className={`${notoSansKr.variable} ${playfairDisplay.variable}`}>
       <body>
         <ToastProvider>
           <SessionManager />

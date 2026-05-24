@@ -12,7 +12,7 @@ export default function PostActivityList({ items }: PostActivityListProps) {
       {items.map(post => (
         <div key={post.postId} className={styles.item}>
           <div className={styles.titleRow}>
-            <Link href={`/community/${post.postId}`} className={styles.title}>
+            <Link href={`/community/${post.postId}`} className={styles.cardTitle}>
               {post.title}
             </Link>
           </div>

@@ -1,7 +1,9 @@
 import httpx
 import logging
 from langchain_core.tools import tool
+from sqlalchemy import text
 from app.config import settings
+from app.db import get_db_session
 
 logger = logging.getLogger(__name__)
 
@@ -9,6 +11,51 @@ logger = logging.getLogger(__name__)
 BACKEND_INTERNAL_URL = settings.BACKEND_INTERNAL_URL
 AI_SECRET_KEY = settings.AI_INTERNAL_SECRET_KEY
 HEADERS = {"X-AI-Internal-Key": AI_SECRET_KEY}
+
+@tool
+async def get_market_price(crop_name: str) -> dict:
+    """
+    특정 작물의 현재 시장 도매 시세(KAMIS 기준)를 조회합니다.
+    사용자가 '적정 판매가', '얼마가 좋을까', '가격', '시세' 등을 물어볼 때 반드시 사용하세요.
+    """
+    session = get_db_session()
+    if session is None:
+        return {"status": "error", "message": "데이터베이스 접근 실패로 시세를 조회할 수 없습니다."}
+    try:
+        # 유사어 처리를 위해 정확한 이름이 아니면 % 매칭할 수도 있지만 일단 정확/포함 매칭
+        query = text("""
+            SELECT price, unit, price_date 
+            FROM crop_price_cache 
+            WHERE crop_name LIKE :crop_name 
+            ORDER BY price_date DESC, id DESC 
+            LIMIT 1
+        """)
+        row = session.execute(query, {"crop_name": f"%{crop_name}%"}).fetchone()
+        session.close()
+        
+        if row:
+            wholesale_price = row[0]
+            # 도매가 대비 약 40% 마진을 더한 소매 추천가 계산 (100원 단위 반올림)
+            retail_price = round((wholesale_price * 1.4) / 100) * 100
+            
+            return {
+                "status": "success",
+                "data": {
+                    "crop_name": crop_name,
+                    "wholesale_price": wholesale_price,
+                    "retail_price_recommendation": retail_price,
+                    "unit": row[1],
+                    "price_date": str(row[2]),
+                    "message": f"현재 {crop_name}의 도매 시세는 {wholesale_price}원/{row[1]} 입니다. 소매 추천 판매가는 {retail_price}원/{row[1]} 입니다."
+                }
+            }
+        return {"status": "not_found", "message": f"'{crop_name}'의 현재 실시간 시세 데이터가 없습니다."}
+    except Exception as e:
+        if session:
+            session.close()
+        logger.error(f"get_market_price 실패 ({crop_name}): {e}")
+        return {"status": "error", "message": "시세 데이터베이스 조회 중 오류가 발생했습니다."}
+
 
 @tool
 async def get_all_crops_balance(year: int = None) -> dict:

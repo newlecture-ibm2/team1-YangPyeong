@@ -61,6 +61,16 @@ public class GlobalExceptionHandler {
         log.warn("[ClientDisconnect] 응답 전송 중 연결 종료: {}", e.getMessage());
     }
 
+    /** 정적 리소스(이미지 등) 404 — Internal 로그 없이 조용히 404만 반환 */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResource(
+            org.springframework.web.servlet.resource.NoResourceFoundException e) {
+        log.debug("[NotFound] 리소스 없음: {}", e.getMessage());
+        return ResponseEntity
+                .status(404)
+                .body(ApiResponse.fail("E-404", "리소스를 찾을 수 없습니다."));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception e) {
         log.error("[Internal] 예기치 않은 오류", e);

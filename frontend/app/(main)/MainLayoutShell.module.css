@@ -1,0 +1,13 @@
+.main {
+  min-height: 100vh;
+}
+
+.mainWithOffset {
+  padding-top: calc(1.5rem + 64px + 1rem);
+}
+
+@media (max-width: 768px) {
+  .mainWithOffset {
+    padding-top: 56px;
+  }
+}

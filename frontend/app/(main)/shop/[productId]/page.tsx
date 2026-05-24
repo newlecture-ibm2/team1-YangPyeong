@@ -140,10 +140,15 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
   return (
     <div className={styles.page}>
-      {/* ════════ 브레드크럼 ════════ */}
-      <div className={styles.breadcrumb}>
-        <Link href="/">홈</Link> › <Link href="/shop">상점</Link> ›{' '}
-        <strong>{product.name}</strong>
+      {/* ════════ 페이지 헤더 ════════ */}
+      <div className="page-header">
+        <div>
+          <div className={styles.breadcrumb}>
+            <Link href="/">홈</Link> › <Link href="/shop">상점</Link> › {product.name}
+          </div>
+          <h1 className="page-title">상품 <em>상세</em></h1>
+          <p className={styles.pageSub}>{product.name}</p>
+        </div>
       </div>
 
       {/* ════════ 상단 2컬럼 ════════ */}
@@ -158,6 +163,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   src={currentImage}
                   alt={`${product.name} - 이미지 ${selectedImageIndex + 1}`}
                   className={styles.mainImage}
+                  onError={(e) => { e.currentTarget.src = DEFAULT_PRODUCT_IMAGE; }}
                 />
                 <span className={styles.zoomHint}>🔍 클릭하여 크게 보기</span>
               </>
@@ -179,6 +185,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                     src={url}
                     alt={`${product.name} - 썸네일 ${index + 1}`}
                     className={styles.thumbnailImg}
+                    onError={(e) => { e.currentTarget.src = DEFAULT_PRODUCT_IMAGE; }}
                   />
                 </button>
               ))}

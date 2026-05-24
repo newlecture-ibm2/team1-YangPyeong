@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import styles from './AdminLayout.module.css'
 import Button from '@/components/common/Button/Button'
 import AdminLogoutButton from './_components/AdminLogoutButton'
+import LandingFooter from '@/components/layout/LandingFooter/LandingFooter'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -77,9 +78,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </aside>
       
-      <main className={styles.mainContent}>
-        {children}
-      </main>
+      <div className={styles.contentWrapper}>
+        <main className={styles.mainContent}>
+          {children}
+        </main>
+        <LandingFooter />
+      </div>
     </div>
   )
 }

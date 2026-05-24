@@ -1,28 +1,39 @@
-/* ════════════════════════════════════════════════════════
-   Shop 상품 목록 페이지 스타일
-   모킹업: shop-browse.html 참고
-   ════════════════════════════════════════════════════════ */
+/* ?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧
+   Shop ?곹뭹 紐⑸줉 ?섏씠吏 ?ㅽ???
+   紐⑦궧?? shop-browse.html 李멸퀬
+   ?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧 */
 
-/* ── 페이지 컨테이너 ── */
+/* ?? ?섏씠吏 而⑦뀒?대꼫 ?? */
 
 .page {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: var(--space-xl) var(--space-lg);
+  padding: 48px 48px 80px;
   min-height: 60vh;
 }
 
-/* ── 페이지 헤더 ── */
+/* ?? ?섏씠吏 ?ㅻ뜑 ?? */
 
 .pageHeader {
-  margin-bottom: var(--space-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+}
+
+.breadcrumb {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
 }
 
 .pageTitle {
-  font-family: var(--font-serif);
-  font-size: 32px;
-  font-weight: 700;
+  font-family: var(--font-page-title);
+  font-size: 40px;
+  font-weight: 400;
   color: var(--color-text);
+  line-height: 1.15;
   margin-bottom: 8px;
 }
 
@@ -34,30 +45,37 @@
 .pageSub {
   font-size: 16px;
   color: var(--color-text-secondary);
+  max-width: 600px;
+  line-height: 1.7;
 }
 
-/* ── 카테고리 탭 ── */
+/* ?? 移댄뀒怨좊━ ???? */
 
 .tabs {
   display: flex;
-  gap: 4px;
-  margin-bottom: var(--space-lg);
   border-bottom: 1px solid var(--color-border);
+  margin-bottom: 1.5rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.tabs::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Opera */
 }
 
 .tab {
-  padding: 12px 20px;
-  font-size: 15px;
+  padding: 1rem 1.5rem;
+  font-size: 16px;
   font-weight: 500;
-  color: var(--color-text-secondary);
+  color: var(--color-text-light);
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
   cursor: pointer;
   white-space: nowrap;
-  transition: color var(--transition-fast), border-color var(--transition-fast);
+  position: relative;
+  transition: color 0.2s;
 }
 
 .tab:hover {
@@ -65,32 +83,27 @@
 }
 
 .tabActive {
+  font-weight: 700;
   color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
-  font-weight: 600;
 }
 
-/* ── 필터 바 ── */
+.tabActive::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-primary);
+}
 
-.filterBar {
-  display: flex;
-  gap: var(--space-md);
-  align-items: center;
+/* ?? ?꾪꽣 諛??? */
+
+.filterSection {
   margin-bottom: var(--space-xl);
-  flex-wrap: wrap;
 }
 
-.filterSort {
-  flex-shrink: 0;
-  min-width: 140px;
-}
-
-.filterSearch {
-  flex: 1;
-  min-width: 200px;
-}
-
-/* ── 상품 그리드 ── */
+/* ?? ?곹뭹 洹몃━???? */
 
 .productGrid {
   display: grid;
@@ -99,7 +112,7 @@
   margin-bottom: var(--space-2xl);
 }
 
-/* ── 빈 상태 ── */
+/* ?? 鍮??곹깭 ?? */
 
 .emptyState {
   grid-column: 1 / -1;
@@ -123,7 +136,7 @@
   font-size: 14px;
 }
 
-/* ── 페이지네이션 ── */
+/* ?? ?섏씠吏?ㅼ씠???? */
 
 .pagination {
   display: flex;
@@ -157,7 +170,7 @@
   color: #fff;
 }
 
-/* ── 반응형 ── */
+/* ?? 諛섏쓳???? */
 
 @media (max-width: 1024px) {
   .productGrid {
@@ -166,23 +179,19 @@
 }
 
 @media (max-width: 768px) {
+  .page {
+    padding: 24px 16px 48px;
+  }
+
   .productGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-md);
   }
 
   .pageTitle {
-    font-size: 24px;
+    font-size: 28px;
   }
 
-  .filterBar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filterSort {
-    min-width: auto;
-  }
 }
 
 @media (max-width: 480px) {
@@ -195,9 +204,9 @@
   }
 }
 
-/* ══════════════════════════════════════════
-   로그인 필요 모달
-   ══════════════════════════════════════════ */
+/* ?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧
+   濡쒓렇???꾩슂 紐⑤떖
+   ?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧?먥븧 */
 
 .loginModalContent {
   text-align: center;
@@ -220,4 +229,5 @@
   flex-direction: column;
   gap: 10px;
 }
+
 

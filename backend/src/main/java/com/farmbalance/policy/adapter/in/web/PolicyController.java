@@ -54,13 +54,13 @@ public class PolicyController {
                 keyword, regionCode, category, period, minConfidence, page, size);
 
         List<PolicyData> policies = searchPolicyUseCase.searchPolicies(condition);
+        long totalCount = searchPolicyUseCase.countPolicies(condition);
 
         List<PolicyListResponse> responseList = policies.stream()
                 .map(this::toListResponse)
                 .toList();
 
-        // 행정 공고 필터가 서비스 계층에서 적용되므로, 필터 후 크기를 총 건수로 사용
-        return ApiResponse.ok(PageResponse.of(responseList, page, size, policies.size()));
+        return ApiResponse.ok(PageResponse.of(responseList, page, size, totalCount));
     }
 
     /**
@@ -103,6 +103,16 @@ public class PolicyController {
     @PostMapping("/api/admin/policies/reprocess")
     public ApiResponse<SyncPolicyUseCase.ReprocessResult> reprocessPolicies() {
         SyncPolicyUseCase.ReprocessResult result = syncPolicyUseCase.reprocessExisting();
+        return ApiResponse.ok(result);
+    }
+
+    /**
+     * 정책 수동 동기화 API (관리자용)
+     * POST /api/admin/policies/sync
+     */
+    @PostMapping("/api/admin/policies/sync")
+    public ApiResponse<SyncPolicyUseCase.SyncResult> syncPolicies() {
+        SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies();
         return ApiResponse.ok(result);
     }
 

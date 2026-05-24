@@ -163,8 +163,20 @@ export default function BalanceListPage() {
     if (statusFilter !== '전체 상태') {
       filtered = filtered.filter(b => b.statusLabel === statusFilter);
     }
-    // 수급률 낮은 순 (공급 부족 심한 순) 정렬
-    filtered.sort((a, b) => a.supplyRatio - b.supplyRatio);
+    // 양평군 대표 9대 주력 농산물 목록 (상세 리스트 최상단 우선 정렬용)
+    const MAIN_CROPS = new Set(['쌀', '배추', '수박', '무', '호박', '감자', '고구마', '상추', '옥수수']);
+
+    // 1순위: 양평군 주력 농산물 우선 / 2순위: 재배량(currentSupplyKg)이 많은 순서 (내림차순) 정렬
+    filtered.sort((a, b) => {
+      const aIsMain = MAIN_CROPS.has(a.cropName);
+      const bIsMain = MAIN_CROPS.has(b.cropName);
+      if (aIsMain && !bIsMain) return -1;
+      if (!aIsMain && bIsMain) return 1;
+      
+      const aSupply = a.currentSupplyKg ?? 0;
+      const bSupply = b.currentSupplyKg ?? 0;
+      return bSupply - aSupply;
+    });
     setFilteredBalances(filtered);
   }, [searchQuery, statusFilter, balances]);
 
@@ -181,11 +193,13 @@ export default function BalanceListPage() {
   return (
     <div className={styles.container}>
       <div className={styles.pageHeader}>
-        <p className={styles.breadcrumb}>홈 / 내 농장 / 수급 현황</p>
-        <h1 className={styles.pageTitle}>
-          수급 <span className={styles.italic}>{isPreviewMode ? (hasUnapprovedFarms ? '심사 대기 중' : '미리보기') : '현황'}</span>
-        </h1>
-        <p className={styles.pageSub}>양평군 주요 작물의 실시간 공급·수요 밸런스를 확인하세요.</p>
+        <div>
+          <p className={styles.breadcrumb}>홈 / 내 농장 / 수급 현황</p>
+          <h1 className={styles.pageTitle}>
+            수급 <em>{isPreviewMode ? (hasUnapprovedFarms ? '심사 대기 중' : '미리보기') : '현황'}</em>
+          </h1>
+          <p className={styles.pageSub}>양평군 주요 작물의 실시간 공급·수요 밸런스를 확인하세요.</p>
+        </div>
       </div>
 
       <div className={styles.tabs}>
@@ -250,15 +264,23 @@ function DashboardSection({ dashboard, isDashboardLoading, onTownChange, activeT
     }
   };
 
-  // KOSIS 5대 공식 주요 작물 목록 정의
-  const OFFICIAL_CROPS = new Set(['감자', '고구마', '고추', '메밀', '방울토마토']);
+  // KOSIS 9대 공식 주요 작물 목록 정의 (진짜 양평군 주력 농산물)
+  const OFFICIAL_CROPS = new Set(['쌀', '배추', '수박', '무', '호박', '감자', '고구마', '상추', '옥수수']);
 
-  // KOSIS 공식 작물(5대 주요 작물)과 농민 등록 온디맨드 작물(그 외 모든 작물) 분류
-  const kosisTownCrops = townSummary.crops.filter(c => OFFICIAL_CROPS.has(c.cropName));
-  const onDemandTownCrops = townSummary.crops.filter(c => !OFFICIAL_CROPS.has(c.cropName));
+  // KOSIS 공식 작물(주요 작물)과, 그 외 작물 중 실제로 재배 중인(공급량 > 0) 활성 온디맨드 작물만 분류 (재배량 순 정렬)
+  const kosisTownCrops = townSummary.crops
+    .filter(c => OFFICIAL_CROPS.has(c.cropName))
+    .sort((a, b) => b.currentSupplyKg - a.currentSupplyKg);
+  const onDemandTownCrops = townSummary.crops
+    .filter(c => !OFFICIAL_CROPS.has(c.cropName) && c.currentSupplyKg > 0)
+    .sort((a, b) => b.currentSupplyKg - a.currentSupplyKg);
 
-  const kosisTotalCrops = totalSummary.crops.filter(c => OFFICIAL_CROPS.has(c.cropName));
-  const onDemandTotalCrops = totalSummary.crops.filter(c => !OFFICIAL_CROPS.has(c.cropName));
+  const kosisTotalCrops = totalSummary.crops
+    .filter(c => OFFICIAL_CROPS.has(c.cropName))
+    .sort((a, b) => b.currentSupplyKg - a.currentSupplyKg);
+  const onDemandTotalCrops = totalSummary.crops
+    .filter(c => !OFFICIAL_CROPS.has(c.cropName) && c.currentSupplyKg > 0)
+    .sort((a, b) => b.currentSupplyKg - a.currentSupplyKg);
 
   return (
     <div className={styles.dashboardSection}>
@@ -354,7 +376,7 @@ function DashboardSection({ dashboard, isDashboardLoading, onTownChange, activeT
       <div className={styles.guideBanner} style={{ marginTop: '24px' }}>
         <span className={styles.guideIcon}>💡</span>
         <p className={styles.guideText}>
-          <strong>읍면동별 수급 가이드</strong>: 본 현황은 통계청(KOSIS) 기준 <strong>양평군 5대 주요 작물(감자, 고구마, 고추, 메밀, 방울토마토)</strong>의 통합 수급 데이터를 기반으로 합니다. 각 읍면동마다 해당 지역의 <strong>농가/사업체 비율 가중치</strong>와 관내 농가들의 <strong>실시간 실제 재배량</strong>을 적용하여 수급률(%) 및 상태를 지역 맞춤형으로 동적 계산해 보여드립니다.
+          <strong>읍면동별 수급 가이드</strong>: 본 현황은 통계청(KOSIS) 기준 <strong>양평군 9대 대표 작물 및 주요 활성 작물</strong>의 통합 수급 데이터를 기반으로 합니다. 2024년까지의 검증된 실 수집 통계와 2025년 예상 통계 데이터를 융합하여, 각 읍면동의 <strong>농가 비율 가중치</strong>와 관내 농가들의 <strong>실시간 실제 재배량</strong>을 적용해 수급 상태를 지역 맞춤형으로 동적 계산해 보여드립니다.
         </p>
       </div>
     </div>

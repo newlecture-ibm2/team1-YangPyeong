@@ -17,12 +17,14 @@ export function useGovUser() {
     fetch('/api/gov/me')
       .then(res => res.json())
       .then(json => {
-        if (json.success === false) throw new Error(json.error?.message);
+        if (json.success === false || !json.data) {
+          setLoading(false);
+          return;
+        }
         setUser(json.data);
         setLoading(false);
       })
-      .catch(e => {
-        console.error(e);
+      .catch(() => {
         setLoading(false);
       });
   }, []);
