@@ -4,6 +4,8 @@ import { fetchAllComments, hideComment, restoreComment, deleteComment, bulkDelet
 import type { AdminComment } from '../../_lib/community.types'
 import ReasonModal from './ReasonModal'
 import CommentDetailModal from './CommentDetailModal'
+import ModalDialog from '@/components/common/Modal/ModalDialog'
+import { useModalDialog } from '@/components/common/Modal/useModalDialog'
 import ResponsiveTable from '@/components/common/ResponsiveTable/ResponsiveTable'
 import Pagination from '@/components/common/Pagination'
 import styles from '../Community.module.css'
@@ -29,6 +31,7 @@ export default function CommentTable() {
   const [selectedComment, setSelectedComment] = useState<AdminComment | null>(null)
   
   const toast = useToast()
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -57,7 +60,8 @@ export default function CommentTable() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return
-    if (!confirm(`선택한 댓글 ${selectedIds.length}개를 완전히 삭제하시겠습니까?\n(이 작업은 취소할 수 없습니다.)`)) return
+    const confirmed = await showConfirm(`선택한 댓글 ${selectedIds.length}개를 완전히 삭제하시겠습니까?\n(이 작업은 취소할 수 없습니다.)`)
+    if (!confirmed) return
     try {
       await bulkDeleteComments(selectedIds)
       toast.success('일괄 삭제가 완료되었습니다.')
@@ -69,7 +73,8 @@ export default function CommentTable() {
   }
 
   const handleRestore = async (id: number) => {
-    if (!confirm('숨겨진 댓글을 복구하시겠습니까?')) return
+    const confirmed = await showConfirm('숨겨진 댓글을 복구하시겠습니까?')
+    if (!confirmed) return
     try {
       await restoreComment(id)
       toast.success('댓글이 복구되었습니다.')
@@ -80,7 +85,8 @@ export default function CommentTable() {
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('이 댓글을 완전히 삭제하시겠습니까?')) return
+    const confirmed = await showConfirm('이 댓글을 완전히 삭제하시겠습니까?')
+    if (!confirmed) return
     try {
       await deleteComment(id)
       toast.success('댓글이 삭제되었습니다.')
@@ -267,6 +273,12 @@ export default function CommentTable() {
         isOpen={detailModalOpen}
         onClose={() => setDetailModalOpen(false)}
         onUpdate={() => loadData()}
+      />
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
       />
     </>
   )

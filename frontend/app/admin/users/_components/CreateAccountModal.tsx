@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Modal from '@/components/common/Modal/Modal'
 import Button from '@/components/common/Button/Button'
 import Input from '@/components/common/Input/Input'
+import { useToast } from '@/components/common/Toast'
 import styles from './CreateAccountModal.module.css'
 import type { CreateUserRequest } from '../../_lib/user.types'
 
@@ -19,6 +20,7 @@ export default function CreateAccountModal({ isOpen, onClose, onConfirm }: Creat
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const toast = useToast()
 
   // 모달이 열릴 때 상태 초기화
   React.useEffect(() => {
@@ -33,19 +35,19 @@ export default function CreateAccountModal({ isOpen, onClose, onConfirm }: Creat
 
   const handleSubmit = async () => {
     if (!email || !name || !password) {
-      alert('모든 입력 필드를 채워주세요.')
+      toast.error('모든 입력 필드를 채워주세요.')
       return
     }
 
     // 간단한 이메일 정규식 체크
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      alert('올바른 이메일 형식을 입력해주세요.')
+      toast.error('올바른 이메일 형식을 입력해주세요.')
       return
     }
 
     if (password.length < 8) {
-      alert('비밀번호는 최소 8자 이상이어야 합니다.')
+      toast.error('비밀번호는 최소 8자 이상이어야 합니다.')
       return
     }
 
