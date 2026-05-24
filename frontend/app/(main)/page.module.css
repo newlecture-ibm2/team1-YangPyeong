@@ -918,7 +918,7 @@
 .flow-items {
   padding: clamp(260px, 20vw, 320px) var(--side-pad) 0;
   max-width: 600px;
-  margin-left: clamp(40px, 8vw, 120px);
+  margin-left: clamp(20px, 5vw, 80px);
 }
 
 .flow-item {
@@ -995,7 +995,7 @@
 /* ????? ??? ? ?? ?? */
 .flow-photo--right {
   position: absolute;
-  right: clamp(40px, 10vw, 150px);
+  right: clamp(20px, 5vw, 100px);
   top: clamp(340px, 28vw, 420px);
   width: clamp(380px, 40vw, 600px);
   height: clamp(500px, 52vw, 800px);
@@ -1621,7 +1621,7 @@
   .flow-photo--right {
     width: clamp(280px, 35vw, 450px);
     height: clamp(380px, 45vw, 600px);
-    right: clamp(20px, 5vw, 80px);
+    right: clamp(10px, 3vw, 40px);
   }
 
   .cta-circle--intro {

@@ -8,7 +8,7 @@
   max-width: 1440px;
   /* Increase width */
   margin: 0 auto;
-  padding: 24px 48px 80px;
+  padding: calc(1.5rem + 64px + 1.5rem) 48px 80px;
 }
 
 .headerWrapper {
@@ -621,9 +621,15 @@
 }
 
 /* ── Responsive ── */
+@media (max-width: 1024px) {
+  .page {
+    padding-top: calc(56px + 1.5rem);
+  }
+}
+
 @media (max-width: 768px) {
   .page {
-    padding: 24px 16px 48px;
+    padding: calc(56px + 1.5rem) 16px 48px;
   }
 
   .mainGrid {

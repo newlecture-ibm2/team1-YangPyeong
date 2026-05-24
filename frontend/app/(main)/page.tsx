@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
 
@@ -8,6 +8,52 @@ const MOBILE_BREAKPOINT = 1024;
 
 export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [statsData, setStatsData] = useState({
+    activeUsers: 324,
+    totalCrops: 28,
+    totalRecommends: 1250,
+    totalOrders: 95
+  });
+
+  // 실시간 라이브 통계 데이터 조회 (BFF 프록시 사용)
+  useEffect(() => {
+    fetch('/api/proxy/balance/stats')
+      .then(res => res.json())
+      .then(json => {
+        if (json.success !== false && json.data) {
+          setStatsData({
+            activeUsers: json.data.activeUsers,
+            totalCrops: json.data.totalCrops,
+            totalRecommends: json.data.totalRecommends,
+            totalOrders: json.data.totalOrders
+          });
+        }
+      })
+      .catch(() => {
+        // ignore, fallback to default design numbers
+      });
+  }, []);
+
+  // statsData가 갱신되어 들어올 때 숫자를 자연스럽게 롤링 업 애니메이션합니다.
+  useEffect(() => {
+    const root = containerRef.current;
+    if (!root) return;
+    const counters = root.querySelectorAll<HTMLElement>(`.${styles['stats__number']}`);
+    counters.forEach((counter) => {
+      const target = parseInt(counter.getAttribute('data-count') || '0', 10);
+      const duration = 1500;
+      const start = performance.now();
+
+      function step(now: number) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        counter.textContent = Math.round(target * ease).toLocaleString();
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+  }, [statsData]);
 
   useEffect(() => {
     const root = containerRef.current;
@@ -301,10 +347,16 @@ export default function LandingPage() {
               <p className={styles['flow-item__sub']}>중간 유통 과정 없이 신선한 양평 농산물을 소비자와 직접 거래합니다</p>
             </div>
             <div className={`${styles['flow-item']} ${styles['show-up']}`}>
-              <Link href="/community" className={styles['flow-item__title']}>
-                AI 정책 &amp; 커뮤니티 <span className={styles.arrow}>→</span>
+              <Link href="/policy" className={styles['flow-item__title']}>
+                AI 지원 정책 <span className={styles.arrow}>→</span>
               </Link>
-              <p className={styles['flow-item__sub']}>AI가 맞춤형 지원 정책을 찾아주고, 농민들 간의 생생한 노하우를 나눕니다</p>
+              <p className={styles['flow-item__sub']}>AI를 통해 내 농장에 딱 맞는 맞춤형 양평군 농업 지원 정책을 빠르게 찾아보세요</p>
+            </div>
+            <div className={`${styles['flow-item']} ${styles['show-up']}`}>
+              <Link href="/community" className={styles['flow-item__title']}>
+                농업인 커뮤니티 <span className={styles.arrow}>→</span>
+              </Link>
+              <p className={styles['flow-item__sub']}>양평 농민들 간의 생생한 재배 노하우와 정보를 자유롭게 공유하고 소통합니다</p>
             </div>
           </div>
 
@@ -315,20 +367,20 @@ export default function LandingPage() {
           <section className={styles.stats}>
             <div className={styles['stats__inner']}>
               <div className={styles['stats__item']}>
-                <div className={styles['stats__number']} data-count="324">0</div>
-                <div className={styles['stats__label']}>양평군 등록 농가</div>
+                <div className={styles['stats__number']} data-count={statsData.activeUsers}>0</div>
+                <div className={styles['stats__label']}>양평군 활성 농민 수</div>
               </div>
               <div className={styles['stats__item']}>
-                <div className={styles['stats__number']} data-count="28">0</div>
+                <div className={styles['stats__number']} data-count={statsData.totalCrops}>0</div>
                 <div className={styles['stats__label']}>수급 관리 작물 종</div>
               </div>
               <div className={styles['stats__item']}>
-                <div className={styles['stats__number']} data-count="1250">0</div>
-                <div className={styles['stats__label']}>맞춤 정책 매칭 건수</div>
+                <div className={styles['stats__number']} data-count={statsData.totalRecommends}>0</div>
+                <div className={styles['stats__label']}>누적 AI 작물 추천 건수</div>
               </div>
               <div className={styles['stats__item']}>
-                <div className={styles['stats__number']} data-count="95">0</div>
-                <div className={styles['stats__label']}>AI 추천 만족도 (%)</div>
+                <div className={styles['stats__number']} data-count={statsData.totalOrders}>0</div>
+                <div className={styles['stats__label']}>누적 직거래 주문 건수</div>
               </div>
             </div>
           </section>
@@ -361,11 +413,11 @@ export default function LandingPage() {
                 지금 팜밸런스에 농장을 등록하고<br />스마트한 수급 관리를 경험해 보세요.
               </p>
               <div className={styles['cta-circle__buttons']}>
-                <Link href="/farm/register" className={`${styles['flow-btn']} ${styles['flow-btn--primary']}`}>
-                  농장 등록하기
+                <Link href="/signup" className={`${styles['flow-btn']} ${styles['flow-btn--primary']}`}>
+                  회원가입
                 </Link>
-                <Link href="/balance" className={`${styles['flow-btn']} ${styles['flow-btn--secondary']}`}>
-                  둘러보기
+                <Link href="/farm/register" className={`${styles['flow-btn']} ${styles['flow-btn--secondary']}`}>
+                  농장 등록하기
                 </Link>
               </div>
             </div>
