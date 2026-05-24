@@ -510,8 +510,8 @@
   top: 50%;
   transform: translate(-50%, -55%);
   z-index: 2;
-  width: clamp(600px, 80vw, 1000px);
-  height: clamp(600px, 80vw, 1000px);
+  width: clamp(350px, 60vw, 1000px);
+  height: clamp(350px, 60vw, 1000px);
   pointer-events: none;
 }
 
@@ -523,15 +523,15 @@
 }
 
 .hero__ball--left {
-  width: clamp(180px, 22vw, 320px);
-  aspect-ratio: 1 / 1;
+  width: clamp(120px, 20vw, 350px);
+  height: clamp(120px, 20vw, 350px);
   left: 0%;
   top: 65%;
 }
 
 .hero__ball--right {
-  width: clamp(260px, 32vw, 450px);
-  aspect-ratio: 1 / 1;
+  width: clamp(180px, 28vw, 500px);
+  height: clamp(180px, 28vw, 500px);
   right: -15%;
   top: 35%;
 }
@@ -553,21 +553,21 @@
 }
 
 .hero__name {
-  font-size: clamp(4.5rem, 8.5vw, 10rem);
+  font-size: clamp(5rem, 14vw, 12rem);
 }
 
 .hero__surname {
-  font-size: clamp(4.5rem, 8.5vw, 10rem);
-  margin-left: clamp(40px, 7vw, 150px);
+  font-size: clamp(5rem, 14vw, 12rem);
+  margin-left: clamp(60px, 10vw, 180px);
   animation-delay: 0.15s;
 }
 
 .hero__subtitle {
-  margin-top: clamp(20px, 3vw, 45px);
+  margin-top: clamp(30px, 4vw, 60px);
   position: relative;
   z-index: 3;
   font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
-  font-size: clamp(1.1rem, 1.4vw, 1.45rem);
+  font-size: clamp(1.15rem, 1.9vw, 1.6rem);
   font-weight: 500;
   line-height: 1.7;
   color: rgba(81, 115, 63, 0.95);
@@ -587,7 +587,7 @@
   width: 88%;
   margin: 0 auto;
   background: #c8d4b8;
-  padding: clamp(40px, 5vw, 90px) clamp(30px, 5vw, 80px) clamp(50px, 7vw, 120px);
+  padding: clamp(60px, 8vw, 120px) clamp(40px, 7vw, 110px) clamp(80px, 12vw, 200px);
   position: relative;
   overflow: hidden;
   z-index: 2;
@@ -634,9 +634,9 @@
 }
 
 .cta-circle--intro {
-  width: clamp(380px, 40vw, 550px);
-  aspect-ratio: 1 / 1;
-  left: clamp(-280px, -24vw, -100px);
+  width: 46%;
+  aspect-ratio: 1;
+  left: -27%;
   top: -40px;
   background-color: #2b3a20;
   color: #fff;
@@ -644,7 +644,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: clamp(40px, 6vw, 90px);
+  padding: 8%;
   position: relative;
 }
 
@@ -704,13 +704,13 @@
 }
 
 .cta-circle--text {
-  width: clamp(480px, 50vw, 680px);
-  aspect-ratio: 1 / 1;
-  right: clamp(-80px, -8vw, 40px);
-  bottom: -80px;
+  width: 57%;
+  aspect-ratio: 1;
+  right: -7%;
+  bottom: -100px;
   background-color: #fff;
   z-index: 3;
-  padding: clamp(24px, 4vw, 50px);
+  padding: 4%;
 }
 
 .cta-circle__title {
@@ -750,12 +750,12 @@
 
 .flow-card__title {
   font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
-  font-size: clamp(2rem, 4.5vw, 4rem);
+  font-size: clamp(2.5rem, 6vw, 5rem);
   font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
   color: var(--dark);
-  margin-bottom: clamp(20px, 3vw, 40px);
+  margin-bottom: clamp(30px, 4vw, 50px);
 }
 
 .flow-card__title--cta {
@@ -770,12 +770,12 @@
 }
 
 .flow-card__desc {
-  padding-left: clamp(40px, 10vw, 200px);
+  padding-left: clamp(80px, 16vw, 280px);
 }
 
 .flow-card__desc p {
   font-family: var(--font-sans);
-  font-size: clamp(0.95rem, 1.1vw, 1.1rem);
+  font-size: clamp(0.95rem, 1.3vw, 1.15rem);
   line-height: 1.6;
   color: var(--dark-soft);
   margin-bottom: 4px;
@@ -798,9 +798,9 @@
 .flow-card__photo {
   position: absolute;
   right: clamp(30px, 6vw, 100px);
-  bottom: clamp(-100px, -7vw, -50px);
-  width: clamp(200px, 22vw, 340px);
-  aspect-ratio: 3 / 4;
+  bottom: clamp(-120px, -10vw, -60px);
+  width: clamp(140px, 22vw, 380px);
+  height: clamp(180px, 28vw, 460px);
   border-radius: 0;
   overflow: hidden;
   box-shadow:
@@ -916,7 +916,7 @@
 
 /* ???? ???????? ????????? */
 .flow-items {
-  padding: clamp(200px, 18vw, 260px) var(--side-pad) 0;
+  padding: clamp(260px, 20vw, 320px) var(--side-pad) 0;
   max-width: 600px;
   margin-left: clamp(20px, 5vw, 80px);
 }
@@ -930,7 +930,7 @@
   align-items: center;
   gap: 8px;
   font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
-  font-size: clamp(1.4rem, 2vw, 2.1rem);
+  font-size: clamp(1.6rem, 2.8vw, 2.5rem);
   font-weight: 500;
   -webkit-text-stroke: 0.4px currentColor;
   line-height: 1.2;
@@ -959,7 +959,7 @@
 
 .flow-item__sub {
   font-family: var(--font-sans);
-  font-size: clamp(0.85rem, 0.95vw, 0.95rem);
+  font-size: clamp(0.85rem, 1.1vw, 1rem);
   margin-top: 6px;
   padding-left: clamp(16px, 2vw, 28px);
   color: var(--dark-soft);
@@ -995,10 +995,10 @@
 /* ????? ??? ? ?? ?? */
 .flow-photo--right {
   position: absolute;
-  right: clamp(20px, 5vw, 100px);
-  top: clamp(300px, 22vw, 380px);
-  width: clamp(320px, 32vw, 500px);
-  aspect-ratio: 3 / 4;
+  right: 5%;
+  top: clamp(200px, 28vw, 420px);
+  width: clamp(160px, 28vw, 600px);
+  height: clamp(220px, 38vw, 800px);
   z-index: 4;
   transform: rotate(-2deg);
 }
@@ -1025,7 +1025,7 @@
   border-radius: 500px;
   position: relative;
   z-index: 1;
-  padding: clamp(120px, 15vw, 220px) 0 clamp(60px, 8vw, 120px) 0;
+  padding: 200px 0 100px 0;
   display: flex;
   flex-direction: column;
 }
@@ -1033,11 +1033,11 @@
 /* ?? ?? ?? ?? ? ?? */
 .dark-circle-badge {
   position: absolute;
-  top: clamp(-80px, -7vw, -50px);
+  top: -90px;
   left: 50%;
   transform: translateX(-50%);
-  width: clamp(180px, 22vw, 320px);
-  aspect-ratio: 1 / 1;
+  width: clamp(100px, 18vw, 380px);
+  height: clamp(100px, 18vw, 380px);
   background-color: #a8bd91;
   border-radius: 50%;
   overflow: hidden;
@@ -1062,8 +1062,9 @@
 
 /* ?? STATS BREAKOUT ?? */
 .long-oval-wrapper .stats {
-  width: 100vw;
-  margin-left: calc(-50vw + 50%);
+  width: 100%;
+  left: 0;
+  right: 0;
   position: relative;
   z-index: 2;
   margin-top: clamp(80px, 10vw, 150px);
@@ -1094,7 +1095,7 @@
 
 /* ?????????????????STATS ?????????????????*/
 .stats {
-  padding: clamp(40px, 5vw, 90px) var(--side-pad);
+  padding: clamp(60px, 8vw, 120px) var(--side-pad);
   background: var(--dark);
   color: var(--white);
   position: relative;
@@ -1104,7 +1105,7 @@
 .stats__inner {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: clamp(16px, 2.5vw, 30px);
+  gap: clamp(16px, 3vw, 40px);
   max-width: 1000px;
   margin: 0 auto;
   text-align: center;
@@ -1112,7 +1113,7 @@
 
 .stats__number {
   font-family: 'GyeonggiCheonnyeonBatang', serif;
-  font-size: clamp(2rem, 3.5vw, 3.5rem);
+  font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 700;
   letter-spacing: -0.03em;
   margin-bottom: 8px;
@@ -1157,7 +1158,7 @@
 
 .links__title {
   font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
-  font-size: clamp(1.8rem, 3vw, 3rem);
+  font-size: clamp(2rem, 4vw, 3.5rem);
   font-weight: 500;
   -webkit-text-stroke: 0.4px currentColor;
   letter-spacing: -0.02em;
@@ -1171,14 +1172,14 @@
 
 .links__desc {
   font-family: var(--font-sans);
-  font-size: clamp(0.9rem, 1vw, 1rem);
+  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
   color: var(--dark-soft);
 }
 
 .links__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: clamp(12px, 1.5vw, 18px);
+  gap: clamp(14px, 2vw, 20px);
   max-width: 880px;
   margin: 0 auto;
 }
@@ -1188,8 +1189,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: clamp(12px, 1.5vw, 18px);
-  padding: clamp(16px, 2vw, 24px);
+  gap: clamp(14px, 2vw, 20px);
+  padding: clamp(20px, 2.5vw, 28px) clamp(20px, 2.5vw, 28px);
   border: 1.5px solid rgba(81, 115, 63, 0.35);
   border-radius: 16px;
   background: rgba(245, 240, 232, 0.6);
@@ -1344,6 +1345,14 @@
 
 .footer__link:hover {
   color: var(--white);
+}
+
+/* 비례 축소 반응형 — 뷰포트 너비에 비례하여 스무스하게 축소됩니다 */
+/* zoom = 100vw / 1600px → 1600px에서 1.0, 1200px에서 0.75, 769px에서 ~0.48 */
+@media (min-width: 769px) and (max-width: 1600px) {
+  .landingRoot {
+    zoom: tan(atan2(100vw, 1600px));
+  }
 }
 
 /* ??????????? RESPONSIVE ??????????? */
@@ -1619,28 +1628,24 @@
   }
 
   .flow-photo--right {
-    width: clamp(240px, 30vw, 360px);
-    aspect-ratio: 3 / 4;
-    height: auto;
+    width: clamp(280px, 35vw, 450px);
+    height: clamp(380px, 45vw, 600px);
     right: clamp(10px, 3vw, 40px);
   }
 
   .cta-circle--intro {
-    width: clamp(340px, 45vw, 500px);
-    aspect-ratio: 1 / 1;
-    height: auto;
+    width: clamp(420px, 55vw, 700px);
+    height: clamp(420px, 55vw, 700px);
   }
 
   .cta-circle--text {
-    width: clamp(380px, 48vw, 540px);
-    aspect-ratio: 1 / 1;
-    height: auto;
+    width: clamp(360px, 45vw, 550px);
+    height: clamp(360px, 45vw, 550px);
   }
 
   .partners-circle-wrapper {
-    width: clamp(800px, 95vw, 1000px);
-    aspect-ratio: 1 / 1;
-    height: auto;
+    width: clamp(900px, 100vw, 1100px);
+    height: clamp(900px, 100vw, 1100px);
     margin-top: -350px;
   }
 }
