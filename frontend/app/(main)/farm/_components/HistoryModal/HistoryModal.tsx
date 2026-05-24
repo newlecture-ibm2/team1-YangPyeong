@@ -19,6 +19,7 @@ interface HistoryModalProps {
   onSave: (content: string, date?: string) => Promise<boolean>;
   farmName: string;
   initialContent?: string;
+  initialDate?: string;
   mode?: 'create' | 'edit';
 }
 
@@ -38,6 +39,7 @@ export default function HistoryModal({
   onSave, 
   farmName, 
   initialContent = '',
+  initialDate,
   mode = 'create'
 }: HistoryModalProps) {
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
@@ -79,6 +81,11 @@ export default function HistoryModal({
         
         setSelectedActivities(matched);
         setCustomContent(unmatched);
+        if (initialDate) {
+          setSelectedDate(initialDate);
+        } else {
+          setSelectedDate(new Date().toISOString().split('T')[0]);
+        }
       } else {
         setSelectedActivities([]);
         setCustomContent('');
@@ -129,7 +136,6 @@ export default function HistoryModal({
             type="date" 
             value={selectedDate} 
             onChange={(e) => setSelectedDate(e.target.value)} 
-            disabled={mode === 'edit'}
             max={new Date().toISOString().split('T')[0]}
           />
         </div>

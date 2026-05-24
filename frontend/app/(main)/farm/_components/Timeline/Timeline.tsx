@@ -16,7 +16,7 @@ export interface CultivationHistory {
 
 interface TimelineProps {
   histories: CultivationHistory[];
-  onEdit?: (historyId: number, content: string) => void;
+  onEdit?: (historyId: number, content: string, date?: string) => void;
   onDelete?: (historyId: number) => void;
   onEditCultivation?: (cultivationId: number) => void;
   onDeleteCultivation?: (cultivationId: number) => void;
@@ -127,7 +127,7 @@ export default function Timeline({ histories, onEdit, onDelete, onEditCultivatio
                             if (history.cultivationRegistrationId) {
                               onEditCultivation?.(history.cultivationRegistrationId);
                             } else {
-                              onEdit?.(history.id, history.activityContent);
+                              onEdit?.(history.id, history.activityContent, history.recordDate);
                             }
                           }}
                           title="수정"

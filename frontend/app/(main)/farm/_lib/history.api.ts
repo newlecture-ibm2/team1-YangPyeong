@@ -55,7 +55,7 @@ export async function recordFarmHistory(farmId: number, content: string, recordD
 /**
  * 재배 이력 수정
  */
-export async function updateFarmHistory(farmId: number, historyId: number, content: string): Promise<void> {
+export async function updateFarmHistory(farmId: number, historyId: number, content: string, recordDate?: string): Promise<void> {
   const res = await fetch(`/api/farm/${farmId}/histories/${historyId}`, {
     method: 'PATCH',
     headers: {
@@ -64,6 +64,7 @@ export async function updateFarmHistory(farmId: number, historyId: number, conte
     body: JSON.stringify({
       activityContent: content,
       activityType: 'USER',
+      recordDate: recordDate,
     }),
   });
 

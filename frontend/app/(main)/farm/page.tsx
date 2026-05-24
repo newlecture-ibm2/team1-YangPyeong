@@ -200,6 +200,7 @@ function FarmDashboardContent() {
   // 수정을 위한 상태
   const [editingHistoryId, setEditingHistoryId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState('');
+  const [editingDate, setEditingDate] = useState<string | undefined>(undefined);
 
   // 선택된 농장
   // 선택된 농장
@@ -557,9 +558,10 @@ function FarmDashboardContent() {
   const isLoading = isFarmsLoading;
 
   // 수정 버튼 클릭 핸들러
-  const handleEditClick = (id: number, content: string) => {
+  const handleEditClick = (id: number, content: string, date?: string) => {
     setEditingHistoryId(id);
     setEditingContent(content);
+    setEditingDate(date);
     setIsHistoryModalOpen(true);
   };
 
@@ -590,12 +592,13 @@ function FarmDashboardContent() {
     setIsHistoryModalOpen(false);
     setEditingHistoryId(null);
     setEditingContent('');
+    setEditingDate(undefined);
   };
 
   // 저장/수정 실행 핸들러
   const handleSaveHistory = async (content: string, date?: string) => {
     if (editingHistoryId) {
-      return await updateHistory(editingHistoryId, content);
+      return await updateHistory(editingHistoryId, content, date);
     } else {
       return await addHistory(content, date);
     }
@@ -800,6 +803,7 @@ function FarmDashboardContent() {
         onSave={handleSaveHistory}
         farmName={farm?.name || ''}
         initialContent={editingContent}
+        initialDate={editingDate}
         mode={editingHistoryId ? 'edit' : 'create'}
       />
 

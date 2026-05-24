@@ -60,10 +60,10 @@ export function useHistory(farmId?: number, skipInitialFetch = false) {
     }
   };
 
-  const updateHistory = async (historyId: number, content: string): Promise<boolean> => {
+  const updateHistory = async (historyId: number, content: string, recordDate?: string): Promise<boolean> => {
     if (!farmId) return false;
     try {
-      await updateFarmHistory(farmId, historyId, content);
+      await updateFarmHistory(farmId, historyId, content, recordDate);
       toast.success('이력이 수정되었습니다.');
       await fetchHistories();
       return true;
