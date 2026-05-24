@@ -7,6 +7,7 @@ import { getMyReports } from '../_lib/community-activity.api';
 import type { MyReportActivity } from '../_lib/community-activity.types';
 import ReportActivityList from './_components/ReportActivityList';
 import { REPORTS_EMPTY_TEXT, REPORTS_ERROR_TEXT, REPORTS_PAGE_SIZE } from './_lib/constants';
+import Pagination from '@/components/common/Pagination';
 import styles from './page.module.css';
 
 export default function MyReportsPage() {
@@ -39,37 +40,36 @@ export default function MyReportsPage() {
   return (
     <Card>
       <div className={styles.container}>
-        {loading && items.length === 0 && <div className={styles.loading}>불러오는 중...</div>}
-        {error && <div className={styles.errorBanner}>{error}</div>}
-        {!loading && !error && items.length === 0 && <div className={styles.empty}>{REPORTS_EMPTY_TEXT}</div>}
+        <div className={styles.header}>
+          <h2 className={styles.title}>신고 내역</h2>
+        </div>
 
-        <ReportActivityList items={items} />
-
-        {totalPages > 1 && (
-          <div className={styles.footer}>
-            <div className={styles.pagination}>
-              <Button
-                variant="outline"
-                onClick={() => load(page - 1)}
-                disabled={loading || page <= 0}
-              >
-                이전
-              </Button>
-              <span className={styles.pageInfo}>
-                {page + 1} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                onClick={() => load(page + 1)}
-                disabled={loading || page >= totalPages - 1}
-              >
-                다음
-              </Button>
+        {loading && items.length === 0 ? (
+          <div className={styles.loading}>불러오는 중...</div>
+        ) : error ? (
+          <div className={styles.errorBanner}>{error}</div>
+        ) : items.length === 0 ? (
+          <div className={styles.empty}>{REPORTS_EMPTY_TEXT}</div>
+        ) : (
+          <>
+            <div className={styles.list}>
+              <ReportActivityList items={items} />
             </div>
-          </div>
+
+            {totalPages > 1 && (
+              <div className={styles.paginationWrapper}>
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={(nextPage) => load(nextPage)}
+                />
+              </div>
+            )}
+          </>
         )}
+        
         {loading && items.length > 0 && (
-          <div className={styles.footer}>
+          <div className={styles.loadingWrapper}>
             <span className={styles.pageInfo}>불러오는 중...</span>
           </div>
         )}

@@ -1,26 +1,32 @@
 .container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 48px 48px 80px;
   letter-spacing: -0.02em;
 }
 
 .pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
   margin-bottom: 32px;
+  border-bottom: 1px solid #C0C4CC;
+  padding-bottom: 24px;
 }
 
 .breadcrumb {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--color-text-secondary);
   margin-bottom: 12px;
 }
 
 .pageTitle {
-  font-family: var(--font-serif);
+  font-family: var(--font-page-title);
   font-size: 40px;
-  color: var(--color-text);
-  margin-bottom: 8px;
   font-weight: 400;
+  color: var(--color-text);
+  line-height: 1.15;
+  margin-bottom: 8px;
 }
 
 .italic {
@@ -28,31 +34,34 @@
 }
 
 .pageSub {
-  color: var(--color-text-secondary);
   font-size: 16px;
+  color: var(--color-text-secondary);
+  max-width: 600px;
+  line-height: 1.7;
 }
 
 .tabs {
   display: flex;
-  gap: 32px;
   border-bottom: 1px solid var(--color-border);
-  margin-bottom: 32px;
-  padding-bottom: 0;
+  margin-bottom: 1.5rem;
 }
 
 .tabs a {
-  padding: 12px 0;
+  padding: 1rem 1.5rem;
+  font-size: 16px;
   font-weight: 500;
-  color: var(--color-text-secondary);
+  color: var(--color-text-light);
   text-decoration: none;
   position: relative;
+  transition: color 0.2s;
 }
 
 .tabs a:hover {
-  color: var(--color-primary);
+  color: var(--color-text);
 }
 
 .activeTab {
+  font-weight: 700 !important;
   color: var(--color-primary) !important;
 }
 
@@ -61,9 +70,9 @@
   position: absolute;
   bottom: -1px;
   left: 0;
-  width: 100%;
+  right: 0;
   height: 2px;
-  background: var(--color-primary);
+  background-color: var(--color-primary);
 }
 
 /* ========== 읍면동 대시보드 ========== */
@@ -541,7 +550,7 @@
 
 @media (max-width: 768px) {
   .container {
-    padding: 24px 16px;
+    padding: 24px 16px 48px;
   }
 
   .pageTitle {

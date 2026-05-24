@@ -31,6 +31,8 @@
 /* ── 페이지 헤더 ── */
 .pageHeader {
   margin-bottom: 8px;
+  border-bottom: 1px solid #C0C4CC;
+  padding-bottom: 24px;
 }
 
 .titleRow {
@@ -55,7 +57,7 @@
 }
 
 .pageTitle {
-  font-family: var(--font-serif);
+  font-family: var(--font-page-title);
   font-size: 36px;
   font-weight: 400;
   color: var(--color-text);

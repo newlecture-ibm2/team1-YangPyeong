@@ -140,10 +140,15 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
   return (
     <div className={styles.page}>
-      {/* ════════ 브레드크럼 ════════ */}
-      <div className={styles.breadcrumb}>
-        <Link href="/">홈</Link> › <Link href="/shop">상점</Link> ›{' '}
-        <strong>{product.name}</strong>
+      {/* ════════ 페이지 헤더 ════════ */}
+      <div className={styles.pageHeader}>
+        <div>
+          <div className={styles.breadcrumb}>
+            <Link href="/">홈</Link> › <Link href="/shop">상점</Link> › {product.name}
+          </div>
+          <h2 className={styles.pageTitle}>상품 <em>상세</em></h2>
+          <p className={styles.pageSub}>{product.name}</p>
+        </div>
       </div>
 
       {/* ════════ 상단 2컬럼 ════════ */}

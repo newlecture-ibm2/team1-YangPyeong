@@ -1,11 +1,13 @@
 .container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 48px 48px 80px;
 }
 
 .pageHeader {
   margin-bottom: 32px;
+  border-bottom: 1px solid #C0C4CC;
+  padding-bottom: 24px;
 }
 
 .breadcrumb {
@@ -15,7 +17,7 @@
 }
 
 .pageTitle {
-  font-family: var(--font-serif);
+  font-family: var(--font-page-title);
   font-size: 32px;
   color: var(--color-text);
   margin-bottom: 8px;
@@ -381,7 +383,7 @@
 
 @media (max-width: 768px) {
   .container {
-    padding: 24px 16px;
+    padding: 24px 16px 48px;
   }
 
   .pageTitle {

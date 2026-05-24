@@ -1,37 +1,54 @@
 .container {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+  border-bottom: 1px solid #C0C4CC;
+  padding-bottom: 24px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* ── 리스트 및 카드 ── */
+.list {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
-.loading,
-.error,
-.empty {
-  text-align: center;
-  padding: 24px;
-  color: #5b6670;
-}
-
-.error {
-  color: #c53030;
-}
-
 .item {
-  border: 1px solid #e8edf2;
-  border-radius: 12px;
-  padding: 14px 16px;
-  background: #fff;
-  transition: all 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  transition: all 0.2s;
+  position: relative;
 }
 
 .clickable {
   cursor: pointer;
 }
 
-.clickable:hover {
-  border-color: #cbd5e1;
-  background-color: #f8fafc;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+.item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
 }
 
 .titleRow {
@@ -43,34 +60,22 @@
 
 .title {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 .meta {
-  margin-top: 8px;
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
 }
 
-.footer {
-  display: flex;
-  justify-content: center;
-  margin-top: 8px;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.pageInfo {
-  min-width: 72px;
+.loading,
+.error,
+.empty {
   text-align: center;
-  font-size: 13px;
-  color: #6b7280;
+  padding: 80px 20px;
+  color: var(--color-text-secondary);
 }
 
 .errorBanner {
@@ -82,15 +87,33 @@
   font-size: 13px;
 }
 
-@media (max-width: 768px) {
-  .item {
-    padding: 12px 14px;
-    border-radius: 10px;
-  }
+.paginationWrapper,
+.loadingWrapper {
+  margin-top: 32px;
+  display: flex;
+  justify-content: center;
+}
 
-  .titleRow {
+.pageInfo {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 768px) {
+  .header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
+    border-bottom: 1px solid #C0C4CC;
+    padding-bottom: 24px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .item {
+    padding: 12px;
     gap: 6px;
   }
 
@@ -99,6 +122,10 @@
   }
 
   .meta {
-    font-size: 12px;
+    font-size: 11px;
+  }
+
+  .paginationWrapper {
+    margin-top: 20px;
   }
 }

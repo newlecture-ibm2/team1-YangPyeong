@@ -1,54 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import LegalModal from '@/components/common/LegalModal/LegalModal';
 import styles from './page.module.css';
 
 const MOBILE_BREAKPOINT = 1024;
-const BANNER_INTERVAL_MS = 4500;
-const BANNER_SLIDE_MS = 720;
-
-const HEADER_BANNERS = [
-  { href: '/balance', text: '오늘의 AI 수급 밸런스, 지금 확인해보세요' },
-  { href: '/farm', text: '음성 영농일지로 스마트하게 농장 관리' },
-  { href: '/shop', text: '양평 농가 직송, 신선 농산물 장터' },
-  { href: '/community', text: '수다방에서 실전 영농 노하우 나눠요' },
-  { href: '/policy/recommend', text: '내 농장에 꼭 맞는 지원 정책 찾기' },
-  { href: '/stores', text: '양평 마을·체험, 동네 구경 떠나기' },
-] as const;
-
-type LegalType = 'terms' | 'privacy';
 
 export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [openLegalModal, setOpenLegalModal] = useState<LegalType | null>(null);
-  const [bannerIndex, setBannerIndex] = useState(0);
-  const [bannerLeavingIndex, setBannerLeavingIndex] = useState<number | null>(null);
-  const [bannerPaused, setBannerPaused] = useState(false);
-
-  useEffect(() => {
-    if (HEADER_BANNERS.length <= 1 || bannerPaused) return;
-
-    const timer = window.setInterval(() => {
-      setBannerIndex((prev) => {
-        setBannerLeavingIndex(prev);
-        return (prev + 1) % HEADER_BANNERS.length;
-      });
-    }, BANNER_INTERVAL_MS);
-
-    return () => window.clearInterval(timer);
-  }, [bannerPaused]);
-
-  useEffect(() => {
-    if (bannerLeavingIndex === null) return;
-
-    const timer = window.setTimeout(() => {
-      setBannerLeavingIndex(null);
-    }, BANNER_SLIDE_MS);
-
-    return () => window.clearTimeout(timer);
-  }, [bannerLeavingIndex, bannerIndex]);
 
   useEffect(() => {
     const root = containerRef.current;
@@ -61,15 +20,6 @@ export default function LandingPage() {
     const prevBodyOverflowX = document.body.style.overflowX;
     document.body.style.background = '#F5F0E8';
     document.body.style.overflowX = 'hidden';
-
-    // ── Header scroll effect ──
-    const header = root.querySelector<HTMLElement>(`.${styles.header}`);
-    const onScroll = () => {
-      if (!header) return;
-      header.classList.toggle('landing-header-scrolled', window.scrollY > 60);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
 
     // ── IntersectionObserver: show-up animations ──
     const showUpEls = root.querySelectorAll(`.${styles['show-up']}`);
@@ -268,7 +218,6 @@ export default function LandingPage() {
       ctx?.revert();
       observer.disconnect();
       counterObserver.disconnect();
-      window.removeEventListener('scroll', onScroll);
       document.body.style.background = prevBodyBg;
       document.body.style.overflowX = prevBodyOverflowX;
     };
@@ -277,92 +226,6 @@ export default function LandingPage() {
   return (
     <div ref={containerRef} className={styles.landingRoot}>
       <div className={styles['bg-dashes']} aria-hidden="true" />
-
-      {/* MOBILE HEADER */}
-      <div className={styles['mobile-header']}>
-        <Link className={styles['mobile-header__logo']} href="/">
-          <img src="/logo.png" alt="FarmBalance" />
-          <span className={styles['mobile-header__logo-text']}>FarmBalance</span>
-        </Link>
-        <div className={styles['mobile-header__right']}>
-          <button type="button" className={styles['mobile-header__icon']} aria-label="알림">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </button>
-          <button type="button" className={styles['mobile-header__icon']} aria-label="장바구니">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg>
-          </button>
-          <Link className={styles['mobile-header__login']} href="/login">
-            로그인
-          </Link>
-        </div>
-      </div>
-
-      {/* HEADER */}
-      <header className={styles.header} id="header">
-        <div className={styles['header__bar']}>
-          <div className={`${styles['header__group']} ${styles['header__group--left']}`}>
-            <div className={styles['header__brand']}>
-              <Link className={styles['header__brand-logo-link']} href="/">
-                <img
-                  src="/logo.png"
-                  alt="FarmBalance Logo"
-                  className={styles['header__brand-icon']}
-                  width={32}
-                  height={32}
-                  style={{ objectFit: 'contain', borderRadius: '50%' }}
-                />
-              </Link>
-              <div
-                className={styles['header__banner-text']}
-                onMouseEnter={() => setBannerPaused(true)}
-                onMouseLeave={() => setBannerPaused(false)}
-              >
-                {HEADER_BANNERS.map((item, index) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`${styles['header__banner-item']} ${
-                      index === bannerIndex ? styles['header__banner-item--active'] : ''
-                    } ${index === bannerLeavingIndex ? styles['header__banner-item--leave'] : ''}`}
-                    aria-hidden={index !== bannerIndex}
-                    tabIndex={index === bannerIndex ? 0 : -1}
-                  >
-                    {item.text}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <nav className={`${styles['header__group']} ${styles['header__group--center']}`}>
-            <Link className={styles['header__nav-link']} href="/farm">내농장</Link>
-            <Link className={styles['header__nav-link']} href="/shop">장터</Link>
-            <Link className={styles['header__nav-link']} href="/community">수다방</Link>
-            <Link className={styles['header__nav-link']} href="/stores">동네구경</Link>
-            <Link className={styles['header__nav-link']} href="/policy">정책</Link>
-          </nav>
-
-          <div className={`${styles['header__group']} ${styles['header__group--right']}`}>
-            <Link className={styles['header__login-btn']} href="/login">
-              <svg className={styles['header__login-icon']} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              로그인
-            </Link>
-            <Link className={styles['header__signup-btn']} href="/signup">
-              회원가입
-            </Link>
-          </div>
-        </div>
-      </header>
 
       {/* HERO */}
       <section className={styles.hero} id="hero">
@@ -635,41 +498,6 @@ export default function LandingPage() {
           </div>
         </section>
       </section>
-
-      {/* FOOTER */}
-      <footer className={styles.footer}>
-        <div className={styles['footer__inner']}>
-          <div className={styles['footer__left']}>
-            <Link className={styles['footer__logo']} href="/">
-              <img src="/logo.png" alt="FarmBalance" width={28} height={28} />
-              <span>FarmBalance</span>
-            </Link>
-            <p className={styles['footer__copy']}>© 2026 FarmBalance. 양평군 스마트 농업 플랫폼</p>
-          </div>
-          <div className={styles['footer__right']}>
-            <button
-              type="button"
-              className={styles['footer__link']}
-              onClick={() => setOpenLegalModal('terms')}
-            >
-              이용약관
-            </button>
-            <button
-              type="button"
-              className={styles['footer__link']}
-              onClick={() => setOpenLegalModal('privacy')}
-            >
-              개인정보처리방침
-            </button>
-          </div>
-        </div>
-      </footer>
-
-      <LegalModal
-        isOpen={openLegalModal !== null}
-        onClose={() => setOpenLegalModal(null)}
-        type={openLegalModal ?? 'terms'}
-      />
     </div>
   );
 }

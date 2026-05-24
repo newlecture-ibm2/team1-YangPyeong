@@ -29,6 +29,18 @@
     font-weight: normal;
     font-style: normal;
 }
+@font-face {
+  font-family: 'GyeonggiCheonnyeonBatang';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2410-3@1.0/Batang_Regular.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'GyeonggiCheonnyeonBatang';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2410-3@1.0/Batang_Bold.woff') format('woff');
+  font-weight: 700;
+  font-display: swap;
+}
 
 /* ── Design Tokens ── */
 :root {
@@ -52,6 +64,7 @@
   --landing-cream: #F5F5EB;
   
   --font-serif: 'Playfair Display', Georgia, serif;
+  --font-page-title: 'GyeonggiCheonnyeonBatang', var(--font-serif);
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --radius-sm: 6px;
   --radius-md: 12px;
@@ -131,8 +144,8 @@ h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
 
 /* ── Page Wrapper ── */
 .page { max-width: 1280px; margin: 0 auto; padding: 48px 48px 80px; }
-.page-header { margin-bottom: 40px; }
-.page-title { font-family: var(--font-serif); font-size: 40px; color: var(--color-text); line-height: 1.15; margin-bottom: 8px; font-weight: 400; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--color-border); }
+.page-title { font-family: var(--font-page-title); font-size: 40px; color: var(--color-text); line-height: 1.15; margin-bottom: 8px; font-weight: 400; }
 .page-sub { font-size: 16px; color: var(--color-text-secondary); max-width: 600px; line-height: 1.7; }
 
 /* ── Breadcrumb ── */

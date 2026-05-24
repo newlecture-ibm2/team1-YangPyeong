@@ -51,6 +51,9 @@ export default async function PostDetailPage({
           <span>관리자에 의해 숨김 처리된 게시글입니다. (작성자 본인 및 관리자만 열람 가능)</span>
         </div>
       )}
+      <nav className={styles.breadcrumb}>
+        <Link href="/">홈</Link> / <Link href="/community">수다방</Link> / 상세보기
+      </nav>
       <header className={styles.header}>
         <div className={styles.meta}>
           <Badge variant={post.isNotice ? 'dark' : 'green'}>

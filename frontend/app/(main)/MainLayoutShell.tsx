@@ -2,12 +2,12 @@
 
 import { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import Header from '@/components/layout/Header';
-import MobileHeader from '@/components/layout/MobileHeader';
+import LandingHeader from '@/components/layout/LandingHeader';
+import LandingFooter from '@/components/layout/LandingFooter';
 import MobileNav from '@/components/layout/MobileNav';
-import Footer from '@/components/layout/Footer';
 import HeaderProvider from '@/components/layout/HeaderProvider';
 import FarmBot from '@/components/common/FarmBot/FarmBot';
+import styles from './MainLayoutShell.module.css';
 
 interface MainLayoutShellProps {
   children: ReactNode;
@@ -17,18 +17,13 @@ export default function MainLayoutShell({ children }: MainLayoutShellProps) {
   const pathname = usePathname();
   const isLanding = pathname === '/';
 
-  if (isLanding) {
-    return <>{children}</>;
-  }
-
   return (
     <HeaderProvider>
-      <Header />
-      <MobileHeader />
+      <LandingHeader />
       <FarmBot>
-        <main>{children}</main>
+        <main className={isLanding ? styles.main : styles.mainWithOffset}>{children}</main>
       </FarmBot>
-      <Footer />
+      <LandingFooter />
       <MobileNav />
     </HeaderProvider>
   );

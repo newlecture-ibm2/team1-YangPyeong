@@ -1,4 +1,5 @@
 import PostListContainer from './_components/PostListContainer';
+import CommunityWriteButton from './_components/CommunityWriteButton';
 import { getPosts } from './_lib/community.api';
 import styles from './community.module.css';
 
@@ -29,9 +30,12 @@ export default async function CommunityPage({
     <main className={styles.container}>
       <header className={styles.header}>
         <div className={styles.headerTitle}>
-          <span className={styles.tag}>Community</span>
-          <h1>파머들의 <em>지식 저장소</em></h1>
+          <span className={styles.tag}>홈 / 수다방</span>
+          <h1>파머들의 <em>수다방</em></h1>
           <p>서로의 지혜를 나누고 함께 성장하는 FarmBalance 커뮤니티입니다.</p>
+        </div>
+        <div className={styles.headerButtons}>
+          <CommunityWriteButton />
         </div>
       </header>
 
