@@ -27,7 +27,7 @@ export default function GuestPreviewBanner({
   const displayMessage = message || defaultMessage;
 
   return (
-    <div className={styles.banner}>
+    <div className={styles.banner} data-guide={isGuest ? 'farm-guest-login' : undefined}>
       <div className={styles.content}>
         <span className={styles.icon}>💡</span>
         <p className={styles.message}>{displayMessage}</p>

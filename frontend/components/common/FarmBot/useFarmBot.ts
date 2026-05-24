@@ -192,8 +192,9 @@ export function useFarmBot() {
     const step = currentSteps[stepIdx];
     const el = document.querySelector(step.target);
 
-    // 타겟이 DOM에 존재하지 않으면 다음 스텝으로 건너뛰기
-    if (!el) {
+    // 타겟이 DOM에 존재하지 않거나, 블러 처리된 미리보기 영역 안에 있으면 건너뜀
+    // (비회원/미승인 상태에서 농업인 전용 요소가 DOM에 있어도 가이드하지 않기 위함)
+    if (!el || el.closest('[data-guide-blurred="true"]')) {
       if (stepIdx + 1 < currentSteps.length) {
         goToStep(stepIdx + 1, visited);
       } else {
@@ -298,13 +299,13 @@ export function useFarmBot() {
     }
   }, [goToStep]);
 
-  /** 이전 스텝 (타겟 없는 스텝은 건너뜀) */
+  /** 이전 스텝 (타겟 없는 스텝, 블러 영역 안 스텝은 건너뜀) */
   const prevStep = useCallback(() => {
     const activeStep = currentStepRef.current;
     const currentSteps = stepsRef.current;
     for (let i = activeStep - 1; i >= 0; i--) {
       const el = document.querySelector(currentSteps[i].target);
-      if (el) {
+      if (el && !el.closest('[data-guide-blurred="true"]')) {
         goToStep(i);
         return;
       }
@@ -671,11 +672,15 @@ export function useFarmBot() {
     };
   }, []);
 
-  // DOM에 존재하는 유효 스텝 인덱스 목록 (카운터 표시용)
+  // DOM에 존재하고 블러 영역 밖에 있는 유효 스텝 인덱스 목록 (카운터 표시용)
   const getVisibleStepInfo = useCallback(() => {
     const validIndices = steps
-      .map((s, i) => ({ idx: i, exists: !!document.querySelector(s.target) }))
-      .filter((v) => v.exists)
+      .map((s, i) => {
+        const el = document.querySelector(s.target);
+        const reachable = !!el && !el.closest('[data-guide-blurred="true"]');
+        return { idx: i, reachable };
+      })
+      .filter((v) => v.reachable)
       .map((v) => v.idx);
     const visiblePos = validIndices.indexOf(currentStep);
     return {

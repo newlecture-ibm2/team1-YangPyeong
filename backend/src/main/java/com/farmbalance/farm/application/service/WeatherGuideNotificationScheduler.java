@@ -72,7 +72,7 @@ public class WeatherGuideNotificationScheduler {
                 NotificationCategory.GUIDE_WEATHER,
                 "서리 위험 주의",
                 String.format("최저기온이 %.1f°C로 서리 피해 위험이 있습니다. 보온 덮개 설치 및 작물 보온 조치를 취해주세요.", w.getMinTa()),
-                "/mypage/notifications"
+                "/farm"
         );
     }
 
@@ -87,7 +87,7 @@ public class WeatherGuideNotificationScheduler {
                 NotificationCategory.GUIDE_WEATHER,
                 "폭염 주의",
                 String.format("최고기온이 %.1f°C까지 오를 예정입니다. 충분한 관수와 차광 조치를 취하고 이른 아침이나 저녁에 작업하세요.", w.getMaxTa()),
-                "/mypage/notifications"
+                "/farm"
         );
     }
 
@@ -102,7 +102,7 @@ public class WeatherGuideNotificationScheduler {
                 NotificationCategory.GUIDE_WEATHER,
                 "집중호우 주의",
                 String.format("하루 강수량이 %.0fmm를 기록했습니다. 배수로를 점검하고 침수 피해에 대비해주세요.", w.getSumRn()),
-                "/mypage/notifications"
+                "/farm"
         );
     }
 
@@ -135,7 +135,7 @@ public class WeatherGuideNotificationScheduler {
                     NotificationCategory.GUIDE_WEATHER,
                     "가뭄 주의 — 관수 권고",
                     String.format("최근 7일 강수량이 %.0fmm로 부족합니다. 토양 수분을 확인하고 정기적인 관수를 실시해주세요.", totalRain),
-                    "/mypage/notifications"
+                    "/farm"
             );
         } catch (Exception e) {
             log.warn("[WeatherGuide] 가뭄 조건 조회 실패: {}", e.getMessage());
@@ -153,7 +153,7 @@ public class WeatherGuideNotificationScheduler {
                 NotificationCategory.GUIDE_WEATHER,
                 "고습 주의 — 병해충 예방",
                 String.format("평균 습도가 %.0f%%로 높습니다. 환기를 강화하고 곰팡이병·노균병 등 병해충 예방 방제를 실시해주세요.", w.getAvgRhm()),
-                "/mypage/notifications"
+                "/farm"
         );
     }
 

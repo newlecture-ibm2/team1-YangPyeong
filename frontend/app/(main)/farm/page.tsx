@@ -790,7 +790,10 @@ function FarmDashboardContent() {
 
       <div style={{ position: 'relative' }}>
         {isShowPreviewBlur && <MockupOverlay hasUnapprovedFarms={hasUnapprovedFarms} isGuest={isGuest} />}
-        <div style={{ filter: isShowPreviewBlur ? 'blur(8px) grayscale(0.3)' : 'none', pointerEvents: isShowPreviewBlur ? 'none' : 'auto' }}>
+        <div
+          style={{ filter: isShowPreviewBlur ? 'blur(8px) grayscale(0.3)' : 'none', pointerEvents: isShowPreviewBlur ? 'none' : 'auto' }}
+          data-guide-blurred={isShowPreviewBlur ? 'true' : undefined}
+        >
       <HistoryModal
         isOpen={isHistoryModalOpen}
         onClose={handleModalClose}
@@ -878,7 +881,7 @@ function FarmDashboardContent() {
                   <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>작물별 수익 · 시세 분석</h3>
                 </div>
                 <p style={{ fontSize: '13px', color: 'var(--color-text-light)', marginTop: '8px', marginBottom: 0 }}>
-                  면적이 가장 큰 대표 작물은 자동 분석합니다. 다른 작물은 「분석받기」를 눌러야 AI 분석이 시작됩니다(당일 캐시).
+                  면적이 가장 큰 대표 작물은 자동 분석합니다. 다른 작물은 「분석받기」를 눌러야 AI 분석이 시작됩니다.
                 </p>
               </div>
 
