@@ -278,7 +278,7 @@ export default function LandingPage() {
         <div className={styles['hero__wrapper']}>
           <div className={styles['hero__ball-container']}>
             <img className={`${styles['hero__ball']} ${styles['hero__ball--left']}`} src="/images/landing/cabbage.png" alt="배추" />
-            <img className={`${styles['hero__ball']} ${styles['hero__ball--right']}`} src="/images/landing/onion.png" alt="양파" />
+            <img className={`${styles['hero__ball']} ${styles['hero__ball--right']}`} src="/1x/당근.png" alt="당근" />
           </div>
           <div className={styles['hero__title']}>
             <div className={styles['hero__name']}>Farm</div>
