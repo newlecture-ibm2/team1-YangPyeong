@@ -53,11 +53,11 @@ export default function AdminDashboardPage() {
 
   // Recharts 데이터 매핑
   const balancePieData = [
-    { name: '적정', value: dashboard.balanceStatusDistribution['BALANCED'] || 0, fill: '#10b981' },
-    { name: '과잉 주의', value: dashboard.balanceStatusDistribution['EXCESS_CAUTION'] || 0, fill: '#f59e0b' },
-    { name: '부족 주의', value: dashboard.balanceStatusDistribution['SHORT_CAUTION'] || 0, fill: '#f59e0b' },
-    { name: '과잉 경고', value: dashboard.balanceStatusDistribution['EXCESS_WARN'] || 0, fill: '#ef4444' },
-    { name: '부족 경고', value: dashboard.balanceStatusDistribution['SHORT_WARN'] || 0, fill: '#ef4444' }
+    { name: '적정', value: dashboard.balanceStatusDistribution['BALANCED'] || 0, fill: '#10b981' }, // 녹색
+    { name: '과잉 주의', value: dashboard.balanceStatusDistribution['EXCESS_CAUTION'] || 0, fill: '#60a5fa' }, // 밝은 파랑
+    { name: '과잉 경고', value: dashboard.balanceStatusDistribution['EXCESS_WARN'] || 0, fill: '#2563eb' }, // 진한 파랑
+    { name: '부족 주의', value: dashboard.balanceStatusDistribution['SHORT_CAUTION'] || 0, fill: '#f59e0b' }, // 주황
+    { name: '부족 경고', value: dashboard.balanceStatusDistribution['SHORT_WARN'] || 0, fill: '#ef4444' } // 빨강
   ].filter(d => d.value > 0);
 
   const areaData = dashboard.topCropsByArea.map(c => ({
@@ -114,7 +114,7 @@ export default function AdminDashboardPage() {
                     ))}
                   </Pie>
                   <Tooltip formatter={(value: any) => [`${value}개 작물`, '']} />
-                  <Legend verticalAlign="bottom" height={36}/>
+                  <Legend verticalAlign="bottom" height={36} />
                 </PieChart>
               </ResponsiveContainer>
             ) : <div className={styles.emptyState}>데이터 없음</div>}
