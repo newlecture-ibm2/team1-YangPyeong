@@ -523,15 +523,15 @@
 }
 
 .hero__ball--left {
-  width: clamp(200px, 25vw, 350px);
-  height: clamp(200px, 25vw, 350px);
+  width: clamp(180px, 22vw, 320px);
+  aspect-ratio: 1 / 1;
   left: 0%;
   top: 65%;
 }
 
 .hero__ball--right {
-  width: clamp(300px, 38vw, 500px);
-  height: clamp(300px, 38vw, 500px);
+  width: clamp(260px, 32vw, 450px);
+  aspect-ratio: 1 / 1;
   right: -15%;
   top: 35%;
 }
@@ -1025,7 +1025,7 @@
   border-radius: 500px;
   position: relative;
   z-index: 1;
-  padding: 200px 0 100px 0;
+  padding: clamp(120px, 15vw, 220px) 0 clamp(60px, 8vw, 120px) 0;
   display: flex;
   flex-direction: column;
 }
@@ -1033,11 +1033,11 @@
 /* ?? ?? ?? ?? ? ?? */
 .dark-circle-badge {
   position: absolute;
-  top: -90px;
+  top: clamp(-80px, -7vw, -50px);
   left: 50%;
   transform: translateX(-50%);
-  width: clamp(220px, 30vw, 380px);
-  height: clamp(220px, 30vw, 380px);
+  width: clamp(180px, 22vw, 320px);
+  aspect-ratio: 1 / 1;
   background-color: #a8bd91;
   border-radius: 50%;
   overflow: hidden;
@@ -1094,7 +1094,7 @@
 
 /* ?????????????????STATS ?????????????????*/
 .stats {
-  padding: clamp(60px, 8vw, 120px) var(--side-pad);
+  padding: clamp(40px, 5vw, 90px) var(--side-pad);
   background: var(--dark);
   color: var(--white);
   position: relative;
@@ -1104,7 +1104,7 @@
 .stats__inner {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: clamp(16px, 3vw, 40px);
+  gap: clamp(16px, 2.5vw, 30px);
   max-width: 1000px;
   margin: 0 auto;
   text-align: center;
@@ -1157,7 +1157,7 @@
 
 .links__title {
   font-family: 'GyeonggiMillenniumBackground', var(--font-serif);
-  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-size: clamp(1.8rem, 3vw, 3rem);
   font-weight: 500;
   -webkit-text-stroke: 0.4px currentColor;
   letter-spacing: -0.02em;
@@ -1171,14 +1171,14 @@
 
 .links__desc {
   font-family: var(--font-sans);
-  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+  font-size: clamp(0.9rem, 1vw, 1rem);
   color: var(--dark-soft);
 }
 
 .links__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: clamp(14px, 2vw, 20px);
+  gap: clamp(12px, 1.5vw, 18px);
   max-width: 880px;
   margin: 0 auto;
 }
@@ -1188,8 +1188,8 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: clamp(14px, 2vw, 20px);
-  padding: clamp(20px, 2.5vw, 28px) clamp(20px, 2.5vw, 28px);
+  gap: clamp(12px, 1.5vw, 18px);
+  padding: clamp(16px, 2vw, 24px);
   border: 1.5px solid rgba(81, 115, 63, 0.35);
   border-radius: 16px;
   background: rgba(245, 240, 232, 0.6);
@@ -1619,24 +1619,28 @@
   }
 
   .flow-photo--right {
-    width: clamp(280px, 35vw, 450px);
-    height: clamp(380px, 45vw, 600px);
+    width: clamp(240px, 30vw, 360px);
+    aspect-ratio: 3 / 4;
+    height: auto;
     right: clamp(10px, 3vw, 40px);
   }
 
   .cta-circle--intro {
-    width: clamp(420px, 55vw, 700px);
-    height: clamp(420px, 55vw, 700px);
+    width: clamp(340px, 45vw, 500px);
+    aspect-ratio: 1 / 1;
+    height: auto;
   }
 
   .cta-circle--text {
-    width: clamp(360px, 45vw, 550px);
-    height: clamp(360px, 45vw, 550px);
+    width: clamp(380px, 48vw, 540px);
+    aspect-ratio: 1 / 1;
+    height: auto;
   }
 
   .partners-circle-wrapper {
-    width: clamp(900px, 100vw, 1100px);
-    height: clamp(900px, 100vw, 1100px);
+    width: clamp(800px, 95vw, 1000px);
+    aspect-ratio: 1 / 1;
+    height: auto;
     margin-top: -350px;
   }
 }
