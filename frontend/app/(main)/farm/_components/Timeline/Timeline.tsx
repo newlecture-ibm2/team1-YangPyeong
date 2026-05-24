@@ -25,9 +25,15 @@ interface TimelineProps {
 export default function Timeline({ histories, onEdit, onDelete, onEditCultivation, onDeleteCultivation }: TimelineProps) {
   const [filter, setFilter] = useState<HistoryType | 'ALL'>('ALL');
 
-  const filteredHistories = histories.filter(
-    (h) => filter === 'ALL' || h.activityType === filter
-  );
+  const filteredHistories = histories
+    .filter((h) => filter === 'ALL' || h.activityType === filter)
+    .sort((a, b) => {
+      const targetA = a.recordDate || a.createdAt;
+      const targetB = b.recordDate || b.createdAt;
+      const dateA = new Date(targetA.includes('T') ? targetA : `${targetA}T00:00:00`).getTime();
+      const dateB = new Date(targetB.includes('T') ? targetB : `${targetB}T00:00:00`).getTime();
+      return dateB - dateA;
+    });
 
   const getTheme = (type: HistoryType) => {
     switch (type) {
