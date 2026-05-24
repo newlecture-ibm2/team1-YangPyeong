@@ -1,30 +1,101 @@
-/* ?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß??   FarmBalance Landing Page ??V2 Mockup
-   Inspired by olhauzhykova.com
-   Color: Sage green + dark + cream
-   ?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß??*/
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap');
 
-/* ???? Reset & Base ???? */
+/* FarmBalance Landing Page V2 ? CSS Modules (from ui-mockup-v2/style.css) */
 
+/* Landing fonts (mockup style.css L15?41 + index.html CheonnyeonBatang) */
+@font-face {
+  font-family: 'GyeonggiCheonnyeonBatang';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2410-3@1.0/Batang_Regular.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
 
+@font-face {
+  font-family: 'GyeonggiCheonnyeonBatang';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2410-3@1.0/Batang_Bold.woff') format('woff');
+  font-weight: 700;
+  font-display: swap;
+}
 
+@font-face {
+  font-family: 'GyeonggiMillenniumBackground';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2410-3@1.0/Batang_Regular.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
 
+@font-face {
+  font-family: 'GyeonggiMillenniumBackground';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2410-3@1.0/Batang_Bold.woff') format('woff');
+  font-weight: 700;
+  font-display: swap;
+}
 
+@font-face {
+  font-family: 'GyeonggiBatang';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/GyeonggiBatang.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
+@font-face {
+  font-family: 'MapoFlowerIsland';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/MapoFlowerIslandA.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
+.landingRoot {
+  --sage: #F5F0E8;
+  --sage-light: #E0E1D1;
+  --sage-dark: #B1C0A0;
+  --cream: #F5F5EB;
+  --cream-warm: #ECEDDE;
+  --dark: #1B1C1E;
+  --dark-soft: #3A3B3D;
+  --green-pill: #51733F;
+  --green-pill-light: #7AA74A;
+  --white: #FFFFFF;
+  --text-muted: #6E6E6E;
+  --font-serif: 'GyeonggiCheonnyeonBatang', var(--font-playfair), 'Playfair Display', 'Noto Serif KR', Georgia, serif;
+  --font-sans: var(--font-noto-sans-kr), 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ui: var(--font-sans);
+  --section-pad: clamp(80px, 10vw, 160px);
+  --side-pad: clamp(24px, 5vw, 80px);
 
+  font-family: var(--font-sans);
+  background: var(--sage);
+  color: var(--dark);
+  overflow-x: hidden;
+  line-height: 1.6;
+  min-height: 100vh;
+  position: relative;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+}
 
+.landingRoot a {
+  text-decoration: none;
+  color: inherit;
+}
 
+.landingRoot img {
+  max-width: 100%;
+  height: auto;
+}
 
+.hero__mobile-ball {
+  display: none;
+}
 
+.visible {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
 
-
-
-
-
-
-
-
-/* ???? Background vertical dashes (Olha-style) ???? */
 .bg-dashes {
   position: fixed;
   top: 0;
@@ -100,10 +171,28 @@
 }
 
 .text-block {
+  font-family: var(--font-sans);
   font-size: clamp(1rem, 1.2vw, 1.2rem);
   line-height: 1.8;
   color: var(--dark-soft);
   font-weight: 300;
+}
+
+/* Subtext / UI copy ? Noto Sans KR (mockup var(--font-sans) effective) */
+.flow-card__desc p,
+.flow-card__cta-text,
+.flow-item__sub,
+.flow-item__title .arrow,
+.links__tag,
+.links__desc,
+.links__card-name,
+.links__card-desc,
+.stats__label,
+.cta-circle__desc,
+.footer__copy,
+.footer__link,
+.flow-btn {
+  font-family: var(--font-sans);
 }
 
 /* ???? Animations ???? */
@@ -152,7 +241,7 @@
   }
 }
 
-/* ?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß??HEADER ?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß??*/
+/* ?????????????????HEADER ?????????????????*/
 .header {
   position: fixed;
   top: 1.5rem;
@@ -163,6 +252,10 @@
   justify-content: center;
   padding: 0 16px;
   pointer-events: none;
+}
+
+.header {
+  font-family: var(--font-ui);
 }
 
 .header__bar {
@@ -178,9 +271,18 @@
   padding: 0 16px 0 24px;
   box-shadow: 0 4px 20px rgba(81, 115, 63, 0.08);
   pointer-events: auto;
+  font-family: var(--font-ui);
 }
 
-/* ?????Header groups ?????*/
+.header__brand,
+.header__banner-item,
+.header__nav-link,
+.header__login-btn,
+.header__signup-btn {
+  font-family: var(--font-ui);
+}
+
+/* ???? Header groups ???? */
 .header__group {
   display: flex;
   align-items: center;
@@ -213,6 +315,8 @@
   font-size: 1.05rem;
   text-decoration: none;
   transition: opacity 0.2s;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .header__brand:hover {
@@ -225,57 +329,61 @@
 }
 
 .header__banner-text {
-  height: 26px;
-  overflow: hidden;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: min(400px, 34vw);
   position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.header__banner-carousel {
-  display: flex;
-  flex-direction: column;
-  animation: banner-cycle 9s ease-in-out infinite;
-}
-
-.header__banner-carousel:hover {
-  animation-play-state: paused;
+  height: 2.75em;
+  display: block;
+  overflow: hidden;
 }
 
 .header__banner-item {
-  height: 26px;
-  line-height: 26px;
-  font-size: 1.05rem;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  line-height: 1.35;
+  font-size: clamp(0.88rem, 0.95vw, 1.05rem);
   font-weight: 500;
   color: var(--dark);
   text-decoration: none;
-  white-space: nowrap;
-  transition: color 0.2s;
+  white-space: normal;
+  word-break: keep-all;
+  transform: translateY(100%);
+  opacity: 0;
+  transition: transform 0.72s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.72s ease, color 0.2s;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.header__banner-item--active {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.header__banner-item--leave {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .header__banner-item:hover {
   color: var(--green-pill);
 }
 
-@keyframes banner-cycle {
-
-  0%,
-  25% {
-    transform: translateY(0);
+@media (max-width: 1280px) {
+  .header__banner-text {
+    max-width: min(300px, 30vw);
   }
 
-  33%,
-  58% {
-    transform: translateY(-26px);
-  }
-
-  66%,
-  91% {
-    transform: translateY(-52px);
-  }
-
-  100% {
-    transform: translateY(0);
+  .header__banner-item {
+    font-size: 0.88rem;
   }
 }
 
@@ -314,18 +422,18 @@
   color: var(--green-pill);
 }
 
-/* ?•Î∞îÍµ¨Îãà Î≤ÑÌäº?Ä Í∏∞Î≥∏ ?®Í? (Î°úÍ∑∏?????úÏãú) */
+/* ???? ??? ?? ?? (??? ? ??) */
 .header__icon-btn--cart {
   display: none;
 }
 
-/* body??is-logged-in ?¥Îûò?§Í? ?àÏùÑ Í≤ΩÏö∞ ?•Î∞îÍµ¨Îãà ?úÏãú Î∞?Î°úÍ∑∏???åÏõêÍ∞Ä???®Í? */
-body.is-logged-in .header__icon-btn--cart {
+/* body? is-logged-in ???? ?? ?? ???? ?? ? ???/???? ?? */
+.landingRoot.is-logged-in .header__icon-btn--cart {
   display: inline-flex;
 }
 
-body.is-logged-in .header__login-btn,
-body.is-logged-in .header__signup-btn {
+.landingRoot.is-logged-in .header__login-btn,
+.landingRoot.is-logged-in .header__signup-btn {
   display: none;
 }
 
@@ -372,7 +480,7 @@ body.is-logged-in .header__signup-btn {
   transform: translateY(-1px);
 }
 
-/* ?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß??HERO ?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß??*/
+/* ?????????????????HERO ?????????????????*/
 .hero {
   min-height: 100vh;
   display: flex;
@@ -463,14 +571,14 @@ body.is-logged-in .header__signup-btn {
   animation: fade-in-up 1s ease 0.4s both;
 }
 
-/* ?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß??CONTENT FLOW (?Î®?∂õ 2 ?Î∂øÏòÑ?? ?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß??*/
+/* ?????????????????CONTENT FLOW (??? 2 ????? ?????????????????*/
 .content-flow {
   padding: 0 var(--side-pad) var(--section-pad);
   position: relative;
   overflow: visible;
 }
 
-/* ???? ?Œ∫???Î™ÑÏî†Ôßû¬Ä ÁßªÎ?Î±??®ÎìØ?????? */
+/* ???? ??? ????? ??? ??? ???? */
 .flow-card {
   width: 88%;
   margin: 0 auto;
@@ -494,7 +602,7 @@ body.is-logged-in .header__signup-btn {
   margin-left: clamp(30px, 4vw, 80px);
 }
 
-/* ?Ä?Ä CTA Two Circles ?Ä?Ä */
+/* ?? CTA Two Circles ?? */
 .cta-circles-container {
   position: relative;
   width: 100%;
@@ -622,12 +730,18 @@ body.is-logged-in .header__signup-btn {
 .cta-circle__title .font-italic {
   color: var(--green-pill);
   font-weight: 500;
+  margin-right: 0.14em;
 }
 
 .cta-circle__buttons {
   display: flex;
   gap: clamp(8px, 1vw, 16px);
   justify-content: center;
+}
+
+.cta-circle__buttons .flow-btn {
+  padding: 18px 44px;
+  font-size: 1.15rem;
 }
 
 .flow-card__title {
@@ -640,7 +754,10 @@ body.is-logged-in .header__signup-btn {
   margin-bottom: clamp(30px, 4vw, 50px);
 }
 
-.flow-card__title--ct
+.flow-card__title--cta {
+  margin-bottom: clamp(16px, 2vw, 24px);
+  font-weight: 500;
+}
 
 .flow-card__title--cta .font-italic {
   font-weight: 500;
@@ -666,9 +783,14 @@ body.is-logged-in .header__signup-btn {
   margin: clamp(30px, 4vw, 60px) auto 0;
 }
 
-.flow-card__ball 
+.flow-card__ball img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+}
 
-/* ?Ä?Ä Concept photo (bottom-right of top card) ?Ä?Ä */
+/* ?? Concept photo (bottom-right of top card) ?? */
 .flow-card__photo {
   position: absolute;
   right: clamp(30px, 6vw, 100px);
@@ -689,7 +811,12 @@ body.is-logged-in .header__signup-btn {
   transform: rotate(0deg) scale(1.03);
 }
 
-.flow-card__photo 
+.flow-card__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
 .flow-card__cta-text {
   font-family: var(--font-sans);
@@ -757,7 +884,33 @@ body.is-logged-in .header__signup-btn {
   transform: scale(1.05);
 }
 
-/* ???????øÎí™???????±—äÎí™???????*/
+/* Mockup button colors ? beat .landingRoot a { color: inherit } */
+.landingRoot .header__login-btn {
+  color: var(--green-pill);
+  background: var(--white);
+}
+
+.landingRoot .header__signup-btn {
+  color: var(--white);
+  background: var(--green-pill);
+}
+
+.landingRoot .flow-btn--primary {
+  color: var(--white);
+  background: #51733f;
+}
+
+.landingRoot .flow-btn--secondary {
+  color: #3d5a2e;
+  background: transparent;
+}
+
+.landingRoot .mobile-header__login {
+  color: var(--white);
+  background: var(--green-pill);
+}
+
+/* ???? ???????? ????????? */
 .flow-items {
   padding: clamp(260px, 20vw, 320px) var(--side-pad) 0;
   max-width: 600px;
@@ -810,7 +963,7 @@ body.is-logged-in .header__signup-btn {
   white-space: nowrap;
 }
 
-/* ?Ä?Ä Flow concept photos ?Ä?Ä */
+/* ?? Flow concept photos ?? */
 .flow-photo {
   border-radius: 0;
   overflow: hidden;
@@ -828,9 +981,14 @@ body.is-logged-in .header__signup-btn {
     0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.flow-photo 
+.flow-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
-/* ?òÍ∏âÎ∞∏Îü∞???§Î•∏Ï™????∏Î°ú ?¨ÏßÑ */
+/* ????? ??? ? ?? ?? */
 .flow-photo--right {
   position: absolute;
   right: clamp(40px, 10vw, 150px);
@@ -845,7 +1003,7 @@ body.is-logged-in .header__signup-btn {
   transform: rotate(0deg) scale(1.03);
 }
 
-/* Ïπ¥Îìú ?¨Ïù¥ ??Í∞ÄÎ°??¨ÏßÑ (Ï§ëÏïô ?ïÎ†¨) */
+/* ?? ?? ? ?? ?? (?? ??) */
 .flow-photo--center {
   position: relative;
   width: clamp(280px, 40vw, 520px);
@@ -854,7 +1012,7 @@ body.is-logged-in .header__signup-btn {
   z-index: 4;
 }
 
-/* ?Ä?Ä Í∏??Ä??Ïª®ÌÖå?¥ÎÑà ?Ä?Ä */
+/* ?? ? ?? ???? ?? */
 .long-oval-wrapper {
   width: 88%;
   margin: -120px auto 0;
@@ -868,7 +1026,7 @@ body.is-logged-in .header__signup-btn {
   flex-direction: column;
 }
 
-/* ?Ä?Ä ?Ä???ÅÎã® ÏßÑÌïú ???Ä?Ä */
+/* ?? ?? ?? ?? ? ?? */
 .dark-circle-badge {
   position: absolute;
   top: -90px;
@@ -895,10 +1053,10 @@ body.is-logged-in .header__signup-btn {
   font-style: italic;
   font-size: 24px;
   letter-spacing: 0.08em;
-  fill: #3d5a2e; /* ÏßôÏ? ?πÏÉâ ?çÏä§??*/
+  fill: #3d5a2e; /* ?? ?? ??? */
 }
 
-/* ?Ä?Ä STATS BREAKOUT ?Ä?Ä */
+/* ?? STATS BREAKOUT ?? */
 .long-oval-wrapper .stats {
   width: 100vw;
   margin-left: calc(-50vw + 50%);
@@ -908,7 +1066,7 @@ body.is-logged-in .header__signup-btn {
   margin-bottom: clamp(60px, 8vw, 100px);
 }
 
-/* ?Ä?Ä ?åÌä∏??Îπ????Ä?Ä */
+/* ?? ??? ? ? ?? */
 .partners-circle-wrapper {
   position: relative;
   width: clamp(1200px, 115vw, 1300px);
@@ -930,7 +1088,7 @@ body.is-logged-in .header__signup-btn {
   width: 80%;
 }
 
-/* ?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß??STATS ?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß??*/
+/* ?????????????????STATS ?????????????????*/
 .stats {
   padding: clamp(60px, 8vw, 120px) var(--side-pad);
   background: var(--dark);
@@ -949,12 +1107,16 @@ body.is-logged-in .header__signup-btn {
 }
 
 .stats__number {
-  font-family: var(--font-serif);
+  font-family: 'GyeonggiCheonnyeonBatang', serif;
   font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 700;
   letter-spacing: -0.03em;
   margin-bottom: 8px;
   color: var(--green-pill-light);
+}
+
+.landingRoot .stats__number {
+  font-family: 'GyeonggiCheonnyeonBatang', serif;
 }
 
 .stats__label {
@@ -964,7 +1126,7 @@ body.is-logged-in .header__signup-btn {
   letter-spacing: 0.02em;
 }
 
-/* ?ê‚ïê?ê‚ïê?ê‚ïê?ê‚ïê?ê‚ïê??LINKS (?∏Î? ?∞Í≤∞) ?ê‚ïê?ê‚ïê?ê‚ïê?ê‚ïê?ê‚ïê??*/
+/* ??????????? LINKS (?? ??) ??????????? */
 .links {
   padding: var(--section-pad) var(--side-pad);
   text-align: center;
@@ -1017,7 +1179,7 @@ body.is-logged-in .header__signup-btn {
   margin: 0 auto;
 }
 
-/* ?Ä?Ä Card ?Ä?Ä */
+/* ?? Card ?? */
 .links__card {
   position: relative;
   display: flex;
@@ -1047,7 +1209,7 @@ body.is-logged-in .header__signup-btn {
   background: rgba(245, 240, 232, 0.9);
 }
 
-/* ?Ä?Ä Numbering ?Ä?Ä */
+/* ?? Numbering ?? */
 .links__card-num {
   position: absolute;
   top: 10px;
@@ -1060,7 +1222,7 @@ body.is-logged-in .header__signup-btn {
   pointer-events: none;
 }
 
-/* ?Ä?Ä Icon badge ?Ä?Ä */
+/* ?? Icon badge ?? */
 .links__card-icon {
   display: flex;
   align-items: center;
@@ -1081,8 +1243,14 @@ body.is-logged-in .header__signup-btn {
   transform: scale(1.06);
 }
 
-/* ?Ä?Ä Card body ?Ä?Ä */
-.links__card-
+/* ?? Card body ?? */
+.links__card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
 
 .links__card-name {
   font-family: var(--font-sans);
@@ -1099,7 +1267,7 @@ body.is-logged-in .header__signup-btn {
   line-height: 1.4;
 }
 
-/* ?Ä?Ä Arrow ?Ä?Ä */
+/* ?? Arrow ?? */
 .links__card-arrow {
   width: 16px;
   height: 16px;
@@ -1114,7 +1282,7 @@ body.is-logged-in .header__signup-btn {
   transform: translate(2px, -2px);
 }
 
-/* ?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß??FOOTER ?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß?Î®•Î∏ß??*/
+/* ?????????????????FOOTER ?????????????????*/
 .footer {
   padding: 40px var(--side-pad);
   background: var(--dark);
@@ -1143,7 +1311,12 @@ body.is-logged-in .header__signup-btn {
   letter-spacing: 0.05em;
 }
 
-.footer__logo 
+.footer__logo img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  filter: brightness(1.2);
+}
 
 .footer__copy {
   font-size: 0.8rem;
@@ -1157,15 +1330,21 @@ body.is-logged-in .header__signup-btn {
 .footer__link {
   font-size: 0.85rem;
   transition: color 0.3s;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-sans);
 }
 
 .footer__link:hover {
   color: var(--white);
 }
 
-/* ?ê‚ïê?ê‚ïê?ê‚ïê?ê‚ïê?ê‚ïê??RESPONSIVE ?ê‚ïê?ê‚ïê?ê‚ïê?ê‚ïê?ê‚ïê??*/
+/* ??????????? RESPONSIVE ??????????? */
 
-/* ?Ä?Ä Mobile Header (hidden on desktop, shown ??68px) ?Ä?Ä */
+/* ?? Mobile Header (hidden on desktop, shown ?768px) ?? */
 .mobile-header {
   display: none;
   position: fixed;
@@ -1182,6 +1361,12 @@ body.is-logged-in .header__signup-btn {
   justify-content: space-between;
   box-sizing: border-box;
   overflow: hidden;
+  font-family: var(--font-ui);
+}
+
+.mobile-header__login,
+.mobile-header__icon {
+  font-family: var(--font-ui);
 }
 .mobile-header__logo {
   display: flex;
@@ -1191,7 +1376,12 @@ body.is-logged-in .header__signup-btn {
   color: var(--dark);
 }
 
-.mobile-header__logo 
+.mobile-header__logo img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: contain;
+}
 
 .mobile-header__logo-text {
   font-family: 'MapoFlowerIsland', var(--font-serif);
@@ -1305,7 +1495,7 @@ body.is-logged-in .header__signup-btn {
   transition: all 0.3s;
 }
 
-/* ?Ä?Ä Mobile Side Menu ?Ä?Ä */
+/* ?? Mobile Side Menu ?? */
 .mobile-menu-overlay {
   display: none;
   position: fixed;
@@ -1417,12 +1607,7 @@ body.is-logged-in .header__signup-btn {
   background: var(--green-pill);
 }
 
-/* ?Ä?Ä Mobile Hero Ball (desktop?êÏÑú???®Í?) ?Ä?Ä */
-.hero__mobile-ball {
-  display: none;
-}
-
-/* ?Ä?Ä Tablet (1024px) ?Ä?Ä */
+/* ?? Tablet (1024px) ?? */
 @media (max-width: 1024px) {
   .stats__inner {
     grid-template-columns: repeat(2, 1fr);
@@ -1452,9 +1637,9 @@ body.is-logged-in .header__signup-btn {
   }
 }
 
-/* ?Ä?Ä Mobile (768px) ?Ä?Ä */
+/* ?? Mobile (768px) ?? */
 @media (max-width: 768px) {
-  /* ?∞Ïä§?¨ÌÉë ?§Îçî ?®Í∏∞Í∏? Î™®Î∞î???§Îçî ?úÏãú */
+  /* ???? ?? ???, ??? ?? ?? */
   .header {
     display: none !important;
   }
@@ -1472,7 +1657,7 @@ body.is-logged-in .header__signup-btn {
     display: flex;
   }
 
-  /* ?àÏñ¥Î°??ÅÏó≠ */
+  /* ??? ?? */
   .hero {
     min-height: 70vh;
     padding: 100px var(--side-pad) 60px;
@@ -1497,7 +1682,7 @@ body.is-logged-in .header__signup-btn {
     margin-top: 24px;
   }
 
-  /* Î∞∞Í≤Ω ???®Í∏∞Í∏?*/
+  /* ?? ? ??? */
   .bg-dashes {
     display: none;
   }
@@ -1512,7 +1697,7 @@ body.is-logged-in .header__signup-btn {
     padding: 40px 20px 50px;
   }
 
-  /* Î∞òÏõê ??Î™®Î∞î?ºÏóê?úÎäî ?§ÌÄòÏñ¥(?•Í∑º Î™®ÏÑúÎ¶? ?ïÌÉúÎ°??ÑÌôò */
+  /* ?? ? ?????? ???(?? ???) ??? ?? */
   .flow-card--top {
     border-radius: 24px;
     overflow: hidden;
@@ -1541,12 +1726,12 @@ body.is-logged-in .header__signup-btn {
     word-break: keep-all;
   }
 
-  /* Î∞òÏõêÍ≥??Ä???¨Ïù¥??Í±∏Ï≥ê?àÎäî ?¨ÏßÑ ?®Í∏∞Í∏?*/
+  /* ??? ?? ??? ???? ?? ??? */
   .flow-card__photo {
     display: none;
   }
 
-  /* ?Ä??Î±ÉÏ? ??Î™®Î∞î?ºÏóê??Í∏Ä???§Ïö∞Í∏?*/
+  /* ?? ?? ? ????? ?? ??? */
   .dark-circle-badge {
     width: clamp(160px, 38vw, 260px);
     height: clamp(160px, 38vw, 260px);
@@ -1558,7 +1743,7 @@ body.is-logged-in .header__signup-btn {
     letter-spacing: 0.03em;
   }
 
-  /* ?Ä???òÌçº ???•Í∑º Í≥°ÏÑ† ?†Ï? */
+  /* ?? ?? ? ?? ?? ?? */
   .long-oval-wrapper {
     width: 95%;
     border-radius: 200px;
@@ -1566,7 +1751,7 @@ body.is-logged-in .header__signup-btn {
     margin-top: -80px;
   }
 
-  /* Î™®Î∞î???àÏñ¥Î°?Î≥??úÏãú */
+  /* ??? ??? ? ?? */
   .hero__mobile-ball {
     display: block;
     position: absolute;
@@ -1584,7 +1769,7 @@ body.is-logged-in .header__signup-btn {
     50% { transform: translateY(-15px); }
   }
 
-  /* Í∏∞Îä• Î¶¨Ïä§??*/
+  /* ?? ??? */
   .flow-items {
     padding: 60px 20px 0;
     margin-left: 0;
@@ -1606,7 +1791,7 @@ body.is-logged-in .header__signup-btn {
     word-break: keep-all;
   }
 
-  /* ?§Î•∏Ï™?Ïª®ÏÖâ ?¨ÏßÑ ??Î™®Î∞î?ºÏóê???®Í∏∞Í∏?*/
+  /* ??? ?? ?? ? ????? ??? */
   .flow-photo--right {
     display: none;
   }
@@ -1625,7 +1810,7 @@ body.is-logged-in .header__signup-btn {
     font-size: 0.75rem;
   }
 
-  /* CTA ?êÌòï ??Ïπ¥ÎìúÎ°?Î≥Ä??*/
+  /* CTA ?? ? ??? ?? */
   .cta-circles-container {
     flex-direction: column;
     align-items: center;
@@ -1692,7 +1877,7 @@ body.is-logged-in .header__signup-btn {
     justify-content: center;
   }
 
-  /* ?åÌä∏???êÌòï ???ºÎ∞ò ?πÏÖò?ºÎ°ú ?ÑÌôò */
+  /* ??? ?? ? ?? ???? ?? */
   .partners-circle-wrapper {
     width: 100%;
     height: auto;
@@ -1731,7 +1916,7 @@ body.is-logged-in .header__signup-btn {
   }
 }
 
-/* ?Ä?Ä Small mobile (480px) ?Ä?Ä */
+/* ?? Small mobile (480px) ?? */
 @media (max-width: 480px) {
   .hero {
     padding: 72px 16px 30px;
@@ -1796,6 +1981,11 @@ body.is-logged-in .header__signup-btn {
     font-size: 0.9rem;
   }
 
+  .cta-circle__buttons .flow-btn {
+    padding: 14px 32px;
+    font-size: 1rem;
+  }
+
   .links__card {
     padding: 16px;
   }
@@ -1806,7 +1996,3 @@ body.is-logged-in .header__signup-btn {
     min-width: 44px;
   }
 }
-
-
-
-

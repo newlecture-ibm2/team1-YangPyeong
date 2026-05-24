@@ -1,28 +1,84 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import LegalModal from '@/components/common/LegalModal/LegalModal';
 import styles from './page.module.css';
 
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
+const MOBILE_BREAKPOINT = 1024;
+const BANNER_INTERVAL_MS = 4500;
+const BANNER_SLIDE_MS = 720;
+
+const HEADER_BANNERS = [
+  { href: '/balance', text: '오늘의 AI 수급 밸런스, 지금 확인해보세요' },
+  { href: '/farm', text: '음성 영농일지로 스마트하게 농장 관리' },
+  { href: '/shop', text: '양평 농가 직송, 신선 농산물 장터' },
+  { href: '/community', text: '수다방에서 실전 영농 노하우 나눠요' },
+  { href: '/policy/recommend', text: '내 농장에 꼭 맞는 지원 정책 찾기' },
+  { href: '/stores', text: '양평 마을·체험, 동네 구경 떠나기' },
+] as const;
+
+type LegalType = 'terms' | 'privacy';
 
 export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [openLegalModal, setOpenLegalModal] = useState<LegalType | null>(null);
+  const [bannerIndex, setBannerIndex] = useState(0);
+  const [bannerLeavingIndex, setBannerLeavingIndex] = useState<number | null>(null);
+  const [bannerPaused, setBannerPaused] = useState(false);
 
   useEffect(() => {
+    if (HEADER_BANNERS.length <= 1 || bannerPaused) return;
+
+    const timer = window.setInterval(() => {
+      setBannerIndex((prev) => {
+        setBannerLeavingIndex(prev);
+        return (prev + 1) % HEADER_BANNERS.length;
+      });
+    }, BANNER_INTERVAL_MS);
+
+    return () => window.clearInterval(timer);
+  }, [bannerPaused]);
+
+  useEffect(() => {
+    if (bannerLeavingIndex === null) return;
+
+    const timer = window.setTimeout(() => {
+      setBannerLeavingIndex(null);
+    }, BANNER_SLIDE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [bannerLeavingIndex, bannerIndex]);
+
+  useEffect(() => {
+    const root = containerRef.current;
+    if (!root) return;
+
+    let cancelled = false;
+    let ctx: { revert: () => void } | undefined;
+
+    const prevBodyBg = document.body.style.background;
+    const prevBodyOverflowX = document.body.style.overflowX;
+    document.body.style.background = '#F5F0E8';
+    document.body.style.overflowX = 'hidden';
+
+    // ── Header scroll effect ──
+    const header = root.querySelector<HTMLElement>(`.${styles.header}`);
+    const onScroll = () => {
+      if (!header) return;
+      header.classList.toggle('landing-header-scrolled', window.scrollY > 60);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
     // ── IntersectionObserver: show-up animations ──
-    const showUpEls = document.querySelectorAll(`.${styles['show-up']}, .${styles['text-block']}, .${styles['features__card']}, .${styles['values__item']}, .${styles['introduction__title']}, .${styles['features__title']}, .${styles['values__title']}, .${styles['contact__title']}`);
+    const showUpEls = root.querySelectorAll(`.${styles['show-up']}`);
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add(styles['visible']);
+            entry.target.classList.add(styles.visible);
             (entry.target as HTMLElement).style.opacity = '1';
             (entry.target as HTMLElement).style.transform = 'translateY(0)';
             observer.unobserve(entry.target);
@@ -40,7 +96,7 @@ export default function LandingPage() {
     });
 
     // ── Counter animation ──
-    const counters = document.querySelectorAll(`.${styles['stats__number']}[data-count]`);
+    const counters = root.querySelectorAll<HTMLElement>(`.${styles['stats__number']}[data-count]`);
     let counterDone = false;
 
     const counterObserver = new IntersectionObserver(
@@ -56,159 +112,259 @@ export default function LandingPage() {
       { threshold: 0.5 }
     );
 
-    if (counters.length) {
-      counterObserver.observe(counters[0].closest(`.${styles['stats']}`)!);
+    const statsSection = counters[0]?.closest(`.${styles.stats}`);
+    if (statsSection) {
+      counterObserver.observe(statsSection);
     }
 
     function animateCounters() {
       counters.forEach((counter) => {
-        const el = counter as HTMLElement;
-        const target = parseInt(el.dataset.count || '0', 10);
+        const target = parseInt(counter.dataset.count || '0', 10);
         const duration = 2000;
         const start = performance.now();
 
         function step(now: number) {
           const elapsed = now - start;
           const progress = Math.min(elapsed / duration, 1);
-          const ease = 1 - Math.pow(1 - progress, 3); // Ease-out cubic
-          el.textContent = Math.round(target * ease).toLocaleString();
+          const ease = 1 - Math.pow(1 - progress, 3);
+          counter.textContent = Math.round(target * ease).toLocaleString();
           if (progress < 1) requestAnimationFrame(step);
         }
         requestAnimationFrame(step);
       });
     }
 
-    // ── GSAP Scroll Physics Animation (데스크탑에서만 실행) ──
-    const MOBILE_BREAKPOINT = 1024;
-    const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+    // ── GSAP (client-only dynamic import) ──
+    async function initGsap() {
+      try {
+        const gsap = (await import('gsap')).default;
+        const { ScrollTrigger } = await import('gsap/ScrollTrigger');
+        if (cancelled) return;
 
-    // We need to use context for GSAP to scope animations
-    let ctx = gsap.context(() => {
-      if (!isMobile) {
-        // Floating animation (repeating)
-        const floatLeft = gsap.to(`.${styles['hero__ball--left']}`, {
-          y: 20,
-          duration: 2,
-          yoyo: true,
-          repeat: -1,
-          ease: "sine.inOut"
-        });
+        gsap.registerPlugin(ScrollTrigger);
 
-        const floatRight = gsap.to(`.${styles['hero__ball--right']}`, {
-          y: 30,
-          duration: 2.5,
-          yoyo: true,
-          repeat: -1,
-          ease: "sine.inOut",
-          delay: 0.5
-        });
+        const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+        if (isMobile) return;
 
-        // Scroll sequence
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: `.${styles.hero}`,
-            start: "top top",
-            end: "bottom top",
-            scrub: 1,
-            onUpdate: (self) => {
-              if (self.progress > 0) {
-                floatLeft.pause();
-                floatRight.pause();
-              } else {
-                floatLeft.play();
-                floatRight.play();
-              }
-            }
-          }
-        });
+        ctx = gsap.context(() => {
+          const floatLeft = gsap.to(`.${styles['hero__ball--left']}`, {
+            y: 20,
+            duration: 2,
+            yoyo: true,
+            repeat: -1,
+            ease: 'sine.inOut',
+          });
 
-        // 1. Drop the balls
-        tl.to(`.${styles['hero__ball--left']}`, { top: "100%", yPercent: -80, duration: 1, ease: "power2.in" }, 0)
-          .to(`.${styles['hero__ball--right']}`, { top: "100%", yPercent: -80, duration: 1, ease: "power2.in" }, 0)
-        // 2. Tilt the top flow-card AND Roll balls
-          .to(`.${styles['flow-card--top']}`, { rotation: 18, transformOrigin: "center top", duration: 1.5, ease: "power1.inOut" }, 1.3)
-          .to(`.${styles['hero__ball--left']}`, { left: "150%", y: "+=300", rotation: 200, duration: 1.5, ease: "power1.in" }, 1.3)
-          .to(`.${styles['hero__ball--right']}`, { right: "-100%", y: "+=300", rotation: 200, duration: 1.5, ease: "power1.in" }, 1.3)
-        // 3. Return seesaw
-          .to(`.${styles['flow-card--top']}`, { rotation: 0, duration: 0.15, ease: "back.out(3)" }, 2.8);
+          const floatRight = gsap.to(`.${styles['hero__ball--right']}`, {
+            y: 30,
+            duration: 2.5,
+            yoyo: true,
+            repeat: -1,
+            ease: 'sine.inOut',
+            delay: 0.5,
+          });
 
-        gsap.fromTo(`.${styles['cta-circle--intro']}`, 
-          { y: 50, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            ease: "power2.out",
+          const tl = gsap.timeline({
             scrollTrigger: {
-              trigger: `.${styles['cta-circles-container']}`,
-              start: "top 80%",
-              end: "center center",
-              scrub: 1.5
-            }
-          }
-        );
+              trigger: `.${styles.hero}`,
+              start: 'top top',
+              end: 'bottom top',
+              scrub: 1,
+              onUpdate: (self) => {
+                if (self.progress > 0) {
+                  floatLeft.pause();
+                  floatRight.pause();
+                } else {
+                  floatLeft.play();
+                  floatRight.play();
+                }
+              },
+            },
+          });
 
-        gsap.fromTo(`.${styles['cta-circle--text']}`, 
-          { rotation: 25, opacity: 0, x: 150 },
-          {
-            rotation: 0,
-            x: 0,
-            opacity: 1,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: `.${styles['cta-circles-container']}`,
-              start: "top 75%",
-              end: "center center",
-              scrub: 1.5
-            }
-          }
-        );
+          tl.to(`.${styles['hero__ball--left']}`, { top: '100%', yPercent: -80, duration: 1, ease: 'power2.in' }, 0)
+            .to(`.${styles['hero__ball--right']}`, { top: '100%', yPercent: -80, duration: 1, ease: 'power2.in' }, 0)
+            .to(`.${styles['flow-card--top']}`, { rotation: 18, transformOrigin: 'center top', duration: 1.5, ease: 'power1.inOut' }, 1.3)
+            .to(`.${styles['hero__ball--left']}`, { left: '150%', y: '+=300', rotation: 200, duration: 1.5, ease: 'power1.in' }, 1.3)
+            .to(`.${styles['hero__ball--right']}`, { right: '-100%', y: '+=300', rotation: 200, duration: 1.5, ease: 'power1.in' }, 1.3)
+            .to(`.${styles['flow-card--top']}`, { rotation: 0, duration: 0.15, ease: 'back.out(3)' }, 2.8);
 
-        // Green circle animation
-        gsap.fromTo(`.${styles['dark-circle-badge']}`, 
-          { scale: 0.8 },
-          {
-            scale: 1.3,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: `.${styles['long-oval-wrapper']}`,
-              start: "top 90%",
-              end: "top 20%",
-              scrub: 1.5
+          gsap.fromTo(
+            `.${styles['cta-circle--intro']}`,
+            { y: 50, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              ease: 'power2.out',
+              scrollTrigger: {
+                trigger: `.${styles['cta-circles-container']}`,
+                start: 'top 80%',
+                end: 'center center',
+                scrub: 1.5,
+              },
             }
-          }
-        );
+          );
 
-        // Partners large empty circle
-        gsap.fromTo(`.${styles['partners-circle-wrapper']}`,
-          { y: 150, scale: 0.95, opacity: 0 },
-          {
-            y: 0,
-            scale: 1,
-            opacity: 1,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: `.${styles['partners-circle-wrapper']}`,
-              start: "top 85%",
-              end: "center 60%",
-              scrub: 1.5
+          gsap.fromTo(
+            `.${styles['cta-circle--text']}`,
+            { rotation: 25, opacity: 0, x: 150 },
+            {
+              rotation: 0,
+              x: 0,
+              opacity: 1,
+              ease: 'power3.out',
+              scrollTrigger: {
+                trigger: `.${styles['cta-circles-container']}`,
+                start: 'top 75%',
+                end: 'center center',
+                scrub: 1.5,
+              },
             }
-          }
-        );
+          );
+
+          gsap.fromTo(
+            `.${styles['dark-circle-badge']}`,
+            { scale: 0.8 },
+            {
+              scale: 1.3,
+              ease: 'power2.out',
+              scrollTrigger: {
+                trigger: `.${styles['long-oval-wrapper']}`,
+                start: 'top 90%',
+                end: 'top 20%',
+                scrub: 1.5,
+              },
+            }
+          );
+
+          gsap.fromTo(
+            `.${styles['partners-circle-wrapper']}`,
+            { y: 150, scale: 0.95, opacity: 0 },
+            {
+              y: 0,
+              scale: 1,
+              opacity: 1,
+              ease: 'power2.out',
+              scrollTrigger: {
+                trigger: `.${styles['partners-circle-wrapper']}`,
+                start: 'top 85%',
+                end: 'center 60%',
+                scrub: 1.5,
+              },
+            }
+          );
+        }, root as HTMLDivElement);
+
+        ScrollTrigger.refresh();
+      } catch (err) {
+        console.error('[Landing] GSAP init failed:', err);
       }
-    }, containerRef); // Scope to container
+    }
+
+    void initGsap();
 
     return () => {
-      ctx.revert(); // cleanup
+      cancelled = true;
+      ctx?.revert();
       observer.disconnect();
       counterObserver.disconnect();
+      window.removeEventListener('scroll', onScroll);
+      document.body.style.background = prevBodyBg;
+      document.body.style.overflowX = prevBodyOverflowX;
     };
   }, []);
 
   return (
-    <div ref={containerRef}>
-      <div className={styles['bg-dashes']}></div>
+    <div ref={containerRef} className={styles.landingRoot}>
+      <div className={styles['bg-dashes']} aria-hidden="true" />
 
-      {/* ═══════════ HERO ═══════════ */}
+      {/* MOBILE HEADER */}
+      <div className={styles['mobile-header']}>
+        <Link className={styles['mobile-header__logo']} href="/">
+          <img src="/logo.png" alt="FarmBalance" />
+          <span className={styles['mobile-header__logo-text']}>FarmBalance</span>
+        </Link>
+        <div className={styles['mobile-header__right']}>
+          <button type="button" className={styles['mobile-header__icon']} aria-label="알림">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </button>
+          <button type="button" className={styles['mobile-header__icon']} aria-label="장바구니">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+          </button>
+          <Link className={styles['mobile-header__login']} href="/login">
+            로그인
+          </Link>
+        </div>
+      </div>
+
+      {/* HEADER */}
+      <header className={styles.header} id="header">
+        <div className={styles['header__bar']}>
+          <div className={`${styles['header__group']} ${styles['header__group--left']}`}>
+            <div className={styles['header__brand']}>
+              <Link className={styles['header__brand-logo-link']} href="/">
+                <img
+                  src="/logo.png"
+                  alt="FarmBalance Logo"
+                  className={styles['header__brand-icon']}
+                  width={32}
+                  height={32}
+                  style={{ objectFit: 'contain', borderRadius: '50%' }}
+                />
+              </Link>
+              <div
+                className={styles['header__banner-text']}
+                onMouseEnter={() => setBannerPaused(true)}
+                onMouseLeave={() => setBannerPaused(false)}
+              >
+                {HEADER_BANNERS.map((item, index) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`${styles['header__banner-item']} ${
+                      index === bannerIndex ? styles['header__banner-item--active'] : ''
+                    } ${index === bannerLeavingIndex ? styles['header__banner-item--leave'] : ''}`}
+                    aria-hidden={index !== bannerIndex}
+                    tabIndex={index === bannerIndex ? 0 : -1}
+                  >
+                    {item.text}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <nav className={`${styles['header__group']} ${styles['header__group--center']}`}>
+            <Link className={styles['header__nav-link']} href="/farm">내농장</Link>
+            <Link className={styles['header__nav-link']} href="/shop">장터</Link>
+            <Link className={styles['header__nav-link']} href="/community">수다방</Link>
+            <Link className={styles['header__nav-link']} href="/stores">동네구경</Link>
+            <Link className={styles['header__nav-link']} href="/policy">정책</Link>
+          </nav>
+
+          <div className={`${styles['header__group']} ${styles['header__group--right']}`}>
+            <Link className={styles['header__login-btn']} href="/login">
+              <svg className={styles['header__login-icon']} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              로그인
+            </Link>
+            <Link className={styles['header__signup-btn']} href="/signup">
+              회원가입
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* HERO */}
       <section className={styles.hero} id="hero">
         <div className={styles['hero__wrapper']}>
           <div className={styles['hero__ball-container']}>
@@ -219,21 +375,23 @@ export default function LandingPage() {
             <div className={styles['hero__name']}>Farm</div>
             <div className={styles['hero__surname']}>Balance</div>
           </div>
-          <img className={styles['hero__mobile-ball']} src="/images/landing/hero-ball.png" alt="히어로 장식" />
+          <img
+            className={styles['hero__mobile-ball']}
+            src="/images/landing/hero-ball.png"
+            alt=""
+            aria-hidden="true"
+          />
           <p className={styles['hero__subtitle']}>
             <span className={styles.italic}>농업</span>의 중심에는 <span className={styles.italic}>균형</span>이 있습니다.
           </p>
         </div>
       </section>
 
-      {/* ═══════════ CONTENT ═══════════ */}
+      {/* CONTENT */}
       <section className={styles['content-flow']} id="about">
-        {/* 상단 둥근 세이지 카드 (소개) */}
         <div className={styles['flow-card-wrapper']} style={{ position: 'relative', width: '88%', margin: '0 auto', zIndex: 2 }}>
           <div className={`${styles['flow-card']} ${styles['flow-card--top']}`} style={{ width: '100%', margin: 0 }}>
-            <h2 className={styles['flow-card__title']}>
-              데이터로 잇는 스마트 양평
-            </h2>
+            <h2 className={styles['flow-card__title']}>데이터로 잇는 스마트 양평</h2>
             <div className={styles['flow-card__desc']}>
               <p>FarmBalance는 양평군 농업의 수급 불균형을</p>
               <p>데이터 기반으로 해결하는 스마트 플랫폼입니다</p>
@@ -246,7 +404,6 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* 긴 타원 컨테이너 시작 */}
         <div style={{ position: 'relative', zIndex: 5 }}>
           <div className={styles['dark-circle-badge']}>
             <svg viewBox="0 0 300 300" className={styles['badge-text-svg']}>
@@ -259,34 +416,39 @@ export default function LandingPage() {
             </svg>
           </div>
         </div>
-        
+
         <div className={styles['long-oval-wrapper']}>
-          {/* 텍스트 항목 리스트 (기능) */}
           <div className={styles['flow-items']} id="features">
             <div className={`${styles['flow-item']} ${styles['show-up']}`}>
-              <Link href="/balance" className={styles['flow-item__title']}>AI 수급 밸런스 <span className={styles.arrow}>→</span></Link>
+              <Link href="/balance" className={styles['flow-item__title']}>
+                AI 수급 밸런스 <span className={styles.arrow}>→</span>
+              </Link>
               <p className={styles['flow-item__sub']}>실시간 수급 예측과 AI 추천 점수로 양평군 농업의 불균형을 해결합니다</p>
             </div>
             <div className={`${styles['flow-item']} ${styles['show-up']}`}>
-              <Link href="/farm" className={styles['flow-item__title']}>스마트 농장 관리 <span className={styles.arrow}>→</span></Link>
+              <Link href="/farm" className={styles['flow-item__title']}>
+                스마트 농장 관리 <span className={styles.arrow}>→</span>
+              </Link>
               <p className={styles['flow-item__sub']}>간편한 농장 등록과 음성(STT) 기록으로 나만의 영농 일지를 관리하세요</p>
             </div>
             <div className={`${styles['flow-item']} ${styles['show-up']}`}>
-              <Link href="/shop" className={styles['flow-item__title']}>양평 장터 <span className={styles.arrow}>→</span></Link>
+              <Link href="/shop" className={styles['flow-item__title']}>
+                양평 장터 <span className={styles.arrow}>→</span>
+              </Link>
               <p className={styles['flow-item__sub']}>중간 유통 과정 없이 신선한 양평 농산물을 소비자와 직접 거래합니다</p>
             </div>
             <div className={`${styles['flow-item']} ${styles['show-up']}`}>
-              <Link href="/community" className={styles['flow-item__title']}>AI 정책 &amp; 커뮤니티 <span className={styles.arrow}>→</span></Link>
+              <Link href="/community" className={styles['flow-item__title']}>
+                AI 정책 &amp; 커뮤니티 <span className={styles.arrow}>→</span>
+              </Link>
               <p className={styles['flow-item__sub']}>AI가 맞춤형 지원 정책을 찾아주고, 농민들 간의 생생한 노하우를 나눕니다</p>
             </div>
           </div>
 
-          {/* 수급밸런스 오른쪽 컨셉 사진 */}
           <div className={`${styles['flow-photo']} ${styles['flow-photo--right']} ${styles['show-up']}`}>
             <img src="/images/landing/farm-data.png" alt="스마트 농업 데이터" />
           </div>
 
-          {/* ═══════════ STATS ═══════════ */}
           <section className={styles.stats}>
             <div className={styles['stats__inner']}>
               <div className={styles['stats__item']}>
@@ -308,44 +470,47 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* 하단 세이지 카드 텍스트 */}
           <div className={styles['cta-circles-container']} id="contact">
             <div className={`${styles['cta-circle']} ${styles['cta-circle--intro']}`}>
               <svg viewBox="0 0 500 500" className={styles['circular-text-svg']}>
                 <path id="circlePath" fill="none" d="M 250, 250 m -220, 0 a 220,220 0 1,1 440,0 a 220,220 0 1,1 -440,0" />
                 <text>
                   <textPath href="#circlePath" startOffset="0%">
-                    FarmBalance • Data-driven Agriculture Ecosystem • Yangpyeong • FarmBalance • Data-driven Agriculture Ecosystem • Yangpyeong • 
+                    FarmBalance • Data-driven Agriculture Ecosystem • Yangpyeong • FarmBalance • Data-driven Agriculture Ecosystem • Yangpyeong •
                   </textPath>
                 </text>
               </svg>
               <div className={styles['intro-content']}>
                 <h3 className={styles['intro-content__ko']}>
-                  <span className={styles['font-italic']}>데이터</span>가 이끄는<br/>양평 농업의 내일
+                  <span className={styles['font-italic']}>데이터</span>가 이끄는<br />양평 농업의 내일
                 </h3>
                 <p className={styles['intro-content__desc']}>
-                  생산과 소비의 완벽한 균형을 찾아<br/>모두가 미소 짓는 풍요로운 생태계를 만듭니다.
+                  생산과 소비의 완벽한 균형을 찾아<br />모두가 미소 짓는 풍요로운 생태계를 만듭니다.
                 </p>
               </div>
             </div>
-            
+
             <div className={`${styles['cta-circle']} ${styles['cta-circle--text']}`}>
               <h2 className={styles['cta-circle__title']}>
                 <span className={styles['font-italic']}>시작</span>할<br />준비 되셨나요?
               </h2>
               <p className={styles['cta-circle__desc']}>
-                지금 팜밸런스에 농장을 등록하고<br/>스마트한 수급 관리를 경험해 보세요.
+                지금 팜밸런스에 농장을 등록하고<br />스마트한 수급 관리를 경험해 보세요.
               </p>
               <div className={styles['cta-circle__buttons']}>
-                <Link href="/farm/register" className={`${styles['flow-btn']} ${styles['flow-btn--primary']}`}>농장 등록하기</Link>
-                <Link href="/balance" className={`${styles['flow-btn']} ${styles['flow-btn--secondary']}`}>둘러보기</Link>
+                <Link href="/farm/register" className={`${styles['flow-btn']} ${styles['flow-btn--primary']}`}>
+                  농장 등록하기
+                </Link>
+                <Link href="/balance" className={`${styles['flow-btn']} ${styles['flow-btn--secondary']}`}>
+                  둘러보기
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ═══════════ LINKS (외부 연결) ═══════════ */}
+      {/* LINKS */}
       <section className={styles['partners-circle-wrapper']}>
         <section className={styles.links} id="links">
           <div className={`${styles['links__header']} ${styles['show-up']}`}>
@@ -356,7 +521,6 @@ export default function LandingPage() {
             <p className={styles['links__desc']}>농업과 지역을 잇는 유용한 채널들을 만나보세요.</p>
           </div>
           <div className={styles['links__grid']}>
-
             <a className={`${styles['links__card']} ${styles['show-up']}`} href="https://www.nongsaro.go.kr" target="_blank" rel="noopener noreferrer">
               <span className={styles['links__card-num']}>01</span>
               <span className={styles['links__card-icon']}>
@@ -468,11 +632,44 @@ export default function LandingPage() {
                 <path d="M3 13L13 3M13 3H5M13 3V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </a>
-
           </div>
         </section>
       </section>
 
+      {/* FOOTER */}
+      <footer className={styles.footer}>
+        <div className={styles['footer__inner']}>
+          <div className={styles['footer__left']}>
+            <Link className={styles['footer__logo']} href="/">
+              <img src="/logo.png" alt="FarmBalance" width={28} height={28} />
+              <span>FarmBalance</span>
+            </Link>
+            <p className={styles['footer__copy']}>© 2026 FarmBalance. 양평군 스마트 농업 플랫폼</p>
+          </div>
+          <div className={styles['footer__right']}>
+            <button
+              type="button"
+              className={styles['footer__link']}
+              onClick={() => setOpenLegalModal('terms')}
+            >
+              이용약관
+            </button>
+            <button
+              type="button"
+              className={styles['footer__link']}
+              onClick={() => setOpenLegalModal('privacy')}
+            >
+              개인정보처리방침
+            </button>
+          </div>
+        </div>
+      </footer>
+
+      <LegalModal
+        isOpen={openLegalModal !== null}
+        onClose={() => setOpenLegalModal(null)}
+        type={openLegalModal ?? 'terms'}
+      />
     </div>
   );
 }
