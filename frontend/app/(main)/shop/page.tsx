@@ -60,7 +60,7 @@ export default function ShopBrowsePage() {
       <div className={styles.pageHeader}>
         <div>
           <p className={styles.breadcrumb}>홈 / 장터</p>
-          <h1 className={styles.pageTitle}>
+          <h1 className="page-title">
             상점 <em>둘러보기</em>
           </h1>
           <p className={styles.pageSub}>

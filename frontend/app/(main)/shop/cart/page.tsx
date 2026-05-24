@@ -89,7 +89,7 @@ export default function CartPage() {
             <span>›</span>
             장바구니
           </nav>
-          <h1 className={styles.pageTitle}>
+          <h1 className="page-title">
             장바구니 <em>({items.length})</em>
           </h1>
           <p className={styles.pageSub}>

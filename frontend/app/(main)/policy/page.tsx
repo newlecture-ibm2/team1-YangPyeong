@@ -45,7 +45,7 @@ export default function PolicyListPage() {
           <div className={styles.breadcrumb}>
             <a href="/">홈</a> › <strong>정책 목록</strong>
           </div>
-          <h1 className={styles.pageTitle}>정책 <em>목록</em></h1>
+          <h1 className="page-title">정책 <em>목록</em></h1>
           <p className={styles.pageSub}>
             농업 지원 정책을 확인하고 지원 조건을 살펴보세요.
           </p>

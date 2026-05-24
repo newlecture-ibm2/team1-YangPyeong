@@ -161,8 +161,8 @@ h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
   font-style: italic !important;
   font-weight: normal !important;
   color: var(--color-text) !important;
-  text-decoration: underline wavy var(--color-primary) !important;
-  text-decoration-color: var(--color-primary) !important;
+  text-decoration: underline wavy olive !important;
+  text-decoration-color: olive !important;
   text-underline-offset: 8px !important;
 }
 

@@ -9,6 +9,20 @@ import CommentSection from '../_components/CommentSection';
 import PostActions from '../_components/PostActions';
 import { formatDate } from '../_lib/formatUtils';
 
+const renderTitleWithEm = (text: string) => {
+  if (!text) return '';
+  const words = text.trim().split(' ');
+  if (words.length <= 1) {
+    return <em>{text}</em>;
+  }
+  const lastWord = words.pop();
+  return (
+    <>
+      {words.join(' ')} <em>{lastWord}</em>
+    </>
+  );
+};
+
 /**
  * 게시글 상세 페이지 (Server Component)
  */
@@ -61,7 +75,7 @@ export default async function PostDetailPage({
           </Badge>
           <span className={styles.date}>{formatDate(post.createdAt)}</span>
         </div>
-        <h1 className={styles.title}>{post.title}</h1>
+        <h1 className="page-title" style={{ marginBottom: '24px' }}>{renderTitleWithEm(post.title)}</h1>
         <div className={styles.authorInfo}>
           <div className={styles.author}>
             <strong style={post.authorStatus === 'WITHDRAWN' ? { color: 'var(--color-text-tertiary, #999)' } : undefined}>

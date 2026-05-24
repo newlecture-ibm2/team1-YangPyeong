@@ -197,8 +197,8 @@ export default function StoreMapPage() {
           <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
             <Link href="/" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none' }}>홈</Link> › 동네 가게
           </div>
-          <h1 className={styles.pageTitle}>
-            동네 <em style={{ fontStyle: 'italic' }}>가게</em>
+          <h1 className="page-title">
+            동네 <em>가게</em>
           </h1>
           <p style={{ fontSize: '16px', color: 'var(--color-text-secondary)', maxWidth: '600px', lineHeight: '1.7' }}>
             양평군 주변 종묘사, 농자재, 직매장을 지도에서 찾아보세요.
