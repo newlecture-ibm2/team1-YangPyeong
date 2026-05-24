@@ -328,12 +328,14 @@ export default function FarmEditPage({ params }: { params: Promise<{ id: string 
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <p className={styles.breadcrumb}>
-          <Link href="/farm" className={styles.breadcrumbLink}>내 농장</Link> / 정보 수정
-        </p>
-        <h1 className={styles.title}>농장 <span style={{ fontStyle: 'italic', color: 'var(--color-primary)' }}>수정</span></h1>
-        <p className={styles.subtitle}>농장 정보를 최신 상태로 유지해 주세요.</p>
+      <div className="page-header">
+        <div>
+          <p className={styles.breadcrumb}>
+            <Link href="/farm" className={styles.breadcrumbLink}>내 농장</Link> / 정보 수정
+          </p>
+          <h1 className="page-title">농장 <em>수정</em></h1>
+          <p className={styles.subtitle}>농장 정보를 최신 상태로 유지해 주세요.</p>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className={styles.grid}>

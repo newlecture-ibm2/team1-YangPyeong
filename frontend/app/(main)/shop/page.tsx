@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Dropdown, SearchInput, Modal, Button, Spinner } from '@/components';
+import { Dropdown, SearchInput, Modal, Button, Spinner, FilterBar } from '@/components';
 import { useToast } from '@/components';
 import ProductCard from './ProductCard';
 import { useProducts } from './useProducts';
@@ -58,12 +58,15 @@ export default function ShopBrowsePage() {
     <div className={styles.page}>
       {/* ════════ 페이지 헤더 ════════ */}
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>
-          상점 <em>둘러보기</em>
-        </h1>
-        <p className={styles.pageSub}>
-          양평군 신선한 농산물을 직접 구매하세요.
-        </p>
+        <div>
+          <p className={styles.breadcrumb}>홈 / 장터</p>
+          <h1 className="page-title">
+            상점 <em>둘러보기</em>
+          </h1>
+          <p className={styles.pageSub}>
+            양평군 신선한 농산물을 직접 구매하세요.
+          </p>
+        </div>
       </div>
 
       {/* ════════ 카테고리 탭 ════════ */}
@@ -80,25 +83,27 @@ export default function ShopBrowsePage() {
       </div>
 
       {/* ════════ 필터 바 ════════ */}
-      <div className={styles.filterBar} data-guide="shop-search">
-        <div className={styles.filterSort}>
-          <Dropdown
-            options={sortOptions}
-            value={sort}
-            onChange={(value) => setSort(value as typeof sort)}
-            size="sm"
-          />
-        </div>
-        <div className={styles.filterSearch}>
-          <SearchInput
-            placeholder="상품 검색..."
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            onSearch={handleSearch}
-            size="sm"
-            fullWidth
-          />
-        </div>
+      <div className={styles.filterSection} data-guide="shop-search">
+        <FilterBar
+          dropdowns={[
+            <Dropdown
+              key="sort"
+              options={sortOptions}
+              value={sort}
+              onChange={(value) => setSort(value as typeof sort)}
+              size="sm"
+            />,
+          ]}
+          search={
+            <SearchInput
+              placeholder="상품 검색..."
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onSearch={handleSearch}
+              size="sm"
+            />
+          }
+        />
       </div>
 
       {/* ════════ 상품 그리드 ════════ */}

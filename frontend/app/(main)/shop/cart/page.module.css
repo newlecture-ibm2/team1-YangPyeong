@@ -5,42 +5,45 @@
 /* ── 페이지 컨테이너 ── */
 
 .page {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: var(--space-xl) var(--space-lg);
+  padding: 48px 48px 80px;
   min-height: 60vh;
 }
 
 /* ── 페이지 헤더 ── */
 
 .pageHeader {
-  margin-bottom: var(--space-xl);
+  margin-bottom: 32px;
+  padding-bottom: 24px;
 }
 
 .pageTitle {
-  font-family: var(--font-serif);
-  font-size: 32px;
-  font-weight: 700;
+  font-family: var(--font-page-title);
+  font-size: 40px;
+  font-weight: 400;
   color: var(--color-text);
+  line-height: 1.15;
   margin-bottom: 8px;
 }
 
 .pageTitle em {
   font-style: italic;
-  color: var(--color-primary);
 }
 
 .pageSub {
   font-size: 16px;
   color: var(--color-text-secondary);
+  max-width: 600px;
+  line-height: 1.7;
 }
 
 /* ── 브레드크럼 ── */
 
 .breadcrumb {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-lg);
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -54,10 +57,6 @@
 
 .breadcrumb a:hover {
   color: var(--color-primary);
-}
-
-.breadcrumb strong {
-  color: var(--color-text);
 }
 
 /* ══════════════════════════════════════════
@@ -484,6 +483,10 @@
 }
 
 @media (max-width: 768px) {
+  .page {
+    padding: 24px 16px 48px;
+  }
+
   .pageTitle {
     font-size: 24px;
   }

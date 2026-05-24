@@ -79,6 +79,20 @@ function getRevenueCropRows(
   return [];
 }
 
+const renderTitleWithEm = (text: string) => {
+  if (!text) return '';
+  const words = text.trim().split(' ');
+  if (words.length <= 1) {
+    return <em>{text}</em>;
+  }
+  const lastWord = words.pop();
+  return (
+    <>
+      {words.join(' ')} <em>{lastWord}</em>
+    </>
+  );
+};
+
 function FarmDashboardContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab') === 'history' ? 'HISTORY' : 'DASHBOARD';
@@ -603,7 +617,7 @@ function FarmDashboardContent() {
       <div className={styles.container}>
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>내 농장 <span className={styles.italic}>선택</span></h1>
+            <h1 className="page-title">내 농장 <em>선택</em></h1>
             <p className={styles.subtitle}>관리할 농장을 선택하거나 새로운 농장을 등록하세요.</p>
           </div>
         </div>
@@ -744,10 +758,12 @@ function FarmDashboardContent() {
                 ←
               </button>
             )}
-            <h1 className={styles.title}>
-              {isPreviewMode
-                ? (hasUnapprovedFarms ? '내 농장 심사 대기 중' : '내 농장 미리보기')
-                : farm?.name}
+            <h1 className="page-title">
+              {renderTitleWithEm(
+                isPreviewMode
+                  ? (hasUnapprovedFarms ? '내 농장 심사 대기 중' : '내 농장 미리보기')
+                  : farm?.name || ''
+              )}
             </h1>
           </div>
           <p className={styles.subtitle}>

@@ -16,6 +16,8 @@
   text-align: left;
   font-family: inherit;
   color: inherit;
+  border-bottom: 1px solid #C0C4CC;
+  padding-bottom: 24px;
 }
 
 .header:hover {
@@ -307,7 +309,9 @@
     flex-direction: column;
     align-items: flex-start;
     padding: 20px;
-  }
+    border-bottom: 1px solid #C0C4CC;
+  padding-bottom: 24px;
+}
 
   .headerRight {
     width: 100%;

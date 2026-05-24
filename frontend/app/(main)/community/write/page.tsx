@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { createPost, updatePost, getPostDetail, getCategories } from '../_lib/community.api';
 import { uploadFile } from '@/lib/upload.api';
 import styles from './PostWrite.module.css';
@@ -110,9 +111,16 @@ function PostWriteContent() {
 
   return (
     <main className={styles.container}>
-      <header className={styles.header}>
-        <h1>{isEditMode ? '지식' : '새로운'} <em>{isEditMode ? '수정하기' : '지식 공유하기'}</em></h1>
-        <p>{isEditMode ? '내용을 보완하여 지식을 풍성하게 만들어주세요.' : '파머들과 함께 나눌 소중한 정보를 작성해 주세요.'}</p>
+      <header className="page-header">
+        <div>
+          <nav className={styles.breadcrumb}>
+            <Link href="/">홈</Link> / <Link href="/community">수다방</Link> / {isEditMode ? '수정' : '새 글 작성'}
+          </nav>
+          <h1 className="page-title">{isEditMode ? '지식' : '새로운'} <em>{isEditMode ? '수정하기' : '지식 공유하기'}</em></h1>
+          <p style={{ maxWidth: '600px', fontSize: '16px', color: 'var(--color-text-secondary)', lineHeight: '1.7', marginTop: '8px' }}>
+            {isEditMode ? '내용을 보완하여 지식을 풍성하게 만들어주세요.' : '파머들과 함께 나눌 소중한 정보를 작성해 주세요.'}
+          </p>
+        </div>
       </header>
 
       <Card className={styles.formCard}>

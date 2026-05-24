@@ -79,23 +79,23 @@ export default function CartPage() {
 
   return (
     <div className={styles.page}>
-      {/* ════════ 브레드크럼 ════════ */}
-      <nav className={styles.breadcrumb}>
-        <Link href="/">홈</Link>
-        <span>›</span>
-        <Link href="/shop">상점</Link>
-        <span>›</span>
-        <strong>장바구니</strong>
-      </nav>
-
       {/* ════════ 페이지 헤더 ════════ */}
-      <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>
-          장바구니 <em>({items.length})</em>
-        </h1>
-        <p className={styles.pageSub}>
-          담아둔 상품을 확인하고 주문해 보세요.
-        </p>
+      <div className="page-header">
+        <div>
+          <nav className={styles.breadcrumb}>
+            <Link href="/">홈</Link>
+            <span>›</span>
+            <Link href="/shop">상점</Link>
+            <span>›</span>
+            장바구니
+          </nav>
+          <h1 className="page-title">
+            장바구니 <em>({items.length})</em>
+          </h1>
+          <p className={styles.pageSub}>
+            담아둔 상품을 확인하고 주문해 보세요.
+          </p>
+        </div>
       </div>
 
       {/* ════════ 빈 장바구니 ════════ */}

@@ -59,11 +59,13 @@ export default function MypageLayout({ children }: MypageLayoutProps) {
   return (
     <div className="page">
       <div className="page-header">
-        <p className="breadcrumb">
-          <Link href="/">홈</Link> › 마이페이지
-          {activeItem && activeItem.href !== '/mypage' ? ` › ${activeItem.label}` : ''}
-        </p>
-        <h1 className="page-title">마이페이지</h1>
+        <div>
+          <p className="breadcrumb">
+            <Link href="/">홈</Link> › 마이페이지
+            {activeItem && activeItem.href !== '/mypage' ? ` › ${activeItem.label}` : ''}
+          </p>
+          <h1 className="page-title">마이<em>페이지</em></h1>
+        </div>
       </div>
 
       <div className={styles.layout}>

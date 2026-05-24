@@ -50,7 +50,7 @@ function CompleteContent() {
           </div>
         </div>
 
-        <h1 className={styles.title}>결제가 완료되었습니다!</h1>
+        <h1 className="page-title" style={{ textAlign: 'center', marginBottom: '24px' }}>결제 <em>완료</em></h1>
         <p className={styles.subtitle}>
           주문이 정상적으로 접수되었습니다.
           <br />
