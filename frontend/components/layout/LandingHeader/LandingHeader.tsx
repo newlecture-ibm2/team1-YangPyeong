@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Shield, LogOut, User } from 'lucide-react';
 import { useHeaderContext } from '../HeaderProvider';
@@ -64,7 +63,7 @@ export default function LandingHeader() {
   const notifRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  const displayName = user?.email ? user.email.split('@')[0] : '';
+  const displayName = user?.name || (user?.email ? user.email.split('@')[0] : '');
   const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
@@ -201,14 +200,14 @@ export default function LandingHeader() {
   const renderUserAvatar = (size: 'desktop' | 'mobile') => {
     if (user?.profileImageUrl && !profileImageLoadFailed) {
       return (
-        <Image
-          src={user.profileImageUrl}
-          alt="프로필"
-          width={32}
-          height={32}
-          className={size === 'mobile' ? styles.mobileAvatarImg : styles.avatarImg}
-          onError={() => setProfileImageLoadFailed(true)}
-        />
+        <span className={size === 'mobile' ? styles.mobileAvatarFallback : styles.avatar}>
+          <img
+            src={user.profileImageUrl}
+            alt="프로필"
+            className={size === 'mobile' ? styles.mobileAvatarImg : styles.avatarImg}
+            onError={() => setProfileImageLoadFailed(true)}
+          />
+        </span>
       );
     }
 

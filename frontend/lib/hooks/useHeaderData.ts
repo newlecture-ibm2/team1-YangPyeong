@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api-fetch';
 
 export interface HeaderUser {
   email: string;
+  name?: string | null;
   role: string;
   profileImageUrl?: string | null;
 }
@@ -58,11 +59,12 @@ export function useHeaderData() {
 
       if (cookieUser) {
         try {
-          const res = await apiFetch<{ profileImageUrl?: string | null }>('/api/users/me');
+          const res = await apiFetch<{ name?: string | null; profileImageUrl?: string | null }>('/api/users/me');
           if (res.success && res.data) {
             const fetchedImageUrl = res.data.profileImageUrl || null;
-            if (cookieUser.profileImageUrl !== fetchedImageUrl) {
-              const updatedUser = { ...cookieUser, profileImageUrl: fetchedImageUrl };
+            const fetchedName = res.data.name || null;
+            if (cookieUser.profileImageUrl !== fetchedImageUrl || cookieUser.name !== fetchedName) {
+              const updatedUser = { ...cookieUser, profileImageUrl: fetchedImageUrl, name: fetchedName };
               setUser(updatedUser);
               const expiration = new Date();
               expiration.setDate(expiration.getDate() + 7);
