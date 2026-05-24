@@ -31,7 +31,7 @@ export default async function CommunityPage({
       <header className={styles.header}>
         <div className={styles.headerTitle}>
           <span className={styles.tag}>홈 / 수다방</span>
-          <h1>파머들의 <em>수다방</em></h1>
+          <h1 className="page-title">파머들의 <em>수다방</em></h1>
           <p>서로의 지혜를 나누고 함께 성장하는 FarmBalance 커뮤니티입니다.</p>
         </div>
         <div className={styles.headerButtons}>

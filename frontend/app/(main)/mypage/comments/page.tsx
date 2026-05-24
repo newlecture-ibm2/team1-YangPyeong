@@ -74,7 +74,7 @@ export default function MyCommentsPage() {
         ) : items.length === 0 ? (
           <div className={styles.empty}>{COMMENTS_EMPTY_TEXT}</div>
         ) : (
-          <>
+          <div className={styles.listContent}>
             <div className={styles.list}>
               <CommentActivityList items={items} />
             </div>
@@ -88,7 +88,7 @@ export default function MyCommentsPage() {
                 />
               </div>
             )}
-          </>
+          </div>
         )}
         
         {loading && items.length > 0 && (

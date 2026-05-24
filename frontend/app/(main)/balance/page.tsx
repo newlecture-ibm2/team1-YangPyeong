@@ -184,7 +184,7 @@ export default function BalanceListPage() {
         <div>
           <p className={styles.breadcrumb}>홈 / 내 농장 / 수급 현황</p>
           <h1 className={styles.pageTitle}>
-            수급 <span className={styles.italic}>{isPreviewMode ? (hasUnapprovedFarms ? '심사 대기 중' : '미리보기') : '현황'}</span>
+            수급 <em>{isPreviewMode ? (hasUnapprovedFarms ? '심사 대기 중' : '미리보기') : '현황'}</em>
           </h1>
           <p className={styles.pageSub}>양평군 주요 작물의 실시간 공급·수요 밸런스를 확인하세요.</p>
         </div>

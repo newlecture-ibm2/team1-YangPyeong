@@ -74,7 +74,7 @@ export default function MyPostsPage() {
         ) : items.length === 0 ? (
           <div className={styles.empty}>{POSTS_EMPTY_TEXT}</div>
         ) : (
-          <>
+          <div className={styles.listContent}>
             <div className={styles.list}>
               <PostActivityList items={items} />
             </div>
@@ -88,7 +88,7 @@ export default function MyPostsPage() {
                 />
               </div>
             )}
-          </>
+          </div>
         )}
         
         {loading && items.length > 0 && (

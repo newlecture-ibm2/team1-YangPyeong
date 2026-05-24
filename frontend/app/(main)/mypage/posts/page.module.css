@@ -135,6 +135,12 @@
   font-size: 13px;
 }
 
+.listContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .paginationWrapper,
 .loadingWrapper {
   margin-top: 32px;

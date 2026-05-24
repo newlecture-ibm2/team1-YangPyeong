@@ -51,7 +51,7 @@ export default function MyReportsPage() {
         ) : items.length === 0 ? (
           <div className={styles.empty}>{REPORTS_EMPTY_TEXT}</div>
         ) : (
-          <>
+          <div className={styles.listContent}>
             <div className={styles.list}>
               <ReportActivityList items={items} />
             </div>
@@ -65,7 +65,7 @@ export default function MyReportsPage() {
                 />
               </div>
             )}
-          </>
+          </div>
         )}
         
         {loading && items.length > 0 && (

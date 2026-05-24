@@ -64,7 +64,7 @@ export default function MypageLayout({ children }: MypageLayoutProps) {
             <Link href="/">홈</Link> › 마이페이지
             {activeItem && activeItem.href !== '/mypage' ? ` › ${activeItem.label}` : ''}
           </p>
-          <h1 className="page-title">마이페이지</h1>
+          <h1 className="page-title">마이<em>페이지</em></h1>
         </div>
       </div>
 
