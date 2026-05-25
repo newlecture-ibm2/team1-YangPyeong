@@ -33,6 +33,7 @@ public class FarmRegisterRequest {
         private Long cropId;
         private Double area;
         private Double expectedYield;
+        private java.time.LocalDate sowingDate;
     }
     
     // PNU 생성용 필드

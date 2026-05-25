@@ -69,7 +69,8 @@ public class HarvestRecordService implements RecordHarvestUseCase, LoadHarvestUs
                 registration.getCropId(),
                 registration.getCropName(),
                 command.getYieldAmount(),
-                command.getYieldUnit() != null ? command.getYieldUnit() : "kg"
+                command.getYieldUnit() != null ? command.getYieldUnit() : "kg",
+                command.getHarvestDate()
         ));
 
         return saved;

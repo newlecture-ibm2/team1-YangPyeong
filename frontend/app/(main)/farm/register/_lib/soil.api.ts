@@ -35,9 +35,9 @@ export const fetchSoilAnalysis = async (pnu: string): Promise<SoilAnalysisResult
     
     return {
       pnuCd: pnu,
-      soilTexture: physical?.surttureCd || '',
-      drainage: physical?.soildraCd || '',
-      soilDepth: physical?.vldsoildepCd || '',
+      soilTexture: physical?.surttureCd || physical?.Surtture_Cd || physical?.SURTTURE_CD || '',
+      drainage: physical?.soildraCd || physical?.Soildra_Cd || physical?.SOILDRA_CD || '',
+      soilDepth: physical?.vldsoildepCd || physical?.Vldsoildep_Cd || physical?.VLDSOILDEP_CD || '',
       ph: chemical?.acid || '',
       organicMatter: chemical?.om || '',
       isBjdAverage: data.isBjdAverage || false,
