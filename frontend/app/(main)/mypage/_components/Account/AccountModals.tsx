@@ -234,6 +234,19 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, isSocial = fals
     onClose();
   };
 
+  /** 탈퇴 성공 후 로그아웃 처리 — 세션 쿠키 삭제 + 홈으로 이동 */
+  const performLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch {
+      // 로그아웃 API 실패해도 클라이언트 쿠키는 삭제
+    }
+    if (typeof document !== 'undefined') {
+      document.cookie = 'fb-user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
+    window.location.href = '/';
+  };
+
   const handleSubmit = async () => {
     setInlineError('');
     // LOCAL 유저는 비밀번호 필수
@@ -264,7 +277,8 @@ export function DeleteAccountModal({ isOpen, onClose, onSuccess, isSocial = fals
 
       if (data.success) {
         onSuccess();
-        handleClose();
+        // 탈퇴 성공 시 자동으로 로그아웃 처리 후 홈으로 이동
+        await performLogout();
       } else {
         const errMsg = data.error?.message || '회원 탈퇴에 실패했습니다.';
         // 비밀번호 관련 에러는 인라인, 그 외는 인라인으로 통일
