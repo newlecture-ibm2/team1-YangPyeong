@@ -70,6 +70,7 @@ public class FarmController {
                             .cropId(c.getCropId())
                             .area(c.getArea())
                             .expectedYield(c.getExpectedYield())
+                            .sowingDate(c.getSowingDate())
                             .build())
                     .collect(java.util.stream.Collectors.toList());
         }
@@ -188,6 +189,7 @@ public class FarmController {
                                         .cropId(c.getCropId())
                                         .area(c.getArea())
                                         .expectedYield(c.getExpectedYield())
+                                        .sowingDate(c.getSowingDate())
                                         .build())
                                 .collect(java.util.stream.Collectors.toList()) : null)
                 .build();

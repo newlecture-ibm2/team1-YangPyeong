@@ -46,7 +46,7 @@ public class HistoryService implements RecordHistoryUseCase, LoadHistoryUseCase,
     }
 
     @Override
-    public void updateHistory(Long historyId, String activityContent, HistoryType activityType) {
+    public void updateHistory(Long historyId, String activityContent, HistoryType activityType, java.time.LocalDate recordDate) {
         CultivationHistory history = loadHistoryPort.loadHistoryById(historyId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 히스토리입니다."));
 
@@ -54,7 +54,7 @@ public class HistoryService implements RecordHistoryUseCase, LoadHistoryUseCase,
                 .id(history.getId())
                 .farmId(history.getFarmId())
                 .cultivationRegistrationId(history.getCultivationRegistrationId())
-                .recordDate(history.getRecordDate())
+                .recordDate(recordDate != null ? recordDate : history.getRecordDate())
                 .activityType(activityType != null ? activityType : history.getActivityType())
                 .activityContent(activityContent)
                 .avgTemp(history.getAvgTemp())

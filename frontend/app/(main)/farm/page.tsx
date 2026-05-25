@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Button from '@/components/common/Button/Button';
 import Card from '@/components/common/Card/Card';
 import Badge from '@/components/common/Badge/Badge';
@@ -95,6 +95,7 @@ const renderTitleWithEm = (text: string) => {
 
 function FarmDashboardContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialTab = searchParams.get('tab') === 'history' ? 'HISTORY' : 'DASHBOARD';
 
   const toast = useToast();
@@ -200,6 +201,7 @@ function FarmDashboardContent() {
   // 수정을 위한 상태
   const [editingHistoryId, setEditingHistoryId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState('');
+  const [editingDate, setEditingDate] = useState<string | undefined>(undefined);
 
   // 선택된 농장
   // 선택된 농장
@@ -557,9 +559,10 @@ function FarmDashboardContent() {
   const isLoading = isFarmsLoading;
 
   // 수정 버튼 클릭 핸들러
-  const handleEditClick = (id: number, content: string) => {
+  const handleEditClick = (id: number, content: string, date?: string) => {
     setEditingHistoryId(id);
     setEditingContent(content);
+    setEditingDate(date);
     setIsHistoryModalOpen(true);
   };
 
@@ -590,15 +593,21 @@ function FarmDashboardContent() {
     setIsHistoryModalOpen(false);
     setEditingHistoryId(null);
     setEditingContent('');
+    setEditingDate(undefined);
   };
 
   // 저장/수정 실행 핸들러
-  const handleSaveHistory = async (content: string) => {
+  const handleSaveHistory = async (content: string, date?: string) => {
+    let result: boolean;
     if (editingHistoryId) {
-      return await updateHistory(editingHistoryId, content);
+      result = await updateHistory(editingHistoryId, content, date);
     } else {
-      return await addHistory(content);
+      result = await addHistory(content, date);
     }
+    if (result) {
+      await refreshAll();
+    }
+    return result;
   };
 
   if (isLoading) {
@@ -800,6 +809,7 @@ function FarmDashboardContent() {
         onSave={handleSaveHistory}
         farmName={farm?.name || ''}
         initialContent={editingContent}
+        initialDate={editingDate}
         mode={editingHistoryId ? 'edit' : 'create'}
       />
 
@@ -821,7 +831,10 @@ function FarmDashboardContent() {
       <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '0', marginBottom: '32px', display: 'flex', gap: '32px' }} data-guide="farm-farmer-tabs">
         <button
           style={{ background: 'none', border: 'none', color: activeSubTab === 'DASHBOARD' ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: activeSubTab === 'DASHBOARD' ? 700 : 600, borderBottom: activeSubTab === 'DASHBOARD' ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-1px', cursor: 'pointer', fontSize: '16px' }}
-          onClick={() => setActiveSubTab('DASHBOARD')}
+          onClick={() => {
+            setActiveSubTab('DASHBOARD');
+            router.replace('/farm', { scroll: false });
+          }}
         >
           대시보드
         </button>
@@ -833,7 +846,10 @@ function FarmDashboardContent() {
         </Link>
         <button
           style={{ background: 'none', border: 'none', color: activeSubTab === 'HISTORY' ? 'var(--color-primary)' : 'var(--color-text-light)', fontWeight: activeSubTab === 'HISTORY' ? 700 : 600, borderBottom: activeSubTab === 'HISTORY' ? '2px solid var(--color-primary)' : 'none', paddingBottom: '16px', marginBottom: '-1px', cursor: 'pointer', fontSize: '16px' }}
-          onClick={() => setActiveSubTab('HISTORY')}
+          onClick={() => {
+            setActiveSubTab('HISTORY');
+            router.replace('/farm?tab=history', { scroll: false });
+          }}
         >
           농장 일지
         </button>
@@ -1180,7 +1196,7 @@ function FarmDashboardContent() {
               <Card>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 700 }}>최근 활동</h3>
-                <Button variant="ghost" size="sm" onClick={() => setActiveSubTab('HISTORY')}>전체보기 →</Button>
+                <Button variant="ghost" size="sm" onClick={() => { setActiveSubTab('HISTORY'); router.replace('/farm?tab=history', { scroll: false }); }}>전체보기 →</Button>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
@@ -1191,9 +1207,23 @@ function FarmDashboardContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {histories.slice(0, 5).map(h => (
+                  {[...histories]
+                    .sort((a, b) => {
+                      const targetA = a.recordDate || a.createdAt;
+                      const targetB = b.recordDate || b.createdAt;
+                      const dateA = new Date(targetA.includes('T') ? targetA : `${targetA}T00:00:00`).getTime();
+                      const dateB = new Date(targetB.includes('T') ? targetB : `${targetB}T00:00:00`).getTime();
+                      return dateB - dateA;
+                    })
+                    .slice(0, 5)
+                    .map(h => (
                     <tr key={h.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td style={{ padding: '12px 8px', fontSize: '14px' }}>{new Date(h.createdAt).toLocaleDateString()}</td>
+                      <td style={{ padding: '12px 8px', fontSize: '14px' }}>
+                        {(() => {
+                          const targetDateStr = h.recordDate || h.createdAt;
+                          return new Date(targetDateStr.includes('T') ? targetDateStr : `${targetDateStr}T00:00:00`).toLocaleDateString();
+                        })()}
+                      </td>
                       <td style={{ padding: '12px 8px', fontSize: '14px' }}>{h.activityContent}</td>
                       <td style={{ padding: '12px 8px' }}>
                         <Badge variant={h.activityType === 'USER' ? 'green' : 'lime'}>

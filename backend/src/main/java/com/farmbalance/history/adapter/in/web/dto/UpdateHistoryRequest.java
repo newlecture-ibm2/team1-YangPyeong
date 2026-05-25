@@ -12,4 +12,6 @@ public class UpdateHistoryRequest {
     private String activityContent;
     
     private HistoryType activityType;
+
+    private java.time.LocalDate recordDate;
 }
