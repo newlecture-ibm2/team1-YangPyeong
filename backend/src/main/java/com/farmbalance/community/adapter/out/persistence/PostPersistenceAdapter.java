@@ -9,7 +9,9 @@ import com.farmbalance.community.application.port.out.PostPort;
 import com.farmbalance.community.domain.model.Post;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -55,19 +57,23 @@ public class PostPersistenceAdapter implements PostPort, LoadPostCategoryPort {
 
     @Override
     public Page<Post> findByFilters(List<Long> categoryIds, String keyword, String searchType, Pageable pageable) {
+        // 공지글(isNotice=true)이 항상 최상단에 오도록 정렬 조건 앞에 isNotice DESC 추가
+        Sort noticeFirst = Sort.by(Sort.Direction.DESC, "isNotice");
+        Sort combinedSort = noticeFirst.and(pageable.getSort());
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), combinedSort);
         Page<PostEntity> entityPage;
         
         String type = searchType != null ? searchType : "all";
         
         switch (type) {
             case "title":
-                entityPage = postJpaRepository.findByFiltersTitle(categoryIds, keyword, pageable);
+                entityPage = postJpaRepository.findByFiltersTitle(categoryIds, keyword, sortedPageable);
                 break;
             case "content":
-                entityPage = postJpaRepository.findByFiltersContent(categoryIds, keyword, pageable);
+                entityPage = postJpaRepository.findByFiltersContent(categoryIds, keyword, sortedPageable);
                 break;
             default:
-                entityPage = postJpaRepository.findByFilters(categoryIds, keyword, pageable);
+                entityPage = postJpaRepository.findByFilters(categoryIds, keyword, sortedPageable);
                 break;
         }
         
