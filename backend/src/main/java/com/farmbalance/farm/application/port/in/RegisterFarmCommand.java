@@ -39,5 +39,6 @@ public class RegisterFarmCommand {
         private Long cropId;
         private Double area;              // 재배 면적 (㎡)
         private Double expectedYield;     // 예상 수확량 (kg)
+        private java.time.LocalDate sowingDate; // 파종일
     }
 }

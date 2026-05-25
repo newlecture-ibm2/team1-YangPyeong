@@ -8,7 +8,6 @@ from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-
 async def verify_internal_key(
     x_ai_internal_key: str | None = Header(default=None),
 ) -> None:

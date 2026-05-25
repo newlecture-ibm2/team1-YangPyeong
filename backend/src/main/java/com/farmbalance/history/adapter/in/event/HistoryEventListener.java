@@ -80,7 +80,7 @@ public class HistoryEventListener {
             RecordHistoryCommand command = RecordHistoryCommand.builder()
                     .farmId(event.getFarmId())
                     .cultivationRegistrationId(event.getId())
-                    .recordDate(java.time.LocalDate.now())
+                    .recordDate(event.getSowingDate() != null ? event.getSowingDate() : java.time.LocalDate.now())
                     .activityType(HistoryType.SYSTEM)
                     .activityContent(content)
                     .build();
@@ -163,7 +163,7 @@ public class HistoryEventListener {
             RecordHistoryCommand command = RecordHistoryCommand.builder()
                     .farmId(event.getFarmId())
                     .cultivationRegistrationId(event.getCultivationRegistrationId()) // 정확한 ID 매핑
-                    .recordDate(java.time.LocalDate.now())
+                    .recordDate(event.getHarvestDate() != null ? event.getHarvestDate() : java.time.LocalDate.now())
                     .activityType(HistoryType.USER)
                     .activityContent(content)
                     .build();

@@ -60,7 +60,8 @@ export default function FarmRegisterPage() {
 
   // 토양 분석 결과 상태
   const [soilAnalysis, setSoilAnalysis] = useState<SoilAnalysisResult | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isFetchingSoil, setIsFetchingSoil] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 작물 마스터 목록 가져오기
   const [cropOptions, setCropOptions] = useState<CropOption[]>([]);
@@ -213,7 +214,7 @@ export default function FarmRegisterPage() {
     // --- 토양 분석 로직 추가 ---
     const pnu = generatePnuCode(data.bcode, isMountain, mainNo, subNo);
     
-    setIsAnalyzing(true);
+    setIsFetchingSoil(true);
     fetchSoilAnalysis(pnu).then(result => {
       if (result) {
         setSoilAnalysis(result);
@@ -249,7 +250,7 @@ export default function FarmRegisterPage() {
         setSoilAnalysis(null);
       }
     }).finally(() => {
-      setIsAnalyzing(false);
+      setIsFetchingSoil(false);
     });
   };
 
@@ -283,7 +284,7 @@ export default function FarmRegisterPage() {
       return;
     }
 
-    setIsAnalyzing(true);
+    setIsSubmitting(true);
     toast.info('농장 정보를 등록하고 서류를 분석 중입니다. 잠시만 기다려주세요...', 8000);
 
     try {
@@ -344,7 +345,7 @@ export default function FarmRegisterPage() {
     } catch {
       toast.error('서버와 통신에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
-      setIsAnalyzing(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -573,7 +574,7 @@ export default function FarmRegisterPage() {
           <Card>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 className={styles.cardTitle} style={{ marginBottom: 0 }}>토양 정보 (선택)</h3>
-              {isAnalyzing && <span style={{ fontSize: '12px', color: 'var(--color-primary)' }}>🔍 분석 중...</span>}
+              {isFetchingSoil && <span style={{ fontSize: '12px', color: 'var(--color-primary)' }}>🔍 토양 정보 분석 중...</span>}
             </div>
 
             {/* AI 토양 분석 결과 표시 영역 */}
@@ -657,10 +658,10 @@ export default function FarmRegisterPage() {
             💡 등록하신 정보는 관리자 검토 및 승인 후 최종 반영되며, 이후 농업인 권한이 부여됩니다.
           </p>
           <div className={styles.buttonGroup}>
-            <Button type="submit" variant="primary" style={{ flex: 1 }} disabled={isAnalyzing}>
-              {isAnalyzing ? '문서 분석 및 등록 중...' : '등록하기 →'}
+            <Button type="submit" variant="primary" style={{ flex: 1 }} disabled={isSubmitting}>
+              {isSubmitting ? '문서 분석 및 등록 중...' : '등록하기 →'}
             </Button>
-            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isAnalyzing}>
+            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
               취소
             </Button>
           </div>
@@ -668,7 +669,7 @@ export default function FarmRegisterPage() {
       </form>
 
       {/* AI OCR 분석 중 오버레이 스피너 */}
-      {isAnalyzing && (
+      {isSubmitting && (
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
