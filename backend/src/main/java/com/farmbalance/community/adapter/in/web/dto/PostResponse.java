@@ -1,5 +1,6 @@
 package com.farmbalance.community.adapter.in.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.farmbalance.community.domain.model.Post;
 import lombok.*;
 
@@ -18,10 +19,15 @@ public class PostResponse {
     private int viewCount;
     private int commentCount;
     private String categoryName;
+
+    @JsonProperty("isNotice")
     private boolean isNotice;
+
     private String authorNickname;
     private String authorStatus;
     private boolean hasAcceptedComment;
+
+    @JsonProperty("isHidden")
     private boolean isHidden;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
