@@ -5,27 +5,37 @@ export function useFCM(userPresent: boolean) {
   const isRegistered = useRef(false);
 
   useEffect(() => {
+    console.log('[useFCM Debug] effect 실행, userPresent:', userPresent);
     // 유저가 로그인 상태일 때만 FCM 토큰 발급 및 등록 진행
     if (!userPresent) {
+      console.log('[useFCM Debug] userPresent=false → 종료');
       isRegistered.current = false;
       return;
     }
 
     const initFCM = async () => {
-      if (isRegistered.current) return;
+      console.log('[useFCM Debug] initFCM 시작, isRegistered:', isRegistered.current);
+      if (isRegistered.current) {
+        console.log('[useFCM Debug] 이미 등록됨 → 종료');
+        return;
+      }
       isRegistered.current = true;
 
       // 1. 서비스 워커 등록
       if ('serviceWorker' in navigator) {
         try {
+          console.log('[useFCM Debug] SW 등록 시도');
           await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          console.log('[useFCM Debug] SW 등록 성공');
         } catch (err) {
           console.error('Service Worker 등록 실패:', err);
         }
       }
 
       // 2. 알림 권한 및 토큰 요청
+      console.log('[useFCM Debug] requestForToken 호출');
       const token = await requestForToken();
+      console.log('[useFCM Debug] requestForToken 결과:', token ? `${token.slice(0, 20)}...` : 'null');
       if (token) {
         const savedToken = localStorage.getItem('fcm-token');
 
