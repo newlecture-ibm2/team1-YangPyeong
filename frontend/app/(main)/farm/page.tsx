@@ -51,11 +51,13 @@ const STATUS_MAP: Record<ActivityStatus, { label: string; variant: 'green' | 'li
 /** AI 수익 예측 요청용 — 재배 등록이 있으면 작물별 면적 합산, 없으면 농장 작물명 + 면적 분할 */
 function getRevenueCropRows(
   farm: { area: number; cropNames: string[] },
-  cultivations: { cropName: string; cultivationArea?: number | null; sowingDate?: string | null }[],
+  cultivations: { cropName: string; cultivationArea?: number | null; sowingDate?: string | null; status?: string }[],
 ): RevenueCropRow[] {
-  if (cultivations.length > 0) {
+  const activeCultivations = cultivations.filter(c => !c.status || c.status === 'ACTIVE');
+  
+  if (activeCultivations.length > 0) {
     const map = new Map<string, { area: number; sowingMonth?: number }>();
-    for (const c of cultivations) {
+    for (const c of activeCultivations) {
       const a = Number(c.cultivationArea) || 0;
       const prev = map.get(c.cropName) || { area: 0, sowingMonth: undefined };
       let sowingMonth = prev.sowingMonth;
@@ -71,11 +73,14 @@ function getRevenueCropRows(
       sowingMonth: v.sowingMonth,
     }));
   }
-  if (farm.cropNames.length > 0) {
+  
+  // If the user has NEVER added any cultivations, fallback to farm.cropNames
+  if (cultivations.length === 0 && farm.cropNames.length > 0) {
     const n = farm.cropNames.length;
     const share = farm.area / n;
     return farm.cropNames.map((cropName) => ({ cropName, areaSqm: share }));
   }
+  
   return [];
 }
 
