@@ -16,4 +16,5 @@ public class CultivationRegisteredEvent {
     private final Long cropId;
     private final String cropName;
     private final Double cultivationArea;
+    private final java.time.LocalDate sowingDate;
 }

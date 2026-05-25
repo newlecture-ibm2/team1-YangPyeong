@@ -10,12 +10,13 @@ export interface CultivationHistory {
   cultivationRegistrationId?: number;
   activityType: HistoryType;
   activityContent: string;
+  recordDate?: string;
   createdAt: string;
 }
 
 interface TimelineProps {
   histories: CultivationHistory[];
-  onEdit?: (historyId: number, content: string) => void;
+  onEdit?: (historyId: number, content: string, date?: string) => void;
   onDelete?: (historyId: number) => void;
   onEditCultivation?: (cultivationId: number) => void;
   onDeleteCultivation?: (cultivationId: number) => void;
@@ -24,9 +25,15 @@ interface TimelineProps {
 export default function Timeline({ histories, onEdit, onDelete, onEditCultivation, onDeleteCultivation }: TimelineProps) {
   const [filter, setFilter] = useState<HistoryType | 'ALL'>('ALL');
 
-  const filteredHistories = histories.filter(
-    (h) => filter === 'ALL' || h.activityType === filter
-  );
+  const filteredHistories = histories
+    .filter((h) => filter === 'ALL' || h.activityType === filter)
+    .sort((a, b) => {
+      const targetA = a.recordDate || a.createdAt;
+      const targetB = b.recordDate || b.createdAt;
+      const dateA = new Date(targetA.includes('T') ? targetA : `${targetA}T00:00:00`).getTime();
+      const dateB = new Date(targetB.includes('T') ? targetB : `${targetB}T00:00:00`).getTime();
+      return dateB - dateA;
+    });
 
   const getTheme = (type: HistoryType) => {
     switch (type) {
@@ -85,12 +92,15 @@ export default function Timeline({ histories, onEdit, onDelete, onEditCultivatio
         ) : (
           filteredHistories.map((history) => {
             const theme = getTheme(history.activityType);
-            const dateStr = new Date(history.createdAt).toLocaleString('ko-KR', {
+            const targetDateStr = history.recordDate || history.createdAt;
+            // recordDate('YYYY-MM-DD') 처리를 위해 T00:00:00 추가
+            const dateObj = new Date(targetDateStr.includes('T') ? targetDateStr : `${targetDateStr}T00:00:00`);
+            
+            const dateStr = dateObj.toLocaleString('ko-KR', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
+              ...(history.recordDate ? {} : { hour: '2-digit', minute: '2-digit' }) // recordDate가 있으면 날짜만 표시
             });
 
             return (
@@ -117,7 +127,7 @@ export default function Timeline({ histories, onEdit, onDelete, onEditCultivatio
                             if (history.cultivationRegistrationId) {
                               onEditCultivation?.(history.cultivationRegistrationId);
                             } else {
-                              onEdit?.(history.id, history.activityContent);
+                              onEdit?.(history.id, history.activityContent, history.recordDate);
                             }
                           }}
                           title="수정"

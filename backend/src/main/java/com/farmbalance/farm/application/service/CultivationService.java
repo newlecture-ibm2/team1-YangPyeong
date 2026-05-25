@@ -71,7 +71,8 @@ public class CultivationService implements RegisterCultivationUseCase, UpdateCul
                 command.getFarmId(),
                 command.getCropId(),
                 fullData.getCropName(),
-                command.getCultivationArea()
+                command.getCultivationArea(),
+                command.getSowingDate()
         ));
 
         return saved;
