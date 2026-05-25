@@ -20,6 +20,7 @@ public class CultivationResponse {
     private Double cultivationArea;
     private Double farmerEstimatedYield;
     private String yieldUnit;
+    private String status;
 
     public static CultivationResponse from(CultivationRegistration domain) {
         return CultivationResponse.builder()
@@ -29,6 +30,7 @@ public class CultivationResponse {
                 .cultivationArea(domain.getCultivationArea())
                 .farmerEstimatedYield(domain.getFarmerEstimatedYield())
                 .yieldUnit(domain.getYieldUnit())
+                .status(domain.getStatus() != null ? domain.getStatus().name() : null)
                 .build();
     }
 }
