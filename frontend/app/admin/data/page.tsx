@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Badge from '@/components/common/Badge/Badge'
 import { useToast } from '@/components/common/Toast'
+import { useRouter } from 'next/navigation'
 import styles from './DataPage.module.css'
 import type { ApiSyncStatus } from '../_lib/apiSync.types'
 import {
@@ -44,11 +45,14 @@ export default function DataPage() {
   const [syncing, setSyncing] = useState<Set<number>>(new Set())
   const [healthChecking, setHealthChecking] = useState<Set<number>>(new Set())
   const toast = useToast()
+  const router = useRouter()
 
   const loadData = useCallback(async () => {
     try {
       const data = await fetchApiSyncStatuses()
-      setStatuses(data)
+      // ID 기준으로 정렬하여 렌더링 순서를 고정
+      const sortedData = data.sort((a, b) => a.id - b.id)
+      setStatuses(sortedData)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'API 상태 조회 실패')
     } finally {
@@ -229,7 +233,25 @@ export default function DataPage() {
                   >
                     {isHealthChecking ? '⏳ 헬스체크 중...' : '💓 헬스체크'}
                   </button>
-                  {status.apiName !== 'KAKAO_LOCAL' && status.apiName !== 'NONGSARO_CROP' && status.apiName !== 'SOIL_ENVIRONMENT' && (
+                  {status.apiName === 'NONGSARO_CROP' && (
+                    <button
+                      className={styles.syncBtn}
+                      onClick={() => router.push('/admin/crops')}
+                      disabled={!status.isActive}
+                    >
+                      작물 동기화 하러가기 ↗
+                    </button>
+                  )}
+                  {status.apiName === 'POLICY_DATA' && (
+                    <button
+                      className={styles.syncBtn}
+                      onClick={() => router.push('/admin/policies')}
+                      disabled={!status.isActive}
+                    >
+                      정책 동기화 하러가기 ↗
+                    </button>
+                  )}
+                  {status.apiName !== 'KAKAO_LOCAL' && status.apiName !== 'NONGSARO_CROP' && status.apiName !== 'SOIL_ENVIRONMENT' && status.apiName !== 'POLICY_DATA' && (
                     <button
                       className={styles.syncBtn}
                       onClick={() => handleSync(status.id, status.displayName)}
