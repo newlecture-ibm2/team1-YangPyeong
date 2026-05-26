@@ -7,6 +7,8 @@ interface GuestPreviewBannerProps {
   message?: string;
   hasUnapprovedFarms?: boolean;
   isGuest?: boolean;
+  /** 비로그인 상태에서 로그인/회원가입 후 돌아올 URL (기본: /farm) */
+  guestCallbackUrl?: string;
 }
 
 /**
@@ -15,7 +17,8 @@ interface GuestPreviewBannerProps {
 export default function GuestPreviewBanner({ 
   message,
   hasUnapprovedFarms = false,
-  isGuest = false
+  isGuest = false,
+  guestCallbackUrl = '/farm',
 }: GuestPreviewBannerProps) {
   let defaultMessage = "현재 보시는 화면은 샘플 데이터가 적용된 미리보기입니다. 내 농장을 등록하시면 맞춤 분석을 받아보실 수 있습니다.";
   if (isGuest) {
@@ -34,7 +37,7 @@ export default function GuestPreviewBanner({
       </div>
       <div className={styles.actions}>
         {isGuest ? (
-          <Link href="/login?callbackUrl=/farm" className={styles.link}>
+          <Link href={`/login?callbackUrl=${encodeURIComponent(guestCallbackUrl)}`} className={styles.link}>
             로그인 / 회원가입 하러 가기 →
           </Link>
         ) : hasUnapprovedFarms ? (
