@@ -30,7 +30,7 @@ public class PolicyApiSyncEventListener {
 
         log.info("[PolicyApiSync] 수동 동기화 지시 수신. 모드={}", event.syncMode());
         try {
-            SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies();
+            SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies(event.syncMode());
             log.info("[PolicyApiSync] 동기화 성공: fetched={}", result.fetched());
             
             eventPublisher.publishEvent(new ApiSyncEvent(

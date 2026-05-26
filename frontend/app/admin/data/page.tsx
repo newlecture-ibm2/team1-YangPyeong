@@ -245,7 +245,7 @@ export default function DataPage() {
                   {status.apiName === 'POLICY_DATA' && (
                     <button
                       className={styles.syncBtn}
-                      onClick={() => router.push('/admin/policies')}
+                      onClick={() => router.push('/admin/policy')}
                       disabled={!status.isActive}
                     >
                       정책 동기화 하러가기 ↗
