@@ -53,9 +53,15 @@ def get_general_agent():
     async def agent_node(state):
         last_msg = state["messages"][-1].content if state["messages"] else ""
         
-        # 1. ChromaDB (RAG)에서 관련 매뉴얼/텍스트 검색
-        rag_resp = search_rag_documents(last_msg, top_k=2)
-        rag_results = rag_resp.get("results", [])
+        # 1. ChromaDB (RAG)에서 관련 매뉴얼/텍스트 비동기 검색
+        rag_results = []
+        try:
+            rag_resp = await search_rag_documents(last_msg, top_k=5)
+            rag_results = rag_resp.get("results", [])
+            if rag_resp.get("error"):
+                logger.warning(f"[GeneralAgent] RAG 검색 에러 (계속 진행): {rag_resp['error']}")
+        except Exception as e:
+            logger.error(f"[GeneralAgent] RAG 검색 실패 (RAG 없이 진행): {e}", exc_info=True)
         
         # 2. 검색된 내용을 프롬프트 뒤에 참고 자료로 덧붙이기 위한 변수
         rag_context = ""
