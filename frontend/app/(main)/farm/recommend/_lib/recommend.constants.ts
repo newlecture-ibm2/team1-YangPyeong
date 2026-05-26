@@ -102,9 +102,14 @@ const CALENDAR_MAP: Record<string, CalendarPhase[]> = {
   ],
 };
 
+/** 추천·캘린더·세부계획서 공통 보강 rec */
+export function enrichRecommendationForGuide(rec: CropRecommendation): CropRecommendation {
+  return enrichCropGuideCardFields(rec);
+}
+
 /** 추천 작물 데이터 기준 캘린더 (가이드 생육기간·파종/수확과 동기화) */
 export function getCropCalendarForRecommendation(rec: CropRecommendation): CalendarPhase[] {
-  const enriched = enrichCropGuideCardFields(rec);
+  const enriched = enrichRecommendationForGuide(rec);
   const fromRec = buildCalendarPhasesFromRecommendation(enriched);
   if (fromRec && fromRec.length > 0) return fromRec;
 

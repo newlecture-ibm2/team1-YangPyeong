@@ -32,8 +32,13 @@ public final class CropCultivationEnvMatcher {
         return """
                 (
                     %1$s = %2$s
+                    OR %1$s LIKE '%%' || %2$s || '%%'
+                    OR %2$s LIKE '%%' || %1$s || '%%'
                     OR (%1$s = '쌀' AND %2$s LIKE '벼%%')
                     OR (%1$s = '벼' AND %2$s LIKE '벼%%')
+                    OR (%1$s LIKE '%%배추%%' AND %2$s LIKE '%%배추%%')
+                    OR (%1$s LIKE '%%고추%%' AND %2$s LIKE '%%고추%%')
+                    OR (%1$s LIKE '%%토마토%%' AND %2$s LIKE '%%토마토%%')
                 )
                 """
                 .formatted(cropNameColumn, farmWorkTypeColumn);
