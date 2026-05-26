@@ -11,6 +11,7 @@ import { useToast } from '@/components/common/Toast';
 import { useMyFarms } from '../useFarm';
 import { getCultivations, type CultivationRegistration } from '../_lib/cultivation.api';
 import { recordHarvest } from '../_lib/harvest.api';
+import { CHAT_EVENTS } from '@/components/common/FarmBot/useChatActions';
 import styles from './page.module.css';
 
 export default function HarvestRegisterPage() {
@@ -82,7 +83,11 @@ export default function HarvestRegisterPage() {
       });
 
       toast.success('수확 등록이 완료되었습니다!');
-      
+
+      window.dispatchEvent(
+        new CustomEvent(CHAT_EVENTS.refresh, { detail: { scope: 'farm' } }),
+      );
+
       if (formData.toShop) {
         const selectedCult = cultivations.find(c => String(c.id) === formData.cultivationRegistrationId);
         const cropName = selectedCult ? selectedCult.cropName : '';

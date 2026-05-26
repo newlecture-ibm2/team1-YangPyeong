@@ -19,8 +19,11 @@ import {
   pickPrimaryRevenueCrop,
   readRevenuePredictionCache,
   writeRevenuePredictionCache,
+  filterPredictionsByCropRows,
+  filterRecordByCropNames,
   type RevenueCropRow,
 } from './_lib/revenuePredictionCache';
+import { CHAT_EVENTS, type ChatRefreshEventDetail } from '@/components/common/FarmBot/useChatActions';
 import Timeline from './_components/Timeline/Timeline';
 import HistoryModal from './_components/HistoryModal/HistoryModal';
 import CultivationEditModal from './_components/CultivationEditModal/CultivationEditModal';
@@ -74,8 +77,12 @@ function getRevenueCropRows(
     }));
   }
   
-  // If the user has NEVER added any cultivations, fallback to farm.cropNames
-  if (cultivations.length === 0 && farm.cropNames.length > 0) {
+  // 재배 등록 API 응답이 비었을 때만 농장 작물명 폴백 (수확 완료로 비운 경우 제외)
+  if (
+    cultivations.length === 0 &&
+    activeCultivations.length === 0 &&
+    farm.cropNames.length > 0
+  ) {
     const n = farm.cropNames.length;
     const share = farm.area / n;
     return farm.cropNames.map((cropName) => ({ cropName, areaSqm: share }));
@@ -104,7 +111,12 @@ function FarmDashboardContent() {
   const initialTab = searchParams.get('tab') === 'history' ? 'HISTORY' : 'DASHBOARD';
 
   const toast = useToast();
-  const { farms: allFarms, isLoading: isFarmsLoading, removeFarm: deleteSelectedFarm } = useMyFarms();
+  const {
+    farms: allFarms,
+    isLoading: isFarmsLoading,
+    removeFarm: deleteSelectedFarm,
+    refetch: refetchFarms,
+  } = useMyFarms();
   const farms = useMemo(
     () => allFarms.filter((f) => f.certificationStatus === 'APPROVED'),
     [allFarms],
@@ -453,7 +465,7 @@ function FarmDashboardContent() {
 
     const applyMerged = (merged: Record<string, RevenuePredictionResponse>) => {
       if (cancelled) return;
-      setPredictionsByCrop((prev) => ({ ...prev, ...merged }));
+      setPredictionsByCrop(filterPredictionsByCropRows(merged, revenueCropRows));
       setRevenueErrorsByCrop({});
 
       const primary = pickPrimaryRevenueCrop(revenueCropRows);
@@ -486,7 +498,17 @@ function FarmDashboardContent() {
     return () => {
       cancelled = true;
     };
-  }, [activeSubTab, farm?.id, revenueCropRowsKey, isCultivationLoading]);
+  }, [activeSubTab, farm?.id, revenueCropRowsKey, isCultivationLoading, revenueCropRows]);
+
+  // 재배 목록 변경 시 수확 완료 작물의 로컬 예측·캐시 UI 제거
+  useEffect(() => {
+    setPredictionsByCrop((prev) => filterPredictionsByCropRows(prev, revenueCropRows));
+    setRevenueErrorsByCrop((prev) => filterRecordByCropNames(prev, revenueCropRows));
+    setActualYieldByCrop((prev) => filterRecordByCropNames(prev, revenueCropRows));
+    setExpandedRevenueCrop((prev) =>
+      prev && revenueCropRows.some((r) => r.cropName === prev) ? prev : null,
+    );
+  }, [revenueCropRowsKey, revenueCropRows]);
 
   // 이력·재배·최근 AI 추천을 한 번에 병렬 로드 (농장 전환 시에만 재요청)
   useEffect(() => {
@@ -500,9 +522,10 @@ function FarmDashboardContent() {
 
     (async () => {
       try {
-        const [, , rec] = await Promise.all([
+        const [, , , rec] = await Promise.all([
           refreshHistories(),
           refreshCultivations(),
+          refetchFarms(),
           getLatestRecommendHistory(farmId).catch(() => null),
         ]);
         if (cancelled) return;
@@ -517,25 +540,37 @@ function FarmDashboardContent() {
     return () => {
       cancelled = true;
     };
-  }, [farm?.id, refreshHistories, refreshCultivations]);
+  }, [farm?.id, refreshHistories, refreshCultivations, refetchFarms]);
 
   // 통합 새로고침
   const refreshAll = useCallback(async () => {
     const f = farmRef.current;
     if (!f?.id) {
-      await Promise.all([refreshHistories(), refreshCultivations()]);
+      await Promise.all([refreshHistories(), refreshCultivations(), refetchFarms()]);
       return;
     }
     const targetId = f.id;
-    const [, , rec] = await Promise.all([
+    const [, , , rec] = await Promise.all([
       refreshHistories(),
       refreshCultivations(),
+      refetchFarms(),
       getLatestRecommendHistory(targetId).catch(() => null),
     ]);
     if (farmRef.current?.id === targetId) {
       setLatestRecommendData(rec);
     }
-  }, [refreshHistories, refreshCultivations]);
+  }, [refreshHistories, refreshCultivations, refetchFarms]);
+
+  // 수확 완료 등 외부 이벤트 후 재배·농장 목록 갱신
+  useEffect(() => {
+    const onFarmRefresh = (event: Event) => {
+      const detail = (event as CustomEvent<ChatRefreshEventDetail>).detail;
+      if (detail?.scope !== 'farm') return;
+      void refreshAll();
+    };
+    window.addEventListener(CHAT_EVENTS.refresh, onFarmRefresh);
+    return () => window.removeEventListener(CHAT_EVENTS.refresh, onFarmRefresh);
+  }, [refreshAll]);
 
   // AI 점수·예상 수익 합산: 재배 변경 시에는 서버 이력을 다시 부르지 않고 로컬만 재계산
   useEffect(() => {
