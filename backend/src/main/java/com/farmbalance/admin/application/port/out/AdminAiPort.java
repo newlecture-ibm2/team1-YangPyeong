@@ -1,7 +1,8 @@
 package com.farmbalance.admin.application.port.out;
 
-import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
 
 public interface AdminAiPort {
 
@@ -13,7 +14,7 @@ public interface AdminAiPort {
 
     // --- DTOs ---
     record ShopAuditItemDto(@JsonProperty("product_id") Long productId, @JsonProperty("product_name") String productName, String category, int price, String description) {}
-    
+
     record ShopAuditResultDto(@JsonProperty("product_id") Long productId, @JsonProperty("is_valid") boolean valid, String reason) {}
 
     record ModerationItemDto(@JsonProperty("post_id") Long postId, String title, String content) {}
