@@ -230,7 +230,10 @@ function FarmDashboardContent() {
   // 2. 현재 선택한 농장이 승인되지 않은 상태일 때
   const isShowPreviewBlur = isPreviewUser || (selectedFarm && !isCurrentFarmApproved);
 
-  const farm = selectedFarm || (isPreviewUser ? { ...DUMMY_FARM, cropNames: DUMMY_FARM.cropNames || [] } : null);
+  const farm = useMemo(
+    () => selectedFarm || (isPreviewUser ? { ...DUMMY_FARM, cropNames: DUMMY_FARM.cropNames || [] } : null),
+    [selectedFarm, isPreviewUser],
+  );
   const farmRef = useRef(farm);
   farmRef.current = farm;
 
@@ -498,17 +501,22 @@ function FarmDashboardContent() {
     return () => {
       cancelled = true;
     };
-  }, [activeSubTab, farm?.id, revenueCropRowsKey, isCultivationLoading, revenueCropRows]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSubTab, farm?.id, revenueCropRowsKey, isCultivationLoading]);
 
   // 재배 목록 변경 시 수확 완료 작물의 로컬 예측·캐시 UI 제거
+  const revenueCropRowsRef = useRef(revenueCropRows);
+  revenueCropRowsRef.current = revenueCropRows;
   useEffect(() => {
-    setPredictionsByCrop((prev) => filterPredictionsByCropRows(prev, revenueCropRows));
-    setRevenueErrorsByCrop((prev) => filterRecordByCropNames(prev, revenueCropRows));
-    setActualYieldByCrop((prev) => filterRecordByCropNames(prev, revenueCropRows));
+    const rows = revenueCropRowsRef.current;
+    setPredictionsByCrop((prev) => filterPredictionsByCropRows(prev, rows));
+    setRevenueErrorsByCrop((prev) => filterRecordByCropNames(prev, rows));
+    setActualYieldByCrop((prev) => filterRecordByCropNames(prev, rows));
     setExpandedRevenueCrop((prev) =>
-      prev && revenueCropRows.some((r) => r.cropName === prev) ? prev : null,
+      prev && rows.some((r) => r.cropName === prev) ? prev : null,
     );
-  }, [revenueCropRowsKey, revenueCropRows]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revenueCropRowsKey]);
 
   // 이력·재배·최근 AI 추천을 한 번에 병렬 로드 (농장 전환 시에만 재요청)
   useEffect(() => {

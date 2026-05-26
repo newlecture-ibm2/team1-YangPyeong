@@ -18,9 +18,10 @@ export async function GET() {
     // SKIP_AUTH가 true인 경우 개발용으로 세션 없이도 진행 가능하게 처리 (선택사항)
     // 여기서는 정석대로 세션 체크
     if (!session?.token && process.env.SKIP_AUTH !== 'true') {
+      // 비회원: 빈 목록 반환 → 미리보기 모드 진입 (401 콘솔 에러 방지)
       return NextResponse.json(
-        { success: false, error: { code: 'UNAUTHORIZED', message: '로그인이 필요합니다.' } },
-        { status: 401 }
+        { success: true, data: [] },
+        { status: 200 }
       );
     }
 

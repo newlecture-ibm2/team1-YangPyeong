@@ -2,7 +2,7 @@
    Farm 도메인 데이터 관리를 위한 커스텀 훅
    ════════════════════════════════════════════════════════ */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getMyFarms, getFarmDetail, deleteFarm } from './_lib/farm.api';
 import { FarmListItem, FarmDetail } from './_lib/farm.types';
 import { useToast } from '@/components/common/Toast';
@@ -15,6 +15,8 @@ export function useMyFarms(enabled = true) {
   const [farms, setFarms] = useState<FarmListItem[]>([]);
   const [isLoading, setIsLoading] = useState(enabled);
   const toast = useToast();
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
 
   const fetchFarms = useCallback(async () => {
     if (!enabled) return;
@@ -26,11 +28,11 @@ export function useMyFarms(enabled = true) {
       setFarms(sortedData);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '농장 목록을 불러오지 못했습니다.';
-      toast.error(message);
+      toastRef.current.error(message);
     } finally {
       setIsLoading(false);
     }
-  }, [enabled, toast]);
+  }, [enabled]);
 
   useEffect(() => {
     fetchFarms();
@@ -39,12 +41,12 @@ export function useMyFarms(enabled = true) {
   const removeFarm = async (id: number) => {
     try {
       await deleteFarm(id);
-      toast.success('농장이 삭제되었습니다.');
+      toastRef.current.success('농장이 삭제되었습니다.');
       await fetchFarms();
       return true;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '농장 삭제에 실패했습니다.';
-      toast.error(message);
+      toastRef.current.error(message);
       return false;
     }
   };
@@ -59,6 +61,8 @@ export function useFarmDetail(id: number) {
   const [farm, setFarm] = useState<FarmDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const toast = useToast();
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
@@ -66,12 +70,12 @@ export function useFarmDetail(id: number) {
     try {
       const data = await getFarmDetail(id);
       setFarm(data);
-    } catch (err: any) {
-      toast.error(err.message || '농장 상세 정보를 불러오지 못했습니다.');
+    } catch (err: unknown) {
+      toastRef.current.error(err instanceof Error ? err.message : '농장 상세 정보를 불러오지 못했습니다.');
     } finally {
       setIsLoading(false);
     }
-  }, [id, toast]);
+  }, [id]);
 
   useEffect(() => {
     fetchDetail();
@@ -81,10 +85,10 @@ export function useFarmDetail(id: number) {
     if (!id) return;
     try {
       await deleteFarm(id);
-      toast.success('농장이 삭제되었습니다.');
+      toastRef.current.success('농장이 삭제되었습니다.');
       return true;
-    } catch (err: any) {
-      toast.error(err.message || '농장 삭제에 실패했습니다.');
+    } catch (err: unknown) {
+      toastRef.current.error(err instanceof Error ? err.message : '농장 삭제에 실패했습니다.');
       return false;
     }
   };
