@@ -212,7 +212,7 @@ export default function FarmsPage() {
                   <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span>✨ AI 분석 데이터</span>
                     <a 
-                      href="https://www.gov.kr/portal/main/nologin" 
+                      href="https://www.gov.kr/mw/AA050OrgDocDtl.do" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       style={{ fontSize: '12px', color: '#3b82f6', textDecoration: 'underline' }}
