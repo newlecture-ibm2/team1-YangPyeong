@@ -122,15 +122,20 @@ services:
       - GOV_AGENT_MODE=${GOV_AGENT_MODE:-classic}
       - CHROMA_PERSIST_DIR=/app/data/chroma
     volumes:
-      - ./ai:/app
+      # 운영용: 이미지 안에 COPY된 코드를 그대로 사용 (소스 바인드 마운트 제거).
+      # 컨테이너 내 root가 호스트 ./ai 폴더에 root 소유 __pycache__/*.pyc 를 생성해
+      # GitHub Actions Runner의 workspace 정리가 EACCES로 실패하던 문제 차단.
+      # 로컬 개발 핫리로드가 필요하면 `docker compose watch` 사용 (아래 develop.watch).
       - chroma-data:/app/data/chroma
     depends_on:
       - db
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: ./ai
           target: /app
+        - action: rebuild
+          path: ./ai/requirements.txt
 
   # 5. Database (PostgreSQL)
   db:
