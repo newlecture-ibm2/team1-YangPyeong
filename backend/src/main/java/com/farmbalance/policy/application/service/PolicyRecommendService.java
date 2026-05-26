@@ -214,10 +214,22 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
             log.info("[시연모드] farmer2 점수 부스트 적용 (TOP={}, cutoff={})", effectiveMaxTop, effectiveCutoff);
             for (Candidate c : candidates) {
                 String combined = combineText(c.policy);
-                if (combined.contains("여성농") || combined.contains("여성 농")) {
+                boolean isWomen = combined.contains("여성농") || combined.contains("여성 농");
+                boolean isYouth = combined.contains("청년") || combined.contains("후계농");
+                // 작물 콤보 체크: farmer2 작물과 정책이 동시 매칭하면 추가 보너스
+                boolean hasCropCombo = userCrops.stream()
+                        .anyMatch(crop -> combined.contains(crop.toLowerCase()));
+
+                if (isWomen && hasCropCombo) {
+                    c.score = Math.min(100, c.score + 25);
+                    c.reasons.add(0, "👩‍🌾 여성농업인 + 등록 작물 동시 매칭");
+                } else if (isYouth && hasCropCombo) {
+                    c.score = Math.min(100, c.score + 22);
+                    c.reasons.add(0, "🌱 청년·후계농 + 등록 작물 동시 매칭");
+                } else if (isWomen) {
                     c.score = Math.min(100, c.score + 18);
                     c.reasons.add(0, "👩‍🌾 여성농업인 우선 대상 — 프로필 조건 일치");
-                } else if (combined.contains("청년") || combined.contains("후계농")) {
+                } else if (isYouth) {
                     c.score = Math.min(100, c.score + 15);
                     c.reasons.add(0, "🌱 청년·후계농 지원 대상");
                 }
