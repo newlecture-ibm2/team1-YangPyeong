@@ -199,11 +199,11 @@ function RecommendDetailInner() {
   return (
     <div className={styles.container}>
       <DetailHeader
-        cropName={rec.cropName}
-        category={rec.category}
-        emoji={getCropEmoji(rec.category, rec.cropName)}
-        growthDays={rec.growthDays}
-        optimalTemp={rec.optimalTemp}
+        cropName={guideRec.cropName}
+        category={guideRec.category}
+        emoji={getCropEmoji(guideRec.category, guideRec.cropName)}
+        growthDays={guideRec.growthDays}
+        optimalTemp={guideRec.optimalTemp}
         score={rec.score}
         soilFitnessPercent={rec.soilFitnessPercent}
       />
@@ -232,7 +232,7 @@ function RecommendDetailInner() {
         onRequestCoaching={handleRequestCoaching}
       />
 
-      <CropGuide rec={rec} recommendResult={result} />
+      <CropGuide rec={guideRec} recommendResult={result} />
 
       {/* ── 재배 캘린더 (클릭 시 세부 계획서 모달) ── */}
       <CalendarSection rec={guideRec} calendar={calendar} />

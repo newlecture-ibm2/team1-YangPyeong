@@ -71,7 +71,7 @@ const CROP_PERIOD_ENTRIES: CropPeriodEntry[] = [
   { match: (n) => n.includes('양배추'), sow: { start: 7, end: 8 }, harvest: { start: 11, end: 12 }, planKind: 'cabbage', growthDays: 90 },
   { match: (n) => n.includes('배추'), sow: { start: 8, end: 9 }, harvest: { start: 10, end: 11 }, planKind: 'cabbage', growthDays: 70 },
   { match: (n) => n.includes('브로콜리'), sow: { start: 7, end: 7 }, harvest: { start: 10, end: 11 }, planKind: 'cabbage', growthDays: 100 },
-  { match: (n) => n.includes('상추') || n.includes('양상추') || n.includes('청경채') || n.includes('시금치'), sow: { start: 3, end: 5 }, harvest: { start: 5, end: 10 }, planKind: 'leafy', growthDays: 45, sowingLabel: '3월 ~ 5월', harvestLabel: '5월 ~ 10월(연속 수확)' },
+  { match: (n) => n.includes('상추') || n.includes('양상추') || n.includes('청경채') || n.includes('시금치'), sow: { start: 4, end: 4 }, harvest: { start: 5, end: 6 }, planKind: 'leafy', growthDays: 50, sowingLabel: '4월 상순', harvestLabel: '5월 하순' },
   { match: (n) => n.includes('셀러리'), sow: { start: 3, end: 4 }, harvest: { start: 6, end: 9 }, planKind: 'leafy', growthDays: 40, sowingLabel: '3월 ~ 4월', harvestLabel: '6월 ~ 9월' },
   { match: (n) => n.includes('총각무') || n === '무', sow: { start: 8, end: 9 }, harvest: { start: 10, end: 11 }, planKind: 'radish', growthDays: 60 },
   { match: (n) => n.includes('대파') || n.includes('쪽파') || (n.includes('파') && !n.includes('파프리카')), sow: { start: 9, end: 11 }, harvest: { start: 5, end: 6 }, winterCycle: true, planKind: 'generic', growthDays: 240 },
@@ -125,7 +125,14 @@ export function resolveCropPeriodLabels(
     };
   }
   const sowing = apiSowing?.trim() || undefined;
-  const harvest = apiHarvest?.trim() || undefined;
+  let harvest = apiHarvest?.trim() || undefined;
+  const parsedSow = parseMonthsFromPeriodText(sowing);
+  const parsedHarv = parseMonthsFromPeriodText(harvest);
+  const growthDays = parseDaysAfterSowing(harvest) ?? undefined;
+  if (parsedSow && parsedHarv && isAbsurdHarvestRange(parsedHarv, growthDays)) {
+    const estimated = estimateHarvestRangeFromGrowth(parsedSow, growthDays ?? 90);
+    harvest = formatMonthRange(estimated);
+  }
   return { sowing, harvest };
 }
 
@@ -138,6 +145,20 @@ export interface ResolvedCalendarMonths {
 
 function isWinterCycle(sow: MonthRange, harv: MonthRange): boolean {
   return sow.start > harv.end;
+}
+
+function monthSpan(range: MonthRange): number {
+  if (range.start <= range.end) return range.end - range.start + 1;
+  return 12 - range.start + 1 + range.end;
+}
+
+/** 농사로 등에서 1~12월·연중 수확처럼 비현실적으로 넓은 구간 보정 */
+function isAbsurdHarvestRange(harv: MonthRange, growthDays?: number | null): boolean {
+  const span = monthSpan(harv);
+  const days = growthDays ?? 999;
+  if (span >= 9 && days < 150) return true;
+  if (harv.start === 1 && harv.end === 12 && days < 120) return true;
+  return false;
 }
 
 /** "파종 후 30~50일" 등에서 일수 추출 */
@@ -226,11 +247,15 @@ export function resolveCalendarMonthRanges(
     }
   }
 
+  if (sow && harv && isAbsurdHarvestRange(harv, growthDays)) {
+    harv = estimateHarvestRangeFromGrowth(sow, growthDays ?? 90);
+  }
+
   return {
     sow: sow!,
     harvest: harv!,
     winterCycle: isWinterCycle(sow!, harv!),
-    source: harv && options?.parsedHarv ? 'parsed' : 'estimated',
+    source: harv && options?.parsedHarv && !isAbsurdHarvestRange(harv, growthDays) ? 'parsed' : 'estimated',
   };
 }
 
