@@ -69,11 +69,11 @@ export async function POST(request: NextRequest) {
 
     const payload = decodeJwtPayload(accessToken);
     if (payload) {
-      response.cookies.set('fb-user', JSON.stringify({
+      response.cookies.set('fb-user', encodeURIComponent(JSON.stringify({
         email: payload.email || payload.sub || '',
         role: payload.role || 'USER',
         name: payload.name || '',
-      }), {
+      })), {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
