@@ -40,4 +40,24 @@ public interface LoadFarmSupplyPort {
      * @return 읍면동 코드-이름 쌍 리스트 [["4183040", "용문면"], ...]
      */
     List<String[]> findTownsByUserId(Long userId);
+
+    /**
+     * 플랫폼에 등록된 전체 활성(ACTIVE) 농장 수를 카운트합니다.
+     */
+    long countAllFarms();
+
+    /**
+     * 플랫폼의 전체 활성 사용자 수를 조회합니다.
+     */
+    long countActiveUsers();
+
+    /**
+     * 플랫폼의 누적 AI 작물 추천 건수를 조회합니다.
+     */
+    long countTotalRecommends();
+
+    /**
+     * 플랫폼의 누적 직거래 주문 건수를 조회합니다.
+     */
+    long countTotalOrders();
 }

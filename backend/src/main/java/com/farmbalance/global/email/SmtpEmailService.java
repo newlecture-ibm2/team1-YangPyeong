@@ -1,6 +1,7 @@
 package com.farmbalance.global.email;
 
 import jakarta.mail.MessagingException;
+import java.io.UnsupportedEncodingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,20 +44,20 @@ public class SmtpEmailService implements EmailService {
     public void sendSync(String to, String subject, String content) {
         try {
             doSend(to, subject, content);
-        } catch (MessagingException | org.springframework.mail.MailException e) {
+        } catch (MessagingException | org.springframework.mail.MailException | UnsupportedEncodingException e) {
             log.error("[이메일] 동기 발송 실패 → {} (제목: {}): {}", to, subject, e.getMessage());
             throw new RuntimeException("이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.", e);
         }
     }
 
     /** 공통 발송 로직 */
-    private void doSend(String to, String subject, String content) throws MessagingException {
+    private void doSend(String to, String subject, String content) throws MessagingException, UnsupportedEncodingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(content, true);
-        helper.setFrom("noreply@farmbalance.com");
+        helper.setFrom("ffarmbalance@gmail.com", "팜밸런스");
 
         mailSender.send(message);
         log.info("[이메일] 발송 성공 → {} (제목: {})", to, subject);

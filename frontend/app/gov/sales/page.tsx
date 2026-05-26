@@ -71,7 +71,7 @@ export default function SalesPage() {
       <div className={styles.headerWrapper}>
         <div className={styles.pageHeader}>
           <p className={styles.breadcrumb}>지자체 / 판매 현황</p>
-          <h1 className={styles.pageTitle}>💰 판매 현황</h1>
+          <h1 className="page-title">💰 판매 <em>현황</em></h1>
           <div className={styles.tabsWrapper}>
             <GovTabs />
           </div>

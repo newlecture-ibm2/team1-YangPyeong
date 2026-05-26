@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Shield, LogOut, User } from 'lucide-react';
 import { useHeaderContext } from '../HeaderProvider';
@@ -64,7 +63,7 @@ export default function LandingHeader() {
   const notifRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  const displayName = user?.email ? user.email.split('@')[0] : '';
+  const displayName = user?.name || (user?.email ? user.email.split('@')[0] : '');
   const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
@@ -201,14 +200,14 @@ export default function LandingHeader() {
   const renderUserAvatar = (size: 'desktop' | 'mobile') => {
     if (user?.profileImageUrl && !profileImageLoadFailed) {
       return (
-        <Image
-          src={user.profileImageUrl}
-          alt="프로필"
-          width={32}
-          height={32}
-          className={size === 'mobile' ? styles.mobileAvatarImg : styles.avatarImg}
-          onError={() => setProfileImageLoadFailed(true)}
-        />
+        <span className={size === 'mobile' ? styles.mobileAvatarFallback : styles.avatar}>
+          <img
+            src={user.profileImageUrl}
+            alt="프로필"
+            className={size === 'mobile' ? styles.mobileAvatarImg : styles.avatarImg}
+            onError={() => setProfileImageLoadFailed(true)}
+          />
+        </span>
       );
     }
 
@@ -317,11 +316,11 @@ export default function LandingHeader() {
           </div>
 
           <nav className={`${styles['header__group']} ${styles['header__group--center']}`}>
-            <Link className={styles['header__nav-link']} href="/farm">내농장</Link>
-            <Link className={styles['header__nav-link']} href="/shop">장터</Link>
-            <Link className={styles['header__nav-link']} href="/community">수다방</Link>
-            <Link className={styles['header__nav-link']} href="/stores">동네구경</Link>
-            <Link className={styles['header__nav-link']} href="/policy">정책</Link>
+            <Link className={styles['header__nav-link']} href="/farm" data-guide="nav-farm">내농장</Link>
+            <Link className={styles['header__nav-link']} href="/shop" data-guide="nav-shop">장터</Link>
+            <Link className={styles['header__nav-link']} href="/community" data-guide="nav-community">수다방</Link>
+            <Link className={styles['header__nav-link']} href="/stores" data-guide="nav-stores">동네구경</Link>
+            <Link className={styles['header__nav-link']} href="/policy" data-guide="nav-policy">정책</Link>
           </nav>
 
           <div className={`${styles['header__group']} ${styles['header__group--right']}`}>
@@ -343,7 +342,7 @@ export default function LandingHeader() {
                   {renderNotifDropdown()}
                 </div>
 
-                <button type="button" className={styles.iconBtn} onClick={handleCartClick} aria-label="장바구니">
+                <button type="button" className={styles.iconBtn} onClick={handleCartClick} aria-label="장바구니" data-guide="cart-btn">
                   {renderCartIcon()}
                   {cartCount > 0 && (
                     <span className={styles.badge}>{cartCount > 99 ? '99+' : cartCount}</span>

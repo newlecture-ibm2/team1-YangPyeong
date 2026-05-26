@@ -23,6 +23,8 @@ interface InputProps {
   passwordToggle?: boolean;
   /** 검증 실패 시 입력 테두리 강조 */
   invalid?: boolean;
+  min?: string | number;
+  max?: string | number;
 }
 
 export default function Input({
@@ -42,6 +44,8 @@ export default function Input({
   autoComplete,
   passwordToggle = true,
   invalid = false,
+  min,
+  max,
 }: InputProps) {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const showPwToggle = as === 'input' && type === 'password' && passwordToggle;
@@ -87,6 +91,8 @@ export default function Input({
         required={required}
         disabled={disabled}
         autoComplete={autoComplete}
+        min={min}
+        max={max}
       />
     );
 

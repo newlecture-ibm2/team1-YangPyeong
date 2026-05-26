@@ -101,6 +101,7 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                             .cultivationArea(c.getArea())
                             .farmerEstimatedYield(c.getExpectedYield())
                             .yieldUnit("kg")
+                            .sowingDate(c.getSowingDate())
                             .build())
                     .collect(java.util.stream.Collectors.toList());
             List<CultivationRegistration> savedRegistrations = saveCultivationPort.saveCultivationRegistrations(savedFarm.getId(), registrations);
@@ -113,7 +114,8 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                         savedFarm.getId(),
                         reg.getCropId(),
                         reg.getCropName(), // cropName이 없는 경우 null이 전달되며 리스너에서 안전하게 처리됩니다.
-                        reg.getCultivationArea()
+                        reg.getCultivationArea(),
+                        reg.getSowingDate()
                 ));
             }
         }
@@ -201,6 +203,7 @@ public class FarmService implements RegisterFarmUseCase, LoadFarmUseCase, Update
                             .cultivationArea(c.getArea())
                             .farmerEstimatedYield(c.getExpectedYield())
                             .yieldUnit("kg")
+                            .sowingDate(c.getSowingDate())
                             .build())
                     .collect(java.util.stream.Collectors.toList());
             saveCultivationPort.saveCultivationRegistrations(savedFarm.getId(), registrations);

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/common/Toast/ToastContext';
 import { Spinner } from '@/components';
 import Button from '@/components/common/Button/Button';
-import { apiFetch } from '@/lib/api-fetch';
 import { useProfile } from './useProfile';
 import { ProfileHeader } from './_components/Header/ProfileHeader';
 import ProfileInfoView from './_components/Info/ProfileInfoView';
@@ -60,15 +59,9 @@ export default function MyPage() {
     return success;
   };
 
-  /** 회원 탈퇴 성공 — 즉시 로그아웃 */
-  const handleDeleteSuccess = async () => {
+  /** 회원 탈퇴 성공 — 토스트 표시 (로그아웃은 DeleteAccountModal에서 자동 처리) */
+  const handleDeleteSuccess = () => {
     toast('회원 탈퇴가 완료되었습니다. 30일 이내 재로그인 시 복구할 수 있습니다.', 'success');
-    await apiFetch('/api/auth/logout', { method: 'POST' });
-    if (typeof document !== 'undefined') {
-      document.cookie = 'fb-user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    }
-    router.push('/');
-    router.refresh();
   };
 
   if (loading) {

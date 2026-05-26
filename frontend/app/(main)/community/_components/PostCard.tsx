@@ -30,9 +30,12 @@ export default function PostCard({ post }: PostCardProps) {
                    contentLower.includes('.webp');
 
   return (
-    <div className={styles.row} onClick={handleClick}>
+    <div className={`${styles.row} ${post.isNotice ? styles.noticeRow : ''}`} onClick={handleClick}>
       <div className={styles.meta}>
-        <Badge variant={post.isNotice ? 'dark' : 'green'} className={styles.badge}>
+        {post.isNotice && (
+          <Badge variant="dark" className={styles.noticeBadge}>📢 공지</Badge>
+        )}
+        <Badge variant="green" className={styles.badge}>
           {post.categoryName}
         </Badge>
         {isQA && post.hasAcceptedComment && (
@@ -42,6 +45,7 @@ export default function PostCard({ post }: PostCardProps) {
       
       <div className={styles.mainInfo}>
         <h3 className={styles.title}>
+          {post.isNotice && <span className={styles.pinIcon}>📌</span>}
           {post.title}
           {hasImage && <span className={styles.imageIcon}>🖼️</span>}
         </h3>

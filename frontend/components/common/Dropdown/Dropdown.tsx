@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './Dropdown.module.css';
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 interface DropdownOption {
   value: string;
@@ -76,7 +78,7 @@ export default function Dropdown({
     }
   }, [isOpen]);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (isOpen) {
       updateMenuPosition();
       window.addEventListener('resize', updateMenuPosition);

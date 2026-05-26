@@ -101,3 +101,24 @@
     border-top: 1px dashed var(--color-surface-dark);
   }
 }
+
+/* ===== 공지 게시글 강조 스타일 ===== */
+.noticeRow {
+  background-color: #fefcf3;
+  border-left: 4px solid var(--color-primary);
+}
+
+.noticeRow:hover {
+  background-color: #fef9e7;
+}
+
+.pinIcon {
+  margin-right: 6px;
+  font-size: 16px;
+  vertical-align: middle;
+}
+
+.noticeBadge {
+  font-size: 11px;
+  width: fit-content;
+}

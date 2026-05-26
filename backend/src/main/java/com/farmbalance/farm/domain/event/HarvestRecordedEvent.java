@@ -12,4 +12,5 @@ public class HarvestRecordedEvent {
     private final String cropName; 
     private final Double yieldAmount;
     private final String yieldUnit;
+    private final java.time.LocalDate harvestDate;
 }

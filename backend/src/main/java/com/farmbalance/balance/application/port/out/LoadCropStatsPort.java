@@ -19,4 +19,9 @@ public interface LoadCropStatsPort {
      * 특정 지역의 모든 작물에 대해 가장 최신 연도의 통계 데이터를 일괄 조회합니다.
      */
     List<CropProductionStats> loadAllLatestCropStats(String regionCode);
+
+    /**
+     * 등록된 전체 활성 정책 수를 카운트합니다.
+     */
+    long countAllPolicies();
 }

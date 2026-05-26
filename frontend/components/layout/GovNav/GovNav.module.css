@@ -1,0 +1,248 @@
+/* GovNav.module.css */
+
+.nav {
+  position: fixed;
+  top: 1.5rem;
+  left: 0;
+  right: 0;
+  z-index: 500;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+  transition: top 0.3s ease, padding 0.3s ease;
+}
+
+.headerBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1600px;
+  height: 64px;
+  background: var(--color-surface);
+  border: 1px solid rgba(81, 115, 63, 0.4);
+  border-radius: 999px;
+  padding: 0 16px 0 24px;
+  box-shadow: 0 4px 20px rgba(81, 115, 63, 0.08);
+  pointer-events: auto;
+  transition: all 0.3s ease;
+}
+
+.headerBarScrolled {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(81, 115, 63, 0.12);
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.groupLeft {
+  flex: 1 1 0;
+  justify-content: flex-start;
+}
+
+.groupCenter {
+  flex: 2 1 auto;
+  justify-content: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.groupRight {
+  flex: 1 1 0;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.bannerTicker {
+  overflow: hidden;
+  width: 820px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+  pointer-events: auto;
+  margin: 0 auto;
+}
+
+.tickerWrapper {
+  display: flex;
+  gap: 60px;
+  white-space: nowrap;
+  animation: ticker-reverse 45s linear infinite;
+}
+
+.tickerWrapper:hover {
+  animation-play-state: paused;
+}
+
+.tickerItem {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-primary);
+  display: inline-block;
+  letter-spacing: -0.02em;
+}
+
+@keyframes ticker-reverse {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-text);
+  font-weight: 500;
+  font-size: 1.05rem;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.logo:hover {
+  opacity: 0.8;
+}
+
+.logoIcon {
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.btnFill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1.5px solid var(--landing-green-pill);
+  color: var(--color-surface);
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  transition: all 0.2s;
+  background: var(--landing-green-pill);
+  white-space: nowrap;
+  font-family: var(--font-sans);
+}
+
+.btnFill:hover {
+  background: #3d5a2e;
+  border-color: #3d5a2e;
+  transform: translateY(-1px);
+}
+
+/* User Profile & Dropdowns */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  min-width: 200px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: dropdownFadeIn 0.2s ease;
+  z-index: 200;
+  border: 1px solid var(--color-border);
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownHeader {
+  padding: 14px 16px 10px;
+  text-align: center;
+}
+
+.dropdownEmail {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdownRole {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(81, 115, 63, 0.1);
+  color: var(--landing-green-pill);
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: var(--color-border);
+}
+
+.dropdownItem {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--color-text);
+  background: none;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-sans);
+  transition: background var(--transition-fast);
+}
+
+.dropdownItem:hover {
+  background: var(--color-bg);
+}
+
+/* ── 반응형 미디어 쿼리 ── */
+@media (max-width: 1024px) {
+  .nav {
+    top: 0;
+    padding: 0;
+  }
+
+  .groupCenter {
+    display: none;
+  }
+
+  .headerBar {
+    height: 56px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    padding: 0 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .btnFill {
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo span {
+    display: none; /* 모바일 극소화면에서 로고 텍스트 숨김 */
+  }
+}

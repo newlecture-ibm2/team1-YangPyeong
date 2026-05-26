@@ -107,7 +107,7 @@ class GeminiLLM(BaseLLM):
         *,
         system_instruction: Optional[str] = None,
         temperature: float = 0.1,
-        max_tokens: int = 8192,
+        max_tokens: int = 65536,
         file_bytes: Optional[bytes] = None,
         mime_type: Optional[str] = None,
     ) -> str:

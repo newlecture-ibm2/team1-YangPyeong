@@ -16,14 +16,7 @@ async def search_policies(keyword: str = "", region: str = "") -> List[Dict[str,
     if not session:
         return [{"error": "DB 연결 실패"}]
         
-    logger.info(f"[policy_search] Called with keyword='{keyword}', region='{region}'")
-        
     try:
-        # Debug: check what's in the DB
-        debug_stmt = text("SELECT title FROM policy_data LIMIT 5")
-        debug_res = session.execute(debug_stmt)
-        logger.info(f"[policy_search] DB Sample titles: {[r.title for r in debug_res]}")
-
         query_str = "SELECT id, title, category, target, support_amount, region_code FROM policy_data WHERE deleted_at IS NULL"
         params = {}
         

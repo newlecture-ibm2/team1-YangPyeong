@@ -22,12 +22,15 @@ export function useHistory(farmId?: number, skipInitialFetch = false) {
       // 중복되는 날씨 기록 필터링 (같은 날짜에 동일한 내용이면 하나만 표시)
       const filteredData = data.filter((h, index, self) => {
         if (h.activityType !== 'WEATHER') return true;
-        const dateStr = new Date(h.createdAt).toLocaleDateString();
+        const targetDateStr1 = h.recordDate || h.createdAt;
+        const dateStr = new Date(targetDateStr1.includes('T') ? targetDateStr1 : `${targetDateStr1}T00:00:00`).toLocaleDateString();
         const firstIndex = self.findIndex(
-          (item) =>
-            item.activityType === 'WEATHER' &&
-            new Date(item.createdAt).toLocaleDateString() === dateStr &&
+          (item) => {
+            const targetDateStr2 = item.recordDate || item.createdAt;
+            return item.activityType === 'WEATHER' &&
+            new Date(targetDateStr2.includes('T') ? targetDateStr2 : `${targetDateStr2}T00:00:00`).toLocaleDateString() === dateStr &&
             item.activityContent === h.activityContent
+          }
         );
         return firstIndex === index;
       });
@@ -44,10 +47,10 @@ export function useHistory(farmId?: number, skipInitialFetch = false) {
     }
   }, [farmId]);
 
-  const addHistory = async (content: string): Promise<boolean> => {
+  const addHistory = async (content: string, recordDate?: string): Promise<boolean> => {
     if (!farmId) return false;
     try {
-      await recordFarmHistory(farmId, content);
+      await recordFarmHistory(farmId, content, recordDate);
       toast.success('이력이 기록되었습니다.');
       await fetchHistories(); // 갱신
       return true;
@@ -57,10 +60,10 @@ export function useHistory(farmId?: number, skipInitialFetch = false) {
     }
   };
 
-  const updateHistory = async (historyId: number, content: string): Promise<boolean> => {
+  const updateHistory = async (historyId: number, content: string, recordDate?: string): Promise<boolean> => {
     if (!farmId) return false;
     try {
-      await updateFarmHistory(farmId, historyId, content);
+      await updateFarmHistory(farmId, historyId, content, recordDate);
       toast.success('이력이 수정되었습니다.');
       await fetchHistories();
       return true;

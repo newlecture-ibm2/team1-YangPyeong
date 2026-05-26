@@ -79,7 +79,7 @@ public class HistoryController {
             @PathVariable Long historyId,
             @Valid @RequestBody UpdateHistoryRequest request) {
             
-        updateHistoryUseCase.updateHistory(historyId, request.getActivityContent(), request.getActivityType());
+        updateHistoryUseCase.updateHistory(historyId, request.getActivityContent(), request.getActivityType(), request.getRecordDate());
         
         return ApiResponse.ok(null);
     }

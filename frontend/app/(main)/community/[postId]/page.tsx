@@ -70,7 +70,8 @@ export default async function PostDetailPage({
       </nav>
       <header className={styles.header}>
         <div className={styles.meta}>
-          <Badge variant={post.isNotice ? 'dark' : 'green'}>
+          {post.isNotice && <Badge variant="dark">📢 공지</Badge>}
+          <Badge variant="green">
             {post.categoryName}
           </Badge>
           <span className={styles.date}>{formatDate(post.createdAt)}</span>
