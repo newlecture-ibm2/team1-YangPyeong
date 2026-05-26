@@ -132,7 +132,7 @@ export default function PolicyRecommendPage() {
         )}
 
         {isPreviewMode && !isLoading && (
-          <MockupOverlay hasUnapprovedFarms={hasUnapprovedFarms}>
+          <MockupOverlay hasUnapprovedFarms={hasUnapprovedFarms} isGuest={!isLoggedIn} guestCallbackUrl="/policy/recommend">
             <div className={styles.resultContainer}>
               <div className={styles.policyList}>
                 {DUMMY_POLICIES.map((policy) => (

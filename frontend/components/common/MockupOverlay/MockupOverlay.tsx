@@ -7,6 +7,8 @@ import styles from './MockupOverlay.module.css';
 interface MockupOverlayProps {
   hasUnapprovedFarms?: boolean;
   isGuest?: boolean;
+  /** 비로그인 상태에서 로그인/회원가입 후 돌아올 URL */
+  guestCallbackUrl?: string;
   children?: ReactNode;
 }
 
@@ -25,6 +27,7 @@ interface MockupOverlayProps {
 export default function MockupOverlay({
   hasUnapprovedFarms = false,
   isGuest = false,
+  guestCallbackUrl,
   children,
 }: MockupOverlayProps) {
   // 1. children이 있는 경우: 콘텐츠를 블러 처리 + 중앙 배너
@@ -33,7 +36,7 @@ export default function MockupOverlay({
       <div className={styles.wrapper}>
         <div className={styles.blurContent}>{children}</div>
         <div className={styles.bannerContainer}>
-          <GuestPreviewBanner hasUnapprovedFarms={hasUnapprovedFarms} isGuest={isGuest} />
+          <GuestPreviewBanner hasUnapprovedFarms={hasUnapprovedFarms} isGuest={isGuest} guestCallbackUrl={guestCallbackUrl} />
         </div>
       </div>
     );
@@ -43,7 +46,7 @@ export default function MockupOverlay({
   return (
     <div className={styles.absoluteOverlay}>
       <div className={styles.bannerContainerAbsolute}>
-        <GuestPreviewBanner hasUnapprovedFarms={hasUnapprovedFarms} isGuest={isGuest} />
+        <GuestPreviewBanner hasUnapprovedFarms={hasUnapprovedFarms} isGuest={isGuest} guestCallbackUrl={guestCallbackUrl} />
       </div>
     </div>
   );
