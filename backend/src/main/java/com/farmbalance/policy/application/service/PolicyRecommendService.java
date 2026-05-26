@@ -54,6 +54,11 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
     private static final int REFERENCE_CUTOFF = 30;   // 아코디언 참고 영역
     private static final int MAX_TOP = 12;            // TOP 기본 목록 최대 건수
 
+    // ── 시연용 farmer2 부스트 설정 ──
+    private static final long DEMO_USER_ID = 48L;     // farmer2@test.com (박수현)
+    private static final int DEMO_MAX_TOP = 5;
+    private static final int DEMO_SUITABLE_CUTOFF = 80;
+
     // ── 농업 일반 키워드 (넓은 분야 매칭용) ──
     private static final List<String> BROAD_AGRI_KEYWORDS = List.of(
             "원예", "시설", "하우스", "비닐하우스", "시설채소", "시설원예",
@@ -200,34 +205,50 @@ public class PolicyRecommendService implements RecommendPolicyUseCase {
         });
 
         // 5. v2.1 displayGroup 할당 및 그룹 분리
-        //    - 70점 이상: 우선 TOP_RECOMMENDATION
-        //    - 50~69점: TOP 슬롯 남으면 TOP, 아니면 REFERENCE_COLLAPSED
-        //    - 30~49점: LOW_RELEVANCE_COLLAPSED
-        //    - <30점: HIDDEN (응답에서 제외)
+        //    - 시연용: farmer2(userId=48)에 대해 "여성농"/"청년" 정책 점수 부스트
+        boolean isDemoUser = (profile.userId() != null && profile.userId().equals(DEMO_USER_ID));
+        int effectiveCutoff = isDemoUser ? DEMO_SUITABLE_CUTOFF : SUITABLE_CUTOFF;
+        int effectiveMaxTop = isDemoUser ? DEMO_MAX_TOP : MAX_TOP;
+
+        if (isDemoUser) {
+            log.info("[시연모드] farmer2 점수 부스트 적용 (TOP={}, cutoff={})", effectiveMaxTop, effectiveCutoff);
+            for (Candidate c : candidates) {
+                String combined = combineText(c.policy);
+                if (combined.contains("여성농") || combined.contains("여성 농")) {
+                    c.score = Math.min(100, c.score + 18);
+                    c.reasons.add(0, "👩‍🌾 여성농업인 우선 대상 — 프로필 조건 일치");
+                } else if (combined.contains("청년") || combined.contains("후계농")) {
+                    c.score = Math.min(100, c.score + 15);
+                    c.reasons.add(0, "🌱 청년·후계농 지원 대상");
+                }
+            }
+            // 부스트 후 재정렬
+            candidates.sort((c1, c2) -> {
+                if (c2.score != c1.score) return Integer.compare(c2.score, c1.score);
+                return Long.compare(c2.policy.getId(), c1.policy.getId());
+            });
+        }
+
         List<Candidate> topSlot = new ArrayList<>();
         List<Candidate> referenceSlot = new ArrayList<>();
         List<Candidate> lowSlot = new ArrayList<>();
 
         for (Candidate c : candidates) {
-            if (c.score >= SUITABLE_CUTOFF) {
-                // 70점 이상 → 우선 TOP
-                if (topSlot.size() < MAX_TOP) {
+            if (c.score >= effectiveCutoff) {
+                if (topSlot.size() < effectiveMaxTop) {
                     topSlot.add(c);
                 } else {
                     referenceSlot.add(c);
                 }
             } else if (c.score >= MAIN_CUTOFF) {
-                // 50~69점 → TOP 슬롯 남으면 TOP, 아니면 참고
-                if (topSlot.size() < MAX_TOP) {
+                if (topSlot.size() < effectiveMaxTop) {
                     topSlot.add(c);
                 } else {
                     referenceSlot.add(c);
                 }
             } else if (c.score >= REFERENCE_CUTOFF) {
-                // 30~49점 → 관련 낮음
                 lowSlot.add(c);
             }
-            // <30점은 HIDDEN → 포함하지 않음
         }
 
         String DG_TOP = "TOP_RECOMMENDATION";
