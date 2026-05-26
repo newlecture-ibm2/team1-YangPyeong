@@ -10,6 +10,8 @@ import type { AdminProduct } from '../_lib/shop.types'
 import { fetchProducts, updateProductStatus, deleteAdminProduct, aiAuditProducts, aiAuditActiveProducts } from '../_lib/shop.api'
 import ReasonModal from '../community/_components/ReasonModal'
 import ProductDetailModal from './_components/ProductDetailModal'
+import ModalDialog from '@/components/common/Modal/ModalDialog'
+import { useModalDialog } from '@/components/common/Modal/useModalDialog'
 
 function formatPrice(price: number): string {
   return price.toLocaleString() + '원'
@@ -88,6 +90,7 @@ export default function ShopPage() {
   const [sort, setSort] = useState('createdAt')
 
   const toast = useToast()
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -180,7 +183,8 @@ export default function ShopPage() {
   }
 
   const handleDelete = async (productId: number) => {
-    if (!confirm('이 상품을 시스템에서 영구적으로 삭제하시겠습니까? (연관 데이터 보호를 위해 실제로는 숨김 처리됩니다)')) return
+    const confirmed = await showConfirm('이 상품을 시스템에서 영구적으로 삭제하시겠습니까? (연관 데이터 보호를 위해 실제로는 숨김 처리됩니다)')
+    if (!confirmed) return
     try {
       await deleteAdminProduct(productId)
       toast.success('상품이 안전하게 삭제되었습니다.')
@@ -191,7 +195,8 @@ export default function ShopPage() {
   }
 
   const handleAiAudit = async () => {
-    if (!confirm('현재 대기 중인 신규 신청 상품들을 AI가 일괄 심사합니다. 적격 상품은 승인되고 부적격 상품은 반려(사유 포함) 처리됩니다. 진행하시겠습니까?')) return
+    const confirmed = await showConfirm('현재 대기 중인 신규 신청 상품들을 AI가 일괄 심사합니다. 적격 상품은 승인되고 부적격 상품은 반려(사유 포함) 처리됩니다. 진행하시겠습니까?')
+    if (!confirmed) return
     setIsAuditing(true)
     try {
       const res = await aiAuditProducts()
@@ -205,7 +210,8 @@ export default function ShopPage() {
   }
 
   const handleAiAuditActive = async () => {
-    if (!confirm('현재 판매 중인(ACTIVE) 상품들을 AI가 일괄 검수합니다. 부적절한 상품이 적발되면 사유와 함께 즉시 숨김 처리됩니다. 진행하시겠습니까?')) return
+    const confirmed = await showConfirm('현재 판매 중인(ACTIVE) 상품들을 AI가 일괄 검수합니다. 부적절한 상품이 적발되면 사유와 함께 즉시 숨김 처리됩니다. 진행하시겠습니까?')
+    if (!confirmed) return
     setIsAuditing(true)
     try {
       const res = await aiAuditActiveProducts()
@@ -466,6 +472,12 @@ export default function ShopPage() {
         onClose={() => setDetailModalOpen(false)}
         onStatusChange={handleModalStatusChange}
         onDelete={handleModalDelete}
+      />
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
       />
     </div>
   )

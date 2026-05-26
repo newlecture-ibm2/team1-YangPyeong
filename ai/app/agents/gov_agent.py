@@ -9,9 +9,11 @@ NOTE: 안정성과 예측 가능성을 우선하여 ReAct Agent가 아닌
       명시적 파이프라인 구조를 유지합니다.
 """
 # orchestrator ainvoke 호환용
+# pyrefly: ignore [missing-import]
 from langchain_core.messages import HumanMessage, AIMessage
 import re
 import logging
+# pyrefly: ignore [missing-import]
 from sqlalchemy import text
 from app.db import get_db_session
 from app.models.gov import (
@@ -132,18 +134,21 @@ class GovAgent:
         entities = ExtractedEntities()
 
         # 1차: Greedy 매칭 (길이 내림차순이므로 안정적)
-        for region in self._dict_cache["REGION"]:
-            if region in message:
-                entities.region = region
-                break
-        for crop in self._dict_cache["CROP"]:
-            if crop in message:
-                entities.crop = crop
-                break
-        for farm in self._dict_cache["FARM"]:
-            if farm in message:
-                entities.farm = farm
-                break
+        if self._dict_cache and "REGION" in self._dict_cache:
+            for region in self._dict_cache["REGION"]:
+                if region in message:
+                    entities.region = region
+                    break
+        if self._dict_cache and "CROP" in self._dict_cache:
+            for crop in self._dict_cache["CROP"]:
+                if crop in message:
+                    entities.crop = crop
+                    break
+        if self._dict_cache and "FARM" in self._dict_cache:
+            for farm in self._dict_cache["FARM"]:
+                if farm in message:
+                    entities.farm = farm
+                    break
 
         # 2차: DB 사전에서 추출 실패 시 LLM NER 백업 시도
         if not entities.region or not entities.crop:
@@ -227,15 +232,15 @@ class GovAgent:
         logger.info("[GovAgent] Graph 조회 시작: intent=%s", intent.value)
 
         if intent == IntentType.RISK_ANALYSIS:
-            graph_data = await self.graph_tool.get_risk_analysis(entities.region, entities.crop)
+            graph_data = await self.graph_tool.get_risk_analysis(entities.region or "", entities.crop or "")
         elif intent == IntentType.REGION_SUMMARY:
-            graph_data = await self.graph_tool.get_region_summary(entities.region)
+            graph_data = await self.graph_tool.get_region_summary(entities.region or "")
         elif intent == IntentType.POLICY_RECOMMEND:
-            graph_data = await self.graph_tool.get_related_policies(entities.region, entities.crop)
+            graph_data = await self.graph_tool.get_related_policies(entities.region or "", entities.crop or "")
         elif intent == IntentType.ALTERNATIVE_CROP:
-            graph_data = await self.graph_tool.get_alternative_crops(entities.region, entities.crop)
+            graph_data = await self.graph_tool.get_alternative_crops(entities.region or "", entities.crop or "")
         elif intent == IntentType.FARM_ANALYSIS:
-            graph_data = await self.graph_tool.get_farm_analysis(entities.farm)
+            graph_data = await self.graph_tool.get_farm_analysis(entities.farm or "")
         else:
             graph_data = await self.graph_tool.get_general_analysis(entities)
 
@@ -317,15 +322,28 @@ class GovAgent:
                 safe_role = "FARMER"
             context = self._build_context(intent, entities, graph_data, safe_role)
 
-            # 7. Fallback 판정 (Graph 근거 없으면 LLM 호출 안 함)
+            # 7. Fallback 판정 (Graph 근거 없으면 RAG 보조 검색)
             if self._is_empty_context(context) and intent != IntentType.GENERAL_ANALYSIS:
-                logger.info("[GovAgent] Graph 근거 없음 → Fallback 응답 반환 (intent=%s)", intent.value)
-                return GovChatResponse(
-                    intent=intent,
-                    entities=entities,
-                    answer="현재 시스템(GraphRAG)에서 해당 조건에 일치하는 분석 근거를 찾지 못했습니다.\n(다른 작물이나 지역으로 다시 질문해 주세요.)",
-                    graph_summary=context.model_dump(exclude_none=True)
-                )
+                logger.info("[GovAgent] Graph 근거 없음 → RAG 도구로 추가 검색 시도 (intent=%s)", intent.value)
+                
+                # pyrefly: ignore [missing-import]
+                from app.agents.tools.rag_search_tool import search_rag_documents
+                rag_results_dict = search_rag_documents(request.message, top_k=2)
+                rag_results = rag_results_dict.get("results", [])
+                
+                if rag_results:
+                    logger.info("[GovAgent] RAG 검색 성공. Context의 sources에 임시 출처로 추가.")
+                    # LLM이 참고할 수 있도록 sources 리스트에 추가
+                    for r in rag_results:
+                        context.sources.append(GraphSource(type="RAG_SEARCH", description=f"[{r['source']}] {r['content']}"))
+                else:
+                    logger.info("[GovAgent] RAG 근거도 없음 → Fallback 응답 반환")
+                    return GovChatResponse(
+                        intent=intent,
+                        entities=entities,
+                        answer="현재 시스템(GraphRAG 및 매뉴얼)에서 해당 조건에 일치하는 분석 근거를 찾지 못했습니다.\n(다른 작물이나 지역으로 다시 질문해 주세요.)",
+                        graph_summary=context.model_dump(exclude_none=True)
+                    )
 
             # 8. LLM 응답 생성
             logger.info("[GovAgent] LLM 호출 시작 (intent=%s)", intent.value)

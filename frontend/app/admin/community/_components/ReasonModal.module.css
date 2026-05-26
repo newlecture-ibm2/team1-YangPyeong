@@ -52,3 +52,18 @@
   gap: 12px;
   margin-top: 12px;
 }
+
+/* ── 반응형 (모바일) ── */
+@media (max-width: 768px) {
+  .presetBtn {
+    width: 100%;
+    text-align: left;
+  }
+  .modalActions {
+    flex-direction: column-reverse;
+    justify-content: stretch;
+  }
+  .modalActions button {
+    width: 100%;
+  }
+}

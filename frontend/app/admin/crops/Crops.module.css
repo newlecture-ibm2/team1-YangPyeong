@@ -254,6 +254,58 @@
   margin-bottom: var(--space-md);
 }
 
+/* ── 동기화 옵션 라디오 그룹 ── */
+.syncOptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.syncOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 14px 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+  font-size: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--color-text);
+  font-weight: normal;
+  margin-bottom: 0;
+}
+
+.syncOption:hover {
+  border-color: var(--color-primary);
+  background: #FAFAF8;
+}
+
+.syncOption input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--color-primary);
+}
+
+.syncOptionTitle {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.syncOptionDesc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
 .headerActions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
 /* ── 반응형 ── */

@@ -3,6 +3,8 @@ import Modal from '@/components/common/Modal/Modal'
 import Button from '@/components/common/Button/Button'
 import Badge from '@/components/common/Badge/Badge'
 import ReasonModal from './ReasonModal'
+import ModalDialog from '@/components/common/Modal/ModalDialog'
+import { useModalDialog } from '@/components/common/Modal/useModalDialog'
 import { fetchPostDetail, fetchComments, deleteComment, hideComment, restoreComment } from '../../_lib/community.api'
 import type { AdminPost, AdminComment } from '../../_lib/community.types'
 import styles from './PostDetailModal.module.css'
@@ -24,6 +26,7 @@ export default function PostDetailModal({ postId, isOpen, onClose }: PostDetailM
   const [targetCommentId, setTargetCommentId] = useState<number | null>(null)
   
   const toast = useToast()
+  const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
   useEffect(() => {
     if (isOpen && postId) {
@@ -59,17 +62,19 @@ export default function PostDetailModal({ postId, isOpen, onClose }: PostDetailM
   }
 
   const handleDeleteComment = async (commentId: number) => {
-    if (!confirm('이 댓글을 삭제하시겠습니까?')) return
+    const confirmed = await showConfirm('이 댓글을 삭제하시겠습니까?')
+    if (!confirmed) return
     try {
       await deleteComment(commentId)
       setComments(prev => prev.map(c => c.id === commentId ? { ...c, deletedAt: new Date().toISOString() } : c))
     } catch (err) {
-      alert(err instanceof Error ? err.message : '댓글 삭제 실패')
+      toast.error(err instanceof Error ? err.message : '댓글 삭제 실패')
     }
   }
 
   const handleRestoreComment = async (commentId: number) => {
-    if (!confirm('숨겨진 댓글을 다시 복구하시겠습니까?')) return
+    const confirmed = await showConfirm('숨겨진 댓글을 다시 복구하시겠습니까?')
+    if (!confirmed) return
     try {
       await restoreComment(commentId)
       toast.success('댓글이 복구되었습니다.')
@@ -86,7 +91,7 @@ export default function PostDetailModal({ postId, isOpen, onClose }: PostDetailM
       setComments(prev => prev.map(c => c.id === targetCommentId ? { ...c, isHidden: true, statusReason: reason } : c))
       setReasonModalOpen(false)
     } catch (err) {
-      alert(err instanceof Error ? err.message : '댓글 숨김 실패')
+      toast.error(err instanceof Error ? err.message : '댓글 숨김 실패')
     }
   }
 
@@ -190,6 +195,12 @@ export default function PostDetailModal({ postId, isOpen, onClose }: PostDetailM
         title="댓글 숨김 처리"
         onClose={() => setReasonModalOpen(false)}
         onConfirm={handleHideCommentConfirm}
+      />
+
+      <ModalDialog
+        {...dialog}
+        onConfirm={handleConfirm}
+        onClose={handleClose}
       />
     </Modal>
   )

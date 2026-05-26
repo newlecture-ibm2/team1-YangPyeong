@@ -10,9 +10,10 @@ public interface SyncPolicyUseCase {
     /**
      * 외부 API/크롤링 소스에서 정책 데이터를 수집하여 DB에 upsert합니다.
      *
+     * @param syncMode 동기화 모드 (MERGE: 신규 추가만, FORCE: 기존 데이터 덮어쓰기)
      * @return 동기화 결과 (수집/업데이트/실패 건수)
      */
-    SyncResult syncPolicies();
+    SyncResult syncPolicies(String syncMode);
 
     /**
      * 정책 데이터 헬스체크 이벤트를 수신하여 가벼운 점검을 수행합니다.
