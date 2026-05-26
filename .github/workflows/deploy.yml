@@ -1,0 +1,79 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      # Docker 컨테이너가 root로 생성한 __pycache__/*.pyc 파일을
+      # runner 사용자(farm)가 지우지 못해 checkout이 실패하는 문제 방어.
+      # Docker로 root 권한 청소를 한 번 수행한 뒤 checkout 진입.
+      - name: Pre-clean root-owned cache files
+        run: |
+          WORKDIR="${{ github.workspace }}"
+          if [ -d "$WORKDIR" ]; then
+            docker run --rm -v "$WORKDIR":/ws alpine sh -c "
+              find /ws -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true
+              find /ws -name '*.pyc' -delete 2>/dev/null || true
+            " || true
+          fi
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          cd /home/farm/dist/team1-YangPyeong
+          cat > .env << EOF
+          DB_USERNAME=${{ vars.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+          NEXT_PUBLIC_KAKAO_MAP_JS_KEY=${{ secrets.NEXT_PUBLIC_KAKAO_MAP_JS_KEY }}
+          KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}
+          WEATHER_BASE_URL=${{ secrets.WEATHER_BASE_URL }}
+          WEATHER_FCST_URL=${{ secrets.WEATHER_FCST_URL }}
+          WEATHER_API_KEY=${{ secrets.WEATHER_API_KEY }}
+          SOIL_API_KEY=${{ secrets.SOIL_API_KEY }}
+          NONGSARO_API_KEY_DEFAULT=${{ secrets.NONGSARO_API_KEY_DEFAULT }}
+          NONGSARO_API_KEY_CROP_EBOOK=${{ secrets.NONGSARO_API_KEY_CROP_EBOOK }}
+          KOSIS_API_KEY=${{ secrets.KOSIS_API_KEY }}
+          KAMIS_API_URL=https://www.kamis.or.kr/service/price/xml.do
+          KAMIS_CERT_KEY=${{ secrets.KAMIS_CERT_KEY }}
+          KAMIS_CERT_ID=${{ secrets.KAMIS_CERT_ID }}
+          KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          NEXT_PUBLIC_PORTONE_STORE_ID=${{ secrets.NEXT_PUBLIC_PORTONE_STORE_ID }}
+          NEXT_PUBLIC_PORTONE_CHANNEL_KEY=${{ secrets.NEXT_PUBLIC_PORTONE_CHANNEL_KEY }}
+          MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+          GOV24_API_KEY=${{ secrets.GOV24_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+          NEXT_PUBLIC_FIREBASE_VAPID_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_VAPID_KEY }}
+          FIREBASE_CREDENTIALS_BASE64=${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}
+          AI_INTERNAL_SECRET_KEY=${{ secrets.AI_INTERNAL_SECRET_KEY }}
+          EOF
+
+      - name: Deploy with Docker Compose
+        run: |
+          cd /home/farm/dist/team1-YangPyeong
+          git fetch origin
+          git reset --hard origin/main
+          docker compose down
+          docker compose up --build -d
+
+      - name: Health check
+        run: |
+          sleep 10
+          docker compose -f /home/farm/dist/team1-YangPyeong/docker-compose.yml ps
