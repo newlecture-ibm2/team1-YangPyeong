@@ -10,6 +10,7 @@ import ModalDialog from '@/components/common/Modal/ModalDialog'
 import styles from './Policy.module.css'
 import type { AdminPolicyData, PolicyDataRequest } from '../_lib/policy.types'
 import { fetchPolicies, createPolicy, updatePolicy, deletePolicy } from '../_lib/policy.api'
+import { fetchApiSyncStatuses, triggerApiSync } from '../_lib/apiSync.api'
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '-'
@@ -26,6 +27,8 @@ export default function PolicyPage() {
   const [editingPolicy, setEditingPolicy] = useState<AdminPolicyData | null>(null)
   const [formData, setFormData] = useState<PolicyDataRequest>({ externalId: '', title: '', category: '', organization: '', regionCode: '', target: '', supportAmount: '', applyStart: '', applyEnd: '', contentSummary: '', sourceUrl: '' })
   const [parsedData, setParsedData] = useState<Record<string, any>>({})
+  const [syncing, setSyncing] = useState(false)
+  const [showSyncModal, setShowSyncModal] = useState(false)
   const toast = useToast()
   const { dialog, showConfirm, handleConfirm, handleClose } = useModalDialog()
 
@@ -127,6 +130,32 @@ export default function PolicyPage() {
     }
   }
 
+  const handleSyncPolicy = async (syncMode: 'MERGE' | 'FORCE') => {
+    setShowSyncModal(false)
+    setSyncing(true)
+    try {
+      const statuses = await fetchApiSyncStatuses()
+      const policyStatus = statuses.find(s => s.apiName === 'POLICY_DATA')
+      
+      if (!policyStatus) {
+        throw new Error('데이터베이스에 POLICY_DATA 동기화 설정이 없습니다.')
+      }
+      
+      if (!policyStatus.isActive) {
+        throw new Error('외부 정책 API 수집이 비활성화되어 있습니다. 관리자 데이터 탭에서 활성화해주세요.')
+      }
+
+      await triggerApiSync(policyStatus.id, syncMode)
+      toast.success(`외부 정책 데이터 동기화가 성공적으로 실행되었습니다. (${syncMode} 모드)`)
+      
+      loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '동기화 실패')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   if (loading) return <div className={styles.loadingWrap}>정책 데이터 로딩 중...</div>
 
   return (
@@ -136,7 +165,16 @@ export default function PolicyPage() {
           <h1 className={styles.pageTitle}>정책 관리</h1>
           <p className={styles.pageSub}>지자체 농업 지원 정책 DB를 등록/갱신합니다. 총 {policies.length}건</p>
         </div>
-        <button className={styles.addBtn} onClick={openCreateModal}>+ 정책 등록</button>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowSyncModal(true)} 
+            disabled={syncing}
+          >
+            {syncing ? '동기화 중...' : '🔄 외부 정책 데이터 동기화'}
+          </Button>
+          <button className={styles.addBtn} onClick={openCreateModal}>+ 정책 등록</button>
+        </div>
       </div>
 
       {policies.length === 0 ? (
@@ -311,6 +349,73 @@ export default function PolicyPage() {
         onConfirm={handleConfirm}
         onClose={handleClose}
       />
+
+      {/* 동기화 옵션 모달 */}
+      {showSyncModal && (
+        <SyncOptionsModal
+          onSubmit={handleSyncPolicy}
+          onClose={() => setShowSyncModal(false)}
+        />
+      )}
     </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════ */
+/*  동기화 옵션 모달                                     */
+/* ═══════════════════════════════════════════════════ */
+interface SyncOptionsModalProps {
+  onSubmit: (syncMode: 'MERGE' | 'FORCE') => void
+  onClose: () => void
+}
+
+function SyncOptionsModal({ onSubmit, onClose }: SyncOptionsModalProps) {
+  const [syncMode, setSyncMode] = useState<'MERGE' | 'FORCE'>('MERGE')
+
+  return (
+    <Modal
+      isOpen={true}
+      title="🔄 외부 정책 데이터 동기화 옵션"
+      onClose={onClose}
+    >
+      <div className={styles.syncOptions}>
+        <label className={styles.syncOption}>
+          <input 
+            type="radio" 
+            name="syncMode" 
+            value="MERGE" 
+            checked={syncMode === 'MERGE'} 
+            onChange={() => setSyncMode('MERGE')} 
+          />
+          <div>
+            <strong className={styles.syncOptionTitle}>새로운 데이터만 추가 (기본값)</strong>
+            <p className={styles.syncOptionDesc}>
+              기존에 관리자가 수정한 이름이나 상태 변경 내역을 <strong>유지</strong>합니다.
+            </p>
+          </div>
+        </label>
+
+        <label className={styles.syncOption}>
+          <input 
+            type="radio" 
+            name="syncMode" 
+            value="FORCE" 
+            checked={syncMode === 'FORCE'} 
+            onChange={() => setSyncMode('FORCE')} 
+          />
+          <div>
+            <strong className={styles.syncOptionTitle}>API 원본 데이터로 전체 덮어쓰기</strong>
+            <p className={styles.syncOptionDesc}>
+              수동 변경사항을 무시하고 API가 제공하는 원본 데이터로 <strong>강제 덮어쓰기</strong>합니다. (수동 추가 정책은 제외)
+            </p>
+          </div>
+        </label>
+      </div>
+
+      <div className={styles.modalFooter}>
+        <button className={styles.cancelBtn} onClick={onClose}>취소</button>
+        <Button variant="primary" onClick={() => onSubmit(syncMode)}>동기화 시작</Button>
+      </div>
+    </Modal>
   )
 }

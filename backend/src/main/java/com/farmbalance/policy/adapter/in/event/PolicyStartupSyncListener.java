@@ -34,7 +34,7 @@ public class PolicyStartupSyncListener {
 
         log.info("[PolicyStartupSync] 정책 데이터가 비어 있습니다. 초기 동기화를 시작합니다…");
         try {
-            SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies();
+            SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies("MERGE");
             log.info("[PolicyStartupSync] 초기 동기화 완료: fetched={}, created={}, failed={}",
                     result.fetched(), result.created(), result.failed());
         } catch (Exception e) {

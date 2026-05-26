@@ -127,3 +127,28 @@
   justify-content: flex-end;
   margin-top: 16px;
 }
+
+/* ── 반응형 (모바일) ── */
+@media (max-width: 768px) {
+  .postMeta {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .commentBody {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .commentAction {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .actions {
+    flex-direction: column-reverse;
+    justify-content: stretch;
+  }
+  .actions button {
+    width: 100%;
+  }
+}

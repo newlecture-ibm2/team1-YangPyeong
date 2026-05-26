@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Modal from '@/components/common/Modal/Modal'
 import Button from '@/components/common/Button/Button'
+import { useToast } from '@/components'
 import styles from './ReasonModal.module.css'
 
 interface ReasonModalProps {
@@ -15,10 +16,11 @@ interface ReasonModalProps {
 
 export default function ReasonModal({ isOpen, title, label = '사유', placeholder = '사유를 입력해주세요', onClose, onConfirm, presets }: ReasonModalProps) {
   const [reason, setReason] = useState('')
+  const toast = useToast()
 
   const handleConfirm = () => {
     if (!reason.trim()) {
-      alert('사유를 입력해주세요.')
+      toast.error('사유를 입력해주세요.')
       return
     }
     onConfirm(reason)

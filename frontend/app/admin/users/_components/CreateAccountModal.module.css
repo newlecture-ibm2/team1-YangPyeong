@@ -89,3 +89,17 @@
   padding-top: 1.5rem;
   border-top: 1px solid var(--color-border);
 }
+
+/* ── 반응형 (모바일) ── */
+@media (max-width: 768px) {
+  .tabs {
+    flex-direction: column;
+  }
+  .actions {
+    flex-direction: column-reverse;
+    justify-content: stretch;
+  }
+  .actions button {
+    width: 100%;
+  }
+}

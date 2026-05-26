@@ -67,7 +67,7 @@ public class ApiSyncManagementService implements ManageApiSyncUseCase {
             throw new BusinessException(ErrorCode.API_SYNC_NOT_FOUND);
         }
 
-        if ("KAKAO_LOCAL".equals(status.getApiName()) || "NONGSARO_CROP".equals(status.getApiName()) || "SOIL_ENVIRONMENT".equals(status.getApiName())) {
+        if ("KAKAO_LOCAL".equals(status.getApiName()) || "SOIL_ENVIRONMENT".equals(status.getApiName())) {
             log.warn("[ApiSync] {}는 실시간/단순 점검 전용 API이므로 수동 수집을 지원하지 않습니다.", status.getApiName());
             throw new BusinessException(ErrorCode.UNSUPPORTED_OPERATION);
         }

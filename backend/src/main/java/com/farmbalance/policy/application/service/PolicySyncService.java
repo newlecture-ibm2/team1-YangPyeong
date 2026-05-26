@@ -78,7 +78,7 @@ public class PolicySyncService implements SyncPolicyUseCase {
     );
 
     @Override
-    public SyncResult syncPolicies() {
+    public SyncResult syncPolicies(String syncMode) {
         // sync 사이클 시작 시 region 캐시 초기화
         regionCodeCache.clear();
 
@@ -123,7 +123,7 @@ public class PolicySyncService implements SyncPolicyUseCase {
                         }
 
                         // ── STEP 4: Persist ──
-                        boolean isNew = upsertPolicy(policyData);
+                        boolean isNew = upsertPolicy(policyData, syncMode);
                         if (isNew) {
                             totalCreated++;
                         } else {
@@ -573,14 +573,23 @@ public class PolicySyncService implements SyncPolicyUseCase {
     /**
      * external_id + source 기준 upsert.
      *
-     * @return true: 신규 생성, false: 기존 갱신
+     * @return true: 신규 생성, false: 기존 갱신 (또는 MERGE 스킵)
      */
-    private boolean upsertPolicy(PolicyData incoming) {
+    private boolean upsertPolicy(PolicyData incoming, String syncMode) {
         Optional<PolicyData> existingOpt = policySavePort
                 .findByExternalIdAndSource(incoming.getExternalId(), incoming.getSource().name());
 
         if (existingOpt.isPresent()) {
             PolicyData existing = existingOpt.get();
+            
+            // MERGE 모드일 경우 기존에 저장/수정된 정책 보호를 위해 덮어쓰지 않고 수집 시간만 갱신
+            if ("MERGE".equalsIgnoreCase(syncMode)) {
+                existing.setFetchedAt(LocalDateTime.now());
+                policySavePort.save(existing);
+                return false;
+            }
+
+            // FORCE 모드일 경우 강제 덮어쓰기
             existing.setTitle(incoming.getTitle());
             existing.setOrganization(incoming.getOrganization());
             existing.setRegionCode(incoming.getRegionCode());
