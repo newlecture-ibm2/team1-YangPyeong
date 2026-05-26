@@ -18,8 +18,21 @@ interface Props {
   data: RecommendChartItem[];
 }
 
+function dedupeChartData(items: RecommendChartItem[]): RecommendChartItem[] {
+  const seen = new Set<string>();
+  const out: RecommendChartItem[] = [];
+  for (const item of items) {
+    const name = item.cropName?.trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    out.push(item);
+  }
+  return out;
+}
+
 export default function RecommendRadarChart({ data }: Props) {
-  if (!data || data.length === 0) return null;
+  const chartItems = dedupeChartData(data ?? []);
+  if (chartItems.length === 0) return null;
 
   // recharts에 맞게 데이터 변환
   // recharts RadarChart는 기준점(subject)별로 각 작물의 점수를 가져야 함
@@ -33,9 +46,11 @@ export default function RecommendRadarChart({ data }: Props) {
   ];
 
   const chartData = subjects.map((subj) => {
-    const row: any = { subject: subj.label };
-    data.forEach((item) => {
-      row[item.cropName] = item[subj.key as keyof RecommendChartItem];
+    const row: Record<string, string | number> = { subject: subj.label };
+    chartItems.forEach((item) => {
+      const raw = item[subj.key as keyof RecommendChartItem];
+      const num = typeof raw === 'number' && Number.isFinite(raw) ? raw : 0;
+      row[item.cropName] = num;
     });
     return row;
   });
@@ -56,9 +71,9 @@ export default function RecommendRadarChart({ data }: Props) {
               contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
             />
             <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-            {data.map((item, index) => (
+            {chartItems.map((item, index) => (
               <Radar
-                key={item.cropName}
+                key={`${item.cropName}-${index}`}
                 name={item.cropName}
                 dataKey={item.cropName}
                 stroke={colors[index % colors.length]}

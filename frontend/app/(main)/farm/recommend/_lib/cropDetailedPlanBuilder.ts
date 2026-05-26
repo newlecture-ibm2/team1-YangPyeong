@@ -10,8 +10,18 @@ import {
   resolveSowingHarvestPeriods,
   type MonthPhaseSlot,
 } from './cropCalendarSync';
+import { resolveCropPlanKind, type CropPlanKind } from './cropPeriodRegistry';
 
-type CropPlanKind =
+type PhaseType = 'sow' | 'growth' | 'harvest';
+type ProgressBand = 'early' | 'mid' | 'late';
+
+interface TaskDef {
+  task: string;
+  detail: string;
+  tip?: string;
+}
+
+type TaskTemplateKey =
   | 'rice'
   | 'barley'
   | 'pepper'
@@ -24,32 +34,34 @@ type CropPlanKind =
   | 'ginseng'
   | 'generic';
 
-type PhaseType = 'sow' | 'growth' | 'harvest';
-type ProgressBand = 'early' | 'mid' | 'late';
-
-interface TaskDef {
-  task: string;
-  detail: string;
-  tip?: string;
-}
-
-function norm(name: string): string {
-  return name.replace(/\s+/g, '').toLowerCase();
-}
-
-function resolveCropPlanKind(cropName: string): CropPlanKind {
-  const n = norm(cropName);
-  if (n.includes('쌀') || n.includes('벼')) return 'rice';
-  if (n.includes('보리')) return 'barley';
-  if (n.includes('방울')) return 'cherry_tomato';
-  if (n.includes('토마토')) return 'tomato';
-  if (n.includes('고추') || n.includes('피망')) return 'pepper';
-  if (n.includes('감자')) return 'potato';
-  if (n.includes('고구마')) return 'sweet_potato';
-  if (n.includes('콩')) return 'soybean';
-  if (n.includes('배추') || n.includes('양배추')) return 'cabbage';
-  if (n.includes('인삼')) return 'ginseng';
-  return 'generic';
+function resolveTaskTemplateKey(kind: CropPlanKind): TaskTemplateKey {
+  switch (kind) {
+    case 'rice':
+    case 'barley':
+    case 'pepper':
+    case 'cherry_tomato':
+    case 'tomato':
+    case 'potato':
+    case 'sweet_potato':
+    case 'soybean':
+    case 'cabbage':
+    case 'ginseng':
+    case 'generic':
+      return kind;
+    case 'garlic':
+      return 'barley';
+    case 'radish':
+      return 'cabbage';
+    case 'melon':
+      return 'cherry_tomato';
+    case 'corn':
+      return 'rice';
+    case 'leafy':
+    case 'fruit':
+    case 'onion':
+    default:
+      return 'generic';
+  }
 }
 
 function phaseTypeFromPhase(phase: CalendarPhase): PhaseType {
@@ -117,7 +129,7 @@ function getTaskPair(
   const isFirst = slot.cycleIndex === 0;
   const isLast = slot.cycleIndex === slot.totalCycleMonths - 1;
 
-  const tasks: Record<CropPlanKind, Record<PhaseType, Record<ProgressBand, [TaskDef, TaskDef]>>> = {
+  const tasks: Record<TaskTemplateKey, Record<PhaseType, Record<ProgressBand, [TaskDef, TaskDef]>>> = {
     rice: {
       sow: {
         early: [
@@ -604,7 +616,8 @@ function getTaskPair(
     },
   };
 
-  return tasks[kind][type][band];
+  const bucket = resolveTaskTemplateKey(kind);
+  return tasks[bucket][type][band];
 }
 
 function buildWeeksForSlot(

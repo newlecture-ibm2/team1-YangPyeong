@@ -145,6 +145,32 @@ export function hydratePrimaryRevenuePredictionFromCache(
   return { [primary.cropName]: cached };
 }
 
+/** 현재 재배 행에 해당하는 예측만 유지 (수확 완료 등으로 제외된 작물 제거) */
+export function filterPredictionsByCropRows(
+  predictions: Record<string, RevenuePredictionResponse>,
+  rows: RevenueCropRow[],
+): Record<string, RevenuePredictionResponse> {
+  const out: Record<string, RevenuePredictionResponse> = {};
+  for (const row of rows) {
+    const p = predictions[row.cropName];
+    if (p) out[row.cropName] = p;
+  }
+  return out;
+}
+
+/** cropName 키 맵에서 허용 작물만 남김 */
+export function filterRecordByCropNames<T>(
+  record: Record<string, T>,
+  rows: RevenueCropRow[],
+): Record<string, T> {
+  const allowed = new Set(rows.map((r) => r.cropName));
+  const out: Record<string, T> = {};
+  for (const [key, value] of Object.entries(record)) {
+    if (allowed.has(key)) out[key] = value;
+  }
+  return out;
+}
+
 /** 대표 작물: 재배 면적이 가장 큰 작물 */
 export function pickPrimaryRevenueCrop(rows: RevenueCropRow[]): RevenueCropRow | null {
   if (rows.length === 0) return null;

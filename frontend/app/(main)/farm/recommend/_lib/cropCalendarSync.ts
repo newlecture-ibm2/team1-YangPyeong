@@ -3,7 +3,13 @@
  */
 
 import type { CalendarPhase, CropRecommendation } from './recommend.types';
-import { resolveCropPeriodFallback } from './cropPeriodFallback';
+import {
+  narrowSowRangeForDisplay,
+  parseMonthsFromPeriodText,
+  resolveCalendarMonthRanges,
+  resolveCropPeriodLabels,
+  type MonthRange,
+} from './cropPeriodRegistry';
 
 const COLORS = {
   sow: '#52B788',
@@ -11,13 +17,9 @@ const COLORS = {
   harvest: '#CCFF33',
 } as const;
 
+/** @deprecated use parseMonthsFromPeriodText from cropPeriodRegistry */
 export function parseMonthsFromPeriod(text?: string | null): { start: number; end: number } | null {
-  if (!text?.trim()) return null;
-  const months = [...text.matchAll(/(\d{1,2})\s*월/g)]
-    .map((m) => parseInt(m[1], 10))
-    .filter((m) => m >= 1 && m <= 12);
-  if (months.length === 0) return null;
-  return { start: Math.min(...months), end: Math.max(...months) };
+  return parseMonthsFromPeriodText(text);
 }
 
 export function resolveSowingHarvestPeriods(rec: CropRecommendation): {
@@ -26,17 +28,24 @@ export function resolveSowingHarvestPeriods(rec: CropRecommendation): {
   sow?: { start: number; end: number };
   harv?: { start: number; end: number };
 } {
-  let sowing = rec.sowingPeriod?.trim() || undefined;
-  let harvest = rec.harvestPeriod?.trim() || undefined;
+  const labels = resolveCropPeriodLabels(rec.cropName, rec.sowingPeriod, rec.harvestPeriod);
+  let sowing = labels.sowing;
+  let harvest = labels.harvest;
 
-  if (!sowing || !harvest) {
-    const fallback = resolveCropPeriodFallback(rec.cropName);
-    if (!sowing) sowing = fallback.sowing;
-    if (!harvest) harvest = fallback.harvest;
-  }
+  const resolved = resolveCalendarMonthRanges(rec.cropName, {
+    sowingText: rec.sowingPeriod,
+    harvestText: rec.harvestPeriod,
+    growthDays: rec.growthDays,
+    parsedSow: parseMonthsFromPeriodText(sowing),
+    parsedHarv: parseMonthsFromPeriodText(harvest),
+  });
 
-  const sowParsed = parseMonthsFromPeriod(sowing);
-  const harvParsed = parseMonthsFromPeriod(harvest);
+  if (resolved && !sowing) sowing = `${resolved.sow.start}월 ~ ${resolved.sow.end}월`;
+  if (resolved && !harvest) harvest = `${resolved.harvest.start}월 ~ ${resolved.harvest.end}월`;
+
+  const sowParsed = parseMonthsFromPeriodText(sowing);
+  const harvParsed = parseMonthsFromPeriodText(harvest);
+
   return {
     sowing,
     harvest,
@@ -45,16 +54,10 @@ export function resolveSowingHarvestPeriods(rec: CropRecommendation): {
   };
 }
 
-function isWinterCycle(sow: { start: number; end: number }, harv: { start: number; end: number }): boolean {
-  return sow.start > harv.end;
-}
+function buildPhasesFromRanges(sowRaw: MonthRange, harv: MonthRange, winterCycle: boolean): CalendarPhase[] {
+  const sow = narrowSowRangeForDisplay(sowRaw);
 
-/** 파종·생육·수확 막대 — rec(및 fallback)의 파종/수확 월 기준 */
-export function buildCalendarPhasesFromRecommendation(rec: CropRecommendation): CalendarPhase[] | null {
-  const { sow, harv } = resolveSowingHarvestPeriods(rec);
-  if (!sow && !harv) return null;
-
-  if (sow && harv && isWinterCycle(sow, harv)) {
+  if (winterCycle) {
     const growthEnd = harv.start > 1 ? harv.start - 1 : 4;
     return [
       { label: '파종·육묘', startMonth: sow.start, endMonth: 12, color: COLORS.sow },
@@ -63,30 +66,72 @@ export function buildCalendarPhasesFromRecommendation(rec: CropRecommendation): 
     ];
   }
 
-  const sowStart = sow?.start ?? harv!.start;
-  const sowEnd = sow?.end ?? sow?.start ?? sowStart;
-  const harvStart = harv?.start ?? sowEnd;
-  const harvEnd = harv?.end ?? harv?.start ?? harvStart;
+  const sowStart = sow.start;
+  const sowEnd = sow.end;
+  const harvStart = harv.start;
+  const harvEnd = harv.end;
 
   const phases: CalendarPhase[] = [
     { label: '파종·육묘', startMonth: sowStart, endMonth: sowEnd, color: COLORS.sow },
   ];
 
-  const growthStart = Math.min(sowEnd + 1, 12);
+  let growthStart = sowEnd < 12 ? sowEnd + 1 : 1;
   let growthEnd = harvStart > sowEnd ? harvStart - 1 : sowEnd;
-  if (growthEnd < growthStart) {
-    growthEnd = harvStart;
+
+  if (harvStart <= sowEnd) {
+    growthStart = sowEnd;
+    growthEnd = sowEnd;
   }
-  if (growthEnd >= growthStart && !(growthStart === harvStart && growthEnd === harvEnd)) {
+
+  if (growthEnd < growthStart) {
+    growthEnd = growthStart;
+  }
+
+  const sowSpan = sowEnd >= sowStart ? sowEnd - sowStart + 1 : 1;
+  const harvSpan = harvEnd >= harvStart ? harvEnd - harvStart + 1 : 1;
+
+  if (growthEnd >= growthStart && !(sowSpan >= 8 && harvSpan <= 2)) {
     phases.push({ label: '생육', startMonth: growthStart, endMonth: growthEnd, color: COLORS.growth });
+  } else if (harvStart > sowEnd + 1) {
+    phases.push({
+      label: '생육',
+      startMonth: Math.min(growthStart, 12),
+      endMonth: Math.max(growthStart, harvStart - 1),
+      color: COLORS.growth,
+    });
   }
 
   phases.push({ label: '수확', startMonth: harvStart, endMonth: harvEnd, color: COLORS.harvest });
   return phases;
 }
 
+/** 파종·생육·수확 막대 — 레지스트리·파싱·growthDays 추정 순 */
+export function buildCalendarPhasesFromRecommendation(rec: CropRecommendation): CalendarPhase[] | null {
+  const resolved = resolveCalendarMonthRanges(rec.cropName, {
+    sowingText: rec.sowingPeriod,
+    harvestText: rec.harvestPeriod,
+    growthDays: rec.growthDays,
+    parsedSow: parseMonthsFromPeriodText(rec.sowingPeriod),
+    parsedHarv: parseMonthsFromPeriodText(rec.harvestPeriod),
+  });
+
+  if (!resolved) return null;
+
+  return buildPhasesFromRanges(resolved.sow, resolved.harvest, resolved.winterCycle);
+}
+
 /** fallback·API 모두 월 파싱 실패 시 growthDays 기준 generic 3-phase 캘린더 */
 export function buildGenericCalendarPhases(rec: CropRecommendation): CalendarPhase[] {
+  const resolved = resolveCalendarMonthRanges(rec.cropName, {
+    growthDays: rec.growthDays ?? 120,
+    sowingText: rec.sowingPeriod,
+    harvestText: rec.harvestPeriod,
+  });
+
+  if (resolved) {
+    return buildPhasesFromRanges(resolved.sow, resolved.harvest, resolved.winterCycle);
+  }
+
   const days = rec.growthDays ?? 120;
   const spanMonths = Math.min(9, Math.max(3, Math.ceil(days / 30)));
   const sowStart = 3;

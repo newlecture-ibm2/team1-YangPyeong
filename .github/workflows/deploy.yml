@@ -2,7 +2,7 @@ name: Deploy to Server
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -69,7 +69,7 @@ jobs:
         run: |
           cd /home/farm/dist/team1-YangPyeong
           git fetch origin
-          git reset --hard origin/dev
+          git reset --hard origin/main
           docker compose down
           docker compose up --build -d
 
