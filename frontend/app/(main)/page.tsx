@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useMyFarms } from './farm/useFarm';
 import styles from './page.module.css';
 
 const MOBILE_BREAKPOINT = 1024;
@@ -14,6 +15,14 @@ export default function LandingPage() {
     totalRecommends: 1250,
     totalOrders: 95
   });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(typeof document !== 'undefined' && document.cookie.includes('fb-user='));
+  }, []);
+
+  const { farms } = useMyFarms(isLoggedIn);
+  const hasFarm = farms.length > 0;
 
   // 실시간 라이브 통계 데이터 조회 (BFF 프록시 사용)
   useEffect(() => {
@@ -413,12 +422,22 @@ export default function LandingPage() {
                 지금 팜밸런스에 농장을 등록하고<br />스마트한 수급 관리를 경험해 보세요.
               </p>
               <div className={styles['cta-circle__buttons']}>
-                <Link href="/signup" className={`${styles['flow-btn']} ${styles['flow-btn--primary']}`}>
-                  회원가입
-                </Link>
-                <Link href="/farm/register" className={`${styles['flow-btn']} ${styles['flow-btn--secondary']}`}>
-                  농장 등록하기
-                </Link>
+                {isLoggedIn && hasFarm ? (
+                  <Link href="/farm?tab=history" className={`${styles['flow-btn']} ${styles['flow-btn--primary']}`}>
+                    농장일지 작성하기
+                  </Link>
+                ) : (
+                  <>
+                    {!isLoggedIn && (
+                      <Link href="/signup" className={`${styles['flow-btn']} ${styles['flow-btn--primary']}`}>
+                        회원가입
+                      </Link>
+                    )}
+                    <Link href={isLoggedIn ? "/farm/register" : "/farm"} className={`${styles['flow-btn']} ${!isLoggedIn ? styles['flow-btn--secondary'] : styles['flow-btn--primary']}`}>
+                      농장 등록하기
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -119,7 +119,7 @@ export default function Header() {
   }, []);
 
   return (
-    <nav className={styles.nav}>
+    <nav className={`${styles.nav} ${scrolled ? styles.navScrolled : ''}`}>
       <div className={`${styles.headerBar} ${scrolled ? styles.headerBarScrolled : ''}`}>
         
         {/* 왼쪽: 로고 + 배너 */}
