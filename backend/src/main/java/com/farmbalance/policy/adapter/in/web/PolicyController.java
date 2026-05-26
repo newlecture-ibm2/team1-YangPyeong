@@ -112,7 +112,7 @@ public class PolicyController {
      */
     @PostMapping("/api/admin/policies/sync")
     public ApiResponse<SyncPolicyUseCase.SyncResult> syncPolicies() {
-        SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies();
+        SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies("MERGE");
         return ApiResponse.ok(result);
     }
 

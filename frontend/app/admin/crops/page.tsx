@@ -544,36 +544,34 @@ function SyncOptionsModal({ onSubmit, onClose }: SyncOptionsModalProps) {
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <h2 className={styles.modalTitle}>🔄 외부 작물 데이터 동기화 옵션</h2>
         
-        <div className={styles.formGroup}>
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', marginBottom: '16px' }}>
+        <div className={styles.syncOptions}>
+          <label className={styles.syncOption}>
             <input 
               type="radio" 
               name="syncMode" 
               value="MERGE" 
               checked={syncMode === 'MERGE'} 
               onChange={() => setSyncMode('MERGE')} 
-              style={{ marginTop: '4px' }}
             />
             <div>
-              <strong style={{ display: 'block', marginBottom: '4px' }}>새로운 데이터만 추가 (기본값)</strong>
-              <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--color-text-light)', lineHeight: '1.4' }}>
+              <strong className={styles.syncOptionTitle}>새로운 데이터만 추가 (기본값)</strong>
+              <p className={styles.syncOptionDesc}>
                 기존에 관리자가 수정한 이름이나 상태 변경 내역을 <strong>유지</strong>합니다.
               </p>
             </div>
           </label>
 
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer' }}>
+          <label className={styles.syncOption}>
             <input 
               type="radio" 
               name="syncMode" 
               value="FORCE" 
               checked={syncMode === 'FORCE'} 
               onChange={() => setSyncMode('FORCE')} 
-              style={{ marginTop: '4px' }}
             />
             <div>
-              <strong style={{ display: 'block', marginBottom: '4px' }}>API 원본 데이터로 전체 덮어쓰기</strong>
-              <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--color-text-light)', lineHeight: '1.4' }}>
+              <strong className={styles.syncOptionTitle}>API 원본 데이터로 전체 덮어쓰기</strong>
+              <p className={styles.syncOptionDesc}>
                 수동 변경사항을 무시하고 API가 제공하는 원본 데이터로 <strong>강제 덮어쓰기</strong>합니다. (수동 추가 작물은 제외)
               </p>
             </div>

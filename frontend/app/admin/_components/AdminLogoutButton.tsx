@@ -2,9 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import Button from '@/components/common/Button/Button';
+import { useToast } from '@/components/common/Toast';
 
 export default function AdminLogoutButton() {
   const router = useRouter();
+  const toast = useToast();
 
   const handleLogout = async () => {
     try {
@@ -15,7 +17,7 @@ export default function AdminLogoutButton() {
       router.refresh(); // 상태 갱신
     } catch (error) {
       console.error('로그아웃 실패:', error);
-      alert('로그아웃 처리 중 오류가 발생했습니다.');
+      toast.error('로그아웃 처리 중 오류가 발생했습니다.');
     }
   };
 

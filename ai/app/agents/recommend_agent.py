@@ -1,4 +1,5 @@
 """Recommend Agent — 최신 AI 작물 추천 결과 조회·해석."""
+# pyrefly: ignore [missing-import]
 from langgraph.prebuilt import create_react_agent
 
 from app.agents.tools.recommend_tools import (
@@ -16,13 +17,15 @@ from app.agents.tools.nongsaro_tools import (
     get_nongsaro_variety
 )
 from app.llm import get_llm
+# pyrefly: ignore [missing-import]
+from app.agents.tools.rag_search_tool import search_rag_documents_tool
 
 RECOMMEND_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 AI 작물 추천' 전문 도우미입니다.
 사용자 질문에 답하려면 반드시 도구(tool)를 호출해 **실제 추천 데이터**를 조회하세요.
 점수·순위·코칭 상태를 추측하거나 지어내지 마세요.
 
 [필수 규칙]
-1. 질문을 받으면 가장 적합한 도구를 먼저 호출하세요.
+1. 질문을 받으면 가장 적합한 도구를 먼저 호출하세요. (DB나 API에 원하는 정보가 없다면 search_rag_documents_tool을 사용하여 RAG 매뉴얼에서 추가 검색하세요)
 2. 도구가 반환한 숫자·순위·상태를 기반으로 자연스럽게 설명하세요. (도구 결과 전체를 그대로 복붙하지 말고 핵심만)
 3. 한자 사용 금지. 한글만 사용.
 4. 본문에 /farm 같은 경로 문자열을 직접 쓰지 마세요. 화면 이동은 도구의 NAVIGATE action을 사용하세요.
@@ -31,11 +34,14 @@ RECOMMEND_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 AI 작물 추천' 전
 - get_latest_recommend_overview: 1등/TOP3/전체 순위/추천 결과 요약
 - get_crop_recommendation_detail: 특정 작물 점수·적합도·코칭 상태·AI 코칭 요약
 - navigate_to_crop_recommend_detail: 특정 작물 상세 화면 이동 요청
-- compare_crop_recommendations: 'A vs B', 'A랑 B 비교', '뭐가 나아?' 등 비교 질문
+- compare_crop_recommendations: 작물끼리 점수 비교. 'A vs B', '추천 작물 비교해줘', 'TOP3 비교' 등.
+  작물명이 없으면 crop_names를 비우거나 빈 문자열로 호출하면 TOP 3를 자동 비교합니다.
+  **지난번 분석과의 비교가 아닙니다** — 그 경우에만 compare_with_previous_recommendation 사용.
 - get_recommendations_by_score_type: '토양 점수 높은 순', '시세 전망 좋은 작물' 등 특정 점수 기준 정렬
 - get_recommend_analysis_info: '분석 언제', '마지막 분석', '분석 모드' 등 메타 정보
 - get_needs_data_guidance: 코칭 NEEDS_DATA 상태일 때 어떤 데이터를 입력해야 하는지 구체적 안내 요청
-- compare_with_previous_recommendation: '지난번 분석이랑 달라진 거 있어?', '추천 점수 올랐어?' 등 과거 분석 결과와의 비교 요청
+- compare_with_previous_recommendation: **분석 시점 간** 비교만. '지난번 분석이랑 달라진 거', '점수 올랐어?' 등.
+  '추천 작물 비교', '감자랑 배추 뭐가 나아'처럼 작물 간 비교는 compare_crop_recommendations 사용.
 - get_nongsaro_schedule: 특정 작물의 재배법, 파종 시기, 월별 농작업 일정, 특히 '수확 시기'나 '언제 수확하는지' 궁금할 때
 - get_nongsaro_variety: 작물의 품종 추천이나 품종별 특성 정보가 필요할 때
 
@@ -74,6 +80,7 @@ def get_recommend_agent():
         compare_with_previous_recommendation,
         get_nongsaro_schedule,
         get_nongsaro_variety,
+        search_rag_documents_tool,
     ]
 
     return create_react_agent(

@@ -48,7 +48,7 @@ public class PolicySyncScheduler {
         log.info("[PolicyScheduler] 일일 정책 동기화 시작");
         try {
             batchLogService.executeWithResult("POLICY_SYNC", () -> {
-                SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies();
+                SyncPolicyUseCase.SyncResult result = syncPolicyUseCase.syncPolicies("MERGE");
                 
                 String syncStatus = "SUCCESS";
                 if (result.failed() > 0) {

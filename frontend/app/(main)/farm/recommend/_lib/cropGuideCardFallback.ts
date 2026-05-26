@@ -3,7 +3,8 @@
  */
 
 import type { CropRecommendation } from './recommend.types';
-import { normCropName, resolveCropPeriodFallback } from './cropPeriodFallback';
+import { normCropName } from './cropPeriodFallback';
+import { resolveCropPeriodLabels } from './cropPeriodRegistry';
 
 const DEFAULT_GROWTH_DAYS: { match: (n: string) => boolean; days: number }[] = [
   { match: (n) => n.includes('쌀') || n.includes('벼'), days: 150 },
@@ -52,9 +53,9 @@ export function enrichCropGuideCardFields(rec: CropRecommendation): CropRecommen
   const growthDays = rec.growthDays ?? fallbackGrowthDays(rec.cropName);
   const pests =
     rec.pests && rec.pests.length > 0 ? rec.pests : fallbackPests(rec.cropName);
-  const periods = resolveCropPeriodFallback(rec.cropName);
-  const sowingPeriod = rec.sowingPeriod?.trim() || periods.sowing;
-  const harvestPeriod = rec.harvestPeriod?.trim() || periods.harvest;
+  const periods = resolveCropPeriodLabels(rec.cropName, rec.sowingPeriod, rec.harvestPeriod);
+  const sowingPeriod = periods.sowing;
+  const harvestPeriod = periods.harvest;
 
   if (
     growthDays === rec.growthDays &&
