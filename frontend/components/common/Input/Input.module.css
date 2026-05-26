@@ -71,9 +71,6 @@ textarea.input {
   margin: 0;
 }
 
-.inputWithToggle::-webkit-textfield-decoration-container {
-  display: none !important;
-}
 
 .toggleVisibility {
   position: absolute;

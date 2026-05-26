@@ -59,6 +59,7 @@ export default function LandingHeader() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -92,6 +93,14 @@ export default function LandingHeader() {
   useEffect(() => {
     setProfileImageLoadFailed(false);
   }, [user?.profileImageUrl]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -280,7 +289,7 @@ export default function LandingHeader() {
         </div>
       </div>
 
-      <header className={styles.header} id="header">
+      <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ''}`} id="header">
         <div className={styles['header__bar']}>
           <div className={`${styles['header__group']} ${styles['header__group--left']}`}>
             <div className={styles['header__brand']}>

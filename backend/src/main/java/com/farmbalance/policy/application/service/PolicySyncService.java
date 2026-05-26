@@ -113,6 +113,14 @@ public class PolicySyncService implements SyncPolicyUseCase {
                             extractFieldsFromContent(policyData);
                         }
                         correctFields(policyData, warnings);
+                        
+                        // 타 지역(양평/경기/전국 외) 정책 필터링
+                        if (!isRelevantRegion(policyData)) {
+                            log.info("[Sync] 타 지역 정책 제외 (저장 안 함) — externalId={}, org={}", 
+                                     policyData.getExternalId(), policyData.getOrganization());
+                            totalSkipped++;
+                            continue;
+                        }
 
                         // ── STEP 4: Persist ──
                         boolean isNew = upsertPolicy(policyData);
@@ -140,6 +148,33 @@ public class PolicySyncService implements SyncPolicyUseCase {
 
         return new SyncResult(totalFetched, totalCreated, totalUpdated,
                 totalAnalyzed, totalSkipped, totalFailed, warnings);
+    }
+
+    /**
+     * 양평군, 경기도, 국가 기관 정책만 허용하고 타 지자체 정책은 필터링합니다.
+     */
+    private boolean isRelevantRegion(PolicyData policyData) {
+        String org = policyData.getOrganization();
+        if (org == null) return true; // 모르면 일단 통과
+
+        // 국가 기관, 경기도, 양평군 등은 허용
+        if (org.contains("농림") || org.contains("농촌") || org.contains("산림") || org.contains("정부") || 
+            org.contains("부") || org.contains("청") || org.contains("공사") || org.contains("재단") ||
+            org.contains("위원회") || org.contains("본부") || org.contains("농협")) {
+            return true;
+        }
+        if (org.contains("경기") || org.contains("양평")) {
+            return true;
+        }
+
+        // 그 외의 지자체 (시, 군, 구, 도) 가 명시되어 있다면 필터링 (예: 인천광역시 부평구, 강원도 평창군 등)
+        if (org.contains("시 ") || org.contains("군 ") || org.contains("구 ") || org.contains("도 ") ||
+            org.endsWith("시") || org.endsWith("군") || org.endsWith("구") || org.endsWith("도") ||
+            org.contains("특별시") || org.contains("광역시") || org.contains("자치도") || org.contains("자치시")) {
+            return false;
+        }
+
+        return true;
     }
 
     // ────────────────────────────────────────────────────────

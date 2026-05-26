@@ -1283,3 +1283,13 @@
     transform: translateY(0);
   }
 }
+
+/* ── 모바일 환경 하단 여백 보정 (우선순위 문제 해결용) ── */
+@media (max-width: 768px) {
+  .restoreBtn {
+    bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 18px) !important;
+  }
+  .footerWalkWrap {
+    bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 10px) !important;
+  }
+}
