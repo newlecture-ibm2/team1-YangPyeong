@@ -57,6 +57,7 @@ def split_pending_intent(text: str) -> tuple[str, dict | None]:
 _KNOWN_ACTION_TYPES: frozenset[str] = frozenset({
     "NAVIGATE", "FILL_FORM", "TOAST", "REFRESH",
     "CLARIFY", "CONFIRM", "OPEN_MODAL", "PRODUCT_LIST",
+    "RECOMMEND_CHART",
 })
 
 
