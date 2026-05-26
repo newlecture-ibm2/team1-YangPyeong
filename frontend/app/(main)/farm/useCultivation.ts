@@ -18,7 +18,8 @@ export function useCultivation(farmId?: number, skipInitialFetch = false) {
     try {
       const data = await getCultivations(farmId);
       if (farmIdRef.current !== targetFarmId) return;
-      setCultivations(data);
+      // 백엔드는 ACTIVE만 반환하지만, 클라이언트 캐시·레이스 대비 이중 필터
+      setCultivations(data.filter((c) => !c.status || c.status === 'ACTIVE'));
     } catch (err: any) {
       if (farmIdRef.current === targetFarmId) {
         console.error(err);

@@ -3,8 +3,11 @@
 도구 출력의 [ACTION:{...}] 토큰은 오케스트레이터가 추출해 ChatResponse.actions로 전달합니다.
 LLM은 토큰을 절대 가공/요약하지 말고 본문에 그대로 포함시켜야 합니다.
 """
+# pyrefly: ignore [missing-import]
+# pyrefly: ignore [missing-import]
 from langgraph.prebuilt import create_react_agent
 
+from app.agents.tools.rag_search_tool import search_rag_documents_tool
 from app.agents.tools.shop_tools import (
     add_to_cart,
     autofill_product_info,
@@ -60,12 +63,13 @@ SHOP_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 상점(Shop)' 도우미입
   · "사과 장바구니에서 지워줘" → remove_from_cart(product_name="사과")
 - buy_selected_from_cart: 장바구니 내 특정 상품만 골라 결제
   · "거기서 쌀이랑 감자만 주문해줘", "장바구니에서 사과하고 배만 결제할게"
-  · 직전 대화에서 get_my_cart 결과가 있고, 사용자가 그 중 일부만 주문하려 할 때 사용
+  · 직전 대화에서 get_my_cart 결과가 있고, 사용자가 그 중 일부만 주문할 때 사용
   · keywords 에 선택 상품명(들) 전달. 예: keywords="쌀, 감자"
   · 전체 결제는 navigate_to("cart") 또는 buy_now 사용
 - list_shop_menu: 장터 전체 상품/메뉴 조회. "뭐 팔아", "어떤 상품 있어", "인기 상품", "메뉴 보여줘"
   ← "장바구니" 단어가 없는 경우에만 사용.
-- search_products: 특정 상품명/키워드 검색 (예: "사과", "배추")
+- search_products: 이름, 카테고리, 태그로 상품 찾기. '사과 팔아?' '비료 있어?' 등
+- search_rag_documents_tool: 장터 상품 정보가 아닌, 일반 농업 정보나 매뉴얼 정보가 필요할 때 보조적으로 사용
 - add_to_cart: 장바구니에 담기 (product_id 필요)
 - buy_now: 바로 결제
 - navigate_to: 페이지 이동 (target: shop_home/cart/my_orders/seller_register/seller_products/seller_orders)
@@ -115,7 +119,6 @@ SHOP_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 상점(Shop)' 도우미입
   → 반드시 clarify_crop_register() 를 먼저 호출. 절대 직접 navigate_to 하지 말 것.
   → 사용자가 "장터에 판매 상품으로 등록"을 선택하면 그 후에 navigate_to("seller_register")
   → 사용자가 "내 농장에 작물 등록"을 선택하면 "해당 기능은 곧 준비됩니다" 라고만 답하기
-    (현재 농장 작물 등록 페이지는 다른 팀에서 개발 중)
 
 [도구 선택 예시 — 반드시 따를 것]
 "장바구니에 뭐있어?" → get_my_cart()
@@ -155,7 +158,6 @@ SHOP_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 상점(Shop)' 도우미입
 사용자가 "좋아", "그걸로", "그거", "응", "이걸로" + 결제/주문/구매 의사를 밝혔다면:
 - 직전 대화에서 언급된 상품명을 찾아 search_products(keyword=상품명) 로 product_id 확보.
 - 즉시 buy_now(product_id=..., quantity=1) 호출.
-- 예: "좋아 그걸로 바로 결제" → 직전 언급 상품명으로 search_products 후 buy_now 호출.
 
 [안전 규칙]
 - add_to_cart 결과에 "[장바구니 담기 성공]" 문구가 있으면 성공. 없으면 실패.
@@ -174,6 +176,7 @@ def get_shop_agent():
         list_shop_menu,               # "메뉴 보여줘" → 판매량 TOP5 카드
         navigate_to,
         search_products,
+        search_rag_documents_tool,
         add_to_cart,
         buy_now,
         get_my_cart,                  # 장바구니 조회

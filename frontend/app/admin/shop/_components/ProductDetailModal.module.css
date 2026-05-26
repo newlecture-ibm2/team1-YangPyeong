@@ -123,4 +123,13 @@
     width: 100%;
     justify-content: center;
   }
+  
+  .actionButtons {
+    flex-wrap: wrap;
+    justify-content: stretch;
+  }
+  
+  .actionButtons button {
+    flex: 1;
+  }
 }

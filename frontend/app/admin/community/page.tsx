@@ -221,7 +221,8 @@ export default function CommunityPage() {
   }
 
   const handleUndoSanction = async (targetType: string, targetId: number) => {
-    if (!confirm('제재를 복구(취소)하시겠습니까? 게시물 복구 및 유저 정지가 해제됩니다.')) return
+    const confirmed = await showConfirm('제재를 복구(취소)하시겠습니까? 게시물 복구 및 유저 정지가 해제됩니다.')
+    if (!confirmed) return
     try {
       const { undoSanctionReport } = await import('../_lib/community.api')
       await undoSanctionReport(targetType, targetId)
@@ -238,7 +239,8 @@ export default function CommunityPage() {
   }
 
   const handleAiModerate = async () => {
-    if (!confirm('현재 활성화된 최신 게시글들을 AI가 일괄 검사하여 스팸 및 부적절한 게시글을 삭제(차단) 처리합니다. 진행하시겠습니까?')) return
+    const confirmed = await showConfirm('현재 활성화된 최신 게시글들을 AI가 일괄 검사하여 스팸 및 부적절한 게시글을 삭제(차단) 처리합니다. 진행하시겠습니까?')
+    if (!confirmed) return
     setIsModerating(true)
     try {
       const res = await aiModeratePosts()

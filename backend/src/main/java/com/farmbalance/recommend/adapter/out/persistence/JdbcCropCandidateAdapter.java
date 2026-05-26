@@ -383,12 +383,12 @@ public class JdbcCropCandidateAdapter implements LoadCropCandidatePort {
     }
 
     private String fallbackHarvestPeriod(String category) {
-        if (category == null) return "파종 후 60~120일";
+        if (category == null) return "9월 ~ 10월";
         return switch (category) {
             case "과일", "과수" -> "7월 ~ 11월";
-            case "채소", "엽경채류", "근채류" -> "파종 후 60~90일";
+            case "채소", "엽경채류", "근채류" -> "6월 ~ 10월";
             case "곡류", "미곡" -> "9월 ~ 11월";
-            default -> "파종 후 60~120일";
+            default -> "9월 ~ 10월";
         };
     }
 }

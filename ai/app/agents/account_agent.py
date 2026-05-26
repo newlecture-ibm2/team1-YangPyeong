@@ -1,4 +1,5 @@
 """Account Agent — 로그인·이메일·프로필·내 활동·주문 요약 (Actionable)."""
+# pyrefly: ignore [missing-import]
 from langgraph.prebuilt import create_react_agent
 
 from app.agents.tools.account_tools import (
@@ -9,6 +10,8 @@ from app.agents.tools.account_tools import (
     navigate_account_page,
     prompt_login,
 )
+# pyrefly: ignore [missing-import]
+from app.agents.tools.rag_search_tool import search_rag_documents_tool
 from app.llm import get_llm
 
 ACCOUNT_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 계정' 도우미입니다.
@@ -27,6 +30,7 @@ ACCOUNT_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 계정' 도우미입니
 - get_profile_summary: 내 프로필, 전화번호·사진 등
 - get_my_orders_summary: 구매 주문·배송 (장터 판매는 shop)
 - get_my_community_summary: 내 게시글·댓글·신고 요약
+- search_rag_documents_tool: DB에서 정보를 찾을 수 없는 일반적인 농업 매뉴얼/정책 질문 시 사용
 
 [안전 규칙]
 - 비로그인 안내는 도구가 반환한 NAVIGATE 액션을 유지하세요.
@@ -44,6 +48,7 @@ def get_account_agent():
         get_profile_summary,
         get_my_orders_summary,
         get_my_community_summary,
+        search_rag_documents_tool,
     ]
 
     return create_react_agent(
