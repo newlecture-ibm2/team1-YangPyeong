@@ -44,11 +44,11 @@ export async function POST(request: NextRequest) {
 
     if (payload) {
       // 클라이언트 읽기용 쿠키: 최소 정보만 저장 (email, role, name)
-      response.cookies.set('fb-user', JSON.stringify({
+      response.cookies.set('fb-user', encodeURIComponent(JSON.stringify({
         email: payload.email || payload.sub || '',
         role: payload.role || 'USER',
         name: payload.name || '',
-      }), {
+      })), {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
