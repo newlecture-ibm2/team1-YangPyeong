@@ -564,8 +564,8 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
             for a in all_actions:
                 try:
                     validated_actions.append(ChatAction(**a).model_dump())
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning("[ChatStream] 잘못된 액션 페이로드 무시: %s — %s", a, e)
 
             validated_pending: dict | None = None
             if pending_intent_obj:
