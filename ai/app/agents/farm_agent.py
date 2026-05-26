@@ -4,8 +4,11 @@ Farm Agent: 농장 데이터 및 재배 기술 지원 전문가
 import os
 import logging
 from typing import Annotated, TypedDict, List
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
+# pyrefly: ignore [missing-import]
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+# pyrefly: ignore [missing-import]
 from langgraph.graph import StateGraph, END, START
+# pyrefly: ignore [missing-import]
 from langgraph.prebuilt import ToolNode
 
 from app.llm import get_llm
@@ -15,6 +18,8 @@ from app.agents.tools.farm_tools import (
     get_farm_weather
 )
 from app.agents.tools.nongsaro_tools import get_nongsaro_disaster
+# pyrefly: ignore [missing-import]
+from app.agents.tools.rag_search_tool import search_rag_documents_tool
 
 
 logger = logging.getLogger(__name__)
@@ -29,11 +34,12 @@ FARM_AGENT_SYSTEM_PROMPT = """
 2. 과거 재배 이력이 궁금해하거나 이전 기록을 참고해야 할 때는 'get_cultivation_history' 도구를 사용하세요.
 3. 현재 날씨나 그에 따른 방제/생육 가이드가 필요하면 'get_farm_weather' 도구를 사용하세요.
 4. 가뭄, 폭염, 장마 등 기상 재해 예방 및 대응법이 필요하다면 'get_nongsaro_disaster' 도구를 사용하세요.
-5. 사용자가 비료 추천을 요청할 경우, 전달받은 컨텍스트(`soil_info`)에 토양 정보(pH, 유기물 함량 등)가 있다면 추가적인 도구 호출 없이 당신이 가진 농업 전문 지식을 활용하여 알맞은 비료(밑거름, 웃거름, 석회비료 등)나 개량 방법을 즉시 조언하세요. 
-6. 만약 토양 정보가 없다면 가까운 농업기술센터에서 토양 검사를 받도록 권유하세요.
-7. 답변 시에는 항상 친절하고 전문적인 어조를 유지하며, 양평군의 지역적 특성을 고려하세요.
-8. 데이터가 부족하거나 도구 호출 결과가 비어있을 경우, 추측하지 말고 솔직하게 정보가 없음을 알리세요. 단, 비료 추천 등 명시적으로 허용된 경우 전문 지식을 활용하세요.
-9. 면적은 항상 m2(제곱미터) 단위를 기본으로 설명하되, 필요시 평수 환산(1평 ≒ 3.3m2)을 곁들여주면 좋습니다.
+5. 사용자가 물어본 농업 지식이나 기상, 재배 관련 정보가 DB나 API에 없다면 'search_rag_documents_tool' 도구를 사용하여 추가 매뉴얼을 찾아보세요.
+6. 사용자가 비료 추천을 요청할 경우, 전달받은 컨텍스트(`soil_info`)에 토양 정보(pH, 유기물 함량 등)가 있다면 추가적인 도구 호출 없이 당신이 가진 농업 전문 지식을 활용하여 알맞은 비료(밑거름, 웃거름, 석회비료 등)나 개량 방법을 즉시 조언하세요. 
+7. 만약 토양 정보가 없다면 가까운 농업기술센터에서 토양 검사를 받도록 권유하세요.
+8. 답변 시에는 항상 친절하고 전문적인 어조를 유지하며, 양평군의 지역적 특성을 고려하세요.
+9. 데이터가 부족하거나 도구 호출 결과가 비어있을 경우, 추측하지 말고 솔직하게 정보가 없음을 알리세요. 단, 비료 추천 등 명시적으로 허용된 경우 전문 지식을 활용하세요.
+10. 면적은 항상 m2(제곱미터) 단위를 기본으로 설명하되, 필요시 평수 환산(1평 ≒ 3.3m2)을 곁들여주면 좋습니다.
 
 [답변 형식 — 반드시 지키세요]
 - 기본적으로 **짧고 핵심만**(4~6줄) 전달하세요. 상세 설명이 필요한 질문(재배법, 품종 비교 등)은 늘려도 되지만 반드시 불릿·번호로 구조화하세요.
@@ -43,7 +49,7 @@ FARM_AGENT_SYSTEM_PROMPT = """
 - 100% 한국어(한글)로만 답변. 영어·한자 절대 금지.
 """
 
-def get_farm_agent(farm_id: int = 0, analysis_context: dict = None):
+def get_farm_agent(farm_id: int = 0, analysis_context: dict | None = None):
     """Farm Agent 인스턴스를 생성하여 반환합니다."""
     # 분석 능력이 좋은 모델을 사용합니다.
     llm = get_llm()
@@ -51,13 +57,13 @@ def get_farm_agent(farm_id: int = 0, analysis_context: dict = None):
         get_farm_status, 
         get_cultivation_history, 
         get_farm_weather,
-        get_nongsaro_disaster
+        get_nongsaro_disaster,
+        search_rag_documents_tool
     ]
+    # pyrefly: ignore [missing-import]
     from langgraph.prebuilt import create_react_agent
-    from langchain_core.messages import SystemMessage
     
     def farm_agent_prompt(state) -> list:
-        from langchain_core.messages import SystemMessage
         base_prompt = FARM_AGENT_SYSTEM_PROMPT
         if farm_id:
             base_prompt += f"\n\n[현재 로그인된 사용자 정보]\n- 사용자의 농장 ID: {farm_id}\n※ 도구 호출 시 이 농장 ID를 인자로 사용하세요. 사용자에게 농장 ID를 묻지 마세요."

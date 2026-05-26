@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Badge from '@/components/common/Badge/Badge';
 import Button from '@/components/common/Button/Button';
 import ResponsiveTable from '@/components/common/ResponsiveTable/ResponsiveTable';
+import { useToast } from '@/components/common/Toast';
 import { fetchBalanceData, fetchThresholds, updateThresholds, AdminBalanceData, BalanceThresholdsDto } from './_lib/balanceEngine.api';
 import styles from './page.module.css';
 
@@ -16,6 +17,7 @@ export default function AdminBalanceEnginePage() {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('전체 상태');
+  const toast = useToast();
 
   useEffect(() => {
     loadAll();
@@ -33,7 +35,7 @@ export default function AdminBalanceEnginePage() {
       setThresholds(threshRes);
     } catch (err) {
       console.error(err);
-      alert('데이터를 불러오는데 실패했습니다.');
+      toast.error('데이터를 불러오는데 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -55,11 +57,11 @@ export default function AdminBalanceEnginePage() {
     setIsSaving(true);
     try {
       await updateThresholds(thresholds);
-      alert('임계치가 즉시 반영되었습니다. (Hot Reload)');
+      toast.success('임계치가 즉시 반영되었습니다. (Hot Reload)');
       await loadAll(); // 재계산된 상태 확인을 위해 다시 불러오기
     } catch (err) {
       console.error(err);
-      alert('저장 실패');
+      toast.error('저장 실패');
     } finally {
       setIsSaving(false);
     }

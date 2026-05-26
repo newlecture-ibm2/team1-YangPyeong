@@ -1,4 +1,5 @@
 """Recommend Agent — 최신 AI 작물 추천 결과 조회·해석."""
+# pyrefly: ignore [missing-import]
 from langgraph.prebuilt import create_react_agent
 
 from app.agents.tools.recommend_tools import (
@@ -16,13 +17,15 @@ from app.agents.tools.nongsaro_tools import (
     get_nongsaro_variety
 )
 from app.llm import get_llm
+# pyrefly: ignore [missing-import]
+from app.agents.tools.rag_search_tool import search_rag_documents_tool
 
 RECOMMEND_AGENT_SYSTEM_PROMPT = """당신은 '팜밸런스 AI 작물 추천' 전문 도우미입니다.
 사용자 질문에 답하려면 반드시 도구(tool)를 호출해 **실제 추천 데이터**를 조회하세요.
 점수·순위·코칭 상태를 추측하거나 지어내지 마세요.
 
 [필수 규칙]
-1. 질문을 받으면 가장 적합한 도구를 먼저 호출하세요.
+1. 질문을 받으면 가장 적합한 도구를 먼저 호출하세요. (DB나 API에 원하는 정보가 없다면 search_rag_documents_tool을 사용하여 RAG 매뉴얼에서 추가 검색하세요)
 2. 도구가 반환한 숫자·순위·상태를 기반으로 자연스럽게 설명하세요. (도구 결과 전체를 그대로 복붙하지 말고 핵심만)
 3. 한자 사용 금지. 한글만 사용.
 4. 본문에 /farm 같은 경로 문자열을 직접 쓰지 마세요. 화면 이동은 도구의 NAVIGATE action을 사용하세요.
@@ -74,6 +77,7 @@ def get_recommend_agent():
         compare_with_previous_recommendation,
         get_nongsaro_schedule,
         get_nongsaro_variety,
+        search_rag_documents_tool,
     ]
 
     return create_react_agent(

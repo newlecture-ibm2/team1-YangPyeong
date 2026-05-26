@@ -1,14 +1,18 @@
+# pyrefly: ignore [missing-import]
 from langchain_core.messages import SystemMessage
+# pyrefly: ignore [missing-import]
 from langgraph.prebuilt import create_react_agent
 from app.llm import get_llm
 from app.agents.tools.policy_search import search_policies
+# pyrefly: ignore [missing-import]
+from app.agents.tools.rag_search_tool import search_rag_documents_tool
 
 POLICY_AGENT_SYSTEM_PROMPT = """
 당신은 'FarmBalance 정책 지원 전문가' 에이전트입니다.
 사용자(농업인 등)가 농업 지원금, 보조금, 혜택, 정책 등에 대해 질문하면 친절하게 답변해 줍니다.
 
 [지침]
-1. 사용자가 특정 작물이나 혜택에 대한 정책을 찾을 때 'search_policies' 도구를 사용하여 관련 정책을 검색하세요.
+1. 사용자가 특정 작물이나 혜택에 대한 정책을 찾을 때 'search_policies' 도구를 사용하여 관련 정책을 검색하세요. 만약 DB에서 정보를 찾지 못했다면 'search_rag_documents_tool'을 추가로 사용하여 기타 정책 문서를 찾아보세요.
 2. 정책 내용(지원 금액, 대상 등)을 설명할 때는 명확하고 이해하기 쉽게 요약해서 전달하세요.
 3. 검색 결과가 없으면, 조건을 넓혀서 검색하거나 솔직하게 현재 조건에 맞는 정보가 없음을 안내하세요.
 4. 양평군 지역의 농업인에게 실질적인 도움이 되는 조언을 제공하세요.
@@ -21,12 +25,12 @@ POLICY_AGENT_SYSTEM_PROMPT = """
 - 100% 한국어(한글)로만 답변. 영어·한자 절대 금지.
 """
 
-def get_policy_agent(analysis_context: dict = None):
+def get_policy_agent(analysis_context: dict | None = None):
     """Policy Agent 인스턴스를 생성하여 반환합니다."""
     llm_provider = get_llm("gemini")
     chat_model = llm_provider.get_chat_model(temperature=0.1)
     
-    tools = [search_policies]
+    tools = [search_policies, search_rag_documents_tool]
     
     # analysis_context가 있으면 사용자 농장 정보를 프롬프트에 주입
     prompt = POLICY_AGENT_SYSTEM_PROMPT

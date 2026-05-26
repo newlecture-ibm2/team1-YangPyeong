@@ -237,6 +237,16 @@ class AdminService:
 
             logger.info(f"총 {len(documents)}개의 텍스트 청크를 ChromaDB에 적재합니다...")
             vectorstore = get_vectorstore()
+            
+            # 기존 컬렉션 데이터를 모두 삭제한 뒤 새로 적재 (중복 누적 방지)
+            existing_count = vectorstore._collection.count()
+            if existing_count > 0:
+                logger.info(f"기존 ChromaDB 데이터 {existing_count}건 삭제 중...")
+                all_ids = vectorstore._collection.get()["ids"]
+                if all_ids:
+                    vectorstore._collection.delete(ids=all_ids)
+                logger.info("기존 데이터 삭제 완료.")
+            
             vectorstore.add_documents(documents)
             
             logger.info("=== RAG 데이터 인제스천 완료 ===")

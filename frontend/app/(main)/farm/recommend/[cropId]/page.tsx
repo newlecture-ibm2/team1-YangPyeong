@@ -8,7 +8,12 @@ import type { CropRecommendation, CropRecommendResponse } from '../_lib/recommen
 import { getLatestRecommendHistory, requestAiCoaching } from '../_lib/recommend.api';
 import { findCropInRecommendResult, sanitizeRecommendResponse } from '../_lib/recommend.utils';
 import { useToast } from '@/components/common/Toast/ToastContext';
-import { getCropEmoji, getCropCalendarForRecommendation, generatePriceData } from '../_lib/recommend.constants';
+import {
+  getCropEmoji,
+  getCropCalendarForRecommendation,
+  generatePriceData,
+  enrichRecommendationForGuide,
+} from '../_lib/recommend.constants';
 import { getCropDetailedPlanForRecommendation } from '../_lib/calendarPlanData';
 import { buildCalendarSubtitle } from '../_lib/cropCalendarSync';
 import type { CalendarPhase } from '../_lib/recommend.types';
@@ -188,16 +193,17 @@ function RecommendDetailInner() {
   const supplyInfo = SUPPLY_STATUS_MAP[rec.supplyStatus];
   const fitnessLabel = SOIL_FITNESS_MAP[rec.soilFitness];
   const priceData = generatePriceData(rec.expectedRevenuePerKg);
-  const calendar = getCropCalendarForRecommendation(rec);
+  const guideRec = enrichRecommendationForGuide(rec);
+  const calendar = getCropCalendarForRecommendation(guideRec);
 
   return (
     <div className={styles.container}>
       <DetailHeader
-        cropName={rec.cropName}
-        category={rec.category}
-        emoji={getCropEmoji(rec.category, rec.cropName)}
-        growthDays={rec.growthDays}
-        optimalTemp={rec.optimalTemp}
+        cropName={guideRec.cropName}
+        category={guideRec.category}
+        emoji={getCropEmoji(guideRec.category, guideRec.cropName)}
+        growthDays={guideRec.growthDays}
+        optimalTemp={guideRec.optimalTemp}
         score={rec.score}
         soilFitnessPercent={rec.soilFitnessPercent}
       />
@@ -226,10 +232,10 @@ function RecommendDetailInner() {
         onRequestCoaching={handleRequestCoaching}
       />
 
-      <CropGuide rec={rec} recommendResult={result} />
+      <CropGuide rec={guideRec} recommendResult={result} />
 
       {/* ── 재배 캘린더 (클릭 시 세부 계획서 모달) ── */}
-      <CalendarSection rec={rec} calendar={calendar} />
+      <CalendarSection rec={guideRec} calendar={calendar} />
 
       {/* ── 가격 추이 ── */}
       <div className={`${styles.card} ${styles.fadeIn}`} style={{ animationDelay: '0.4s' }}>

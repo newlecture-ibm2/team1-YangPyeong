@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Modal from '@/components/common/Modal/Modal'
 import Button from '@/components/common/Button/Button'
 import Dropdown from '@/components/common/Dropdown/Dropdown'
+import { useToast } from '@/components/common/Toast'
 import styles from './ForceWithdrawModal.module.css'
 
 interface ForceWithdrawModalProps {
@@ -28,10 +29,11 @@ export default function ForceWithdrawModal({
 }: ForceWithdrawModalProps) {
   const [reasonType, setReasonType] = useState('')
   const [reasonDetail, setReasonDetail] = useState('')
+  const toast = useToast()
 
   const handleConfirm = () => {
     if (!reasonType) {
-      alert('제재 사유 카테고리를 선택해주세요.')
+      toast.error('제재 사유 카테고리를 선택해주세요.')
       return
     }
     onConfirm(reasonType, reasonDetail)
@@ -72,7 +74,7 @@ export default function ForceWithdrawModal({
           />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
+        <div className={styles.actions}>
           <Button variant="outline" onClick={handleClose}>취소</Button>
           <Button variant="primary" onClick={handleConfirm}>강제 탈퇴 실행</Button>
         </div>

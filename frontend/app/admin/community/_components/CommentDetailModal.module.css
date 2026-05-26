@@ -132,3 +132,24 @@
   display: flex;
   gap: 8px;
 }
+
+@media (max-width: 768px) {
+  .actions {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .leftActions {
+    justify-content: space-between;
+  }
+
+  .commentHeader {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .commentMeta {
+    text-align: left;
+  }
+}

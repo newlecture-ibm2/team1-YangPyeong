@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Modal from '@/components/common/Modal/Modal'
 import Button from '@/components/common/Button/Button'
 import Dropdown from '@/components/common/Dropdown/Dropdown'
+import { useToast } from '@/components'
 import styles from './NoticeCreateModal.module.css'
 
 interface NoticeCreateModalProps {
@@ -15,6 +16,8 @@ export default function NoticeCreateModal({ isOpen, onClose, onConfirm }: Notice
   const [content, setContent] = useState('')
   const [categoryId, setCategoryId] = useState<string>('1')
   const [categories, setCategories] = useState<{ label: string; value: string }[]>([])
+  
+  const toast = useToast()
 
   useEffect(() => {
     if (isOpen) {
@@ -43,11 +46,11 @@ export default function NoticeCreateModal({ isOpen, onClose, onConfirm }: Notice
 
   const handleConfirm = () => {
     if (!title.trim()) {
-      alert('공지 제목을 입력해주세요.')
+      toast.error('공지 제목을 입력해주세요.')
       return
     }
     if (!content.trim()) {
-      alert('공지 내용을 입력해주세요.')
+      toast.error('공지 내용을 입력해주세요.')
       return
     }
     onConfirm({

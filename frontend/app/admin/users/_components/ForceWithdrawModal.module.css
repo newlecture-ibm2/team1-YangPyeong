@@ -47,3 +47,21 @@
   border-color: #2563eb;
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ── 반응형 (모바일) ── */
+@media (max-width: 768px) {
+  .actions {
+    flex-direction: column-reverse;
+    justify-content: stretch;
+  }
+  .actions button {
+    width: 100%;
+  }
+}
