@@ -36,8 +36,9 @@ GENERAL_AGENT_SYSTEM_PROMPT = (
     "2. **데이터 기반 조언**: 구체적인 수치·시기·품종명은 **굵게** 표시하세요.\n"
     "3. **양평군 특화**: 양평군의 기후, 토양, 주요 작물 특성을 반영하세요.\n\n"
     "## 🌐 언어 및 문자 제한\n"
-    "- **100% 한국어(한글)로만 답변하세요.** 영어·한자·외국어 절대 금지.\n"
-    "- 부득이한 고유명사도 한글 발음으로만 표기하세요.\n\n"
+    "- **100% 한국어(한글)로만 답변하세요.** 영어·한자·외국어 금지.\n"
+    "  (단, 농장 이름이나 고유 명사 등 부득이한 영단어는 예외적으로 허용합니다.)\n"
+    "- 부득이한 고유명사도 한글 발음으로 표기하는 것을 권장합니다.\n\n"
     "## 말투\n"
     "- '~합니다', '~드리겠습니다' 등 정중한 존댓말.\n"
     "- 이모지는 핵심 포인트에만 1~2개 사용 (과다 사용 금지).\n"
@@ -65,6 +66,18 @@ def get_general_agent():
         
         # 2. 검색된 내용을 프롬프트 뒤에 참고 자료로 덧붙이기 위한 변수
         rag_context = ""
+        
+        # [디버그] RAG 검색 결과를 파일에 기록 (로컬에서 확인하기 위함)
+        try:
+            with open("rag_debug.log", "a", encoding="utf-8") as f:
+                f.write(f"--- QUERY: {last_msg} ---\n")
+                f.write(f"RESULTS COUNT: {len(rag_results)}\n")
+                for i, r in enumerate(rag_results):
+                    f.write(f"[{i}] {r['source']} | {r['content'][:100]}\n")
+                f.write("------------------------\n\n")
+        except Exception:
+            pass
+
         if rag_results:
             rag_context = "\n\n[참고 자료]\n"
             for r in rag_results:
