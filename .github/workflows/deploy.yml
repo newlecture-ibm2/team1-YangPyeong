@@ -9,6 +9,19 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      # Docker 컨테이너가 root로 생성한 __pycache__/*.pyc 파일을
+      # runner 사용자(farm)가 지우지 못해 checkout이 실패하는 문제 방어.
+      # Docker로 root 권한 청소를 한 번 수행한 뒤 checkout 진입.
+      - name: Pre-clean root-owned cache files
+        run: |
+          WORKDIR="${{ github.workspace }}"
+          if [ -d "$WORKDIR" ]; then
+            docker run --rm -v "$WORKDIR":/ws alpine sh -c "
+              find /ws -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true
+              find /ws -name '*.pyc' -delete 2>/dev/null || true
+            " || true
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
 
