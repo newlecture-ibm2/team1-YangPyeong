@@ -9,7 +9,7 @@
 | 항목 | 내용 |
 |------|------|
 | **팀** | Team 1 - YangPyeong |
-| **기간** | 6주 (5주 MVP + 1주 안정화) |
+| **기간** | 6주 (5주 MVP + 1주 고도화 및 안정화) |
 | **기술 스택** | Spring Boot 3.4 · Next.js 15 · FastAPI · PostgreSQL 16 · Redis 7 |
 
 ---
