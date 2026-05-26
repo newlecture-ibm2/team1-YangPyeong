@@ -7,7 +7,6 @@ import com.farmbalance.policy.application.port.out.PolicyExternalFetchPort;
 import com.farmbalance.policy.application.port.out.PolicySavePort;
 import com.farmbalance.global.service.RegionCodeResolver;
 import com.farmbalance.policy.domain.model.PolicyData;
-import com.farmbalance.policy.domain.model.PolicySource;
 import com.farmbalance.policy.domain.model.SyncWarningType;
 import com.farmbalance.global.event.ApiSyncEvent;
 import com.farmbalance.global.event.HealthCheckTriggerEvent;
@@ -582,23 +581,15 @@ public class PolicySyncService implements SyncPolicyUseCase {
 
         if (existingOpt.isPresent()) {
             PolicyData existing = existingOpt.get();
-
+            
+            // MERGE 모드일 경우 기존에 저장/수정된 정책 보호를 위해 덮어쓰지 않고 수집 시간만 갱신
             if ("MERGE".equalsIgnoreCase(syncMode)) {
-                if (isManuallyModified(existing, incoming)) {
-                    log.debug("MERGE: skip manually edited policy externalId={}, source={}",
-                            existing.getExternalId(), existing.getSource());
-                    return false;
-                }
                 existing.setFetchedAt(LocalDateTime.now());
                 policySavePort.save(existing);
                 return false;
             }
 
-            if (PolicySource.MANUAL.equals(existing.getSource())) {
-                log.debug("FORCE: skip manually registered policy externalId={}", existing.getExternalId());
-                return false;
-            }
-
+            // FORCE 모드일 경우 강제 덮어쓰기
             existing.setTitle(incoming.getTitle());
             existing.setOrganization(incoming.getOrganization());
             existing.setRegionCode(incoming.getRegionCode());
@@ -620,21 +611,6 @@ public class PolicySyncService implements SyncPolicyUseCase {
             policySavePort.save(incoming);
             return true;
         }
-    }
-
-    /**
-     * 관리자가 마지막 동기화 이후 필드를 수정했는지 판별합니다.
-     * (DB 컬럼 추가 없이 updated_at / fetched_at 비교)
-     */
-    private static boolean isManuallyModified(PolicyData existing, PolicyData incoming) {
-        if (existing.getUpdatedAt() != null && existing.getFetchedAt() != null
-                && existing.getUpdatedAt().isAfter(existing.getFetchedAt())) {
-            return true;
-        }
-        if (incoming.getTitle() == null || existing.getTitle() == null) {
-            return false;
-        }
-        return !incoming.getTitle().trim().equals(existing.getTitle().trim());
     }
 
     // ── 유틸리티 ──

@@ -59,7 +59,6 @@ public class CropManagementService implements ManageCropUseCase {
                 .description(category.getDescription())
                 .displayOrder(category.getDisplayOrder())
                 .isActive(category.getIsActive())
-                .dataSource("MANUAL")
                 .build());
     }
 
@@ -109,7 +108,6 @@ public class CropManagementService implements ManageCropUseCase {
                 .id(id)
                 .categoryId(crop.getCategoryId())
                 .name(crop.getName())
-                .dataSource("MANUAL")
                 .build());
     }
 

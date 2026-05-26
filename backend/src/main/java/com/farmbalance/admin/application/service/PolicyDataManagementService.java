@@ -8,7 +8,6 @@ import com.farmbalance.policy.application.port.out.PolicyQueryPort;
 import com.farmbalance.policy.application.port.out.PolicySavePort;
 import com.farmbalance.policy.application.port.out.RegionNameResolvePort;
 import com.farmbalance.policy.domain.model.PolicyData;
-import com.farmbalance.policy.domain.model.PolicySource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,7 +64,6 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
         policyData.setApplyEnd(applyEnd);
         policyData.setContent(contentSummary);
         policyData.setSourceUrl(sourceUrl);
-        policyData.setSource(PolicySource.MANUAL);
         policyData.setFetchedAt(LocalDateTime.now());
 
         PolicyData saved = policySavePort.save(policyData);
@@ -89,6 +87,7 @@ public class PolicyDataManagementService implements ManagePolicyDataUseCase {
         existing.setApplyEnd(applyEnd);
         existing.setContent(contentSummary);
         existing.setSourceUrl(sourceUrl);
+        existing.setFetchedAt(LocalDateTime.now());
 
         policySavePort.save(existing);
     }

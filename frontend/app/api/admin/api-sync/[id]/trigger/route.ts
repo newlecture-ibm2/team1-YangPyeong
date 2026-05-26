@@ -4,18 +4,13 @@ import { BACKEND_URL } from '@/lib/constants'
 
 /** POST /api/admin/api-sync/:id/trigger → 수동 동기화 트리거 프록시 */
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSessionFromCookie();
     const { id } = await params
-    const backendUrl = new URL(`${BACKEND_URL}/api/admin/api-sync/${id}/trigger`)
-    const syncMode = request.nextUrl.searchParams.get('syncMode')
-    if (syncMode) {
-      backendUrl.searchParams.set('syncMode', syncMode)
-    }
-    const res = await fetch(backendUrl.toString(),  { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) }, 
+    const res = await fetch(`${BACKEND_URL}/api/admin/api-sync/${id}/trigger`,  { headers: { ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}) }, 
       method: 'POST',
     })
     const data = await res.json()
