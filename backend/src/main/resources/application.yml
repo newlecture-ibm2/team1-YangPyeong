@@ -168,6 +168,7 @@ firebase:
 
 # ── Custom App Properties ──
 app:
+  ai-internal-secret-key: ${AI_INTERNAL_SECRET_KEY:farm-balance-ai-secret-key}
   policy:
     scheduler-enabled: true
   user:
