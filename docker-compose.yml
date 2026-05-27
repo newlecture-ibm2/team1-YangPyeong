@@ -91,6 +91,7 @@ services:
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - GOV24_API_KEY=${GOV24_API_KEY}
       - FIREBASE_CREDENTIALS_BASE64=${FIREBASE_CREDENTIALS_BASE64}
+      - AI_INTERNAL_SECRET_KEY=${AI_INTERNAL_SECRET_KEY}
     volumes:
       - uploads-data:/app/uploads
     depends_on:
