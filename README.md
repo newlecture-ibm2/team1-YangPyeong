@@ -9,7 +9,8 @@
 | 항목 | 내용 |
 |------|------|
 | **팀** | Team 1 - YangPyeong |
-| **기간** | 6주 (5주 MVP + 1주 고도화 및 안정화) |
+| **주소** | [farm.newlecture.com](https://farm.newlecture.com) |
+| **기간** | 6주 (5주 MVP + 1주 안정화) |
 | **기술 스택** | Spring Boot 3.4 · Next.js 15 · FastAPI · PostgreSQL 16 · Redis 7 |
 
 ---
@@ -37,7 +38,7 @@
 - **아키텍처**: 헥사고날 아키텍처 (adapter/in, adapter/out)
 - **DB**: PostgreSQL 16 · Redis 7 · Flyway (마이그레이션)
 - **인증**: JWT · OAuth2 (카카오, 구글)
-- **외부 연동**: Firebase FCM · AWS S3 · KAMIS · KMA · gov24 · 농사로(비료/재배)
+- **외부 연동**: Firebase FCM · KAMIS · KMA · gov24 · 농사로(비료/재배)
 
 ### Frontend (Next.js 15)
 - **언어/프레임워크**: TypeScript 5 · React 19 · Next.js 15 (App Router)
@@ -54,7 +55,6 @@
 
 ### 인프라
 - **컨테이너**: Docker · Docker Compose
-- **클라우드**: AWS EC2 · AWS RDS · AWS S3
 - **CI/CD**: GitHub Actions
 
 ---
@@ -179,7 +179,7 @@ team1-YangPyeong/
 │       ├── prompts/  ← LLM 프롬프트
 │       └── models/   ← Pydantic 스키마
 ├── docs/             ← 기획/설계 문서
-├── scripts/          ← EC2 배포 스크립트
+├── scripts/          ← 배포 스크립트
 ├── setup.sh          ← 로컬 초기 환경 설정
 └── docker-compose.yml
 ```
@@ -210,42 +210,13 @@ team1-YangPyeong/
 
 ---
 
-## 🖥️ EC2 서버 초기 구축 (배포 담당자용)
-
-> ⚠️ **EC2 서버에 최초 배포할 때만** 실행합니다.
-
-```bash
-# EC2 인스턴스에 SSH 접속 후 실행
-bash scripts/ec2-setup.sh
-```
-
-이 스크립트가 수행하는 작업:
-- ✅ 시스템 업데이트 및 Docker / Docker Compose v2 설치
-- ✅ `ubuntu` 유저 docker 그룹 추가
-- ✅ git, curl, unzip 설치
-
-> 실행 완료 후 docker 그룹 권한 적용을 위해 **재접속(exit → SSH)** 해야 합니다.
-
-### 서버 접속
-
-- **SSM**: AWS 콘솔 → EC2 → 인스턴스 → '연결' 버튼 (브라우저 터미널)
-- **SSH**: `chmod 400 FB-Key.pem && ssh -i "FB-Key.pem" ubuntu@<EC2-IP>`
-
-### 보안 준수
-
-- `.env`, `.env.local`, `*.pem` 파일은 절대 커밋하지 마세요 (`.gitignore` 등록됨)
-- 민감 정보는 환경 변수(`${DB_PASSWORD}` 등)로만 주입
-
----
-
 ## 👥 팀원
 
-| 이름 | 역할 |
-|------|------|
-| 김지윤 | 인프라 및 기반 설계 |
-| 채나은 | 장터(Shop) 풀스택 · FCM 푸시 알림 시스템 · STT 음성 입력 · FarmBot Shop 에이전트 · 반응형 UI · 프로젝트 초기 세팅 |
-| 박수경 | 지자체(GOV) 대시보드 풀스택 · 정책 추천 엔진(v2.1) 설계 및 고도화 · GOV 챗봇 에이전트 · 가게 지도(카카오맵) 연동 · CI/CD 파이프라인 구축 · 기획 및 IA 설계 |
-| - | - |
-| - | - |
-| - | - |
-
+| 이름 | 역할 | 주요 담당 |
+|------|------|--------|
+| 정지은 | 농장주 | Farm 도메인 풀스택 · 재배 관리 & 수확 플로우 · 수급 밸런스 엔진 · 대시보드 시각화 · 영농 일지(History) 전체 · 외부 API 5종 연동 (기상청 · 흙토람 · 농사로 · KOSIS) · 비회원 미리보기 UX 전략 · DB 마이그레이션 · 데이터 시딩 · 초기 셋업 |
+| 박수경 | 군수 | 지자체 GraphRAG AI 분석 · 대시보드 & 챗봇 · 정책 수집 · AI 맞춤 추천 · 에이전트 RAG · 동네 가게 지도 검색 · 비회원 챗봇 게스트 정책 · 인증 · BFF · 외부 API 연동 · 배포 환경 · 정책 고도화 |
+| 김지윤 | 수문장 | AI 추천 페이지 · 수익 예측 & 인사이트 · 인증 시스템 · 계정 보안 · 마이페이지 통합 뷰 · 랜딩 페이지 UI · 공통 에러 페이지 · AI 초기 인프라 셋업 · 배포 서버 환경 · 마이그레이션 |
+| 채나은 | 장터지기 | 장터(Shop) 전체 · 알림 시스템 · 이메일 발송 · Shop 에이전트 · FarmBot 가이드 · AI 상품 자동완성 · 판매자 인사이트 · STT 영농일지 · 농사로 API 연동 · 모바일 반응형 · 공통 컴포넌트 · 초기 셋업 |
+| 정우혁 | 이장 | 커뮤니티(게시판) 전체 · 특화 기능 · 챗봇(FarmBot) 프론트엔드 · UX 제어 · 사용자 인증(Auth) · 권한 처리 · 게시판 검색 · 필터링 · 게시글 에디터 · 이미지 업로드 |
+| 방현석 | 촌장 | 관리자 도메인 설계 · 풀스택 · 농장 및 작물 · RAG 관리 페이지 · ChromaDB RAG 전체 연동 · 고도화 · AI 상품 심사 · JSON 파싱 안정화 · AI 커뮤니티 게시글 · 댓글 검수 · 제재 시스템 · 관리자 UI 개선 |
