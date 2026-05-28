@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any, Optional
 
 from langchain_core.tools import tool
@@ -76,6 +77,127 @@ async def _fetch_all_recommend_history(farm_id: int) -> list[dict[str, Any]]:
 
 def _normalize_crop_name(name: str) -> str:
     return name.replace(" ", "").strip().lower()
+
+
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    """JSON null·누락 필드에도 안전하게 float 변환."""
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+# 작물명이 아닌 일반 표현 — compare_crop_recommendations 파싱 시 제외
+_COMPARE_NOISE_PHRASES = frozenset({
+    "추천", "작물", "비교", "비교해줘", "비교해", "알려줘", "보여줘", "알려줘요",
+    "top", "top3", "top5", "1등", "2등", "3등", "순위", "추천작물", "추천작물비교",
+    "추천작물비교해줘", "작물비교", "작물비교해줘",
+})
+
+
+def _coerce_crop_names_input(crop_names: Any) -> str:
+    """LLM이 list·dict 등으로 넘긴 crop_names를 문자열로 정규화."""
+    if crop_names is None:
+        return ""
+    if isinstance(crop_names, list):
+        parts = [str(x).strip() for x in crop_names if x is not None and str(x).strip()]
+        return ", ".join(parts)
+    if isinstance(crop_names, dict):
+        for key in ("crop_names", "names", "crops", "cropNames"):
+            val = crop_names.get(key)
+            if val is not None:
+                return _coerce_crop_names_input(val)
+        return ""
+    return str(crop_names).strip()
+
+
+def _split_crop_name_phrases(raw: str) -> list[str]:
+    """접속 조사·vs만 분리 (작물명 내부 '과'·'와'는 유지)."""
+    text = raw.strip()
+    if not text:
+        return []
+
+    text = re.sub(r"\s+vs\.?\s*", ",", text, flags=re.IGNORECASE)
+    prev = None
+    while prev != text:
+        prev = text
+        text = re.sub(
+            r"(\S+)\s*(?:와|과|랑|하고)\s*(\S+)",
+            r"\1,\2",
+            text,
+        )
+    return [p.strip() for p in text.split(",") if p.strip()]
+
+
+def _parse_crop_name_list(crop_names: Any) -> list[str]:
+    """비교 대상 작물명 목록 파싱 (빈 값·일반 문구 제외)."""
+    raw = _coerce_crop_names_input(crop_names)
+    if not raw:
+        return []
+
+    names: list[str] = []
+    seen: set[str] = set()
+    for part in _split_crop_name_phrases(raw):
+        norm = _normalize_crop_name(part)
+        if len(norm) < 2 or norm in _COMPARE_NOISE_PHRASES or norm in seen:
+            continue
+        seen.add(norm)
+        names.append(part)
+    return names[:3]
+
+
+def _dedupe_compare_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """비교·차트용 작물 목록에서 cropName 중복·빈 이름 제거."""
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("cropName") or "").strip()
+        if not name:
+            continue
+        key = _normalize_crop_name(name)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+    return out
+
+
+def _fmt_metric_cell(item: dict[str, Any], key: str, *, suffix: str = "") -> str:
+    """마크다운 표 셀 — null 안전."""
+    val = item.get(key)
+    if val is None:
+        return "-"
+    return f"{_safe_float(val):.0f}{suffix}"
+
+
+def _collect_default_compare_items(
+    data: dict[str, Any], *, limit: int = 3
+) -> list[dict[str, Any]]:
+    """작물명 없이 비교 요청 시 — 추천 TOP N(없으면 코칭 작물) 자동 선택."""
+    items: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    def _append_from_list(raw: Any) -> None:
+        if not isinstance(raw, list) or len(items) >= limit:
+            return
+        pool = [x for x in raw if isinstance(x, dict) and x.get("cropName")]
+        pool.sort(key=lambda x: (x.get("rank") is None, x.get("rank") or 999))
+        for item in pool:
+            key = _normalize_crop_name(str(item.get("cropName")))
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            items.append(item)
+            if len(items) >= limit:
+                return
+
+    _append_from_list(data.get("recommendations"))
+    _append_from_list(data.get("currentCropAdvices"))
+    return items[:limit]
 
 
 def _find_crop_by_name(data: dict[str, Any], crop_name: str) -> Optional[tuple[str, dict[str, Any]]]:
@@ -306,26 +428,25 @@ def _format_comparison(items: list[dict[str, Any]]) -> str:
         
     lines = ["⚖️ **작물 비교 결과**\n"]
     
+    def _md_name(item: dict[str, Any]) -> str:
+        return str(item.get("cropName", "작물")).replace("|", "/")
+
     # 헤더
-    header = "| 항목 | " + " | ".join([str(item.get("cropName", "작물")) for item in items]) + " |"
+    header = "| 항목 | " + " | ".join([_md_name(item) for item in items]) + " |"
     divider = "|---|" + "|".join(["---"] * len(items)) + "|"
     lines.append(header)
     lines.append(divider)
-    
-    # 종합 점수
-    score_line = "| 종합 | " + " | ".join([f'{item.get("score", "-")}점' for item in items]) + " |"
+
+    score_line = "| 종합 | " + " | ".join([_fmt_metric_cell(item, "score", suffix="점") for item in items]) + " |"
     lines.append(score_line)
-    
-    # 토양
-    soil_line = "| 토양 | " + " | ".join([f'{item.get("soilFitnessPercent", "-")}%' for item in items]) + " |"
+
+    soil_line = "| 토양 | " + " | ".join([_fmt_metric_cell(item, "soilFitnessPercent", suffix="%") for item in items]) + " |"
     lines.append(soil_line)
-    
-    # 시세
-    price_line = "| 시세 | " + " | ".join([f'{item.get("priceForecastPercent", "-")}%' for item in items]) + " |"
+
+    price_line = "| 시세 | " + " | ".join([_fmt_metric_cell(item, "priceForecastPercent", suffix="%") for item in items]) + " |"
     lines.append(price_line)
-    
-    # 수급
-    supply_line = "| 수급 | " + " | ".join([f'{item.get("supplyStabilityPercent", "-")}%' for item in items]) + " |"
+
+    supply_line = "| 수급 | " + " | ".join([_fmt_metric_cell(item, "supplyStabilityPercent", suffix="%") for item in items]) + " |"
     lines.append(supply_line)
     
     # 유형
@@ -337,10 +458,10 @@ def _format_comparison(items: list[dict[str, Any]]) -> str:
     for item in items:
         chart_data.append({
             "cropName": item.get("cropName", "작물"),
-            "score": float(item.get("score", 0)),
-            "soil": float(item.get("soilFitnessPercent", 0)),
-            "price": float(item.get("priceForecastPercent", 0)),
-            "supply": float(item.get("supplyStabilityPercent", 0))
+            "score": _safe_float(item.get("score")),
+            "soil": _safe_float(item.get("soilFitnessPercent")),
+            "price": _safe_float(item.get("priceForecastPercent")),
+            "supply": _safe_float(item.get("supplyStabilityPercent")),
         })
         
     action_dict = {
@@ -353,12 +474,13 @@ def _format_comparison(items: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 @tool
-async def compare_crop_recommendations(crop_names: str) -> str:
-    """두 개 이상의 작물의 추천 점수를 비교합니다.
-    '감자 vs 배추', '감자랑 고구마 비교' 요청 시 사용하세요.
+async def compare_crop_recommendations(crop_names: str = "") -> str:
+    """두 개 이상의 작물의 추천 점수를 비교합니다 (레이더 차트 포함).
+    '감자 vs 배추', '감자랑 고구마 비교', '추천 작물 비교해줘' 요청 시 사용하세요.
+    작물명이 없으면 최신 추천 TOP 3를 자동으로 비교합니다.
     
     Args:
-        crop_names: 비교할 작물명들 (쉼표 또는 'vs'로 구분. 예: '감자, 배추')
+        crop_names: 비교할 작물명 (쉼표·'vs' 구분). 비우면 TOP 3 자동 선택.
     """
     if (msg := ensure_logged_in(login_url=login_with_callback(FARM_RECOMMEND))):
         return msg
@@ -371,29 +493,77 @@ async def compare_crop_recommendations(crop_names: str) -> str:
     if not data:
         return _no_history_message()
 
-    names = [n.strip() for n in crop_names.replace("vs", ",").replace("랑", ",").replace("하고", ",").replace("과", ",").replace("와", ",").split(",")]
-    names = [n for n in names if n]
-    
-    # 비교는 최대 3개까지만
-    names = names[:3]
-    
-    found_items = []
-    not_found = []
-    
-    for name in names:
-        found = _find_crop_by_name(data, name)
-        if found:
-            found_items.append(found[1])
-        else:
-            not_found.append(name)
-            
+    names = _parse_crop_name_list(crop_names)
+    auto_selected = False
+    supplemented = False
+    not_found: list[str] = []
+    found_items: list[dict[str, Any]] = []
+
+    if not names:
+        found_items = _collect_default_compare_items(data, limit=3)
+        auto_selected = True
+    else:
+        for name in names:
+            found = _find_crop_by_name(data, name)
+            if found:
+                found_items.append(found[1])
+            else:
+                not_found.append(name)
+
+        found_items = _dedupe_compare_items(found_items)
+
+        if not found_items:
+            found_items = _collect_default_compare_items(data, limit=3)
+            auto_selected = bool(found_items)
+        elif len(found_items) < 2:
+            existing_keys = {_normalize_crop_name(str(i.get("cropName", ""))) for i in found_items}
+            for extra in _collect_default_compare_items(data, limit=3):
+                key = _normalize_crop_name(str(extra.get("cropName", "")))
+                if key and key not in existing_keys:
+                    found_items.append(extra)
+                    existing_keys.add(key)
+                if len(found_items) >= 3:
+                    break
+            found_items = _dedupe_compare_items(found_items)
+            supplemented = len(found_items) >= 2
+
+    found_items = _dedupe_compare_items(found_items)
+
     if not found_items:
-        return f"요청하신 작물({', '.join(names)})을 최근 분석 결과에서 찾을 수 없습니다."
-        
+        if names:
+            return (
+                f"요청하신 작물({', '.join(names)})을 최근 분석 결과에서 찾지 못했고, "
+                "비교할 다른 추천 작물도 없습니다. AI 작물 추천 화면에서 분석을 실행해 주세요."
+            )
+        return (
+            "비교할 추천 작물이 없습니다. AI 작물 추천 화면에서 「작물 적합도 다시 분석」을 실행해 주세요."
+            + action_token({"type": "NAVIGATE", "url": FARM_RECOMMEND})
+        )
+
+    if len(found_items) < 2:
+        return (
+            f"비교하려면 작물이 2개 이상 필요합니다. "
+            f"현재 분석 결과에는 '{found_items[0].get('cropName', '작물')}' 1개만 있습니다. "
+            "다른 작물명을 함께 말씀해 주시거나, 추천 분석을 다시 실행해 주세요."
+        )
+
     res = _format_comparison(found_items)
-    if not_found:
+    labels = ", ".join(str(i.get("cropName", "작물")) for i in found_items)
+    if auto_selected and not_found:
+        res = (
+            f"요청하신 작물({', '.join(not_found)})은 목록에서 찾지 못해, "
+            f"최신 추천 상위 작물({labels})으로 비교했습니다.\n\n" + res
+        )
+    elif auto_selected:
+        res = f"최신 추천 상위 작물({labels})을 기준으로 비교했습니다.\n\n" + res
+    elif supplemented:
+        res = (
+            f"요청하신 작물과 함께 추천 상위 작물을 보충해 비교했습니다. (비교: {labels})\n\n"
+            + res
+        )
+    if not_found and not auto_selected:
         res += f"\n\n(※ '{', '.join(not_found)}' 작물은 최근 추천 목록에 없어 비교에서 제외되었습니다.)"
-        
+
     return res
 
 @tool
@@ -537,50 +707,87 @@ async def compare_with_previous_recommendation() -> str:
     latest_date = latest.get("generatedAt", "최근")
     prev_date = previous.get("generatedAt", "이전")
     
-    # 1. 1등 작물 비교
-    def get_top_crop(data):
-        recs = data.get("recommendations", [])
+    def get_top_crop(data: dict[str, Any]) -> Optional[dict[str, Any]]:
+        recs = [r for r in (data.get("recommendations") or []) if isinstance(r, dict)]
+        if not recs:
+            return None
         for r in recs:
-            if isinstance(r, dict) and r.get("rank") == 1:
+            if r.get("rank") == 1:
                 return r
-        return None
-        
+        ranked = [r for r in recs if r.get("rank") is not None]
+        if ranked:
+            return min(ranked, key=lambda x: x.get("rank", 999))
+        return recs[0]
+
+    def get_top3_names(data: dict[str, Any]) -> set[str]:
+        names: set[str] = set()
+        for key in ("recommendations", "currentCropAdvices"):
+            recs = data.get(key) or []
+            if not isinstance(recs, list):
+                continue
+            for r in recs:
+                if not isinstance(r, dict) or not r.get("cropName"):
+                    continue
+                rank = r.get("rank")
+                if rank is None or rank <= 3:
+                    names.add(str(r.get("cropName")))
+        return names
+
     latest_top = get_top_crop(latest)
     prev_top = get_top_crop(previous)
-    
+
     lines = [f"📊 **[추천 이력 비교]**\n(기준: {prev_date} ➔ {latest_date})\n"]
-    
+
     if latest_top and prev_top:
-        lt_name = latest_top.get("cropName")
-        pt_name = prev_top.get("cropName")
-        lt_score = latest_top.get("score", 0)
-        pt_score = prev_top.get("score", 0)
-        
+        lt_name = latest_top.get("cropName") or "작물"
+        pt_name = prev_top.get("cropName") or "작물"
+        lt_score = _safe_float(latest_top.get("score"))
+        pt_score = _safe_float(prev_top.get("score"))
+
         if lt_name == pt_name:
             diff = lt_score - pt_score
-            diff_str = f"{diff}점 상승 🔼" if diff > 0 else f"{abs(diff)}점 하락 🔽" if diff < 0 else "동일"
-            lines.append(f"• **1위 유지**: '{lt_name}' 작물이 여전히 1위를 기록했습니다. (종합 점수: {pt_score}점 ➔ {lt_score}점, {diff_str})")
+            if diff > 0:
+                diff_str = f"{diff:.0f}점 상승 🔼"
+            elif diff < 0:
+                diff_str = f"{abs(diff):.0f}점 하락 🔽"
+            else:
+                diff_str = "동일"
+            lines.append(
+                f"• **1위 유지**: '{lt_name}' 작물이 여전히 1위입니다. "
+                f"(종합 점수: {pt_score:.0f}점 ➔ {lt_score:.0f}점, {diff_str})"
+            )
         else:
-            lines.append(f"• **1위 변동**: 1위 작물이 '{pt_name}'({pt_score}점)에서 **'{lt_name}'**({lt_score}점)으로 변경되었습니다! 🔄")
-            
-    # 2. 상위권 진입/탈락 요약 (TOP 3 기준)
-    def get_top3_names(data):
-        recs = data.get("recommendations", [])
-        return {r.get("cropName") for r in recs if isinstance(r, dict) and r.get("rank", 99) <= 3 and r.get("cropName")}
-        
+            lines.append(
+                f"• **1위 변동**: 1위가 '{pt_name}'({pt_score:.0f}점)에서 "
+                f"**'{lt_name}'**({lt_score:.0f}점)으로 바뀌었습니다! 🔄"
+            )
+    elif latest_top:
+        lines.append(
+            f"• **최근 1위**: '{latest_top.get('cropName', '작물')}' "
+            f"(종합 {_safe_float(latest_top.get('score')):.0f}점)"
+        )
+    elif prev_top:
+        lines.append(
+            f"• **이전 1위**: '{prev_top.get('cropName', '작물')}' — "
+            "최근 분석에는 동일한 순위 데이터가 없습니다."
+        )
+    else:
+        lines.append("• 1위 추천 작물 데이터가 없어 TOP 3 변동만 요약합니다.")
+
     latest_top3 = get_top3_names(latest)
     prev_top3 = get_top3_names(previous)
-    
+
     new_entries = latest_top3 - prev_top3
     dropped = prev_top3 - latest_top3
-    
+
     if new_entries:
         lines.append(f"• **새로운 TOP 3 진입**: {', '.join(new_entries)} 작물이 상위권으로 올라왔습니다. 🎉")
     if dropped:
         lines.append(f"• **TOP 3 이탈**: {', '.join(dropped)} 작물은 상위권에서 내려갔습니다.")
-        
-    if not new_entries and not dropped and lt_name == pt_name:
-        lines.append("• 전체적으로 이전 분석 대비 상위권 작물 순위에 큰 변동이 없습니다.")
-        
+
+    if not new_entries and not dropped and latest_top and prev_top:
+        if latest_top.get("cropName") == prev_top.get("cropName"):
+            lines.append("• 전체적으로 이전 분석 대비 상위권 작물 순위에 큰 변동이 없습니다.")
+
     lines.append("\n상세한 변동 내역을 보시려면 추천 화면에서 지난 이력을 확인해 주세요.")
     return "\n".join(lines)

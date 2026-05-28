@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Map, MapMarker, useKakaoLoader } from 'react-kakao-maps-sdk';
 import Card from '@/components/common/Card';
 import Badge from '@/components/common/Badge';
@@ -33,6 +33,7 @@ export default function StoreMapPage() {
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [visibleStores, setVisibleStores] = useState<Store[]>([]);
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  const [isExpandedSearch, setIsExpandedSearch] = useState(false); // 반경 확대 검색 여부
   
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('종묘사'); // 기본 검색어
@@ -42,8 +43,40 @@ export default function StoreMapPage() {
   const isFirstLoad = useRef(true);
   const { dialog, showAlert, handleConfirm, handleClose } = useModalDialog();
 
+  // 카카오맵 검색 결과 → Store 변환 헬퍼
+  const toStores = (data: kakao.maps.services.PlacesSearchResult): Store[] =>
+    data.map((item) => ({
+      id: item.id,
+      name: item.place_name,
+      address: item.road_address_name || item.address_name,
+      lat: parseFloat(item.y),
+      lng: parseFloat(item.x),
+      phone: item.phone,
+      category: item.category_name.split(' > ').pop() || '',
+    }));
+
+  // 반경 확대 fallback 검색 (bounds 검색 0건 시 호출)
+  const searchWithRadius = useCallback((query: string, radius: number = 20000) => {
+    const map = mapRef.current;
+    if (!map || !window.kakao?.maps?.services) return;
+
+    const ps = new kakao.maps.services.Places();
+    const center = map.getCenter();
+    const location = new kakao.maps.LatLng(center.getLat(), center.getLng());
+
+    ps.keywordSearch(query, (data, status) => {
+      if (status === kakao.maps.services.Status.OK) {
+        setVisibleStores(toStores(data));
+        setIsExpandedSearch(true);
+      } else {
+        setVisibleStores([]);
+        setIsExpandedSearch(false);
+      }
+    }, { location, radius, sort: kakao.maps.services.SortBy.DISTANCE });
+  }, []);
+
   // 장소 검색 함수 — 명시적 호출 시에만 실행 (의존성 없음)
-  const searchPlaces = useCallback(() => {
+  const searchPlaces = useCallback((forceExpand?: boolean) => {
     const map = mapRef.current;
     if (!map || !window.kakao?.maps?.services) return;
 
@@ -59,35 +92,39 @@ export default function StoreMapPage() {
     const ps = new kakao.maps.services.Places();
     const bounds = map.getBounds();
 
+    // 강제 확대 검색 요청
+    if (forceExpand && query) {
+      searchWithRadius(query);
+      return;
+    }
+
     // '전체' 카테고리이고 검색어가 없을 때: 대표 3가지 키워드로 동시 검색 후 병합
     if (!query && selectedCategory === '') {
+      const searchOpts = { bounds };
       Promise.all([
-        new Promise<any>((resolve) => ps.keywordSearch('종묘사', (data, status) => resolve({ data, status }), { bounds })),
-        new Promise<any>((resolve) => ps.keywordSearch('농자재', (data, status) => resolve({ data, status }), { bounds })),
-        new Promise<any>((resolve) => ps.keywordSearch('직매장', (data, status) => resolve({ data, status }), { bounds }))
+        new Promise<{data: kakao.maps.services.PlacesSearchResult; status: kakao.maps.services.Status}>((resolve) => ps.keywordSearch('종묘사', (data, status) => resolve({ data, status }), searchOpts)),
+        new Promise<{data: kakao.maps.services.PlacesSearchResult; status: kakao.maps.services.Status}>((resolve) => ps.keywordSearch('농자재', (data, status) => resolve({ data, status }), searchOpts)),
+        new Promise<{data: kakao.maps.services.PlacesSearchResult; status: kakao.maps.services.Status}>((resolve) => ps.keywordSearch('직매장', (data, status) => resolve({ data, status }), searchOpts))
       ]).then(results => {
-        let allStores: any[] = [];
+        let allStores: kakao.maps.services.PlacesSearchResult = [];
         results.forEach(res => {
           if (res.status === kakao.maps.services.Status.OK && res.data) {
             allStores = allStores.concat(res.data);
           }
         });
         
-        // 중복 제거 (id 기준, Map 임포트 충돌 우회)
+        // 중복 제거 (id 기준)
         const uniqueStores = allStores.filter((store, index, self) => 
           index === self.findIndex((s) => s.id === store.id)
         );
         
-        const stores: Store[] = uniqueStores.map((item: any) => ({
-          id: item.id,
-          name: item.place_name,
-          address: item.road_address_name || item.address_name,
-          lat: parseFloat(item.y),
-          lng: parseFloat(item.x),
-          phone: item.phone,
-          category: item.category_name.split(' > ').pop() || '',
-        }));
-        setVisibleStores(stores);
+        if (uniqueStores.length > 0) {
+          setVisibleStores(toStores(uniqueStores));
+          setIsExpandedSearch(false);
+        } else {
+          // bounds 내 0건 → 반경 20km로 재검색
+          searchWithRadius('종묘사 농자재 직매장');
+        }
       });
       return;
     }
@@ -95,29 +132,23 @@ export default function StoreMapPage() {
     // 빈 키워드라면 API 호출 방지
     if (!query) {
       setVisibleStores([]);
+      setIsExpandedSearch(false);
       return;
     }
 
     ps.keywordSearch(query, (data, status) => {
       if (status === kakao.maps.services.Status.OK) {
-        const stores: Store[] = data.map((item: any) => ({
-          id: item.id,
-          name: item.place_name,
-          address: item.road_address_name || item.address_name,
-          lat: parseFloat(item.y),
-          lng: parseFloat(item.x),
-          phone: item.phone,
-          category: item.category_name.split(' > ').pop() || '',
-        }));
-        setVisibleStores(stores);
+        setVisibleStores(toStores(data));
+        setIsExpandedSearch(false);
       } else if (status === kakao.maps.services.Status.ZERO_RESULT) {
-        setVisibleStores([]);
+        // bounds 내 0건 → 반경 20km 확대 검색 자동 시도
+        searchWithRadius(query);
       } else {
         console.warn('카카오맵 장소 검색 결과 없음 (코드:', status, ')');
       }
     }, { bounds });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchKeyword, selectedCategory]);
+  }, [searchKeyword, selectedCategory, searchWithRadius]);
 
   // 내 위치 찾기 (버튼 클릭 전용)
   const findMyLocation = useCallback(() => {
@@ -184,6 +215,14 @@ export default function StoreMapPage() {
     setSelectedStoreId(store.id);
     setMapCenter({ lat: store.lat, lng: store.lng });
   };
+
+  // 카테고리 변경 시 자동 검색 (전체 제외)
+  useEffect(() => {
+    if (selectedCategory && mapRef.current) {
+      searchPlaces();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -301,10 +340,30 @@ export default function StoreMapPage() {
         </div>
 
         <div className={styles.listSection}>
+          {isExpandedSearch && visibleStores.length > 0 && (
+            <div style={{ padding: '8px 12px', background: '#FFF8E1', borderRadius: '8px', margin: '0 0 8px', fontSize: '13px', color: '#8D6E00', textAlign: 'center' }}>
+              📍 주변 20km 반경으로 확대 검색된 결과입니다
+            </div>
+          )}
           {visibleStores.length === 0 ? (
             <div className={styles.emptyState}>
               <p>현재 검색된 매장이 없습니다.</p>
-              <span style={{ fontSize: '12px' }}>지도 범위를 이동하거나 검색어를 변경해주세요.</span>
+              <span style={{ fontSize: '12px', display: 'block', marginBottom: '12px' }}>양평군 지역 특성상 등록된 매장이 적을 수 있습니다.</span>
+              <button
+                onClick={() => searchPlaces(true)}
+                style={{
+                  background: 'var(--color-primary, #2D6A4F)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                🔍 주변 지역으로 넓혀 검색
+              </button>
             </div>
           ) : (
             visibleStores.map(store => (

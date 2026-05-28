@@ -94,12 +94,13 @@ public class BalanceEventListener {
      */
     public void syncToBalanceData(String cropName, SupplyRatioResult result) {
         try {
-            Long cropId = jdbcTemplate.queryForObject(
+            List<Long> cropIds = jdbcTemplate.queryForList(
                     "SELECT id FROM crops WHERE name = ? LIMIT 1", Long.class, cropName);
-            if (cropId == null) {
+            if (cropIds.isEmpty()) {
                 log.warn("[Balance-Sync] crops 테이블에서 '{}' 를 찾을 수 없어 balance_data 동기화를 건너뜁니다.", cropName);
                 return;
             }
+            Long cropId = cropIds.get(0);
 
             String regionCode = "4183"; // 양평군
             int year = result.getBaseYear();
