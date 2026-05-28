@@ -216,6 +216,14 @@ export default function StoreMapPage() {
     setMapCenter({ lat: store.lat, lng: store.lng });
   };
 
+  // 카테고리 변경 시 자동 검색 (전체 제외)
+  useEffect(() => {
+    if (selectedCategory && mapRef.current) {
+      searchPlaces();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     searchPlaces();
